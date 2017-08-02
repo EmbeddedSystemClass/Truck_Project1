@@ -16,7 +16,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define TEMP_DELAY3		2
 #define TEMP_DELAY2		1000
 #define TDELAY 2
-#define TDELAY2 1
+#define TDELAY2 1000
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 
@@ -441,6 +441,7 @@ ESOS_USER_TASK(echo_spi_task)
 	static uint16_t res3, res4;
 	static char res_str[10];
 	static char res2_str[10];
+	static uint8_t  res_array[24];
 
 	memset(rpm_disp,0,sizeof(rpm_disp));
 	memset(mph_disp,0,sizeof(mph_disp));
@@ -472,7 +473,28 @@ ESOS_USER_TASK(echo_spi_task)
 			ESOS_TASK_WAIT_ON_READ1SPI1(data1);
 			ESOS_TASK_WAIT_ON_WRITE1SPI1(cmd);
 			ESOS_TASK_SIGNAL_AVAILABLE_SPI();
+			
+			if(res_array[i] != data1)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(i);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			}
+			res_array[i] = data1;
 
+			if(i == 0)
+				ESOS_TASK_WAIT_TICKS(TDELAY2);
+			res2++;
+			if((res2 % 300) == 0)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(res2>>8));
+//				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			}
+
+#if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			if(i == 2)
 			{
@@ -483,7 +505,6 @@ ESOS_USER_TASK(echo_spi_task)
 	//        ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-#if 0
 			switch(i)
 			{
 				case 2:

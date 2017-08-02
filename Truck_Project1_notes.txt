@@ -461,8 +461,9 @@ from the linux laptop to the RJ-45 jack).
 
 The dashboard will have programming connectors for:
 1) the PIC24 - 6 pin din
-2) the AVR - USB connector to the buspirate board
+2) the AVR - USB connector to the buspirate board *
 3) 14 pin ICD connector to program the FPGA
+* or if we want to use the SPI then the MISO, MOSI, etc could have a disconnect
 
 The TS-7200 has a reset button on board and can be re-wired to bring it out to the
 dashboard. The PIC24 and the AVR can have separate switches to turn each board on
@@ -489,4 +490,15 @@ The TS-7200 has connectors for the I/O - inputs from external switches or
 momentary contact push-buttons - outputs go either directly to
 lights (dash indicator lights) or to high-amp relays (headlights, starter relay, etc)
 
+TS-7200:
+2 UARTs are RS-232 - 1 goes to PIC24, the other is open
+The ehternet is for a monitor (use cross-over cable to laptop)
+
+PIC24:
+1 UART goes to PIC24 (5-3v3 conv to RS-232 conv)
+another UART goes to AVR (5-3v3 conv)
+SPI goes to FPGA (4k7 pull-up resistors)
+
+FPGA:
+1 UART goes to monitor (5-3v3 conv to RS-232 conv)
 

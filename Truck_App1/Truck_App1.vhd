@@ -40,9 +40,9 @@ architecture truck_arch of Truck_App is
 
 	type state_uart1 is (idle1, start, delay);
 	signal state_uart_reg1, state_uart_next1: state_uart1;
-	signal t_reg_uart1, t_next_uart1: unsigned(23 downto 0);
+--	signal t_reg_uart1, t_next_uart1: unsigned(23 downto 0);
 	
-	type state_uart2 is (idle2, start2a, start2b, start2c, start2d, done2);
+	type state_uart2 is (idle2, start2, delay2);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
 --	signal t_reg_uart2, t_next_uart2: unsigned(23 downto 0);
 
@@ -282,38 +282,83 @@ begin
 		state_uart_reg1 <= idle1;
 		data_tx <= (others=>'0');
 		start_tx <= '0';
-		time_delay_reg <= (others=>'0');
-		time_delay_next <= (others=>'0');
 		skip <= '0';
 	else if clk'event and clk = '1' then
 		case state_uart_reg1 is
 			when idle1 =>
-				state_uart_next1 <= start;
-				data_tx <= conv_std_logic_vector(temp_uart,8);
---				data_tx <= stlv_temp;
+				if done_rx = '1' then
+					state_uart_next1 <= start;
+					data_tx <= conv_std_logic_vector(temp_uart,8);
+	--				data_tx <= stlv_temp;
 
-				skip <= not skip;
-				if skip = '1' then
-					if temp_uart > 125 then
-						temp_uart:= 33;
-					else
-						temp_uart:= temp_uart + 1;
-					end if;	
+					skip <= not skip;
+					if skip = '1' then
+						if temp_uart > 125 then
+							temp_uart:= 33;
+						else
+							temp_uart:= temp_uart + 1;
+						end if;	
+					end if;
+					start_tx <= '1';
 				end if;
-				start_tx <= '1';
 			when start =>
 				start_tx <= '0';
 				state_uart_next1 <= delay;
 			when delay =>
-				if time_delay_reg > TIME_DELAY8 then
-					time_delay_next <= (others=>'0');
+--				if time_delay_reg > TIME_DELAY8 then
+--					time_delay_next <= (others=>'0');
 					state_uart_next1 <= idle1;
-				else
-					time_delay_next <= time_delay_reg + 1;
-				end if;	
+--				else
+--					time_delay_next <= time_delay_reg + 1;
+--				end if;	
 		end case;
-		time_delay_reg <= time_delay_next;
+--		time_delay_reg <= time_delay_next;
 		state_uart_reg1 <= state_uart_next1;
+		end if;
+	end if;
+end process;
+
+-- ********************************************************************************
+
+send_uart2: process(clk,reset,state_uart_reg2)
+variable temp_uart: integer range 0 to 255:= 33;
+begin
+	if reset = '0' then
+		state_uart_reg2 <= idle2;
+		data_tx2 <= (others=>'0');
+		start_tx2 <= '0';
+		skip2 <= '0';
+	else if clk'event and clk = '1' then
+		case state_uart_reg2 is
+			when idle2 =>
+				if done_rx2 = '1' then
+					state_uart_next2 <= start2;
+					data_tx2 <= conv_std_logic_vector(temp_uart,8);
+	--				data_tx <= stlv_temp;
+
+					skip2 <= not skip2;
+					if skip2 = '1' then
+						if temp_uart > 125 then
+							temp_uart:= 33;
+						else
+							temp_uart:= temp_uart + 1;
+						end if;	
+					end if;
+					start_tx2 <= '1';
+				end if;
+			when start2 =>
+				start_tx2 <= '0';
+				state_uart_next2 <= delay;
+			when delay =>
+--				if time_delay_reg > TIME_DELAY8 then
+--					time_delay_next <= (others=>'0');
+					state_uart_next2 <= idle2;
+--				else
+--					time_delay_next <= time_delay_reg + 1;
+--				end if;	
+		end case;
+--		time_delay_reg <= time_delay_next;
+		state_uart_reg2 <= state_uart_next2;
 		end if;
 	end if;
 end process;

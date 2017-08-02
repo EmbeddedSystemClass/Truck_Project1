@@ -361,7 +361,6 @@ ESOS_USER_TASK(data_from_AVR)
     ESOS_TASK_END();
 }
 
-
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
 //******************************************************************************************//
@@ -370,8 +369,6 @@ void user_init(void)
 //    __esos_unsafe_PutString( HELLO_MSG );
 //	CONFIG_SPI_MASTER()
 	CONFIG_SPI_SLAVE();
-//	CONFIG_SPI2();
-//	esos_RegisterTask(echo_spi_task);
 	esos_RegisterTask(echo_spi_task);
 /*
     CONFIG_KEYPAD();
