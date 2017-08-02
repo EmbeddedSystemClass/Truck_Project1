@@ -1,0 +1,26 @@
+-- board_layout.txt
+-- 10/26/16
+
+The LCD screen is plugged into the board with the PIC24. The board with the PIC24 has the
+board for the FPGA plugged into the back of it. The PIC24 board has the drivers for converting
+3v3 to 5v TTL going to the LCD screen. The board for LCD also has the keypad which has pins
+which plug into the PIC24 board which are passed to the FPGA board. 
+
+LCD screen (front panel) <- drivers <- PIC24
+keypad (front panel) -> PIC24 board -> FPGA
+PIC24 -> (SPI signals) -> FPGA
+FPGA -> drivers -> LED's for mph & rpm (front panel)
+PIC24 <-> FPGA (extra signals for future use)
+PIC24 -> (2) UARTS: 1 to the TS-5500 and one for a monitor
+
+The front panel will also have 3 small LED's: 2 for right & left blinker (red & green)
+and a blue one in the middle for brights. These can either be commands sent via SPI or
+separate lines. The FPGA board will have drivers plus the hw to drive the LED's and use
+extra pins from the PIC24 to the front panel.
+
+The pins on the PIC24 for hooking up the programmer will have to be sawed off and another
+connector routed to the outside for hooking up the PIC programmer. The ICD ribbon connector
+for programming the FPGA will be facing the outside or re-routed to another ICD plug.
+The outside will also have the (2) DB-9 connectors for the comm ports.
+There also needs to be connectors for the PIC24 to read the other sensors like the temp
+sensors, water temp, oil pressure and rpm & mph. 

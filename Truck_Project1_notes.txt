@@ -1,0 +1,492 @@
+Truck_Project1_notes.txt 8/1/2017
+
+UART1 - RS232 to TS-7200
+UART2 - FPGA
+UART3 - AVR
+
+UART1 uses 3v3 -> 5v -> RS-232 -> serial port to TS-7200
+UART2 stays at 3v3 to FPGA (100 ohm current limiting resitors? || 4.7k pullup?)
+UART3 uses 3v3 -> 5v -> serial port on AVR
+
+Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
+It uses the ESOS library. Each ESOS_USER_TASK will run independently.
+Each task must be registered in user_init.
+
+//******************************************************************************************//
+//************************************* PIC24_support **************************************//
+//******************************************************************************************//
+
+Currently there are the following tasks:
+keyscan_col - puts a scan pattern on the 4 lsb's of PORTA (column outputs)
+keyscan_row - if a key is pressed, get the 4 bit pattern on 
+	the 4 lsb's of PORTE (row inputs) and compare with the current column scan
+	to determine which key was pressed and send it to task1
+
+sendFPGA - sends mail msg to send_cmd_param which sends cmd/param to FPGA
+
+Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200
+and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from
+the PIC24FJ128GB110 over the serial port. The path to the FPGA is the serial and the path to the
+AVR and the TS-7200 are serial ports. The keypad input manages the menuing of the LCD screen
+and can display optional real time info like engine speed, engine temp, oil pressure, etc.
+There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
+The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
+shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
+the PIC24FJ128GB110 via the UART. (other telemetry data can be added later like distributor
+timing to use for spark advance).
+The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
+'black box' FDR that records the last so many hours or minutes of the telemetry data to a
+file that can be downloaded later.
+	
+// skeleton example of 2 tasks - test1 task sends mail to cmd_param task
+
+ESOS_USER_TASK(cmd_param);
+ESOS_USER_TASK(test1);
+...
+ESOS_USER_TASK(cmd_param)
+{
+    static uint16_t data;
+    static ESOS_TASK_HANDLE h_Sender;
+    
+    ESOS_TASK_BEGIN();
+    h_Sender = esos_GetTaskHandle(test1);
+
+    while(TRUE)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			// this can also be 8 bytes
+            data = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
+			// do something with data
+        }
+    }
+    ESOS_TASK_END();
+}
+
+ESOS_USER_TASK(test1)
+{
+    static ESOS_TASK_HANDLE cmd_param_task;
+    static uint16_t _cmd_param = 0;
+    
+    ESOS_TASK_BEGIN();
+    cmd_param_task = esos_GetTaskHandle(cmd_param);
+
+    while(TRUE)
+    {
+		// set _cmd_param to something
+		__esos_CB_WriteUINT16(cmd_param_task->pst_Mailbox->pst_CBuffer,_cmd_param);
+		ESOS_TASK_WAIT_TICKS(2000);
+	}
+    ESOS_TASK_END();
+}	
+void user_init(void) 
+{
+	...
+    esos_RegisterTask(test1);
+    esos_RegisterTask(cmd_param);
+	...
+}
+
+// skeleton example of 2 tasks using a semaphore 
+
+ESOS_USER_TASK(task1);
+ESOS_USER_TASK(task2);
+ESOS_SEMAPHORE(sem1);
+
+#define MY_DELAY 100
+
+ESOS_USER_TASK(task1)
+{
+    ESOS_TASK_BEGIN();
+
+    while(TRUE)
+    {
+        ESOS_SIGNAL_SEMAPHORE(sem1,1);	// send signal task2 to continue
+        ESOS_TASK_WAIT_TICKS(MY_DELAY);
+    }
+    ESOS_TASK_END();
+}
+
+ESOS_USER_TASK(task2)
+{
+    ESOS_TASK_BEGIN();
+    while(TRUE)
+    {
+        ESOS_TASK_WAIT_SEMAPHORE(sem1,1);	// wait here until task1 sends a signal to continue
+        ESOS_TASK_WAIT_TICKS(MY_DELAY/2);	// even though the delay here is shorter it will effectively
+											// be the same as the delay time of task1
+											// if the param is 2 instead of 1 it will wait for 2 signals
+											// from task1
+    }
+    ESOS_TASK_END();
+}
+
+void user_init(void) 
+{
+	...
+    ESOS_INIT_SEMAPHORE(sem1,0);
+    esos_RegisterTask(task1);
+    esos_RegisterTask(task2);
+	...
+} // end user_init()
+
+// skeleton example of waiting on chars from comm3 and sending to comm2 and comm 1
+
+ESOS_USER_TASK(serial_port1)
+{
+	static uint8_t data;
+    ESOS_TASK_BEGIN();
+    while(TRUE)
+	{
+        ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
+        ESOS_TASK_WAIT_ON_GET_UINT83(data);
+        ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
+
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+        ESOS_TASK_WAIT_ON_SEND_STRING("Here's the data byte: ");
+        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data);
+        ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);			// print a space character
+        ESOS_TASK_WAIT_ON_SEND_STRING("/n/r");		// print a carriage return
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();		// (what is a carriage anyway?)
+		
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING2(data);
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	}
+	ESOS_END_TASK();
+}
+
+// timers
+// using the ESOS_USER_TIMER the fastest possible f is 500Hz (2ms)
+// and using the ESOS_WAIT_TICKS(1) = 250Hz (4ms)
+
+ESOS_USER_TASK(test_RE7)
+{
+    static  uint8_t data = 2;
+    CONFIG_RE7_AS_DIG_OUTPUT();
+    ESOS_TASK_BEGIN();
+    while(1)
+    {
+	    ESOS_TASK_WAIT_TICKS(1);
+	    _LATE7 = ~_LATE7;
+    } // endof while()
+    ESOS_TASK_END();
+}
+
+ESOS_USER_TIMER(testTimer)
+{
+    _LATG15 = ~_LATG15;
+}
+
+void user_init(void)
+{
+    CONFIG_RG15_AS_DIG_OUTPUT();
+	esos_RegisterTimer( testTimer, 1);
+	esos_RegisterTask(test_RE7);
+}
+
+
+//******************************************************************************************//
+//*************************************** AVR_t6963 ****************************************//
+//******************************************************************************************//
+
+
+The AVR is just a driver for the LCD display. The serial port of the AVR communicates with a PIC24.
+The PIC24 sends a stream of data specified by an array of structs rt_params.
+
+(main.h)
+typedef struct rt_params
+{
+	UCHAR row;			// row, col tells where the param will appear on screen
+	UCHAR col;
+	UCHAR shown;		// if its shown or not
+	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
+	UCHAR type;			// rt_types
+} RT_PARAM;
+
+A 4x4 keypad is attached to the PIC24 so when a key is pressed, one of the 
+following bytes is sent to the AVR
+
+0xE0 - '#'
+0xE1 - '*'
+0xE2 - '0'
+0xE3 - '1'
+0xE4 - '2'
+0xE5 - '3'
+0xE6 - '4'
+0xE7 - '5'
+0xE8 - '6'
+0xE9 - '7'
+0xEA - '8'
+0xEB - '9'
+0xEC - 'A'
+0xED - 'B'
+0xEE - 'C'
+0xEF - 'D'
+
+When the PIC24 sends a byte in the range of 0xE0 -> 0xEF that will be interpreted as
+a keypress. The dialog will filter this out using a switch statement. The default will
+just return whatever was passed in. (see get_key() in menus.c)
+
+The array of rt_params is filled in with the function update_rtparams() in eeprom_burn.c
+The program compiled in the eeprom directory is used to burn the eeprom initially.
+The program compiled in the test_write_data directory is compiled to run on a linux box
+and is used to simulate the PIC24 talking to the AVR. So eeprom_burn.c is linked into
+both the main program in the parent directory and the simulator in test_write_data.
+The section of code at the beginning of main.c reads from the eeprom 3 different arrays:
+1) labels
+2) rt_params
+3) menu_structs
+It also reads how many labels, rt_params and menu structs and their offsets into the eeprom.
+(see read_eeprom() function in eeprom_burn.c)
+
+Special character codes sent by the PIC24:
+
+RT_RPM
+RT_ENGT
+RT_TRIP
+RT_TIME
+RT_AIRT
+RT_MPH
+RT_OILP
+RT_MAP
+RT_OILT
+RT_O2
+RT_AUX1
+RT_AUX2
+
+When the PIC24 is sending data to the AVR, each data is preceded by a one of the following:
+- RT_LOW	- a UCHAR (unsigned char) is sent without the MSB set (0 -> 0x7F)
+- RT_HIGH0	- a UCHAR is sent with the MSB set (0xFF -> 0x80)
+- RT_HIGH1	- a UINT (actually a UCHAR) is sent to make up an unsigned int with neither MSB set
+- RT_HIGH2	- bit 7 of unsigned int is set
+- RT_HIGH3	- bit 15 of unsigned int is set
+
+The state table in parse_P24.c parses the data stream into UINTs and UCHARs and puts them
+in param_string in do_read() (when used in the simulator) or in main.c where it calls parse_P24().
+Using this scheme allows the AVR to separate the RT_XXX commands from actual data.
+
+*************************************** details ****************************************
+
+The beginning of eeprom stores all the labels used. Another table directly after the labels
+stores the offsets from the beginning of eeprom to each label. Any part of the code that uses
+the labels can just read them from eeprom as reading doesn't wear out the eeprom like writing
+does. Reading out of eeprom is slower than reading from flash which is slower than ram, but
+the code doesn't read the labels that often. 
+
+Right after the above tables in eeprom there is an array of rt_params structs. 
+typedef struct rt_params
+{
+	UINT label_offset;	// offset from beginning of eeprom
+	UCHAR row;			// row, col tells where the param will appear on screen
+	UCHAR col;	
+	UCHAR shown;		// if its shown or not
+	UCHAR type;			// rt_types
+} RT_PARAM;
+
+The array of RT_PARAMS is read into an array in ram and can be changed by commands from
+the PIC24 to re-arrange the display.
+
+The next section of eeprom stores the default menu setup which is an array of the MENU_STRUCT:
+typedef struct rt_params
+{
+	UCHAR row;			// row, col tells where the param will appear on screen
+	UCHAR col;
+	UCHAR shown;		// if its shown or not
+	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
+	UCHAR type;			// rt_types
+} RT_PARAM;
+
+This array will be read into program memory on startup and can be changed (added to ?) by
+commands from the PIC24.
+	
+test_write_data:
+The subdirectory called test_write_data has a separate makefile that compiles a program that I used
+to test some of the functionality so I didn't have to keep reflashing the AVR. I used 2 linux boxes
+connected with a crossed over serial cable. The makefile will compile the test_write_data.c
+using menus.c, t6963.c, parse_P24 and USART.c from the main directory, the run copy.sh which will
+tar up the files needed to compile the program on the other machines. You will have to edit the
+copy.sh script to match your machine IP addresses. Then run the extract.sh script on your other
+2 machines (I use ssh to run the other 2 machines on my main box).
+Then run:
+sudo ./test_write r (for the machine that simulates the the AVR) 
+and
+sudo ./test_write w <interations*10> <starting rpm value> <other 
+starting values> <time delay> to simulate the PIC24 or whatever processor is writing the data 
+to the AVR.
+
+PIC24 sends commands that modify the RT_PARAM and MENU_FUNC_STRUCT array to display 
+params in different format on screen. It will also send commands to tell AVR to only
+display certain params. 
+
+For instance. we may only want to see RPM, MPH and engine temp when a non-trivial dialog 
+is on the screen. It can also send commands to modify a certain dialog, like different 
+labels for checkboxes.
+
+Each menu function that is pointed to by the array of function pointers 
+
+keypad layout - since the six reassignable keys are on the outside (bottom and left) it makes
+sense to use these as special function keys.
+1 2 3 A
+4 5 6 B
+7 8 9 C
+* 0 # D
+
+First load from the eeprom the list of MENU_FUNC_STRUCT's which are in groups of 6 (6 possible
+redefined keys for each menu choice) into an array. The 6 redefinable keys are
+'A'
+'B'
+'C'
+'D'
+'#'
+'0'
+If the keypress has been reassigned, the 'enabled' field is set. That means the function for
+the fptr (index into the list of function pointers) will be called. If the fptr is 0, then 
+look up the menu specified by the menu element and just go to that menu. The function assigned 
+to '*' in generic_menu_function() will always go back to the previous menu. 
+
+This way, we have 3 possible choices:
+1) Use the 'factory default' set of menus in eeprom.
+2) Dynamically load another set of menus using a special command from the PIC24.
+3) #2 plus burn the new menu set into eeprom.
+
+TODO:
+
+The numentry/alnum dialog should primarily be used for entering a passcode to start the engine.
+The AVR code will handle the password retries and timeouts. e.g. three tries to enter passcode and
+passcode must be entered within 15 seconds or the system locks out totally for 1/2 hour.
+
+Other parameters to have the system offer the user to change:
+	- max rpm before rev-limiter kicks in (turn off ignition momentarily and flash warning light).
+	- engine temperature too high and oil pressure too low level warning signals (lights and buzzer).
+	- set outdoor temp at which block heater comes on. (when plugged into 110vac outlet)
+	- set time of day and length of time other heaters come on.
+	- set frequency of blinkers and how long to stay blinking (if not using the conventional switch)
+	- how long for headlights to stay on after vehicle shuts off.
+
+? do we really need label_offset[]
+if scale_display is called to reduce the display to just rpm, mph, eng temp & oil press then
+the PIC24 should not send those values
+
+checkboxes:
+
+The checkboxes are loaded using the RT_AUX state machine:
+	- a menu choice sends a command to the AVR state machine that tells the PIC24
+		to send either a UCHAR or UINT to modify or a list of binary values that
+		will be listed in the checkboxes
+	- the list of checkboxes will fill an array of structs: checkboxes[NUM_CHECKBOXES]
+	- the list will be displayed on the screen and the user will have the choice
+		of scrolling threw the list (blinking cursor is moved), checking/unchecking
+		the choice and entering the changes
+	- the AVR state machine will tell the PIC24 state machine that the list is ready
+		to be sent back to the PIC24
+
+typedef struct checkboxes
+{
+	UCHAR index;
+	UCHAR checked;
+	char string[20];
+} CHECKBOXES;
+	
+The array of structs will just be enough to display on the screen (or there could be more if
+the scrolling function can move the choices in and out)
+
+menu choices for checkboxes:
+A - up
+B - down
+C - set/clear
+D - enter
+
+when using the simulation (test_write_data) the data is sent in aux_data AUX_DATA_SIZE
+bytes at a time because of the fact that the serial port is set to non-blocking, there's
+a problem sending a variable number of bytes at a time so when it comes time to use it
+on the actual hardware, some things may have to be changed...
+
+keypad layout:
+
+1 2 3 A
+4 5 6 B
+7 8 9 C
+* 0 # D
+
+dec		hex		char
+35		23		#
+42		2a		*
+48		30		0
+49		31		1
+50		32		2
+51		33		3
+52		34		4
+53		35		5
+54		36		6
+55		37		7
+56		38		8
+57		39		9
+65		41		A
+66		42		B
+67		43		C
+68		44		D
+
+test_write_data (read) - simulates the AVR
+test_write_data (write) - simulates the PIC24
+
+I should be able to use TWD (test_write_data) in write mode connected to the actual
+AVR and alternatively use TWD in read mode connected to the PIC24.
+Also, if the FPGA can be made to output the telemetry data in the same format as the
+PIC24 sends to the AVR. The FPGA currently just reads an index (0->15) into an array
+of the telem data and sends out on UART2. UART1 of the FPGA is an extra UART used for
+monitoring. So for now the PIC24 will poll the FPGA for data (on comm2) and put it 
+in the format for the AVR and send it out on comm3 (to AVR). (comm1 of the PIC24 talks
+to the TS-7200).
+
+FPGA UART2 <->  PIC24 comm2
+				PIC24 comm3 <-> AVR
+				PIC24 comm1 <-> TS-7200 comm2
+				
+The TS-7200 uses comm1 as a monitor but can be disabled and used as an extra serial port
+as long as the sched program can start automatically. Since I really don't need an extra
+serial port on the TS-7200 I can just have a DB9 connector wired out to the dashboard
+and possibly a switch attached to the jumper on the TS-7200 board which disabled comm1
+used as a monitor. The TS-7200 uses the ethernet connector as a TCP/IP server so a linux
+box running the client program (/dev/thread_io/ncurses) can be hooked up and and the 
+client can log on and off at anytime.
+
+So currently there is an extra serial port available on the FPGA and one extra on the
+TS-7200.
+
+The dashboard will have a DB9 connector for the TS-7200 monitor and one for the FPGA
+plus a RJ-45 connector to the TS-7200 ethernet port. (Use a crossover ethernet cable
+from the linux laptop to the RJ-45 jack).
+
+The dashboard will have programming connectors for:
+1) the PIC24 - 6 pin din
+2) the AVR - USB connector to the buspirate board
+3) 14 pin ICD connector to program the FPGA
+
+The TS-7200 has a reset button on board and can be re-wired to bring it out to the
+dashboard. The PIC24 and the AVR can have separate switches to turn each board on
+and off. 
+
+So the 2 DB9 connectors, the 3 programming jacks, the RJ-45 jack, the reset buttons
+and the on/off switches can be in a panel with a cover so it can be opened only for
+upgrading, testing and debugging.
+
+FPGA connections:
+
+1) 2 inputs for the mph & rpm and alternately another rpm for the optional
+		missing tooth wheel.
+2) a tone-generator output which goes to a speaker.
+3) an output which breaks the circuit to the fuel pump.
+4) other optional IO for future expansion.
+
+PIC24 connections:
+
+1) 8 or 16 inputs for the ADC (eng temp & oil pressure to start with)
+2) other IO for future expansion.
+
+The TS-7200 has connectors for the I/O - inputs from external switches or
+momentary contact push-buttons - outputs go either directly to
+lights (dash indicator lights) or to high-amp relays (headlights, starter relay, etc)
+
+

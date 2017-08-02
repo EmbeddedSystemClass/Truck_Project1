@@ -1,0 +1,40 @@
+##############################################Core3S500E#################################################
+NET "clk" LOC = "P184" ;
+NET "reset" LOC = "P101" ;
+
+# serial port
+NET "tx_uart" LOC = "P77";
+NET "rx_uart" LOC = "P75";
+NET "tx_uart2" LOC = "P69";
+NET "rx_uart2" LOC = "P64";
+
+# inputs from sensors
+NET "rpm_signal" LOC = "P62";
+NET "mph_signal" LOC = "P60";
+
+# 7-seg LED outputs
+NET "tx_rpm" LOC = "P50";
+NET "tx_mph" LOC = "P48";
+
+#SPI signals
+#NET "MOSI_i" LOC = "P82";
+#NET "MISO_o" LOC = "P76";
+#NET	"SCLK_i" LOC = "P74";
+#NET	"SS_i"   LOC = "P65";
+
+NET "MOSI_o" LOC = "P82";
+NET "MISO_i" LOC = "P76";
+NET	"SCLK_o" LOC = "P74";
+NET	"SS_o"   LOC = "P65";
+
+NET "test[0]" LOC = "P63";
+NET "test[1]" LOC = "p61";
+NET "test[2]" LOC = "p55";
+NET "test[3]" LOC = "p49";
+
+# led1 is the build-in LED's on the board
+NET "led1[0]" LOC = "p68";
+NET "led1[1]" LOC = "p78";
+NET "led1[2]" LOC = "p83";
+NET "led1[3]" LOC = "p89";
+

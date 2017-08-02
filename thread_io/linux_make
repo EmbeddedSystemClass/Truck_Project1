@@ -1,0 +1,61 @@
+###########################################################
+# An example source module to accompany...
+#
+# "Using POSIX Threads: Programming with Pthreads"
+#     by Brad nichols, Dick Buttlar, Jackie Farrell
+#     O'Reilly & Associates, Inc.
+###########################################################
+# list/makefile
+#
+# makefile for the example programs 
+#
+INCLUDE_PATHS = -I.
+# Tru64 UNIX compile flags
+T64CC = cc
+T64CFLAGS = -g -std1 -warnprotos -pthread
+T64LDFLAGS = -non_shared
+T64LDFLAGS_T = ${T64LDFLAGS} -pthread
+
+# GCC/Linux compile flags
+GNUCC = gcc
+GNUCFLAGS = -g -ansi -Wstrict-prototypes
+GNULDFLAGS = -static
+CC_FLAGS = -static -DNOTARGET
+GNULDFLAGS_T = ${GNULDFLAGS} -pthread
+
+#####################################################
+CC = ${GNUCC}
+
+all : sched
+
+sched.o: sched.c tasks.h serial_io.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread sched.c
+
+ioports.o: ioports.c ioports.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ioports.c
+
+tasks.o: tasks.c tasks.h serial_io.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread tasks.c
+
+serial_io.o: serial_io.c serial_io.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
+
+illist_threads_rw.o: queue/illist_threads_rw.c queue/illist_threads_rw.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/illist_threads_rw.c
+
+ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/ollist_threads_rw.c
+
+rdwr.o: queue/rdwr.c queue/rdwr.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rdwr.c
+	
+config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
+
+sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
+# if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
+	${CC} -pthread sched.o ioports.o tasks.o ollist_threads_rw.o illist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+
+clean :
+	rm -f *.o *~ *# core  \
+	sched
