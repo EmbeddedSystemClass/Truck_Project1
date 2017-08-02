@@ -1,0 +1,12 @@
+ROWS:
+R3 - 2nd from right inside top
+R2 - 2nd from right outside top
+R1 - 4th from right outside top
+R0 - 5th from right inside top
+
+COLUMNS:
+C3 - 5th up from bottom - outside left
+C2 - 4th up from bottom - inside left
+C1 - 7th from right - outside bottom
+C0 - 5th up - outside right
+

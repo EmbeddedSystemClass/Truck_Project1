@@ -106,16 +106,18 @@ CONFIG_RE1_AS_DIG_INPUT();  // row 1 - p94
 CONFIG_RE2_AS_DIG_INPUT();  // row 2 - p98
 CONFIG_RE3_AS_DIG_INPUT();  // row 3 - p99
 
-RE0 - p93 - 5th from right inside top
-RE1 - p94 - 4th from right outside top
-RE2 - p98 - 2nd from right outside top
-RE3 - p99 - 2nd from right inside top
-
 CONFIG_RA0_AS_DIG_OUTPUT(); // col 0 - p17
 CONFIG_RA1_AS_DIG_OUTPUT(); // col 1 - p38
 CONFIG_RA2_AS_DIG_OUTPUT(); // col 2 - p58
 CONFIG_RA3_AS_DIG_OUTPUT(); // col 3 - p59
 
+ROWS:
+RE0 - p93 - 5th from right inside top
+RE1 - p94 - 4th from right outside top
+RE2 - p98 - 2nd from right outside top
+RE3 - p99 - 2nd from right inside top
+
+COLUMNS:
 RA0 - p17 - 5th up - outside right
 RA1 - p38 - 7th from right - outside bottom
 RA2 - p58 - 4th up from bottom - inside left

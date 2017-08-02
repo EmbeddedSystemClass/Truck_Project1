@@ -5,7 +5,7 @@
 // main program that drives the t6963 LCD (32 col x 15 row) display - text only
 // see t6963_notes.txt for more details
 #include <avr/io.h>
-#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include "sfr_helper.h"
 #include <avr/eeprom.h>
 #include <stdlib.h>

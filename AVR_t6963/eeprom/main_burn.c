@@ -1,5 +1,5 @@
 #include <avr/io.h>
-#include "../../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include "../sfr_helper.h"
 #include <avr/eeprom.h>
 #include "../USART.h"

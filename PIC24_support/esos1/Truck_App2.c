@@ -368,16 +368,13 @@ void user_init(void)
 {
 //    __esos_unsafe_PutString( HELLO_MSG );
 //	CONFIG_SPI_MASTER()
-	CONFIG_SPI_SLAVE();
-	esos_RegisterTask(echo_spi_task);
+//	CONFIG_SPI_SLAVE();
+//	esos_RegisterTask(echo_spi_task);
 /*
     CONFIG_KEYPAD();
 	ESOS_INIT_SEMAPHORE(key_sem,0);
 	ESOS_INIT_SEMAPHORE(send_sem,0);
 
-	esos_RegisterTask(keyscan_col);
-	esos_RegisterTask(keyscan_row);
-	esos_RegisterTask(getkey_task);
 	esos_RegisterTask(recvFPGA);
 	esos_RegisterTask(sendFPGA);
 	esos_RegisterTask(sendFPGA2);
@@ -385,6 +382,9 @@ void user_init(void)
 */
 //	esos_RegisterTask(comm3_task);
 //	esos_RegisterTask(comm1_task);
+
+	esos_RegisterTask(keypad);
+	esos_RegisterTask(poll_keypad);
 //	esos_RegisterTask(convADC);
 } // end user_init()
 

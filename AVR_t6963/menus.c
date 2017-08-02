@@ -6,7 +6,7 @@
 #endif
 #ifndef NOAVR
 #include <avr/io.h>
-#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include <avr/eeprom.h>
 #include "macros.h"
 #else

@@ -16,7 +16,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define TEMP_DELAY3		2
 #define TEMP_DELAY2		1000
 #define TDELAY 2
-#define TDELAY2 1000
+#define TDELAY2 1
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 
@@ -111,10 +111,9 @@ volatile uint8_t col;
 volatile uint8_t last_code;
 volatile uint8_t user_flag;
 
-ESOS_USER_TASK(keyscan_col);
-ESOS_USER_TASK(keyscan_row);
+ESOS_USER_TASK(keypad);
+ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
-ESOS_USER_TASK(getkey_task);
 ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(comm2_task);
 ESOS_USER_TASK(sendFPGA);
@@ -129,184 +128,268 @@ ESOS_USER_TASK(echo_spi_task);
 //ESOS_USER_TASK(fast_echo_spi_task);
 CONFIG_SPI_MASTER();
 CONFIG_SPI_SLAVE();
-//******************************************************************************************//
-//*************************************** CONFIG_KEYPAD ************************************//
-//******************************************************************************************//
-inline void CONFIG_KEYPAD()
-{
-    CONFIG_RE0_AS_DIG_INPUT();  // row 0 - p93
-    ENABLE_RE0_PULLUP();     // enable the pull-ups on the inputs
-    CONFIG_RE1_AS_DIG_INPUT();  // row 1 - p94
-    ENABLE_RE1_PULLUP();
-    CONFIG_RE2_AS_DIG_INPUT();  // row 2 - p98
-    ENABLE_RE2_PULLUP();
-    CONFIG_RE3_AS_DIG_INPUT();  // row 3 - p99
-    ENABLE_RE3_PULLUP();
-    CONFIG_RA0_AS_DIG_OUTPUT(); // col 0 - p17
-    CONFIG_RA1_AS_DIG_OUTPUT(); // col 1 - p38
-    CONFIG_RA2_AS_DIG_OUTPUT(); // col 2 - p58
-    CONFIG_RA3_AS_DIG_OUTPUT(); // col 3 - p59
-}
-// send a scan code to the columns outputs on 4 lsb's of port a as:
-// 0111
-// 1011
-// 1101
-// 1110
-// to test for keypad input on 4 lsb's of port a
-//******************************************************************************************//
-//*************************************** keyscan_col **************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(keyscan_col)
-{
-    static uint8_t scan;
-    ESOS_TASK_BEGIN();
-//    scan = 0xFFFE;
-    scan = 0x0008;
-    col = scan;
 
-    while(TRUE)
-    {
 /*
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(scan>>4));
-        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)scan);
-        ESOS_TASK_WAIT_ON_SEND_UINT8(0x30);
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+RE0 - p93 - 5th from right inside top
+RE1 - p94 - 4th from right outside top
+RE2 - p98 - 2nd from right outside top
+RE3 - p99 - 2nd from right inside top
 
-        LATA = LATA & scan;
-
-        scan <<= 1;
-        scan |= 0x0001;
-        if(scan == 0xFFF7)
-            scan = 0xFFFE;
+RA0 - p17 - 5th up - outside right
+RA1 - p38 - 7th from right - outside bottom
+RA2 - p58 - 4th up from bottom - inside left
+RA3 - p59 - 5th up from bottom - outside left
 */
-        if((scan >>= 1) == 0)
-            scan = 0x0008;
 
-        if((scan & 0x01) == 1)
-            _LATA0 = 0;
-        else _LATA0 = 1;
+#define C0 _RA0
+#define C1 _RA1
+#define C2 _RA2
+#define C3 _RA3
 
-        if((scan & 0x02) == 0x02)
-            _LATA1 = 0;
-        else _LATA1 = 1;
+// test
 
-        if((scan & 0x04) == 0x04)
-            _LATA2 = 0;
-        else _LATA2 = 1;
-
-        if((scan & 0x08) == 0x08)
-            _LATA3 = 0;
-        else _LATA3 = 1;
-
-//        ESOS_TASK_WAIT_TICKS(KEYPAD_DEBOUNCE_DELAY);
-        col = scan;
-        ESOS_TASK_WAIT_TICKS(KEYPAD_DELAY);
-        ESOS_SIGNAL_SEMAPHORE(key_sem,1);
-    }
-    ESOS_TASK_END();
-}
-// wait until user flag is set then check for a keypad press
-// if any of the lower 4 bits of PORTE are 0 then get the keypress
-//******************************************************************************************//
-//************************************* keyscan_row ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(keyscan_row)
+static inline void CONFIG_COLUMN()
 {
-//    static ESOS_TASK_HANDLE hTask_LCD;
-    static ESOS_TASK_HANDLE h_Task1;
-    static uint8_t code;
-    static uint8_t ret_code;
-    static uint16_t tPORTE;
-    static uint8_t temp = 0;
-    h_Task1 = esos_GetTaskHandle(getkey_task);
+	CONFIG_RA0_AS_DIG_INPUT();
+	ENABLE_RA0_PULLUP();
+	CONFIG_RA1_AS_DIG_INPUT();
+	ENABLE_RA1_PULLUP();
+	CONFIG_RA2_AS_DIG_INPUT();
+	ENABLE_RA2_PULLUP();
+	CONFIG_RA3_AS_DIG_INPUT();
+	ENABLE_RA3_PULLUP();
+}
+
+#define R0 _LATE0
+#define R1 _LATE1
+#define R2 _LATE2
+#define R3 _LATE3
+
+#define CONFIG_R0_DIG_OUTPUT() CONFIG_RE0_AS_DIG_OUTPUT()
+#define CONFIG_R1_DIG_OUTPUT() CONFIG_RE1_AS_DIG_OUTPUT()
+#define CONFIG_R2_DIG_OUTPUT() CONFIG_RE2_AS_DIG_OUTPUT()
+#define CONFIG_R3_DIG_OUTPUT() CONFIG_RE3_AS_DIG_OUTPUT()
+
+void CONFIG_ROW()
+{
+	CONFIG_R0_DIG_OUTPUT();
+	CONFIG_R1_DIG_OUTPUT();
+	CONFIG_R2_DIG_OUTPUT();
+	CONFIG_R3_DIG_OUTPUT();
+}
+
+static inline void DRIVE_ROW_LOW()
+{
+	R0 = 0;
+	R1 = 0;
+	R2 = 0;
+	R3 = 0;
+}
+
+static inline void DRIVE_ROW_HIGH()
+{
+	R0 = 1;
+	R1 = 1;
+	R2 = 1;
+	R3 = 1;
+}
+
+typedef enum
+{
+	STATE_WAIT_FOR_PRESS = 0x30,
+	STATE_WAIT_FOR_PRESS2,
+	STATE_WAIT_FOR_RELEASE,
+} ISRSTATE;
+
+volatile ISRSTATE e_isrState;
+volatile uint8_t u8_newKey = 0;
+
+void configKeypad(void)
+{
+	CONFIG_ROW();
+	DRIVE_ROW_LOW();
+	CONFIG_COLUMN();
+	DELAY_US(1);								  //wait for pullups to stabilize inputs
+	e_isrState = STATE_WAIT_FOR_PRESS;
+}
+
+//drive one row low
+void setOneRowLow(uint8_t u8_x)
+{
+	switch (u8_x)
+	{
+		case 0:
+			R0 = 0;
+			R1 = 1;
+			R2 = 1;
+			R3 = 1;
+			break;
+		case 1:
+			R0 = 1;
+			R1 = 0;
+			R2 = 1;
+			R3 = 1;
+			break;
+		case 2:	
+			R0 = 1;
+			R1 = 1;
+			R2 = 0;
+			R3 = 1;
+			break;
+		default:
+			R0 = 1;
+			R1 = 1;
+			R2 = 1;
+			R3 = 0;
+			break;
+	}
+}
+#define NUM_ROWS 4
+#define NUM_COLS 4
+const uint8_t au8_keyTable[NUM_ROWS][NUM_COLS] =
+{
+	{KP_1, KP_2, KP_3, KP_A },
+	{KP_4, KP_5, KP_6, KP_B },
+	{KP_7, KP_8, KP_9, KP_C },
+	{KP_AST, KP_0, KP_POUND, KP_D}
+};
+//	{'1', '2', '3', 'A'},
+//	{'4', '5', '6', 'B'},
+//	{'7', '8', '9', 'C'},
+//	{'*', '0', '#', 'D'}
+
+#define KEY_PRESSED() (!C0 || !C1 || !C2 || !C3)  //any low
+#define KEY_RELEASED() (C0 && C1 && C2 && C3)	  //all high
+
+uint8_t doKeyScan(void)
+{
+	uint8_t u8_row, u8_col;
+//determine column
+	if (!C0) u8_col = 0;
+	else if (!C1) u8_col = 1;
+	else if (!C2) u8_col = 2;
+	else if (!C3) u8_col = 3;
+	else return('E');							  //error
+//determine row
+	for (u8_row = 0; u8_row < NUM_ROWS; u8_row++)
+	{
+		setOneRowLow(u8_row);					  //enable one row low
+		if (KEY_PRESSED())
+		{
+			DRIVE_ROW_LOW();					  //return rows to driving low
+			return(au8_keyTable[u8_row][u8_col]);
+		}
+	}
+	DRIVE_ROW_LOW();							  //return rows to driving low
+	return('E');								  //error
+}
+
+//******************************************************************************************//
+//*************************************** keypad *******************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(keypad)
+{
 
     ESOS_TASK_BEGIN();
-//    hTask_LCD = esos_GetTaskHandle(to_LCD_task);
-    while(TRUE)
-    {
-        // PORTE = rows 0x0E - row 0; 0x0D - row 2; 0x0B - row 1;0x07 - row 3
-        // PORTA = cols
-        ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
-        if((PORTE & 0x000F) != 0x0F)
-        {
-            tPORTE = PORTE;
-            tPORTE &= 0x0f;
-            code = (0xF0 & ~(col << 4)) | (uint8_t)(PORTE & 0x000F);
+	
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("keypad task");
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-            if(code == last_code && temp < 4)
-            {
-                ESOS_TASK_WAIT_TICKS(100);
-                last_code = 0;
-                temp++;
-                code = 0;
-            }
-            else
-            {
-                last_code = code;
-                temp = 0;
-            }
-			// 0E - bit 0 cleared rest are set
-			// 0D - bit 1 cleared  "   "   "
-			// 0B - bit 2 cleared  "   "   "
-			// 07 - bit 3 cleared  "   "   "
-            switch(code)
-            {                                       //  col		row
-                case 0xEE:  ret_code = KP_1;break;   //  0       0
-                case 0xED:  ret_code = KP_4;break;   //  0       1
-                case 0xEB:  ret_code = KP_7;break;   //  0       2
-                case 0xE7:  ret_code = KP_AST;break;   //  0       3
+	while(TRUE)
+	{
+		ESOS_TASK_WAIT_TICKS(1);
+/*
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(e_isrState);
+		ESOS_TASK_WAIT_ON_SEND_UINT8(e_isrState);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+		switch (e_isrState)
+		{
+			case STATE_WAIT_FOR_PRESS:
+				if (KEY_PRESSED() && (u8_newKey == 0))
+				{
+	//ensure that key is sampled low for two consecutive interrupt periods
+/*
+					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+					ESOS_TASK_WAIT_ON_SEND_STRING("wait for press");
+					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+					e_isrState = STATE_WAIT_FOR_PRESS2;
+				}
+				break;
+			case STATE_WAIT_FOR_PRESS2:
+				if (KEY_PRESSED())
+				{
+	// a key is ready
+/*
+					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+					ESOS_TASK_WAIT_ON_SEND_STRING("key pressed");
+					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+					u8_newKey = doKeyScan();
+					e_isrState = STATE_WAIT_FOR_RELEASE;
+				} else e_isrState = STATE_WAIT_FOR_PRESS;
+				break;
 
-                case 0xDE:  ret_code = KP_2;break;   //  1       0
-                case 0xDD:  ret_code = KP_5;break;   //  1       1
-                case 0xDB:  ret_code = KP_8;break;   //  1       2
-                case 0xD7:  ret_code = KP_0;break;   //  1       3
-
-                case 0xBE:  ret_code = KP_3;break;   //  2       0
-                case 0xBD:  ret_code = KP_6;break;   //  2       1
-                case 0xBB:  ret_code = KP_9;break;   //  2       2
-                case 0xB7:  ret_code = KP_POUND;break;   //  2       3
-
-                case 0x7E:  ret_code = KP_A;break;   //  3       0
-                case 0x7D:  ret_code = KP_B;break;   //  3       1
-                case 0x7B:  ret_code = KP_C;break;   //  3       2
-                case 0x77:  ret_code = KP_D;break;   //  3       3
-                default:
-//                    ESOS_TASK_WAIT_ON_SEND_STRING("bad char\n\r");
-                    ret_code = 0;break;
-            }
-
-            if(ret_code > 1)
-				__esos_CB_WriteUINT8(h_Task1->pst_Mailbox->pst_CBuffer,ret_code);
-        }
-    }
-    ESOS_TASK_END();
+			case STATE_WAIT_FOR_RELEASE:
+	//keypad released
+				if (KEY_RELEASED())
+				{
+/*
+					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+					ESOS_TASK_WAIT_ON_SEND_STRING("key released");
+					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+					e_isrState = STATE_WAIT_FOR_PRESS;
+				}
+				break;
+			default:
+				e_isrState = STATE_WAIT_FOR_PRESS;
+				break;
+		}
+	}
+	ESOS_TASK_END();
 }
+
 //******************************************************************************************//
-//*************************************** getkey_task **************************************//
+//************************************** poll_keypad ***************************************//
 //******************************************************************************************//
-// comm1_task - uses comm1 - waits for incomming mail from keypad
-// tasks and sends to AVR over comm3
-ESOS_USER_TASK(getkey_task)
+ESOS_USER_TASK(poll_keypad)
 {
-    static  uint8_t data;
-//    static ESOS_TASK_HANDLE h_Task3;
-
     ESOS_TASK_BEGIN();
-//    h_Task3 = esos_GetTaskHandle(task3);
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-            data = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-            ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
-            ESOS_TASK_WAIT_ON_SEND_UINT83(data);
-            ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
-        }
-    } // endof while()
+
+	configKeypad();
+
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("poll keypad task");
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_TICKS(1);
+		if (u8_newKey)
+		{
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey);
+//		    ESOS_TASK_WAIT_ON_SEND_UINT8(u8_newKey);
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			u8_newKey = 0;
+		}
+	}
     ESOS_TASK_END();
 }
+
 //******************************************************************************************//
 //************************************ semd_cmd_param **************************************//
 //******************************************************************************************//
@@ -653,17 +736,18 @@ ESOS_USER_TASK(comm1_task)
         else
 	        ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 */
-        if(data1 == 0)
+        if(++temp == 93)
 //        if(data2 >= 0x1f)
         {
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			temp = 0;
         }
 //        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
 		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
         ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
         
-		ESOS_TASK_WAIT_TICKS(TDELAY2);
+		ESOS_TASK_WAIT_TICKS(3000);
 
 	}
 //    h_Task3 = esos_GetTaskHandle(task3);
