@@ -1,12 +1,14 @@
 Truck_Project1_notes.txt 8/1/2017
 
+PIC24 UARTS:
+
 UART1 - RS232 to TS-7200
-UART2 - FPGA
-UART3 - AVR
+UART2 - AVR
+UART3 - monitor
 
 UART1 uses 3v3 -> 5v -> RS-232 -> serial port to TS-7200
-UART2 stays at 3v3 to FPGA (100 ohm current limiting resitors? || 4.7k pullup?)
-UART3 uses 3v3 -> 5v -> serial port on AVR
+UART2 uses 3v3 -> 5v -> serial port on AVR
+UART3 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

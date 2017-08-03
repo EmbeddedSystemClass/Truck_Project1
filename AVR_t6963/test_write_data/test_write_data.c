@@ -2,6 +2,8 @@
 // test_write_data.c - used to test the data protocol between the AVR and PIC24 where the
 // data string is sent with FF,FE,FD.. and the next 3 bytes are shifted so they don't
 // have the high bits set - displays in ncurses window
+// when this is called with write params - 'w'... it simulates the PIC24
+// when called with just the 'r' param, it simulates the AVR (calls do_read below)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -356,7 +358,7 @@ int main(int argc, char *argv[])
 					if(code2 != RT_AUX1-RT_OFFSET && code2 != RT_AUX2-RT_OFFSET)
 					{
 						mvwprintw(menu_win, display_offset+22,2,"%d %d   ",code2,data2);
-						data2 += 10;
+						data2 += 10;	// rpm get inc'd by 10
 					}
 					else mvwprintw(menu_win, display_offset+23,2,"%d %d   ",code2,data2);
 					rtdata[code2] = data2;
@@ -519,7 +521,7 @@ int main(int argc, char *argv[])
 
 			if(++code > RT_AUX2)
 				code = RT_RPM;
-			code2 = code - RT_RPM;
+			code2 = code - RT_RPM;	// use code2 as index - code starts at RT_OFFSET
 //			mvwprintw(menu_win, display_offset+39, 2, "rt_type: %d %s        ",code2,get_rt_label(code2));
 			wrefresh(menu_win);
 		}

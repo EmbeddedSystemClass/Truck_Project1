@@ -9,6 +9,7 @@
 #include "../lib/include/pic24_adc.h"
 #include "../lib/include/pic24_ports_config.h"
 #include "../lib/include/pic24_ports_mapping.h"
+#include <string.h>
 // DEFINEs go here
 //#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
 uint8_t     LED1 = TRUE;      // LED1 is initially "on"
@@ -19,11 +20,12 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define TDELAY2 1
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
+#define RT_OFFSET 0x70
 
 enum data_types
 {
-	RT_LOW,				// UCHAR without high bit set
-	RT_HIGH0,			// UCHAR with bit 7 set
+	RT_LOW,				// uint8_t without high bit set
+	RT_HIGH0,			// uint8_t with bit 7 set
 	RT_HIGH1,			// UINT with neither 7 or 15 set
 	RT_HIGH2,			// bit 7 of UINT set
 	RT_HIGH3			// bit 15 of UINT set
@@ -31,6 +33,19 @@ enum data_types
 
 enum rt_types
 {
+	RT_RPM = RT_OFFSET,
+	RT_ENGT,
+	RT_TRIP,
+	RT_TIME,
+	RT_AIRT,
+	RT_MPH,
+	RT_OILP,
+	RT_MAP,
+	RT_OILT,
+	RT_O2,
+	RT_AUX1,
+	RT_AUX2
+#if 0
 	RT_TRIP = 0xF6,
 	RT_TIME,
 	RT_AIRT,
@@ -41,7 +56,42 @@ enum rt_types
 	RT_ENGT,
 	RT_MPH,
 	RT_RPM	// this should be 0xFE
+#endif
 } RT_TYPES;
+
+#define NUM_RT_PARAMS 12
+
+typedef struct rt_params
+{
+	uint8_t row;			// row, col tells where the param will appear on screen
+	uint8_t col;
+	uint8_t shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
+	uint8_t dtype;		// 0 = uint8_t; 1 = UINT; 2 = dword?
+	uint8_t type;			// rt_types
+} RT_PARAM;
+
+enum shown_types
+{
+	SHOWN_SENT,
+	NOSHOWN_SENT,
+	NOSHOWN_NOSENT
+} SHOWN_TYPES;
+
+RT_PARAM P24_rt_params[NUM_RT_PARAMS] =	\
+{
+{0,		0,	0,	1,	112 },
+{1,		0,	0,	0,	113 },
+{2,		0,	0,	0,	114 },
+{3,		0,	0,	0,	115 },
+{4,		0,	0,	0,	116 },
+{0,		15,	0,	0,	117 },
+{1,		15,	0,	0,	118 },
+{2,		15,	0,	0,	119 },
+{3,		15,	0,	0,	120 },
+{4,		15,	0,	0,	121 },
+{5,		0,	0,	2,	122 },
+{6,		0,	0,	3,	123 }
+};
 
 enum key_types
 {
@@ -95,27 +145,59 @@ enum spi_recv_states
 	DATA2
 } SPI_RECV_STATES;
 
-// GLOBALs go here
-//  Generally, the user-created semaphores will be defined/allocated here
+enum aux_states
+{
+	IDLE_AUX,
+	DATA_REQ,
+	VALID_DATA,
+	DATA_READY,
+	EXTRA
+} AUX_STATES;
 
-//ESOS_SEMAPHORE( sem_CapturedData );
+enum aux_commands
+{
+	CMD_GET_DATA = 6,		// AVR tells PIC24 what data it wants
+	CMD_DATA_READY,			// PIC24 tells AVR it has the data to send
+	CMD_NEW_DATA,			// AVR tells PIC24 it has new data to store
+	CMD_EXTRA
+} AUX_CMDS;
+
+#define NUM_ENTRY_SIZE 7
+#define AUX_DATA_SIZE 4
 
 volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
 volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
+volatile UCHAR aux_type;	// tells PIC24 what to send when code = RT_AUX
+volatile UCHAR paux_state;
+volatile UCHAR aaux_state;
+volatile UCHAR auxcmd;
+volatile UCHAR auxparam;
+volatile UCHAR pic_data[AUX_DATA_SIZE];
+volatile UCHAR pic_data2[AUX_DATA_SIZE];
+volatile UCHAR aux_index;
+volatile uint16_t sample_data[20];
+volatile uint16_t temp_int;
+volatile uint16_t temp_int2;
+
+volatile	uint16_t rtdata[RT_AUX2+1];	// this should be no of rt_params
+volatile	uint8_t code;
+volatile	uint8_t code2;
 
 #define KEYPAD_DELAY    100
 #define KEYPAD_DEBOUNCE_DELAY 2
 volatile uint8_t col;
 volatile uint8_t last_code;
 volatile uint8_t user_flag;
+volatile char param_string[10];
 
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
 ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(comm2_task);
+ESOS_USER_TASK(data_to_AVR);
 ESOS_USER_TASK(sendFPGA);
 ESOS_USER_TASK(sendFPGA2);
 ESOS_USER_TASK(recvFPGA);
@@ -126,8 +208,6 @@ ESOS_USER_TASK(test_timer);
 ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(echo_spi_task);
 //ESOS_USER_TASK(fast_echo_spi_task);
-CONFIG_SPI_MASTER();
-CONFIG_SPI_SLAVE();
 
 /*
 RE0 - p93 - 5th from right inside top
@@ -375,15 +455,12 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 	while (TRUE)
 	{
-		ESOS_TASK_WAIT_TICKS(1);
+		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if (u8_newKey)
 		{
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey);
-//		    ESOS_TASK_WAIT_ON_SEND_UINT8(u8_newKey);
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+		    ESOS_TASK_WAIT_ON_SEND_UINT82(u8_newKey);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 			u8_newKey = 0;
 		}
 	}
@@ -443,52 +520,11 @@ ESOS_USER_TASK(send_cmd_param)
 //#define   CONFIG_SLAVE2_ENABLE() CONFIG_RG8_AS_DIG_OUTPUT()
 //#define   SLAVE2_ENABLE()        LATGbits.LATG8 = 0
 //#define   SLAVE2_DISABLE()       LATGbits.LATG8 = 1
-//******************************************************************************************//
-//************************************** CONFIG_SPI ****************************************//
-//******************************************************************************************//
-CONFIG_SPI_MASTER()
-{
-#if 0
-  SPI1CON1 = SEC_PRESCAL_1_1		|		//1:1 secondary prescale	40MHz
-             PRI_PRESCAL_4_1		|		//4:1 primary prescale
-             CLK_POL_ACTIVE_HIGH	|		//clock active high (CKP = 0)
-             SPI_CKE_ON				|		//out changes active to idle (CKE=1)
-             SPI_MODE8_ON			|		//8-bit mode
-             MASTER_ENABLE_ON;				//master mode
-#endif
-//#if 0
-  SPI1CON1 = SEC_PRESCAL_8_1		|		//8:1 secondary prescale
-             PRI_PRESCAL_64_1		|		//64:1 primary prescale
-             CLK_POL_ACTIVE_HIGH	|		//clock active high (CKP = 0)
-             SPI_CKE_ON				|		//out changes active to idle (CKE=1)
-             SPI_MODE8_ON			|		//8-bit mode
-//             SPI_SMP_ON				|		// input data sampled at end of data output time
-             MASTER_ENABLE_ON;				//master mode
-//#endif
-//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_LOW | SPI_FRM_PULSE_PREV_CLK;
-//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_LOW | SPI_FRM_PULSE_FIRST_CLK;
-//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_HIGH;
-/*
-pin 47	RD14	RPI42	MISO	(input)
-pin 48	RD15	RP5		MOSI	(output)
-pin 49	RF4		RP10	SCLK	(output)
-pin 50	RF5		RP17	SS		(output)
-*/
-	CONFIG_SDI1_TO_RP(RD14_RP);
-	CONFIG_RD14_AS_DIG_INPUT();
-	CONFIG_SDO1_TO_RP(RD15_RP);
-	CONFIG_RD15_AS_DIG_OUTPUT();
-	CONFIG_SCK1OUT_TO_RP(RF4_RP);
-	CONFIG_RF4_AS_DIG_OUTPUT();
-	CONFIG_SS1OUT_TO_RP(RF5_RP);
-	CONFIG_RF5_AS_DIG_OUTPUT();
-	SPI1STATbits.SPIEN = 1;  //enable SPI mode
-}
 
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
-CONFIG_SPI_SLAVE()
+static void CONFIG_SPI_SLAVE(void)
 {
   SPI1CON1 = SEC_PRESCAL_8_1		|		//8:1 secondary prescale
              PRI_PRESCAL_64_1		|		//64:1 primary prescale
@@ -518,16 +554,16 @@ ESOS_USER_TASK(echo_spi_task)
 	static uint8_t data2;
 	static uint8_t cmd;
 	static uint8_t i;
-	static char rpm_disp[5];
-	static char mph_disp[5];
-	static uint16_t res, res2;
-	static uint16_t res3, res4;
-	static char res_str[10];
-	static char res2_str[10];
-	static uint8_t  res_array[24];
 
-	memset(rpm_disp,0,sizeof(rpm_disp));
-	memset(mph_disp,0,sizeof(mph_disp));
+//	static char rpm_disp[5];
+//	static char mph_disp[5];
+//	static uint16_t res;
+	static res2;
+//	static uint16_t res3, res4;
+//	static char res_str[10];
+//	static char res2_str[10];
+
+	static uint8_t  res_array[24];
 
     ESOS_TASK_BEGIN();
 
@@ -655,6 +691,65 @@ ESOS_USER_TASK(echo_spi_task)
     }
     ESOS_TASK_END();
 }
+//#if 0
+static void diy_sprintf(char *str,uint16_t num)
+{
+	int i;
+	uint16_t num2,num3,num4,num5,num6;
+
+	for(i = 0;i < 6;i++)
+		str[i] = 0x20;
+	str[5] = 0;
+
+//	printf("num (int): %d\n",num);
+
+	num2 = num;
+	num2 /= 10;
+	num2 *= 10;
+
+	num3 = num;
+	num3 /= 100;
+	num3 *= 100;
+
+	num4 = num;
+	num4 /= 1000;
+	num4 *= 1000;
+
+	num5 = num;
+	num5 /= 10000;
+	num5 *= 10000;
+
+	num6 = num;
+	num6 /= 100000;
+	num6 *= 100000;
+
+	num6 = num5 - num6;
+	num5 = num4 - num5;
+	num4 = num3 - num4;
+	num3 = num2 - num3;
+	num2 = num - num2;
+
+	num6 /= 10000;
+	num5 /= 1000;
+	num4 /= 100;
+	num3 /= 10;
+
+//	printf("num separated into ints: %d %d %d %d %d\n",num6,num5,num4,num3,num2);	// 2 3 4 5 6
+
+	str[4] = num2 + 0x30;
+	str[3] = num3 + 0x30;
+	str[2] = num4 + 0x30;
+	str[1] = num5 + 0x30;
+	str[0] = num6 + 0x30;
+
+	i = 0;
+	while(str[i] == '0')
+	{
+		str[i] = 0x20;
+		i++;
+	}
+}
+//#endif
 //******************************************************************************************//
 //*************************************** comm1_task ***************************************//
 //******************************************************************************************//
@@ -663,7 +758,9 @@ ESOS_USER_TASK(comm1_task)
 {
     static  uint8_t data1, data2;
     static  uint8_t temp;
+    static	uint16_t temp2;
     static int first_glitch = 0;
+    char str[7];
 //    static ESOS_TASK_HANDLE h_Task3;
 
     ESOS_TASK_BEGIN();
@@ -687,7 +784,7 @@ ESOS_USER_TASK(comm1_task)
 //	data = 0x21;
 	data1 = 0x21;
 	data2 = 0x30;
-
+	temp2 = 1000;
 	while(TRUE)
     {
 		// wait for input from comm1
@@ -742,12 +839,24 @@ ESOS_USER_TASK(comm1_task)
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			temp = 0;
+			temp2++;
         }
 //        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
-		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+//		ESOS_TASK_WAIT_ON_GET_UINT8(data2);
+//		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+//		data2++;
+//		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+		temp2 += 10;
+		if(temp2 > 32767)
+			temp2 = 0;
+		diy_sprintf(str,temp2);
+//		sprintf(str,"%6d",temp2++);
+   		ESOS_TASK_WAIT_ON_SEND_STRING(str);
+		ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+		ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
         ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
         
-		ESOS_TASK_WAIT_TICKS(3000);
+		ESOS_TASK_WAIT_TICKS(5);
 
 	}
 //    h_Task3 = esos_GetTaskHandle(task3);
@@ -875,6 +984,71 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
+
+/*
+static void strcpy2(char *str1, char *str2)
+{
+	int i = 0;
+	do
+	{
+		str1[i] = str2[i];
+		i++;
+
+	}while(str2[i] != 0);
+}
+*/
+//******************************************************************************************//
+//**************************************** disp_pstate *************************************//
+//******************************************************************************************//
+// PIC24_aux_states (main.h)
+static void disp_pstate(UCHAR state, char *str)
+{
+	switch (state)
+	{
+		case IDLE_AUX:
+			strcpy(str,"IDLE_AUX\0");
+			break;
+		case DATA_REQ:
+			strcpy(str,"DATA_REQ\0");
+			break;
+		case VALID_DATA:
+			strcpy(str,"VALID_DATA\0");
+			break;
+		case DATA_READY:
+			strcpy(str,"DATA_READY\0");
+			break;
+		case EXTRA:
+			strcpy(str,"EXTRA\0");
+			break;
+		default:
+			strcpy(str,"<bad state>\0");
+			break;
+	}
+}
+//******************************************************************************************//
+//************************************** disp_auxcmd ***************************************//
+//******************************************************************************************//
+static void disp_auxcmd(UCHAR state, char *str)
+{
+	switch (state)
+	{
+		case CMD_GET_DATA:
+			strcpy(str,"CMD_GET_DATA\0");
+			break;
+		case CMD_DATA_READY:
+			strcpy(str,"CMD_DATA_READY\0");
+			break;
+		case CMD_NEW_DATA:
+			strcpy(str,"CMD_NEW_DATA\0");
+			break;
+		case CMD_EXTRA:
+			strcpy(str,"CMD_EXTRA\0");
+			break;
+		default:
+		strcpy(str,"<bad cmd>\0");
+		break;
+	}
+}
 //******************************************************************************************//
 //************************************* CONFIG_SPI2 ****************************************//
 //******************************************************************************************//
@@ -948,6 +1122,47 @@ ESOS_USER_TASK(fast_echo_spi_task)
 */
     }
     ESOS_TASK_END();
+}
+//******************************************************************************************//
+//************************************** CONFIG_SPI ****************************************//
+//******************************************************************************************//
+CONFIG_SPI_MASTER()
+{
+#if 0
+  SPI1CON1 = SEC_PRESCAL_1_1		|		//1:1 secondary prescale	40MHz
+             PRI_PRESCAL_4_1		|		//4:1 primary prescale
+             CLK_POL_ACTIVE_HIGH	|		//clock active high (CKP = 0)
+             SPI_CKE_ON				|		//out changes active to idle (CKE=1)
+             SPI_MODE8_ON			|		//8-bit mode
+             MASTER_ENABLE_ON;				//master mode
+#endif
+//#if 0
+  SPI1CON1 = SEC_PRESCAL_8_1		|		//8:1 secondary prescale
+             PRI_PRESCAL_64_1		|		//64:1 primary prescale
+             CLK_POL_ACTIVE_HIGH	|		//clock active high (CKP = 0)
+             SPI_CKE_ON				|		//out changes active to idle (CKE=1)
+             SPI_MODE8_ON			|		//8-bit mode
+//             SPI_SMP_ON				|		// input data sampled at end of data output time
+             MASTER_ENABLE_ON;				//master mode
+//#endif
+//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_LOW | SPI_FRM_PULSE_PREV_CLK;
+//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_LOW | SPI_FRM_PULSE_FIRST_CLK;
+//	SPI1CON2 = FRAME_ENABLE_ON | FRAME_SYNC_OUTPUT | FRAME_SYNC_ACTIVE_HIGH;
+/*
+pin 47	RD14	RPI42	MISO	(input)
+pin 48	RD15	RP5		MOSI	(output)
+pin 49	RF4		RP10	SCLK	(output)
+pin 50	RF5		RP17	SS		(output)
+*/
+	CONFIG_SDI1_TO_RP(RD14_RP);
+	CONFIG_RD14_AS_DIG_INPUT();
+	CONFIG_SDO1_TO_RP(RD15_RP);
+	CONFIG_RD15_AS_DIG_OUTPUT();
+	CONFIG_SCK1OUT_TO_RP(RF4_RP);
+	CONFIG_RF4_AS_DIG_OUTPUT();
+	CONFIG_SS1OUT_TO_RP(RF5_RP);
+	CONFIG_RF5_AS_DIG_OUTPUT();
+	SPI1STATbits.SPIEN = 1;  //enable SPI mode
 }
 #endif
 

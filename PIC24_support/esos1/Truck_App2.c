@@ -245,118 +245,244 @@ ESOS_USER_TASK(recvFPGA)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//************************************* data_from_AVR **************************************//
+//************************************** data_to_AVR ***************************************//
 //******************************************************************************************//
-// test the LCD for receiving data (later this will be valid telemetry data from the FPGA)
-ESOS_USER_TASK(data_from_AVR)
+ESOS_USER_TASK(data_to_AVR)
 {
     static  uint8_t data = 2;
     static  uint8_t data1 = 0;
     static  uint8_t skip = 1;
 	static  uint16_t data2 = 0;
-    static  uint8_t code = RT_TRIP;
+	static char tempx[20];
 //    static  uint8_t code = RT_RPM;
 
     ESOS_TASK_BEGIN();
 //    h_Task3 = esos_GetTaskHandle(task3);
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(0x41);
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-    while (1)
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
+    ESOS_TASK_WAIT_ON_SEND_UINT83('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT83('\r');
+	ESOS_TASK_WAIT_ON_SEND_STRING("data_to_AVR");
+    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING3(0x41);
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
+
+	code = RT_RPM;
+	code2 = code - RT_RPM;
+	auxcmd = 0;
+	auxparam = 0;
+	temp_int2 = 0;
+	memset((void*)pic_data,0,AUX_DATA_SIZE);
+	memset((void*)pic_data2,0,AUX_DATA_SIZE);
+
+	while(TRUE)
     {
-		while(TRUE)
-        {
-			code++;
-            ESOS_TASK_WAIT_TICKS(100);
-            ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
-            ESOS_TASK_WAIT_ON_SEND_UINT83(code);
-            ESOS_TASK_WAIT_TICKS(2);
-			if(code == RT_RPM)
+		code++;
+        ESOS_TASK_WAIT_TICKS(100);
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+        ESOS_TASK_WAIT_ON_SEND_UINT82(code);
+        ESOS_TASK_WAIT_TICKS(2);
+		if(P24_rt_params[code2].shown == NOSHOWN_SENT || P24_rt_params[code2].shown == SHOWN_SENT)
+		{
+			if(P24_rt_params[code2].dtype > 0)
 			{
+				data2 = rtdata[code2];
 				if(data2 & 0x8000)
 				{
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(RT_HIGH3);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(RT_HIGH3);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)(data2);
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)(data2>>8);
 					data1 &= 0x7f;
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 				}
 				else if(data2 & 0x0080)
 				{
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(RT_HIGH2);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(RT_HIGH2);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)data2;
 					data1 &= 0x7f;
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)(data2>>8);
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 				}
 				else
 				{
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(RT_HIGH1);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(RT_HIGH1);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)(data2);
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = (UCHAR)(data2>>8);
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 
 				}
-/*
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		        ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-		        ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-		        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(~code);
-		        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-				if(data2 > 6000)
-					data2 = 0;
-				data2++;
-				code = RT_TRIP-1;
-//				code = RT_OILP;
+
+				if(code2 != RT_AUX1-RT_OFFSET && code2 != RT_AUX2-RT_OFFSET)
+				{
+					data2 += 10;	// rpm get inc'd by 10
+				}
+				rtdata[code2] = data2;
 			}
-			else
+			else if(P24_rt_params[code2].dtype == 0)
 			{
+				data = (UCHAR)rtdata[code2];
 				if(data > 0x7f)
 				{
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(RT_HIGH0);
-				    ESOS_TASK_WAIT_TICKS(2);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(RT_HIGH0);
+					ESOS_TASK_WAIT_TICKS(2);
 					data1 = data & 0x7f;
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 				}
 				else
 				{
-				    ESOS_TASK_WAIT_ON_SEND_UINT83(RT_LOW);
-				    ESOS_TASK_WAIT_TICKS(2);
-			        ESOS_TASK_WAIT_ON_SEND_UINT83(data);
+					ESOS_TASK_WAIT_ON_SEND_UINT82(RT_LOW);
+					ESOS_TASK_WAIT_TICKS(2);
+				    ESOS_TASK_WAIT_ON_SEND_UINT82(data);
 				}
 				data++;
-			}
-            ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
-#if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-            ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-            ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-//            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(~code);
-            ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
-			if(code == RT_RPM)
+				rtdata[code2] = (uint16_t)data;
+//				sprintf(param_string,"%4u",data);
+			}	
+		}
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+		if(code == RT_AUX1)
+		{
+			
+//			read(fd,&pic_data,AUX_DATA_SIZE);
+//				mvwprintw(menu_win, display_offset+24, 2,"res: %d  ",res);
+//				for(i = 0;i < AUX_DATA_SIZE;i++)
+//					mvwprintw(menu_win, display_offset+25, 2+(i * 3),"%x  ",pic_data[i]);
+//				mvwprintw(menu_win, display_offset+26, 2,"%x %x  ",pic_data[0],pic_data[1]);
+//#if 0
+			switch(paux_state)
 			{
-	            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)data2);
-	            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(data2>>8));
-	            ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
+				case IDLE_AUX:
+					auxcmd = auxparam = 0;
+					if(pic_data[0] == CMD_GET_DATA)
+					{
+						paux_state = DATA_REQ;
+						aux_index = pic_data[1];
+					}
+					else
+						paux_state = IDLE_AUX;
+					break;
+										// write requested data to AVR to be modified
+				case DATA_REQ:
+					rtdata[code2+1] = sample_data[aux_index];		// this ends up in tempint2 of do_read()
+//						mvwprintw(menu_win, display_offset+29, 2,"before: %d    ",rtdata[code2+1]);
+					auxcmd = CMD_DATA_READY;
+					auxparam = 0;
+					paux_state = VALID_DATA;
+					break;
+				case VALID_DATA:
+					auxcmd = auxparam = 1;
+					if(pic_data[0] == CMD_NEW_DATA)
+						paux_state = DATA_READY;
+					else
+					{
+						paux_state = VALID_DATA;
+//							loop = break_out_loop(loop, paux_state);
+//							mvwprintw(menu_win, display_offset+24, 2,"loop: %d  ",loop);
+					}
+					break;
+				case DATA_READY:
+//						mvwprintw(menu_win, display_offset+24, 2,"             ");
+					auxcmd = auxparam = 2;
+//						for(i = 0;i < AUX_DATA_SIZE;i++)
+//							mvwprintw(menu_win, display_offset+26, 2+(i * 3),"%x  ",pic_data[i]);
+					paux_state = EXTRA;
+					break;
+				case EXTRA:
+				default:
+					paux_state = IDLE_AUX;
+					break;
 			}
-			else
-	            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+//#endif
+			disp_pstate(paux_state,tempx);
+//				auxcmd = pic_data[0];
+//				mvwprintw(menu_win, display_offset+25, 2,"aux_index: %x  ",aux_index);
+//				mvwprintw(menu_win, display_offset+26, 2,"%s        ",tempx);
+			disp_auxcmd(pic_data[0], tempx);
+//				mvwprintw(menu_win, display_offset+26, 20,"%s        ",tempx);
+//				mvwprintw(menu_win, display_offset+27, 2,"cmd: %x  param: %x  ",auxcmd,auxparam);
+			temp_int = (uint16_t)auxcmd;
+//				mvwprintw(menu_win, display_offset+34,2,"%x ",temp_int);
+			temp_int <<= 8;
+//				temp_int &= 0xff00;
+//				mvwprintw(menu_win, display_offset+35,2,"%x ",temp_int);
+			rtdata[code2] = temp_int;
+			temp_int = (uint16_t)auxparam;
+			rtdata[code2] |= temp_int;
+//				mvwprintw(menu_win, display_offset+28,2,"temp_int: %x   ",temp_int);
+			temp_int2 = (uint16_t)pic_data[2];
+			temp_int2 <<= 8;
+			temp_int2 |= (uint16_t)pic_data[3];
+//				mvwprintw(menu_win, display_offset+33, 2,"temp_int2: %d  ",temp_int2);
+		}
+		else if(code == RT_AUX2)
+		{
+//			read(fd,&pic_data2,AUX_DATA_SIZE);
+//				mvwprintw(menu_win, display_offset+31, 2,"res: %d  ",res);
+//				for(i = 0;i < AUX_DATA_SIZE;i++)
+//					mvwprintw(menu_win, display_offset+29, 2+(i * 3),"%x  ",pic_data2[i]);
+//				temp1 = (uint16_t)pic_data2[0];
+//				temp1 <<= 8;
+//				temp1 |= (uint16_t)pic_data2[1];
+			UCHAR test1x, test2x;
+			uint16_t test1y;
+			if(paux_state == DATA_READY)
+			{
+				test1x = pic_data2[2];
+//					mvwprintw(menu_win, display_offset+31,2,"%x  ",test1x);
+				test2x= pic_data2[3] << 1;
+				test2x &= 0x80;
+//					mvwprintw(menu_win, display_offset+31,6,"%x  ",test2x);
+				test1y = (uint16_t)test1x;
+				test1y <<= 8;
+//					mvwprintw(menu_win, display_offset+31,10,"%x  ",test1y);
+				test1y |= (uint16_t)(test2x);
+//					mvwprintw(menu_win, display_offset+31,16,"%x  ",test1y);
+				sample_data[aux_index] = (uint16_t)pic_data2[0];
+				// this is a work-around for strange bug - for some reason the high bit of
+				// the 2nd byte is getting unset
+				sample_data[aux_index] <<= 8;
+				pic_data2[1] |= test2x;
+				sample_data[aux_index] |= (uint16_t)pic_data2[1];
+//					mvwprintw(menu_win, display_offset+30, 2,"after:%d    %x %x %x %x %d   ",sample_data[aux_index],pic_data2[0],pic_data2[1],pic_data2[2],pic_data2[3],test1y);
+			}
+
+//				temp2 = (uint16_t)pic_data2[2];
+
+//				temp2 <<= 8;
+//				temp2 |= (uint16_t)pic_data2[3];
+		}
+
+//			for(i = 0;i < no_data_index;i++)
+//				mvwprintw(menu_win, display_offset+34+i, 2,"%d  ",sample_data[i]);
+
+		if(++code > RT_AUX2)
+			code = RT_RPM;
+		code2 = code - RT_RPM;	// use code2 as index - code starts at RT_OFFSET
+
+#if 0
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+        ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+        ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+//            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(~code);
+        ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
+		if(code == RT_RPM)
+		{
+            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)data2);
+            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(data2>>8));
+            ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
+		}
+		else
+            ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 
-        }
     } // endof while()
     ESOS_TASK_END();
 }
@@ -381,10 +507,10 @@ void user_init(void)
 	esos_RegisterTask(send_cmd_param);
 */
 //	esos_RegisterTask(comm3_task);
-//	esos_RegisterTask(comm1_task);
+	esos_RegisterTask(comm1_task);
 
-	esos_RegisterTask(keypad);
-	esos_RegisterTask(poll_keypad);
+//	esos_RegisterTask(keypad);
+//	esos_RegisterTask(poll_keypad);
 //	esos_RegisterTask(convADC);
 } // end user_init()
 

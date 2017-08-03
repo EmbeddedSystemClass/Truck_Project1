@@ -171,7 +171,6 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, 0,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, 0,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, 0,		MENU2B,		MENU2B,0);
-	// menu 1a		6
 /*
 	i = update_menu_structs(i, 1, 0,		num_entry,	num_entry,0);
 	i = update_menu_structs(i, 1, 0,		chkboxes,	chkboxes,0);
@@ -180,6 +179,7 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, 0,		MENU1C,		MENU1C,0);
 	i = update_menu_structs(i, 1, 0,		MENU1D,		MENU1D,0);
 */
+	// menu 1a		6
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum0,1);
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum1,2);
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum2,3);

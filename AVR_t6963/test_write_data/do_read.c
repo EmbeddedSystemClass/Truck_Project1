@@ -199,7 +199,7 @@ void do_read(WINDOW *win, int fd, int display_offset)
 							aaux_state = IDLE_AUX;
 							break;
 					}
-					mvwprintw(win, DISP_OFFSET+30, 2,"aux_index: %x  ",taux_index);
+					mvwprintw(win, DISP_OFFSET+30, 2,"aux_index: %x  ",aux_index);
 					disp_astate(aaux_state,tempx);
 					mvwprintw(win, DISP_OFFSET+31, 2,"%s     ",tempx);
 					disp_auxcmd(avr_data[0],tempx);
