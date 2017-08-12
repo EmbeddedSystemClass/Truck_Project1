@@ -115,16 +115,16 @@ port D
 
 BusPirate pinout
 (ribbon cable colors - starting from right when looking at top of board with ICD connection towards you)
-light brown		GND
+light brown		GND		(black mini clip)
 red				3v3
 orange			+5v**
 yellow			ADC0
 green			VPU
 blue			AUX
-purple			CLK
-grey			MOSI
-white			CS
-black			MISO
+purple			CLK		(other green clip)
+grey			MOSI	(yellow clip)
+white			CS		(white clip)
+black			MISO	(black regular clip)
 
 ** don't hook this up from buspirate, but put VCC from AVR to separate 5v power supply (RAW)
 
@@ -138,10 +138,11 @@ FTDI USB-to-TTL: DTR (orange) -> Arduino Mini Pro Reset
 FTDI USB-to-TTL: CTS (non connected)
 
 (new Pro-Mini)
+note: be sure and change the clock speed in the Makefile (slow for older one)
 pin labels on bottom left with reset button on left
 13 - SCK
 12 - MISO
 11 - MOSI
 10 - SS
-reset - CS
+reset - CS	(when programming otherwise when using as SPI this goes to SS?)
 

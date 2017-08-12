@@ -251,7 +251,6 @@ ESOS_USER_TASK(data_to_AVR)
 {
     static  uint8_t data = 2;
     static  uint8_t data1 = 0;
-    static  uint8_t skip = 1;
 	static  uint16_t data2 = 0;
 	static char tempx[20];
 //    static  uint8_t code = RT_RPM;
@@ -318,6 +317,7 @@ ESOS_USER_TASK(data_to_AVR)
 					ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 
 				}
+				sprintf((char *)param_string,"%4u",data2);
 
 				if(code2 != RT_AUX1-RT_OFFSET && code2 != RT_AUX2-RT_OFFSET)
 				{
@@ -343,7 +343,7 @@ ESOS_USER_TASK(data_to_AVR)
 				}
 				data++;
 				rtdata[code2] = (uint16_t)data;
-//				sprintf(param_string,"%4u",data);
+				sprintf((char*)param_string,"%4u",data);
 			}	
 		}
         ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();

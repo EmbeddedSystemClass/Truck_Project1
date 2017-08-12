@@ -501,13 +501,14 @@ static UCHAR generic_menu_function(UCHAR ch, int  index)
 //******************************************************************************************//
 static UCHAR escape(UCHAR ch)
 {
+//	memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	prev_list();
 	clean_disp_num();
 //	scale_disp(SCALE_DISP_ALL);
 	data_entry_mode = 0;
-	mod_data_ready = 1;
+	mod_data_ready = 2;
 	return ch;
 }
 //******************************************************************************************//
@@ -628,7 +629,7 @@ static UCHAR backspace(UCHAR ch)
 		cursor_backward();
 		dispCharAt(NUM_ENTRY_ROW,cur_col,0x20);
 		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
-		mvwprintw(win, DISP_OFFSET+39,2,"bs:%s      %d  ",cur_global_number,cur_col);
+//		mvwprintw(win, DISP_OFFSET+39,2,"bs:%s      %d  ",cur_global_number,cur_col);
 	}
 //	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	return ch;

@@ -39,7 +39,7 @@
  */
 #ifndef NOAVR
 #include <avr/io.h>
-#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #else
 #include <ncurses.h>
 #endif

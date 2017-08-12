@@ -1,5 +1,10 @@
 Truck_Project1_notes.txt 8/1/2017
 
+8/7/17
+test AVR to FPGA SPI - AVR just echos back what's recv'd in SPI to FPGA which prints results to serial port
+connection to SPI on AVR will have to be removeable to program to AVR - if this works then start wiring
+the master board together
+
 PIC24 UARTS:
 
 UART1 - RS232 to TS-7200
@@ -10,6 +15,15 @@ UART1 uses 3v3 -> 5v -> RS-232 -> serial port to TS-7200
 UART2 uses 3v3 -> 5v -> serial port on AVR
 UART3 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
 
+There is an SPI bus from the PIC24 to the FPGA: FPGA is master while PIC24 is slave.
+SPI from FPGA (master) to AVR (slave)
+(or) just one bus using (2) SS signals
+
+SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
+SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
+
+FPGA to AVR works up to ~30K doing just an echo
+
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.
@@ -18,24 +32,16 @@ Each task must be registered in user_init.
 //************************************* PIC24_support **************************************//
 //******************************************************************************************//
 
-Currently there are the following tasks:
-keyscan_col - puts a scan pattern on the 4 lsb's of PORTA (column outputs)
-keyscan_row - if a key is pressed, get the 4 bit pattern on 
-	the 4 lsb's of PORTE (row inputs) and compare with the current column scan
-	to determine which key was pressed and send it to task1
-
-sendFPGA - sends mail msg to send_cmd_param which sends cmd/param to FPGA
-
 Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200
 and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from
-the PIC24FJ128GB110 over the serial port. The path to the FPGA is the serial and the path to the
+the PIC24FJ128GB110 over the serial port. The path to the FPGA is the SPI and the path to the
 AVR and the TS-7200 are serial ports. The keypad input manages the menuing of the LCD screen
 and can display optional real time info like engine speed, engine temp, oil pressure, etc.
 There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
 The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
 shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
-the PIC24FJ128GB110 via the UART. (other telemetry data can be added later like distributor
-timing to use for spark advance).
+the PIC24FJ128GB110 via the SPI (as master).
+Other telemetry data can be added later like distributor timing to use for spark advance.
 The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
 'black box' FDR that records the last so many hours or minutes of the telemetry data to a
 file that can be downloaded later.

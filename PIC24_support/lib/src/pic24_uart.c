@@ -295,7 +295,7 @@ configUART1 (uint32_t u32_baudRate)
 
   // Configure UART baud rate, based on \ref FCY.
   U1BRG = compute_brg (FCY, DEFAULT_BRGH1, u32_baudRate);
-  uint32_t temp = FCY;
+//  uint32_t temp = FCY;
   // Set up the UART mode register
   U1MODE =
           (1u << 15) | // UARTEN = 1 (enable the UART)

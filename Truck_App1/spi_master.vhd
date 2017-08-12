@@ -36,21 +36,21 @@ entity SPI_MASTER is
     Generic (
         CLK_FREQ    : natural := 50e6; -- set system clock frequency in Hz
         SCLK_FREQ   : natural := 5e6;  -- set SPI clock frequency in Hz (condition: SCLK_FREQ <= CLK_FREQ/10)
-        SLAVE_COUNT : natural := 1     -- count of SPI slaves
+        SLAVE_COUNT : natural := 2     -- count of SPI slaves
     );
     Port (
         CLK      : in  std_logic; -- system clock
         RST      : in  std_logic; -- high active synchronous reset
         -- SPI MASTER INTERFACE
         SCLK     : out std_logic;
-        CS_N	: out std_logic;
---        CS_N     : out std_logic_vector(SLAVE_COUNT-1 downto 0);
+--        CS_N	: out std_logic;
+        CS_N     : out std_logic_vector(SLAVE_COUNT-1 downto 0);
 --		CS_N	: out std_logic_vector(1 downto 0);
         MOSI     : out std_logic;
         MISO     : in  std_logic;
         -- USER INTERFACE
 --        ADDR     : in  std_logic_vector(integer(ceil(log2(real(SLAVE_COUNT))))-1 downto 0); -- slave address
---		ADDR	: in std_logic_vector(1 downto 0);
+		ADDR	: in std_logic_vector(1 downto 0);
         READY    : out std_logic; -- when READY = 1, SPI master is ready to accept input data
         DIN      : in  std_logic_vector(7 downto 0); -- input data for slave
         DIN_VLD  : in  std_logic; -- when DIN_VLD = 1, input data are valid and can be accept
@@ -63,9 +63,11 @@ architecture RTL of SPI_MASTER is
 
     constant DIVIDER_VALUE      : integer := CLK_FREQ/SCLK_FREQ;
     constant WIDTH_CLK_CNT      : integer := integer(ceil(log2(real(DIVIDER_VALUE))));
-    constant WIDTH_ADDR         : integer := integer(ceil(log2(real(SLAVE_COUNT))));
+--    constant WIDTH_ADDR         : integer := integer(ceil(log2(real(SLAVE_COUNT))));
+    constant WIDTH_ADDR         : integer := 2;
 
---    signal addr_reg             : std_logic_vector(WIDTH_ADDR-1 downto 0);
+    signal addr_reg             : std_logic_vector(WIDTH_ADDR-1 downto 0);
+--	signal addr_reg				: unsigned(1 downto 0);
     signal sys_clk_cnt          : unsigned(WIDTH_CLK_CNT-1 downto 0);
     signal sys_clk_cnt_max      : std_logic;
     signal spi_clk              : std_logic;
@@ -151,6 +153,30 @@ begin
     --  SPI MASTER ADDRESSING
     -- -------------------------------------------------------------------------
 
+	addr_gen: process(CLK, RST, load_data, chip_select_n)
+	variable temp: integer range 0 to 3:= 0;
+	begin
+		if RST = '0' then
+			addr_reg <= (others=>'0');
+			CS_N <= (others=>'0');
+		elsif rising_edge(CLK) and load_data = '1' then
+--			if chip_select_n = '1' then
+--				CS_N <= "11";
+--			else
+				addr_reg <= ADDR;
+				temp:= to_integer(unsigned(addr_reg));
+				if temp = 1 then
+					CS_N <= "01";
+				elsif temp = 2 then
+					CS_N <= "10";
+				else CS_N <= "11";
+				end if;
+			end if;	
+--		end if;	
+--		end if;
+			
+	end process;
+
 --	addr_reg_p : process (CLK)
 --	begin
 --	if (rising_edge(CLK)) then
@@ -161,7 +187,7 @@ begin
 --		end if;
 --	end if;
 --	end process;
-
+--
 --	cs_n_g : for i in 0 to SLAVE_COUNT-1 generate
 --		cs_n_p : process (addr_reg, chip_select_n)
 --		begin
@@ -172,7 +198,9 @@ begin
 --		end if;
 --		end process;
 --	end generate;
-	CS_N <= chip_select_n;
+	
+-- comment all the above and uncomment the line below if using single address line	
+--	CS_N <= chip_select_n;
     -- -------------------------------------------------------------------------
     --  MOSI REGISTER
     -- -------------------------------------------------------------------------

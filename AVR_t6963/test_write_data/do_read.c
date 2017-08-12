@@ -32,14 +32,14 @@ void do_read(WINDOW *win, int fd, int display_offset)
 	UCHAR ch;
 	char param_string[10];
 //	UCHAR temp;
-	UINT limit16 = 0;
-	UINT limit16a = 1;
+//	UINT limit16 = 0;
+//	UINT limit16a = 1;
 	UINT tempint;
 	UINT tempint2;
 	UINT tempint3 = 0;
 	int i,j;
 	char tempx[20];
-//	char tempnum[NUM_ENTRY_SIZE];
+	char tempnum[NUM_ENTRY_SIZE];
 	int error_code = 0;
 	UCHAR avr_data[AUX_DATA_SIZE];
 	UCHAR avr_data2[AUX_DATA_SIZE];
@@ -143,12 +143,14 @@ void do_read(WINDOW *win, int fd, int display_offset)
 /*
 								strncpy(tempnum,cur_global_number+i,NUM_ENTRY_SIZE-i);
 								mvwprintw(win, DISP_OFFSET+24,2,"tempnum: %s   %d",tempnum,i);
+
 								memset(cur_global_number,0,NUM_ENTRY_SIZE);
 								strcpy(cur_global_number,tempnum);
 								cur_global_number[NUM_ENTRY_SIZE-i] = 0;
-								mvwprintw(win, DISP_OFFSET+25,2,"cur:     %sx     ",cur_global_number);
-								mvwprintw(win, DISP_OFFSET+26,2,"%sx   %d   ",cur_global_number,tempint2);
 */
+//								mvwprintw(win, DISP_OFFSET+24,2,"cur:     %sx     ",cur_global_number);
+//								mvwprintw(win, DISP_OFFSET+26,2,"%sx   %d   ",cur_global_number,tempint2);
+
 								new_data_ready = 1;
 //								loop = 0;
 							}
@@ -163,33 +165,42 @@ void do_read(WINDOW *win, int fd, int display_offset)
 						case VALID_DATA:
 //							mvwprintw(win, DISP_OFFSET+28,2,"             ");
 //							mvwprintw(win, DISP_OFFSET+35, 2,"mod_data_ready: %d  ",mod_data_ready);
-							if(mod_data_ready == 1)
+							if(mod_data_ready == 0)
 							{
-								aaux_state = DATA_READY;
+								aaux_state = VALID_DATA;
 //								loop = 0;
 							}
 							else
 							{
 //								loop = break_out_loop(loop,aaux_state);
 //								mvwprintw(win, DISP_OFFSET+28,2,"loop: %d ",loop);
-								aaux_state = VALID_DATA;
+								aaux_state = DATA_READY;
 							}
 							break;
 						// data has been modified by AVR and is ready to send back to PIC24
 						case DATA_READY:
+/*
+							if(mod_data_ready == 2)
+							{
+								avr_data[0] = CMD_OLD_DATA;
+								aaux_state = IDLE_AUX;
+							}	
+*/						
 							tempint2 = atol(new_global_number);
 							avr_data[0] = CMD_NEW_DATA;
 							aaux_state = DATA_READY;
 							avr_data2[0] = (UCHAR)(tempint2 >> 8);
 							avr_data2[1] = (UCHAR)tempint2;
-							limit16++;
+//							limit16++;
 //							avr_data2[2] = (UCHAR)(limit16a >> 8);
 //							avr_data2[3] = (UCHAR)limit16a;
 // this is a work-around for strange bug - for some reason the high bit of the 2nd byte is getting unset
 							avr_data2[2] = avr_data2[0];
 							avr_data2[3] = avr_data2[1] >> 1;
-							limit16a += 2;
-							mvwprintw(win, DISP_OFFSET+29, 2,"%d   %d   ",limit16,limit16a);
+//							limit16a += 2;
+//							mvwprintw(win, DISP_OFFSET+29, 2,"%d   %d   ",limit16,limit16a);
+							mvwprintw(win, DISP_OFFSET+28, 2,"new_global#: %s      ",new_global_number);
+							mvwprintw(win, DISP_OFFSET+29, 2,"tempint2#: %d      ",tempint2);
 //							if(++taux_index > no_menu_labels)
 //								taux_index = 1;
 							mvwprintw(win, DISP_OFFSET+32, 2,"                                                    ");
@@ -302,8 +313,8 @@ static void disp_auxcmd(UCHAR state, char *str)
 		case CMD_NEW_DATA:
 			strcpy(str,"CMD_NEW_DATA\0");
 			break;
-		case CMD_EXTRA:
-			strcpy(str,"CMD_EXTRA\0");
+		case CMD_OLD_DATA:
+			strcpy(str,"CMD_OLD_DATA\0");
 			break;
 		default:
 		strcpy(str,"<bad state>\0");
@@ -328,9 +339,6 @@ static void disp_astate(UCHAR state, char *str)
 			break;
 		case DATA_READY:
 			strcpy(str,"DATA_READY\0");
-			break;
-		case EXTRA:
-			strcpy(str,"EXTRA\0");
 			break;
 		default:
 		strcpy(str,"<bad state>\0");

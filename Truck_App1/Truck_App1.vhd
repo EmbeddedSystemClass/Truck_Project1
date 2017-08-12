@@ -25,7 +25,7 @@ entity Truck_App is
 		MOSI_o : out std_logic;
 		MISO_i : in std_logic;
 		SCLK_o : out std_logic;
-		SS_o : out std_logic;
+		SS_o : out std_logic_vector(1 downto 0);
 --		SS_o : out std_logic;
 --		MOSI_i : in std_logic;
 --		MISO_o : out std_logic;
@@ -58,6 +58,9 @@ architecture truck_arch of Truck_App is
 	type state_dout is (idle_dout, start_dout, done_dout);
 	signal state_dout_reg, state_dout_next: state_dout;
 
+	type state_dout2 is (idle_dout2, start_dout2, done_dout2);
+	signal state_dout_reg2, state_dout_next2: state_dout2;
+
 --	signal tempx: std_logic_vector(7 downto 0);
 	signal temp3_int: std_logic_vector(7 downto 0);
 
@@ -74,6 +77,7 @@ architecture truck_arch of Truck_App is
 	signal inc_frame: unsigned(3 downto 0);
 	signal skip: std_logic;
 	signal skip2: std_logic;
+	signal skip3: std_logic;
 	signal rpm_temp, mph_temp: std_logic;
 	signal rpm_result: std_logic_vector(12 downto 0);
 	signal mph_result: std_logic_vector(12 downto 0);
@@ -102,7 +106,6 @@ architecture truck_arch of Truck_App is
 	signal mph_done, rpm_done: std_logic;
 	signal mph_done2, rpm_done2: std_logic;
 
-	signal spi_ready, spi_din_vld, spi_dout_vld : std_logic;
 	signal spi_din, spi_dout : std_logic_vector(7 downto 0);
 	signal s_cnt : unsigned(7 downto 0);
 	signal time_delay_reg, time_delay_next: unsigned(23 downto 0);
@@ -111,10 +114,12 @@ architecture truck_arch of Truck_App is
 	signal mspi_din_vld, mspi_dout_vld : std_logic;
 	signal mosi, miso, sclk, ss: std_logic;
 	signal mspi_din, mspi_dout : std_logic_vector(7 downto 0);
-	signal stlv_temp : std_logic_vector(7 downto 0);
+	signal stlv_temp1 : std_logic_vector(7 downto 0);
+	signal stlv_temp1a : std_logic_vector(7 downto 0);
 	signal stlv_temp2 : std_logic_vector(7 downto 0);
-	signal stlv_temp3 : std_logic_vector(7 downto 0);
+	signal stlv_temp2a : std_logic_vector(7 downto 0);
 	signal trigger_send_spi : std_logic;
+	signal addr: std_logic_vector(1 downto 0);
 
 begin
 
@@ -196,12 +201,13 @@ db1_unit: entity work.db_fsm
 		db=>mph_db);
 
 spi_master_unit: entity work.SPI_MASTER(RTL)
-	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>15000,SLAVE_COUNT=>1)
+	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>20000,SLAVE_COUNT=>2)
 	port map(CLK=>clk, RST=>reset,
 	SCLK=>SCLK_o,
 	CS_N=>SS_o,
 	MOSI=>MOSI_o,
 	MISO=>MISO_i,
+	ADDR=>addr,
 	READY=>mspi_ready,
 	DIN=>mspi_din,
 	DIN_VLD=>mspi_din_vld,
@@ -211,67 +217,149 @@ spi_master_unit: entity work.SPI_MASTER(RTL)
 -- ********************************************************************************
 --	type state_dout is (idle_dout, start_dout, end_dout, done_dout, delay_dout);
 
-echo_dout_unit: process(clk, reset, state_dout_reg)
+echo_dout_unit1: process(clk, reset, state_dout_reg)
 variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
-variable temp: integer range 0 to 255:= 0;
+variable temp1: integer range 0 to 255:= 0;
+variable temp2: integer range 0 to 255:= 255;
+variable temp3: integer range 0 to 7:= 1;
 begin
 	if reset = '0' then
 		state_dout_reg <= idle_dout;
-		stlv_temp3 <= (others=>'0');
-		stlv_temp <= (others=>'0');
-		test <= (others=>'0');
+		stlv_temp1 <= (others=>'0');
+		stlv_temp1a <= (others=>'0');
 		led1 <= (others=>'1');
-		time_delay_reg2 <= (others=>'0');
-		time_delay_next2 <= (others=>'0');
+		addr <= (others=>'1');
+		mspi_din_vld <= '0';
+		mspi_din <= (others=>'0');
+		test <= (others=>'0');
+		skip3 <= '0';
 	else if clk'event and clk = '1' then
 		case state_dout_reg is
 			when idle_dout =>
 				led1 <= "1110";
 				if mspi_ready = '1' then
 					led1 <= "0111";
-					mspi_din <= stlv_temp2;
+					mspi_din <= stlv_temp1;		-- write
 					mspi_din_vld <= '1';
 					state_dout_next <= start_dout;
 				end if;
 			when start_dout =>
-					mspi_din_vld <= '0';			
 					state_dout_next <= done_dout;
 			when done_dout =>
+				mspi_din_vld <= '0';			
+--				if SS_o(0) = '0' then
 				if mspi_dout_vld = '1' then
 					led1 <= "1011";
 					-- mspi_dout is what gets received by MISO
-					stlv_temp <= mspi_dout;
-					cmd <= stlv_temp(7 downto 4);
-					param <= stlv_temp(3 downto 0);
-					test <= param;
-					temp_uart := conv_integer(param);
-					if cmd(3) = '0' then
-						if temp_uart > NUM_DATA_ARRAY-1 then
-							temp_uart := 0;
+--					if addr(0) = '1' then
+--						stlv_temp1 <= mspi_dout;
+--					elsif addr(1) = '1' then	
+--						stlv_temp1a <= mspi_dout;
+--					end if;	
+--					cmd <= stlv_temp1(7 downto 4);
+--					param <= stlv_temp1(3 downto 0);
+--					test <= param;
+--					temp_uart := conv_integer(param);
+--					if cmd(3) = '0' then
+--						if temp_uart > NUM_DATA_ARRAY-1 then
+--							temp_uart := 0;
+--						end if;	
+--						stlv_temp1 <= data_array1(temp_uart);
+--					else
+--						if temp_uart > 7 then
+--							temp_uart := 0;
+--						end if;	
+--						stlv_temp1 <= "0000" & data_array2(temp_uart);
+--					end if;	
+					skip3 <= not skip3;
+					if skip3 = '1' then
+						if temp1 > 125 then
+							temp1:= 33;
+						else temp1:= temp1 + 1;
 						end if;	
-						stlv_temp2 <= data_array1(temp_uart);
-					else
-						if temp_uart > 7 then
-							temp_uart := 0;
+--						stlv_temp1 <= conv_std_logic_vector(temp1,8);
+						stlv_temp1 <= X"AA";
+						addr <= "01";					
+					else	
+						if temp2 < 33 then
+							temp2:= 125;
+						else temp2:= temp2 - 1;	
 						end if;	
-						stlv_temp2 <= "0000" & data_array2(temp_uart);
-					end if;	
-	
+--						stlv_temp1 <= conv_std_logic_vector(temp2,8);
+						stlv_temp1 <= X"55";
+						addr <= "10";
+					end if;
+
+					test <= "00" & addr;
+					state_dout_next <= idle_dout;
+				end if;
+--				end if;
+		end case;
+		state_dout_reg <= state_dout_next;
+		end if;
+	end if;
+end process;	
+
+-- ********************************************************************************
+
+--echo_dout_unit2: process(clk, reset, state_dout_reg2)
+--variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
+--variable temp: integer range 0 to 255:= 0;
+--begin
+--	if reset = '0' then
+--		state_dout_reg2 <= idle_dout2;
+--		stlv_temp2 <= (others=>'0');
+--		stlv_temp2a <= (others=>'0');
+--	else if clk'event and clk = '1' then
+--		case state_dout_reg2 is
+--			when idle_dout2 =>
+--				led1 <= "1110";
+--				if mspi_ready = '1' then
+--					led1 <= "0111";
+--					mspi_din <= stlv_temp2;
+--					mspi_din_vld <= '1';
+--					state_dout_next <= start_dout;
+--				end if;
+--			when start_dout2 =>
+--					mspi_din_vld <= '0';			
+--					state_dout_next <= done_dout;
+--			when done_dout2 =>
+--				if SS_o(1) = '0' then
+--				if mspi_dout_vld = '1' then
+--					led1 <= "1011";
+--					-- mspi_dout is what gets received by MISO
+--					stlv_temp2a <= mspi_dout;
+----					cmd <= stlv_temp2(7 downto 4);
+----					param <= stlv_temp2(3 downto 0);
+----					test <= param;
+----					temp_uart := conv_integer(param);
+----					if cmd(3) = '0' then
+----						if temp_uart > NUM_DATA_ARRAY-1 then
+----							temp_uart := 0;
+----						end if;	
+----						stlv_temp2 <= data_array1(temp_uart);
+----					else
+----						if temp_uart > 7 then
+----							temp_uart := 0;
+----						end if;	
+----						stlv_temp <= "0000" & data_array2(temp_uart);
+----					end if;	
+--	
 --					if temp > 126 then
 --						temp:= 33;
 --					else	
 --						temp:= temp + 1;
 --					end if;	
 --					stlv_temp2 <= conv_std_logic_vector(temp,8);
-									
-					state_dout_next <= idle_dout;
-				end if;
-		end case;
-		time_delay_reg2 <= time_delay_next2;
-		state_dout_reg <= state_dout_next;
-		end if;
-	end if;
-end process;	
+--									
+--					state_dout_next <= idle_dout;
+--				end if;
+--				end if;
+--		end case;
+--		state_dout_reg2 <= state_dout_next2;
+--		end if;
+--	end if;
+--end process;	
 
 -- ********************************************************************************
 
@@ -283,13 +371,18 @@ begin
 		data_tx <= (others=>'0');
 		start_tx <= '0';
 		skip <= '0';
+		start_rx <= '1';
+		time_delay_reg <= (others=>'0');
+		time_delay_next <= (others=>'0');
 	else if clk'event and clk = '1' then
 		case state_uart_reg1 is
 			when idle1 =>
 				if done_rx = '1' then
+					start_rx <= '0';
 					state_uart_next1 <= start;
-					data_tx <= conv_std_logic_vector(temp_uart,8);
-	--				data_tx <= stlv_temp;
+--					data_tx <= conv_std_logic_vector(temp_uart,8);
+--					data_tx <= stlv_temp1a;
+					data_tx <= data_rx;
 
 					skip <= not skip;
 					if skip = '1' then
@@ -305,6 +398,7 @@ begin
 				start_tx <= '0';
 				state_uart_next1 <= delay;
 			when delay =>
+				start_rx <= '1';
 --				if time_delay_reg > TIME_DELAY8 then
 --					time_delay_next <= (others=>'0');
 					state_uart_next1 <= idle1;
@@ -312,7 +406,7 @@ begin
 --					time_delay_next <= time_delay_reg + 1;
 --				end if;	
 		end case;
---		time_delay_reg <= time_delay_next;
+		time_delay_reg <= time_delay_next;
 		state_uart_reg1 <= state_uart_next1;
 		end if;
 	end if;
@@ -348,8 +442,8 @@ begin
 				end if;
 			when start2 =>
 				start_tx2 <= '0';
-				state_uart_next2 <= delay;
-			when delay =>
+				state_uart_next2 <= delay2;
+			when delay2 =>
 --				if time_delay_reg > TIME_DELAY8 then
 --					time_delay_next <= (others=>'0');
 					state_uart_next2 <= idle2;

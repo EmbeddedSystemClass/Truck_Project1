@@ -1,5 +1,7 @@
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // NOAVR is define when compiled in test_write_data
+#define EEPROM_BURN
+
 #include "../sfr_helper.h"
 #ifndef NOAVR
 #include <avr/io.h>

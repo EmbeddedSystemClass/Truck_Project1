@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/dan/dev/Truck_Project1/Truck_App1/spi_sim_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="commonpckg" />
+            <top_module name="math_real" />
+            <top_module name="numeric_std" />
+            <top_module name="spi_sim" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_unsigned" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="19" />
+   <wave_markers>
+      <marker time="1900110000000" label="" />
+      <marker time="35366932000" label="" />
+      <marker time="10500000" label="" />
+   </wave_markers>
+   <wvobject fp_name="/spi_sim/miso_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">miso_i</obj_property>
+      <obj_property name="ObjectShortName">miso_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/state_dout_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">state_dout_reg</obj_property>
+      <obj_property name="ObjectShortName">state_dout_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/mspi_dout_vld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mspi_dout_vld</obj_property>
+      <obj_property name="ObjectShortName">mspi_dout_vld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/stlv_temp1a" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">stlv_temp1a[7:0]</obj_property>
+      <obj_property name="ObjectShortName">stlv_temp1a[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/mspi_dout_vld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mspi_dout_vld</obj_property>
+      <obj_property name="ObjectShortName">mspi_dout_vld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/mspi_din_vld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mspi_din_vld</obj_property>
+      <obj_property name="ObjectShortName">mspi_din_vld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/spi_master_unit/present_state" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">present_state</obj_property>
+      <obj_property name="ObjectShortName">present_state</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/ss_o" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ss_o[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ss_o[1:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/spi_master_unit/cs_n" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cs_n[1:0]</obj_property>
+      <obj_property name="ObjectShortName">cs_n[1:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/addr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addr[1:0]</obj_property>
+      <obj_property name="ObjectShortName">addr[1:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/spi_master_unit/addr_reg" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addr_reg[1:0]</obj_property>
+      <obj_property name="ObjectShortName">addr_reg[1:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/spi_master_unit/chip_select_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">chip_select_n</obj_property>
+      <obj_property name="ObjectShortName">chip_select_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/spi_master_unit/load_data" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">load_data</obj_property>
+      <obj_property name="ObjectShortName">load_data</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/test" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">test[3:0]</obj_property>
+      <obj_property name="ObjectShortName">test[3:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/skip3" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">skip3</obj_property>
+      <obj_property name="ObjectShortName">skip3</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/sclk_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sclk_o</obj_property>
+      <obj_property name="ObjectShortName">sclk_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/mosi_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mosi_o</obj_property>
+      <obj_property name="ObjectShortName">mosi_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/spi_sim/uut/stlv_temp1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">stlv_temp1[7:0]</obj_property>
+      <obj_property name="ObjectShortName">stlv_temp1[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>

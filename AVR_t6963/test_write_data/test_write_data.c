@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	char tempx[20];
 	char param_string[10];
 	int display_offset = 3;
-	UCHAR read_buf[NUM_ENTRY_SIZE];
+//	UCHAR read_buf[NUM_ENTRY_SIZE];
 	UINT temp_int;
 	UINT temp_int2 = 0;
 	UCHAR pic_data[AUX_DATA_SIZE];
@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
 	memset(P24_rt_params,0,NUM_RT_PARAMS*sizeof(RT_PARAM));
 #endif
 	burn_eeprom();
-	sample_data = (UINT *)malloc(no_data_index*sizeof(UINT));
+	// reserve an extra sample_data space for in case of 'escape'
+	sample_data = (UINT *)malloc((no_data_index+1)*sizeof(UINT));
 	for(i = 0;i < no_data_index;i++)
 		sample_data[i] = (i+500)*2+2;
 // comment out the following #if/#endif's to print out what's loaded by eeprom_burn() and the totals
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
 // write - simulate the PIC24
 	else if(type == 1)
 	{
-		memset(read_buf,0,sizeof(read_buf));
+//		memset(read_buf,0,sizeof(read_buf));
 		for(i = 0;i < 11;i++)
 			rtdata[i] = i;
 		rtdata[RT_RPM] = 0;
@@ -437,7 +438,9 @@ int main(int argc, char *argv[])
 						auxcmd = auxparam = 1;
 						if(pic_data[0] == CMD_NEW_DATA)
 							paux_state = DATA_READY;
-						else
+						else if(pic_data[0] == CMD_OLD_DATA)
+							paux_state = IDLE_AUX;
+						else	
 						{
 							paux_state = VALID_DATA;
 //							loop = break_out_loop(loop, paux_state);
@@ -449,9 +452,8 @@ int main(int argc, char *argv[])
 						auxcmd = auxparam = 2;
 //						for(i = 0;i < AUX_DATA_SIZE;i++)
 //							mvwprintw(menu_win, display_offset+26, 2+(i * 3),"%x  ",pic_data[i]);
-						paux_state = EXTRA;
+						paux_state = IDLE_AUX;
 						break;
-					case EXTRA:
 					default:
 						paux_state = IDLE_AUX;
 						break;
@@ -507,7 +509,7 @@ int main(int argc, char *argv[])
 					sample_data[aux_index] <<= 8;
 					pic_data2[1] |= test2x;
 					sample_data[aux_index] |= (UINT)pic_data2[1];
-					mvwprintw(menu_win, display_offset+30, 2,"after:%d    %x %x %x %x %d   ",sample_data[aux_index],pic_data2[0],pic_data2[1],pic_data2[2],pic_data2[3],test1y);
+					mvwprintw(menu_win, display_offset+30, 2,"after:%d %x %x %x %x %d   ",sample_data[aux_index],pic_data2[0],pic_data2[1],pic_data2[2],pic_data2[3],test1y);
 				}
 
 //				temp2 = (UINT)pic_data2[2];
@@ -584,9 +586,6 @@ static void disp_pstate(UCHAR state, char *str)
 		case DATA_READY:
 			strcpy(str,"DATA_READY\0");
 			break;
-		case EXTRA:
-			strcpy(str,"EXTRA\0");
-			break;
 		default:
 			strcpy(str,"<bad state>\0");
 			break;
@@ -608,8 +607,8 @@ static void disp_auxcmd(UCHAR state, char *str)
 		case CMD_NEW_DATA:
 			strcpy(str,"CMD_NEW_DATA\0");
 			break;
-		case CMD_EXTRA:
-			strcpy(str,"CMD_EXTRA\0");
+		case CMD_OLD_DATA:
+			strcpy(str,"CMD_OLD_DATA\0");
 			break;
 		default:
 		strcpy(str,"<bad cmd>\0");
