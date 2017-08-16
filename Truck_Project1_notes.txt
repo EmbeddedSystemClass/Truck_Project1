@@ -24,6 +24,10 @@ SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 FPGA to AVR works up to ~30K doing just an echo
 
+idea for new branch:
+PIC24 handles the menuing and sends cmds/param sets to AVR to just display menus, text entry etc
+on screen - 
+
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.

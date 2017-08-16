@@ -106,6 +106,7 @@ enum data_types
 	RT_HIGH2,			// bit 7 of UINT set
 	RT_HIGH3			// bit 15 of UINT set
 } DATA_TYPES;
+
 enum rt_types
 {
 	RT_RPM = RT_OFFSET,
@@ -121,6 +122,7 @@ enum rt_types
 	RT_AUX1,
 	RT_AUX2
 } RT_TYPES;
+
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
@@ -138,8 +140,10 @@ enum key_types
 	KP_A, // 'A'
 	KP_B, // 'B'
 	KP_C, // 'C'
-	KP_D // 'D'	(0xEF)
+	KP_D, // 'D'	(0xEF)
+	KP_SIM_DATA		// simulates sending data 
 } KEY_TYPES;
+
 enum states
 {
 	IDLE = 1,
@@ -154,6 +158,21 @@ enum states
 	SEND_UINT2		// UINT with bit 15 set
 } STATES;
 
+enum send_types
+{
+	T1,
+	T2,
+	T3,
+	T4,
+	T5,
+	T6,
+	T7,
+	T8,
+	T9,
+	T10
+} SEND_TYPES;
+
+#if 0
 enum aux_states
 {
 	IDLE_AUX,
@@ -169,6 +188,7 @@ enum aux_commands
 	CMD_NEW_DATA,			// AVR tells PIC24 it has new data to store
 	CMD_OLD_DATA
 } AUX_CMDS;
+#endif
 
 #define NUM_ENTRY_SIZE 7
 #define AUX_DATA_SIZE 4
@@ -197,7 +217,6 @@ enum aux_commands
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
 void display_labels(void);
-void set_defaults(void);
 #ifdef NOAVR
 void do_read(WINDOW *win, int fd, int display_offset);
 void set_win2(WINDOW *win);
@@ -209,13 +228,6 @@ int get_curr_menu(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
-#ifndef NOPARSE
-#ifdef MAIN_C
-int parse_P24(UCHAR ch, char *param_string, UCHAR *xbyte, UINT *xword);
-#else
-int parse_P24(WINDOW *win, int fd, UCHAR ch, char *param_string);
-#endif
-#endif
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
 int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
@@ -244,9 +256,6 @@ UCHAR get_col(int index);
 RT_PARAM rt_params[NUM_RT_PARAMS];
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24
-#ifdef NOAVR
-RT_PARAM P24_rt_params[NUM_RT_PARAMS];
-#endif
 //#ifdef NOAVR
 // we could read the labels into ram when in AVR mode but its just as easy to read them from
 // eeprom directly - doesn't take that much more time, plus it saves ram space in AVR
@@ -260,18 +269,18 @@ int total_offset;
 //#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
-UCHAR aux_type;	// tells PIC24 what to send when code = RT_AUX
-UCHAR paux_state;
-UCHAR aaux_state;
-//UCHAR aux_data[AUX_DATA_SIZE];
-//UCHAR aux_data2[AUX_DATA_SIZE];
+//int sample_data[10];
+UINT send_data;
+UINT recv_data;
+#ifdef NOAVR
+int global_fd;
+#endif
 void set_state_defaults(void);
 CHECKBOXES check_boxes[NUM_CHECKBOXES];
 int curr_checkbox;
 int last_checkbox;
 int scale_type;
 int prev_scale_type;
-UCHAR ask_data_ready;
 UCHAR aux_index;
 UCHAR new_data_ready;
 UCHAR mod_data_ready;

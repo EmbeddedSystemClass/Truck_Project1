@@ -131,44 +131,17 @@ int main(void)
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
 	GDispClrTxt();
-	set_defaults();
 	_delay_us(10);
 	init_list();
 	display_labels();
 	done = 0;
 	char param_string[10];
-	UCHAR avr_data[AUX_DATA_SIZE];
-	UCHAR avr_data2[AUX_DATA_SIZE];
-	UCHAR auxcmd, auxparam;
-	UINT tempint;
-	UINT tempint2 = 0;
-	UINT tempint3 = 0;
 
 	while (1)
 	{
 		ret_char = receiveByte();
 		ret_char = get_key(ret_char);
-		done = parse_P24(ret_char, param_string, &xbyte, &xword);
 
-// try this, just to be a little more cryptic:
-//		done = parse_P24(get_key(receiveByte()), param_string, &xbyte, &xword);
-
-		if(done)
-		{
-			if(current_param == RT_RPM)
-			{
-#ifdef TTY_DISPLAY
-				printHexByte((UCHAR)(xword>>8));
-				printHexByte((UCHAR)xword);
-//			GDispStringAt(2,2,param_string);
-#else
-				transmitByte((UCHAR)(xword>>8));
-				transmitByte((UCHAR)xword);
-//			GDispStringAt(2,2,param_string);
-#endif
-			}
-			else if(current_param != RT_AUX1 && current_param != RT_AUX2)
-			{
 #ifdef TTY_DISPLAY
 				printHexByte(xbyte);
 //			GDispStringAt(2,4,param_string);
@@ -176,161 +149,28 @@ int main(void)
 				transmitByte(xbyte);
 //			GDispStringAt(2,4,param_string);
 #endif
-			}
-			else if(current_param == RT_AUX1)
-			{
-				tempint = atol(param_string);
-				auxparam = (UCHAR)tempint;
-				tempint >>= 8;
-				auxcmd = (UCHAR)tempint;
-/*
-				mvwprintw(win, DISP_OFFSET+27, 2,"cmd: %x  param: %x  ",auxcmd,auxparam);
-				mvwprintw(win, DISP_OFFSET+35, 2,"mod_data_ready: %d  ",mod_data_ready);
-				mvwprintw(win, DISP_OFFSET+36, 2,"new_data_ready: %d  ",new_data_ready);
-*/
-				switch(aaux_state)
-				{
-					// menu choice sets aux_index to something other than 0
-					// when it wants certain data from PIC24
-					case IDLE_AUX:
-						mod_data_ready = 0;
-						if(aux_index != 0)
-						{
-							avr_data[0] = CMD_GET_DATA;
-							avr_data[1] = aux_index-1;
-							aaux_state = DATA_REQ;
-						}
-						else aaux_state = IDLE_AUX;
-						break;
-					// wait for PIC24 to get data
-					case DATA_REQ:
-						aux_index = 0;
-						if(auxcmd == CMD_DATA_READY)	// new data should be in tempint2
-						{
-							aaux_state = VALID_DATA;
-							sprintf(cur_global_number,"%-6u",tempint2);
-							i = 0;
-							do
-							{
-								i++;
-							}while(cur_global_number[i] != 0x20);
-							cur_global_number[i] = 0;
-/*
-							strncpy(tempnum,cur_global_number+i,NUM_ENTRY_SIZE-i);
-							mvwprintw(win, DISP_OFFSET+24,2,"tempnum: %s   %d",tempnum,i);
-							memset(cur_global_number,0,NUM_ENTRY_SIZE);
-							strcpy(cur_global_number,tempnum);
-							cur_global_number[NUM_ENTRY_SIZE-i] = 0;
-							mvwprintw(win, DISP_OFFSET+25,2,"cur:     %sx     ",cur_global_number);
-							mvwprintw(win, DISP_OFFSET+26,2,"%sx   %d   ",cur_global_number,tempint2);
-*/
-							new_data_ready = 1;
-//								loop = 0;
-						}
-						else
-						{
-							aaux_state = DATA_REQ;
-//								loop = break_out_loop(loop,aaux_state);
-//								mvwprintw(win, DISP_OFFSET+28,2,"loop: %d ",loop);
-						}
-						break;
-					// read data into buffer and waits for user to modify it (or cancel)
-					case VALID_DATA:
-//							mvwprintw(win, DISP_OFFSET+28,2,"             ");
-//							mvwprintw(win, DISP_OFFSET+35, 2,"mod_data_ready: %d  ",mod_data_ready);
-						if(mod_data_ready == 1)
-						{
-							aaux_state = DATA_READY;
-//								loop = 0;
-						}
-						else
-						{
-//								loop = break_out_loop(loop,aaux_state);
-//								mvwprintw(win, DISP_OFFSET+28,2,"loop: %d ",loop);
-							aaux_state = VALID_DATA;
-						}
-						break;
-					// data has been modified by AVR and is ready to send back to PIC24
-					case DATA_READY:
-						tempint2 = atol(new_global_number);
-						avr_data[0] = CMD_NEW_DATA;
-						aaux_state = DATA_READY;
-						avr_data2[0] = (UCHAR)(tempint2 >> 8);
-						avr_data2[1] = (UCHAR)tempint2;
-//						limit16++;
-//							avr_data2[2] = (UCHAR)(limit16a >> 8);
-//							avr_data2[3] = (UCHAR)limit16a;
-// this is a work-around for strange bug - for some reason the high bit of the 2nd byte is getting unset
-						avr_data2[2] = avr_data2[0];
-						avr_data2[3] = avr_data2[1] >> 1;
-//						limit16a += 2;
-//						mvwprintw(win, DISP_OFFSET+29, 2,"%d   %d   ",limit16,limit16a);
-//							if(++taux_index > no_menu_labels)
-//								taux_index = 1;
-//						mvwprintw(win, DISP_OFFSET+32, 2,"                                                    ");
-						aaux_state = IDLE_AUX;
-						break;
-					default:
-						aaux_state = IDLE_AUX;
-						break;
-				}
-/*
-				mvwprintw(win, DISP_OFFSET+30, 2,"aux_index: %x  ",aux_index);
-				disp_astate(aaux_state,tempx);
-				mvwprintw(win, DISP_OFFSET+31, 2,"%s     ",tempx);
-				disp_auxcmd(avr_data[0],tempx);
-				mvwprintw(win, DISP_OFFSET+31, 20,"%s     ",tempx);
 
-				for(i = 0;i < AUX_DATA_SIZE;i++)
-					mvwprintw(win, display_offset+32, 2+(i * 3),"%x  ",avr_data[i]);
-*/
-//					avr_data[2] = (UCHAR)(tempint3 >> 8);
-//					avr_data[3] = (UCHAR)tempint3;
-				avr_data[2] = avr_data[3] = 0;
-				tempint3++;
-// write avr_data
-//				write(fd,avr_data,AUX_DATA_SIZE);
-				for(i = 0;i < AUX_DATA_SIZE;i++)
-					transmitByte(avr_data[i]);
-
-			} else if (current_param == RT_AUX2)
+		for(i = 0;i < no_rtparams;i++)
+		{
+			if(rt_params[i].type == current_param)
 			{
-				if(aaux_state == DATA_REQ)
-				{
-					tempint2 = atol(param_string);
-					strcpy(param_string,cur_global_number);
-//					mvwprintw(win, DISP_OFFSET+34, 2,"tempint2: %d  ",tempint2);
-				}
-				else tempint2 = 0;
-//					for(i = 0;i < AUX_DATA_SIZE;i++)
-//						avr_data2[i]++;
-//				mvwprintw(win, display_offset+33, 2,"avr_data2:");
-//				for(i = 0;i < AUX_DATA_SIZE;i++)
-//					mvwprintw(win, display_offset+33, 12+(i * 3),"%x  ",avr_data2[i]);
-// write avr_data2
-//				write(fd,avr_data2,AUX_DATA_SIZE);
-				for(i = 0;i < AUX_DATA_SIZE;i++)
-					transmitByte(avr_data2[i]);
+				GDispStringAt(rt_params[i].row,rt_params[i].col+9,"      ");
 			}
-			for(i = 0;i < no_rtparams;i++)
-			{
-				if(rt_params[i].type == current_param)
-				{
-					GDispStringAt(rt_params[i].row,rt_params[i].col+9,"      ");
-				}
 
-				if(rt_params[i].type == current_param && rt_params[i].shown == SHOWN_SENT)
-				{
-					GDispStringAt(rt_params[i].row,rt_params[i].col+10,param_string);
-				}
+			if(rt_params[i].type == current_param && rt_params[i].shown == SHOWN_SENT)
+			{
+				GDispStringAt(rt_params[i].row,rt_params[i].col+10,param_string);
 			}
-			set_defaults();
 		}
-
 	}
 	return (0);									  // this should never happen
 }
 
+void set_defaults(void)
+{
+	temp_UINT  = 0;
+	parse_state = IDLE;
+}
 
 //******************************************************************************************//
 //******************************************* dispRC ***************************************//
@@ -372,9 +212,3 @@ void CheckRC(int *row, int *col, UCHAR *k)
 		*k = 0x41;
 }
 
-
-void set_defaults(void)
-{
-	temp_UINT = 0;
-	parse_state = IDLE;
-}

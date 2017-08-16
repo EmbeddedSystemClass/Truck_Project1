@@ -146,27 +146,18 @@ int burn_eeprom(void)
 //	menu_structs[i].fptr = fptr;
 //	menu_structs[i].menu = menu;
 //	menu_structs[i].label = label;
-// A,B,C,D,#,0
-	// main menu	0
-/*
-	for(i = 0;i < no_rtparams;i++)
-	{
-		printf("%d\t",P24_rt_params[i].row);
-		printf("%d\t",P24_rt_params[i].col);
-		printf("%d\t",P24_rt_params[i].shown);
-		printf("%d\t",P24_rt_params[i].dtype);
-		printf("%d\n",P24_rt_params[i].type);
-	}
-
+#if 0
 	UCHAR enabled;		// if alt function will replace generic function
 	UCHAR fptr;			// which function to call (menu_types)
 	UCHAR menu;			// if fptr == 0 then it means goto this menu
 	UCHAR label;		// which label to display in legend (labels)
-
-*/
+	UCHAR index;		// if > 0 then this is index into sample_data
+#endif
+// A,B,C,D,#,0
+	// main menu	0
 	i = 0;
 	no_data_index = 0;
-//							enabled fptr    menu       label
+
 	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
 	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
 	i = update_menu_structs(i, 1, 0,		MENU1C,		MENU1C,0);
@@ -193,7 +184,7 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum6,7);
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum7,8);
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum8,9);
-	i = update_menu_structs(i, 0, 0,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, 0,		chkboxes,	chkboxes,0);
 	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
 	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
 
@@ -223,7 +214,7 @@ int burn_eeprom(void)
 
 	// alnum entry	36
 	i = update_menu_structs(i, 1, alnum_ent, 0, 		alnum_ent,0);		// A
-	i = update_menu_structs(i, 1, cur_for, 	0, 			cur_for,0);		// B
+	i = update_menu_structs(i, 1, cur_for, 	0, 			cur_for,0);			// B
 	i = update_menu_structs(i, 1, next, 	0, 			next,0);			// C
 	i = update_menu_structs(i, 1, caps, 	0,  		caps,0);			// D
 	i = update_menu_structs(i, 1, spec, 	0, 			spec,0);			// #
@@ -231,9 +222,9 @@ int burn_eeprom(void)
 
 	// checkboxes	42
 	i = update_menu_structs(i, 1, ckup, 	0, 			ckup,0);			// A
-	i = update_menu_structs(i, 1, ckdown, 	0, 			ckdown,0);		// B
+	i = update_menu_structs(i, 1, ckdown, 	0, 			ckdown,0);			// B
 	i = update_menu_structs(i, 1, cktoggle, 0, 			cktoggle,0);		// C
-	i = update_menu_structs(i, 1, ckenter, 	0,  		ckenter,0);		// D
+	i = update_menu_structs(i, 1, ckenter, 	0,  		ckenter,0);			// D
 	i = update_menu_structs(i, 0, ckesc, 	0, 			ckesc,0);			// #
 	i = update_menu_structs(i, 0, 0, 		0, 			0,0);				// 0
 
@@ -269,16 +260,6 @@ int burn_eeprom(void)
 //	printf("no_menu_structs: %d\n",no_menu_structs);
 //	printf("total_offset: %d\n",total_offset);
 #endif
-/*
-	for(i = 0;i < no_rtparams;i++)
-	{
-		printf("%d\t",P24_rt_params[i].row);
-		printf("%d\t",P24_rt_params[i].col);
-		printf("%d\t",P24_rt_params[i].shown);
-		printf("%d\t",P24_rt_params[i].dtype);
-		printf("%d\n",P24_rt_params[i].type);
-	}
-*/
 	return 0;
 }
 //******************************************************************************************//
@@ -335,12 +316,6 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	rt_params[i].type = type;
 #ifndef NOAVR
     eeprom_update_block(&rt_params[i], eepromString+total_offset, sizeof(RT_PARAM));
-#else
-	P24_rt_params[i].row = row;
-	P24_rt_params[i].col = col;
-	P24_rt_params[i].shown = shown;
-	P24_rt_params[i].dtype = dtype;
-	P24_rt_params[i].type = type;
 #endif
 	total_offset += sizeof(RT_PARAM);
 //	printf("total_offset = %d\n",total_offset);

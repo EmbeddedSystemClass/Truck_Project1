@@ -34,8 +34,11 @@ parse_P24.o : ../parse_P24.c ../main.h ../sfr_helper.h
 eeprom_burn.o : ../eeprom/eeprom_burn.c ../main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o ../eeprom/eeprom_burn.c
 
-test_data : menus.o test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o parse_P24.o
-	${CC} ${CFLAGS} test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o parse_P24.o -o test_data -lcurses
+#test_data : menus.o test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o parse_P24.o
+#	${CC} ${CFLAGS} test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o parse_P24.o -o test_data -lcurses
+
+test_data : menus.o test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o
+	${CC} ${CFLAGS} test_write_data.o do_read.o t6963.o menus.o eeprom_burn.o -o test_data -lcurses
 	
 clean :
 	rm -f *.o *~ *# core  a.out \

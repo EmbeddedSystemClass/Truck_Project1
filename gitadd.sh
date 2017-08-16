@@ -104,6 +104,7 @@ git add AVR_t6963/eeprom/eeprom_burn.c
 git add AVR_t6963/eeprom/main_burn.c
 git add AVR_t6963/eeprom/Makefile
 git add AVR_t6963/menus.c
+git add AVR_t6963/main.c
 git add AVR_t6963/main.h
 git add AVR_t6963/spi.c
 git add AVR_t6963/spi.h

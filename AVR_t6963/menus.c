@@ -10,6 +10,12 @@
 #include <avr/eeprom.h>
 #include "macros.h"
 #else
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
 #include <ncurses.h>
 #endif
 #include "sfr_helper.h"
@@ -91,10 +97,12 @@ char *get_rt_label(int index)
 {
 	return rt_labels[index];
 }
+/*
 char *get_menu_label(int index)
 {
 	return menu_labels[index];
 }
+*/
 UCHAR get_row(int index)
 {
 //	return menu_structs[index].row;
@@ -285,14 +293,11 @@ void init_list(void)
 	menu_list[0] = current_fptr;
 	curr_type = MAIN;
 	dirty_flag = 0;
-	display_menus(0);
 	no_setlist = 1;
-	aux_type = 0;
 	curr_checkbox = 0;
 	last_checkbox = NUM_CHECKBOXES-1;
 	scale_type = 0;
 	prev_scale_type = 1;
-	ask_data_ready = 0;
 	new_data_ready = 0;
 	data_entry_mode = 0;
 	mod_data_ready = 0;
@@ -377,6 +382,8 @@ static UCHAR generic_menu_function(UCHAR ch, int  index)
 	UCHAR ret_char = ch;
 	int menu_index = index * 6;
 	int i;
+	UCHAR temp;
+	
 	switch (ch)
 	{
 		case KP_0:
@@ -446,6 +453,20 @@ static UCHAR generic_menu_function(UCHAR ch, int  index)
 				prev_list();
 //			mvwprintw(win, 41, 3, "ast");
 			break;
+		case KP_SIM_DATA:	
+#ifdef NOAVR
+			write(global_fd,&send_data,sizeof(UINT));
+			read(global_fd,&recv_data,sizeof(UINT));
+			mvwprintw(win, DISP_OFFSET+7, 20,"recv_data: %d       ",recv_data);
+#else
+			transmitByte(send_data >> 8);
+			transmitByte(send_data);
+			recv_data = receiveByte();
+			temp = receiveByte();
+			recv_data |= (temp << 8);
+#endif
+			send_data = recv_data;
+			break;
 		default:
 			break;
 	}
@@ -508,7 +529,7 @@ static UCHAR escape(UCHAR ch)
 	clean_disp_num();
 //	scale_disp(SCALE_DISP_ALL);
 	data_entry_mode = 0;
-	mod_data_ready = 2;
+//	mod_data_ready = 2;
 	return ch;
 }
 //******************************************************************************************//
@@ -527,6 +548,7 @@ static UCHAR enter(UCHAR ch)
 		prev_list();
 		clean_disp_num();
 		mod_data_ready = 1;
+//		sample_data[aux_index-1] = atol(new_global_number);
 	}
 #ifdef NOAVR
 	mvwprintw(win, DISP_OFFSET+37, 2,"new: %s       %d    ",new_global_number,limit);
@@ -550,7 +572,7 @@ static void start_numentry(void)
 	clean_disp_num();
 	dispCharAt(NUM_ENTRY_ROW,cur_col,'/');
 	dispCharAt(NUM_ENTRY_ROW,cur_col+NUM_ENTRY_SIZE,'/');
-//	set_list(NUM_ENTRY);
+	new_data_ready = 1;
 }
 //******************************************************************************************//
 //********************************* display_edit_value *************************************//
@@ -721,7 +743,7 @@ static void init_checkboxes(void)
 	int i;
 	UCHAR row, col;
 	scale_disp(SCALE_DISP_SOME);
-	row = 2;
+	row = 1;
 	col = 3;
 	curr_checkbox = 0;
 	memset(check_boxes,0,sizeof(CHECKBOXES)*NUM_CHECKBOXES);
@@ -765,12 +787,12 @@ static UCHAR toggle_checkboxes(UCHAR ch)
 	if(check_boxes[curr_checkbox].checked == 1)
 	{
 		check_boxes[curr_checkbox].checked = 0;
-		dispCharAt(1+check_boxes[curr_checkbox].index,0,0x20);	// display 'blank'
+		dispCharAt(2+check_boxes[curr_checkbox].index,0,0x20);	// display 'blank'
 	}
 	else
 	{
 		check_boxes[curr_checkbox].checked = 1;
-		dispCharAt(1+check_boxes[curr_checkbox].index,0,120);	// display 'x'
+		dispCharAt(2+check_boxes[curr_checkbox].index,0,120);	// display 'x'
 	}
 	return ch;
 }
