@@ -1,8 +1,5 @@
-// test_write_data.c - used to test the data protocol between the AVR and PIC24 where the
-// data string is sent with FF,FE,FD.. and the next 3 bytes are shifted so they don't
-// have the high bits set - displays in ncurses window
-// when this is called with write params - 'w'... it simulates the PIC24
-// when called with just the 'r' param, it simulates the AVR (calls do_read below)
+// sim_read.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,8 +29,6 @@
 
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
-static UCHAR get_keypress(UCHAR ch,WINDOW *win, int display_offset);
-void do_read(WINDOW *win, int fd, int display_offset);
 
 //******************************************************************************************//
 //****************************************** main ******************************************//
@@ -132,37 +127,11 @@ int main(int argc, char *argv[])
 	i = 0;
 	j = 0;
 	res = 0;
-	mvwprintw(menu_win, display_offset, 4, "res: %x  ",res);
-	wrefresh(menu_win);
 	while(j < 100)
-//	for(itr = 0;itr < iters;itr++)
 	{
-//			usleep(tdelay);
-//		wrefresh(menu_win);
-//			if(++i > 15)
-//				i = 0;
-//		res = read(fd,(void*)temp_params,NUM_UCHAR_PARAMS);		this doesn't work
-//		for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//			res += read(fd,(void*)&temp_params[i],1);
-
-		mvwprintw(menu_win, display_offset, 4, "res: %d  %d",res,j);
-		res = 0;
 		read_get_key(temp_params);
 
-//		for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//			mvwprintw(menu_win, display_offset+i+25, 4, "%d   ",cur_param_string[i]);
-/*
-		if(wkey == KP_SIM_DATA)
-		{
-			read(fd,&recv_data,sizeof(UINT));
-			write(fd,&send_data,sizeof(UINT));
-			send_data++;
-			mvwprintw(menu_win, display_offset+2, 4, "recv_data: %d  ",recv_data);
-		}
-*/
 		j++;
-//		mvwprintw(menu_win, display_offset-1, 4, "j: %d  ",j);
-//		wrefresh(menu_win);
 	}
 	delwin(menu_win);
 	clrtoeol();
@@ -171,114 +140,6 @@ int main(int argc, char *argv[])
 	tcsetattr(fd,TCSANOW,&oldtio);
 	close(fd);
 	exit(0);
-}
-
-//******************************************************************************************//
-//*************************************** get_keypress *************************************//
-//******************************************************************************************//
-static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
-{
-	UCHAR wkey;
-	if(key != 0xff)
-	{
-		switch(key)
-		{
-			case '0':
-				mvwprintw(win, display_offset+23, 8, "zero  ");
-				wkey = KP_0;
-				break;
-			case '1':
-				mvwprintw(win, display_offset+23, 8, "one   ");
-				wkey = KP_1;
-				break;
-			case '2':
-				mvwprintw(win, display_offset+23, 8, "two   ");
-				wkey = KP_2;
-				break;
-			case '3':
-				mvwprintw(win,display_offset+23, 8, "three ");
-				wkey = KP_3;
-				break;
-			case '4':
-				mvwprintw(win, display_offset+23, 8, "four  ");
-				wkey = KP_4;
-				break;
-			case '5':
-				mvwprintw(win, display_offset+23, 8, "five  ");
-				wkey = KP_5;
-				break;
-			case '6':
-				mvwprintw(win, display_offset+23, 8, "six   ");
-				wkey = KP_6;
-				break;
-			case '7':
-				mvwprintw(win, display_offset+23, 8, "seven ");
-				wkey = KP_7;
-				break;
-			case '8':
-				mvwprintw(win, display_offset+23, 8, "eight ");
-				wkey = KP_8;
-				break;
-			case '9':
-				mvwprintw(win, display_offset+23, 8, "nine  ");
-				wkey = KP_9;
-				break;
-			case '*':
-				mvwprintw(win, display_offset+23, 8, "ast   ");
-				wkey = KP_AST;
-				break;
-			case '#':
-				mvwprintw(win, display_offset+23, 8, "pound ");
-				wkey = KP_POUND;
-				break;
-			case 'A':
-			case 'a':
-				mvwprintw(win, display_offset+23, 8, "A     ");
-				wkey = KP_A;
-				break;
-			case 'B':
-			case 'b':
-				mvwprintw(win, display_offset+23, 8, "B     ");
-				wkey = KP_B;
-				break;
-			case 'C':
-			case 'c':
-				mvwprintw(win, display_offset+23, 8, "C     ");
-				wkey = KP_C;
-				break;
-			case 'D':
-			case 'd':
-				mvwprintw(win, display_offset+23, 8, "D     ");
-				wkey = KP_D;
-				break;
-// use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
-			case 'Y':
-			case 'y':
-				mvwprintw(win, display_offset+23, 8, "pound ");
-				wkey = KP_POUND;
-				break;
-			case 'Z':
-			case 'z':
-				mvwprintw(win, display_offset+23, 8, "ast   ");
-				wkey = KP_AST;
-				break;
-			case 'U':
-			case 'u':
-				mvwprintw(win, display_offset+23, 8,"U    ");
-				wkey = 0xff;
-				break;
-			case 'V':
-			case 'v':
-				mvwprintw(win, display_offset+23, 8,"V     ");
-				wkey = KP_SIM_DATA;
-				break;
-			default:
-				mvwprintw(win, display_offset+23, 8, "?     ");
-				wkey = 0xff;
-				break;
-		}
-	}
-	return wkey;
 }
 
 //******************************************************************************************//

@@ -7,6 +7,9 @@
 #define NUM_MENU_LABELS 34
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
+#define NUM_MENU_CHOICES 6
+#define NUM_MENUS 9
+#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES+1 // plus 1 for ENDMENU
 #define DISP_OFFSET 5
 #define NUM_CHECKBOXES 10
 #define SCALE_DISP_ALL 0
@@ -178,11 +181,13 @@ void set_win(WINDOW *win);
 void init_list(void);
 UCHAR get_key(UCHAR ch, UCHAR *str);
 UCHAR read_get_key(UCHAR *str);
+int curr_fptr_changed(void);
+int get_curr_menu(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-//int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index);
+int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_menu_labels(int i, char *ramstr);
 int update_rt_labels(int index, char *ramstr);
@@ -202,7 +207,7 @@ char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 //char labels[1][MAX_LABEL_LEN];
 // just have 1 copy in ram and reload from eeprom every time we change menus
-//MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
+MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
 char *get_label(int index);
 UCHAR get_row(int index);
 UCHAR get_col(int index);
@@ -236,5 +241,6 @@ UCHAR aux_index;
 UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
-int menu_index;
+
 UCHAR cur_param_string[NUM_UCHAR_PARAMS];
+

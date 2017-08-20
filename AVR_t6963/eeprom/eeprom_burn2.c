@@ -72,6 +72,10 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"test8\0");
 	i = update_menu_labels(i,"<end>\0");
 // end of menus
+	i = update_menu_labels(i,"mchange\0");
+	i = update_menu_labels(i,"exec_ch\0");
+	i = update_menu_labels(i,"chkbox\0");
+	i = update_menu_labels(i,"non_fnc\0");
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"back\0");
 	i = update_menu_labels(i,"esc\0");
@@ -158,145 +162,6 @@ int burn_eeprom(void)
 	no_data_index = 0;
 // home
 
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2C,		MENU2C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 1a
-	i = update_menu_structs(i, 1, _exec_choice,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _exec_choice,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _exec_choice,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _exec_choice,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _exec_choice,		MENU2B,		MENU2B,0);
-	i = update_menu_structs(i, 1, _exec_choice,		MENU2C,		MENU2C,0);
-// 1b	
-	i = update_menu_structs(i, 1, _do_chkbox,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _do_chkbox,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _do_chkbox,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _do_chkbox,		MENU3D,		MENU3D,0);
-	i = update_menu_structs(i, 1, _do_chkbox,		MENU4A,		MENU4A,0);
-	i = update_menu_structs(i, 1, _do_chkbox,		MENU4B,		MENU4B,0);
-// 1c	
-	i = update_menu_structs(i, 1, _non_func,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _non_func,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _non_func,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _non_func,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _non_func,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _non_func,		MENU2B,		MENU2B,0);
-// 1d	
-//#if 0
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-// 2a	
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-//#if 0
-// 2b	
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 2c	
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 2d
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-	i = update_menu_structs(i, 0, _menu_change,		ENDMENU,	ENDMENU,0);
-	
-#if 0
-	// menu 1a		6
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum0,1);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum1,2);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum2,3);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum3,4);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum4,5);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum5,6);
-
-	// menu 1b		12
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum6,7);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum7,8);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum8,9);
-	i = update_menu_structs(i, 1, 0,		chkboxes,	chkboxes,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-
-	// menu 1c		18
-	i = update_menu_structs(i, 1, 0,		num_entry,	num_entry,0);
-	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, 0,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, 0,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-
-	// menu 1d		24
-	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, 0,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-
-	// num_entry	30
-	i = update_menu_structs(i, 1, entr, 	0, 			entr,0);
-	i = update_menu_structs(i, 1, back, 	0,  		back,0);
-	i = update_menu_structs(i, 1, esc, 		0, 			esc,0);
-	i = update_menu_structs(i, 1, 0, 		0, 			0,0);
-	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
-	i = update_menu_structs(i, 0, 0, 		MAIN,		MAIN,0);
-
-	// alnum entry	36
-	i = update_menu_structs(i, 1, alnum_ent, 0, 		alnum_ent,0);		// A
-	i = update_menu_structs(i, 1, cur_for, 	0, 			cur_for,0);			// B
-	i = update_menu_structs(i, 1, next, 	0, 			next,0);			// C
-	i = update_menu_structs(i, 1, caps, 	0,  		caps,0);			// D
-	i = update_menu_structs(i, 1, spec, 	0, 			spec,0);			// #
-	i = update_menu_structs(i, 1, small, 	0,			small,0);			// 0
-
-	// checkboxes	42
-	i = update_menu_structs(i, 1, ckup, 	0, 			ckup,0);			// A
-	i = update_menu_structs(i, 1, ckdown, 	0, 			ckdown,0);			// B
-	i = update_menu_structs(i, 1, cktoggle, 0, 			cktoggle,0);		// C
-	i = update_menu_structs(i, 1, ckenter, 	0,  		ckenter,0);			// D
-	i = update_menu_structs(i, 0, ckesc, 	0, 			ckesc,0);			// #
-	i = update_menu_structs(i, 0, 0, 		0, 			0,0);				// 0
-
-	// menu 2a		48
-	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
-	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
-	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
-	i = update_menu_structs(i, 0, 0, 		0,			0,0);
-
-	// 2b			54
-	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 0, 0, 0, 0,0);
-	i = update_menu_structs(i, 0, 0, 0, 0,0);
-	i = update_menu_structs(i, 0, 0, 0, 0,0);
-	i = update_menu_structs(i, 0, 0, 0, 0,0);
-#endif
 	no_menu_structs = i;
 	// now we can write to the NO_MENUS_EEPROM_LOCATION in eeprom
 #ifndef	TEST_WRITE_DATA
@@ -389,24 +254,6 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 	UCHAR label;			// which label to display in legend (labels)
 	UCHAR index;		// if > 0 then this is index into sample_data
 */
-	menu_structs[i].enabled = enabled;
-//	menu_structs[i]._index = i;
-	if(enabled == 1)
-	{
-		menu_structs[i].fptr = fptr;
-		menu_structs[i].menu = menu;
-		menu_structs[i].label = label;
-		menu_structs[i].index = index;
-		if(index > 0)
-			no_data_index++;
-	}
-	else
-	{
-		menu_structs[i].fptr = 0;
-		menu_structs[i].menu = 0;
-		menu_structs[i].label = label;
-		menu_structs[i].index = 0;
-	}
 #ifndef TEST_WRITE_DATA
     eeprom_update_block(&menu_structs, eepromString+total_offset, sizeof(MENU_FUNC_STRUCT));
 #endif

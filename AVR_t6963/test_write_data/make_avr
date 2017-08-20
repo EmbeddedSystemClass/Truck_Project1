@@ -25,11 +25,11 @@ AVR_menu.o : ../AVR_menu.c
 sim_read.o : sim_read.c ../avr_main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_read.o sim_read.c
 
-eeprom_burn.o : ../eeprom/eeprom_burn.c ../avr_main.h ../sfr_helper.h
-	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o ../eeprom/eeprom_burn.c
+eeprom_burn2.o : ../eeprom/eeprom_burn2.c ../avr_main.h ../sfr_helper.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn2.o ../eeprom/eeprom_burn2.c
 
-sim_read : AVR_menu.o sim_read.o t6963.o eeprom_burn.o
-	${CC} ${CFLAGS} sim_read.o t6963.o AVR_menu.o eeprom_burn.o -o sim_read -lcurses
+sim_read : AVR_menu.o sim_read.o t6963.o eeprom_burn2.o
+	${CC} ${CFLAGS} sim_read.o t6963.o AVR_menu.o eeprom_burn2.o -o sim_read -lcurses
 	
 clean :
 	rm -f *.o *~ *# core  a.out \

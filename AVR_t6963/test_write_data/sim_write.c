@@ -16,7 +16,7 @@
 #include <ncurses.h>
 #include "../sfr_helper.h"
 //#include "../main.h"
-#include "../avr_main.h"
+#include "../pic_main.h"
 #include "../t6963.h"
 
 #define BAUDRATE B19200
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 		cur_param_string[i] = i;
 	j = 0;
 	res = 0;
-//#if 0
+#if 0
 	mvwprintw(menu_win, display_offset,2,"test  ");
 	wrefresh(menu_win);
 	getch();
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"                          ");	
 		wrefresh(menu_win);
 	}
-//#endif
+#endif
 	i = 0;
 	j = 0;
 	init_list();
