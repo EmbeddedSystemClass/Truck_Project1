@@ -1,9 +1,9 @@
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
-// NOAVR is define when compiled in test_write_data
+// TEST_WRITE_DATA is define when compiled in test_write_data
 #define EEPROM_BURN
 
 #include "../sfr_helper.h"
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
 #include <avr/io.h>
 #include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include <avr/eeprom.h>
@@ -12,13 +12,13 @@
 #include "../macros.h"
 #else
 #include <ncurses.h>
-//#warning "NOAVR defined"
+//#warning "TEST_WRITE_DATA defined"
 #endif
-#include "../main.h"
+#include "../avr_main.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
 extern char eepromString[STRING_LEN] EEMEM;
 #endif
 //******************************************************************************************//
@@ -33,7 +33,7 @@ int burn_eeprom(void)
 	no_menu_structs = 0;
 	total_offset = 0;
 
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
     printString("\r\nwriting to eeprom...\r\n");
 #endif
     i = 0;
@@ -58,11 +58,9 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"MENU1b\0");
 	i = update_menu_labels(i,"MENU1c\0");
 	i = update_menu_labels(i,"MENU1d\0");
-	i = update_menu_labels(i,"nument\0");
-	i = update_menu_labels(i,"alnum\0");
-	i = update_menu_labels(i,"checkbox\0");
 	i = update_menu_labels(i,"MENU2a\0");
-	i = update_menu_labels(i,"MENU2b\0");
+	i = update_menu_labels(i,"MENU2B\0");
+	i = update_menu_labels(i,"MENU2c\0");
 	i = update_menu_labels(i,"test0\0");
 	i = update_menu_labels(i,"test1\0");
 	i = update_menu_labels(i,"test2\0");
@@ -72,6 +70,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"test6\0");
 	i = update_menu_labels(i,"test7\0");
 	i = update_menu_labels(i,"test8\0");
+	i = update_menu_labels(i,"<end>\0");
 // end of menus
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"back\0");
@@ -90,7 +89,7 @@ int burn_eeprom(void)
 	no_menu_labels = i;
 #endif
 	i = 0;
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
 	eeprom_update_word((UINT *)NO_RT_LABELS_EEPROM_LOCATION,no_rt_labels);
 	printString("\r\nno_rt_labels: ");
 	printHexByte((UCHAR)no_rt_labels>>8);
@@ -126,7 +125,7 @@ int burn_eeprom(void)
 	i = update_rtparams(i, 6, 0, SHOWN_SENT, 3, RT_AUX2);
 	no_rtparams = i;
 // write to the number of rt_params location in eeprom the number of rt_params
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
 	eeprom_update_word((UINT *)NO_RTPARAMS_EEPROM_LOCATION,no_rtparams);
 	printString("\r\nno_rtparams: ");
 	printHexByte((UCHAR)no_rtparams>>8);
@@ -157,21 +156,75 @@ int burn_eeprom(void)
 	// main menu	0
 	i = 0;
 	no_data_index = 0;
+// home
 
-	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, 0,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, 0,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, 0,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, 0,		MENU2B,		MENU2B,0);
-/*
-	i = update_menu_structs(i, 1, 0,		num_entry,	num_entry,0);
-	i = update_menu_structs(i, 1, 0,		chkboxes,	chkboxes,0);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum1,1);
-	i = update_menu_structs(i, 1, 0,		num_entry,	testnum2,2);
-	i = update_menu_structs(i, 1, 0,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, 0,		MENU1D,		MENU1D,0);
-*/
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2C,		MENU2C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+// 1a
+	i = update_menu_structs(i, 1, _exec_choice,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _exec_choice,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _exec_choice,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _exec_choice,		MENU2A,		MENU2A,0);
+	i = update_menu_structs(i, 1, _exec_choice,		MENU2B,		MENU2B,0);
+	i = update_menu_structs(i, 1, _exec_choice,		MENU2C,		MENU2C,0);
+// 1b	
+	i = update_menu_structs(i, 1, _do_chkbox,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		MENU3D,		MENU3D,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		MENU4A,		MENU4A,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		MENU4B,		MENU4B,0);
+// 1c	
+	i = update_menu_structs(i, 1, _non_func,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _non_func,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _non_func,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _non_func,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _non_func,		MENU2A,		MENU2A,0);
+	i = update_menu_structs(i, 1, _non_func,		MENU2B,		MENU2B,0);
+// 1d	
+//#if 0
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+// 2a	
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+//#if 0
+// 2b	
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+// 2c	
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+// 2d
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+	i = update_menu_structs(i, 0, _menu_change,		ENDMENU,	ENDMENU,0);
+	
+#if 0
 	// menu 1a		6
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum0,1);
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum1,2);
@@ -235,7 +288,7 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
 	i = update_menu_structs(i, 0, 0, 		0, 			0,0);
 	i = update_menu_structs(i, 0, 0, 		0,			0,0);
-#if 1
+
 	// 2b			54
 	i = update_menu_structs(i, 1, 0,		MENU1A,		MENU1A,0);
 	i = update_menu_structs(i, 1, 0,		MENU1B,		MENU1B,0);
@@ -246,7 +299,7 @@ int burn_eeprom(void)
 #endif
 	no_menu_structs = i;
 	// now we can write to the NO_MENUS_EEPROM_LOCATION in eeprom
-#ifndef	NOAVR
+#ifndef	TEST_WRITE_DATA
 	eeprom_update_word((UINT *)NO_MENUS_EEPROM_LOCATION,no_menu_structs);
 	printString("\r\nno_menu_structs: ");
 	printHexByte((UCHAR)no_menu_structs>>8);
@@ -275,8 +328,8 @@ int update_menu_labels(int index, char *ramstr)
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);
-// if NOAVR then just copy to array of strings
-#ifndef NOAVR
+// if TEST_WRITE_DATA then just copy to array of strings
+#ifndef TEST_WRITE_DATA
     eeprom_update_block(ramstr, eepromString+len, len);
 #endif
 	strncpy(menu_labels[index],ramstr,len);
@@ -296,8 +349,8 @@ int update_rt_labels(int index, char *ramstr)
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);
-// if NOAVR then just copy to array of strings
-#ifndef NOAVR
+// if TEST_WRITE_DATA then just copy to array of strings
+#ifndef TEST_WRITE_DATA
     eeprom_update_block(ramstr, eepromString+len, len);
 #endif
 	strncpy(rt_labels[index],ramstr,len);
@@ -314,7 +367,7 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	rt_params[i].shown = shown;				// if its shown or not
 	rt_params[i].dtype = dtype;				// 0 - UCHAR; 1 - UINT; 2 - string
 	rt_params[i].type = type;
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
     eeprom_update_block(&rt_params[i], eepromString+total_offset, sizeof(RT_PARAM));
 #endif
 	total_offset += sizeof(RT_PARAM);
@@ -337,6 +390,7 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 	UCHAR index;		// if > 0 then this is index into sample_data
 */
 	menu_structs[i].enabled = enabled;
+//	menu_structs[i]._index = i;
 	if(enabled == 1)
 	{
 		menu_structs[i].fptr = fptr;
@@ -353,7 +407,7 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 		menu_structs[i].label = label;
 		menu_structs[i].index = 0;
 	}
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
     eeprom_update_block(&menu_structs, eepromString+total_offset, sizeof(MENU_FUNC_STRUCT));
 #endif
 	total_offset += sizeof(MENU_FUNC_STRUCT);
@@ -361,7 +415,7 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 	i++;
 	return i;
 }
-#ifndef NOAVR
+#ifndef TEST_WRITE_DATA
 //******************************************************************************************//
 //************************************** read_eeprom****************************************//
 //******************************************************************************************//
@@ -376,7 +430,7 @@ int read_eeprom(void)
 	int offset = 0;
 	char *ch;
 
-	// read the labels into ram (if in NOAVR mode)
+	// read the labels into ram (if in TEST_WRITE_DATA mode)
 	printString("reading no_rt_labels\r\n");
 	no_rt_labels = eeprom_read_byte((UCHAR*)NO_RT_LABELS_EEPROM_LOCATION);
 	printString("no_rt_labels: ");

@@ -1,0 +1,37 @@
+# GCC/Linux compile flags
+GNUCC = gcc
+GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA
+#GNUCFLAGS =  -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA
+GNULDFLAGS = -static
+GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE
+GNUNOANSI = -Wall -std=gnu99 -Wstrict-prototypes 
+
+#####################################################
+CC = ${GNUCC}
+NOANSI = ${GNUNOANSI}
+CFLAGS = ${GNUCFLAGS}
+LDFLAGS = ${GNULDFLAGS}
+#SFLAGS = ${GNUSFLAGS}
+SFLAGS = -DDEBUG
+
+all: sim_write
+
+t6963.o : ../t6963.c
+	${CC} -c ${CFLAGS} ${SFLAGS} -o t6963.o ../t6963.c
+
+PIC_menu.o : ../PIC_menu.c 
+	${CC} -c ${CFLAGS} ${SFLAGS} -o PIC_menu.o ../PIC_menu.c
+	
+sim_write.o : sim_write.c ../avr_main.h ../sfr_helper.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_write.o sim_write.c
+
+eeprom_burn.o : ../eeprom/eeprom_burn.c ../avr_main.h ../sfr_helper.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o ../eeprom/eeprom_burn.c
+
+sim_write : PIC_menu.o sim_write.o t6963.o eeprom_burn.o
+	${CC} ${CFLAGS} sim_write.o t6963.o PIC_menu.o eeprom_burn.o -o sim_write -lcurses
+	
+clean :
+	rm -f *.o *~ *# core  a.out \
+	sim_write
+

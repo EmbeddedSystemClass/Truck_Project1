@@ -15,7 +15,8 @@
 #include <sys/time.h>
 #include <ncurses.h>
 #include "../sfr_helper.h"
-#include "../main.h"
+//#include "../main.h"
+#include "../avr_main.h"
 #include "../t6963.h"
 
 #define BAUDRATE B19200
@@ -25,23 +26,24 @@
 #define TRUE 1
 #define LEN 200
 // really cranking
-#define TIME_DELAY 20000
+#define TIME_DELAY 200000
 // readable
 //#define TIME_DELAY 300000
 
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 static UCHAR get_keypress(UCHAR ch,WINDOW *win, int display_offset);
+
 //******************************************************************************************//
 //****************************************** main ******************************************//
 //******************************************************************************************//
 int main(int argc, char *argv[])
 {
-#if 1
 	int fd;
 	int type = 0;
 	int iters, itr;
 	int i,j;
+	int res;
 	UCHAR ch;
 	struct termios oldtio,newtio;
 	WINDOW *menu_win;
@@ -57,7 +59,8 @@ int main(int argc, char *argv[])
 
 //	memset(sample_data,0,sizeof(sample_data));
 	send_data = recv_data = 0;
-	
+	iters = 100;	
+#if 0
 	if(argv[1][0] == 'w')
 		type = 1;
 	else if(argv[1][0] == 'r')
@@ -68,11 +71,13 @@ int main(int argc, char *argv[])
 		printf("or test_data r\n");
 		return 1;
 	}
+
 	memset(new_global_number,0,NUM_ENTRY_SIZE);
 	memset(menu_labels,0,NUM_MENU_LABELS*MAX_LABEL_LEN);
 	memset(rt_labels,0,NUM_RT_LABELS*MAX_LABEL_LEN);
 	memset(menu_structs,0,NUM_MENU_STRUCTS*sizeof(MENU_FUNC_STRUCT));
 	memset(rt_params,0,NUM_RT_PARAMS*sizeof(RT_PARAM));
+
 #endif
 	burn_eeprom();
 	// reserve an extra sample_data space for in case of 'escape'
@@ -88,9 +93,7 @@ int main(int argc, char *argv[])
 	box(menu_win,0,0);
 	set_win(menu_win);
 
-	if(type == 0)
-		display_offset = DISP_OFFSET;
-
+#if 0
 	else if(type == 1)
 	{
 //		printf("write: ");
@@ -118,7 +121,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	wrefresh(menu_win);
-
+#endif
 	memset(&newtio, 0, sizeof newtio);
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
@@ -137,144 +140,91 @@ int main(int argc, char *argv[])
 //	set_blocking (fd, 0);	// non-blocking
 
 // read	- simulate the AVR
-	if(type == 0)
+//	memset(cur_param_string,0,sizeof(cur_param_string));
+	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
+		cur_param_string[i] = i;
+	j = 0;
+	res = 0;
+//#if 0
+	mvwprintw(menu_win, display_offset,2,"test  ");
+	wrefresh(menu_win);
+	getch();
+	for(i = 0;i < no_menu_labels;i++)
+		mvwprintw(menu_win, display_offset+i,2,"%s  ",menu_labels[i]);
+	wrefresh(menu_win);	
+	getch();	
+	for(i = 0;i < no_menu_labels;i++)
+		mvwprintw(menu_win, display_offset+i,2,"                     ");
+	for(i = 0;i < no_menu_structs;i++)
 	{
-		do_read(menu_win, fd,display_offset);
-//		printf("do_read: %d\n",ret_code);
-	}	// end of else
-
-// write - simulate the PIC24
-	else if(type == 1)
+		mvwprintw(menu_win, display_offset+i,2,"%d: %d %d %s %s %d   ",i,
+			menu_structs[i].enabled, menu_structs[i].fptr, menu_labels[menu_structs[i].menu],
+			menu_labels[menu_structs[i].label],menu_structs[i].index);
+	}
+	wrefresh(menu_win);
+	getch();
+//	for(i = 0;i < no_menu_structs;i++)
+	for(i = 0;i < 60;i++)
 	{
-		i = 0;
-		for(itr = 0;itr < iters;itr++)
-		{
+		mvwprintw(menu_win, display_offset+i,2,"                          ");	
+		wrefresh(menu_win);
+	}
+//#endif
+	i = 0;
+	j = 0;
+	init_list();
+	while(j < 100)
+//	for(itr = 0;itr < iters;itr++)
+	{
 //			usleep(tdelay);
-			mvwprintw(menu_win, display_offset+17, 4, "iterations left: %d   ",iters-itr);
+//		mvwprintw(menu_win, display_offset+17, 4, "iterations left: %d   ",iters-itr);
 
-	// see if one of the keys from the "keypad" is pressed
+// see if one of the keys from the "keypad" is pressed
 //#if 0	//comment this out and set blocking to non-blocking
-			key = wgetch(menu_win);
+		key = wgetch(menu_win);
 //			mvwprintw(menu_win, display_offset, 4, "key: %x  ",key);
-			wrefresh(menu_win);
 //			if(++i > 15)
 //				i = 0;
-			wkey = get_keypress(key,menu_win, display_offset);
-			if(key != 0xff)
-			{
+		wkey = get_keypress(key,menu_win, display_offset);
+		if(wkey != 0xff)
+		{
+			get_key(wkey,cur_param_string);
+//			for(i = 0;i < NUM_UCHAR_PARAMS;i++)
+//				res += write(fd,(void*)&cur_param_string[i],1);
+//			usleep(tdelay);
+			
+//			mvwprintw(menu_win, display_offset+2, 4, "res: %d  ",res);
+//			wrefresh(menu_win);
+			res = 0;
 
-				mvwprintw(menu_win, display_offset+1, 4, "wkey: %x  ",wkey);
-				write(fd,&wkey,1);	// simulates the PIC24 sending a keypress
+//for(i = 0;i < NUM_UCHAR_PARAMS;i++)
+//write(fd,&i,1);
 //				mvwprintw(menu_win, display_offset+2, 4, "         ");
 //				read(fd,sample_data,sizeof(int)*10);
 //				read(fd,&req,1);
 //				mvwprintw(menu_win, display_offset+2, 4, "req: %d  ",req);
 //				for(i = 0;i < 10;i++)
 //					mvwprintw(menu_win, display_offset+4+i, 4, "%d              ",sample_data[i]);
-				// simulates the AVR timer or int sending/receiving data
-				// AVR uses 16-bit counter-timer
-				if(wkey == KP_SIM_DATA)
-				{
-					read(fd,&recv_data,sizeof(UINT));
-					write(fd,&send_data,sizeof(UINT));
-					send_data++;
-					mvwprintw(menu_win, display_offset+2, 4, "recv_data: %d  ",recv_data);
-				}
+			// simulates the AVR timer or int sending/receiving data
+			// AVR uses 16-bit counter-timer
+/*
+			if(wkey == KP_SIM_DATA)
+			{
+				read(fd,&recv_data,sizeof(UINT));
+				write(fd,&send_data,sizeof(UINT));
+				send_data++;
+				mvwprintw(menu_win, display_offset+2, 4, "recv_data: %d  ",recv_data);
 			}
+*/
+			j++;
+		}
 
 //			read(fd,&req,1);
 
-			wkey = key = 0;
-#if 0
-			if(P24_rt_params[code2].dtype > 0)
-			{
-				data2 = rtdata[code2];
-				if(data2 & 0x8000)
-				{
-					ch = RT_HIGH3;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = (UCHAR)(data2);
-					write(fd,&data1,1);
-					usleep(tdelay);
-					data1 = (UCHAR)(data2>>8);
-					data1 &= 0x7f;
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-				}
-				else if(data2 & 0x0080)
-				{
-					ch = RT_HIGH2;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = (UCHAR)data2;
-					data1 &= 0x7f;
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = (UCHAR)(data2>>8);
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-				}
-				else
-				{
-					ch = RT_HIGH1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = (UCHAR)(data2);
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = (UCHAR)(data2>>8);
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-				}
-
-				sprintf(param_string,"%4u",data2);
-				mvwprintw(menu_win, display_offset+code2, 10,"              ");
-				mvwprintw(menu_win, display_offset+code2, 10, param_string);
-				wrefresh(menu_win);
-				if(code2 != RT_AUX1-RT_OFFSET && code2 != RT_AUX2-RT_OFFSET)
-				{
-					mvwprintw(menu_win, display_offset+22,2,"%d %d   ",code2,data2);
-					data2 += 10;	// rpm get inc'd by 10
-				}
-				else mvwprintw(menu_win, display_offset+23,2,"%d %d   ",code2,data2);
-				rtdata[code2] = data2;
-			}
-			// end of if RT_RPM
-			else if(P24_rt_params[code2].dtype == 0)
-			{
-				data = (UCHAR)rtdata[code2];
-				if(data > 0x7f)
-				{
-					ch = RT_HIGH0;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					data1 = data & 0x7f;
-					ch = data1;
-					write(fd,&ch,1);
-					usleep(tdelay);
-				}
-				else
-				{
-					ch = RT_LOW;
-					write(fd,&ch,1);
-					usleep(tdelay);
-					ch = data;
-					write(fd,&ch,1);
-					usleep(tdelay);
-				}
-				data++;
-				rtdata[code2] = (UINT)data;
-			}
-#endif
-			wrefresh(menu_win);
-		}
+		wkey = key = 0;
+		wrefresh(menu_win);
 	}
+
 	delwin(menu_win);
 	clrtoeol();
 	refresh();

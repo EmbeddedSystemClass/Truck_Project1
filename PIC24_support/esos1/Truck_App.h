@@ -168,22 +168,6 @@ volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
 volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
-volatile UCHAR aux_type;	// tells PIC24 what to send when code = RT_AUX
-volatile UCHAR paux_state;
-volatile UCHAR aaux_state;
-volatile UCHAR auxcmd;
-volatile UCHAR auxparam;
-volatile UCHAR pic_data[AUX_DATA_SIZE];
-volatile UCHAR pic_data2[AUX_DATA_SIZE];
-volatile UCHAR aux_index;
-volatile uint16_t sample_data[20];
-volatile uint16_t temp_int;
-volatile uint16_t temp_int2;
-
-volatile	uint16_t rtdata[RT_AUX2+1];	// this should be no of rt_params
-volatile	uint8_t code;
-volatile	uint8_t code2;
-
 #define KEYPAD_DELAY    100
 #define KEYPAD_DEBOUNCE_DELAY 2
 volatile uint8_t col;
@@ -819,58 +803,5 @@ void _ISR _ADC1Interrupt (void)
 	} //end for()
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
-}
-
-//******************************************************************************************//
-//**************************************** disp_pstate *************************************//
-//******************************************************************************************//
-// PIC24_aux_states (main.h)
-static void disp_pstate(UCHAR state, char *str)
-{
-	switch (state)
-	{
-		case IDLE_AUX:
-			strcpy(str,"IDLE_AUX\0");
-			break;
-		case DATA_REQ:
-			strcpy(str,"DATA_REQ\0");
-			break;
-		case VALID_DATA:
-			strcpy(str,"VALID_DATA\0");
-			break;
-		case DATA_READY:
-			strcpy(str,"DATA_READY\0");
-			break;
-		case EXTRA:
-			strcpy(str,"EXTRA\0");
-			break;
-		default:
-			strcpy(str,"<bad state>\0");
-			break;
-	}
-}
-//******************************************************************************************//
-//************************************** disp_auxcmd ***************************************//
-//******************************************************************************************//
-static void disp_auxcmd(UCHAR state, char *str)
-{
-	switch (state)
-	{
-		case CMD_GET_DATA:
-			strcpy(str,"CMD_GET_DATA\0");
-			break;
-		case CMD_DATA_READY:
-			strcpy(str,"CMD_DATA_READY\0");
-			break;
-		case CMD_NEW_DATA:
-			strcpy(str,"CMD_NEW_DATA\0");
-			break;
-		case CMD_EXTRA:
-			strcpy(str,"CMD_EXTRA\0");
-			break;
-		default:
-		strcpy(str,"<bad cmd>\0");
-		break;
-	}
 }
 

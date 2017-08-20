@@ -24,9 +24,77 @@ SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 FPGA to AVR works up to ~30K doing just an echo
 
-idea for new branch:
-PIC24 handles the menuing and sends cmds/param sets to AVR to just display menus, text entry etc
-on screen - 
+8/18/17
+idea for new branch (PIC24_menus)
+
+(in the old way)
+if fptr field in menu_structs is 0 then goto the menu in the menu field, otherwise execute the function
+in the fptr array of function pointers.
+
+Upload the current menu when the menu changes by sending the indexes into the list of labels already
+in ram on the AVR.
+Upload the current choice and check box list by sending indexes into label list. Or can be separate lists.
+
+The non-function in the AVR will just return but the PIC24 will do whatever, like
+send an on/off to one of the TS-7200 ports, or just say, "turn on the headlights" and the PIC24 will have
+a special function to do just that. Or just do it at line 487 in pic_menu.c.
+
+MENU_FUNC_STRUCT;
+
+	UCHAR enabled;		// if shown on the menu
+	UCHAR fptr;			// which function to call (menu_types)
+	UCHAR menu;			// which menu to goto if _menu_change is the fptr
+	UCHAR label;		// which label to display in legend (labels)
+	UCHAR index;		// if > 0 then this is index into sample_data
+
+types of function ptrs can be:
+
+- goto next menu (use the label param as index to next menu)
+- execute a choice in the checkbox-like list
+- execute a function like: init_checkboxes or start_numentry
+- do a key entry (if in entry mode)
+- do a 'non-function' which only means something to the PIC24
+
+One of the params to the generic_menu_function can be the keypress so we can filter out which
+key was pressed and not have to do the switch statement that call cursor_forward_stuff. The
+function that edits entered values can just filter those out. 
+
+If the function calls one of the menu choices, display the list.
+If the function is to execute something that the PIC24 does, just return.
+The list of choices is an array into the list of checkbox choices.
+The other type of checkbox is just on/off checkboxes.
+The lists can be either burned into eeprom or loaded dynamically. Or loaded dynamically first and then
+burrned into eeprom with a cmd. 
+We can save on data space by just depending on what's in the eeprom and read from the eeprom for every 
+label. 
+
+The key pressed can just be the first param passed into the function with the other params.
+The labels listed in the choices can just be passed in with every init function which displays the
+list of choices. When the function to init the pure checkboxes is called, a UCHAR is passed in that
+represents the choices to show as set/unset. (use bit shifting or just pass in array of 8 or 16 choices
+already set/unset).
+
+If the AVR is rebooted then it will send a cmd to the PIC24 saying to re-upload the configuration files.
+If the PIC24 is rebooted, it will (optionally) send a cmd saying that it needs to re-upload the config files.
+In the AVR, it could be a if statement in the main loop that filters out that cmd.
+
+AVR_menu.c	- runs in AVR
+PIC_menu.c	- in PIC24
+
+sim_write.c compiles PIC_menu.c and simulates the PIC24
+sim_read.c compiles AVR_menu.c and simulates the AVR
+
+the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
+get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
+to the AVR
+
+the main.c in the AVR calls get_key in AVR_menu.c
+
+as long as both the AVR and PIC point to the same index into the menu_struct the get_key in PIC 
+does a switch and then sends a string of bytes to AVR
+
+the get_key in AVR reads the bytes and does its own switch statement
+
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
