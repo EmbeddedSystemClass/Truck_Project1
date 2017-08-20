@@ -394,7 +394,7 @@ static UCHAR generic_menu_function(void)
 		res += read(global_fd,&cur_param_string[i],1);
 
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+30, 2,"fptr:   %s   %x  %d  ",get_fptr_label(tfptr),ch,res);
+	mvwprintw(win, DISP_OFFSET+30, 2,"fptr: %s ch:%x res:%d    ",get_fptr_label(tfptr),ch,res);
 #endif
 	ret_char = (*fptr[tfptr])(ch);
 //	cur_param_string[0] = ret_char;
@@ -402,12 +402,13 @@ static UCHAR generic_menu_function(void)
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2, 2,"fptr:   %s   %x   ",get_fptr_label(tfptr),ch);
 	for(i = 0;i < NUM_UCHAR_PARAMS/2;i++)
-		mvwprintw(win, DISP_OFFSET+3, 2+i,"%c",cur_param_string[i]);
+		mvwprintw(win, DISP_OFFSET+31, 2+i,"%c",cur_param_string[i]);
 	for(i = 0;i < NUM_UCHAR_PARAMS/2;i++)
-		mvwprintw(win, DISP_OFFSET+4, 2+i,"%c",cur_param_string[i+NUM_UCHAR_PARAMS/2]);
+		mvwprintw(win, DISP_OFFSET+32, 2+i,"%c",cur_param_string[i+NUM_UCHAR_PARAMS/2]);
 	wrefresh(win);
 #endif
 #endif
+	wrefresh(win);
 	return ret_char;
 }
 //******************************************************************************************//
@@ -463,9 +464,10 @@ static UCHAR exec_choice(UCHAR ch)
 #endif
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+20,2, "exec_choice  ");
-	wrefresh(win);
+//	mvwprintw(win, DISP_OFFSET+20,2, "exec_choice  ");
+//	wrefresh(win);
 #endif
+	display_menus();
 	return ret_char;
 }
 //******************************************************************************************//
@@ -514,9 +516,10 @@ static UCHAR do_chkbox(UCHAR ch)
 #endif
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+20,2, "do_chkbox   ");
-	wrefresh(win);
+//	mvwprintw(win, DISP_OFFSET+20,2, "do_chkbox   ");
+//	wrefresh(win);
 #endif
+	display_menus();
 	return ret_char;
 }
 //******************************************************************************************//
@@ -565,9 +568,10 @@ static UCHAR non_func(UCHAR ch)
 #endif
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+20,2, "non_func    ");
-	wrefresh(win);
+//	mvwprintw(win, DISP_OFFSET+20,2, "non_func    ");
+//	wrefresh(win);
 #endif
+	display_menus();
 	return ret_char;
 }
 

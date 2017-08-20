@@ -218,7 +218,7 @@ static UCHAR menu_change(UCHAR ch)
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
 //	mvwprintw(win, DISP_OFFSET+6,2, "menu_change %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
-	mvwprintw(win, DISP_OFFSET+6,2, "menu_change   ");
+//	mvwprintw(win, DISP_OFFSET+6,2, "menu_change                           ");
 	wrefresh(win);
 #endif
 
@@ -288,12 +288,14 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 	if(menu_structs[get_curr_menu()].enabled == 1)
 	{
+#if 0
 #ifdef TEST_WRITE_DATA
 		mvwprintw(win, DISP_OFFSET, 2, "menu_index:  %d   ",get_curr_menu());
 		mvwprintw(win, DISP_OFFSET+1, 2,"fptr:   %s   %s  ",
 //				menu_structs[get_curr_menu()*6].fptr,
 				menu_labels[get_curr_menu()],
 				get_fptr_label());
+#endif
 #endif
 		ret_char = (*fptr[menu_structs[get_curr_menu()*6].fptr])(ch);
 //		cur_param_string[0] = ret_char;
@@ -348,7 +350,7 @@ static UCHAR get_fptr(void)
 //******************************************************************************************//
 static char* get_fptr_label(void)
 {
-	return menu_labels[menu_structs[get_curr_menu()*6].fptr+18];
+	return menu_labels[menu_structs[get_curr_menu()*6].fptr+21];
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -380,7 +382,8 @@ static UCHAR exec_choice(UCHAR ch)
 {
 	UCHAR ret_char;
 	int menu_index, temp, temp1;
-
+	char tlabel[MAX_LABEL_LEN];
+	int i;
 	menu_index = 0;
 	temp1 = get_curr_menu();
 	menu_index = temp1 * 6;
@@ -418,9 +421,20 @@ static UCHAR exec_choice(UCHAR ch)
 	ret_char = get_curr_menu();
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+6,2, "exec_choice %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "exec_choice %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "exec_choice    ");	
 	wrefresh(win);
 #endif
+
+	for(i = 0;i < 6;i++)
+	{
+		memset(tlabel,0,MAX_LABEL_LEN);
+		strcpy(tlabel,menu_labels[menu_structs[(get_curr_menu()*6)+i].label]);
+		// dest src num
+		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
+	}
+
+
 	return ret_char;
 }
 //******************************************************************************************//
@@ -468,7 +482,8 @@ static UCHAR do_chkbox(UCHAR ch)
 	ret_char = get_curr_menu();
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+6,2, "do_chkbox %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "do_chkbox %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "do_chkbox 	               ");
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -518,10 +533,12 @@ static UCHAR non_func(UCHAR ch)
 	ret_char = get_curr_menu();
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+6,2, "non_func %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "non_func %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+//	mvwprintw(win, DISP_OFFSET+6,2, "non_func                ");	
 	wrefresh(win);
 #endif
 	return ret_char;
 }
+
 
 

@@ -52,7 +52,36 @@ int burn_eeprom(void)
 	i = update_rt_labels(i,"AUX2\0");
 	no_rt_labels = i;
 	i = 0;
-// start of menus
+/* start of menus
+	MAIN,
+	MENU1A,
+	MENU1B,
+	MENU1C,
+	MENU1D,
+	MENU2A,
+	MENU2B,
+	MENU2C,
+	MENU2D,
+	MENU3A,
+	MENU3B,
+	MENU3C,
+	MENU3D,
+	MENU4A,
+	MENU4B,
+	MENU4C,
+	MENU4D,
+	testnum0,
+	testnum1,
+	testnum2,
+	testnum3,
+	testnum4,
+	testnum5,
+	testnum6,
+	testnum7,
+	testnum8,
+	ENDMENU
+*/
+// when adding up to <end> must modify line 353 in PIC_menu.c (currently 21)
 	i = update_menu_labels(i,"home\0");
 	i = update_menu_labels(i,"MENU1a\0");
 	i = update_menu_labels(i,"MENU1b\0");
@@ -61,15 +90,18 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"MENU2a\0");
 	i = update_menu_labels(i,"MENU2B\0");
 	i = update_menu_labels(i,"MENU2c\0");
-	i = update_menu_labels(i,"test0\0");
-	i = update_menu_labels(i,"test1\0");
-	i = update_menu_labels(i,"test2\0");
-	i = update_menu_labels(i,"test3\0");
-	i = update_menu_labels(i,"test4\0");
-	i = update_menu_labels(i,"test5\0");
-	i = update_menu_labels(i,"test6\0");
-	i = update_menu_labels(i,"test7\0");
-	i = update_menu_labels(i,"test8\0");
+	i = update_menu_labels(i,"MENU2d\0");
+	i = update_menu_labels(i,"test 0\0");
+	i = update_menu_labels(i,"test 1\0");
+	i = update_menu_labels(i,"test 2\0");
+	i = update_menu_labels(i,"test 3\0");
+	i = update_menu_labels(i,"test 4\0");
+	i = update_menu_labels(i,"test 5\0");
+	i = update_menu_labels(i,"test 6\0");
+	i = update_menu_labels(i,"test 7\0");
+	i = update_menu_labels(i,"test 8\0");
+	i = update_menu_labels(i,"choice 0\0");
+	i = update_menu_labels(i,"choice 1\0");
 	i = update_menu_labels(i,"<end>\0");
 // end of menus
 	i = update_menu_labels(i,"mchange\0");
@@ -183,14 +215,13 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
 // 1c	
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
+	i = update_menu_structs(i, 1, _exec_choice,		choice0,	choice0,0);
+	i = update_menu_structs(i, 1, _exec_choice,		choice1,	choice1,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
 // 1d	
-//#if 0
 	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
@@ -204,7 +235,6 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
 	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
 	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-//#if 0
 // 2b	
 	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);

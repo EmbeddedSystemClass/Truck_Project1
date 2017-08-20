@@ -59,14 +59,6 @@ enum menu_types
 	MENU2B,
 	MENU2C,
 	MENU2D,
-	MENU3A,
-	MENU3B,
-	MENU3C,
-	MENU3D,
-	MENU4A,
-	MENU4B,
-	MENU4C,
-	MENU4D,
 	testnum0,
 	testnum1,
 	testnum2,
@@ -76,6 +68,8 @@ enum menu_types
 	testnum6,
 	testnum7,
 	testnum8,
+	choice0,
+	choice1,
 	ENDMENU
 } MENU_TYPES;
 

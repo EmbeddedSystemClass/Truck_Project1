@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 	wrefresh(menu_win);
 	getch();
 	for(i = 0;i < no_menu_labels;i++)
-		mvwprintw(menu_win, display_offset+i,2,"%s  ",menu_labels[i]);
+		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,menu_labels[i]);
 	wrefresh(menu_win);	
 	getch();	
 	for(i = 0;i < no_menu_labels;i++)
