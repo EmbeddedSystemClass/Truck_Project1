@@ -44,7 +44,7 @@ typedef struct menu_func
 	UCHAR enabled;		// if alt function will replace generic function
 	UCHAR fptr;			// which function to call (menu_types)
 	UCHAR menu;			// which menu to goto if _menu_change is the fptr
-	UCHAR label;		// which label to display in legend (labels)
+//	UCHAR label;		// which label to display in legend (labels)
 	UCHAR index;		// if > 0 then this is index into sample_data
 } MENU_FUNC_STRUCT;
 
@@ -198,7 +198,7 @@ int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index);
+int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR index);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_menu_labels(int i, char *ramstr);
 int update_rt_labels(int index, char *ramstr);
@@ -237,8 +237,6 @@ int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
 #endif
 int total_offset;
 //#endif
-char cur_global_number[NUM_ENTRY_SIZE];
-char new_global_number[NUM_ENTRY_SIZE];
 //int sample_data[10];
 UINT send_data;
 UINT recv_data;

@@ -41,6 +41,7 @@ static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
 static int inc_index;
+static int test_send_num;
 
 #ifdef TEST_WRITE_DATA
 static void display_menus(int index);
@@ -129,6 +130,7 @@ void init_list(void)
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
 	inc_index = 0;
+	test_send_num = 254;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -265,8 +267,8 @@ static UCHAR generic_menu_function(UCHAR ch)
 	UCHAR ret_char;
 	int i;
 	int init_flag = 0;
-	int temp;
 	UCHAR temp2;
+	int temp3;
 	char tlabel[MAX_LABEL_LEN];
 
 
@@ -297,16 +299,17 @@ static UCHAR generic_menu_function(UCHAR ch)
 		for(i = 0;i < 6;i++)
 		{
 			memset(tlabel,0,MAX_LABEL_LEN);
+//			if(menu_structs[(get_curr_menu2())+i].enabled == 1)
+//			{
 /*
 			mvwprintw(win, DISP_OFFSET+5,2,"press space bar...");
 			wrefresh(win);
 			getch();
 			mvwprintw(win, DISP_OFFSET+5,2,"                    ");
 */
-			strcpy(tlabel,menu_labels[menu_structs[(get_curr_menu2())+i].label]);
-			// dest src num
-//			memset(tlabel,0x20,MAX_LABEL_LEN);
-			memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
+				strcpy(tlabel,menu_labels[menu_structs[(get_curr_menu2())+i].menu]);
+				memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
+//			}
 		}
 
 		if(strcmp(get_fptr_label(),"mchange") == 0)
@@ -327,6 +330,14 @@ static UCHAR generic_menu_function(UCHAR ch)
 				break;
 				case MENU2B:
 					aux_string[3] = 13;
+				break;
+				case MENU2C:
+					aux_string[3] = (UCHAR)test_send_num;
+					temp3 = test_send_num;
+					temp3 >>= 8;
+					temp2 = (UCHAR)temp3;
+					aux_string[4] = temp2;
+					test_send_num++;
 				break;
 				default:
 				break;
@@ -634,7 +645,8 @@ static void display_menus(int index)
 	mvwprintw(win, DISP_OFFSET+23,2,"%d  ",index);
 	for(i = 0;i < 6;i++)
 	{
-		mvwprintw(win, DISP_OFFSET+24+i, 2,"%s   ",menu_labels[menu_structs[index+i].label]);
+		if(menu_structs[index+i].enabled == 1)
+			mvwprintw(win, DISP_OFFSET+24+i, 2,"%s   ",menu_labels[menu_structs[index+i].menu]);
 	}
 }
 #endif

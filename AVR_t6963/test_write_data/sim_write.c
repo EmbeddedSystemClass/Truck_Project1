@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 		aux_string[i] = i;
 	j = 0;
 	res = 0;
-#if 0
+//#if 0
 	mvwprintw(menu_win, display_offset,2,"test  ");
 	wrefresh(menu_win);
 	getch();
@@ -159,9 +159,9 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"%d: %d %d %s %s %d   ",i,
+		mvwprintw(menu_win, display_offset+i,2,"%d: %d %d %s %d   ",i,
 			menu_structs[i].enabled, menu_structs[i].fptr, menu_labels[menu_structs[i].menu],
-			menu_labels[menu_structs[i].label],menu_structs[i].index);
+			menu_structs[i].index);
 	}
 	wrefresh(menu_win);
 	getch();
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"                          ");
 		wrefresh(menu_win);
 	}
-#endif
+//#endif
 	i = 0;
 	j = 0;
 	init_list();

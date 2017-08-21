@@ -52,35 +52,6 @@ int burn_eeprom(void)
 	i = update_rt_labels(i,"AUX2\0");
 	no_rt_labels = i;
 	i = 0;
-/* start of menus
-	MAIN,
-	MENU1A,
-	MENU1B,
-	MENU1C,
-	MENU1D,
-	MENU2A,
-	MENU2B,
-	MENU2C,
-	MENU2D,
-	MENU3A,
-	MENU3B,
-	MENU3C,
-	MENU3D,
-	MENU4A,
-	MENU4B,
-	MENU4C,
-	MENU4D,
-	testnum0,
-	testnum1,
-	testnum2,
-	testnum3,
-	testnum4,
-	testnum5,
-	testnum6,
-	testnum7,
-	testnum8,
-	ENDMENU
-*/
 // when adding up to <end> must modify get_fptr_label in PIC_menu.c (currently 25)
 	i = update_menu_labels(i,"home\0");
 	i = update_menu_labels(i,"MENU1a\0");
@@ -204,75 +175,73 @@ int burn_eeprom(void)
 	UCHAR index;		// if > 0 then this is index into sample_data
 #endif
 // A,B,C,D,#,0
-	// main menu	0
 	i = 0;
 	no_data_index = 0;
-// home
-
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);	// offset: 5
+// main menu	0
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,0);
+	i = update_menu_structs(i, 1, 0,				MENU1B,0);
+	i = update_menu_structs(i, 1, 0,				MENU1C,0);
+	i = update_menu_structs(i, 1, 0,				MENU1D,0);
+	i = update_menu_structs(i, 1, 0,				MENU2A,0);
+	i = update_menu_structs(i, 1, 0,				MENU2B,0);	// offset: 5
 // 1a
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);	// 6
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU2D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2C,		MENU2C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,0);	// 6
+	i = update_menu_structs(i, 1, 0,				MENU2D,0);
+	i = update_menu_structs(i, 1, 0,				MENU1D,0);
+	i = update_menu_structs(i, 1, 0,				MENU2A,0);
+	i = update_menu_structs(i, 1, 0,				MENU2B,0);
+	i = update_menu_structs(i, 1, 0,				MENU2C,0);
 // 1b
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);	// 12
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 0, _menu_change,		MENU2B,		MENU2B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,0);	// 12
+	i = update_menu_structs(i, 1, 0,				MENU1A,0);
+	i = update_menu_structs(i, 1, 0,				MENU1B,0);
+	i = update_menu_structs(i, 1, 0,				MENU1D,0);
+	i = update_menu_structs(i, 1, 0,				MENU2A,0);
+	i = update_menu_structs(i, 0, 0,				MENU2B,0);
 // 1c
-	i = update_menu_structs(i, 1, _exec_choice,		choice0,	choice0,MENU1C);	// 18
-	i = update_menu_structs(i, 1, _test1,			choice1,	choice1,0);
-	i = update_menu_structs(i, 1, _test2,			choice2,	choice2,0);
-	i = update_menu_structs(i, 1, _test3,			choice3,	choice3,0);
-	i = update_menu_structs(i, 1, _test4,			choice4,	choice4,0);
-	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+	i = update_menu_structs(i, 1, _exec_choice,		choice0,MENU1C);	// 18
+	i = update_menu_structs(i, 1, _test1,			choice1,0);
+	i = update_menu_structs(i, 1, _test2,			choice2,0);
+	i = update_menu_structs(i, 1, _test3,			choice3,0);
+	i = update_menu_structs(i, 1, _test4,			choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,0);
 // 1d
-	i = update_menu_structs(i, 1, _do_chkbox,		choice0,	choice0,MENU1D);	// 24
-	i = update_menu_structs(i, 1, 0,				choice1,	choice1,0);
-	i = update_menu_structs(i, 1, 0,				choice2,	choice2,0);
-	i = update_menu_structs(i, 1, 0,				choice3,	choice3,0);
-	i = update_menu_structs(i, 1, 0,				choice4,	choice4,0);
-	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+	i = update_menu_structs(i, 1, _do_chkbox,		choice0,MENU1D);	// 24
+	i = update_menu_structs(i, 1, 0,				choice1,0);
+	i = update_menu_structs(i, 1, 0,				choice2,0);
+	i = update_menu_structs(i, 1, 0,				choice3,0);
+	i = update_menu_structs(i, 1, 0,				choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,0);
 // 2a
-	i = update_menu_structs(i, 1, _non_func,		choice0,	choice0,MENU2A);	// 30
-	i = update_menu_structs(i, 1, 0,				choice1,	choice1,0);
-	i = update_menu_structs(i, 1, 0,				choice2,	choice2,0);
-	i = update_menu_structs(i, 1, 0,				choice3,	choice3,0);
-	i = update_menu_structs(i, 1, 0,				choice4,	choice4,0);
-	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+	i = update_menu_structs(i, 1, _non_func,		choice0,MENU2A);	// 30
+	i = update_menu_structs(i, 1, 0,				choice1,0);
+	i = update_menu_structs(i, 1, 0,				choice2,0);
+	i = update_menu_structs(i, 1, 0,				choice3,0);
+	i = update_menu_structs(i, 1, 0,				choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,0);
 // 2b
-	i = update_menu_structs(i, 1, _exec_choice,		choice6,	choice6,MENU2B);	// 36
-	i = update_menu_structs(i, 1, 0,				choice7,	choice7,0);
-	i = update_menu_structs(i, 1, 0,				choice8,	choice8,0);
-	i = update_menu_structs(i, 1, 0,				choice9,	choice9,0);
-	i = update_menu_structs(i, 1, 0,				choice10,	choice10,0);
-	i = update_menu_structs(i, 1, 0,				choice11,	choice11,0);
+	i = update_menu_structs(i, 1, _exec_choice,		choice6,MENU2B);	// 36
+	i = update_menu_structs(i, 1, 0,				choice7,0);
+	i = update_menu_structs(i, 1, 0,				choice8,0);
+	i = update_menu_structs(i, 1, 0,				choice9,0);
+	i = update_menu_structs(i, 1, 0,				choice10,0);
+	i = update_menu_structs(i, 1, 0,				choice11,0);
 // 2c
-	i = update_menu_structs(i, 1, _start_numentry,	testnum0,	testnum0,MENU2C);	// 42
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+	i = update_menu_structs(i, 1, _start_numentry,	testnum0,MENU2C);	// 42
+	i = update_menu_structs(i, 1, 0,				MENU1B,0);
+	i = update_menu_structs(i, 1, 0,				MENU1C,0);
+	i = update_menu_structs(i, 1, 0,				MENU1D,0);
+	i = update_menu_structs(i, 1, 0,				MENU2A,0);
+	i = update_menu_structs(i, 1, 0,				MENU2B,0);
 // 2d
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);	// 48
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-	i = update_menu_structs(i, 0, _menu_change,		ENDMENU,	ENDMENU,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,0);	// 48
+	i = update_menu_structs(i, 1, 0,				MENU1B,0);
+	i = update_menu_structs(i, 1, 0,				MENU1C,0);
+	i = update_menu_structs(i, 1, 0,				MENU1D,0);
+	i = update_menu_structs(i, 1, 0,				MENU2A,0);
+	i = update_menu_structs(i, 1, 0,				MENU2B,0);
 
+	i = update_menu_structs(i, 0, 0,				ENDMENU,0);
 #if 0
 	// menu 1a		6
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum0,1);
@@ -433,7 +402,7 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 //********************************* update_menu_structs*************************************//
 //******************************************************************************************//
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type)
-int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index)
+int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR index)
 {
 /*
 	UCHAR enabled;		// if alt function will replace generic function
@@ -449,7 +418,7 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 	{
 		menu_structs[i].fptr = fptr;
 		menu_structs[i].menu = menu;
-		menu_structs[i].label = label;
+//		menu_structs[i].label = label;
 		menu_structs[i].index = index;
 		if(index > 0)
 			no_data_index++;
@@ -458,7 +427,7 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR labe
 	{
 		menu_structs[i].fptr = 0;
 		menu_structs[i].menu = 0;
-		menu_structs[i].label = label;
+//		menu_structs[i].label = label;
 		menu_structs[i].index = 0;
 	}
 #ifndef TEST_WRITE_DATA
