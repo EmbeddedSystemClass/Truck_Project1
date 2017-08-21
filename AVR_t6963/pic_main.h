@@ -2,13 +2,13 @@
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
-#define NUM_FPTS 4
-#define MAX_LABEL_LEN 9
-#define NUM_MENU_LABELS 34
+#define NUM_FPTS 9
+#define MAX_LABEL_LEN 10
+#define NUM_MENU_LABELS 52
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define NUM_MENU_CHOICES 6
-#define NUM_MENUS 9
+#define NUM_MENUS 10
 #define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES+1 // plus 1 for ENDMENU
 #define DISP_OFFSET 5
 #define NUM_CHECKBOXES 10
@@ -18,7 +18,7 @@
 #define RT_OFFSET 0x70
 #define LIST_SIZE 50
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-//#define NUM_UCHAR_PARAMS 20
+#define AUX_STRING_LEN 50
 
 int burn_eeprom(void);
 
@@ -70,6 +70,16 @@ enum menu_types
 	testnum8,
 	choice0,
 	choice1,
+	choice2,
+	choice3,
+	choice4,
+	choice5,
+	choice6,
+	choice7,
+	choice8,
+	choice9,
+	choice10,
+	choice11,
 	ENDMENU
 } MENU_TYPES;
 
@@ -81,6 +91,11 @@ enum fptr_types
 	_exec_choice,
 	_do_chkbox,
 	_non_func,
+	_start_numentry,
+	_test1,
+	_test2,
+	_test3,
+	_test4,
 	entr,
 	back,
 	esc,
@@ -115,7 +130,8 @@ enum key_types
 	KP_B, // 'B'
 	KP_C, // 'C'
 	KP_D, // 'D'	(0xEF)
-	KP_SIM_DATA		// simulates sending data 
+	SPACE,
+	KP_SIM_DATA		// simulates sending data
 } KEY_TYPES;
 
 enum rt_types
@@ -177,6 +193,7 @@ UCHAR get_key(UCHAR ch, UCHAR *str);
 UCHAR read_get_key(UCHAR *str);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
+int get_curr_menu2(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
@@ -193,6 +210,7 @@ int no_rt_labels;
 int no_rtparams;
 int no_menu_structs;
 int no_menu_labels;
+int no_func_labels;
 int no_data_index;
 //UINT label_info_offset;
 UINT rt_params_offset;
@@ -235,6 +253,6 @@ UCHAR aux_index;
 UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
-
 UCHAR cur_param_string[NUM_UCHAR_PARAMS];
+UCHAR aux_string[AUX_STRING_LEN];
 

@@ -81,7 +81,7 @@ int burn_eeprom(void)
 	testnum8,
 	ENDMENU
 */
-// when adding up to <end> must modify line 353 in PIC_menu.c (currently 21)
+// when adding up to <end> must modify get_fptr_label in PIC_menu.c (currently 25)
 	i = update_menu_labels(i,"home\0");
 	i = update_menu_labels(i,"MENU1a\0");
 	i = update_menu_labels(i,"MENU1b\0");
@@ -102,7 +102,20 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"test 8\0");
 	i = update_menu_labels(i,"choice 0\0");
 	i = update_menu_labels(i,"choice 1\0");
-	i = update_menu_labels(i,"<end>\0");
+	i = update_menu_labels(i,"choice 2\0");
+	i = update_menu_labels(i,"choice 3\0");
+	i = update_menu_labels(i,"choice 4\0");
+	i = update_menu_labels(i,"choice 5\0");
+	i = update_menu_labels(i,"choice 6\0");
+	i = update_menu_labels(i,"choice 7\0");
+	i = update_menu_labels(i,"choice 8\0");
+	i = update_menu_labels(i,"choice 9\0");
+	i = update_menu_labels(i,"choice 10\0");
+	i = update_menu_labels(i,"choice 11\0");
+	no_menu_labels = i;
+//	printf("no_menu_labels: %d\n",no_menu_labels);
+//	getch();
+	no_func_labels = 0;
 // end of menus
 	i = update_menu_labels(i,"mchange\0");
 	i = update_menu_labels(i,"exec_ch\0");
@@ -122,7 +135,9 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"toggle\0");
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"esc\0");
-	no_menu_labels = i;
+	no_func_labels = i;
+//	printf("no_func_labels: %d\n",no_func_labels);
+//	getch();
 #endif
 	i = 0;
 #ifndef TEST_WRITE_DATA
@@ -199,65 +214,65 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);	// offset: 5
 // 1a
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);	// 6
+	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU2D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2C,		MENU2C,0);
-// 1b	
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
+// 1b
+	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);	// 12
 	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 1c	
-	i = update_menu_structs(i, 1, _exec_choice,		choice0,	choice0,0);
-	i = update_menu_structs(i, 1, _exec_choice,		choice1,	choice1,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 1d	
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-// 2a	
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-// 2b	
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
-	i = update_menu_structs(i, 1, _menu_change,		MAIN,		MAIN,0);
-	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
-// 2c	
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 0, _menu_change,		MENU2B,		MENU2B,0);
+// 1c
+	i = update_menu_structs(i, 1, _exec_choice,		choice0,	choice0,MENU1C);	// 18
+	i = update_menu_structs(i, 1, _test1,			choice1,	choice1,0);
+	i = update_menu_structs(i, 1, _test2,			choice2,	choice2,0);
+	i = update_menu_structs(i, 1, _test3,			choice3,	choice3,0);
+	i = update_menu_structs(i, 1, _test4,			choice4,	choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+// 1d
+	i = update_menu_structs(i, 1, _do_chkbox,		choice0,	choice0,MENU1D);	// 24
+	i = update_menu_structs(i, 1, 0,				choice1,	choice1,0);
+	i = update_menu_structs(i, 1, 0,				choice2,	choice2,0);
+	i = update_menu_structs(i, 1, 0,				choice3,	choice3,0);
+	i = update_menu_structs(i, 1, 0,				choice4,	choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+// 2a
+	i = update_menu_structs(i, 1, _non_func,		choice0,	choice0,MENU2A);	// 30
+	i = update_menu_structs(i, 1, 0,				choice1,	choice1,0);
+	i = update_menu_structs(i, 1, 0,				choice2,	choice2,0);
+	i = update_menu_structs(i, 1, 0,				choice3,	choice3,0);
+	i = update_menu_structs(i, 1, 0,				choice4,	choice4,0);
+	i = update_menu_structs(i, 1, 0,				choice5,	choice5,0);
+// 2b
+	i = update_menu_structs(i, 1, _exec_choice,		choice6,	choice6,MENU2B);	// 36
+	i = update_menu_structs(i, 1, 0,				choice7,	choice7,0);
+	i = update_menu_structs(i, 1, 0,				choice8,	choice8,0);
+	i = update_menu_structs(i, 1, 0,				choice9,	choice9,0);
+	i = update_menu_structs(i, 1, 0,				choice10,	choice10,0);
+	i = update_menu_structs(i, 1, 0,				choice11,	choice11,0);
+// 2c
+	i = update_menu_structs(i, 1, _start_numentry,	testnum0,	testnum0,MENU2C);	// 42
 	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
 // 2d
-	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);
+	i = update_menu_structs(i, 1, _menu_change,		MENU1A,		MENU1A,0);	// 48
 	i = update_menu_structs(i, 1, _menu_change,		MENU1B,		MENU1B,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1C,		MENU1C,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU1D,		MENU1D,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2A,		MENU2A,0);
 	i = update_menu_structs(i, 1, _menu_change,		MENU2B,		MENU2B,0);
 	i = update_menu_structs(i, 0, _menu_change,		ENDMENU,	ENDMENU,0);
-	
+
 #if 0
 	// menu 1a		6
 	i = update_menu_structs(i, 1, 0,		num_entry,	testnum0,1);
@@ -366,6 +381,11 @@ int update_menu_labels(int index, char *ramstr)
 #ifndef TEST_WRITE_DATA
     eeprom_update_block(ramstr, eepromString+len, len);
 #endif
+	if(index > NUM_MENU_LABELS)
+	{
+		printf("%d no labels > than storage space\n",index);
+		exit(-1);	
+	}
 	strncpy(menu_labels[index],ramstr,len);
 	index++;
 	return index;

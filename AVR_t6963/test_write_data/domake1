@@ -5,6 +5,6 @@ if grep -q error warnings.txt
  find2 error warnings.txt
  then exit 1
 fi 
-rm warnings.txt
+#rm warnings.txt
 ./copy1.sh
 

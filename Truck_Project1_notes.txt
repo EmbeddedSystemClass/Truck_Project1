@@ -31,14 +31,6 @@ idea for new branch (PIC24_menus)
 if fptr field in menu_structs is 0 then goto the menu in the menu field, otherwise execute the function
 in the fptr array of function pointers.
 
-Upload the current menu when the menu changes by sending the indexes into the list of labels already
-in ram on the AVR.
-Upload the current choice and check box list by sending indexes into label list. Or can be separate lists.
-
-The non-function in the AVR will just return but the PIC24 will do whatever, like
-send an on/off to one of the TS-7200 ports, or just say, "turn on the headlights" and the PIC24 will have
-a special function to do just that. Or just do it at line 487 in pic_menu.c.
-
 MENU_FUNC_STRUCT;
 
 	UCHAR enabled;		// if shown on the menu
@@ -54,25 +46,6 @@ types of function ptrs can be:
 - execute a function like: init_checkboxes or start_numentry
 - do a key entry (if in entry mode)
 - do a 'non-function' which only means something to the PIC24
-
-One of the params to the generic_menu_function can be the keypress so we can filter out which
-key was pressed and not have to do the switch statement that call cursor_forward_stuff. The
-function that edits entered values can just filter those out. 
-
-If the function calls one of the menu choices, display the list.
-If the function is to execute something that the PIC24 does, just return.
-The list of choices is an array into the list of checkbox choices.
-The other type of checkbox is just on/off checkboxes.
-The lists can be either burned into eeprom or loaded dynamically. Or loaded dynamically first and then
-burrned into eeprom with a cmd. 
-We can save on data space by just depending on what's in the eeprom and read from the eeprom for every 
-label. 
-
-The key pressed can just be the first param passed into the function with the other params.
-The labels listed in the choices can just be passed in with every init function which displays the
-list of choices. When the function to init the pure checkboxes is called, a UCHAR is passed in that
-represents the choices to show as set/unset. (use bit shifting or just pass in array of 8 or 16 choices
-already set/unset).
 
 If the AVR is rebooted then it will send a cmd to the PIC24 saying to re-upload the configuration files.
 If the PIC24 is rebooted, it will (optionally) send a cmd saying that it needs to re-upload the config files.
@@ -90,11 +63,12 @@ to the AVR
 
 the main.c in the AVR calls get_key in AVR_menu.c
 
-as long as both the AVR and PIC point to the same index into the menu_struct the get_key in PIC 
-does a switch and then sends a string of bytes to AVR
+The generic_menu_func in PIC gets the keypress, passes it to the func ptr. If the menu_change fptr
+is called then it sets the new set of menus. Then in generic we send the fptr, ch, array of menus
+and aux_string then it exits and waits for another keypress.
 
-the get_key in AVR reads the bytes and does its own switch statement
-
+In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's the function ptr,
+displays the new menus and returns to wait for another read. 
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

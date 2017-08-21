@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
 	int display_offset = 3;
 	UCHAR temp_params[NUM_UCHAR_PARAMS];
 	int res;
-	
+
 //	UCHAR read_buf[NUM_ENTRY_SIZE];
 
 //	memset(sample_data,0,sizeof(sample_data));
 	send_data = recv_data = 0;
-	
+
 /*
 	memset(new_global_number,0,NUM_ENTRY_SIZE);
 	memset(menu_labels,0,NUM_MENU_LABELS*MAX_LABEL_LEN);

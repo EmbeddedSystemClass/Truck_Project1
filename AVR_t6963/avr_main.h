@@ -2,9 +2,9 @@
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
-#define NUM_FPTS 4
-#define MAX_LABEL_LEN 9
-#define NUM_MENU_LABELS 34
+#define NUM_FPTS 9
+#define MAX_LABEL_LEN 10
+#define NUM_MENU_LABELS 52
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define DISP_OFFSET 5
@@ -15,7 +15,7 @@
 #define RT_OFFSET 0x70
 #define LIST_SIZE 50
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-//#define NUM_UCHAR_PARAMS 20
+#define AUX_STRING_LEN 50
 
 int burn_eeprom(void);
 
@@ -45,61 +45,6 @@ typedef struct menu_func
 	UCHAR index;		// if > 0 then this is index into sample_data
 } MENU_FUNC_STRUCT;
 
-enum menu_types
-{
-	MAIN,
-	MENU1A,
-	MENU1B,
-	MENU1C,
-	MENU1D,
-	MENU2A,
-	MENU2B,
-	MENU2C,
-	MENU2D,
-	MENU3A,
-	MENU3B,
-	MENU3C,
-	MENU3D,
-	MENU4A,
-	MENU4B,
-	MENU4C,
-	MENU4D,
-	testnum0,
-	testnum1,
-	testnum2,
-	testnum3,
-	testnum4,
-	testnum5,
-	testnum6,
-	testnum7,
-	testnum8,
-	ENDMENU
-} MENU_TYPES;
-
-// total of 20 menus
-
-enum fptr_types
-{
-	_menu_change,
-	_exec_choice,
-	_do_chkbox,
-	_non_func,
-	entr,
-	back,
-	esc,
-	caps,
-	small,
-	spec,
-	next,
-	cur_for,
-	alnum_ent,
-	ckup,
-	ckdown,
-	cktoggle,
-	ckenter,
-	ckesc
-} FPTR_TYPES;
-
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
@@ -118,7 +63,7 @@ enum key_types
 	KP_B, // 'B'
 	KP_C, // 'C'
 	KP_D, // 'D'	(0xEF)
-	KP_SIM_DATA		// simulates sending data 
+	KP_SIM_DATA		// simulates sending data
 } KEY_TYPES;
 
 enum rt_types
@@ -198,7 +143,7 @@ int no_data_index;
 //UINT label_info_offset;
 UINT rt_params_offset;
 UINT menu_struct_offset;
-char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
+//char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 //char labels[1][MAX_LABEL_LEN];
 // just have 1 copy in ram and reload from eeprom every time we change menus
@@ -238,3 +183,5 @@ UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 int menu_index;
 UCHAR cur_param_string[NUM_UCHAR_PARAMS];
+UCHAR aux_string[AUX_STRING_LEN];
+

@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 //	memset(sample_data,0,sizeof(sample_data));
 	send_data = recv_data = 0;
-	iters = 100;	
+	iters = 100;
 #if 0
 	if(argv[1][0] == 'w')
 		type = 1;
@@ -143,6 +143,8 @@ int main(int argc, char *argv[])
 //	memset(cur_param_string,0,sizeof(cur_param_string));
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 		cur_param_string[i] = i;
+	for(i = 0;i < AUX_STRING_LEN;i++)
+		aux_string[i] = i;
 	j = 0;
 	res = 0;
 #if 0
@@ -151,8 +153,8 @@ int main(int argc, char *argv[])
 	getch();
 	for(i = 0;i < no_menu_labels;i++)
 		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,menu_labels[i]);
-	wrefresh(menu_win);	
-	getch();	
+	wrefresh(menu_win);
+	getch();
 	for(i = 0;i < no_menu_labels;i++)
 		mvwprintw(menu_win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
@@ -166,7 +168,7 @@ int main(int argc, char *argv[])
 //	for(i = 0;i < no_menu_structs;i++)
 	for(i = 0;i < 60;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"                          ");	
+		mvwprintw(menu_win, display_offset+i,2,"                          ");
 		wrefresh(menu_win);
 	}
 #endif
@@ -192,7 +194,7 @@ int main(int argc, char *argv[])
 //			for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 //				res += write(fd,(void*)&cur_param_string[i],1);
 //			usleep(tdelay);
-			
+
 //			mvwprintw(menu_win, display_offset+2, 4, "res: %d  ",res);
 //			wrefresh(menu_win);
 			res = 0;
@@ -332,6 +334,10 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			case 'v':
 				mvwprintw(win, display_offset+23, 8,"V     ");
 				wkey = KP_SIM_DATA;
+				break;
+			case ' ':
+				mvwprintw(win, display_offset+23, 8,"space   ");
+				wkey = SPACE;
 				break;
 			default:
 				mvwprintw(win, display_offset+23, 8, "?     ");

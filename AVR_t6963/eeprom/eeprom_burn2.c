@@ -53,6 +53,7 @@ int burn_eeprom(void)
 	no_rt_labels = i;
 	i = 0;
 // start of menus
+#if 0
 	i = update_menu_labels(i,"home\0");
 	i = update_menu_labels(i,"MENU1a\0");
 	i = update_menu_labels(i,"MENU1b\0");
@@ -91,6 +92,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"esc\0");
 	no_menu_labels = i;
+#endif
 #endif
 	i = 0;
 #ifndef TEST_WRITE_DATA
@@ -197,7 +199,7 @@ int update_menu_labels(int index, char *ramstr)
 #ifndef TEST_WRITE_DATA
     eeprom_update_block(ramstr, eepromString+len, len);
 #endif
-	strncpy(menu_labels[index],ramstr,len);
+//	strncpy(menu_labels[index],ramstr,len);
 	index++;
 	return index;
 }
