@@ -15,7 +15,7 @@
 #define RT_OFFSET 0x70
 #define LIST_SIZE 50
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 50
+#define AUX_STRING_LEN 48
 
 int burn_eeprom(void);
 
@@ -34,6 +34,56 @@ enum shown_types
 	NOSHOWN_SENT,
 	NOSHOWN_NOSENT
 } SHOWN_TYPES;
+
+enum menu_types
+{
+	MAIN,
+	MENU1A,
+	MENU1B,
+	MENU1C,
+	MENU1D,
+	MENU2A,
+	MENU2B,
+	MENU2C,
+	MENU2D,
+	
+	ckup,
+	ckdown,
+	cktoggle,
+	ckenter,
+	ckesc,
+	
+	entr,
+	caps,
+	small,
+	spec,
+	next,
+	cur_for,
+	
+	testnum0,
+	testnum1,
+	testnum2,
+	testnum3,
+	testnum4,
+	testnum5,
+	testnum6,
+	testnum7,
+	testnum8,
+	
+	choice0,
+	choice1,
+	choice2,
+	choice3,
+	choice4,
+	choice5,
+	choice6,
+	choice7,
+	choice8,
+	choice9,
+	choice10,
+	choice11,
+	ENDMENU
+} MENU_TYPES;
 
 enum key_types
 {
@@ -76,14 +126,13 @@ typedef struct checkboxes
 {
 	UCHAR index;
 	UCHAR checked;
-	char string[20];
+	char string[10];
 } CHECKBOXES;
 
 UINT send_data;
 UINT recv_data;
 int global_fd;
 #define NUM_ENTRY_SIZE 7
-#define AUX_DATA_SIZE 4
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
 #define NUM_ENTRY_BEGIN_COL 3
 #define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE

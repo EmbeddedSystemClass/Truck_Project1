@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
 		aux_string[i] = i;
 	j = 0;
 	res = 0;
+// comment out the next #if 0/#endif to test 	
 #if 0
 	mvwprintw(menu_win, display_offset,2,"test  ");
 	wrefresh(menu_win);
@@ -155,6 +156,8 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,rt_labels[i]);
 	wrefresh(menu_win);
 	getch();
+	for(i = 0;i < no_rt_labels;i++)
+		mvwprintw(menu_win, display_offset+i,2,"                          ");
 	for(i = no_menu_labels;i < no_menu_labels+no_func_labels; i++)
 		mvwprintw(menu_win, display_offset+i-no_menu_labels,2,"%d: %s  ",i-no_menu_labels,menu_labels[i]);
 	wrefresh(menu_win);
@@ -177,9 +180,18 @@ int main(int argc, char *argv[])
 	for(i = 0;i < 60;i++)
 	{
 		mvwprintw(menu_win, display_offset+i,2,"                                                             ");
-		wrefresh(menu_win);
 	}
+	wrefresh(menu_win);
+	getch();
+	delwin(menu_win);
+	clrtoeol();
+	refresh();
+	endwin();
+	tcsetattr(fd,TCSANOW,&oldtio);
+	close(fd);
+	exit(1);
 #endif
+	
 	i = 0;
 	j = 0;
 	init_list();

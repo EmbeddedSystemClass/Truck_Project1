@@ -52,47 +52,6 @@ int burn_eeprom(void)
 	i = update_rt_labels(i,"AUX2\0");
 	no_rt_labels = i;
 	i = 0;
-// start of menus
-#if 0
-	i = update_menu_labels(i,"home\0");
-	i = update_menu_labels(i,"MENU1a\0");
-	i = update_menu_labels(i,"MENU1b\0");
-	i = update_menu_labels(i,"MENU1c\0");
-	i = update_menu_labels(i,"MENU1d\0");
-	i = update_menu_labels(i,"MENU2a\0");
-	i = update_menu_labels(i,"MENU2B\0");
-	i = update_menu_labels(i,"MENU2c\0");
-	i = update_menu_labels(i,"test0\0");
-	i = update_menu_labels(i,"test1\0");
-	i = update_menu_labels(i,"test2\0");
-	i = update_menu_labels(i,"test3\0");
-	i = update_menu_labels(i,"test4\0");
-	i = update_menu_labels(i,"test5\0");
-	i = update_menu_labels(i,"test6\0");
-	i = update_menu_labels(i,"test7\0");
-	i = update_menu_labels(i,"test8\0");
-	i = update_menu_labels(i,"<end>\0");
-// end of menus
-	i = update_menu_labels(i,"mchange\0");
-	i = update_menu_labels(i,"exec_ch\0");
-	i = update_menu_labels(i,"chkbox\0");
-	i = update_menu_labels(i,"non_fnc\0");
-	i = update_menu_labels(i,"enter\0");
-	i = update_menu_labels(i,"back\0");
-	i = update_menu_labels(i,"esc\0");
-	i = update_menu_labels(i,"caps\0");
-	i = update_menu_labels(i,"small\0");
-	i = update_menu_labels(i,"spec\0");
-	i = update_menu_labels(i,"next\0");
-	i = update_menu_labels(i,"forward\0");
-	i = update_menu_labels(i,"enter\0");
-	i = update_menu_labels(i,"up\0");
-	i = update_menu_labels(i,"down\0");
-	i = update_menu_labels(i,"toggle\0");
-	i = update_menu_labels(i,"enter\0");
-	i = update_menu_labels(i,"esc\0");
-	no_menu_labels = i;
-#endif
 #endif
 	i = 0;
 #ifndef TEST_WRITE_DATA

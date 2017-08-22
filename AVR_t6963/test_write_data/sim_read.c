@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
 	i = 0;
 	j = 0;
 	res = 0;
+	init_list();
 	while(j < 100)
 	{
 		read_get_key(temp_params);

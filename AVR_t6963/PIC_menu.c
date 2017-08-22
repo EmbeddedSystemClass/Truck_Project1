@@ -36,7 +36,6 @@ static int curr_type;
 static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
-static int test_send_num;
 
 #ifdef TEST_WRITE_DATA
 static void display_menus(int index);
@@ -123,7 +122,7 @@ void init_list(void)
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
-	test_send_num = 254;
+	send_aux_data = 0;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -149,11 +148,51 @@ static void prev_list(void)
 //#if 0
 static void set_list(int fptr)
 {
+	int i;
 	if(current_fptr < list_size)
 	{
 		current_fptr++;
 		menu_list[current_fptr] = fptr;
 		dirty_flag = 1;
+
+		mvwprintw(win, DISP_OFFSET+5,2,"%s   ",get_fptr_label());
+		wrefresh(win);
+		send_aux_data = 1;
+		if(menu_structs[get_curr_menu()].fptr != _menu_change)
+		{
+			switch(get_curr_menu_index())
+			{
+				case MENU1C:	// 1st exec_choice
+					send_aux_data = 8;
+					for(i = 0;i < send_aux_data;i++)
+						aux_string[i] = i;
+				break;
+				case MENU1D:	// do_chkbox
+					send_aux_data = 16;
+//					for(i = 0;i < send_aux_data;i++)
+//						aux_string[i] = i;
+				break;
+				case MENU2A:	// non_func
+					send_aux_data = 24;
+//					for(i = 0;i < send_aux_data;i++)
+//						aux_string[i] = i;
+				break;
+				case MENU2B:	// 2nd exec_choice
+					send_aux_data = 32;
+//					for(i = 0;i < send_aux_data;i++)
+//						aux_string[i] = i;
+				break;
+				case MENU2C:	// start_numentry
+					send_aux_data = 48;
+//					for(i = 0;i < send_aux_data;i++)
+//						aux_string[i] = i;
+				break;
+				default:
+					send_aux_data = 1;					
+				break;
+			}
+		}
+
 	}
 }
 //#endif
@@ -259,23 +298,15 @@ static UCHAR generic_menu_function(UCHAR ch)
 {
 	UCHAR ret_char;
 	int i;
-	int init_flag = 0;
 	UCHAR temp2;
 	int temp3;
 	char tlabel[MAX_LABEL_LEN];
 
+//	mvwprintw(win, DISP_OFFSET+5,2,"                       ");
+
 
 	if(menu_structs[get_curr_menu()].enabled == 1)
 	{
-#if 0
-#ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET, 2, "menu_index:  %d   ",get_curr_menu());
-		mvwprintw(win, DISP_OFFSET+1, 2,"fptr:   %s   %s  ",
-//				menu_structs[get_curr_menu()*6].fptr,
-				menu_labels[get_curr_menu()],
-				get_fptr_label());
-#endif
-#endif
 		// execute function pointer
 		ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
 //		cur_param_string[0] = ret_char;
@@ -290,59 +321,21 @@ static UCHAR generic_menu_function(UCHAR ch)
 		for(i = 0;i < 6;i++)
 		{
 			memset(tlabel,0,MAX_LABEL_LEN);
-//			if(menu_structs[(get_curr_menu2())+i].enabled == 1)
-//			{
-/*
-			mvwprintw(win, DISP_OFFSET+5,2,"press space bar...");
-			wrefresh(win);
-			getch();
-			mvwprintw(win, DISP_OFFSET+5,2,"                    ");
-*/
-				strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
-				memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
-//			}
+			strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
+			memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
 		}
-#if 0
-		if(strcmp(get_fptr_label(),"mchange") == 0)
-			init_flag = 0;
-
-		if(init_flag == 0 && strcmp(get_fptr_label(),"mchange") != 0)
-		{
-			switch(get_curr_menu_index())
-			{
-				case MENU1C:
-					aux_string[3] = 10;
-				break;
-				case MENU1D:
-					aux_string[3] = 11;
-				break;
-				case MENU2A:
-					aux_string[3] = 12;
-				break;
-				case MENU2B:
-					aux_string[3] = 13;
-				break;
-				case MENU2C:
-					aux_string[3] = (UCHAR)test_send_num;
-					temp3 = test_send_num;
-					temp3 >>= 8;
-					temp2 = (UCHAR)temp3;
-					aux_string[4] = temp2;
-					test_send_num++;
-				break;
-				default:
-				break;
-			}
-		}
-		aux_string[2] = init_flag;
-#endif
 
 		temp2 = get_fptr();
 		write(global_fd,&temp2,1);
 		write(global_fd,&ch,1);
+		temp2 = (UCHAR)get_curr_menu_index();
+		write(global_fd,&temp2,1);
 		write(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
-		aux_string[0] = get_curr_menu();
-		write(global_fd,aux_string,AUX_STRING_LEN);
+
+		write(global_fd,&send_aux_data,1);
+		if(send_aux_data != 0)
+			write(global_fd,aux_string,send_aux_data);
+			
 	}
 //#if 0
 #ifdef TEST_WRITE_DATA
@@ -351,6 +344,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 		mvwprintw(win, DISP_OFFSET+8+i, 2,"%d -> %s  ",menu_list[i],menu_labels[get_curr_menu()]);
 		mvwprintw(win, DISP_OFFSET+8+i+1, 2,"                                  ");
+		wrefresh(win);
 #endif
 //#endif
 	return ret_char;
@@ -397,8 +391,6 @@ static UCHAR exec_choice(UCHAR ch)
 	mvwprintw(win, DISP_OFFSET+6,2, "*exec_choice: %x     ",ch);
 	wrefresh(win);
 #endif
-//	for(i = 0;i < AUX_STRING_LEN;i++)
-//		aux_string[i]++;
 	return ret_char;
 }
 
@@ -419,8 +411,10 @@ static UCHAR do_chkbox(UCHAR ch)
 		case KP_C:
 		break;
 		case KP_D:
+		prev_list();
 		break;
 		case KP_POUND:
+		prev_list();
 		break;
 		case KP_0:
 		break;
@@ -526,7 +520,7 @@ static void display_menus(int index)
 	mvwprintw(win, DISP_OFFSET+23,2,"%d  ",index);
 	for(i = 0;i < 6;i++)
 	{
-		if(menu_structs[index].enabled == 1)
+//		if(menu_structs[index].enabled == 1)
 			mvwprintw(win, DISP_OFFSET+24+i, 2,"%s   ",menu_labels[menu_structs[get_curr_menu()].menus[i]]);
 	}
 }

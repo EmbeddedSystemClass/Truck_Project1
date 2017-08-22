@@ -1,10 +1,10 @@
-// avr_main.h
+// pic_main.h
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
 #define NUM_FPTS 5
 #define MAX_LABEL_LEN 10
-#define NUM_MENU_LABELS 52
+#define NUM_MENU_LABELS 60
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define NUM_MENU_CHOICES 6
@@ -18,7 +18,7 @@
 #define RT_OFFSET 0x70
 #define LIST_SIZE 50
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 50
+#define AUX_STRING_LEN 48
 
 int burn_eeprom(void);
 
@@ -57,6 +57,21 @@ enum menu_types
 	MENU2A,
 	MENU2B,
 	MENU2C,
+	MENU2D,
+	
+	ckup,
+	ckdown,
+	cktoggle,
+	ckenter,
+	ckesc,
+	
+	entr,
+	caps,
+	small,
+	spec,
+	next,
+	cur_for,
+	
 	testnum0,
 	testnum1,
 	testnum2,
@@ -66,6 +81,7 @@ enum menu_types
 	testnum6,
 	testnum7,
 	testnum8,
+	
 	choice0,
 	choice1,
 	choice2,
@@ -89,7 +105,8 @@ enum fptr_types
 	_exec_choice,
 	_do_chkbox,
 	_non_func,
-	_start_numentry,
+	_start_numentry
+/*
 	entr,
 	back,
 	esc,
@@ -104,6 +121,7 @@ enum fptr_types
 	cktoggle,
 	ckenter,
 	ckesc
+*/
 } FPTR_TYPES;
 
 enum key_types
@@ -148,14 +166,13 @@ typedef struct checkboxes
 {
 	UCHAR index;
 	UCHAR checked;
-	char string[20];
+	char string[10];
 } CHECKBOXES;
 
 UINT send_data;
 UINT recv_data;
 int global_fd;
 #define NUM_ENTRY_SIZE 7
-#define AUX_DATA_SIZE 4
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
 #define NUM_ENTRY_BEGIN_COL 3
 #define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE
@@ -168,14 +185,6 @@ int global_fd;
 #define MENU_START_ROW 12
 #define MENU_START_COL 15
 #define MENU_BLANK "          "
-#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
-#define NO_RT_LABELS_EEPROM_LOCATION 0x03e2
-#define NO_RTPARAMS_EEPROM_LOCATION 0x03e4
-#define NO_MENUS_EEPROM_LOCATION 0x3e6
-#define RTPARAMS_OFFSET_EEPROM_LOCATION_LSB 0x03e8	// points to just after all the labels (prompt_info)
-#define RTPARAMS_OFFSET_EEPROM_LOCATION_MSB 0x03ea
-#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
-#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
 #define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 #define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
@@ -247,4 +256,4 @@ UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 UCHAR cur_param_string[NUM_UCHAR_PARAMS];
 UCHAR aux_string[AUX_STRING_LEN];
-
+UCHAR send_aux_data;

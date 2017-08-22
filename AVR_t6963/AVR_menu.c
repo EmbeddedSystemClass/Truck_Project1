@@ -307,6 +307,7 @@ int get_str_len(void)
 static UCHAR menu_change(UCHAR ch)
 {
 	UCHAR ret_char = ch;
+	mvwprintw(win, DISP_OFFSET+20,2, "                    ");
 	switch(ch)
 	{
 		case KP_A:
@@ -358,9 +359,9 @@ static UCHAR generic_menu_function(void)
 {
 	UCHAR ret_char;
 	int i,j;
-	int index;
-	int temp2;
 	UCHAR temp;
+	UCHAR menu_index;
+	UCHAR prev_menu_index;
 	UCHAR ch = 0;
 	UCHAR tfptr;
 	int res,res2;
@@ -368,24 +369,46 @@ static UCHAR generic_menu_function(void)
 //	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 //		cur_param_string[i]++;
 
+	memset(aux_string,0,AUX_STRING_LEN);
 	res = 0;
 	res2 = 0;
 	read(global_fd,&tfptr,1);
 	read(global_fd,&ch,1);
+	read(global_fd,&menu_index,1);
 //	read(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 		res += read(global_fd,&cur_param_string[i],1);
 
-	for(i = 0;i < AUX_STRING_LEN;i++)
+	read(global_fd,&temp,1);
+
+	mvwprintw(win, DISP_OFFSET+29, 2,"no bytes read for aux_string:%d  menu_index %d                   ",temp,menu_index);
+	for(i = 0;i < temp;i++)
 		res2 += read(global_fd,&aux_string[i],1);
-		
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+30, 2,"fptr: %s   ch:%x    res:%d    res2:%d   ",get_fptr_label(tfptr),ch,res,res2);
 	mvwprintw(win, DISP_OFFSET+30, 2,"ch:%x  fptr:%x  res:%d    res2:%d   ",ch,tfptr,res,res2);
 #endif
 	ret_char = (*fptr[tfptr])(ch);
 	display_menus();
-//	cur_param_string[0] = ret_char;
+
+	if(prev_menu_index != menu_index)
+	{
+		switch (menu_index)
+		{
+			case MENU1C:
+			break;
+			case MENU1D:
+				init_checkboxes();
+			break;
+			case MENU2A:
+			break;
+			case MENU2B:
+			break;
+			case MENU2C:
+			break;
+		}
+	}
+	prev_menu_index = menu_index;
 //#if 0
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2, 2,"fptr:   %s   %x   ",get_fptr_label(tfptr),ch);
@@ -400,7 +423,6 @@ static UCHAR generic_menu_function(void)
 	wrefresh(win);
 #endif
 //#endif
-	wrefresh(win);
 	return ret_char;
 }
 //******************************************************************************************//
@@ -409,13 +431,18 @@ static UCHAR generic_menu_function(void)
 static char* get_fptr_label(UCHAR fptr)
 {
 //s	return menu_labels[fptr+18];
+	return (char*)0;
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 static UCHAR exec_choice(UCHAR ch)
 {
+
 	UCHAR ret_char = ch;
+
+	mvwprintw(win, DISP_OFFSET+20,2, "                    ");
+
 	switch(ch)
 	{
 		case KP_A:
@@ -449,27 +476,34 @@ static UCHAR do_chkbox(UCHAR ch)
 {
 	UCHAR ret_char = ch;
 
+	mvwprintw(win, DISP_OFFSET+20,2, "                    ");
 	switch(ch)
 	{
 		case KP_A:
-		mvwprintw(win, DISP_OFFSET+21,2, "A  ");
+		scrollup_checkboxes(ch);
+		mvwprintw(win, DISP_OFFSET+21,2, "scroll up    %d   ",curr_checkbox);
 		break;
 		case KP_B:
-		mvwprintw(win, DISP_OFFSET+21,2, "B  ");
+		scrolldown_checkboxes(ch);
+		mvwprintw(win, DISP_OFFSET+21,2, "scroll down  %d   ",curr_checkbox);
 		break;
 		case KP_C:
-		mvwprintw(win, DISP_OFFSET+21,2, "C  ");
+		toggle_checkboxes(ch);
+		mvwprintw(win, DISP_OFFSET+21,2, "toggle       %d   ",curr_checkbox);
 		break;
 		case KP_D:
-		mvwprintw(win, DISP_OFFSET+21,2, "D  ");
+		enter_checkboxes(ch);
+		mvwprintw(win, DISP_OFFSET+21,2, "enter       %d    ",curr_checkbox);
 		break;
 		case KP_POUND:
-		mvwprintw(win, DISP_OFFSET+21,2, "#  ");
+		escape_checkboxes(ch);
+		mvwprintw(win, DISP_OFFSET+21,2, "escape      %d    ",curr_checkbox);
 		break;
 		case KP_0:
 		mvwprintw(win, DISP_OFFSET+21,2, "0  ");
 		break;
 		case KP_AST:
+		escape_checkboxes(ch);
 		break;
 		default:
 		break;
@@ -487,6 +521,8 @@ static UCHAR do_chkbox(UCHAR ch)
 static UCHAR non_func(UCHAR ch)
 {
 	UCHAR ret_char = ch;
+
+	mvwprintw(win, DISP_OFFSET+20,2, "                    ");
 
 	switch(ch)
 	{
@@ -783,14 +819,18 @@ static void clean_disp_num(void)
 		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL+1,0x20);
 	}
 }
+//******************************************************************************************//
+//************************************ init_checkboxes *************************************//
+//******************************************************************************************//
 static void init_checkboxes(void)
 {
 	int i;
 	UCHAR row, col;
-	scale_disp(SCALE_DISP_SOME);
+//	scale_disp(SCALE_DISP_SOME);
 	row = 1;
 	col = 3;
 	curr_checkbox = 0;
+	mvwprintw(win, DISP_OFFSET+20,2, "init_checkboxes           ");
 	memset(check_boxes,0,sizeof(CHECKBOXES)*NUM_CHECKBOXES);
 
 	strcpy(check_boxes[0].string,"choice 1\0");
@@ -811,6 +851,9 @@ static void init_checkboxes(void)
 		row++;
 	}
 }
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
 static UCHAR scrollup_checkboxes(UCHAR ch)
 {
 	if(--curr_checkbox < 0)
@@ -819,6 +862,9 @@ static UCHAR scrollup_checkboxes(UCHAR ch)
 //	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
 	return ch;
 }
+//******************************************************************************************//
+//********************************* scrolldown_checkboxes **********************************//
+//******************************************************************************************//
 static UCHAR scrolldown_checkboxes(UCHAR ch)
 {
 	if(++curr_checkbox > last_checkbox)
@@ -827,31 +873,40 @@ static UCHAR scrolldown_checkboxes(UCHAR ch)
 //	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
 	return ch;
 }
+//******************************************************************************************//
+//********************************** toggle_checkboxes *************************************//
+//******************************************************************************************//
 static UCHAR toggle_checkboxes(UCHAR ch)
 {
 	if(check_boxes[curr_checkbox].checked == 1)
 	{
 		check_boxes[curr_checkbox].checked = 0;
-		dispCharAt(2+check_boxes[curr_checkbox].index,0,0x20);	// display 'blank'
+		dispCharAt(1+check_boxes[curr_checkbox].index,0,0x20);	// display 'blank'
 	}
 	else
 	{
 		check_boxes[curr_checkbox].checked = 1;
-		dispCharAt(2+check_boxes[curr_checkbox].index,0,120);	// display 'x'
+		dispCharAt(1+check_boxes[curr_checkbox].index,0,120);	// display 'x'
 	}
 	return ch;
 }
+//******************************************************************************************//
+//*********************************** enter_checkboxes *************************************//
+//******************************************************************************************//
 static UCHAR enter_checkboxes(UCHAR ch)
 {
 	blank_choices();
-	scale_disp(SCALE_DISP_ALL);
+//	scale_disp(SCALE_DISP_ALL);
 //	prev_list();
 	return ch;
 }
+//******************************************************************************************//
+//********************************** escape_checkboxes *************************************//
+//******************************************************************************************//
 static UCHAR escape_checkboxes(UCHAR ch)
 {
 	blank_choices();
-	scale_disp(SCALE_DISP_ALL);
+//	scale_disp(SCALE_DISP_ALL);
 //	prev_list();
 	return ch;
 }
@@ -861,7 +916,7 @@ static UCHAR escape_checkboxes(UCHAR ch)
 static void blank_choices(void)
 {
 	int row,col,i;
-	row = 3;
+	row = 1;
 	col = 3;
 	char blank[] = "                     ";
 	for(i = 0;i < NUM_CHECKBOXES;i++)
