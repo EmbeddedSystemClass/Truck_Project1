@@ -242,28 +242,7 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	i++;
 	return i;
 }
-//******************************************************************************************//
-//********************************* update_menu_structs*************************************//
-//******************************************************************************************//
-//int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type)
-int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index)
-{
-/*
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR key;			// which keypress applies
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// if fptr == 0 then it means goto a this menu
-	UCHAR label;			// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-*/
-#ifndef TEST_WRITE_DATA
-    eeprom_update_block(&menu_structs, eepromString+total_offset, sizeof(MENU_FUNC_STRUCT));
-#endif
-	total_offset += sizeof(MENU_FUNC_STRUCT);
-//	printf("total_offset = %d\n",total_offset);
-	i++;
-	return i;
-}
+
 #ifndef TEST_WRITE_DATA
 //******************************************************************************************//
 //************************************** read_eeprom****************************************//

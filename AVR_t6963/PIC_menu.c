@@ -26,10 +26,6 @@ static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR start_numentry(UCHAR ch);
-static UCHAR test1(UCHAR ch);
-static UCHAR test2(UCHAR ch);
-static UCHAR test3(UCHAR ch);
-static UCHAR test4(UCHAR ch);
 static UCHAR generic_menu_function(UCHAR ch);
 static int first_menu = MAIN;
 static int last_menu = testnum8;
@@ -40,7 +36,6 @@ static int curr_type;
 static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
-static int inc_index;
 static int test_send_num;
 
 #ifdef TEST_WRITE_DATA
@@ -60,8 +55,7 @@ static UCHAR (*fptr[NUM_FPTS])(UCHAR) = {enter, backspace, escape, scr_alnum0, \
 		 scr_alnum1, scr_alnum2, scr_alnum3, cursor_forward, alnum_enter, scrollup_checkboxes, \
 			scrolldown_checkboxes, toggle_checkboxes, enter_checkboxes, escape_checkboxes };
 #endif
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry, 
-		test1, test2, test3, test4 };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry };
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -129,7 +123,6 @@ void init_list(void)
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
-	inc_index = 0;
 	test_send_num = 254;
 }
 //******************************************************************************************//
@@ -153,7 +146,7 @@ static void prev_list(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-#if 0
+//#if 0
 static void set_list(int fptr)
 {
 	if(current_fptr < list_size)
@@ -163,7 +156,7 @@ static void set_list(int fptr)
 		dirty_flag = 1;
 	}
 }
-#endif
+//#endif
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -172,10 +165,10 @@ static UCHAR menu_change(UCHAR ch)
 	UCHAR ret_char = ch;
 	int i;
 	int temp;
-	int menu_index;
+	int menu_index = 0;
+	int curr_menu;
 	
-	temp = get_curr_menu();
-	menu_index = temp * 6;
+	curr_menu = get_curr_menu();
 	switch(ch)
 	{
 		case KP_A:
@@ -202,11 +195,11 @@ static UCHAR menu_change(UCHAR ch)
 		break;
 	}
 	if(ch != KP_AST)
-		set_list(menu_structs[menu_index].menu);
+		set_list(menu_structs[curr_menu].menus[menu_index]);
 
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-	mvwprintw(win, DISP_OFFSET+6,2, "menu_change %d  %d              ",menu_index,menu_structs[menu_index].menu);
+	mvwprintw(win, DISP_OFFSET+6,2, "menu_change   %x    ",ch);
 //	mvwprintw(win, DISP_OFFSET+6,2, "*menu_change                           ");
 	wrefresh(win);
 #endif
@@ -239,7 +232,7 @@ UCHAR get_key(UCHAR ch, UCHAR *str)
 	{
 //#if 0
 #ifdef TEST_WRITE_DATA
-		display_menus(get_curr_menu2());
+		display_menus(get_curr_menu());
 #endif
 //#endif
 	}
@@ -272,7 +265,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	char tlabel[MAX_LABEL_LEN];
 
 
-	if(menu_structs[get_curr_menu2()].enabled == 1)
+	if(menu_structs[get_curr_menu()].enabled == 1)
 	{
 #if 0
 #ifdef TEST_WRITE_DATA
@@ -284,16 +277,14 @@ static UCHAR generic_menu_function(UCHAR ch)
 #endif
 #endif
 		// execute function pointer
-		ret_char = (*fptr[menu_structs[get_curr_menu2()+inc_index].fptr])(ch);
+		ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
 //		cur_param_string[0] = ret_char;
 #ifdef TEST_WRITE_DATA
-//		mvwprintw(win, DISP_OFFSET+3, 2, "menu_index:  %d   ",get_curr_menu());
-		mvwprintw(win, DISP_OFFSET+4, 2,"%s  %d  %s   %d             ",
-//				menu_structs[get_curr_menu()*6].fptr,
+		mvwprintw(win, DISP_OFFSET+4, 2,"%s  %d  %s   %d            ",
 				menu_labels[get_curr_menu()],
-				get_curr_menu2(),				
+				get_curr_menu(),
 				get_fptr_label(),
-				inc_index);
+				menu_structs[get_curr_menu()].fptr);
 		wrefresh(win);
 #endif
 		for(i = 0;i < 6;i++)
@@ -307,11 +298,11 @@ static UCHAR generic_menu_function(UCHAR ch)
 			getch();
 			mvwprintw(win, DISP_OFFSET+5,2,"                    ");
 */
-				strcpy(tlabel,menu_labels[menu_structs[(get_curr_menu2())+i].menu]);
+				strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
 				memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
 //			}
 		}
-
+#if 0
 		if(strcmp(get_fptr_label(),"mchange") == 0)
 			init_flag = 0;
 
@@ -343,14 +334,14 @@ static UCHAR generic_menu_function(UCHAR ch)
 				break;
 			}
 		}
-
 		aux_string[2] = init_flag;
+#endif
 
 		temp2 = get_fptr();
 		write(global_fd,&temp2,1);
 		write(global_fd,&ch,1);
 		write(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
-		aux_string[0] = get_curr_menu2();
+		aux_string[0] = get_curr_menu();
 		write(global_fd,aux_string,AUX_STRING_LEN);
 	}
 //#if 0
@@ -394,13 +385,11 @@ static UCHAR exec_choice(UCHAR ch)
 		break;
 		case KP_AST:
 		prev_list();
-		inc_index = 0;
 		break;
 		default:
 		break;
 	}
-	if(ch != KP_AST)
-		inc_index = menu_index;
+//	if(ch != KP_AST)
 
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
@@ -413,114 +402,6 @@ static UCHAR exec_choice(UCHAR ch)
 	return ret_char;
 }
 
-static UCHAR test1(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		prev_list();
-		inc_index = 0;
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+6,2, "*test 1: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test2(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		prev_list();
-		inc_index = 0;
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+6,2, "*test 2: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test3(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		prev_list();
-		inc_index = 0;
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+6,2, "*test 3: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test4(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		prev_list();
-		inc_index = 0;
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+6,2, "*test 4: %x         ",ch);
-	return ret_char;
-}
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -645,8 +526,8 @@ static void display_menus(int index)
 	mvwprintw(win, DISP_OFFSET+23,2,"%d  ",index);
 	for(i = 0;i < 6;i++)
 	{
-		if(menu_structs[index+i].enabled == 1)
-			mvwprintw(win, DISP_OFFSET+24+i, 2,"%s   ",menu_labels[menu_structs[index+i].menu]);
+		if(menu_structs[index].enabled == 1)
+			mvwprintw(win, DISP_OFFSET+24+i, 2,"%s   ",menu_labels[menu_structs[get_curr_menu()].menus[i]]);
 	}
 }
 #endif
@@ -655,14 +536,14 @@ static void display_menus(int index)
 //******************************************************************************************//
 static UCHAR get_fptr(void)
 {
-	return menu_structs[get_curr_menu2()+inc_index].fptr;
+	return menu_structs[get_curr_menu()].fptr;
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 static char* get_fptr_label(void)
 {
-	return menu_labels[menu_structs[get_curr_menu2()].fptr+no_menu_labels];
+	return menu_labels[menu_structs[get_curr_menu()].fptr+no_menu_labels];
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -674,16 +555,9 @@ int get_curr_menu(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-int get_curr_menu2(void)
-{
-	return menu_list[current_fptr]*6;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
 static int get_curr_menu_index(void)
 {
-	return menu_structs[get_curr_menu2()].index;
+	return menu_structs[get_curr_menu()].index;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -702,7 +576,7 @@ int get_str_len(void)
 	return cur_col-NUM_ENTRY_BEGIN_COL;
 }
 
-//#if 0
+#if 0
 static void set_list(int fptr)
 {
 	int temp = current_fptr;
@@ -731,6 +605,6 @@ static void set_list(int fptr)
 	wrefresh(win);
 #endif
 }
-//#endif
+#endif
 
 

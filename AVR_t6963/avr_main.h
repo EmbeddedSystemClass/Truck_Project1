@@ -2,7 +2,7 @@
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
-#define NUM_FPTS 9
+#define NUM_FPTS 5
 #define MAX_LABEL_LEN 10
 #define NUM_MENU_LABELS 52
 #define NUM_RT_PARAMS 12
@@ -34,16 +34,6 @@ enum shown_types
 	NOSHOWN_SENT,
 	NOSHOWN_NOSENT
 } SHOWN_TYPES;
-
-typedef struct menu_func
-{
-//	int _index;
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// which menu to goto if _menu_change is the fptr
-	UCHAR label;		// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-} MENU_FUNC_STRUCT;
 
 enum key_types
 {

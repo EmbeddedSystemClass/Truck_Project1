@@ -147,8 +147,16 @@ int main(int argc, char *argv[])
 		aux_string[i] = i;
 	j = 0;
 	res = 0;
-//#if 0
+#if 0
 	mvwprintw(menu_win, display_offset,2,"test  ");
+	wrefresh(menu_win);
+	getch();
+	for(i = 0;i < no_rt_labels;i++)
+		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,rt_labels[i]);
+	wrefresh(menu_win);
+	getch();
+	for(i = no_menu_labels;i < no_menu_labels+no_func_labels; i++)
+		mvwprintw(menu_win, display_offset+i-no_menu_labels,2,"%d: %s  ",i-no_menu_labels,menu_labels[i]);
 	wrefresh(menu_win);
 	getch();
 	for(i = 0;i < no_menu_labels;i++)
@@ -159,19 +167,19 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"%d: %d %d %s %d   ",i,
-			menu_structs[i].enabled, menu_structs[i].fptr, menu_labels[menu_structs[i].menu],
-			menu_structs[i].index);
+		mvwprintw(menu_win, display_offset+i,2,"%d: %d ",menu_structs[i].enabled, menu_structs[i].fptr);
+		for(j = 0;j < 6;j++)
+			mvwprintw(menu_win, display_offset+i,7+(j*12),"%s ", menu_labels[ menu_structs[i].menus[j]] );
 	}
 	wrefresh(menu_win);
 	getch();
 //	for(i = 0;i < no_menu_structs;i++)
 	for(i = 0;i < 60;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"                          ");
+		mvwprintw(menu_win, display_offset+i,2,"                                                             ");
 		wrefresh(menu_win);
 	}
-//#endif
+#endif
 	i = 0;
 	j = 0;
 	init_list();

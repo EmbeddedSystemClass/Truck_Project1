@@ -49,7 +49,7 @@ static void scroll_alnum_list(int dir);
 static void blank_menu(void);
 static void adv_menu_label(int index, UCHAR *row, UCHAR *col);
 static void display_menus(void);
-static void start_numentry(void);
+static void start_numentry2(void);
 static void scale_disp(int amt);
 static void init_checkboxes(void);
 static void blank_choices(void);
@@ -72,10 +72,7 @@ static UCHAR menu_change(UCHAR ch);
 static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
-static UCHAR test1(UCHAR ch);
-static UCHAR test2(UCHAR ch);
-static UCHAR test3(UCHAR ch);
-static UCHAR test4(UCHAR ch);
+static UCHAR start_numentry(UCHAR ch);
 
 static char* get_fptr_label(UCHAR);
 
@@ -89,8 +86,7 @@ static UCHAR alnum_array[NUM_ALNUM+1];
 static UCHAR choose_alnum;
 #endif
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry, 
-		test1, test2, test3, test4 };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry };
 
 //******************************************************************************************//
 //******************************************************************************************//
@@ -446,106 +442,6 @@ static UCHAR exec_choice(UCHAR ch)
 #endif
 	return ret_char;
 }
-static UCHAR test1(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+20,2, "*test 1: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test2(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+20,2, "*test 2: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test3(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+20,2, "*test 3: %x         ",ch);
-	return ret_char;
-}
-static UCHAR test4(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		break;
-		default:
-		break;
-	}
-	mvwprintw(win, DISP_OFFSET+20,2, "*test 4: %x         ",ch);
-	return ret_char;
-}
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -556,16 +452,22 @@ static UCHAR do_chkbox(UCHAR ch)
 	switch(ch)
 	{
 		case KP_A:
+		mvwprintw(win, DISP_OFFSET+21,2, "A  ");
 		break;
 		case KP_B:
+		mvwprintw(win, DISP_OFFSET+21,2, "B  ");
 		break;
 		case KP_C:
+		mvwprintw(win, DISP_OFFSET+21,2, "C  ");
 		break;
 		case KP_D:
+		mvwprintw(win, DISP_OFFSET+21,2, "D  ");
 		break;
 		case KP_POUND:
+		mvwprintw(win, DISP_OFFSET+21,2, "#  ");
 		break;
 		case KP_0:
+		mvwprintw(win, DISP_OFFSET+21,2, "0  ");
 		break;
 		case KP_AST:
 		break;
@@ -612,8 +514,54 @@ static UCHAR non_func(UCHAR ch)
 #endif
 	return ret_char;
 }
-
-
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static UCHAR start_numentry(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	switch(ch)
+	{
+		case KP_0:
+		case KP_1:
+		case KP_2:
+		case KP_3:
+		case KP_4:
+		case KP_5:
+		case KP_6:
+		case KP_7:
+		case KP_8:
+		case KP_9:
+			ret_char = ch - 0xE2;
+		break;	
+		mvwprintw(win, DISP_OFFSET+21,2, "A  ");
+		break;
+		case KP_B:
+		mvwprintw(win, DISP_OFFSET+21,2, "B  ");
+		break;
+		case KP_C:
+		mvwprintw(win, DISP_OFFSET+21,2, "C  ");
+		break;
+		case KP_D:
+		mvwprintw(win, DISP_OFFSET+21,2, "D  ");
+		break;
+		case KP_POUND:
+		mvwprintw(win, DISP_OFFSET+21,2, "#  ");
+		break;
+		case KP_AST:
+		mvwprintw(win, DISP_OFFSET+21,2, "*  ");
+		break;
+		default:
+		break;
+	}
+#ifdef TEST_WRITE_DATA
+//	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
+//	mvwprintw(win, DISP_OFFSET+6,2, "non_func %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
+	mvwprintw(win, DISP_OFFSET+20,2, "*start_num_entry  %x   ",ret_char);
+	wrefresh(win);
+#endif
+	return ret_char;
+}
 //******************************************************************************************//
 //******************************************* escape ***************************************//
 //******************************************************************************************//
@@ -656,7 +604,7 @@ static UCHAR enter(UCHAR ch)
 //******************************************************************************************//
 //************************************** start_numentry ************************************//
 //******************************************************************************************//
-static void start_numentry(void)
+static void start_numentry2(void)
 {
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, 41, 3,"                                   ");

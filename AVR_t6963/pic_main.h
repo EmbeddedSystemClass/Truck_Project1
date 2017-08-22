@@ -2,7 +2,7 @@
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
-#define NUM_FPTS 9
+#define NUM_FPTS 5
 #define MAX_LABEL_LEN 10
 #define NUM_MENU_LABELS 52
 #define NUM_RT_PARAMS 12
@@ -41,11 +41,10 @@ enum shown_types
 typedef struct menu_func
 {
 //	int _index;
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// which menu to goto if _menu_change is the fptr
-//	UCHAR label;		// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
+	UCHAR enabled;							// if alt function will replace generic function
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;							// if > 0 then this is index into sample_data
 } MENU_FUNC_STRUCT;
 
 enum menu_types
@@ -58,7 +57,6 @@ enum menu_types
 	MENU2A,
 	MENU2B,
 	MENU2C,
-	MENU2D,
 	testnum0,
 	testnum1,
 	testnum2,
@@ -92,10 +90,6 @@ enum fptr_types
 	_do_chkbox,
 	_non_func,
 	_start_numentry,
-	_test1,
-	_test2,
-	_test3,
-	_test4,
 	entr,
 	back,
 	esc,
@@ -193,12 +187,12 @@ UCHAR get_key(UCHAR ch, UCHAR *str);
 UCHAR read_get_key(UCHAR *str);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
-int get_curr_menu2(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR index);
+int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+			UCHAR menu4, UCHAR menu5, UCHAR index);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_menu_labels(int i, char *ramstr);
 int update_rt_labels(int index, char *ramstr);
