@@ -50,21 +50,9 @@ int main(int argc, char *argv[])
 	UCHAR key;
 	UCHAR wkey;
 	UCHAR req;
-	int display_offset = 3;
 	UCHAR temp_params[NUM_UCHAR_PARAMS];
 	int res;
 
-//	UCHAR read_buf[NUM_ENTRY_SIZE];
-
-//	memset(sample_data,0,sizeof(sample_data));
-
-/*
-	memset(new_global_number,0,NUM_ENTRY_SIZE);
-	memset(menu_labels,0,NUM_MENU_LABELS*MAX_LABEL_LEN);
-	memset(rt_labels,0,NUM_RT_LABELS*MAX_LABEL_LEN);
-	memset(menu_structs,0,NUM_MENU_STRUCTS*sizeof(MENU_FUNC_STRUCT));
-	memset(rt_params,0,NUM_RT_PARAMS*sizeof(RT_PARAM));
-*/
 #endif
 	burn_eeprom();
 	// reserve an extra sample_data space for in case of 'escape'
@@ -79,30 +67,6 @@ int main(int argc, char *argv[])
 //	nodelay(menu_win, TRUE);
 	box(menu_win,0,0);
 	set_win(menu_win);
-
-	display_offset = DISP_OFFSET;
-
-#if 0
-		if(argc > 2)
-		{
-			data2 = atoi(argv[3]);
-//			printf("rpm starting at: %d\n",data2);
-			mvwprintw(menu_win,display_offset+18,4,"rpm starting at: %d",data2);
-		}
-		if(argc > 3)
-		{
-			data = atoi(argv[4]);
-//			printf("others starting at: %d\n",data);
-			mvwprintw(menu_win,display_offset+19,4,"others starting at: %d",data);
-		}
-		if(argc > 4)
-		{
-//			printf("time delay: %s  ",argv[5]);
-			tdelay = atoi(argv[5])*5000;
-			tdelay2 = atoi(argv[5])*10000;
-			mvwprintw(menu_win,display_offset+20,4,"time delays: %d  %d ",tdelay,tdelay2);
-		}
-#endif
 
 	wrefresh(menu_win);
 
@@ -128,7 +92,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	res = 0;
 	init_list();
-	while(j < 100)
+	while(1)
 	{
 		read_get_key(temp_params);
 

@@ -1,14 +1,5 @@
 // avr_main.h
 
-#define SCALE_DISP_ALL 0
-#define SCALE_DISP_SOME 1
-#define SCALE_DISP_NONE 2
-#define RT_OFFSET 0x70
-
-
-UINT send_data;
-UINT recv_data;
-int global_fd;
 #define NUM_ENTRY_SIZE 7
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
 #define NUM_ENTRY_BEGIN_COL 3
@@ -30,12 +21,14 @@ int global_fd;
 #define RTPARAMS_OFFSET_EEPROM_LOCATION_MSB 0x03ea
 #define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
 #define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
-#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
-#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
+//#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
+//#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
 void display_labels(void);
+#ifdef TEST_WRITE_DATA
 void set_win(WINDOW *win);
+#endif
 void init_list(void);
 UCHAR get_key(UCHAR ch, UCHAR *str);
 UCHAR read_get_key(UCHAR *str);
@@ -50,7 +43,7 @@ int update_rt_labels(int index, char *ramstr);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
-UCHAR cursor_row, cursor_col;
+//UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 int no_rtparams;
 int no_menu_structs;
@@ -86,7 +79,6 @@ char new_global_number[NUM_ENTRY_SIZE];
 //int sample_data[10];
 int global_fd;
 void set_state_defaults(void);
-CHECKBOXES check_boxes[NUM_CHECKBOXES];
 int curr_checkbox;
 int last_checkbox;
 int scale_type;

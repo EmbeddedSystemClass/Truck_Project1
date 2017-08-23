@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	UCHAR key;
 	UCHAR wkey;
 	UCHAR req;
-	int display_offset = 3;
+	int display_offset = 1;
 //	UCHAR read_buf[NUM_ENTRY_SIZE];
 
 //	memset(sample_data,0,sizeof(sample_data));
@@ -205,40 +205,16 @@ int main(int argc, char *argv[])
 	i = 0;
 	j = 0;
 	init_list();
-	while(j < 100)
-//	for(itr = 0;itr < iters;itr++)
-	{
-//			usleep(tdelay);
-//		mvwprintw(menu_win, display_offset+17, 4, "iterations left: %d   ",iters-itr);
-
-// see if one of the keys from the "keypad" is pressed
-//#if 0	//comment this out and set blocking to non-blocking
+	do {
 		key = wgetch(menu_win);
-//			mvwprintw(menu_win, display_offset, 4, "key: %x  ",key);
-//			if(++i > 15)
-//				i = 0;
 		wkey = get_keypress(key,menu_win, display_offset);
 		if(wkey != 0xff)
 		{
 			get_key(wkey,cur_param_string);
 //			for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 //				res += write(fd,(void*)&cur_param_string[i],1);
-//			usleep(tdelay);
-
-//			mvwprintw(menu_win, display_offset+2, 4, "res: %d  ",res);
-//			wrefresh(menu_win);
 			res = 0;
 
-//for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//write(fd,&i,1);
-//				mvwprintw(menu_win, display_offset+2, 4, "         ");
-//				read(fd,sample_data,sizeof(int)*10);
-//				read(fd,&req,1);
-//				mvwprintw(menu_win, display_offset+2, 4, "req: %d  ",req);
-//				for(i = 0;i < 10;i++)
-//					mvwprintw(menu_win, display_offset+4+i, 4, "%d              ",sample_data[i]);
-			// simulates the AVR timer or int sending/receiving data
-			// AVR uses 16-bit counter-timer
 /*
 			if(wkey == KP_SIM_DATA)
 			{
@@ -250,12 +226,9 @@ int main(int argc, char *argv[])
 */
 			j++;
 		}
-
-//			read(fd,&req,1);
-
-		wkey = key = 0;
+//		wkey = key = 0;
 		wrefresh(menu_win);
-	}
+	}while(key != 'q');
 
 	delwin(menu_win);
 	clrtoeol();
@@ -277,100 +250,100 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 		switch(key)
 		{
 			case '0':
-				mvwprintw(win, display_offset+23, 8, "zero  ");
+				mvwprintw(win, display_offset,50, "zero  ");
 				wkey = KP_0;
 				break;
 			case '1':
-				mvwprintw(win, display_offset+23, 8, "one   ");
+				mvwprintw(win, display_offset,50, "one   ");
 				wkey = KP_1;
 				break;
 			case '2':
-				mvwprintw(win, display_offset+23, 8, "two   ");
+				mvwprintw(win, display_offset,50, "two   ");
 				wkey = KP_2;
 				break;
 			case '3':
-				mvwprintw(win,display_offset+23, 8, "three ");
+				mvwprintw(win,display_offset,50, "three ");
 				wkey = KP_3;
 				break;
 			case '4':
-				mvwprintw(win, display_offset+23, 8, "four  ");
+				mvwprintw(win, display_offset,50, "four  ");
 				wkey = KP_4;
 				break;
 			case '5':
-				mvwprintw(win, display_offset+23, 8, "five  ");
+				mvwprintw(win, display_offset,50, "five  ");
 				wkey = KP_5;
 				break;
 			case '6':
-				mvwprintw(win, display_offset+23, 8, "six   ");
+				mvwprintw(win, display_offset,50, "six   ");
 				wkey = KP_6;
 				break;
 			case '7':
-				mvwprintw(win, display_offset+23, 8, "seven ");
+				mvwprintw(win, display_offset,50, "seven ");
 				wkey = KP_7;
 				break;
 			case '8':
-				mvwprintw(win, display_offset+23, 8, "eight ");
+				mvwprintw(win, display_offset,50, "eight ");
 				wkey = KP_8;
 				break;
 			case '9':
-				mvwprintw(win, display_offset+23, 8, "nine  ");
+				mvwprintw(win, display_offset,50, "nine  ");
 				wkey = KP_9;
 				break;
 			case '*':
-				mvwprintw(win, display_offset+23, 8, "ast   ");
+				mvwprintw(win, display_offset,50, "ast   ");
 				wkey = KP_AST;
 				break;
 			case '#':
-				mvwprintw(win, display_offset+23, 8, "pound ");
+				mvwprintw(win, display_offset,50, "pound ");
 				wkey = KP_POUND;
 				break;
 			case 'A':
 			case 'a':
-				mvwprintw(win, display_offset+23, 8, "A     ");
+				mvwprintw(win, display_offset,50, "A     ");
 				wkey = KP_A;
 				break;
 			case 'B':
 			case 'b':
-				mvwprintw(win, display_offset+23, 8, "B     ");
+				mvwprintw(win, display_offset,50, "B     ");
 				wkey = KP_B;
 				break;
 			case 'C':
 			case 'c':
-				mvwprintw(win, display_offset+23, 8, "C     ");
+				mvwprintw(win, display_offset,50, "C     ");
 				wkey = KP_C;
 				break;
 			case 'D':
 			case 'd':
-				mvwprintw(win, display_offset+23, 8, "D     ");
+				mvwprintw(win, display_offset,50, "D     ");
 				wkey = KP_D;
 				break;
 // use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
 			case 'Y':
 			case 'y':
-				mvwprintw(win, display_offset+23, 8, "pound ");
+				mvwprintw(win, display_offset,50, "pound ");
 				wkey = KP_POUND;
 				break;
 			case 'Z':
 			case 'z':
-				mvwprintw(win, display_offset+23, 8, "ast   ");
+				mvwprintw(win, display_offset,50, "ast   ");
 				wkey = KP_AST;
 				break;
 			case 'U':
 			case 'u':
-				mvwprintw(win, display_offset+23, 8,"U    ");
+				mvwprintw(win, display_offset,50,"U    ");
 				wkey = 0xff;
 				break;
 			case 'V':
 			case 'v':
-				mvwprintw(win, display_offset+23, 8,"V     ");
+				mvwprintw(win, display_offset,50,"V     ");
 				wkey = KP_SIM_DATA;
 				break;
 			case ' ':
-				mvwprintw(win, display_offset+23, 8,"space   ");
+				mvwprintw(win, display_offset,50,"space   ");
 				wkey = SPACE;
 				break;
 			default:
-				mvwprintw(win, display_offset+23, 8, "?     ");
+				mvwprintw(win, display_offset,50, "?     ");
 				wkey = 0xff;
 				break;
 		}

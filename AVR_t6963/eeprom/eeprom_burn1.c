@@ -1,6 +1,6 @@
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // TEST_WRITE_DATA is define when compiled in test_write_data
-#define EEPROM_BURN
+#ifdef TEST_WRITE_DATA
 
 #include "../sfr_helper.h"
 #include <ncurses.h>
@@ -22,7 +22,6 @@ int burn_eeprom(void)
 	total_offset = 0;
 
     i = 0;
-#if 1	// update labels
 	i = update_rt_labels(i,"RPM\0");
 	i = update_rt_labels(i,"ENG TEMP\0");
 	i = update_rt_labels(i,"TRIP\0");
@@ -43,6 +42,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"MENU1b\0");
 	i = update_menu_labels(i,"MENU1c\0");
 	i = update_menu_labels(i,"MENU1d\0");
+	i = update_menu_labels(i,"MENU1e\0");
 	i = update_menu_labels(i,"MENU2a\0");
 	i = update_menu_labels(i,"MENU2B\0");
 	i = update_menu_labels(i,"MENU2c\0");
@@ -60,6 +60,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"spec\0");
 	i = update_menu_labels(i,"next\0");
 	i = update_menu_labels(i,"forward\0");
+	i = update_menu_labels(i,"back\0");
 
 	i = update_menu_labels(i,"test 0\0");
 	i = update_menu_labels(i,"test 1\0");
@@ -83,6 +84,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"choice9\0");
 	i = update_menu_labels(i,"choice10\0");
 	i = update_menu_labels(i,"choice11\0");
+	i = update_menu_labels(i,"blank\0");
 	no_menu_labels = i;
 //	printf("no_menu_labels: %d\n",no_menu_labels);
 //	getch();
@@ -95,7 +97,6 @@ int burn_eeprom(void)
 	no_func_labels = i-no_menu_labels;
 //	printf("no_func_labels: %d\n",no_func_labels);
 //	getch();
-#endif
 	i = 0;
 	i = update_rtparams(i, 0, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
 	i = update_rtparams(i, 1, 0, SHOWN_SENT, 0, RT_ENGT);
@@ -128,21 +129,23 @@ int burn_eeprom(void)
 	no_data_index = 0;
 // main menu	0
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, 1, _menu_change, MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, 0);
+	i = update_menu_structs(i, 1, _menu_change, MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN);
 // 1a
 	i = update_menu_structs(i, 1, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU1A);
 // 1b
 	i = update_menu_structs(i, 1, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
-	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, choice3, choice4, choice5, choice6, MENU1C);
+	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C);
 // 1d
-	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, choice1, MENU1D);
+	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+// 1e
+	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
 // 2a
 	i = update_menu_structs(i, 1, _non_func, choice1, choice2, choice3, choice4, choice5, choice6, MENU2A);
 // 2b
-	i = update_menu_structs(i, 1, _exec_choice,	choice1, choice2, choice3, choice4, choice5, choice6, MENU2B);
+	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
 // 2c
-	i = update_menu_structs(i, 1, _start_numentry, choice1, choice2, choice3, choice4, choice5, choice6, MENU2C);
+	i = update_menu_structs(i, 1, _do_numentry, forward, back, entr, blank, blank, blank, MENU2C);
 
 	no_menu_structs = i;
 	return 0;
@@ -244,4 +247,4 @@ int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu0, UCHAR men
 	i++;
 	return i;
 }
-
+#endif

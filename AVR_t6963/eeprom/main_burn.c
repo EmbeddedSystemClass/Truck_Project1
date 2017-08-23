@@ -94,32 +94,6 @@ int main(void)
                 }
                 break;
 			case 'e':
-/*
-	UCHAR pnum;			// index
-	UCHAR row;			// row, col where the label will be displayed
-	UCHAR col;
-	UCHAR menu_choice;	// the type of keypress in the switch statement of the menu
-	UCHAR type;			// index of which function pointer this menu label is associated with
-*/
-                printString(" displaying menu structs\r\n");
-                for(i = 0;i < no_menu_structs;i++)
-                {
-/*
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR key;			// which keypress applies
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// if fptr == 0 then it means goto a this menu
-	UCHAR label;			// which label to display in legend (labels)
-*/
-					eeprom_read_block(&menu_structs[i],  \
-					eepromString+menu_struct_offset+(sizeof(MENU_FUNC_STRUCT)*i),sizeof(MENU_FUNC_STRUCT));
-					printHexByte(menu_structs[i].enabled);
-					printHexByte(menu_structs[i].fptr);
-					printHexByte(menu_structs[i].menu);
-					printHexByte(menu_structs[i].label);
-					// TODO: look up the label in the table for labels and print it out here
-					printString("\r\n");
-                }
                 break;
 			case 'f':
                 printString(" unimplemented\r\n");
@@ -281,7 +255,7 @@ void printMenu(void)
 	printString("b - read data from eeprom into ram\r\n");
 	printString("c - display labels\r\n");
 	printString("d - display rt_params\r\n");
-	printString("e - display menu_structs\r\n");
+	printString("e - \r\n");
 	printString("f - \r\n");
 	printString("g - \r\n");
 	printString("h - help (menu)\r\n");

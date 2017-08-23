@@ -57,6 +57,10 @@ PIC_menu.c	- in PIC24
 sim_write.c compiles PIC_menu.c and simulates the PIC24
 sim_read.c compiles AVR_menu.c and simulates the AVR
 
+AVR_menu.c uses #ifdef TEST_WRITE_DATA at the very top so the Makefile for the AVR will compile.
+(the makefiles in the test_write_data directory define TEST_WRITE_DATA while the Makefile in
+the main directory to compile the AVR does not)
+
 the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
 get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
 to the AVR
@@ -69,6 +73,17 @@ and aux_string then it exits and waits for another keypress.
 
 In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's the function ptr,
 displays the new menus and returns to wait for another read. 
+
+To change/add menus, add the menu type to main.h in the menu_types enum, then make sure the
+update_menu_labels calls in burn_eeprom() in eeprom_burn1.c match. Also make sure that
+NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in eeprom_burn1.c
+Then add the new menu type in the case statement in set_list - this is essentially the
+initialization for the menu on the sim_write side (PIC). 
+Then on the sim_read side (AVR), add the menu type in the case statement in generic_menu_function
+in AVR_menu.c where there is an if(prev_menu_index != menu_index).
+This is where the initialization occurs on the AVR when a new menu is started. 
+However, the menu_index is the last param in the call to update_menu_structs (or the index elem
+in MENU_FUNC_STRUCT.
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

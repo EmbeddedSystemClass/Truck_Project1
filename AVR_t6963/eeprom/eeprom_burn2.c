@@ -1,3 +1,4 @@
+#ifndef TEST_WRITE_DATA
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // TEST_WRITE_DATA is define when compiled in test_write_data
 #define EEPROM_BURN
@@ -19,9 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef TEST_WRITE_DATA
 extern char eepromString[STRING_LEN] EEMEM;
-#endif
 //******************************************************************************************//
 //***************************************** burn_eeprom ************************************//
 //******************************************************************************************//
@@ -283,4 +282,5 @@ int read_eeprom(void)
 	printString("done reading eeprom\r\n");
 	return 0;
 }
+#endif
 #endif

@@ -14,6 +14,7 @@
 #include "macros.h"
 #include <string.h>
 #include "main.h"
+#include "avr_main.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -136,11 +137,14 @@ int main(void)
 	display_labels();
 	done = 0;
 	char param_string[10];
+	UCHAR temp_params[NUM_UCHAR_PARAMS];
 
 	while (1)
 	{
 		ret_char = receiveByte();
-		ret_char = get_key(ret_char);
+		read_get_key(temp_params);
+
+//		ret_char = get_key(ret_char);
 
 #ifdef TTY_DISPLAY
 				printHexByte(xbyte);
@@ -168,8 +172,6 @@ int main(void)
 
 void set_defaults(void)
 {
-	temp_UINT  = 0;
-	parse_state = IDLE;
 }
 
 //******************************************************************************************//
