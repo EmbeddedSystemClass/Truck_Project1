@@ -197,6 +197,11 @@ int main(int argc, char *argv[])
 		check_boxes[i].checked = 0;
 		strcpy(check_boxes[i].string,"test\0");
 	}
+	for(i = 0;i < NUM_EXECCHOICES;i++)
+	{
+		exec_choices[i].index = i;
+		strcpy(exec_choices[i].string,"test\0");
+	}
 	i = 0;
 	j = 0;
 	init_list();

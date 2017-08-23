@@ -31,6 +31,8 @@ static UCHAR generic_menu_function(UCHAR ch);
 static UCHAR toggle_checkboxes(UCHAR ch);
 static UCHAR scrollup_checkboxes(UCHAR ch);
 static UCHAR scrolldown_checkboxes(UCHAR ch);
+static UCHAR scrollup_execchoice(UCHAR ch);
+static UCHAR scrolldown_execchoice(UCHAR ch);
 static int first_menu = MAIN;
 static int last_menu = testnum8;
 static int current_fptr;		// pointer into the menu_list[]
@@ -53,11 +55,7 @@ static void set_list(int fptr);
 static UCHAR get_fptr(void);
 static char* get_fptr_label(void);
 static int get_curr_menu_index(void);
-#if 0
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = {enter, backspace, escape, scr_alnum0, \
-		 scr_alnum1, scr_alnum2, scr_alnum3, cursor_forward, alnum_enter, scrollup_checkboxes, \
-			scrolldown_checkboxes, toggle_checkboxes, enter_checkboxes, escape_checkboxes };
-#endif
+
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry };
 //******************************************************************************************//
 //******************************************************************************************//
@@ -118,6 +116,8 @@ void init_list(void)
 	dirty_flag = 0;
 	curr_checkbox = 0;
 	last_checkbox = NUM_CHECKBOXES-1;
+	last_execchoice = NUM_EXECCHOICES-1;
+	curr_execchoice = 0;
 	scale_type = 0;
 	prev_scale_type = 1;
 	new_data_ready = 0;
@@ -167,9 +167,11 @@ static void set_list(int fptr)
 			switch(get_curr_menu_index())
 			{
 				case MENU1C:	// 1st exec_choice
-					send_aux_data = 8;
-					for(i = 0;i < send_aux_data;i++)
-						aux_string[i] = i;
+					curr_execchoice = 0;
+//					for(i = 0;i < NUM_EXECCHOICES;i++)
+//						aux_string[i] = exec_choices[i].checked;
+//					send_aux_data = NUM_EXECCHOICES;
+					send_aux_data = 1;
 				break;
 				case MENU1D:	// do_chkbox
 					curr_checkbox = 0;
@@ -183,9 +185,11 @@ static void set_list(int fptr)
 //						aux_string[i] = i;
 				break;
 				case MENU2B:	// 2nd exec_choice
-					send_aux_data = 32;
-//					for(i = 0;i < send_aux_data;i++)
-//						aux_string[i] = i;
+					curr_execchoice = 0;
+//					for(i = 0;i < NUM_EXECCHOICES;i++)
+//						aux_string[i] = exec_choices[i].checked;
+//					send_aux_data = NUM_EXECCHOICES;
+					send_aux_data = 1;
 				break;
 				case MENU2C:	// start_numentry
 					send_aux_data = 48;
@@ -360,6 +364,10 @@ static UCHAR generic_menu_function(UCHAR ch)
 		mvwprintw(win, DISP_OFFSET+33,2,"curr_checkbox: %d     ",curr_checkbox);
 		for(i = 0;i < NUM_CHECKBOXES;i++)
 			mvwprintw(win, DISP_OFFSET+34,2+(i+2),"%d  ",check_boxes[i].checked);
+
+		mvwprintw(win, DISP_OFFSET+35,2,"curr_execchoice: %d     ",curr_execchoice);
+//		for(i = 0;i < NUM_EXECCHOICES;i++)
+//			mvwprintw(win, DISP_OFFSET+36,2+(i+2),"%d  ",exec_choices[i].checked);
 		wrefresh(win);
 
 	return ret_char;
@@ -376,21 +384,18 @@ static UCHAR exec_choice(UCHAR ch)
 	switch(ch)
 	{
 		case KP_A:
+		scrollup_execchoice(ch);
 		break;
 		case KP_B:
-		menu_index++;
+		scrolldown_execchoice(ch);
 		break;
 		case KP_C:
-		menu_index += 2;
 		break;
 		case KP_D:
-		menu_index += 3;
 		break;
 		case KP_POUND:
-		menu_index += 4;
 		break;
 		case KP_0:
-		menu_index += 5;
 		break;
 		case KP_AST:
 		prev_list();
@@ -460,8 +465,6 @@ static UCHAR scrollup_checkboxes(UCHAR ch)
 {
 	if(--curr_checkbox < 0)
 		curr_checkbox = last_checkbox;
-	// move cursor to 3 + check_boxes[curr_checkbox]
-//	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
 	return ch;
 }
 //******************************************************************************************//
@@ -471,8 +474,24 @@ static UCHAR scrolldown_checkboxes(UCHAR ch)
 {
 	if(++curr_checkbox > last_checkbox)
 		curr_checkbox = 0;
-	// move cursor
-//	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
+	return ch;
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+static UCHAR scrollup_execchoice(UCHAR ch)
+{
+	if(--curr_execchoice < 0)
+		curr_execchoice = last_execchoice;
+	return ch;
+}
+//******************************************************************************************//
+//********************************* scrolldown_checkboxes **********************************//
+//******************************************************************************************//
+static UCHAR scrolldown_execchoice(UCHAR ch)
+{
+	if(++curr_execchoice > last_execchoice)
+		curr_execchoice = 0;
 	return ch;
 }
 //******************************************************************************************//
@@ -483,12 +502,10 @@ static UCHAR toggle_checkboxes(UCHAR ch)
 	if(check_boxes[curr_checkbox].checked == 1)
 	{
 		check_boxes[curr_checkbox].checked = 0;
-//		dispCharAt(1+check_boxes[curr_checkbox].index,0,0x20);	// display 'blank'
 	}
 	else
 	{
 		check_boxes[curr_checkbox].checked = 1;
-//		dispCharAt(1+check_boxes[curr_checkbox].index,0,120);	// display 'x'
 	}
 	return ch;
 }

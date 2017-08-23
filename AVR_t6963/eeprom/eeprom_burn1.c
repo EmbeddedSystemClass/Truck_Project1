@@ -134,7 +134,7 @@ int burn_eeprom(void)
 // 1b
 	i = update_menu_structs(i, 1, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
-	i = update_menu_structs(i, 1, _exec_choice,	choice1, choice2, choice3, choice4, choice5, choice6, MENU1C);
+	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, choice3, choice4, choice5, choice6, MENU1C);
 // 1d
 	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, choice1, MENU1D);
 // 2a

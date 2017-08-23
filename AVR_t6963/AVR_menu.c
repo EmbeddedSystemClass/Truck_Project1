@@ -53,6 +53,7 @@ static void display_menus(void);
 static void start_numentry2(void);
 static void scale_disp(int amt);
 static void init_checkboxes(void);
+static void init_execchoices(int);
 static void blank_choices(void);
 static void display_edit_value(void);
 static UCHAR generic_menu_function(void);
@@ -67,6 +68,8 @@ static UCHAR alnum_enter(UCHAR ch);
 static UCHAR scrollup_checkboxes(UCHAR ch);
 static UCHAR scrolldown_checkboxes(UCHAR ch);
 static UCHAR toggle_checkboxes(UCHAR ch);
+static UCHAR scrolldown_execchoice(UCHAR ch);
+static UCHAR scrollup_execchoice(UCHAR ch);
 /*
 static UCHAR enter_checkboxes(UCHAR ch);
 static UCHAR escape_checkboxes(UCHAR ch);
@@ -287,6 +290,8 @@ void init_list(void)
 	dirty_flag = 0;
 	curr_checkbox = 0;
 	last_checkbox = NUM_CHECKBOXES-1;
+	last_execchoice = NUM_EXECCHOICES-1;
+	curr_execchoice = 0;
 	scale_type = 0;
 	prev_scale_type = 1;
 	new_data_ready = 0;
@@ -395,20 +400,18 @@ static UCHAR generic_menu_function(void)
 
 	if(prev_menu_index != menu_index)
 	{
+		blank_choices();
 		switch (menu_index)
 		{
 			case MAIN:
-				blank_choices();
 				break;
 			case MENU1A:
-				blank_choices();
 				break;
 			case MENU1B:
-				blank_choices();
 				break;
 			case MENU1C:
-				mvwprintw(win, DISP_OFFSET+27,2, "MENU1C:                           ");
-				blank_choices();
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU1C: init_choices  %d          ",menu_index);
+				init_execchoices(menu_index);
 			break;
 			case MENU1D:
 				mvwprintw(win, DISP_OFFSET+27,2, "MENU1D: init_checkboxes           ");
@@ -416,15 +419,13 @@ static UCHAR generic_menu_function(void)
 			break;
 			case MENU2A:
 				mvwprintw(win, DISP_OFFSET+27,2, "MENU2A:                           ");
-				blank_choices();
 			break;
 			case MENU2B:
-				mvwprintw(win, DISP_OFFSET+27,2, "MENU2B:                           ");
-				blank_choices();
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU2B: init_choices  %d          ",menu_index);
+				init_execchoices(menu_index);
 			break;
 			case MENU2C:
 				mvwprintw(win, DISP_OFFSET+27,2, "MENU2C:                           ");
-				blank_choices();
 			break;
 		}
 	}
@@ -466,8 +467,10 @@ static UCHAR exec_choice(UCHAR ch)
 	switch(ch)
 	{
 		case KP_A:
+		scrollup_execchoice(ch);
 		break;
 		case KP_B:
+		scrolldown_execchoice(ch);
 		break;
 		case KP_C:
 		break;
@@ -501,29 +504,20 @@ static UCHAR do_chkbox(UCHAR ch)
 	{
 		case KP_A:
 		scrollup_checkboxes(ch);
-		mvwprintw(win, DISP_OFFSET+21,2, "scroll up    %d   ",curr_checkbox);
 		break;
 		case KP_B:
 		scrolldown_checkboxes(ch);
-		mvwprintw(win, DISP_OFFSET+21,2, "scroll down  %d   ",curr_checkbox);
 		break;
 		case KP_C:
 		toggle_checkboxes(ch);
-		mvwprintw(win, DISP_OFFSET+21,2, "toggle       %d   ",curr_checkbox);
 		break;
 		case KP_D:
-//		enter_checkboxes(ch);
-		mvwprintw(win, DISP_OFFSET+21,2, "enter       %d    ",curr_checkbox);
 		break;
 		case KP_POUND:
-//		escape_checkboxes(ch);
-		mvwprintw(win, DISP_OFFSET+21,2, "escape      %d    ",curr_checkbox);
 		break;
 		case KP_0:
-		mvwprintw(win, DISP_OFFSET+21,2, "0  ");
 		break;
 		case KP_AST:
-//		escape_checkboxes(ch);
 		break;
 		default:
 		break;
@@ -882,6 +876,53 @@ static void init_checkboxes(void)
 	}
 }
 //******************************************************************************************//
+//************************************ init_execchoice *************************************//
+//******************************************************************************************//
+static void init_execchoices(int menu_index)
+{
+	int i;
+	UCHAR row, col;
+//	scale_disp(SCALE_DISP_SOME);
+	row = 1;
+	col = 3;
+	curr_execchoice = 0;
+//	for(i = 0;i < NUM_EXECCHOICES;i++)
+//		check_boxes[i].checked = aux_string[i];
+
+// setting the list to choice 'n' is all well and good but we need a way for the PIC to send
+// the choices over in case there are more than 1 lists of choices
+	strcpy(exec_choices[0].string,"exec 1\0");
+	strcpy(exec_choices[1].string,"exec 2\0");
+	strcpy(exec_choices[2].string,"exec 3\0");
+	strcpy(exec_choices[3].string,"exec 4\0");
+	strcpy(exec_choices[4].string,"exec 5\0");
+	strcpy(exec_choices[5].string,"exec 6\0");
+	strcpy(exec_choices[6].string,"exec 7\0");
+	strcpy(exec_choices[7].string,"exec 8\0");
+	strcpy(exec_choices[8].string,"exec 9\0");
+	strcpy(exec_choices[9].string,"exec 10\0");
+
+
+	for(i = 0;i < NUM_EXECCHOICES;i++)
+	{
+		exec_choices[i].index = i;
+		GDispStringAt(row,col,exec_choices[i].string);
+		row++;
+/*
+		if(exec_choices[i].checked == 1)
+		{
+			dispCharAt(1+exec_choices[i].index,0,120);
+		}
+		else
+		{
+			dispCharAt(1+exec_choices[i].index,0,0x20);
+		}
+*/
+	}
+	dispCharAt(1+exec_choices[0].index,0,120);
+
+}
+//******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
 //******************************************************************************************//
 static UCHAR scrollup_checkboxes(UCHAR ch)
@@ -918,6 +959,38 @@ static UCHAR toggle_checkboxes(UCHAR ch)
 		check_boxes[curr_checkbox].checked = 1;
 		dispCharAt(1+check_boxes[curr_checkbox].index,0,120);	// display 'x'
 	}
+	return ch;
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+static UCHAR scrollup_execchoice(UCHAR ch)
+{
+	UCHAR temp = curr_execchoice;
+	if(--curr_execchoice < 0)
+		curr_execchoice = last_execchoice;
+
+//	mvwprintw(win, DISP_OFFSET+22,2,"%d %d   ",temp,curr_execchoice);
+//	wrefresh(win);
+
+	dispCharAt(1+exec_choices[temp].index,0,0x20);
+	dispCharAt(1+exec_choices[curr_execchoice].index,0,120);
+	return ch;
+}
+//******************************************************************************************//
+//********************************* scrolldown_checkboxes **********************************//
+//******************************************************************************************//
+static UCHAR scrolldown_execchoice(UCHAR ch)
+{
+	UCHAR temp = curr_execchoice;
+	if(++curr_execchoice > last_execchoice)
+		curr_execchoice = 0;
+
+//	mvwprintw(win, DISP_OFFSET+22,2,"%d %d   ",temp,curr_execchoice);
+//	wrefresh(win);
+
+	dispCharAt(1+exec_choices[temp].index,0,0x20);
+	dispCharAt(1+exec_choices[curr_execchoice].index,0,120);
 	return ch;
 }
 //******************************************************************************************//
