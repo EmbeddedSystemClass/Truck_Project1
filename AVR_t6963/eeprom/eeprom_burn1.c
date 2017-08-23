@@ -61,6 +61,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"next\0");
 	i = update_menu_labels(i,"forward\0");
 	i = update_menu_labels(i,"back\0");
+	i = update_menu_labels(i,"escape\0");
 
 	i = update_menu_labels(i,"test 0\0");
 	i = update_menu_labels(i,"test 1\0");
@@ -145,7 +146,7 @@ int burn_eeprom(void)
 // 2b
 	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
 // 2c
-	i = update_menu_structs(i, 1, _do_numentry, forward, back, entr, blank, blank, blank, MENU2C);
+	i = update_menu_structs(i, 1, _do_numentry, forward, back, entr, esc, blank, blank, MENU2C);
 
 	no_menu_structs = i;
 	return 0;

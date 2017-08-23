@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
 	UCHAR key;
 	UCHAR wkey;
 	UCHAR req;
+	UCHAR ret_key;
 	int display_offset = 1;
 //	UCHAR read_buf[NUM_ENTRY_SIZE];
 
@@ -210,11 +211,49 @@ int main(int argc, char *argv[])
 		wkey = get_keypress(key,menu_win, display_offset);
 		if(wkey != 0xff)
 		{
-			get_key(wkey,cur_param_string);
+			ret_key = get_key(wkey,cur_param_string);
 //			for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 //				res += write(fd,(void*)&cur_param_string[i],1);
 			res = 0;
+			mvwprintw(menu_win, DISP_OFFSET+34,2,"non_func: %x %c  ",wkey, wkey-NF_1);
+			wrefresh(menu_win);
 
+			if(ret_key >= NF_1 && ret_key <= NF_10)
+			{
+				mvwprintw(menu_win, DISP_OFFSET+34,2,"non_func: %x %d  ",ret_key, ret_key-NF_1);
+				wrefresh(menu_win);
+
+				switch(ret_key)
+				{
+					case NF_1:
+					break;
+					case NF_2:
+					break;
+					case NF_3:
+					break;
+					case NF_4:
+					break;
+					case NF_5:
+					break;
+					case NF_6:
+					break;
+					case NF_7:
+					break;
+					case NF_8:
+					break;
+					case NF_9:
+					break;
+					case NF_10:
+					break;
+					default:
+					break;
+				}
+			}
+			else
+			{
+				mvwprintw(menu_win, DISP_OFFSET+34,2,"                 ");
+				wrefresh(menu_win);
+			}	
 /*
 			if(wkey == KP_SIM_DATA)
 			{

@@ -1,10 +1,12 @@
 // avr_main.h
 
+/*
 #define NUM_ENTRY_SIZE 7
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
 #define NUM_ENTRY_BEGIN_COL 3
 #define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE
 #define NUM_ENTRY_ROW 8
+*/
 // '!' - '9' (33 - 58) + 'A' - 'Z' (26) + 'a' - 'z' (26) = 77
 //#define NUM_ALNUM 77
 //#define NUM_ALNUM 52		// without the '!' - '9'
