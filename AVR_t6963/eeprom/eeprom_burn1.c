@@ -4,6 +4,7 @@
 
 #include "../sfr_helper.h"
 #include <ncurses.h>
+#include "../main.h"
 #include "../pic_main.h"
 #include <string.h>
 #include <stdlib.h>
@@ -46,20 +47,20 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"MENU2B\0");
 	i = update_menu_labels(i,"MENU2c\0");
 	i = update_menu_labels(i,"MENU2d\0");
-	
+
 	i = update_menu_labels(i,"up\0");
 	i = update_menu_labels(i,"down\0");
 	i = update_menu_labels(i,"toggle\0");
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"esc\0");
-	
+
 	i = update_menu_labels(i,"enter\0");
 	i = update_menu_labels(i,"caps\0");
 	i = update_menu_labels(i,"small\0");
 	i = update_menu_labels(i,"spec\0");
 	i = update_menu_labels(i,"next\0");
 	i = update_menu_labels(i,"forward\0");
-	
+
 	i = update_menu_labels(i,"test 0\0");
 	i = update_menu_labels(i,"test 1\0");
 	i = update_menu_labels(i,"test 2\0");
@@ -69,7 +70,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"test 6\0");
 	i = update_menu_labels(i,"test 7\0");
 	i = update_menu_labels(i,"test 8\0");
-	
+
 	i = update_menu_labels(i,"choice0\0");
 	i = update_menu_labels(i,"choice1\0");
 	i = update_menu_labels(i,"choice2\0");
@@ -129,9 +130,9 @@ int burn_eeprom(void)
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, 1, _menu_change, MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, 0);
 // 1a
-	i = update_menu_structs(i, 1, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, 0);
+	i = update_menu_structs(i, 1, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU1A);
 // 1b
-	i = update_menu_structs(i, 1, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, 0);
+	i = update_menu_structs(i, 1, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
 	i = update_menu_structs(i, 1, _exec_choice,	choice1, choice2, choice3, choice4, choice5, choice6, MENU1C);
 // 1d
@@ -163,7 +164,7 @@ int update_menu_labels(int index, char *ramstr)
 	if(index > NUM_MENU_LABELS)
 	{
 		printf("%d no labels > than storage space\n",index);
-		exit(-1);	
+		exit(-1);
 	}
 	strncpy(menu_labels[index],ramstr,len);
 	index++;

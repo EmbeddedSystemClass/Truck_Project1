@@ -19,13 +19,13 @@ all: sim_write
 t6963.o : ../t6963.c
 	${CC} -c ${CFLAGS} ${SFLAGS} -o t6963.o ../t6963.c
 
-PIC_menu.o : ../PIC_menu.c ../pic_main.h
+PIC_menu.o : ../PIC_menu.c ../pic_main.h ../main.h
 	${CC} -c ${CFLAGS} ${SFLAGS} -o PIC_menu.o ../PIC_menu.c
 	
 sim_write.o : sim_write.c ../pic_main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_write.o sim_write.c
 
-eeprom_burn1.o : ../eeprom/eeprom_burn1.c ../pic_main.h ../sfr_helper.h
+eeprom_burn1.o : ../eeprom/eeprom_burn1.c ../pic_main.h ../sfr_helper.h ../main.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn1.o ../eeprom/eeprom_burn1.c
 
 sim_write : PIC_menu.o sim_write.o t6963.o eeprom_burn1.o

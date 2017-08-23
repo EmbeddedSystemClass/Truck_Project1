@@ -19,13 +19,13 @@ all: sim_read
 t6963.o : ../t6963.c
 	${CC} -c ${CFLAGS} ${SFLAGS} -o t6963.o ../t6963.c
 
-AVR_menu.o : ../AVR_menu.c 
+AVR_menu.o : ../AVR_menu.c ../avr_main.h ../main.h
 	${CC} -c ${CFLAGS} ${SFLAGS} -o AVR_menu.o ../AVR_menu.c
 	
 sim_read.o : sim_read.c ../avr_main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_read.o sim_read.c
 
-eeprom_burn2.o : ../eeprom/eeprom_burn2.c ../avr_main.h ../sfr_helper.h
+eeprom_burn2.o : ../eeprom/eeprom_burn2.c ../avr_main.h ../sfr_helper.h ../main.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn2.o ../eeprom/eeprom_burn2.c
 
 sim_read : AVR_menu.o sim_read.o t6963.o eeprom_burn2.o

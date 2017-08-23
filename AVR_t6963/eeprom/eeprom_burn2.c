@@ -14,6 +14,7 @@
 #include <ncurses.h>
 //#warning "TEST_WRITE_DATA defined"
 #endif
+#include "../main.h"
 #include "../avr_main.h"
 #include <string.h>
 #include <stdlib.h>

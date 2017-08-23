@@ -16,6 +16,7 @@
 #include <ncurses.h>
 #include "../sfr_helper.h"
 //#include "../main.h"
+#include "../main.h"
 #include "../pic_main.h"
 #include "../t6963.h"
 
@@ -58,7 +59,6 @@ int main(int argc, char *argv[])
 //	UCHAR read_buf[NUM_ENTRY_SIZE];
 
 //	memset(sample_data,0,sizeof(sample_data));
-	send_data = recv_data = 0;
 	iters = 100;
 #if 0
 	if(argv[1][0] == 'w')
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 		aux_string[i] = i;
 	j = 0;
 	res = 0;
-// comment out the next #if 0/#endif to test 	
+// comment out the next #if 0/#endif to test
 #if 0
 	mvwprintw(menu_win, display_offset,2,"test  ");
 	wrefresh(menu_win);
@@ -191,7 +191,12 @@ int main(int argc, char *argv[])
 	close(fd);
 	exit(1);
 #endif
-	
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		check_boxes[i].index = i;
+		check_boxes[i].checked = 0;
+		strcpy(check_boxes[i].string,"test\0");
+	}
 	i = 0;
 	j = 0;
 	init_list();

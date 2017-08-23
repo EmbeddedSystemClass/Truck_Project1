@@ -1,42 +1,11 @@
 // pic_main.h
 
-#define TIME_DELAY1 1
-#define STRING_LEN 100
-#define NUM_FPTS 5
-#define MAX_LABEL_LEN 10
-#define NUM_MENU_LABELS 60
-#define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define NUM_MENU_CHOICES 6
 #define NUM_MENUS 10
 #define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES+1 // plus 1 for ENDMENU
-#define DISP_OFFSET 5
-#define NUM_CHECKBOXES 10
-#define SCALE_DISP_ALL 0
-#define SCALE_DISP_SOME 1
-#define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define LIST_SIZE 50
-#define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 48
-
-int burn_eeprom(void);
-
-typedef struct rt_params
-{
-	UCHAR row;			// row, col tells where the param will appear on screen
-	UCHAR col;
-	UCHAR shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
-	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
-	UCHAR type;			// rt_types
-} RT_PARAM;
-
-enum shown_types
-{
-	SHOWN_SENT,
-	NOSHOWN_SENT,
-	NOSHOWN_NOSENT
-} SHOWN_TYPES;
 
 typedef struct menu_func
 {
@@ -47,132 +16,9 @@ typedef struct menu_func
 	UCHAR index;							// if > 0 then this is index into sample_data
 } MENU_FUNC_STRUCT;
 
-enum menu_types
-{
-	MAIN,
-	MENU1A,
-	MENU1B,
-	MENU1C,
-	MENU1D,
-	MENU2A,
-	MENU2B,
-	MENU2C,
-	MENU2D,
-	
-	ckup,
-	ckdown,
-	cktoggle,
-	ckenter,
-	ckesc,
-	
-	entr,
-	caps,
-	small,
-	spec,
-	next,
-	cur_for,
-	
-	testnum0,
-	testnum1,
-	testnum2,
-	testnum3,
-	testnum4,
-	testnum5,
-	testnum6,
-	testnum7,
-	testnum8,
-	
-	choice0,
-	choice1,
-	choice2,
-	choice3,
-	choice4,
-	choice5,
-	choice6,
-	choice7,
-	choice8,
-	choice9,
-	choice10,
-	choice11,
-	ENDMENU
-} MENU_TYPES;
-
 // total of 20 menus
 
-enum fptr_types
-{
-	_menu_change,
-	_exec_choice,
-	_do_chkbox,
-	_non_func,
-	_start_numentry
-/*
-	entr,
-	back,
-	esc,
-	caps,
-	small,
-	spec,
-	next,
-	cur_for,
-	alnum_ent,
-	ckup,
-	ckdown,
-	cktoggle,
-	ckenter,
-	ckesc
-*/
-} FPTR_TYPES;
-
-enum key_types
-{
-	KP_POUND = 0xE0, // '#'
-	KP_AST, // '*'
-	KP_0, // '0'
-	KP_1, // '1'
-	KP_2, // '2'
-	KP_3, // '3'
-	KP_4, // '4'
-	KP_5, // '5'
-	KP_6, // '6'
-	KP_7, // '7'
-	KP_8, // '8'
-	KP_9, // '9'
-	KP_A, // 'A'
-	KP_B, // 'B'
-	KP_C, // 'C'
-	KP_D, // 'D'	(0xEF)
-	SPACE,
-	KP_SIM_DATA		// simulates sending data
-} KEY_TYPES;
-
-enum rt_types
-{
-	RT_RPM = RT_OFFSET,
-	RT_ENGT,
-	RT_TRIP,
-	RT_TIME,
-	RT_AIRT,
-	RT_MPH,
-	RT_OILP,
-	RT_MAP,
-	RT_OILT,
-	RT_O2,
-	RT_AUX1,
-	RT_AUX2
-} RT_TYPES;
-
-typedef struct checkboxes
-{
-	UCHAR index;
-	UCHAR checked;
-	char string[10];
-} CHECKBOXES;
-
-UINT send_data;
-UINT recv_data;
 int global_fd;
-#define NUM_ENTRY_SIZE 7
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
 #define NUM_ENTRY_BEGIN_COL 3
 #define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE

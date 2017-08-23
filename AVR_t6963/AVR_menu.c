@@ -21,6 +21,7 @@
 #endif
 #include "sfr_helper.h"
 #include <stdlib.h>
+#include "main.h"
 #include "avr_main.h"
 #include "t6963.h"
 #include <string.h>
@@ -66,8 +67,10 @@ static UCHAR alnum_enter(UCHAR ch);
 static UCHAR scrollup_checkboxes(UCHAR ch);
 static UCHAR scrolldown_checkboxes(UCHAR ch);
 static UCHAR toggle_checkboxes(UCHAR ch);
+/*
 static UCHAR enter_checkboxes(UCHAR ch);
 static UCHAR escape_checkboxes(UCHAR ch);
+*/
 static UCHAR menu_change(UCHAR ch);
 static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
@@ -77,14 +80,13 @@ static UCHAR start_numentry(UCHAR ch);
 static char* get_fptr_label(UCHAR);
 
 #endif
-#if 1
 static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
 static UCHAR cur_row, cur_col;	// used by the current menu/dialog function to keep track of the current row,col
 static UCHAR alnum_array[NUM_ALNUM+1];
 static UCHAR choose_alnum;
-#endif
+static UCHAR prev_menu_index;
 
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, start_numentry };
 
@@ -361,7 +363,6 @@ static UCHAR generic_menu_function(void)
 	int i,j;
 	UCHAR temp;
 	UCHAR menu_index;
-	UCHAR prev_menu_index;
 	UCHAR ch = 0;
 	UCHAR tfptr;
 	int res,res2;
@@ -381,12 +382,13 @@ static UCHAR generic_menu_function(void)
 
 	read(global_fd,&temp,1);
 
-	mvwprintw(win, DISP_OFFSET+29, 2,"no bytes read for aux_string:%d  menu_index %d                   ",temp,menu_index);
+	mvwprintw(win, DISP_OFFSET+25, 2,
+			"no bytes read for aux_string:%d  menu_index %d  prev index: %d     ",temp,menu_index,prev_menu_index);
 	for(i = 0;i < temp;i++)
 		res2 += read(global_fd,&aux_string[i],1);
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+30, 2,"fptr: %s   ch:%x    res:%d    res2:%d   ",get_fptr_label(tfptr),ch,res,res2);
-	mvwprintw(win, DISP_OFFSET+30, 2,"ch:%x  fptr:%x  res:%d    res2:%d   ",ch,tfptr,res,res2);
+	mvwprintw(win, DISP_OFFSET+26, 2,"ch:%x  fptr:%x  res:%d    res2:%d   ",ch,tfptr,res,res2);
 #endif
 	ret_char = (*fptr[tfptr])(ch);
 	display_menus();
@@ -395,16 +397,34 @@ static UCHAR generic_menu_function(void)
 	{
 		switch (menu_index)
 		{
+			case MAIN:
+				blank_choices();
+				break;
+			case MENU1A:
+				blank_choices();
+				break;
+			case MENU1B:
+				blank_choices();
+				break;
 			case MENU1C:
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU1C:                           ");
+				blank_choices();
 			break;
 			case MENU1D:
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU1D: init_checkboxes           ");
 				init_checkboxes();
 			break;
 			case MENU2A:
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU2A:                           ");
+				blank_choices();
 			break;
 			case MENU2B:
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU2B:                           ");
+				blank_choices();
 			break;
 			case MENU2C:
+				mvwprintw(win, DISP_OFFSET+27,2, "MENU2C:                           ");
+				blank_choices();
 			break;
 		}
 	}
@@ -492,18 +512,18 @@ static UCHAR do_chkbox(UCHAR ch)
 		mvwprintw(win, DISP_OFFSET+21,2, "toggle       %d   ",curr_checkbox);
 		break;
 		case KP_D:
-		enter_checkboxes(ch);
+//		enter_checkboxes(ch);
 		mvwprintw(win, DISP_OFFSET+21,2, "enter       %d    ",curr_checkbox);
 		break;
 		case KP_POUND:
-		escape_checkboxes(ch);
+//		escape_checkboxes(ch);
 		mvwprintw(win, DISP_OFFSET+21,2, "escape      %d    ",curr_checkbox);
 		break;
 		case KP_0:
 		mvwprintw(win, DISP_OFFSET+21,2, "0  ");
 		break;
 		case KP_AST:
-		escape_checkboxes(ch);
+//		escape_checkboxes(ch);
 		break;
 		default:
 		break;
@@ -569,7 +589,7 @@ static UCHAR start_numentry(UCHAR ch)
 		case KP_8:
 		case KP_9:
 			ret_char = ch - 0xE2;
-		break;	
+		break;
 		mvwprintw(win, DISP_OFFSET+21,2, "A  ");
 		break;
 		case KP_B:
@@ -830,9 +850,11 @@ static void init_checkboxes(void)
 	row = 1;
 	col = 3;
 	curr_checkbox = 0;
-	mvwprintw(win, DISP_OFFSET+20,2, "init_checkboxes           ");
-	memset(check_boxes,0,sizeof(CHECKBOXES)*NUM_CHECKBOXES);
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		check_boxes[i].checked = aux_string[i];
 
+// setting the list to choice 'n' is all well and good but we need a way for the PIC to send
+// the choices over in case there are more than 1 lists of choices
 	strcpy(check_boxes[0].string,"choice 1\0");
 	strcpy(check_boxes[1].string,"choice 2\0");
 	strcpy(check_boxes[2].string,"choice 3\0");
@@ -849,6 +871,14 @@ static void init_checkboxes(void)
 		check_boxes[i].index = i;
 		GDispStringAt(row,col,check_boxes[i].string);
 		row++;
+		if(check_boxes[i].checked == 1)
+		{
+			dispCharAt(1+check_boxes[i].index,0,120);
+		}
+		else
+		{
+			dispCharAt(1+check_boxes[i].index,0,0x20);
+		}
 	}
 }
 //******************************************************************************************//
@@ -893,6 +923,7 @@ static UCHAR toggle_checkboxes(UCHAR ch)
 //******************************************************************************************//
 //*********************************** enter_checkboxes *************************************//
 //******************************************************************************************//
+#if 0
 static UCHAR enter_checkboxes(UCHAR ch)
 {
 	blank_choices();
@@ -913,11 +944,12 @@ static UCHAR escape_checkboxes(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+#endif
 static void blank_choices(void)
 {
 	int row,col,i;
 	row = 1;
-	col = 3;
+	col = 0;
 	char blank[] = "                     ";
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
