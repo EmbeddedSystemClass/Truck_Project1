@@ -13,6 +13,7 @@
 #include <stdio.h>
 void printMenu(void);
 char eepromString[STRING_LEN] EEMEM;
+int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
 
 int main(void)
 {

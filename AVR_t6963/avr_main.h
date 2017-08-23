@@ -69,9 +69,6 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 // not worried about it when compiling in NOAVR mode on a linux box in 32/64 bit mode.
 // label_offsets is an array that get set to the length of each label by searching
 // for the first 0
-#ifdef EEPROM_BURN
-int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
-#endif
 int total_offset;
 //#endif
 char cur_global_number[NUM_ENTRY_SIZE];

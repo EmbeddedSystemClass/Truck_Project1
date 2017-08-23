@@ -1,6 +1,6 @@
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // TEST_WRITE_DATA is define when compiled in test_write_data
-#ifdef TEST_WRITE_DATA
+#ifndef EEPROM_BURN
 
 #include "../sfr_helper.h"
 #include <ncurses.h>
@@ -159,7 +159,7 @@ int update_menu_labels(int index, char *ramstr)
 	len = strlen(ramstr);
 	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
 	len++;
-	label_offsets[index] = len;
+//	label_offsets[index] = len;
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);
@@ -182,7 +182,7 @@ int update_rt_labels(int index, char *ramstr)
 	len = strlen(ramstr);
 	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
 	len++;
-	label_offsets[index] = len;
+//	label_offsets[index] = len;
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);

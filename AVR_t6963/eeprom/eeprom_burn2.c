@@ -1,7 +1,5 @@
-#ifndef TEST_WRITE_DATA
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // TEST_WRITE_DATA is define when compiled in test_write_data
-#define EEPROM_BURN
 
 #include "../sfr_helper.h"
 #ifndef TEST_WRITE_DATA
@@ -20,7 +18,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifndef TEST_WRITE_DATA
 extern char eepromString[STRING_LEN] EEMEM;
+extern int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
+#endif
 //******************************************************************************************//
 //***************************************** burn_eeprom ************************************//
 //******************************************************************************************//
@@ -150,7 +152,9 @@ int update_menu_labels(int index, char *ramstr)
 	len = strlen(ramstr);
 	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
 	len++;
+#ifndef TEST_WRITE_DATA
 	label_offsets[index] = len;
+#endif
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);
@@ -171,7 +175,9 @@ int update_rt_labels(int index, char *ramstr)
 	len = strlen(ramstr);
 	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
 	len++;
+#ifndef TEST_WRITE_DATA
 	label_offsets[index] = len;
+#endif
 	total_offset += len;
 //	printf("len = %d total_offset = %d\n",len,total_offset);
 //	printf("len=%d i= %d\n",len,index);
@@ -267,7 +273,9 @@ int read_eeprom(void)
 		}
 		j++;		// adjust for zero at end
 		offset += j;
+#ifndef TEST_WRITE_DATA
 		label_offsets[i] = j;	// fill label_offsets array so we can lookup and display all the labels in main_burn.c
+#endif
 	}
 
 	menu_struct_offset = (UINT)eeprom_read_byte((UCHAR*)MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB);	// read lsb
@@ -283,4 +291,4 @@ int read_eeprom(void)
 	return 0;
 }
 #endif
-#endif
+
