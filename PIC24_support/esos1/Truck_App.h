@@ -7,6 +7,7 @@
 #include "../lib/include/pic24_adc.h"
 #include "../lib/include/pic24_ports_config.h"
 #include "../lib/include/pic24_ports_mapping.h"
+//#include "../../AVR_t6963/key_defs.h"
 #include <stdio.h>
 #include <string.h>
 // DEFINEs go here
@@ -20,9 +21,10 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
-#define AVR_SEND_DATA_SIZE 120
+#define AVR_SEND_DATA_SIZE 100
 
-extern UCHAR get_key(UCHAR ch, UCHAR *str);		// from ../../AVR_t6963/PIC_menu.c
+extern UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str);		// from ../../AVR_t6963/PIC_menu.c
+// size can't be > 255 for now
 
 enum data_types
 {
@@ -35,6 +37,9 @@ enum data_types
 
 #define NUM_RT_PARAMS 12
 
+// warning: these are also defined in the AVR directory
+// got mult defined errors if enums have the same names
+// but got undefined errors if left out ???
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
@@ -55,6 +60,20 @@ enum key_types
 	KP_D // 'D'
 } KEY_TYPES2;
 
+enum non_func_type
+{
+	NF_1 = 0xB0,
+	NF_2,
+	NF_3,
+	NF_4,
+	NF_5,
+	NF_6,
+	NF_7,
+	NF_8,
+	NF_9,
+	NF_10
+} NON_FUNC_TYPES2;
+
 volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
@@ -71,6 +90,7 @@ ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
 ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(comm2_task);
+ESOS_USER_TASK(comm3_task);
 ESOS_USER_TASK(data_to_AVR);
 ESOS_USER_TASK(send_cmd_param);
 ESOS_SEMAPHORE(send_sem);
@@ -545,47 +565,6 @@ ESOS_USER_TASK(comm1_task)
         ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
         
 		ESOS_TASK_WAIT_TICKS(1);
-
-	}
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//*************************************** comm2_task ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(comm2_task)
-{
-    static  uint8_t key1;
-    int i;
-    static ESOS_TASK_HANDLE h_Sender;
-    
-    ESOS_TASK_BEGIN();
-    h_Sender = esos_GetTaskHandle(poll_keypad);
-
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("comm2_task");
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-	while(TRUE)
-    {
-//		if(++data1 > 0x7e)
-//			data1 = 0x21;
-        ESOS_TASK_WAIT_FOR_MAIL();
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
-
-			get_key((UCHAR)key1,(UCHAR)avr_send_data);
-		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
-				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
-		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		    
-			ESOS_TASK_WAIT_TICKS(1);
-		}
 
 	}
     ESOS_TASK_END();

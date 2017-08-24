@@ -1,7 +1,6 @@
 // eeprom_burn.c - get used by test_write_data/test_write_data.c and eeprom/main_burn.c
 // TEST_WRITE_DATA is define when compiled in test_write_data
-#ifndef EEPROM_BURN
-
+#ifndef MAIN_C
 #include "../sfr_helper.h"
 #include <ncurses.h>
 #include "../main.h"

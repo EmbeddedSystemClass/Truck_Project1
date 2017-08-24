@@ -1,4 +1,5 @@
-// menus.c
+// AVR_menus.c
+// 
 #ifdef MAIN_C
 #warning "MAIN_C defined"
 #else
@@ -29,6 +30,7 @@
 #include "avr_main.h"
 
 #ifdef TEST_WRITE_DATA
+static char *show_keypress(UCHAR key, int offset);
 void dispSetCursorX(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
 {
 //	cursor_row = row;
@@ -55,7 +57,7 @@ static void init_checkboxes(int menu_index);
 static void init_execchoices(int);
 static void blank_choices(void);
 static void display_edit_value(void);
-static UCHAR generic_menu_function(void);
+static UCHAR generic_menu_function(UCHAR ch);
 static UCHAR backspace(UCHAR ch);
 static UCHAR enter(UCHAR ch);
 static UCHAR escape(UCHAR ch);
@@ -81,7 +83,6 @@ static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
-
 static char* get_fptr_label(UCHAR);
 
 #endif
@@ -101,6 +102,7 @@ static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, n
 static UCHAR menu_change(UCHAR ch)
 {
 	UCHAR ret_char = ch;
+	int offset;
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+12,2, "                    ");
 #endif
@@ -124,6 +126,8 @@ static UCHAR menu_change(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
+	offset = DISP_OFFSET+12;
+//	mvwprintw(win, DISP_OFFSET+12,2, "*menu_change  %x   ",show_keypress(ret_char,offset));
 	mvwprintw(win, DISP_OFFSET+12,2, "*menu_change  %x   ",ret_char);
 	wrefresh(win);
 #endif
@@ -132,66 +136,90 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-UCHAR read_get_key(UCHAR *str)
+UCHAR read_get_key(UCHAR key, UCHAR *str)
 {
-	int i;
-	UCHAR ret_char;
+	int i,j,k;
+	UCHAR ret_char = key;
+	UCHAR size = 0;
+	int res = 0;
+	int offset;	
+	if(ret_char == PUSH_DATA)
+	{
+#ifdef TEST_WRITE_DATA
+		res = read(global_fd,&size,1);
+		for(i = 0;i < size;i++)
+			res += read(global_fd,&aux_string[i],1);
+
+		offset = LAST_ROW-1;
+//		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %s",size,res,show_keypress(ret_char,offset));
+		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %d",size,res,ret_char);
+		wrefresh(win);
+			
+		j = k = 0;
+		for(i = 0;i < AUX_STRING_LEN;i++)
+		{
+			mvwprintw(win, LAST_ROW+j-7, 2+(k*3),"%x  ",aux_string[i]);
+			if(++k > 19)
+			{
+				k = 0;
+				++j;
+			}
+		}
+		wrefresh(win);
+#else
+	size = receiveByte();
+	for(i = 0;i < size;i++)
+		cur_param_string[i] = receiveByte();
+#endif
+		return ret_char;
+
+	}else if(ret_char > KP_D) return ret_char;
 	memcpy(cur_param_string,str,NUM_UCHAR_PARAMS);
 
-	ret_char = generic_menu_function();
-/*
-	if(new_data_ready == 1)
-	{
-		data_entry_mode = 1;
-		display_edit_value();
-		new_data_ready = 0;
-	}
-*/
+	ret_char = generic_menu_function(ret_char);
+	wrefresh(win);
 	return ret_char;
 }
 //******************************************************************************************//
 //********************************* generic_menu_function **********************************//
 //******************************************************************************************//
-static UCHAR generic_menu_function(void)
+static UCHAR generic_menu_function(UCHAR ch)
 {
 	UCHAR ret_char;
 	int i,j;
-	UCHAR temp;
+	UCHAR aux_bytes_to_read;
 	UCHAR menu_index;
-	UCHAR ch = 0;
 	UCHAR tfptr;
 	int res,res2;
 
-//	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//		cur_param_string[i]++;
-
-	memset(aux_string,0,AUX_STRING_LEN);
 	res = 0;
 	res2 = 0;
 #ifdef TEST_WRITE_DATA
 	read(global_fd,&tfptr,1);
-	read(global_fd,&ch,1);
+//	read(global_fd,&ch,1);
 	read(global_fd,&menu_index,1);
 //	read(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 		res += read(global_fd,&cur_param_string[i],1);
 
-	read(global_fd,&temp,1);
-	mvwprintw(win, DISP_OFFSET+13,2,"                             ");
+	read(global_fd,&aux_bytes_to_read,1);
+//	mvwprintw(win, DISP_OFFSET+13,2,"                             ");
 	mvwprintw(win, DISP_OFFSET+17, 2,
-			"aux_string read:%d menu_index %d  prev index: %d     ",temp,menu_index,prev_menu_index);
-	for(i = 0;i < temp;i++)
+			"aux_string read:%d menu_index %d  prev index: %d     ",aux_bytes_to_read,menu_index,prev_menu_index);
+	for(i = 0;i < aux_bytes_to_read;i++)
 		res2 += read(global_fd,&aux_string[i],1);
 //	mvwprintw(win, DISP_OFFSET+30, 2,"fptr: %s   ch:%x    res:%d    res2:%d   ",get_fptr_label(tfptr),ch,res,res2);
 	mvwprintw(win, DISP_OFFSET+18, 2,"ch:%x  fptr:%x  res:%d    res2:%d   ",ch,tfptr,res,res2);
 #else
 	tfptr = receiveByte();
-	ch = receiveByte();
+//	ch = receiveByte();
 	menu_index = receiveByte();
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-	cur_param_string[i] = receiveByte();
+		cur_param_string[i] = receiveByte();
 
-	temp = receiveByte();
+	aux_bytes_to_read = receiveByte();
+	for(i = 0;i < aux_bytes_to_read;i++)
+		res2 += read(global_fd,&aux_string[i],1);
 #endif
 	ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
 	display_menus();
@@ -246,18 +274,6 @@ static UCHAR generic_menu_function(void)
 	}
 	prev_menu_index = menu_index;
 //#if 0
-#ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+2, 2,"fptr:   %s   %x   ",get_fptr_label(tfptr),ch);
-	for(i = 0;i < AUX_STRING_LEN/3;i++)
-		mvwprintw(win, DISP_OFFSET+14, 2+(i*3),"%x  ",aux_string[i]);
-	for(i = AUX_STRING_LEN/3,j=0;i < (AUX_STRING_LEN/3)*2;i++,j++)
-		mvwprintw(win, DISP_OFFSET+15, 2+(j*3),"%x  ",aux_string[i]);
-	for(i = (AUX_STRING_LEN/3)*2,j=0;i < AUX_STRING_LEN;i++,j++)
-		mvwprintw(win, DISP_OFFSET+16, 2+(j*3),"%x  ",aux_string[i]);
-//	for(i = 0;i < AUX_STRING_LEN/2;i++)
-//		mvwprintw(win, DISP_OFFSET+32, 2+(i*3),"%d  ",i);
-	wrefresh(win);
-#endif
 //#endif
 	return ret_char;
 }
@@ -615,8 +631,10 @@ static void init_checkboxes(int menu_index)
 		check_boxes[i].checked = aux_string[i];				// load what's sent from PIC
 	}
 	
+#ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+21, 2,"menu_index (init_checkboxes) %d           ",menu_index);
 	wrefresh(win);
+#endif
 // setting the list to choice 'n' is all well and good but we need a way for the PIC to send
 // the choices over in case there are more than 1 lists of choices
 	strcpy(check_boxes[0].string,"choice 1\0");
@@ -847,8 +865,6 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 		GDispStringAt(*row,*col+3,temp);
 	}
 
-//printf("%d %d %d %s\n",index,*row,*col,temp);
-
 	if(*col > MAX_LABEL_LEN*2-1)
 	{
 		*col = 0;
@@ -878,7 +894,8 @@ static void display_menus(void)
 	adv_menu_label(5,&row,&col);
 //	mvwprintw(win, 45, 25,"index: %d ",index);
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, 45, 3, "current menu: %s  ",labels[get_curr_menu()+no_rtparams]);
+	mvwprintw(win, LAST_ROW-10, 1, "display_menu            ");
+	wrefresh(win);
 #endif
 }
 //******************************************************************************************//
@@ -1093,4 +1110,77 @@ static void scroll_alnum_list(int dir)
 	cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = choose_alnum;
 }
 #endif
-
+#ifdef TEST_WRITE_DATA
+static char *show_keypress(UCHAR key, int offset)
+{
+	char string[10];
+	switch(key)
+	{
+		case KP_POUND:
+		strcpy(string,"#\0");
+		break;
+		case KP_AST:
+		strcpy(string,"#\0");
+		break;
+		case KP_0:
+		strcpy(string,"0\0");
+		break;
+		case KP_1:
+		strcpy(string,"1\0");
+		break;
+		case KP_2:
+		strcpy(string,"2\0");
+		break;
+		case KP_3:
+		strcpy(string,"3\0");
+		break;
+		case KP_4:
+		strcpy(string,"4\0");
+		break;
+		case KP_5:
+		strcpy(string,"5\0");
+		break;
+		case KP_6:
+		strcpy(string,"6\0");
+		break;
+		case KP_7:
+		strcpy(string,"7\0");
+		break;
+		case KP_8:
+		strcpy(string,"8\0");
+		break;
+		case KP_9:
+		strcpy(string,"9\0");
+		break;
+		case KP_A:
+		strcpy(string,"A\0");
+		break;
+		case KP_B:
+		strcpy(string,"B\0");
+		break;
+		case KP_C:
+		strcpy(string,"C\0");
+		break;
+		case KP_D:
+		strcpy(string,"D\0");
+		break;
+		case SPACE:
+		strcpy(string,"<space>\0");
+		break;
+		case SET_DATA1:
+		strcpy(string,"SET_DATA1\0");
+		break;
+		case SET_DATA2:
+		strcpy(string,"SET_DATA2\0");
+		break;
+		case PUSH_DATA:
+		strcpy(string,"PUSH_DATA\0");
+		break;
+		default:		
+		strcpy(string,"<unknown>\0");
+		break;
+	}
+	mvwprintw(win, offset, 1,"%s      ",string);
+	wrefresh(win);
+}	
+#endif

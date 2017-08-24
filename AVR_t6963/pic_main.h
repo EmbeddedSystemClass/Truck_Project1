@@ -22,7 +22,7 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, UCHAR *str);
+UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
@@ -64,7 +64,6 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 // not worried about it when compiling in NOAVR mode on a linux box in 32/64 bit mode.
 // label_offsets is an array that get set to the length of each label by searching
 // for the first 0
-int total_offset;
 //#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];

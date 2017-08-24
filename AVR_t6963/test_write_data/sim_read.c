@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <ncurses.h>
 #include "../sfr_helper.h"
-//#include "../main.h"
+//#include "../key_defs.h"
 #include "../main.h"
 #include "../avr_main.h"
 #include "../t6963.h"
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	int i,j;
 	UCHAR ch;
 	struct termios oldtio,newtio;
-	WINDOW *menu_win;
+	WINDOW *win;
 	useconds_t tdelay = TIME_DELAY;
 	useconds_t tdelay2 = TIME_DELAY;
     UCHAR data = 2;
@@ -62,13 +62,13 @@ int main(int argc, char *argv[])
 //	nodelay(stdscr,TRUE);
 	raw();				/* Line buffering disabled	*/
 	cbreak();	/* Line buffering disabled. pass on everything */
-	menu_win = newwin(60, 65, 0,0);
-	keypad(menu_win, TRUE);
-//	nodelay(menu_win, TRUE);
-	box(menu_win,0,0);
-	set_win(menu_win);
+	win = newwin(60, 65, 0,0);
+	keypad(win, TRUE);
+//	nodelay(win, TRUE);
+	box(win,0,0);
+	set_win(win);
 
-	wrefresh(menu_win);
+	wrefresh(win);
 
 	memset(&newtio, 0, sizeof newtio);
 
@@ -92,13 +92,18 @@ int main(int argc, char *argv[])
 	j = 0;
 	res = 0;
 	init_list();
+	mvwprintw(win, LAST_ROW,1,"started     ");
+	wrefresh(win);
 	while(1)
 	{
-		read_get_key(temp_params);
-
+		res = read(global_fd,&ch,1);
+		mvwprintw(win, LAST_ROW,1,"data recv'd: %d key: %x   ",res,ch);
+		wrefresh(win);
+		
+		read_get_key(ch,temp_params);
 		j++;
 	}
-	delwin(menu_win);
+	delwin(win);
 	clrtoeol();
 	refresh();
 	endwin();

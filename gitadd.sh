@@ -100,7 +100,7 @@ git add AVR_t6963/macros.h
 git add AVR_t6963/binaryMacro.h
 git add AVR_t6963/t6963.h
 git add AVR_t6963/t6963.c
-git add AVR_t6963/eeprom/eeprom_burn1.c
+git add AVR_t6963/test_write_data/eeprom_burn1.c
 git add AVR_t6963/eeprom/eeprom_burn2.c
 git add AVR_t6963/eeprom/main_burn.c
 git add AVR_t6963/eeprom/Makefile

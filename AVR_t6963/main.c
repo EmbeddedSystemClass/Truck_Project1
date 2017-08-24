@@ -138,13 +138,11 @@ int main(void)
 	done = 0;
 	char param_string[10];
 	UCHAR temp_params[NUM_UCHAR_PARAMS];
-
 	while (1)
 	{
 		ret_char = receiveByte();
-		read_get_key(temp_params);
+		read_get_key(ret_char,temp_params);
 
-//		ret_char = get_key(ret_char);
 
 #ifdef TTY_DISPLAY
 				printHexByte(xbyte);

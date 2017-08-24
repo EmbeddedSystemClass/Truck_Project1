@@ -15,7 +15,6 @@
 #include <sys/time.h>
 #include <ncurses.h>
 #include "../sfr_helper.h"
-//#include "../main.h"
 #include "../main.h"
 #include "../pic_main.h"
 #include "../t6963.h"
@@ -34,6 +33,7 @@
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 static UCHAR get_keypress(UCHAR ch,WINDOW *win, int display_offset);
+static void print_menu(WINDOW *win);
 
 //******************************************************************************************//
 //****************************************** main ******************************************//
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	int res;
 	UCHAR ch;
 	struct termios oldtio,newtio;
-	WINDOW *menu_win;
+	WINDOW *win;
 	useconds_t tdelay = TIME_DELAY;
 	useconds_t tdelay2 = TIME_DELAY;
     UCHAR data = 2;
@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
 	UCHAR key;
 	UCHAR wkey;
 	UCHAR req;
+	UCHAR size;
 	UCHAR ret_key;
 	int display_offset = 1;
 //	UCHAR read_buf[NUM_ENTRY_SIZE];
@@ -88,11 +89,11 @@ int main(int argc, char *argv[])
 //	nodelay(stdscr,TRUE);
 	raw();				/* Line buffering disabled	*/
 	cbreak();	/* Line buffering disabled. pass on everything */
-	menu_win = newwin(60, 65, 0,0);
-	keypad(menu_win, TRUE);
-//	nodelay(menu_win, TRUE);
-	box(menu_win,0,0);
-	set_win(menu_win);
+	win = newwin(60, 65, 0,0);
+	keypad(win, TRUE);
+//	nodelay(win, TRUE);
+	box(win,0,0);
+	set_win(win);
 
 #if 0
 	else if(type == 1)
@@ -100,28 +101,28 @@ int main(int argc, char *argv[])
 //		printf("write: ");
 		iters = atoi(argv[2])*10;
 //		printf("iters: %d\n",iters);
-		mvwprintw(menu_win,display_offset+17,4,"interations: %d",iters);
+		mvwprintw(win,display_offset+17,4,"interations: %d",iters);
 		if(argc > 2)
 		{
 			data2 = atoi(argv[3]);
 //			printf("rpm starting at: %d\n",data2);
-			mvwprintw(menu_win,display_offset+18,4,"rpm starting at: %d",data2);
+			mvwprintw(win,display_offset+18,4,"rpm starting at: %d",data2);
 		}
 		if(argc > 3)
 		{
 			data = atoi(argv[4]);
 //			printf("others starting at: %d\n",data);
-			mvwprintw(menu_win,display_offset+19,4,"others starting at: %d",data);
+			mvwprintw(win,display_offset+19,4,"others starting at: %d",data);
 		}
 		if(argc > 4)
 		{
 //			printf("time delay: %s  ",argv[5]);
 			tdelay = atoi(argv[5])*5000;
 			tdelay2 = atoi(argv[5])*10000;
-			mvwprintw(menu_win,display_offset+20,4,"time delays: %d  %d ",tdelay,tdelay2);
+			mvwprintw(win,display_offset+20,4,"time delays: %d  %d ",tdelay,tdelay2);
 		}
 	}
-	wrefresh(menu_win);
+	wrefresh(win);
 #endif
 	memset(&newtio, 0, sizeof newtio);
 
@@ -144,47 +145,45 @@ int main(int argc, char *argv[])
 //	memset(cur_param_string,0,sizeof(cur_param_string));
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 		cur_param_string[i] = i;
-	for(i = 0;i < AUX_STRING_LEN;i++)
-		aux_string[i] = i;
 	j = 0;
 	res = 0;
 // comment out the next #if 0/#endif to test
 #if 0
-	mvwprintw(menu_win, display_offset,2,"test  ");
-	wrefresh(menu_win);
+	mvwprintw(win, display_offset,2,"test  ");
+	wrefresh(win);
 	getch();
 	for(i = 0;i < no_rt_labels;i++)
-		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,rt_labels[i]);
-	wrefresh(menu_win);
+		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,rt_labels[i]);
+	wrefresh(win);
 	getch();
 	for(i = 0;i < no_rt_labels;i++)
-		mvwprintw(menu_win, display_offset+i,2,"                          ");
+		mvwprintw(win, display_offset+i,2,"                          ");
 	for(i = no_menu_labels;i < no_menu_labels+no_func_labels; i++)
-		mvwprintw(menu_win, display_offset+i-no_menu_labels,2,"%d: %s  ",i-no_menu_labels,menu_labels[i]);
-	wrefresh(menu_win);
+		mvwprintw(win, display_offset+i-no_menu_labels,2,"%d: %s  ",i-no_menu_labels,menu_labels[i]);
+	wrefresh(win);
 	getch();
 	for(i = 0;i < no_menu_labels;i++)
-		mvwprintw(menu_win, display_offset+i,2,"%d: %s  ",i,menu_labels[i]);
-	wrefresh(menu_win);
+		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,menu_labels[i]);
+	wrefresh(win);
 	getch();
 	for(i = 0;i < no_menu_labels;i++)
-		mvwprintw(menu_win, display_offset+i,2,"                     ");
+		mvwprintw(win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"%d ",menu_structs[i].fptr);
+		mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
 		for(j = 0;j < 6;j++)
-			mvwprintw(menu_win, display_offset+i,7+(j*12),"%s ", menu_labels[ menu_structs[i].menus[j]] );
+			mvwprintw(win, display_offset+i,7+(j*12),"%s ", menu_labels[ menu_structs[i].menus[j]] );
 	}
-	wrefresh(menu_win);
+	wrefresh(win);
 	getch();
 //	for(i = 0;i < no_menu_structs;i++)
 	for(i = 0;i < 60;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"                                                             ");
+		mvwprintw(win, display_offset+i,2,"                                                             ");
 	}
-	wrefresh(menu_win);
+	wrefresh(win);
 	getch();
-	delwin(menu_win);
+	delwin(win);
 	clrtoeol();
 	refresh();
 	endwin();
@@ -206,68 +205,92 @@ int main(int argc, char *argv[])
 	i = 0;
 	j = 0;
 	init_list();
+	size = 0;
+
+	print_menu(win);
+	
 	do {
-		key = wgetch(menu_win);
-		wkey = get_keypress(key,menu_win, display_offset);
+		key = wgetch(win);
+		wkey = get_keypress(key,win, display_offset);
 		if(wkey != 0xff)
 		{
-			ret_key = get_key(wkey,0);
-			res = 0;
-			mvwprintw(menu_win, DISP_OFFSET+34,2,"non_func: %x %c  ",wkey, wkey-NF_1);
-			wrefresh(menu_win);
-
-			if(ret_key >= NF_1 && ret_key <= NF_10)
+			if(wkey == SET_DATA1)
 			{
-				mvwprintw(menu_win, DISP_OFFSET+34,2,"non_func: %x %d  ",ret_key, ret_key-NF_1);
-				wrefresh(menu_win);
+				for(i = 0;i < AUX_STRING_LEN;i++)
+					aux_string[i] = 0XFF - i;
+				size = AUX_STRING_LEN;
+				mvwprintw(win, LAST_ROW-7,1,"data1 set       ");
+				wrefresh(win);
+			}else if(wkey == SET_DATA2)
+			{
+				for(i = 0;i < AUX_STRING_LEN;i++)
+					aux_string[i] = 0X7f - i;
+				size = AUX_STRING_LEN;
+				mvwprintw(win, LAST_ROW-7,1,"data2 set       ");
+				wrefresh(win);
+			}else if(wkey == PUSH_DATA)
+			{
+				mvwprintw(win, LAST_ROW-7,1,"data pushed    ");
+				wrefresh(win);
+				get_key(wkey,size,aux_string);
+				ret_key = 0xff;
+			}else
+			{
+				for(i = 0;i < AUX_STRING_LEN;i++)
+					aux_string[i] = i;
+				mvwprintw(win, LAST_ROW-7,1,"           ");
+				size = AUX_STRING_LEN;
+				wrefresh(win);
 
-				switch(ret_key)
+				ret_key = get_key(wkey,size,aux_string);
+				res = 0;
+//				mvwprintw(win, LAST_ROW-8,1,"non_func: %x %c  ",wkey, wkey-NF_1);
+//				wrefresh(win);
+
+				if(ret_key >= NF_1 && ret_key <= NF_10)
 				{
-					case NF_1:
-					break;
-					case NF_2:
-					break;
-					case NF_3:
-					break;
-					case NF_4:
-					break;
-					case NF_5:
-					break;
-					case NF_6:
-					break;
-					case NF_7:
-					break;
-					case NF_8:
-					break;
-					case NF_9:
-					break;
-					case NF_10:
-					break;
-					default:
-					break;
+					mvwprintw(win, LAST_ROW-8,1,"non_func: %x %d  ",ret_key, ret_key-NF_1);
+					wrefresh(win);
+
+					switch(ret_key)
+					{
+						case NF_1:
+						break;
+						case NF_2:
+						break;
+						case NF_3:
+						break;
+						case NF_4:
+						break;
+						case NF_5:
+						break;
+						case NF_6:
+						break;
+						case NF_7:
+						break;
+						case NF_8:
+						break;
+						case NF_9:
+						break;
+						case NF_10:
+						break;
+						default:
+						break;
+					}
 				}
+				else
+				{
+					mvwprintw(win, LAST_ROW-7,1,"                 ");
+					wrefresh(win);
+				}	
+				j++;
 			}
-			else
-			{
-				mvwprintw(menu_win, DISP_OFFSET+34,2,"                 ");
-				wrefresh(menu_win);
-			}	
-/*
-			if(wkey == KP_SIM_DATA)
-			{
-				read(fd,&recv_data,sizeof(UINT));
-				write(fd,&send_data,sizeof(UINT));
-				send_data++;
-				mvwprintw(menu_win, display_offset+2, 4, "recv_data: %d  ",recv_data);
-			}
-*/
-			j++;
 		}
 //		wkey = key = 0;
-		wrefresh(menu_win);
+		wrefresh(win);
 	}while(key != 'q');
 
-	delwin(menu_win);
+	delwin(win);
 	clrtoeol();
 	refresh();
 	endwin();
@@ -287,98 +310,113 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 		switch(key)
 		{
 			case '0':
-				mvwprintw(win, display_offset,50, "zero  ");
+				mvwprintw(win, display_offset,50, "zero    ");
 				wkey = KP_0;
 				break;
 			case '1':
-				mvwprintw(win, display_offset,50, "one   ");
+				mvwprintw(win, display_offset,50, "one     ");
 				wkey = KP_1;
 				break;
 			case '2':
-				mvwprintw(win, display_offset,50, "two   ");
+				mvwprintw(win, display_offset,50, "two     ");
 				wkey = KP_2;
 				break;
 			case '3':
-				mvwprintw(win,display_offset,50, "three ");
+				mvwprintw(win,display_offset,50, "three    ");
 				wkey = KP_3;
 				break;
 			case '4':
-				mvwprintw(win, display_offset,50, "four  ");
+				mvwprintw(win, display_offset,50, "four    ");
 				wkey = KP_4;
 				break;
 			case '5':
-				mvwprintw(win, display_offset,50, "five  ");
+				mvwprintw(win, display_offset,50, "five    ");
 				wkey = KP_5;
 				break;
 			case '6':
-				mvwprintw(win, display_offset,50, "six   ");
+				mvwprintw(win, display_offset,50, "six     ");
 				wkey = KP_6;
 				break;
 			case '7':
-				mvwprintw(win, display_offset,50, "seven ");
+				mvwprintw(win, display_offset,50, "seven   ");
 				wkey = KP_7;
 				break;
 			case '8':
-				mvwprintw(win, display_offset,50, "eight ");
+				mvwprintw(win, display_offset,50, "eight   ");
 				wkey = KP_8;
 				break;
 			case '9':
-				mvwprintw(win, display_offset,50, "nine  ");
+				mvwprintw(win, display_offset,50, "nine    ");
 				wkey = KP_9;
 				break;
 			case '*':
-				mvwprintw(win, display_offset,50, "ast   ");
+				mvwprintw(win, display_offset,50, "ast     ");
 				wkey = KP_AST;
 				break;
 			case '#':
-				mvwprintw(win, display_offset,50, "pound ");
+				mvwprintw(win, display_offset,50, "pound   ");
 				wkey = KP_POUND;
 				break;
 			case 'A':
 			case 'a':
-				mvwprintw(win, display_offset,50, "A     ");
+				mvwprintw(win, display_offset,50, "A       ");
 				wkey = KP_A;
 				break;
 			case 'B':
 			case 'b':
-				mvwprintw(win, display_offset,50, "B     ");
+				mvwprintw(win, display_offset,50, "B       ");
 				wkey = KP_B;
 				break;
 			case 'C':
 			case 'c':
-				mvwprintw(win, display_offset,50, "C     ");
+				mvwprintw(win, display_offset,50, "C       ");
 				wkey = KP_C;
 				break;
 			case 'D':
 			case 'd':
-				mvwprintw(win, display_offset,50, "D     ");
+				mvwprintw(win, display_offset,50, "D       ");
 				wkey = KP_D;
 				break;
 // use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
 			case 'Y':
 			case 'y':
-				mvwprintw(win, display_offset,50, "pound ");
+				mvwprintw(win, display_offset,50, "pound   ");
 				wkey = KP_POUND;
 				break;
 			case 'Z':
 			case 'z':
-				mvwprintw(win, display_offset,50, "ast   ");
+				mvwprintw(win, display_offset,50, "ast     ");
 				wkey = KP_AST;
 				break;
 			case 'U':
 			case 'u':
-				mvwprintw(win, display_offset,50,"U    ");
+				mvwprintw(win, display_offset,50,"U         ");
 				wkey = 0xff;
 				break;
 			case 'V':
 			case 'v':
-				mvwprintw(win, display_offset,50,"V     ");
-				wkey = KP_SIM_DATA;
+				mvwprintw(win, display_offset,50,"V         ");
+				break;
+			case 'R':
+			case 'r':
+				mvwprintw(win, display_offset,50,"SET_DATA1 ");
+				wkey = SET_DATA1;
+				break;
+			case 'S':
+			case 's':
+				mvwprintw(win, display_offset,50,"SET_DATA2 ");
+				wkey = SET_DATA2;
+				break;
+			case 'T':
+			case 't':	
+				mvwprintw(win, display_offset,50,"PUSH_DATA ");
+				wkey = PUSH_DATA;
 				break;
 			case ' ':
-				mvwprintw(win, display_offset,50,"space   ");
+				mvwprintw(win, display_offset,50,"space     ");
 				wkey = SPACE;
 				break;
+			case PUSH_DATA:	
 			default:
 				mvwprintw(win, display_offset,50, "?     ");
 				wkey = 0xff;
@@ -388,6 +426,19 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 	return wkey;
 }
 
+static void print_menu(WINDOW *win)
+{
+//	mvwprintw(win, LAST_ROW-6,LAST_COL,"*");
+	mvwprintw(win, LAST_ROW-6,1,"----------------------------- menu ----------------------------");
+	mvwprintw(win, LAST_ROW-5,1,"0->9, A->D, # and * are the keys on the keypad");
+	mvwprintw(win, LAST_ROW-4,1,"Z/z is a shortcut to '*', Y/y is a shortcut to '*'");
+	mvwprintw(win, LAST_ROW-3,1,"R/r is a shortcut to SET_DATA1");
+	mvwprintw(win, LAST_ROW-2,1,"S/s is a shortcut to SET_DATA2");
+	mvwprintw(win, LAST_ROW-1,1,"T/t is a shortcut to PUSH_DATA");
+	mvwprintw(win, LAST_ROW,2,"the '*' key always goes to the previous menu");
+	wrefresh(win);
+	
+}
 //******************************************************************************************//
 //*********************************** set_interface_attribs ********************************//
 //******************************************************************************************//

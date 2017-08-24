@@ -85,6 +85,18 @@ This is where the initialization occurs on the AVR when a new menu is started.
 However, the menu_index is the last param in the call to update_menu_structs (or the index elem
 in MENU_FUNC_STRUCT.
 
+If the ret_key returned from get_key() call in Truck_App.h is one of the NF_x codes from the non_func
+then we can do something like not send as many bytes in the loop in comm2_task or send some extra
+stuff to the AVR with a special cmd that's filtered by the get_key function int PIC_menu.c like
+read some extra data or do a reset or some init function. Very cool stuff!
+
+tried making AUX_STRING_LEN 400 and then did a make size in the main dir and got 95% full so
+make separate sized arrays for each and just copy over what's needed. 
+
+Added a special 'keypress' call PUSH_DATA which the PIC sends when it want's to send data
+without the AVR going thru the generic_menu_function. In the simulation, make a shortcut key
+that loads the data and then another shortcut key that sends the PUSH_DATA cmd. 
+
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.

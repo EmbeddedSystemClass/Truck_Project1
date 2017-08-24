@@ -25,8 +25,8 @@ PIC_menu.o : ../PIC_menu.c ../pic_main.h ../main.h
 sim_write.o : sim_write.c ../pic_main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_write.o sim_write.c
 
-eeprom_burn1.o : ../eeprom/eeprom_burn1.c ../pic_main.h ../sfr_helper.h ../main.h
-	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn1.o ../eeprom/eeprom_burn1.c
+eeprom_burn1.o : eeprom_burn1.c ../pic_main.h ../sfr_helper.h ../main.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn1.o eeprom_burn1.c
 
 sim_write : PIC_menu.o sim_write.o t6963.o eeprom_burn1.o
 	${CC} ${CFLAGS} sim_write.o t6963.o PIC_menu.o eeprom_burn1.o -o sim_write -lcurses

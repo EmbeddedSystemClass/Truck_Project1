@@ -1,9 +1,9 @@
-//#ifdef TEST_WRITE_DATA
+#ifndef MAIN_C
 #include "sfr_helper.h"
 #include "t6963.h"
 #ifdef TEST_WRITE_DATA
 #include <unistd.h>
-#include <errno.h>
+#include <errno.h> 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -55,9 +55,9 @@ static void display_menus(int index);
 static UCHAR cur_row, cur_col;	// used by the current menu/dialog function to keep track of the current row,col
 static UCHAR alnum_array[NUM_ALNUM+1];
 static UCHAR choose_alnum;
-static void prev_list(void);
+static int prev_list(void);
 static int menu_list[LIST_SIZE];	// works like a stack for the how deep into the menus we go
-static void set_list(int fptr);
+static UCHAR set_list(int fptr);
 static UCHAR get_fptr(void);
 static char* get_fptr_label(void);
 static int get_curr_menu_index(void);
@@ -66,42 +66,45 @@ static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, n
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-static void prev_list(void)
+static int prev_list(void)
 {
-//	UCHAR temp = menu_list[current_fptr];
-//	UCHAR temp2 = current_fptr;
+	int ret;
 
 	if(current_fptr == 0)
-		return;
+		ret = -1;
 	else
 	{
 		menu_list[current_fptr] = 0;
 		current_fptr--;
 		dirty_flag = 1;
+		ret = 0;
 	}
-//	return menu_list[current_fptr];
+	return ret;
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 //#if 0
-static void set_list(int fptr)
+static UCHAR set_list(int fptr)
 {
 	int i;
+	UCHAR ret_char = 0;
+	
 	if(current_fptr < list_size)
 	{
 		current_fptr++;
 		menu_list[current_fptr] = fptr;
 		dirty_flag = 1;
 
+		ret_char = get_curr_menu_index();
 		send_aux_data = 1;
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, DISP_OFFSET,2,"set_list: %s   %d     ",get_fptr_label(),get_curr_menu_index());
+			mvwprintw(win, DISP_OFFSET,2,"set_list: %s   menu_index: %d     ",get_fptr_label(),ret_char);
 			wrefresh(win);
 #endif
-			switch(get_curr_menu_index())
+			switch(ret_char)
 			{
 				case MENU1C:	// 1st exec_choice
 					curr_execchoice = 0;
@@ -132,8 +135,8 @@ static void set_list(int fptr)
 				break;
 				case MENU2A:	// non_func
 					send_aux_data = 24;
-//					for(i = 0;i < send_aux_data;i++)
-//						aux_string[i] = i;
+					for(i = 0;i < send_aux_data;i++)
+						aux_string[i] = i;
 				break;
 				case MENU2B:	// 2nd exec_choice
 					curr_execchoice = 0;
@@ -155,6 +158,7 @@ static void set_list(int fptr)
 		}
 
 	}
+	return ret_char;
 }
 //#endif
 //******************************************************************************************//
@@ -195,7 +199,7 @@ static UCHAR menu_change(UCHAR ch)
 		break;
 	}
 	if(ch != KP_AST)
-		set_list(menu_structs[curr_menu].menus[menu_index]);
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
 
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
@@ -209,15 +213,38 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 // pass in the keypress from the PIC24 keypad and pass out the string of UCHARs
-UCHAR get_key(UCHAR ch, UCHAR *str)
+UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str)
 {
 	int i;
+	UCHAR ret_char = ch;
 // warning: str passed when not in simulator is pointing to memory in the PIC24
-#ifndef TEST_WRITE_DATA
-	ppic_data = str;	
+#ifdef TEST_WRITE_DATA
+//	ppic_data = str;	
+	
+	if(ret_char == PUSH_DATA)
+	{
+		int res = 0;
+		res += write(global_fd,&ret_char,1);
+		res += write(global_fd,&size,1);		// data pushed can't be > 255
+		res += write(global_fd,str,size);
+		mvwprintw(win, LAST_ROW-8,1,"PUSH_DATA wrote %d bytes   ",res);
+		wrefresh(win);
+		return ret_char;
+	}else
+	{
+		mvwprintw(win, LAST_ROW-8,1,"ch: %x   size: %d            ",ret_char,size);
+		wrefresh(win);
+	}
+
+#else
+
+	memcpy(ppic_data,&ret_char,1);
+	memcpy(ppic_data+1,&size,1);
+	memcpy(ppic_data+2,str,size);
+		
 #endif
 
-	UCHAR ret_char = generic_menu_function(ch);
+	ret_char = generic_menu_function(ret_char);
 	if(curr_fptr_changed())
 	{
 #ifdef TEST_WRITE_DATA
@@ -239,7 +266,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 	// execute function pointer
 	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
-//		cur_param_string[0] = ret_char;
+
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+2, 2,"%s -> %d func: %s -> %d            ",
 			menu_labels[get_curr_menu()],
@@ -262,9 +289,10 @@ static UCHAR generic_menu_function(UCHAR ch)
 // so the PIC must allocate this much space for this module to write to so the pic can
 // send it using its own serial interface.
 #ifdef TEST_WRITE_DATA
+	write(global_fd,&ch,1);
 	temp2 = get_fptr();
 	write(global_fd,&temp2,1);
-	write(global_fd,&ch,1);
+//	write(global_fd,&ch,1);
 	temp2 = (UCHAR)get_curr_menu_index();
 	write(global_fd,&temp2,1);
 	write(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
@@ -278,7 +306,8 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 	mvwprintw(win, DISP_OFFSET+18+i, 2,"%d -> %s  ",menu_list[i],menu_labels[get_curr_menu()]);
 	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
-	wrefresh(win);
+
+//#if 0
 	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 		mvwprintw(win, DISP_OFFSET+4,2+(i+2),"%d  ",check_boxes[i].checked);
@@ -286,6 +315,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
 	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
+//#endif
 	wrefresh(win);
 #else
 	temp2 = get_fptr();
@@ -817,5 +847,5 @@ void init_list(void)
 	aux_index = 0;
 	send_aux_data = 0;
 }
-//#endif
+#endif
 

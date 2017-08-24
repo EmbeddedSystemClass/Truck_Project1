@@ -31,6 +31,7 @@
  * User supplied functions
  ************************************************************************
  */
+#define _TRUCK_APP
 #include "Truck_App.h"
 
 //******************************************************************************************//
@@ -59,7 +60,91 @@ ESOS_USER_TASK(data_to_AVR)
     } // endof while()
     ESOS_TASK_END();
 }
+//******************************************************************************************//
+//*************************************** comm2_task ***************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(comm2_task)
+{
+    static  uint8_t key1, ret_key, size;
+    int i;
+    static ESOS_TASK_HANDLE h_Sender;
+    static int once = 1;
+    
+    ESOS_TASK_BEGIN();
+    h_Sender = esos_GetTaskHandle(poll_keypad);
 
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("comm2_task");
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+
+
+	while(TRUE)
+    {
+//		if(++data1 > 0x7e)
+//			data1 = 0x21;
+#if 0
+		if(once == 1)
+		{
+			size = AVR_SEND_DATA_SIZE;
+			ret_key = get_key((UCHAR)key1,size,(UCHAR*)avr_send_data);
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+			once =0;
+		}
+#endif
+        ESOS_TASK_WAIT_FOR_MAIL();
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
+
+			ret_key = get_key((UCHAR)key1,size,(UCHAR*)avr_send_data);
+		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
+		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+		    
+			ESOS_TASK_WAIT_TICKS(1);
+
+// if key returned is one of the non_func codes then do something...
+
+			switch(ret_key)
+			{
+				case NF_1:
+				break;
+				case NF_2:
+				break;
+				case NF_3:
+				break;
+				case NF_4:
+				break;
+				case NF_5:
+				break;
+				case NF_6:
+				break;
+				case NF_7:
+				break;
+				case NF_8:
+				break;
+				case NF_9:
+				break;
+				case NF_10:
+				break;
+				default:
+				break;
+			}
+			
+		}
+
+	}
+    ESOS_TASK_END();
+}
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
 //******************************************************************************************//
@@ -81,6 +166,7 @@ void user_init(void)
 */
 //	esos_RegisterTask(comm3_task);
 	esos_RegisterTask(comm1_task);
+	esos_RegisterTask(comm2_task);
 
 //	esos_RegisterTask(keypad);
 //	esos_RegisterTask(poll_keypad);

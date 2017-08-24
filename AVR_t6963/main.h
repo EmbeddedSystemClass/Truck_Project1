@@ -15,8 +15,9 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 48
-
+#define AUX_STRING_LEN 100
+#define LAST_ROW DISP_OFFSET+54
+#define LAST_COL 63
 int burn_eeprom(void);
 
 typedef struct rt_params
@@ -115,26 +116,29 @@ enum fptr_types
 */
 } FPTR_TYPES;
 
+// warning: these are also defined in the esos1 directory
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
-	KP_AST, // '*'
-	KP_0, // '0'
-	KP_1, // '1'
-	KP_2, // '2'
-	KP_3, // '3'
-	KP_4, // '4'
-	KP_5, // '5'
-	KP_6, // '6'
-	KP_7, // '7'
-	KP_8, // '8'
-	KP_9, // '9'
-	KP_A, // 'A'
-	KP_B, // 'B'
-	KP_C, // 'C'
-	KP_D, // 'D'	(0xEF)
-	SPACE,
-	KP_SIM_DATA		// simulates sending data
+	KP_AST, // '*'	- E1
+	KP_0, // '0'	- E2
+	KP_1, // '1'	- E3
+	KP_2, // '2'	- E4
+	KP_3, // '3'	- E5
+	KP_4, // '4'	- E6
+	KP_5, // '5'	- E7
+	KP_6, // '6'	- E8
+	KP_7, // '7'	- E9
+	KP_8, // '8'	- EA
+	KP_9, // '9'	- EB
+	KP_A, // 'A'	- EC
+	KP_B, // 'B'	- ED
+	KP_C, // 'C'	- EE
+	KP_D, // 'D'	- EF
+	SPACE,//		- F0
+	SET_DATA1,//	- F1
+	SET_DATA2,//	- F2	
+	PUSH_DATA //	- F3
 } KEY_TYPES;
 
 enum non_func_types
@@ -169,6 +173,7 @@ enum rt_types
 
 // we already don't need the string elem in the PIC so when we find a way to pass the strings
 // in via the aux_string we can do away with string elem
+
 typedef struct checkboxes
 {
 	UCHAR index;
@@ -205,8 +210,6 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, UCHAR *str);
-UCHAR read_get_key(UCHAR *str);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
@@ -250,11 +253,9 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 //#ifdef EEPROM_BURN
 //int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
 //#endif
-int total_offset;
 //#endif
 //int sample_data[10];
-UINT send_data;
-UINT recv_data;
+int total_offset;
 int global_fd;
 void set_state_defaults(void);
 EXEC_CHOICES exec_choices[NUM_EXECCHOICES];
