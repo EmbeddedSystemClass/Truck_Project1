@@ -109,6 +109,7 @@ git add AVR_t6963/PIC_menu.c
 git add AVR_t6963/main.c
 git add AVR_t6963/pic_main.h
 git add AVR_t6963/avr_main.h
+git add AVR_t6963/main.h
 git add AVR_t6963/spi.c
 git add AVR_t6963/spi.h
 git add AVR_t6963/ERM240128.png

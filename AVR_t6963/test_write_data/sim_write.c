@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		mvwprintw(menu_win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
 	{
-		mvwprintw(menu_win, display_offset+i,2,"%d: %d ",menu_structs[i].enabled, menu_structs[i].fptr);
+		mvwprintw(menu_win, display_offset+i,2,"%d ",menu_structs[i].fptr);
 		for(j = 0;j < 6;j++)
 			mvwprintw(menu_win, display_offset+i,7+(j*12),"%s ", menu_labels[ menu_structs[i].menus[j]] );
 	}
@@ -211,9 +211,7 @@ int main(int argc, char *argv[])
 		wkey = get_keypress(key,menu_win, display_offset);
 		if(wkey != 0xff)
 		{
-			ret_key = get_key(wkey,cur_param_string);
-//			for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//				res += write(fd,(void*)&cur_param_string[i],1);
+			ret_key = get_key(wkey,0);
 			res = 0;
 			mvwprintw(menu_win, DISP_OFFSET+34,2,"non_func: %x %c  ",wkey, wkey-NF_1);
 			wrefresh(menu_win);

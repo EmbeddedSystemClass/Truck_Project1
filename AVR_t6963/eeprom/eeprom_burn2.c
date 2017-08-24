@@ -108,19 +108,6 @@ int burn_eeprom(void)
 //	printf("total_offset: %d\n",total_offset);
 #endif
 
-//	menu_structs[i].enabled = enabled;
-//	menu_structs[i].fptr = fptr;
-//	menu_structs[i].menu = menu;
-//	menu_structs[i].label = label;
-#if 0
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// if fptr == 0 then it means goto this menu
-	UCHAR label;		// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-#endif
-// A,B,C,D,#,0
-	// main menu	0
 	i = 0;
 	no_data_index = 0;
 // home

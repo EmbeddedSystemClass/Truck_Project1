@@ -20,6 +20,9 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
+#define AVR_SEND_DATA_SIZE 120
+
+extern UCHAR get_key(UCHAR ch, UCHAR *str);		// from ../../AVR_t6963/PIC_menu.c
 
 enum data_types
 {
@@ -30,67 +33,7 @@ enum data_types
 	RT_HIGH3			// bit 15 of UINT set
 } DATA_TYPES;
 
-enum rt_types
-{
-	RT_RPM = RT_OFFSET,
-	RT_ENGT,
-	RT_TRIP,
-	RT_TIME,
-	RT_AIRT,
-	RT_MPH,
-	RT_OILP,
-	RT_MAP,
-	RT_OILT,
-	RT_O2,
-	RT_AUX1,
-	RT_AUX2
-#if 0
-	RT_TRIP = 0xF6,
-	RT_TIME,
-	RT_AIRT,
-	RT_O2,
-	RT_MAP,
-	RT_OILT,
-	RT_OILP,
-	RT_ENGT,
-	RT_MPH,
-	RT_RPM	// this should be 0xFE
-#endif
-} RT_TYPES;
-
 #define NUM_RT_PARAMS 12
-
-typedef struct rt_params
-{
-	uint8_t row;			// row, col tells where the param will appear on screen
-	uint8_t col;
-	uint8_t shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
-	uint8_t dtype;		// 0 = uint8_t; 1 = UINT; 2 = dword?
-	uint8_t type;			// rt_types
-} RT_PARAM;
-
-enum shown_types
-{
-	SHOWN_SENT,
-	NOSHOWN_SENT,
-	NOSHOWN_NOSENT
-} SHOWN_TYPES;
-
-RT_PARAM P24_rt_params[NUM_RT_PARAMS] =	\
-{
-{0,		0,	0,	1,	112 },
-{1,		0,	0,	0,	113 },
-{2,		0,	0,	0,	114 },
-{3,		0,	0,	0,	115 },
-{4,		0,	0,	0,	116 },
-{0,		15,	0,	0,	117 },
-{1,		15,	0,	0,	118 },
-{2,		15,	0,	0,	119 },
-{3,		15,	0,	0,	120 },
-{4,		15,	0,	0,	121 },
-{5,		0,	0,	2,	122 },
-{6,		0,	0,	3,	123 }
-};
 
 enum key_types
 {
@@ -110,59 +53,7 @@ enum key_types
 	KP_B, // 'B'
 	KP_C, // 'C'
 	KP_D // 'D'
-} KEY_TYPES;
-
-enum fpga_recv_types
-{
-	FPGA_RPM = 0x80,
-	FPGA_MPH,
-	FPGA_REVLIMIT,
-	FPGA_O2,
-	FPGA_MAP,
-	FPGA_AIRT
-} FPGA_RECV_TYPES;
-
-enum fpga_send_types
-{
-	SET_BR_RPM = 0x80,
-	SET_BR_MPH,				// 0x81
-	SET_DEC_RPM,			// 0x82
-	SET_DEC_MPH,
-	SET_BAUD_RPM,
-	SET_BAUD_MPH,
-	SET_DELAY_RPM,
-	SET_DELAY_MPH,
-	SET_FACT_RPM,
-	SET_FACT_MPH			// 0x89
-} FPGA_SEND_TYPES;
-
-enum spi_recv_states
-{
-	CMD = 0xAA,
-	DATA0,
-	DATA1,
-	DATA2
-} SPI_RECV_STATES;
-
-enum aux_states
-{
-	IDLE_AUX,
-	DATA_REQ,
-	VALID_DATA,
-	DATA_READY,
-	EXTRA
-} AUX_STATES;
-
-enum aux_commands
-{
-	CMD_GET_DATA = 6,		// AVR tells PIC24 what data it wants
-	CMD_DATA_READY,			// PIC24 tells AVR it has the data to send
-	CMD_NEW_DATA,			// AVR tells PIC24 it has new data to store
-	CMD_EXTRA
-} AUX_CMDS;
-
-#define NUM_ENTRY_SIZE 7
-#define AUX_DATA_SIZE 4
+} KEY_TYPES2;
 
 volatile uint8_t row;
 volatile uint8_t cmd;
@@ -173,7 +64,7 @@ volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 volatile uint8_t col;
 volatile uint8_t last_code;
 volatile uint8_t user_flag;
-volatile char param_string[10];
+volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
 
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
@@ -181,14 +72,10 @@ ESOS_SEMAPHORE(key_sem);
 ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(comm2_task);
 ESOS_USER_TASK(data_to_AVR);
-ESOS_USER_TASK(sendFPGA);
-ESOS_USER_TASK(sendFPGA2);
-ESOS_USER_TASK(recvFPGA);
 ESOS_USER_TASK(send_cmd_param);
 ESOS_SEMAPHORE(send_sem);
 ESOS_USER_TASK(convADC);
 ESOS_USER_TASK(test_timer);
-ESOS_USER_TASK(comm1_task);
 ESOS_USER_TASK(echo_spi_task);
 //ESOS_USER_TASK(fast_echo_spi_task);
 
@@ -425,7 +312,11 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
+    static ESOS_TASK_HANDLE cmd_param_task;
+    static uint8_t send_key;
+
     ESOS_TASK_BEGIN();
+    cmd_param_task = esos_GetTaskHandle(comm2_task);
 
 	configKeypad();
 
@@ -436,64 +327,26 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if (u8_newKey)
 		{
+			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,send_key);
+
+#if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 		    ESOS_TASK_WAIT_ON_SEND_UINT82(u8_newKey);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+#endif
 			u8_newKey = 0;
 		}
 	}
     ESOS_TASK_END();
 }
 
-//******************************************************************************************//
-//************************************ semd_cmd_param **************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(send_cmd_param)
-{
-    static  uint8_t cmd, param;
-    static  uint16_t data;
-
-    ESOS_TASK_BEGIN();
-
-    while(TRUE)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			// this can also be 8 bytes
-            data = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
-            cmd = (uint8_t)(data >> 8);
-            param = (uint8_t)data;
-
-#if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(param);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(cmd);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xAA); 		// send byte to FPGA
-			ESOS_TASK_WAIT_TICKS(TEMP_DELAY3);
-
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0x55);
-			ESOS_TASK_WAIT_TICKS(TEMP_DELAY3);
-
-			ESOS_TASK_WAIT_ON_SEND_UINT82(param);
-			ESOS_TASK_WAIT_TICKS(TEMP_DELAY3);
-
-			ESOS_TASK_WAIT_ON_SEND_UINT82(cmd);
-			ESOS_TASK_WAIT_TICKS(TEMP_DELAY3);
-
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-        }
-    }
-    ESOS_TASK_END();
-}
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
@@ -692,6 +545,47 @@ ESOS_USER_TASK(comm1_task)
         ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
         
 		ESOS_TASK_WAIT_TICKS(1);
+
+	}
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
+//*************************************** comm2_task ***************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(comm2_task)
+{
+    static  uint8_t key1;
+    int i;
+    static ESOS_TASK_HANDLE h_Sender;
+    
+    ESOS_TASK_BEGIN();
+    h_Sender = esos_GetTaskHandle(poll_keypad);
+
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("comm2_task");
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+	while(TRUE)
+    {
+//		if(++data1 > 0x7e)
+//			data1 = 0x21;
+        ESOS_TASK_WAIT_FOR_MAIL();
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
+
+			get_key((UCHAR)key1,(UCHAR)avr_send_data);
+		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
+		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+		    
+			ESOS_TASK_WAIT_TICKS(1);
+		}
 
 	}
     ESOS_TASK_END();

@@ -32,7 +32,6 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, UCHAR *str);
 UCHAR read_get_key(UCHAR *str);
 int get_str_len(void);
 int burn_eeprom(void);
@@ -87,6 +86,6 @@ UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 int menu_index;
-UCHAR cur_param_string[NUM_UCHAR_PARAMS];
-UCHAR aux_string[AUX_STRING_LEN];
+//UCHAR cur_param_string[NUM_UCHAR_PARAMS];
+//UCHAR aux_string[AUX_STRING_LEN];
 

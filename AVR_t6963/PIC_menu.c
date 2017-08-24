@@ -1,10 +1,7 @@
-#ifdef TEST_WRITE_DATA
+//#ifdef TEST_WRITE_DATA
 #include "sfr_helper.h"
 #include "t6963.h"
 #ifdef TEST_WRITE_DATA
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -14,6 +11,9 @@
 #include <ncurses.h>
 WINDOW *win;
 #endif
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "main.h"
 #include "pic_main.h"
 
@@ -38,6 +38,8 @@ static UCHAR scrollup_execchoice(UCHAR ch);
 static UCHAR scrolldown_execchoice(UCHAR ch);
 static UCHAR do_exec_choice(void);
 
+static UCHAR *ppic_data;
+
 static int first_menu = MAIN;
 static int last_menu = testnum8;
 static int current_fptr;		// pointer into the menu_list[]
@@ -47,7 +49,6 @@ static int curr_type;
 static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
-static int next_prev_list;
 #ifdef TEST_WRITE_DATA
 static void display_menus(int index);
 #endif
@@ -96,8 +97,10 @@ static void set_list(int fptr)
 		send_aux_data = 1;
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
+#ifdef TEST_WRITE_DATA
 			mvwprintw(win, DISP_OFFSET,2,"set_list: %s   %d     ",get_fptr_label(),get_curr_menu_index());
 			wrefresh(win);
+#endif
 			switch(get_curr_menu_index())
 			{
 				case MENU1C:	// 1st exec_choice
@@ -209,25 +212,17 @@ static UCHAR menu_change(UCHAR ch)
 UCHAR get_key(UCHAR ch, UCHAR *str)
 {
 	int i;
-	memcpy(cur_param_string,str,NUM_UCHAR_PARAMS);
+// warning: str passed when not in simulator is pointing to memory in the PIC24
+#ifndef TEST_WRITE_DATA
+	ppic_data = str;	
+#endif
+
 	UCHAR ret_char = generic_menu_function(ch);
-
-
 	if(curr_fptr_changed())
 	{
-//#if 0
 #ifdef TEST_WRITE_DATA
 		display_menus(get_curr_menu());
 #endif
-//#endif
-	}
-	return ret_char;
-
-	if(new_data_ready == 1)
-	{
-		data_entry_mode = 1;
-//		display_edit_value();
-		new_data_ready = 0;
 	}
 	return ret_char;
 }
@@ -242,61 +237,65 @@ static UCHAR generic_menu_function(UCHAR ch)
 	int temp3;
 	char tlabel[MAX_LABEL_LEN];
 
-//	mvwprintw(win, DISP_OFFSET+5,2,"                       ");
-
-
-	if(menu_structs[get_curr_menu()].enabled == 1)
-	{
-		// execute function pointer
-		ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
+	// execute function pointer
+	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
 //		cur_param_string[0] = ret_char;
 #ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET+2, 2,"%s -> %d func: %s -> %d            ",
-				menu_labels[get_curr_menu()],
-				get_curr_menu(),
-				get_fptr_label(),
-				menu_structs[get_curr_menu()].fptr);
-		wrefresh(win);
+	mvwprintw(win, DISP_OFFSET+2, 2,"%s -> %d func: %s -> %d            ",
+			menu_labels[get_curr_menu()],
+			get_curr_menu(),
+			get_fptr_label(),
+			menu_structs[get_curr_menu()].fptr);
+	wrefresh(win);
 #endif
-		for(i = 0;i < 6;i++)
-		{
-			memset(tlabel,0,MAX_LABEL_LEN);
-			strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
-			memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
-		}
-
-		temp2 = get_fptr();
-		write(global_fd,&temp2,1);
-		write(global_fd,&ch,1);
-		temp2 = (UCHAR)get_curr_menu_index();
-		write(global_fd,&temp2,1);
-		write(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
-
-		write(global_fd,&send_aux_data,1);
-		if(send_aux_data != 0)
-			write(global_fd,aux_string,send_aux_data);
-/*
-		if(next_prev_list == 1)
-		{
-			prev_list();
-			next_prev_list = 0;
-		}
-*/
+	for(i = 0;i < 6;i++)
+	{
+		memset(tlabel,0,MAX_LABEL_LEN);
+		strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
+		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
 	}
-//#if 0
+
+// write 4 bytes: fptr, ch, menu_index & current_param_string
+// then the size of the aux_data, then the aux_data (which can be up to AUX_STRING_LEN)
+// if the NUM_UCHAR_PARAMS is MAX_LABEL_LEN*6 then the total cur_param_string is 60
+// and if the AUX_STRING_LEN is 48 then to total is 4+60+48 = 112
+// so the PIC must allocate this much space for this module to write to so the pic can
+// send it using its own serial interface.
 #ifdef TEST_WRITE_DATA
-		for(i = 0;i < current_fptr;i++)
-			mvwprintw(win, DISP_OFFSET+18+i, 2,"%d -> %s  ",menu_list[i],menu_labels[menu_list[i]]);
+	temp2 = get_fptr();
+	write(global_fd,&temp2,1);
+	write(global_fd,&ch,1);
+	temp2 = (UCHAR)get_curr_menu_index();
+	write(global_fd,&temp2,1);
+	write(global_fd,cur_param_string,NUM_UCHAR_PARAMS);
 
-		mvwprintw(win, DISP_OFFSET+18+i, 2,"%d -> %s  ",menu_list[i],menu_labels[get_curr_menu()]);
-		mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
-		wrefresh(win);
-		mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
-		for(i = 0;i < NUM_CHECKBOXES;i++)
-			mvwprintw(win, DISP_OFFSET+4,2+(i+2),"%d  ",check_boxes[i].checked);
+	write(global_fd,&send_aux_data,1);
+	if(send_aux_data != 0)
+		write(global_fd,aux_string,send_aux_data);
 
-		for(i = 0;i < NUM_CHECKBOXES;i++)
-			mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
+	for(i = 0;i < current_fptr;i++)
+		mvwprintw(win, DISP_OFFSET+18+i, 2,"%d -> %s  ",menu_list[i],menu_labels[menu_list[i]]);
+
+	mvwprintw(win, DISP_OFFSET+18+i, 2,"%d -> %s  ",menu_list[i],menu_labels[get_curr_menu()]);
+	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
+	wrefresh(win);
+	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		mvwprintw(win, DISP_OFFSET+4,2+(i+2),"%d  ",check_boxes[i].checked);
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
+	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
+	wrefresh(win);
+#else
+	temp2 = get_fptr();
+	memcpy(ppic_data,&temp2,1);
+	memcpy(ppic_data+1,&ch,1);
+	temp2 = (UCHAR)get_curr_menu_index();
+	memcpy(ppic_data+2,&temp2,1);
+	memcpy(ppic_data+3,cur_param_string,NUM_UCHAR_PARAMS);
+	memcpy(ppic_data+3+NUM_UCHAR_PARAMS,&send_aux_data,1);
+	memcpy(ppic_data+3+NUM_UCHAR_PARAMS+1,aux_string,AUX_STRING_LEN);
 #endif
 	return ret_char;
 }
@@ -379,8 +378,6 @@ static void cursor_forward(char ch)
 #ifdef TEST_WRITE_DATA
 //		dispCharAt(NUM_ENTRY_ROW+1,cur_col,95);
 #endif
-//	mvwprintw(win, 45, 3,"cursor forward   ");
-    return ch;
 }
 //******************************************************************************************//
 //***************************************** backspace **************************************//
@@ -390,11 +387,11 @@ static UCHAR backspace(UCHAR ch)
 	if(data_entry_mode)
 	{
 		cursor_backward();
+#ifdef TEST_WRITE_DATA
 		dispCharAt(NUM_ENTRY_ROW,cur_col,0x20);
+#endif
 		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
-//		mvwprintw(win, DISP_OFFSET+19,2,"bs:%s      %d  ",cur_global_number,cur_col);
 	}
-//	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	return ch;
 }
 //******************************************************************************************//
@@ -547,7 +544,6 @@ static UCHAR do_chkbox(UCHAR ch)
 {
 	UCHAR ret_char = ch;
 	int i;
-	next_prev_list = 0;
 
 	switch(ch)
 	{
@@ -562,16 +558,16 @@ static UCHAR do_chkbox(UCHAR ch)
 		break;
 		case KP_D:		// enter
 		prev_list();
-		next_prev_list = 1;
 		break;
 		case KP_POUND:		// esc
+#ifdef TEST_WRITE_DATA
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 				check_boxes[i].checked = prev_check_boxes[i];	// restore old
 
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 				mvwprintw(win, DISP_OFFSET+6,2+(i+2),"%d  ",prev_check_boxes[i]);
 			wrefresh(win);
-		next_prev_list = 1;
+#endif
 		prev_list();
 		break;
 		case KP_0:
@@ -631,8 +627,7 @@ static UCHAR scrolldown_execchoice(UCHAR ch)
 //******************************************************************************************//
 static UCHAR do_exec_choice(void)
 {
-//	mvwprintw(win, DISP_OFFSET+9,2, "*do_exec_choice %x	               ",curr_execchoice);
-	wrefresh(win);
+	return 0;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -682,8 +677,6 @@ static UCHAR non_func(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-//	mvwprintw(win, DISP_OFFSET+1,2, "non_func %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
 	mvwprintw(win, DISP_OFFSET+1,2, "*non_func %x              ",ch);
 	wrefresh(win);
 #endif
@@ -823,13 +816,6 @@ void init_list(void)
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
 	send_aux_data = 0;
-	next_prev_list = 0;
 }
-#endif
-#if 0
-void dispSetCursorX(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
-{
-	cursor_row = row;
-	cursor_col = col;
-}
-#endif
+//#endif
+

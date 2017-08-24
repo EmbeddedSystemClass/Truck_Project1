@@ -114,39 +114,27 @@ int burn_eeprom(void)
 	no_rtparams = i;
 // write to the number of rt_params location in eeprom the number of rt_params
 
-//	menu_structs[i].enabled = enabled;
-//	menu_structs[i].fptr = fptr;
-//	menu_structs[i].menu = menu;
-//	menu_structs[i].label = label;
-#if 0
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// if fptr == 0 then it means goto this menu
-	UCHAR label;		// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-#endif
-// A,B,C,D,#,0
 	i = 0;
 	no_data_index = 0;
 // main menu	0
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, 1, _menu_change, MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN);
 // 1a
-	i = update_menu_structs(i, 1, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU1A);
+	i = update_menu_structs(i, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU1A);
 // 1b
-	i = update_menu_structs(i, 1, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+	i = update_menu_structs(i, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
-	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C);
 // 1d
-	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, choice1, MENU1D);
 // 1e
-	i = update_menu_structs(i, 1, _do_chkbox, ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
 // 2a
-	i = update_menu_structs(i, 1, _non_func, choice1, choice2, choice3, choice4, choice5, choice6, MENU2A);
+	i = update_menu_structs(i, _non_func, 		choice1, choice2, choice3, choice4, choice5, choice6, MENU2A);
 // 2b
-	i = update_menu_structs(i, 1, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
 // 2c
-	i = update_menu_structs(i, 1, _do_numentry, forward, back, entr, esc, blank, blank, MENU2C);
+	i = update_menu_structs(i, _do_numentry, 	forward, back, entr, esc, blank, blank, MENU2C);
 
 	no_menu_structs = i;
 	return 0;
@@ -211,38 +199,19 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 //********************************* update_menu_structs*************************************//
 //******************************************************************************************//
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type)
-int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index)
 {
-/*
-	UCHAR enabled;		// if alt function will replace generic function
-	UCHAR key;			// which keypress applies
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// if fptr == 0 then it means goto a this menu
-	UCHAR label;			// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-*/
-	menu_structs[i].enabled = enabled;
-//	menu_structs[i]._index = i;
 	menu_structs[i].menus[0] = menu0;
 	menu_structs[i].menus[1] = menu1;
 	menu_structs[i].menus[2] = menu2;
 	menu_structs[i].menus[3] = menu3;
 	menu_structs[i].menus[4] = menu4;
 	menu_structs[i].menus[5] = menu5;
-
-	if(enabled == 1)
-	{
-		menu_structs[i].fptr = fptr;
-		menu_structs[i].index = index;
-		if(index > 0)
-			no_data_index++;
-	}
-	else
-	{
-		menu_structs[i].fptr = 0;
-		menu_structs[i].index = 0;
-	}
+	menu_structs[i].fptr = fptr;
+	menu_structs[i].index = index;
+	if(index > 0)
+		no_data_index++;
 	total_offset += sizeof(MENU_FUNC_STRUCT);
 //	printf("total_offset = %d\n",total_offset);
 	i++;

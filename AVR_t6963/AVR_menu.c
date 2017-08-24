@@ -177,7 +177,7 @@ static UCHAR generic_menu_function(void)
 		res += read(global_fd,&cur_param_string[i],1);
 
 	read(global_fd,&temp,1);
-
+	mvwprintw(win, DISP_OFFSET+13,2,"                             ");
 	mvwprintw(win, DISP_OFFSET+17, 2,
 			"aux_string read:%d menu_index %d  prev index: %d     ",temp,menu_index,prev_menu_index);
 	for(i = 0;i < temp;i++)
@@ -215,12 +215,13 @@ static UCHAR generic_menu_function(void)
 			break;
 			case MENU1D:
 #ifdef TEST_WRITE_DATA
-				mvwprintw(win, DISP_OFFSET+13,2, "MENU1D: init_checkboxes           ");
+				mvwprintw(win, DISP_OFFSET+13,2, "MENU1D: 1st init_checkboxes           ");
 #endif
 				init_checkboxes(menu_index);
+			break;	
 			case MENU1E:
 #ifdef TEST_WRITE_DATA
-				mvwprintw(win, DISP_OFFSET+13,2, "MENU1E: init_checkboxes           ");
+				mvwprintw(win, DISP_OFFSET+13,2, "MENU1E: 2nd init_checkboxes           ");
 #endif
 				init_checkboxes(menu_index);
 			break;
@@ -613,7 +614,9 @@ static void init_checkboxes(int menu_index)
 		prev_check_boxes[i] = check_boxes[i].checked;		// save previous in case of escape key to restore
 		check_boxes[i].checked = aux_string[i];				// load what's sent from PIC
 	}
-
+	
+	mvwprintw(win, DISP_OFFSET+21, 2,"menu_index (init_checkboxes) %d           ",menu_index);
+	wrefresh(win);
 // setting the list to choice 'n' is all well and good but we need a way for the PIC to send
 // the choices over in case there are more than 1 lists of choices
 	strcpy(check_boxes[0].string,"choice 1\0");
