@@ -83,6 +83,7 @@ static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
+static UCHAR do_init(UCHAR ch);
 static char* get_fptr_label(UCHAR);
 
 #endif
@@ -94,7 +95,7 @@ static UCHAR alnum_array[NUM_ALNUM+1];
 static UCHAR choose_alnum;
 static UCHAR prev_menu_index;
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, do_numentry };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, do_numentry, do_init };
 
 //******************************************************************************************//
 //******************************************************************************************//
@@ -142,42 +143,113 @@ UCHAR read_get_key(UCHAR key, UCHAR *str)
 	UCHAR ret_char = key;
 	UCHAR size = 0;
 	int res = 0;
-	int offset;	
-	if(ret_char == PUSH_DATA)
+	int offset;
+	int type = 0;
+	char tlabel[MAX_LABEL_LEN];
+	switch(ret_char)
 	{
+		case PUSH_DATA:
 #ifdef TEST_WRITE_DATA
-		res = read(global_fd,&size,1);
-		for(i = 0;i < size;i++)
-			res += read(global_fd,&aux_string[i],1);
+			res = read(global_fd,&size,1);
+			res += read(global_fd,&type,1);
+			for(i = 0;i < size;i++)
+				res += read(global_fd,&aux_string[i],1);
+			offset = LAST_ROW-1;
+	//		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %s",size,res,show_keypress(ret_char,offset));
+			mvwprintw(win, LAST_ROW-1,1,"size: %d res: %d key: %d type: %d    ",size,res,ret_char,type);
 
-		offset = LAST_ROW-1;
-//		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %s",size,res,show_keypress(ret_char,offset));
-		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %d",size,res,ret_char);
-		wrefresh(win);
-			
-		j = k = 0;
-		for(i = 0;i < AUX_STRING_LEN;i++)
-		{
-			mvwprintw(win, LAST_ROW+j-7, 2+(k*3),"%x  ",aux_string[i]);
-			if(++k > 19)
+			j = k = 0;
+			for(i = 0;i < AUX_STRING_LEN;i++)
 			{
-				k = 0;
-				++j;
+				mvwprintw(win, LAST_ROW+j-17, 2+k,"%c",aux_string[i]);
+				if(++k > 19)
+				{
+					k = 0;
+					++j;
+				}
 			}
-		}
-		wrefresh(win);
+			
 #else
-	size = receiveByte();
-	for(i = 0;i < size;i++)
-		cur_param_string[i] = receiveByte();
+			size = receiveByte();
+			for(i = 0;i < size;i++)
+				cur_param_string[i] = receiveByte();
+			type = receiveByte();	
 #endif
-		return ret_char;
-
-	}else if(ret_char > KP_D) return ret_char;
-	memcpy(cur_param_string,str,NUM_UCHAR_PARAMS);
-
-	ret_char = generic_menu_function(ret_char);
+			switch(type)
+			{
+				case 0:
+				break;
+				case 1:
+					choice_aux_offset = NUM_CHECKBOXES+1;
+					memcpy(check_boxes[0].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[1].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[2].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[3].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[4].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[5].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[6].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[7].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[8].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(check_boxes[9].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
+#ifdef TEST_WRITE_DATA
+//					for(i = 0;i < NUM_CHECKBOXES;i++)
+//						mvwprintw(win, LAST_ROW-20+i,1,"%s        ",check_boxes[i].string);
+#endif
+				break;
+				case 2:
+					exec_aux_offset = NUM_CHECKBOXES+1+(MAX_LABEL_LEN*NUM_EXECCHOICES);
+					memcpy(exec_choices[0].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[1].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[2].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[3].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[4].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[5].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[6].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[7].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[8].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(exec_choices[9].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
+#ifdef TEST_WRITE_DATA
+//					for(i = 0;i < NUM_EXECCHOICES;i++)
+//						mvwprintw(win, LAST_ROW-20+i,1,"%s        ",exec_choices[i].string);
+#endif
+				break;
+				default:
+				break;	
+			}
+		break;
+		case INIT:
+			init_list();
+			break;
+		case 	SPACE:
+		case	SET_DATA1:
+		case	SET_DATA2:
+		break;	
+		default:
+//			memcpy(cur_param_string,str,NUM_UCHAR_PARAMS);
+			ret_char = generic_menu_function(ret_char);
+		break;	
+	}	
+#ifdef TEST_WRITE_DATA
 	wrefresh(win);
+#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -219,7 +291,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 	aux_bytes_to_read = receiveByte();
 	for(i = 0;i < aux_bytes_to_read;i++)
-		res2 += read(global_fd,&aux_string[i],1);
+		aux_string[i] = receiveByte();
 #endif
 	ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
 	display_menus();
@@ -558,6 +630,7 @@ static UCHAR do_chkbox(UCHAR ch)
 		break;
 		case KP_C:
 		toggle_checkboxes(ch);
+		scrolldown_checkboxes(ch);
 		break;
 		case KP_D:		// enter
 		break;
@@ -637,6 +710,7 @@ static void init_checkboxes(int menu_index)
 #endif
 // setting the list to choice 'n' is all well and good but we need a way for the PIC to send
 // the choices over in case there are more than 1 lists of choices
+/*
 	strcpy(check_boxes[0].string,"choice 1\0");
 	strcpy(check_boxes[1].string,"choice 2\0");
 	strcpy(check_boxes[2].string,"choice 3\0");
@@ -647,7 +721,7 @@ static void init_checkboxes(int menu_index)
 	strcpy(check_boxes[7].string,"choice 8\0");
 	strcpy(check_boxes[8].string,"choice 9\0");
 	strcpy(check_boxes[9].string,"choice 10\0");
-
+*/
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		check_boxes[i].index = i;
@@ -679,6 +753,7 @@ static void init_execchoices(int menu_index)
 
 // setting the list to choice 'n' is all well and good but we need a way for the PIC to send
 // the choices over in case there are more than 1 lists of choices
+/*
 	strcpy(exec_choices[0].string,"exec 1\0");
 	strcpy(exec_choices[1].string,"exec 2\0");
 	strcpy(exec_choices[2].string,"exec 3\0");
@@ -689,7 +764,7 @@ static void init_execchoices(int menu_index)
 	strcpy(exec_choices[7].string,"exec 8\0");
 	strcpy(exec_choices[8].string,"exec 9\0");
 	strcpy(exec_choices[9].string,"exec 10\0");
-
+*/
 
 	for(i = 0;i < NUM_EXECCHOICES;i++)
 	{
@@ -881,10 +956,23 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 // (no_rtparams*sizeof(int) + get_type()*sizeof(int)) * menu_struct[i].ch_type
 static void display_menus(void)
 {
+	int i,j,k;
 	UCHAR row,col;
 	row = MENU_START_ROW;
 	col = 0;
 //	mvwprintw(win, 42, 3,"index: %d",index);
+	k = j = 0;
+#ifdef TEST_WRITE_DATA
+	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
+	{
+		mvwprintw(win, LAST_ROW+j-20, 2+k,"%c",cur_param_string[i]);
+		if(++k > 29)
+		{
+			k = 0;
+			++j;
+		}
+	}
+#endif
 	blank_menu();
 	adv_menu_label(0,&row,&col);
 	adv_menu_label(1,&row,&col);
@@ -894,7 +982,7 @@ static void display_menus(void)
 	adv_menu_label(5,&row,&col);
 //	mvwprintw(win, 45, 25,"index: %d ",index);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW-10, 1, "display_menu            ");
+//	mvwprintw(win, LAST_ROW-5, 1, "display_menu            ");
 	wrefresh(win);
 #endif
 }
@@ -986,6 +1074,14 @@ static void blank_menu(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+static UCHAR do_init(UCHAR ch)
+{
+	init_list();
+	return ch;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 void init_list(void)
 {
 	int i = 0;
@@ -1021,6 +1117,7 @@ void init_list(void)
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
+	display_menus();
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1182,5 +1279,7 @@ static char *show_keypress(UCHAR key, int offset)
 	}
 	mvwprintw(win, offset, 1,"%s      ",string);
 	wrefresh(win);
+	return string;
 }	
 #endif
+

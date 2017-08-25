@@ -96,6 +96,13 @@ make separate sized arrays for each and just copy over what's needed.
 Added a special 'keypress' call PUSH_DATA which the PIC sends when it want's to send data
 without the AVR going thru the generic_menu_function. In the simulation, make a shortcut key
 that loads the data and then another shortcut key that sends the PUSH_DATA cmd. 
+Added 2 other keypresses called SET_DATA1/2 which sets the data in aux_string.
+There can be other keypresses like the SET_DATA but they must set the variable 'size' to 
+the length of the data to be pushed by the PUSH_DATA command. 
+
+So now we can have offsets into the aux_string to where the beginning is the names of the 
+choices for the 1st list of check_boxes, the 2nd offset is the 2nd list of check_boxes,
+the 3rd offset is the start of the exec_choices and so on.
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

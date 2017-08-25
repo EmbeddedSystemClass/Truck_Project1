@@ -43,21 +43,26 @@ enum data_types
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
-	KP_AST, // '*'
-	KP_0, // '0'
-	KP_1, // '1'
-	KP_2, // '2'
-	KP_3, // '3'
-	KP_4, // '4'
-	KP_5, // '5'
-	KP_6, // '6'
-	KP_7, // '7'
-	KP_8, // '8'
-	KP_9, // '9'
-	KP_A, // 'A'
-	KP_B, // 'B'
-	KP_C, // 'C'
-	KP_D // 'D'
+	KP_AST, // '*'	- E1
+	KP_0, // '0'	- E2
+	KP_1, // '1'	- E3
+	KP_2, // '2'	- E4
+	KP_3, // '3'	- E5
+	KP_4, // '4'	- E6
+	KP_5, // '5'	- E7
+	KP_6, // '6'	- E8
+	KP_7, // '7'	- E9
+	KP_8, // '8'	- EA
+	KP_9, // '9'	- EB
+	KP_A, // 'A'	- EC
+	KP_B, // 'B'	- ED
+	KP_C, // 'C'	- EE
+	KP_D, // 'D'	- EF
+	SPACE,//		- F0
+	SET_DATA1,//	- F1
+	SET_DATA2,//	- F2	
+	PUSH_DATA, //	- F3
+	INIT //			- F4
 } KEY_TYPES2;
 
 enum non_func_type

@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 	init_list();
 	mvwprintw(win, LAST_ROW,1,"started     ");
 	wrefresh(win);
+
 	while(1)
 	{
 		res = read(global_fd,&ch,1);

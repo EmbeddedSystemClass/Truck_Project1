@@ -2,7 +2,7 @@
 
 #define TIME_DELAY1 1
 #define STRING_LEN 100
-#define NUM_FPTS 5
+#define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
 #define NUM_MENU_LABELS 60
 #define NUM_RT_PARAMS 12
@@ -15,7 +15,7 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 100
+#define AUX_STRING_LEN 300
 #define LAST_ROW DISP_OFFSET+54
 #define LAST_COL 63
 int burn_eeprom(void);
@@ -64,16 +64,6 @@ enum menu_types
 	back,
 	esc,
 
-	testnum0,
-	testnum1,
-	testnum2,
-	testnum3,
-	testnum4,
-	testnum5,
-	testnum6,
-	testnum7,
-	testnum8,
-
 	choice0,
 	choice1,
 	choice2,
@@ -85,7 +75,6 @@ enum menu_types
 	choice8,
 	choice9,
 	choice10,
-	choice11,
 	blank
 } MENU_TYPES;
 
@@ -138,7 +127,8 @@ enum key_types
 	SPACE,//		- F0
 	SET_DATA1,//	- F1
 	SET_DATA2,//	- F2	
-	PUSH_DATA //	- F3
+	PUSH_DATA, //	- F3
+	INIT //			- F4
 } KEY_TYPES;
 
 enum non_func_types
@@ -178,13 +168,13 @@ typedef struct checkboxes
 {
 	UCHAR index;
 	UCHAR checked;
-	char string[10];
+	char string[MAX_LABEL_LEN];
 } CHECKBOXES;
 
 typedef struct execchoices
 {
 	UCHAR index;
-	char string[10];
+	char string[MAX_LABEL_LEN];
 } EXEC_CHOICES;
 
 int global_fd;
@@ -228,6 +218,9 @@ UCHAR parse_state;
 int no_rt_labels;
 int no_rtparams;
 int no_menu_structs;
+int total_no_menu_labels;
+int choice_aux_offset;
+int exec_aux_offset;
 int no_menu_labels;
 int no_func_labels;
 int no_data_index;

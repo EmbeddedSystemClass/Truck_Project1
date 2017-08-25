@@ -22,7 +22,7 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str);
+UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
@@ -42,11 +42,11 @@ int no_rt_labels;
 int no_rtparams;
 int no_menu_structs;
 int no_menu_labels;
+
 int no_func_labels;
 int no_data_index;
-//UINT label_info_offset;
 UINT rt_params_offset;
-UINT menu_struct_offset;
+int choice_offset;
 char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 //char labels[1][MAX_LABEL_LEN];

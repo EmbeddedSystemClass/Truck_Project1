@@ -158,15 +158,15 @@ int main(int argc, char *argv[])
 	getch();
 	for(i = 0;i < no_rt_labels;i++)
 		mvwprintw(win, display_offset+i,2,"                          ");
-	for(i = no_menu_labels;i < no_menu_labels+no_func_labels; i++)
-		mvwprintw(win, display_offset+i-no_menu_labels,2,"%d: %s  ",i-no_menu_labels,menu_labels[i]);
+	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
+		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
 	wrefresh(win);
 	getch();
-	for(i = 0;i < no_menu_labels;i++)
+	for(i = 0;i < total_no_menu_labels;i++)
 		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,menu_labels[i]);
 	wrefresh(win);
 	getch();
-	for(i = 0;i < no_menu_labels;i++)
+	for(i = 0;i < total_no_menu_labels;i++)
 		mvwprintw(win, display_offset+i,2,"                     ");
 	for(i = 0;i < no_menu_structs;i++)
 	{
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	init_list();
 	size = 0;
-
+	char temp[MAX_LABEL_LEN];
 	print_menu(win);
 	
 	do {
@@ -214,76 +214,146 @@ int main(int argc, char *argv[])
 		wkey = get_keypress(key,win, display_offset);
 		if(wkey != 0xff)
 		{
-			if(wkey == SET_DATA1)
+			switch(wkey)
 			{
-				for(i = 0;i < AUX_STRING_LEN;i++)
-					aux_string[i] = 0XFF - i;
-				size = AUX_STRING_LEN;
-				mvwprintw(win, LAST_ROW-7,1,"data1 set       ");
-				wrefresh(win);
-			}else if(wkey == SET_DATA2)
-			{
-				for(i = 0;i < AUX_STRING_LEN;i++)
-					aux_string[i] = 0X7f - i;
-				size = AUX_STRING_LEN;
-				mvwprintw(win, LAST_ROW-7,1,"data2 set       ");
-				wrefresh(win);
-			}else if(wkey == PUSH_DATA)
-			{
-				mvwprintw(win, LAST_ROW-7,1,"data pushed    ");
-				wrefresh(win);
-				get_key(wkey,size,aux_string);
-				ret_key = 0xff;
-			}else
-			{
-				for(i = 0;i < AUX_STRING_LEN;i++)
-					aux_string[i] = i;
-				mvwprintw(win, LAST_ROW-7,1,"           ");
-				size = AUX_STRING_LEN;
-				wrefresh(win);
-
-				ret_key = get_key(wkey,size,aux_string);
-				res = 0;
-//				mvwprintw(win, LAST_ROW-8,1,"non_func: %x %c  ",wkey, wkey-NF_1);
-//				wrefresh(win);
-
-				if(ret_key >= NF_1 && ret_key <= NF_10)
-				{
-					mvwprintw(win, LAST_ROW-8,1,"non_func: %x %d  ",ret_key, ret_key-NF_1);
+				case SET_DATA1:
+					memset(aux_string,0,AUX_STRING_LEN);
+					choice_aux_offset = NUM_CHECKBOXES+1;
+					mvwprintw(win, LAST_ROW-9,1,"choice_aux_offset       %d  ",choice_aux_offset);
+					strcpy(temp,"test ch 0\0");
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '1';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '2';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '3';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '4';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '5';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '6';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '7';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '8';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '9';
+					choice_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+choice_aux_offset,temp,MAX_LABEL_LEN);
+					type = 1;
+					size = MAX_LABEL_LEN*NUM_CHECKBOXES;
+					mvwprintw(win, LAST_ROW-7,1,"data1 set       %d  ",choice_aux_offset);
+					wrefresh(win);
+					break;
+				case SET_DATA2:
+					memset(aux_string,0,AUX_STRING_LEN);
+					exec_aux_offset = NUM_CHECKBOXES+1+(MAX_LABEL_LEN*NUM_EXECCHOICES);
+					size = MAX_LABEL_LEN*NUM_EXECCHOICES+exec_aux_offset;
+					mvwprintw(win, LAST_ROW-9,1,"exec_aux_offset       %d  ",exec_aux_offset);
+					strcpy(temp,"exec ch 0\0");
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '1';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '2';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '3';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '4';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '5';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '6';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '7';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '8';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					temp[8] = '9';
+					exec_aux_offset += MAX_LABEL_LEN;
+					memcpy(aux_string+exec_aux_offset,temp,MAX_LABEL_LEN);
+					type = 2;
+					mvwprintw(win, LAST_ROW-7,1,"data2 set       %d  ",exec_aux_offset);
+					wrefresh(win);
+					break;
+				case PUSH_DATA:
+					mvwprintw(win, LAST_ROW-7,1,"data pushed    ");
+					wrefresh(win);
+					get_key(wkey,size,aux_string,type);
+					ret_key = 0xff;
+					break;
+				case INIT:	
+					mvwprintw(win, LAST_ROW-7,1,"init          ");
+					wrefresh(win);
+					get_key(wkey,size,aux_string,type);
+					ret_key = 0xff;
+					break;
+				default:
+					for(i = 0;i < AUX_STRING_LEN;i++)
+						aux_string[i] = i;
+					mvwprintw(win, LAST_ROW-7,1,"           ");
+					size = AUX_STRING_LEN;
 					wrefresh(win);
 
-					switch(ret_key)
+					ret_key = get_key(wkey,size,aux_string,0);
+					res = 0;
+	//				mvwprintw(win, LAST_ROW-8,1,"non_func: %x %c  ",wkey, wkey-NF_1);
+	//				wrefresh(win);
+
+					if(ret_key >= NF_1 && ret_key <= NF_10)
 					{
-						case NF_1:
-						break;
-						case NF_2:
-						break;
-						case NF_3:
-						break;
-						case NF_4:
-						break;
-						case NF_5:
-						break;
-						case NF_6:
-						break;
-						case NF_7:
-						break;
-						case NF_8:
-						break;
-						case NF_9:
-						break;
-						case NF_10:
-						break;
-						default:
-						break;
+						mvwprintw(win, LAST_ROW-8,1,"non_func: %x %d  ",ret_key, ret_key-NF_1);
+						wrefresh(win);
+
+						switch(ret_key)
+						{
+							case NF_1:
+							break;
+							case NF_2:
+							break;
+							case NF_3:
+							break;
+							case NF_4:
+							break;
+							case NF_5:
+							break;
+							case NF_6:
+							break;
+							case NF_7:
+							break;
+							case NF_8:
+							break;
+							case NF_9:
+							break;
+							case NF_10:
+							break;
+							default:
+							break;
+						}
 					}
-				}
-				else
-				{
-					mvwprintw(win, LAST_ROW-7,1,"                 ");
-					wrefresh(win);
-				}	
-				j++;
+					else
+					{
+						mvwprintw(win, LAST_ROW-7,1,"                 ");
+						wrefresh(win);
+					}	
+					j++;
+					break;
 			}
 		}
 //		wkey = key = 0;
@@ -411,6 +481,11 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			case 't':	
 				mvwprintw(win, display_offset,50,"PUSH_DATA ");
 				wkey = PUSH_DATA;
+				break;
+			case 'I':
+			case 'i':	
+				mvwprintw(win, display_offset,50,"INIT ");
+				wkey = INIT;
 				break;
 			case ' ':
 				mvwprintw(win, display_offset,50,"space     ");

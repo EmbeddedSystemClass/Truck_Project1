@@ -15,7 +15,7 @@ int burn_eeprom(void)
 {
 	int i;
 	no_rt_labels = 0;
-	no_menu_labels = 0;
+	total_no_menu_labels = 0;
 	no_rtparams = 0;
 	no_menu_structs = 0;
 	total_offset = 0;
@@ -46,6 +46,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"MENU2B\0");
 	i = update_menu_labels(i,"MENU2c\0");
 	i = update_menu_labels(i,"MENU2d\0");
+	no_menu_labels = i;
 
 	i = update_menu_labels(i,"up\0");
 	i = update_menu_labels(i,"down\0");
@@ -61,17 +62,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"forward\0");
 	i = update_menu_labels(i,"back\0");
 	i = update_menu_labels(i,"escape\0");
-
-	i = update_menu_labels(i,"test 0\0");
-	i = update_menu_labels(i,"test 1\0");
-	i = update_menu_labels(i,"test 2\0");
-	i = update_menu_labels(i,"test 3\0");
-	i = update_menu_labels(i,"test 4\0");
-	i = update_menu_labels(i,"test 5\0");
-	i = update_menu_labels(i,"test 6\0");
-	i = update_menu_labels(i,"test 7\0");
-	i = update_menu_labels(i,"test 8\0");
-
+	choice_offset = i;
 	i = update_menu_labels(i,"choice0\0");
 	i = update_menu_labels(i,"choice1\0");
 	i = update_menu_labels(i,"choice2\0");
@@ -83,10 +74,9 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"choice8\0");
 	i = update_menu_labels(i,"choice9\0");
 	i = update_menu_labels(i,"choice10\0");
-	i = update_menu_labels(i,"choice11\0");
 	i = update_menu_labels(i,"blank\0");
-	no_menu_labels = i;
-//	printf("no_menu_labels: %d\n",no_menu_labels);
+	total_no_menu_labels = i;
+//	printf("total_no_menu_labels: %d\n",total_no_menu_labels);
 //	getch();
 	no_func_labels = 0;
 	i = update_menu_labels(i,"mchange\0");
@@ -94,7 +84,7 @@ int burn_eeprom(void)
 	i = update_menu_labels(i,"chkbox\0");
 	i = update_menu_labels(i,"non_fnc\0");
 	i = update_menu_labels(i,"edit val\0");
-	no_func_labels = i-no_menu_labels;
+	no_func_labels = i-total_no_menu_labels;
 //	printf("no_func_labels: %d\n",no_func_labels);
 //	getch();
 	i = 0;

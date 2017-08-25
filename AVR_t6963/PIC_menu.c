@@ -22,6 +22,7 @@ static UCHAR exec_choice(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
+static UCHAR do_init(UCHAR ch);
 static void init_numentry(int menu_index);
 static void cursor_forward_stuff(char x);
 static void cursor_forward(char x);
@@ -41,7 +42,6 @@ static UCHAR do_exec_choice(void);
 static UCHAR *ppic_data;
 
 static int first_menu = MAIN;
-static int last_menu = testnum8;
 static int current_fptr;		// pointer into the menu_list[]
 static int prev_fptr;
 static int list_size;
@@ -62,7 +62,7 @@ static UCHAR get_fptr(void);
 static char* get_fptr_label(void);
 static int get_curr_menu_index(void);
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, do_numentry };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, do_numentry, do_init };
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -202,9 +202,7 @@ static UCHAR menu_change(UCHAR ch)
 		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
 
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
 	mvwprintw(win, DISP_OFFSET+1,2, "menu_change   %x    ",ch);
-//	mvwprintw(win, DISP_OFFSET+1,2, "*menu_change                           ");
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -213,44 +211,65 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 // pass in the keypress from the PIC24 keypad and pass out the string of UCHARs
-UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str)
+UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type)
 {
 	int i;
 	UCHAR ret_char = ch;
+	int res = 0;
+	char tlabel[MAX_LABEL_LEN];
+
 // warning: str passed when not in simulator is pointing to memory in the PIC24
-#ifdef TEST_WRITE_DATA
 //	ppic_data = str;	
-	
-	if(ret_char == PUSH_DATA)
-	{
-		int res = 0;
-		res += write(global_fd,&ret_char,1);
-		res += write(global_fd,&size,1);		// data pushed can't be > 255
-		res += write(global_fd,str,size);
-		mvwprintw(win, LAST_ROW-8,1,"PUSH_DATA wrote %d bytes   ",res);
-		wrefresh(win);
-		return ret_char;
-	}else
-	{
-		mvwprintw(win, LAST_ROW-8,1,"ch: %x   size: %d            ",ret_char,size);
-		wrefresh(win);
-	}
 
-#else
-
-	memcpy(ppic_data,&ret_char,1);
-	memcpy(ppic_data+1,&size,1);
-	memcpy(ppic_data+2,str,size);
-		
-#endif
-
-	ret_char = generic_menu_function(ret_char);
-	if(curr_fptr_changed())
-	{
+	switch(ret_char)
+	{	
+		case PUSH_DATA:
 #ifdef TEST_WRITE_DATA
-		display_menus(get_curr_menu());
+			res += write(global_fd,&ret_char,1);
+			res += write(global_fd,&size,1);		// data pushed can't be > 255
+ 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
+			res += write(global_fd,str,size);
+			mvwprintw(win, LAST_ROW-8,1,"PUSH_DATA wrote %d bytes   ",res);
+#else
+			memcpy(ppic_data,&ret_char,1);
+			memcpy(ppic_data+1,&size,1);
+			memcpy(ppic_data+2,str,size);
 #endif
+			break;
+		case INIT:
+			for(i = 0;i < 6;i++)
+			{
+				memset(tlabel,0,MAX_LABEL_LEN);
+				strcpy(tlabel,menu_labels[menu_structs[0].menus[i]]);
+				memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
+			}
+			init_list();
+			break;
+		case 	SPACE:
+			break;
+		case	SET_DATA1:
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, LAST_ROW-8,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
+#endif
+			break;
+		case	SET_DATA2:
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, LAST_ROW-8,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
+#endif
+			break;	
+		default:
+#ifdef TEST_WRITE_DATA
+			ret_char = generic_menu_function(ret_char);
+			if(curr_fptr_changed())
+				display_menus(get_curr_menu());
+			mvwprintw(win, LAST_ROW-8,1,"ch: %x   size: %d            ",ret_char,size);
+			wrefresh(win);
+#endif
+		break;	
 	}
+#ifdef TEST_WRITE_DATA
+	wrefresh(win);
+#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -278,6 +297,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	for(i = 0;i < 6;i++)
 	{
 		memset(tlabel,0,MAX_LABEL_LEN);
+//		memset(cur_param_string,0,NUM_UCHAR_PARAMS);
 		strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
 		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
 	}
@@ -559,8 +579,6 @@ static UCHAR exec_choice(UCHAR ch)
 //	if(ch != KP_AST)
 
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-//	mvwprintw(win, DISP_OFFSET+1,2, "exec_choice %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
 	mvwprintw(win, DISP_OFFSET+1,2, "*exec_choice: %x            ",ch);
 	wrefresh(win);
 #endif
@@ -609,8 +627,6 @@ static UCHAR do_chkbox(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+2,2,"%d  %d  %d  %s ",menu_index,temp,ret_char,menu_labels[menu_structs[ret_char].label]);
-//	mvwprintw(win, DISP_OFFSET+1,2, "do_chkbox %d %d  %d  %d  ",temp1,temp,menu_index,menu_structs[menu_index].menu);
 	mvwprintw(win, DISP_OFFSET+1,2, "*do_chkbox %x	               ",ch);
 	wrefresh(win);
 #endif
@@ -744,7 +760,7 @@ static UCHAR get_fptr(void)
 //******************************************************************************************//
 static char* get_fptr_label(void)
 {
-	return menu_labels[menu_structs[get_curr_menu()].fptr+no_menu_labels];
+	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -783,24 +799,23 @@ char *get_rt_label(int index)
 {
 	return rt_labels[index];
 }
-/*
-char *get_menu_label(int index)
-{
-	return menu_labels[index];
-}
-*/
 UCHAR get_row(int index)
 {
-//	return menu_structs[index].row;
 	return 0;
 }
 UCHAR get_col(int index)
 {
-//	return menu_structs[index].col;
 	return 0;
 }
-//#endif
 
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static UCHAR do_init(UCHAR ch)
+{
+	init_list();
+	return ch;
+}
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
