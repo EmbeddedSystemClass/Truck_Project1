@@ -38,18 +38,12 @@ int main(int argc, char *argv[])
 {
 #if 1
 	int fd;
-	int iters, itr;
-	int i,j;
+	int j;
 	UCHAR ch;
 	struct termios oldtio,newtio;
 	WINDOW *win;
-	useconds_t tdelay = TIME_DELAY;
-	useconds_t tdelay2 = TIME_DELAY;
-    UCHAR data = 2;
-	UINT data2 = 0;
-	UCHAR key;
-	UCHAR wkey;
-	UCHAR req;
+//	useconds_t tdelay = TIME_DELAY;
+//	useconds_t tdelay2 = TIME_DELAY;
 	UCHAR temp_params[NUM_UCHAR_PARAMS];
 	int res;
 
@@ -88,7 +82,6 @@ int main(int argc, char *argv[])
 //	set_blocking (fd, 0);	// non-blocking
 
 // read	- simulate the AVR
-	i = 0;
 	j = 0;
 	res = 0;
 	init_list();

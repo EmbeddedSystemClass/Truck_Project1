@@ -30,7 +30,7 @@
 #include "avr_main.h"
 
 #ifdef TEST_WRITE_DATA
-static char *show_keypress(UCHAR key, int offset);
+static char *show_keypress(UCHAR key, int offset, char *string);
 void dispSetCursorX(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
 {
 //	cursor_row = row;
@@ -103,7 +103,6 @@ static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, n
 static UCHAR menu_change(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int offset;
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+12,2, "                    ");
 #endif
@@ -127,7 +126,6 @@ static UCHAR menu_change(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	offset = DISP_OFFSET+12;
 //	mvwprintw(win, DISP_OFFSET+12,2, "*menu_change  %x   ",show_keypress(ret_char,offset));
 	mvwprintw(win, DISP_OFFSET+12,2, "*menu_change  %x   ",ret_char);
 	wrefresh(win);
@@ -139,13 +137,11 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 UCHAR read_get_key(UCHAR key, UCHAR *str)
 {
-	int i,j,k;
+	int i;
 	UCHAR ret_char = key;
 	UCHAR size = 0;
 	int res = 0;
-	int offset;
 	int type = 0;
-	char tlabel[MAX_LABEL_LEN];
 	switch(ret_char)
 	{
 		case PUSH_DATA:
@@ -154,21 +150,7 @@ UCHAR read_get_key(UCHAR key, UCHAR *str)
 			res += read(global_fd,&type,1);
 			for(i = 0;i < size;i++)
 				res += read(global_fd,&aux_string[i],1);
-			offset = LAST_ROW-1;
-	//		mvwprintw(win, LAST_ROW-1,1,"size: %d  res: %d   key: %s",size,res,show_keypress(ret_char,offset));
 			mvwprintw(win, LAST_ROW-1,1,"size: %d res: %d key: %d type: %d    ",size,res,ret_char,type);
-
-			j = k = 0;
-			for(i = 0;i < AUX_STRING_LEN;i++)
-			{
-				mvwprintw(win, LAST_ROW+j-17, 2+k,"%c",aux_string[i]);
-				if(++k > 19)
-				{
-					k = 0;
-					++j;
-				}
-			}
-			
 #else
 			size = receiveByte();
 			for(i = 0;i < size;i++)
@@ -202,7 +184,7 @@ UCHAR read_get_key(UCHAR key, UCHAR *str)
 					memcpy(check_boxes[9].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
 #ifdef TEST_WRITE_DATA
 //					for(i = 0;i < NUM_CHECKBOXES;i++)
-//						mvwprintw(win, LAST_ROW-20+i,1,"%s        ",check_boxes[i].string);
+//						mvwprintw(win, LAST_ROW-30+i,1,"%s        ",check_boxes[i].string);
 #endif
 				break;
 				case 2:
@@ -258,7 +240,7 @@ UCHAR read_get_key(UCHAR key, UCHAR *str)
 static UCHAR generic_menu_function(UCHAR ch)
 {
 	UCHAR ret_char;
-	int i,j;
+	int i,j,k;
 	UCHAR aux_bytes_to_read;
 	UCHAR menu_index;
 	UCHAR tfptr;
@@ -302,28 +284,31 @@ static UCHAR generic_menu_function(UCHAR ch)
 		switch (menu_index)
 		{
 			case MAIN:
+				display_labels();
 				break;
 			case MENU1A:
+				display_labels();
 				break;
 			case MENU1B:
+				display_labels();
 				break;
 			case MENU1C:
+				init_execchoices(menu_index);
 #ifdef TEST_WRITE_DATA
 				mvwprintw(win, DISP_OFFSET+13,2, "MENU1C: init_choices  %d          ",menu_index);
 #endif
-				init_execchoices(menu_index);
 			break;
 			case MENU1D:
+				init_checkboxes(menu_index);
 #ifdef TEST_WRITE_DATA
 				mvwprintw(win, DISP_OFFSET+13,2, "MENU1D: 1st init_checkboxes           ");
 #endif
-				init_checkboxes(menu_index);
 			break;	
 			case MENU1E:
+				init_checkboxes(menu_index);
 #ifdef TEST_WRITE_DATA
 				mvwprintw(win, DISP_OFFSET+13,2, "MENU1E: 2nd init_checkboxes           ");
 #endif
-				init_checkboxes(menu_index);
 			break;
 			case MENU2A:
 #ifdef TEST_WRITE_DATA
@@ -331,10 +316,10 @@ static UCHAR generic_menu_function(UCHAR ch)
 #endif
 			break;
 			case MENU2B:
+				init_execchoices(menu_index);
 #ifdef TEST_WRITE_DATA
 				mvwprintw(win, DISP_OFFSET+13,2, "MENU2B: init_choices  %d          ",menu_index);
 #endif
-				init_execchoices(menu_index);
 			break;
 			case MENU2C:
 				init_numentry(menu_index);
@@ -345,8 +330,19 @@ static UCHAR generic_menu_function(UCHAR ch)
 		}
 	}
 	prev_menu_index = menu_index;
-//#if 0
-//#endif
+	// show the contents of aux_string
+	j = k = 0;
+#ifdef TEST_WRITE_DATA
+	for(i = 0;i < AUX_STRING_LEN;i++)
+	{
+		mvwprintw(win, LAST_ROW+j-25, 2+k,"%c",aux_string[i]);
+		if(++k > 19)
+		{
+			k = 0;
+			++j;
+		}
+	}
+#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -630,7 +626,6 @@ static UCHAR do_chkbox(UCHAR ch)
 		break;
 		case KP_C:
 		toggle_checkboxes(ch);
-		scrolldown_checkboxes(ch);
 		break;
 		case KP_D:		// enter
 		break;
@@ -726,7 +721,11 @@ static void init_checkboxes(int menu_index)
 	{
 		check_boxes[i].index = i;
 		GDispStringAt(row,col,check_boxes[i].string);
+		// to cover up what's left of rt_labels
+		dispCharAt(row,col+MAX_LABEL_LEN+8,0x20);
+		dispCharAt(row,col+MAX_LABEL_LEN+9,0x20);
 		row++;
+		
 		if(check_boxes[i].checked == 1)
 		{
 			dispCharAt(1+check_boxes[i].index,0,120);
@@ -770,6 +769,9 @@ static void init_execchoices(int menu_index)
 	{
 		exec_choices[i].index = i;
 		GDispStringAt(row,col,exec_choices[i].string);
+		// to cover up what's left of rt_labels
+		dispCharAt(row,col+MAX_LABEL_LEN+8,0x20);
+		dispCharAt(row,col+MAX_LABEL_LEN+9,0x20);
 		row++;
 /*
 		if(exec_choices[i].checked == 1)
@@ -933,7 +935,7 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 		default:strncpy(temp2,"\0",4);break;
 	}
 
-	strncpy(temp,cur_param_string+(index*MAX_LABEL_LEN),MAX_LABEL_LEN);
+	memcpy(temp,cur_param_string+(index*MAX_LABEL_LEN),MAX_LABEL_LEN);
 	if(strcmp(temp,"blank") != 0)
 	{
 		GDispStringAt(*row,*col,temp2);
@@ -965,7 +967,7 @@ static void display_menus(void)
 #ifdef TEST_WRITE_DATA
 	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
 	{
-		mvwprintw(win, LAST_ROW+j-20, 2+k,"%c",cur_param_string[i]);
+		mvwprintw(win, LAST_ROW+j-30, 2+k,"%c",cur_param_string[i]);
 		if(++k > 29)
 		{
 			k = 0;
@@ -1208,8 +1210,9 @@ static void scroll_alnum_list(int dir)
 }
 #endif
 #ifdef TEST_WRITE_DATA
-static char *show_keypress(UCHAR key, int offset)
+static char *show_keypress(UCHAR key, int offset, char *string)
 {
+#if 0
 	char string[10];
 	switch(key)
 	{
@@ -1279,6 +1282,7 @@ static char *show_keypress(UCHAR key, int offset)
 	}
 	mvwprintw(win, offset, 1,"%s      ",string);
 	wrefresh(win);
+#endif
 	return string;
 }	
 #endif

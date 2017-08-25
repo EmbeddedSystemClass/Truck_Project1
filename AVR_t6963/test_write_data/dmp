@@ -1,5 +1,5 @@
 make -f make_pic clean
 make -f make_pic  &> warnings.txt
 make -f make_pic clean
-find2 warning warnings.txt
-find2 error warnings.txt
+find2a warning warnings.txt
+find2a error warnings.txt

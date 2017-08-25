@@ -39,7 +39,7 @@ UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
-int no_rtparams;
+//int no_rtparams;
 int no_menu_structs;
 int no_menu_labels;
 
@@ -55,7 +55,7 @@ MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
 char *get_label(int index);
 UCHAR get_row(int index);
 UCHAR get_col(int index);
-RT_PARAM rt_params[NUM_RT_PARAMS];
+//RT_PARAM rt_params[NUM_RT_PARAMS];
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24
 //#ifdef NOAVR

@@ -33,22 +33,32 @@ in the fptr array of function pointers.
 
 MENU_FUNC_STRUCT;
 
+(the old way)
+
 	UCHAR enabled;		// if shown on the menu
 	UCHAR fptr;			// which function to call (menu_types)
 	UCHAR menu;			// which menu to goto if _menu_change is the fptr
 	UCHAR label;		// which label to display in legend (labels)
 	UCHAR index;		// if > 0 then this is index into sample_data
 
+(the new way)
+
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;							// if > 0 then this is index into sample_data
+
+
 types of function ptrs can be:
 
 - goto next menu (use the label param as index to next menu)
 - execute a choice in the checkbox-like list
 - execute a function like: init_checkboxes or start_numentry
-- do a key entry (if in entry mode)
+- do a key entry
 - do a 'non-function' which only means something to the PIC24
 
-If the AVR is rebooted then it will send a cmd to the PIC24 saying to re-upload the configuration files.
+If the AVR is rebooted then it will send a cmd to the PIC24 (upon startup) saying to re-upload the configuration files.
 If the PIC24 is rebooted, it will (optionally) send a cmd saying that it needs to re-upload the config files.
+(or push the data using PUSH_DATA cmd)
 In the AVR, it could be a if statement in the main loop that filters out that cmd.
 
 AVR_menu.c	- runs in AVR
@@ -56,10 +66,6 @@ PIC_menu.c	- in PIC24
 
 sim_write.c compiles PIC_menu.c and simulates the PIC24
 sim_read.c compiles AVR_menu.c and simulates the AVR
-
-AVR_menu.c uses #ifdef TEST_WRITE_DATA at the very top so the Makefile for the AVR will compile.
-(the makefiles in the test_write_data directory define TEST_WRITE_DATA while the Makefile in
-the main directory to compile the AVR does not)
 
 the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
 get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
@@ -91,18 +97,27 @@ stuff to the AVR with a special cmd that's filtered by the get_key function int 
 read some extra data or do a reset or some init function. Very cool stuff!
 
 tried making AUX_STRING_LEN 400 and then did a make size in the main dir and got 95% full so
-make separate sized arrays for each and just copy over what's needed. 
+make separate sized arrays for each and just copy over what's needed. (currently the size variable
+is only a UCHAR so aux_string can't be > 255)
 
 Added a special 'keypress' call PUSH_DATA which the PIC sends when it want's to send data
 without the AVR going thru the generic_menu_function. In the simulation, make a shortcut key
 that loads the data and then another shortcut key that sends the PUSH_DATA cmd. 
-Added 2 other keypresses called SET_DATA1/2 which sets the data in aux_string.
-There can be other keypresses like the SET_DATA but they must set the variable 'size' to 
+Added 4 other keypresses called SET_DATA1/2/3/4 which sets the data in aux_string.
+There can be other keypresses like the SET_DATA(n) but they must set the variable 'size' to 
 the length of the data to be pushed by the PUSH_DATA command. 
 
 So now we can have offsets into the aux_string to where the beginning is the names of the 
 choices for the 1st list of check_boxes, the 2nd offset is the 2nd list of check_boxes,
 the 3rd offset is the start of the exec_choices and so on.
+
+bug list:
+- fix the backspace in edit
+- redo the SET_DATA(n) so it copies to beginning of aux_string for whatever it needs
+- bug in copying of checkboxes
+- clear display must save/restore what was at the top of the screen
+- init_checkboxes & init_execchoices will check to see if the aux_string has something in it
+	and if not put some default stuff into the check_boxes and exec_choices string elem
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

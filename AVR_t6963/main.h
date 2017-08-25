@@ -15,7 +15,11 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-#define AUX_STRING_LEN 300
+//#define AUX_STRING_LEN 600	// main AVR data is 97% full
+//#define AUX_STRING_LEN 400	// main AVR data is 87% full
+#define AUX_STRING_LEN 250		// can't be over 255 because of size is UCHAR
+//#define AUX_STRING_LEN 300		// main AVR data is 82% full
+//#define AUX_STRING_LEN 200	// main AVR data is 77% full
 #define LAST_ROW DISP_OFFSET+54
 #define LAST_COL 63
 int burn_eeprom(void);
@@ -127,8 +131,10 @@ enum key_types
 	SPACE,//		- F0
 	SET_DATA1,//	- F1
 	SET_DATA2,//	- F2	
-	PUSH_DATA, //	- F3
-	INIT //			- F4
+	SET_DATA3,//	- F3
+	SET_DATA4,//	- F4	
+	PUSH_DATA, //	- F5
+	INIT //			- F6
 } KEY_TYPES;
 
 enum non_func_types

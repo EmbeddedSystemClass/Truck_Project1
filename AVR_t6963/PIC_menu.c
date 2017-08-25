@@ -229,7 +229,7 @@ UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type)
 			res += write(global_fd,&size,1);		// data pushed can't be > 255
  			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
 			res += write(global_fd,str,size);
-			mvwprintw(win, LAST_ROW-8,1,"PUSH_DATA wrote %d bytes   ",res);
+			mvwprintw(win, LAST_ROW-11,1,"PUSH_DATA wrote %d bytes   ",res);
 #else
 			memcpy(ppic_data,&ret_char,1);
 			memcpy(ppic_data+1,&size,1);
@@ -249,12 +249,12 @@ UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type)
 			break;
 		case	SET_DATA1:
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-8,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW-11,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
 #endif
 			break;
 		case	SET_DATA2:
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-8,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW-11,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
 #endif
 			break;	
 		default:
@@ -262,7 +262,7 @@ UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type)
 			ret_char = generic_menu_function(ret_char);
 			if(curr_fptr_changed())
 				display_menus(get_curr_menu());
-			mvwprintw(win, LAST_ROW-8,1,"ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW-11,1,"ch: %x   size: %d            ",ret_char,size);
 			wrefresh(win);
 #endif
 		break;	
@@ -608,10 +608,10 @@ static UCHAR do_chkbox(UCHAR ch)
 		prev_list();
 		break;
 		case KP_POUND:		// esc
-#ifdef TEST_WRITE_DATA
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 				check_boxes[i].checked = prev_check_boxes[i];	// restore old
 
+#ifdef TEST_WRITE_DATA
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 				mvwprintw(win, DISP_OFFSET+6,2+(i+2),"%d  ",prev_check_boxes[i]);
 			wrefresh(win);
@@ -795,10 +795,12 @@ int get_str_len(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+#if 0
 char *get_rt_label(int index)
 {
 	return rt_labels[index];
 }
+#endif
 UCHAR get_row(int index)
 {
 	return 0;
