@@ -4,7 +4,8 @@
 #define STRING_LEN 100
 #define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
-#define NUM_MENU_LABELS 60
+#define NUM_LABELS 100
+#define NUM_MENU_CHOICES 6
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define DISP_OFFSET 4
@@ -14,12 +15,39 @@
 #define SCALE_DISP_SOME 1
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
-#define NUM_UCHAR_PARAMS MAX_LABEL_LEN*6
-//#define AUX_STRING_LEN 600	// main AVR data is 97% full
-//#define AUX_STRING_LEN 400	// main AVR data is 87% full
-#define AUX_STRING_LEN 250		// can't be over 255 because of size is UCHAR
-//#define AUX_STRING_LEN 300		// main AVR data is 82% full
-//#define AUX_STRING_LEN 200	// main AVR data is 77% full
+#define EEPROM_SIZE 0x400
+
+#define NUM_MENUS 12
+#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES
+
+char *get_label(int index, char *str);
+
+#ifndef MAIN_C
+
+typedef struct menu_func
+{
+//	int _index;
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;
+} MENU_FUNC_STRUCT;
+
+//char menu_labels[NUM_LABELS][MAX_LABEL_LEN];
+//char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
+MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
+UCHAR eeprom_sim[1023];
+#else
+#endif
+
+int label_offsets[NUM_LABELS+NUM_RT_LABELS];
+int goffset;
+
+//#define AUX_STRING_LEN 300	// main AVR data is 70% full
+//#define AUX_STRING_LEN 400	// main AVR data is 75% full
+#define AUX_STRING_LEN 520		// main AVR data is 81% full
+//#define AUX_STRING_LEN 600	// main AVR data is 85% full
+//#define AUX_STRING_LEN 800	// main AVR data is 94% full
+//#define AUX_STRING_LEN 900	// main AVR data is 99% full
 #define LAST_ROW DISP_OFFSET+54
 #define LAST_COL 63
 int burn_eeprom(void);
@@ -78,7 +106,18 @@ enum menu_types
 	choice7,
 	choice8,
 	choice9,
-	choice10,
+
+	exec0,
+	exec1,
+	exec2,
+	exec3,
+	exec4,
+	exec5,
+	exec6,
+	exec7,
+	exec8,
+	exec9,
+
 	blank
 } MENU_TYPES;
 
@@ -130,11 +169,14 @@ enum key_types
 	KP_D, // 'D'	- EF
 	SPACE,//		- F0
 	SET_DATA1,//	- F1
-	SET_DATA2,//	- F2	
+	SET_DATA2,//	- F2
 	SET_DATA3,//	- F3
-	SET_DATA4,//	- F4	
-	PUSH_DATA, //	- F5
-	INIT //			- F6
+	SET_DATA4,//	- F4
+	SET_DATA5,//	- F5
+	PUSH_DATA, //	- F6
+	INIT, //		- F7
+	TEST_RTPARAMS,//- F8
+	READ_EEPROM	//	- F9
 } KEY_TYPES;
 
 enum non_func_types
@@ -163,8 +205,6 @@ enum rt_types
 	RT_MAP,
 	RT_OILT,
 	RT_O2,
-	RT_AUX1,
-	RT_AUX2
 } RT_TYPES;
 
 // we already don't need the string elem in the PIC so when we find a way to pass the strings
@@ -211,19 +251,15 @@ int get_curr_menu(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
-//int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
-			UCHAR menu4, UCHAR menu5, UCHAR index);
+void get_label_offsets(void);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
-int update_menu_labels(int i, char *ramstr);
-int update_rt_labels(int index, char *ramstr);
+int update_labels(int i, char *ramstr);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 int no_rtparams;
-int no_menu_structs;
 int total_no_menu_labels;
 int choice_aux_offset;
 int exec_aux_offset;
@@ -233,14 +269,24 @@ int no_data_index;
 //UINT label_info_offset;
 UINT rt_params_offset;
 UINT menu_struct_offset;
-char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
-char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 //char labels[1][MAX_LABEL_LEN];
 // just have 1 copy in ram and reload from eeprom every time we change menus
-char *get_label(int index);
 UCHAR get_row(int index);
 UCHAR get_col(int index);
+int pack(UCHAR low_byte, UCHAR high_byte);
+void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte);
 RT_PARAM rt_params[NUM_RT_PARAMS];
+#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
+#define NO_RT_LABELS_EEPROM_LOCATION 0x03e2
+#define NO_RTPARAMS_EEPROM_LOCATION 0x03e4
+#define NO_MENUS_EEPROM_LOCATION 0x3e6
+#define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
+#if 0
+#define RTPARAMS_OFFSET_EEPROM_LOCATION_LSB 0x03e8	// points to just after all the labels (prompt_info)
+#define RTPARAMS_OFFSET_EEPROM_LOCATION_MSB 0x03ea
+#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
+#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
+#endif
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24
 //#ifdef NOAVR
@@ -253,7 +299,6 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 //int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
 //#endif
 //#endif
-//int sample_data[10];
 int total_offset;
 int global_fd;
 void set_state_defaults(void);
@@ -270,6 +315,5 @@ UCHAR aux_index;
 UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
-UCHAR cur_param_string[NUM_UCHAR_PARAMS];
 UCHAR aux_string[AUX_STRING_LEN];
-UCHAR send_aux_data;
+

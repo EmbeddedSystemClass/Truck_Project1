@@ -15,14 +15,7 @@
 #define MENU_START_ROW 12
 #define MENU_START_COL 15
 #define MENU_BLANK "          "
-#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
-#define NO_RT_LABELS_EEPROM_LOCATION 0x03e2
-#define NO_RTPARAMS_EEPROM_LOCATION 0x03e4
-#define NO_MENUS_EEPROM_LOCATION 0x3e6
-#define RTPARAMS_OFFSET_EEPROM_LOCATION_LSB 0x03e8	// points to just after all the labels (prompt_info)
-#define RTPARAMS_OFFSET_EEPROM_LOCATION_MSB 0x03ea
-#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
-#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
+
 //#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
@@ -32,31 +25,20 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR read_get_key(UCHAR key, UCHAR *str);
+UCHAR read_get_key(UCHAR key);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
-//int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-//int update_menu_structs(int i, UCHAR enabled, UCHAR fptr, UCHAR menu, UCHAR label, UCHAR index);
-int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
-int update_menu_labels(int i, char *ramstr);
-int update_rt_labels(int index, char *ramstr);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 int no_rtparams;
-int no_menu_structs;
 int no_data_index;
 //UINT label_info_offset;
 UINT rt_params_offset;
-//char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
-//char labels[1][MAX_LABEL_LEN];
-// just have 1 copy in ram and reload from eeprom every time we change menus
-//MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
-char *get_label(int index);
 UCHAR get_row(int index);
 UCHAR get_col(int index);
 RT_PARAM rt_params[NUM_RT_PARAMS];
@@ -83,6 +65,4 @@ UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 int menu_index;
-//UCHAR cur_param_string[NUM_UCHAR_PARAMS];
-//UCHAR aux_string[AUX_STRING_LEN];
-
+int curr_menus[6];

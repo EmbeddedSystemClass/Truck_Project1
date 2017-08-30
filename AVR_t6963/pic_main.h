@@ -3,17 +3,6 @@
 // and before avr_main.h in the files for the AVR
 
 #define LIST_SIZE 50
-#define NUM_MENU_CHOICES 6
-#define NUM_MENUS 12
-#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES
-
-typedef struct menu_func
-{
-//	int _index;
-	UCHAR fptr;								// which function to call (menu_types)
-	int menus[6];							// which menu to goto if _menu_change is the fptr
-	UCHAR index;							// if > 0 then this is index into sample_data
-} MENU_FUNC_STRUCT;
 
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
@@ -22,7 +11,7 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str, int type);
+UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
@@ -31,9 +20,6 @@ int read_eeprom(void);
 //int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
 int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index);
-int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
-int update_menu_labels(int i, char *ramstr);
-int update_rt_labels(int index, char *ramstr);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -47,12 +33,6 @@ int no_func_labels;
 int no_data_index;
 UINT rt_params_offset;
 int choice_offset;
-char menu_labels[NUM_MENU_LABELS][MAX_LABEL_LEN];
-char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
-//char labels[1][MAX_LABEL_LEN];
-// just have 1 copy in ram and reload from eeprom every time we change menus
-MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
-char *get_label(int index);
 UCHAR get_row(int index);
 UCHAR get_col(int index);
 //RT_PARAM rt_params[NUM_RT_PARAMS];
@@ -79,6 +59,5 @@ UCHAR aux_index;
 UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
-//UCHAR cur_param_string[NUM_UCHAR_PARAMS];
-//UCHAR aux_string[AUX_STRING_LEN];
-UCHAR send_aux_data;
+int send_aux_data;
+int aux_data_offset;

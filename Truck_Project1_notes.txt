@@ -115,9 +115,58 @@ bug list:
 - fix the backspace in edit
 - redo the SET_DATA(n) so it copies to beginning of aux_string for whatever it needs
 - bug in copying of checkboxes
-- clear display must save/restore what was at the top of the screen
-- init_checkboxes & init_execchoices will check to see if the aux_string has something in it
-	and if not put some default stuff into the check_boxes and exec_choices string elem
+- find out why columns are only 30 (should be 40) font size?
+
+new idea: make all possible labels exist in eeprom and use an array of indexes to find any given
+label which is terminated by a '0' and just send over the indexes into the labels when displaying
+either the menus, the list of checkbox choices or the exec choices. Then have an array of menus_labels,
+checkbox_labels and execchoice_labels that are bigger than what's currently displayed and implement
+a type of garbage-collecting algorithm which saves the latest labels used so we don't have to access
+the eeprom every time. (NOT!)
+
+Also, make the exec_choices execute the do_numentry function so all exec_choices are pointing to 
+a list of numbers to edit. 
+
+The AVR_menu.c could have a function that accesses the eeprom with an #ifdef which when run in the 
+simulator, will access an array which represents what's in the eeprom.
+
+There can be a 'push_data' function called from the laptop (via thread_io) which burns new labels
+into the eeprom. Longer labels can be in a different array with longer length so when burning new
+labels, we don't have to reprogram the entire eeprom, just do an eeprom update. 
+
+Or just, for now, have label arrays in eeprom with fixed lengths until we start running out of 
+space in the eeprom so we can just do updates on that array index. Also, put the menu_structs in 
+the eeprom too, but always have a copy in memory.
+
+0x300 can be the start of where the location variables are:
+- start of short labels (10 bytes per record)
+- start of long labels (30 bytes per record)
+- no. of short labels
+- no. of long labels
+
+There is no reason to store the menu_structs in eeprom. The menu_structs is stored in the PIC.
+
+There is a function called get_label in the AVR_menu.c which corrisponds to the menu_label array
+in the PIC, but the function is separated by the MAIN_C define. The labels can just start at
+the beginning of eeprom and the long labels can start at some predefined offset so that when
+reprogramming the labels we can just use an update. A function called get_label_offset reads
+threw all the labels and fills an array of ints called label_offsets in the AVR. The label_offsets
+function will have to be run each time from the init_list function in the AVR. 
+
+If the AVR gets labels from the eeprom using the label_offsets array, then the simulation should
+do the same thing, only using an array of 1023 UCHAR's to represent the eeprom. So in all the
+update functions in eeprom_burn.c just use defines that make the chip version read and write eeprom
+while the simulation reads/writes the 1023 array. So both the PIC and AVR simulations will have to
+run the update functions to load the eeprom_sim array, but the chip will not run the update functions
+except when reprogramming the eeprom. 
+
+
+The enums can just be MENU1A, MENU2A etc but the menu mgmt in ncurses laptop can just do a lookup
+and show the labels that go to each enum. MENU1A,s label is 'Main', MENU2A's label is 'Options' and
+so on. 
+
+Another nice feature would be 'bread-crumbs' e.g. MAIN->MENU1A->MENU1B-> ...
+In that case '*' could always be 'back-to-MAIN' and 'B' could be <back>
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

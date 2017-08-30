@@ -58,7 +58,7 @@ int main(void)
 		no_rt_labels  = eeprom_read_byte((UCHAR*)NO_RT_LABELS_EEPROM_LOCATION);
 		no_menu_labels  = eeprom_read_byte((UCHAR*)NO_MENU_LABELS_EEPROM_LOCATION);
 		no_rtparams  = eeprom_read_byte((UCHAR*)NO_RTPARAMS_EEPROM_LOCATION);
-		no_menu_structs  = eeprom_read_byte((UCHAR*)NO_MENUS_EEPROM_LOCATION);
+//		no_menu_structs  = eeprom_read_byte((UCHAR*)NO_MENUS_EEPROM_LOCATION);
 #ifdef TTY_DISPLAY
 		printString("no_labels: ");
 		printHexByte(no_labels);
@@ -66,10 +66,11 @@ int main(void)
 		printString("no_rtparams: ");
 		printHexByte(no_rtparams);
 		printString("\r\n");
-		printString("no_menu_structs: ");
-		printHexByte(no_menu_structs);
+//		printString("no_menu_structs: ");
+//		printHexByte(no_menu_structs);
 		printString("\r\n");
 #endif
+/*
 		rt_params_offset = (UINT)eeprom_read_byte((UCHAR*)RTPARAMS_OFFSET_EEPROM_LOCATION_LSB);
 		temp = eeprom_read_byte((UCHAR*)RTPARAMS_OFFSET_EEPROM_LOCATION_MSB);
 		temp2 = (UINT)temp;
@@ -79,7 +80,7 @@ int main(void)
 		temp = eeprom_read_byte((UCHAR*)MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB);
 		temp2 = (UINT)temp;
 		menu_struct_offset |= (temp2 << 8);		  // shift msb over and bit-or with lsb
-
+*/
 #ifdef TTY_DISPLAY
 /*
 		printString("label_info_offset: ");
@@ -137,11 +138,11 @@ int main(void)
 	display_labels();
 	done = 0;
 	char param_string[10];
-	UCHAR temp_params[NUM_UCHAR_PARAMS];
+
 	while (1)
 	{
 		ret_char = receiveByte();
-		read_get_key(ret_char,temp_params);
+		read_get_key(ret_char);
 
 
 #ifdef TTY_DISPLAY

@@ -38,14 +38,13 @@ int main(int argc, char *argv[])
 {
 #if 1
 	int fd;
-	int j;
+	int i,j,k;
 	UCHAR ch;
 	struct termios oldtio,newtio;
 	WINDOW *win;
-//	useconds_t tdelay = TIME_DELAY;
-//	useconds_t tdelay2 = TIME_DELAY;
-	UCHAR temp_params[NUM_UCHAR_PARAMS];
 	int res;
+	int display_offset = 1;
+	char temp_label[MAX_LABEL_LEN];
 
 #endif
 	burn_eeprom();
@@ -81,20 +80,92 @@ int main(int argc, char *argv[])
 	set_blocking (fd, 1);	// block on read
 //	set_blocking (fd, 0);	// non-blocking
 
+	goffset = 0;
+	get_label_offsets();
+#if 0
+	mvwprintw(win, display_offset,2,"test  ");
+	wrefresh(win);
+	getch();
+//	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
+//		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
+//	wrefresh(win);
+//	getch();
+	for(i = 0;i < 1023;i++)
+	{
+		mvwprintw(win, display_offset+j,2+k,"%c",eeprom_sim[i]);
+		if(++k > 30)
+		{
+			k = 0;
+			j++;
+		}
+	}
+	wrefresh(win);
+	getch();
+
+	for(i = 0;i < no_menu_labels;i++)
+		mvwprintw(win, display_offset+i,2,"                                                 ");
+	j = 0;
+	for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB;i++)
+	{
+		mvwprintw(win, display_offset,2+(j*2),"%x ", eeprom_sim[i]);
+		j++;
+	}
+	wrefresh(win);
+	getch();
+
+	mvwprintw(win, display_offset,2,"                                            ");
+
+	k = j = 0;
+	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
+	{
+		mvwprintw(win, display_offset+j,2+(k*4),"%2d ",label_offsets[i]);
+		if(++k > 10)
+		{
+			k = 0;
+			j++;
+		}
+
+	}
+	wrefresh(win);
+	getch();
+
+	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
+		mvwprintw(win, display_offset+i,2,"                                            ");
+
+	for(i = 0;i < no_menu_labels;i++)
+	{
+		get_label(i,temp_label);
+		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,temp_label);
+	}
+
+	wrefresh(win);
+	getch();
+
+	delwin(win);
+	clrtoeol();
+	refresh();
+	endwin();
+	tcsetattr(fd,TCSANOW,&oldtio);
+	close(fd);
+	exit(1);
+#endif
+
+
 // read	- simulate the AVR
 	j = 0;
 	res = 0;
 	init_list();
 	mvwprintw(win, LAST_ROW,1,"started     ");
 	wrefresh(win);
+	memset(aux_string,0,AUX_STRING_LEN);
 
 	while(1)
 	{
 		res = read(global_fd,&ch,1);
 		mvwprintw(win, LAST_ROW,1,"data recv'd: %d key: %x   ",res,ch);
 		wrefresh(win);
-		
-		read_get_key(ch,temp_params);
+
+		read_get_key(ch);
 		j++;
 	}
 	delwin(win);
