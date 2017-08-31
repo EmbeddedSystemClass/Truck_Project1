@@ -64,7 +64,7 @@ int burn_eeprom(void)
 #ifndef TEST_WRITE_DATA
     printString("\r\nwriting to eeprom...\r\n");
 #else
-    memset(eeprom_sim,0x21,EEPROM_SIZE);
+    memset(eeprom_sim,0x22,EEPROM_SIZE);
 #endif
     i = 0;
 	i = update_labels(i,"home\0");
@@ -77,21 +77,27 @@ int burn_eeprom(void)
 	i = update_labels(i,"MENU2B\0");
 	i = update_labels(i,"MENU2c\0");
 	i = update_labels(i,"MENU2d\0");
+	i = update_labels(i,"MENU2e\0");
+	i = update_labels(i,"MENU3a\0");
+	i = update_labels(i,"MENU3b\0");
 
+	i = update_labels(i,"enter\0");
 	i = update_labels(i,"up\0");
 	i = update_labels(i,"down\0");
 	i = update_labels(i,"toggle\0");
-	i = update_labels(i,"enter\0");
 	i = update_labels(i,"esc\0");
 
 	i = update_labels(i,"enter\0");
+	i = update_labels(i,"forward\0");
+	i = update_labels(i,"back\0");
+	i = update_labels(i,"clear\0");
+	i = update_labels(i,"escape\0");
+
 	i = update_labels(i,"caps\0");
 	i = update_labels(i,"small\0");
 	i = update_labels(i,"spec\0");
 	i = update_labels(i,"next\0");
-	i = update_labels(i,"forward\0");
-	i = update_labels(i,"back\0");
-	i = update_labels(i,"escape\0");
+	
 	i = update_labels(i,"choice0\0");
 	i = update_labels(i,"choice1\0");
 	i = update_labels(i,"choice2\0");
@@ -195,9 +201,9 @@ int burn_eeprom(void)
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN);
 // 1a
-	i = update_menu_structs(i, _menu_change,	MENU1B, MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU1A);
+	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
 // 1b
-	i = update_menu_structs(i, _menu_change,	MAIN,   MENU1A, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
 	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C);
 // 1d
@@ -209,7 +215,15 @@ int burn_eeprom(void)
 // 2b
 	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
 // 2c
-	i = update_menu_structs(i, _do_numentry, 	forward, back, entr, esc, blank, blank, MENU2C);
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+// 2d	
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+// 2e
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+// 3a	
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+// 3b	
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
 	no_menu_structs = i;
 #endif

@@ -120,5 +120,5 @@ git add AVR_t6963/test_write_data/domake1
 git add AVR_t6963/test_write_data/domake2
 clear
 git status
-git log --oneline
+git log --oneline > oneline.txt
 #git log | grep Date

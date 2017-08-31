@@ -18,8 +18,9 @@ WINDOW *win;
 #include "pic_main.h"
 
 static UCHAR menu_change(UCHAR ch);
-static UCHAR exec_choice(UCHAR ch);
+static UCHAR do_exec(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
+static UCHAR init_checkboxes(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
 static UCHAR do_init(UCHAR ch);
@@ -27,6 +28,7 @@ static void init_numentry(int menu_index);
 static void cursor_forward_stuff(char x);
 static void cursor_forward(char x);
 static void cursor_backward(void);
+static void _eclear(void);
 static UCHAR backspace(UCHAR ch);
 static UCHAR enter(UCHAR ch);
 static UCHAR escape(UCHAR ch);
@@ -61,7 +63,7 @@ static UCHAR get_fptr(void);
 static void get_fptr_label(char *str);
 static int get_curr_menu_index(void);
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, exec_choice, do_chkbox, non_func, do_numentry, do_init };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -98,12 +100,11 @@ static UCHAR set_list(int fptr)
 
 		ret_char = get_curr_menu_index();
 		send_aux_data = 0;
-		aux_data_offset = 0;
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
 #ifdef TEST_WRITE_DATA
 			get_fptr_label(tlabel);
-			mvwprintw(win, DISP_OFFSET,2,"set_list: %s   menu_index: %d     ",tlabel,ret_char);
+			mvwprintw(win, DISP_OFFSET,2,"fptr: %d set_list: %s   menu_index: %d     ",fptr,tlabel,ret_char);
 			wrefresh(win);
 #endif
 			switch(ret_char)
@@ -112,33 +113,8 @@ static UCHAR set_list(int fptr)
 					curr_execchoice = 0;
 				break;
 				case MENU1D:	// do_chkbox
-					curr_checkbox = 0;
-					for(i = 0;i < NUM_CHECKBOXES;i++)
-					{
-						// store the what's sent in case they hit 'cancel'
-//						aux_string[AUX_STRING_LEN-NUM_CHECKBOXES+i] = check_boxes[i].checked;
-						prev_check_boxes[i] = check_boxes[i].checked;
-					}
-//					aux_data_offset = AUX_STRING_LEN-(NUM_CHECKBOXES*MENU1D);
-					aux_data_offset = 0;
-//					send_aux_data = NUM_CHECKBOXES;
-					send_aux_data = 0;
-				break;
 				case MENU1E:
-					curr_checkbox = 0;
-					for(i = 0;i < NUM_CHECKBOXES;i++)
-					{
-						// store the what's sent in case they hit 'cancel'
-//						aux_string[AUX_STRING_LEN-NUM_CHECKBOXES+i] = check_boxes[i].checked;
-						prev_check_boxes[i] = check_boxes[i].checked;
-					}
-//					aux_data_offset = AUX_STRING_LEN-(NUM_CHECKBOXES*MENU1E);
-					aux_data_offset = 0;
-//					send_aux_data = NUM_CHECKBOXES;
-					send_aux_data = 150;
-					for(i = 0;i < 150;i++)
-						aux_string[i] = 0xFF - i;
-					aux_data_offset = 0;
+					init_checkboxes(ret_char);
 				break;
 				case MENU2A:	// non_func
 				break;
@@ -146,7 +122,11 @@ static UCHAR set_list(int fptr)
 					curr_execchoice = 0;
 				break;
 				case MENU2C:	// do_numentry
-					init_numentry(MENU2C);
+				case MENU2D:
+				case MENU2E:
+				case MENU3A:
+				case MENU3B:
+					init_numentry(ret_char);
 				break;
 				default:
 					send_aux_data = 0;
@@ -230,7 +210,7 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 
  			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
 			res += write(global_fd,str,size);
-			mvwprintw(win, LAST_ROW-11,1,"PUSH_DATA wrote %d bytes   ",res);
+			mvwprintw(win, LAST_ROW_DISP-2,1,"PUSH_DATA wrote %d bytes   ",res);
 #else
 			memcpy(ppic_data,&ret_char,1);
 			memcpy(ppic_data+1,&size,1);
@@ -240,16 +220,16 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 		case INIT:
 			init_list();
 			break;
-		case 	SPACE:
-			break;
+//		case 	SPACE:
+//			break;
 		case	SET_DATA1:
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-11,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW_DISP-2,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
 #endif
 			break;
 		case	SET_DATA2:
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-11,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW_DISP-2,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
 #endif
 			break;
 		case READ_EEPROM:
@@ -261,8 +241,11 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
  			send_aux_data = 0;
-			mvwprintw(win, LAST_ROW-11,1,"read eeprom: ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW_DISP-2,1,"read eeprom: ch: %x   size: %d            ",ret_char,size);
  			break;
+ 		case SPACE:
+			write(global_fd,&ret_char,1);
+ 			break;	
 		default:
 #ifdef TEST_WRITE_DATA
 			ret_char = generic_menu_function(ret_char);
@@ -270,11 +253,8 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 				display_menus(get_curr_menu());
 			wrefresh(win);
 #endif
-		break;
+			break;
 	}
-#ifdef TEST_WRITE_DATA
-	wrefresh(win);
-#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -329,6 +309,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		unpack(menu_structs[get_curr_menu()].menus[i],&low_byte,&high_byte);
 		write(global_fd, &high_byte,1);
 		write(global_fd, &low_byte,1);
+//		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  %d  %d  ",menu_structs[get_curr_menu()].menus[i],high_byte,low_byte);
 	}
 	unpack(send_aux_data,&low_byte,&high_byte);
 	write(global_fd, &high_byte,1);
@@ -417,12 +398,14 @@ static UCHAR do_numentry(UCHAR ch)
 		backspace(ch);
 		break;
 		case KP_C:
+		_eclear();
+		break;
+		case KP_D:
 		enter(ch);
 		prev_list();
 		break;
-		case KP_D:
-		break;
 		case KP_POUND:
+		prev_list();
 		break;
 		case KP_AST:
 			prev_list();
@@ -431,63 +414,74 @@ static UCHAR do_numentry(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+31,2,"cur: %s %d   ",cur_global_number,cur_col);
 	mvwprintw(win, DISP_OFFSET+1,2, "*do_numentry  %x   ",ret_char);
 	wrefresh(win);
 #endif
 	return ret_char;
 }
 //******************************************************************************************//
-//************************************* cursor_forward *************************************//
+//******************************************* escape ***************************************//
 //******************************************************************************************//
-static void cursor_forward(char ch)
+static UCHAR escape(UCHAR ch)
 {
-#ifdef TEST_WRITE_DATA
-//		dispCharAt(NUM_ENTRY_ROW+1,cur_col,95);
-#endif
-	if(++cur_col > NUM_ENTRY_END_COL)
-		cur_col = NUM_ENTRY_BEGIN_COL;
-//    dispSetCursorX(TEXT_ON | CURSOR_BLINK_ON,NUM_ENTRY_ROW,cur_col,LINE_8_CURSOR);
-#ifdef TEST_WRITE_DATA
-//		dispCharAt(NUM_ENTRY_ROW+1,cur_col,95);
-#endif
-}
-//******************************************************************************************//
-//***************************************** backspace **************************************//
-//******************************************************************************************//
-static UCHAR backspace(UCHAR ch)
-{
-	if(data_entry_mode)
-	{
-		cursor_backward();
-#ifdef TEST_WRITE_DATA
-		dispCharAt(NUM_ENTRY_ROW,cur_col,0x20);
-#endif
-		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
-	}
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	cur_col = NUM_ENTRY_BEGIN_COL;
 	return ch;
 }
 //******************************************************************************************//
-//************************************* cursor_backward ************************************//
+//******************************************* enter ****************************************//
 //******************************************************************************************//
-static void cursor_backward(void)
+static UCHAR enter(UCHAR ch)
 {
-#ifdef TEST_WRITE_DATA
-//		dispCharAt(NUM_ENTRY_ROW+1,cur_col,0x20);
-#endif
-	if(--cur_col < NUM_ENTRY_BEGIN_COL)
+	int limit;
+	int index;
+	if(1)
+//	if(data_entry_mode)
+	{
+		limit = atoi(cur_global_number);
+		if(limit > 32767)
+			strcpy(cur_global_number,"32766\0");
+		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
 		cur_col = NUM_ENTRY_BEGIN_COL;
-//	dispSetCursorX(TEXT_ON | CURSOR_BLINK_ON,NUM_ENTRY_ROW,cur_col,LINE_8_CURSOR);
+		mod_data_ready = 1;
+		index = get_curr_menu_index() - MENU2C;
+		sample_numbers[index] = atoi(new_global_number);
+	}
 #ifdef TEST_WRITE_DATA
-//		dispCharAt(NUM_ENTRY_ROW+1,cur_col,95);
+	mvwprintw(win, DISP_OFFSET+32, 2,"new: %s  %d  ",new_global_number,sample_numbers[index]);
+	wrefresh(win);
 #endif
+	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	return ch;
+}
+//******************************************************************************************//
+//*************************************** init_numentry ************************************//
+//******************************************************************************************//
+static void init_numentry(int menu_index)
+{
+	int temp_int;
+	cur_row = NUM_ENTRY_ROW;
+	cur_col = NUM_ENTRY_BEGIN_COL;
+//	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	send_aux_data = 2;
+	temp_int = sample_numbers[menu_index-MENU2C];
+	sprintf(cur_global_number,"%4d",temp_int);
+	mvwprintw(win, LAST_ROW_DISP-3,2,"init_numentry: %s %d %d %d  ",cur_global_number,temp_int,cur_col,menu_index);
+	aux_string[0] = (UCHAR)temp_int;
+	temp_int >>= 8;
+	aux_string[1] = (UCHAR)temp_int;
+	cur_col = strlen(cur_global_number)+NUM_ENTRY_BEGIN_COL;
 }
 //******************************************************************************************//
 //********************************** cursor_forward_stuff **********************************//
 //******************************************************************************************//
 static void cursor_forward_stuff(char x)
 {
-	data_entry_mode = 1;
-	if(data_entry_mode)
+//	if(data_entry_mode)
+	if(1)
 	{
 		stuff_num(x);
 		cursor_forward(x);
@@ -503,72 +497,61 @@ static void cursor_forward_stuff(char x)
 static void stuff_num(char num)
 {
 	num += 0x30;
-//	dispCharAt(NUM_ENTRY_ROW,cur_col,num);
 	cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = num;
-#ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+8,2,"test   ");
-	mvwprintw(win, DISP_OFFSET+31,2,"cur: %s           %d   ",cur_global_number,cur_col);
-	wrefresh(win);
-#endif
 }
 //******************************************************************************************//
-//******************************************* enter ****************************************//
+//************************************* cursor_forward *************************************//
 //******************************************************************************************//
-static UCHAR enter(UCHAR ch)
+static void cursor_forward(char ch)
 {
-	int limit;
-	if(data_entry_mode)
-	{
-		limit = atoi(cur_global_number);
-		if(limit > 32767)
-			strcpy(cur_global_number,"32766\0");
-		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
+	if(++cur_col > NUM_ENTRY_END_COL)
 		cur_col = NUM_ENTRY_BEGIN_COL;
-		mod_data_ready = 1;
-	}
+}
+//******************************************************************************************//
+//***************************************** backspace **************************************//
+//******************************************************************************************//
+static UCHAR backspace(UCHAR ch)
+{
+//	if(data_entry_mode)
+	if(1)
+	{
+		cursor_backward();
+		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+32, 2,"new: %s       %d    ",new_global_number,limit);
+	mvwprintw(win, DISP_OFFSET+32,2,"bs: %s %d   ",cur_global_number,cur_col);
 	wrefresh(win);
 #endif
+	}
 	return ch;
 }
 //******************************************************************************************//
-//******************************************* escape ***************************************//
+//**************************************** _eclear *******************************************//
 //******************************************************************************************//
-static UCHAR escape(UCHAR ch)
-{
-	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
-	cur_col = NUM_ENTRY_BEGIN_COL;
-	return ch;
-}
-//******************************************************************************************//
-//************************************* init_numentry ************************************//
-//******************************************************************************************//
-static void init_numentry(int menu_index)
+static void _eclear(void)
 {
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
-//	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 }
 //******************************************************************************************//
-//************************************ clean_disp_num **************************************//
+//************************************* cursor_backward ************************************//
 //******************************************************************************************//
-#if 0
-static void clean_disp_num(void)
+static void cursor_backward(void)
 {
-	int i;
-	for(i = 0;i < NUM_ENTRY_SIZE+1;i++)
-	{
-//		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL,0x20);
-//		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL+1,0x20);
-	}
-}
+	if(--cur_col < NUM_ENTRY_BEGIN_COL)
+		cur_col = NUM_ENTRY_BEGIN_COL;
+#if 0
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+33,2,"cb: %s %d   ",cur_global_number,cur_col);
+	wrefresh(win);
 #endif
+#endif
+}
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-static UCHAR exec_choice(UCHAR ch)
+static UCHAR do_exec(UCHAR ch)
 {
 	UCHAR ret_char = ch;
 	int i;
@@ -583,7 +566,6 @@ static UCHAR exec_choice(UCHAR ch)
 		scrolldown_execchoice(ch);
 		break;
 		case KP_C:
-		do_exec_choice();
 		prev_list();
 		break;
 		case KP_D:
@@ -601,7 +583,7 @@ static UCHAR exec_choice(UCHAR ch)
 //	if(ch != KP_AST)
 
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+1,2, "*exec_choice: %x            ",ch);
+	mvwprintw(win, DISP_OFFSET+1,2, "*do_exec: %x            ",ch);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -653,6 +635,21 @@ static UCHAR do_chkbox(UCHAR ch)
 	wrefresh(win);
 #endif
 	return ret_char;
+}
+//******************************************************************************************//
+//************************************* init_checkboxes ************************************//
+//******************************************************************************************//
+static UCHAR init_checkboxes(UCHAR ch)
+{
+	curr_checkbox = 0;
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		// store the what's sent in case they hit 'cancel'
+//		aux_string[AUX_STRING_LEN-NUM_CHECKBOXES+i] = check_boxes[i].checked;
+		prev_check_boxes[i] = check_boxes[i].checked;
+	}
+//					send_aux_data = NUM_CHECKBOXES;
+	send_aux_data = 0;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//

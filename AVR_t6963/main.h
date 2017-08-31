@@ -49,6 +49,7 @@ int goffset;
 //#define AUX_STRING_LEN 800	// main AVR data is 94% full
 //#define AUX_STRING_LEN 900	// main AVR data is 99% full
 #define LAST_ROW DISP_OFFSET+54
+#define LAST_ROW_DISP LAST_ROW-10
 #define LAST_COL 63
 int burn_eeprom(void);
 
@@ -70,33 +71,38 @@ enum shown_types
 
 enum menu_types
 {
-	MAIN,
-	MENU1A,
-	MENU1B,
-	MENU1C,
-	MENU1D,
-	MENU1E,
-	MENU2A,
-	MENU2B,
-	MENU2C,
-	MENU2D,
+	MAIN,		// 0
+	MENU1A,		// 1
+	MENU1B,		// 2
+	MENU1C,		// 3
+	MENU1D,		// 4
+	MENU1E,		// 5
+	MENU2A,		// 6
+	MENU2B,		// 7
+	MENU2C,		// 8
+	MENU2D,		// 9
+	MENU2E,		// 10
+	MENU3A,		// 11
+	MENU3B,		// 12
 
-	ckup,
-	ckdown,
-	cktoggle,
-	ckenter,
-	ckesc,
+	ckenter,	// 12
+	ckup,		// 13
+	ckdown,		// 14
+	cktoggle,	// 15
+	ckesc,		// 16
 
-	entr,
-	caps,
-	small,
-	spec,
-	next,
-	forward,
-	back,
-	esc,
+	entr,		// 17
+	forward,	// 18
+	back,		// 19
+	eclear,		// 20
+	esc,		// 21
 
-	choice0,
+	caps,		// 22
+	small,		// 23
+	spec,		// 24
+	next,		// 25
+
+	choice0,	// 26
 	choice1,
 	choice2,
 	choice3,
@@ -107,7 +113,7 @@ enum menu_types
 	choice8,
 	choice9,
 
-	exec0,
+	exec0,		// 36
 	exec1,
 	exec2,
 	exec3,
@@ -118,7 +124,7 @@ enum menu_types
 	exec8,
 	exec9,
 
-	blank
+	blank		// 46
 } MENU_TYPES;
 
 // total of 20 menus
@@ -167,16 +173,16 @@ enum key_types
 	KP_B, // 'B'	- ED
 	KP_C, // 'C'	- EE
 	KP_D, // 'D'	- EF
-	SPACE,//		- F0
-	SET_DATA1,//	- F1
-	SET_DATA2,//	- F2
-	SET_DATA3,//	- F3
-	SET_DATA4,//	- F4
-	SET_DATA5,//	- F5
-	PUSH_DATA, //	- F6
-	INIT, //		- F7
-	TEST_RTPARAMS,//- F8
-	READ_EEPROM	//	- F9
+	SET_DATA1,//	- F0
+	SET_DATA2,//	- F1
+	SET_DATA3,//	- F2
+	SET_DATA4,//	- F3
+	SET_DATA5,//	- F4
+	PUSH_DATA, //	- F5
+	INIT, //		- F6
+	TEST_RTPARAMS,//- F7
+	READ_EEPROM,//	- F8
+	SPACE//		- F9
 } KEY_TYPES;
 
 enum non_func_types

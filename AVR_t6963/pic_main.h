@@ -47,6 +47,7 @@ UCHAR get_col(int index);
 //#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
+int sample_numbers[5];
 //UINT send_data;
 //UINT recv_data;
 int global_fd;
@@ -60,4 +61,5 @@ UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 int send_aux_data;
-int aux_data_offset;
+
+

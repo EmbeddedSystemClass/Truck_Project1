@@ -80,7 +80,7 @@ ESOS_USER_TASK(comm2_task)
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+	size = AVR_SEND_DATA_SIZE;
 
 
 	while(TRUE)
@@ -104,7 +104,7 @@ ESOS_USER_TASK(comm2_task)
         {
 			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
 
-			ret_key = get_key((UCHAR)key1,size,(UCHAR*)avr_send_data);
+			ret_key = get_key((UCHAR)key1,size,(UCHAR*)avr_send_data,0);
 		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
 				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
