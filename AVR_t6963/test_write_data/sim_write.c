@@ -45,9 +45,12 @@ int main(int argc, char *argv[])
 	int i,j,k;
 	struct termios oldtio,newtio;
 	WINDOW *win;
+	MENU_FUNC_STRUCT mf;
+	MENU_FUNC_STRUCT *pmf = &mf;
 	UCHAR key;
 	UCHAR wkey;
 	int size;
+	int start_addr;
 	UCHAR ret_key;
 	int display_offset = 1;
 	char temp_label[MAX_LABEL_LEN];
@@ -83,112 +86,12 @@ int main(int argc, char *argv[])
 	set_blocking (fd, 1);	// block on read
 //	set_blocking (fd, 0);	// non-blocking
 
-// read	- simulate the AVR
-//	memset(cur_param_string,0,sizeof(cur_param_string));
-//	for(i = 0;i < NUM_UCHAR_PARAMS;i++)
-//		cur_param_string[i] = i;
 	j = 0;
 	k = 0;
-// comment out the next #if 0/#endif to test
+
 	goffset = 0;
 	get_label_offsets();
-#if 0
-	mvwprintw(win, display_offset,2,"test  ");
-	wrefresh(win);
-	getch();
-//	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
-//		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
-//	wrefresh(win);
-//	getch();
-	for(i = 0;i < 1023;i++)
-	{
-		mvwprintw(win, display_offset+j,2+k,"%c",eeprom_sim[i]);
-		if(++k > 30)
-		{
-			k = 0;
-			j++;
-		}
-	}
-	wrefresh(win);
-	getch();
 
-	for(i = 0;i < 50;i++)
-		mvwprintw(win, display_offset+i,2,"                                                 ");
-	k = j = 0;
-	for(i = RT_PARAMS_OFFSET_EEPROM_LOCATION;i < RT_PARAMS_OFFSET_EEPROM_LOCATION+(sizeof(RT_PARAM)*no_rtparams);i++)
-	{
-		mvwprintw(win, display_offset+j,2+(k*3),"%x ",eeprom_sim[i]);
-		if(++k > 4)
-		{
-			k = 0;
-			j++;
-		}
-	}
-	wrefresh(win);
-	getch();
-
-	for(i = 0;i < 50;i++)
-		mvwprintw(win, display_offset+i,2,"                                                       ");
-	j = 0;
-	for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++)
-	{
-		mvwprintw(win, display_offset,2+(j*3),"%d ", eeprom_sim[i]);
-		j++;
-	}
-	mvwprintw(win, display_offset+1,2,"%d %d %d ",no_menu_labels,no_rt_labels,no_rtparams);
-	wrefresh(win);
-	getch();
-
-	mvwprintw(win, display_offset,2,"                                            ");
-
-	k = j = 0;
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
-	{
-		mvwprintw(win, display_offset+j,2+(k*4),"%2d ",label_offsets[i]);
-		if(++k > 10)
-		{
-			k = 0;
-			j++;
-		}
-
-	}
-	wrefresh(win);
-	getch();
-
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
-		mvwprintw(win, display_offset+i,2,"                                            ");
-
-	for(i = 0;i < no_menu_labels;i++)
-	{
-		get_label(i,temp_label);
-		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,temp_label);
-	}
-
-	wrefresh(win);
-	getch();
-
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
-		mvwprintw(win, display_offset+i,2,"                                       ");
-	for(i = 0;i < no_menu_structs;i++)
-	{
-		mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
-		for(j = 0;j < 6;j++)
-		{
-			get_label(menu_structs[i].menus[j],temp_label);
-			mvwprintw(win, display_offset+i,2+(j*10),"%s ", temp_label);
-		}
-	}
-	wrefresh(win);
-	getch();
-
-	delwin(win);
-	clrtoeol();
-	refresh();
-	endwin();
-	tcsetattr(fd,TCSANOW,&oldtio);
-	close(fd);
-	exit(1);
-#endif
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		check_boxes[i].index = i;
@@ -204,8 +107,10 @@ int main(int argc, char *argv[])
 	j = 0;
 	init_list();
 	size = 0;
+	start_addr = 0;
 	char temp1[MAX_LABEL_LEN];
 	char temp2[MAX_LABEL_LEN];
+	int choice_aux_offset, exec_aux_offset;
 	print_menu(win);
 	strcpy(temp1,"hello   0\0");
 	strcpy(temp2,"whatsup?0\0");
@@ -325,7 +230,7 @@ int main(int argc, char *argv[])
 				case PUSH_DATA:
 					mvwprintw(win, LAST_ROW_DISP-1,1,"data pushed    ");
 					wrefresh(win);
-					get_key(wkey,size,aux_string,type);
+					get_key(wkey,size,start_addr, aux_string,type);
 					ret_key = 0xff;
 					k = j = 0;
 					for(i = 0;i < 11;i++)
@@ -349,24 +254,40 @@ int main(int argc, char *argv[])
 					type = 0;
 					strcpy(temp1,"test ch 0\0");
 					strcpy(temp2,"exec ch 0\0");
-					get_key(wkey,size,aux_string,type);
+					get_key(wkey,size,start_addr,aux_string,type);
 					ret_key = 0xff;
 					break;
-				case TEST_RTPARAMS:
+				case READ_MENUSTR:
+					start_addr = start_menu_structs;
+					size = no_menu_structs*sizeof(MENU_FUNC_STRUCT);
+					get_key(wkey,size,start_addr,aux_string,type);
+					j = 30;
+					for(i = 0;i < no_menu_structs;i++)
+					{
+						read(global_fd,&mf,sizeof(MENU_FUNC_STRUCT));
+						memcpy(&mf,eeprom_sim+(sizeof(MENU_FUNC_STRUCT)*i)+start_menu_structs,sizeof(MENU_FUNC_STRUCT));
+						mvwprintw(win, display_offset+j,2,
+							"%2d %2d %2d %2d %2d %2d %2d %2d",pmf->fptr,pmf->menus[0],pmf->menus[1],
+								pmf->menus[2],pmf->menus[3],pmf->menus[4],pmf->menus[5],pmf->index);
+						j++;
+					}	
 					break;
 				case READ_EEPROM:
-					size = EEPROM_SIZE/2;
 					type = 3;
-					get_key(wkey,size,aux_string,type);
-					for(i = 0;i < size;i++)
+					size = EEPROM_SIZE-2;
+					start_addr = 0;
+//					start_addr = EEPROM_SIZE/2;
+//					start_addr = menu_offset;
+//					size = rt_params_offset - menu_offset;
+					get_key(wkey,size,start_addr,aux_string,type);
+					for(i = start_addr;i < size+start_addr;i++)
 //						read(global_fd,&aux_string[i],1);
 						read(global_fd,&eeprom_sim[i],1);
-					for(i = 0;i < size;i++)
-						read(global_fd,&eeprom_sim[i+size],1);
+
 					j = k = 0;
 					for(i = 0;i < 22;i++)
 						mvwprintw(win, LAST_ROW_DISP-35+i,24,"                                   ");
-					for(i = 0;i < size*2;i++)
+					for(i = start_addr;i < size+start_addr;i++)
 					{
 						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
@@ -386,18 +307,31 @@ int main(int argc, char *argv[])
 					}
 					wrefresh(win);
 					break;
+				case BURN_EEPROM:
+					size = EEPROM_SIZE/2;
+					start_addr = 0;
+					burn_eeprom2();
+//					start_addr = EEPROM_SIZE/2;
+//					start_addr = menu_offset;
+//					size = rt_params_offset - menu_offset;
+					get_key(wkey,size,start_addr,aux_string,type);
+					for(i = start_addr;i < size+start_addr;i++)
+//						read(global_fd,&aux_string[i],1);
+						write(global_fd,&eeprom_sim[i],1);
+//					burn_eeprom2();
+					break;	
 				case SPACE:
 					size = 0;
 					type = 0;
-					get_key(wkey,size,aux_string,type);
+					get_key(wkey,size,start_addr,aux_string,type);
 					for(i = 1;i < LAST_ROW+1;i++)
 						mvwprintw(win, i,2,"                                                            ");
 					print_menu(win);
-					break;	
+					break;
 				default:
 					wrefresh(win);
 
-					ret_key = get_key(wkey,size,aux_string,0);
+					ret_key = get_key(wkey,size,start_addr,aux_string,0);
 	//				mvwprintw(win, LAST_ROW-9,1,"non_func: %x %c  ",wkey, wkey-NF_1);
 	//				wrefresh(win);
 
@@ -573,6 +507,16 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				mvwprintw(win, display_offset,50,"READ_EEPROM ");
 				wkey = READ_EEPROM;
 				break;
+			case 'P':
+			case 'p':
+				mvwprintw(win, display_offset,50,"READ_MENUSTR ");
+				wkey = READ_MENUSTR;
+				break;
+			case 'X':
+			case 'x':
+				mvwprintw(win, display_offset,50,"BURN_EEPROM ");
+				wkey = BURN_EEPROM;
+				break;
 			case 'I':
 			case 'i':
 				mvwprintw(win, display_offset,50,"INIT ");
@@ -595,14 +539,16 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 static void print_menu(WINDOW *win)
 {
 //	mvwprintw(win, LAST_ROW-6,LAST_COL,"*");
-	mvwprintw(win, LAST_ROW-9,1,"----------------------------- menu ----------------------------");
-	mvwprintw(win, LAST_ROW-8,1,"0->9, A->D, # and * are the keys on the keypad");
-	mvwprintw(win, LAST_ROW-7,1,"Z/z is a shortcut to '*', Y/y is a shortcut to '*'");
-	mvwprintw(win, LAST_ROW-6,1,"R/r is a shortcut to SET_DATA1");
-	mvwprintw(win, LAST_ROW-5,1,"S/s is a shortcut to SET_DATA2");
-	mvwprintw(win, LAST_ROW-4,1,"T/t is a shortcut to PUSH_DATA");
-	mvwprintw(win, LAST_ROW-3,1,"I/i is a shortcut to INIT");
-	mvwprintw(win, LAST_ROW-2,1,"E/e is a shortcut to READ_EEPROM");
+	mvwprintw(win, LAST_ROW-11,1,"----------------------------- menu ----------------------------");
+	mvwprintw(win, LAST_ROW-10,1,"0->9, A->D, # and * are the keys on the keypad");
+	mvwprintw(win, LAST_ROW-9,1,"Z/z is a shortcut to '*', Y/y is a shortcut to '*'");
+	mvwprintw(win, LAST_ROW-8,1,"R/r is a shortcut to SET_DATA1");
+	mvwprintw(win, LAST_ROW-7,1,"S/s is a shortcut to SET_DATA2");
+	mvwprintw(win, LAST_ROW-6,1,"T/t is a shortcut to PUSH_DATA");
+	mvwprintw(win, LAST_ROW-5,1,"I/i is a shortcut to INIT");
+	mvwprintw(win, LAST_ROW-4,1,"E/e is a shortcut to READ_EEPROM");
+	mvwprintw(win, LAST_ROW-3,1,"X/x is a shortcut to BURN_EEPROM");
+	mvwprintw(win, LAST_ROW-2,1,"P/p is a shortcut to READ_MENUSTR");
 	mvwprintw(win, LAST_ROW-1,1,"<space> = blank screen");
 	mvwprintw(win, LAST_ROW,1,"the '*' key always goes to the previous menu");
 	wrefresh(win);

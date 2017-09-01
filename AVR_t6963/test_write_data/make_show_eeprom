@@ -1,0 +1,34 @@
+# GCC/Linux compile flags
+GNUCC = gcc
+GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC
+#GNUCFLAGS =  -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA
+GNULDFLAGS = -static
+GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE
+GNUNOANSI = -Wall -std=gnu99 -Wstrict-prototypes 
+
+#####################################################
+CC = ${GNUCC}
+NOANSI = ${GNUNOANSI}
+CFLAGS = ${GNUCFLAGS}
+LDFLAGS = ${GNULDFLAGS}
+#SFLAGS = ${GNUSFLAGS}
+SFLAGS = -DDEBUG
+
+all: show_eeprom
+
+PIC_menu.o : ../PIC_menu.c ../pic_main.h ../main.h
+	${CC} -c ${CFLAGS} ${SFLAGS} -o PIC_menu.o ../PIC_menu.c
+	
+eeprom_burn.o : ../eeprom_burn.c ../pic_main.h ../sfr_helper.h ../main.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o ../eeprom_burn.c
+
+read_eeprom_sim.o : read_eeprom_sim.c ../pic_main.h ../sfr_helper.h ../main.h
+	${CC} -c  ${CFLAGS} ${SFLAGS} -o read_eeprom_sim.o read_eeprom_sim.c
+
+show_eeprom : PIC_menu.o eeprom_burn.o read_eeprom_sim.o
+	${CC} ${CFLAGS} read_eeprom_sim.o PIC_menu.o eeprom_burn.o -o show_eeprom -lcurses
+	
+clean :
+	rm -f *.o *~ *# core  a.out \
+	show_eeprom
+

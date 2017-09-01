@@ -103,8 +103,8 @@ static UCHAR set_list(int fptr)
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
 #ifdef TEST_WRITE_DATA
-			get_fptr_label(tlabel);
-			mvwprintw(win, DISP_OFFSET,2,"fptr: %d set_list: %s   menu_index: %d     ",fptr,tlabel,ret_char);
+//			get_fptr_label(tlabel);
+			mvwprintw(win, DISP_OFFSET,2,"fptr: %d menu_index: %d     ",fptr,ret_char);
 			wrefresh(win);
 #endif
 			switch(ret_char)
@@ -188,7 +188,7 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 // pass in the keypress from the PIC24 keypad and pass out the string of UCHARs
-UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
+UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 {
 	int i;
 	UCHAR ret_char = ch;
@@ -232,6 +232,20 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 			mvwprintw(win, LAST_ROW_DISP-2,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
 #endif
 			break;
+		case READ_MENUSTR:
+			res += write(global_fd,&ret_char,1);
+
+			unpack(size,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+			send_aux_data = 0;
+			mvwprintw(win, LAST_ROW_DISP-2,1,
+				"read menustr: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
+			break;	
 		case READ_EEPROM:
 			res += write(global_fd,&ret_char,1);
 
@@ -239,13 +253,35 @@ UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type)
 			res += write(global_fd, &high_byte,1);
 			res += write(global_fd, &low_byte,1);
 
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
  			send_aux_data = 0;
-			mvwprintw(win, LAST_ROW_DISP-2,1,"read eeprom: ch: %x   size: %d            ",ret_char,size);
+			mvwprintw(win, LAST_ROW_DISP-2,1,
+				"read eeprom: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
+ 			break;
+		case BURN_EEPROM:
+			res += write(global_fd,&ret_char,1);
+
+			unpack(size,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+// 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
+			goffset = 0;
+			get_label_offsets();
+
+ 			send_aux_data = 0;
+			mvwprintw(win, LAST_ROW_DISP-2,1,
+				"burn eeprom: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
  			break;
  		case SPACE:
 			write(global_fd,&ret_char,1);
- 			break;	
+ 			break;
 		default:
 #ifdef TEST_WRITE_DATA
 			ret_char = generic_menu_function(ret_char);
@@ -642,6 +678,7 @@ static UCHAR do_chkbox(UCHAR ch)
 static UCHAR init_checkboxes(UCHAR ch)
 {
 	curr_checkbox = 0;
+	int i;
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		// store the what's sent in case they hit 'cancel'

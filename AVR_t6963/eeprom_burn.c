@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #ifndef TEST_WRITE_DATA
-extern char eepromString[STRING_LEN] EEMEM;
+extern char eepromString[EEPROM_SIZE] EEMEM;
 #endif
 
 //******************************************************************************************//
@@ -49,6 +49,25 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*low_byte = (UCHAR)myint;
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
+}
+
+int burn_eeprom2(void)
+{
+	int i = 0;
+	total_offset = 0;
+	i = update_labels(i,"home\0");
+	i = update_labels(i,"testa\0");
+	i = update_labels(i,"test1b\0");
+	i = update_labels(i,"test1c\0");
+	i = update_labels(i,"test1d\0");
+	i = update_labels(i,"test1e\0");
+	i = update_labels(i,"test2a\0");
+	i = update_labels(i,"test2B\0");
+	i = update_labels(i,"test2c\0");
+	i = update_labels(i,"test2d\0");
+	i = update_labels(i,"test2e\0");
+	i = update_labels(i,"test3a\0");
+	i = update_labels(i,"test3b\0");
 }
 //******************************************************************************************//
 //***************************************** burn_eeprom ************************************//
@@ -97,7 +116,7 @@ int burn_eeprom(void)
 	i = update_labels(i,"small\0");
 	i = update_labels(i,"spec\0");
 	i = update_labels(i,"next\0");
-	
+
 	i = update_labels(i,"choice0\0");
 	i = update_labels(i,"choice1\0");
 	i = update_labels(i,"choice2\0");
@@ -121,6 +140,7 @@ int burn_eeprom(void)
 	i = update_labels(i,"exec9\0");
 	i = update_labels(i,"\0");
 
+	menu_offset = total_offset;
 	no_menu_labels = i;
 
 	i = update_labels(i,"RPM\0");
@@ -135,7 +155,7 @@ int burn_eeprom(void)
 	i = update_labels(i,"O2\0");
 	no_rt_labels = i - no_menu_labels;
 //	choice_offset = i;
-
+	rt_params_offset = total_offset;
 	i = 0;
 #ifndef TEST_WRITE_DATA
 	eeprom_update_word((UINT *)NO_RT_LABELS_EEPROM_LOCATION,no_rt_labels);
@@ -196,8 +216,11 @@ int burn_eeprom(void)
 	i = 0;
 	no_data_index = 0;
 
-#ifdef SIM_PIC
-	no_menu_structs = 0;
+	total_offset = 0;
+
+	start_menu_structs = rt_params_offset + 10;
+
+//#ifdef SIM_PIC
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN);
 // 1a
@@ -216,20 +239,20 @@ int burn_eeprom(void)
 	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
 // 2c
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-// 2d	
+// 2d
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
 // 2e
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-// 3a	
+// 3a
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-// 3b	
+// 3b
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
 	no_menu_structs = i;
-#endif
+//#endif
 	return 0;
 }
-#ifdef SIM_PIC
+//#ifdef SIM_PIC
 //******************************************************************************************//
 //********************************* update_menu_structs*************************************//
 //******************************************************************************************//
@@ -237,6 +260,9 @@ int burn_eeprom(void)
 int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index)
 {
+	int len;
+	len = sizeof(MENU_FUNC_STRUCT);
+
 	menu_structs[i].menus[0] = menu0;
 	menu_structs[i].menus[1] = menu1;
 	menu_structs[i].menus[2] = menu2;
@@ -247,10 +273,18 @@ int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2
 	menu_structs[i].index = index;
 	if(index > 0)
 		no_data_index++;
+
+#ifdef TEST_WRITE_DATA
+	memcpy(eeprom_sim+total_offset+start_menu_structs,&menu_structs[i], len);
+#else
+    eeprom_update_block(menu_structs, eepromString+start_menu_structs+total_offset, len);
+#endif
+//	strncpy(menu_labels[index],ramstr,len);
+	total_offset += len;
 	i++;
 	return i;
 }
-#endif
+//#endif
 //******************************************************************************************//
 //*********************************** get_label_offsets ************************************//
 //******************************************************************************************//
@@ -260,7 +294,7 @@ void get_label_offsets(void)
 	char *ch;
 	char temp_label[MAX_LABEL_LEN];
 
-	for(i = 0;i < NUM_LABELS;i++)
+	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
 	{
 		label_offsets[i] = goffset;
 		j = 0;

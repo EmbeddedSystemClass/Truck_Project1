@@ -11,27 +11,20 @@ void display_labels(void);
 void set_win(WINDOW *win);
 #endif
 void init_list(void);
-UCHAR get_key(UCHAR ch, int size, UCHAR *str, int type);
+UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
-//int update_menu_structs(int i, char *label, UCHAR row, UCHAR col, UCHAR choice, UCHAR ch_type, UCHAR type);
-int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
-			UCHAR menu4, UCHAR menu5, UCHAR index);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 //int no_rtparams;
-int no_menu_structs;
-int no_menu_labels;
 
 int no_func_labels;
-int no_data_index;
-UINT rt_params_offset;
 int choice_offset;
 UCHAR get_row(int index);
 UCHAR get_col(int index);

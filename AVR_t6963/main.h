@@ -4,7 +4,7 @@
 #define STRING_LEN 100
 #define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
-#define NUM_LABELS 100
+#define NUM_LABELS 60
 #define NUM_MENU_CHOICES 6
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
@@ -49,9 +49,10 @@ int goffset;
 //#define AUX_STRING_LEN 800	// main AVR data is 94% full
 //#define AUX_STRING_LEN 900	// main AVR data is 99% full
 #define LAST_ROW DISP_OFFSET+54
-#define LAST_ROW_DISP LAST_ROW-10
+#define LAST_ROW_DISP LAST_ROW-11
 #define LAST_COL 63
 int burn_eeprom(void);
+int burn_eeprom2(void);
 
 typedef struct rt_params
 {
@@ -85,24 +86,24 @@ enum menu_types
 	MENU3A,		// 11
 	MENU3B,		// 12
 
-	ckenter,	// 12
-	ckup,		// 13
-	ckdown,		// 14
-	cktoggle,	// 15
-	ckesc,		// 16
+	ckenter,	// 13
+	ckup,		// 14
+	ckdown,		// 15
+	cktoggle,	// 16
+	ckesc,		// 17
 
-	entr,		// 17
-	forward,	// 18
-	back,		// 19
-	eclear,		// 20
-	esc,		// 21
+	entr,		// 18
+	forward,	// 19
+	back,		// 20
+	eclear,		// 21
+	esc,		// 22
 
-	caps,		// 22
-	small,		// 23
-	spec,		// 24
-	next,		// 25
+	caps,		// 23
+	small,		// 24
+	spec,		// 25
+	next,		// 26
 
-	choice0,	// 26
+	choice0,	// 27
 	choice1,
 	choice2,
 	choice3,
@@ -113,7 +114,7 @@ enum menu_types
 	choice8,
 	choice9,
 
-	exec0,		// 36
+	exec0,		// 37
 	exec1,
 	exec2,
 	exec3,
@@ -124,7 +125,7 @@ enum menu_types
 	exec8,
 	exec9,
 
-	blank		// 46
+	blank		// 47
 } MENU_TYPES;
 
 // total of 20 menus
@@ -180,9 +181,10 @@ enum key_types
 	SET_DATA5,//	- F4
 	PUSH_DATA, //	- F5
 	INIT, //		- F6
-	TEST_RTPARAMS,//- F7
+	READ_MENUSTR, //- F7
 	READ_EEPROM,//	- F8
-	SPACE//		- F9
+	BURN_EEPROM,//	- F9
+	SPACE	//		- FA
 } KEY_TYPES;
 
 enum non_func_types
@@ -255,11 +257,11 @@ void init_list(void);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
-int burn_eeprom(void);
-int read_eeprom(void);
 void get_label_offsets(void);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_labels(int i, char *ramstr);
+int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+			UCHAR menu4, UCHAR menu5, UCHAR index);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -267,14 +269,15 @@ UCHAR parse_state;
 int no_rt_labels;
 int no_rtparams;
 int total_no_menu_labels;
-int choice_aux_offset;
-int exec_aux_offset;
 int no_menu_labels;
 int no_func_labels;
 int no_data_index;
+int no_menu_structs;
+int no_menu_labels;
 //UINT label_info_offset;
-UINT rt_params_offset;
-UINT menu_struct_offset;
+int menu_struct_offset;
+int start_menu_structs;
+
 //char labels[1][MAX_LABEL_LEN];
 // just have 1 copy in ram and reload from eeprom every time we change menus
 UCHAR get_row(int index);
@@ -306,6 +309,8 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 //#endif
 //#endif
 int total_offset;
+int menu_offset;
+int rt_params_offset;
 int global_fd;
 void set_state_defaults(void);
 EXEC_CHOICES exec_choices[NUM_EXECCHOICES];

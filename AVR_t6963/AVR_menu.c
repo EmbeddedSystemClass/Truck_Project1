@@ -144,11 +144,14 @@ UCHAR read_get_key(UCHAR key)
 	int i;
 	UCHAR ret_char = key;
 	int size = 0;
+	int start_addr = 0;
 	int res = 0;
 	int res2 = 0;
 	int type = 0;
 	UCHAR low_byte, high_byte;
-
+	int choice_aux_offset;
+	int exec_aux_offset;
+	
 	switch(ret_char)
 	{
 		case PUSH_DATA:
@@ -244,37 +247,89 @@ UCHAR read_get_key(UCHAR key)
 			init_list();
 			break;
 		case SPACE:
+#if TEST_WRITE_DATA
 			for(i = 1;i < LAST_ROW+1;i++)
 				mvwprintw(win, i,2,"                                                            ");
-			wrefresh(win);	
+			wrefresh(win);
+#endif
 			break;
 		case SET_DATA1:
 			break;
 		case SET_DATA2:
 			break;
-		case TEST_RTPARAMS:
+		case READ_MENUSTR:
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			size = pack(low_byte,high_byte);
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				res2 += write(global_fd,&eeprom_sim[i],1);
+			mvwprintw(win, LAST_ROW-2,1,
+				"read_menustr - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 			break;
 		case READ_EEPROM:
+#if TEST_WRITE_DATA
+			
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			size = pack(low_byte,high_byte);
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				res2 += write(global_fd,&eeprom_sim[i],1);
+
+			mvwprintw(win, LAST_ROW-2,1,
+				"read_eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
+#else
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			size = pack(low_byte,high_byte);
+
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			start_addr = pack(low_byte,high_byte);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				transmitByte(eeprom_read_byte(eepromString+i));
+#endif
+			break;
+		case BURN_EEPROM:	
 #if TEST_WRITE_DATA
 			read(global_fd,&high_byte,1);
 			read(global_fd,&low_byte,1);
 			size = pack(low_byte,high_byte);
 
-			for(i = 0;i < size;i++)
-				res2 += write(global_fd,&eeprom_sim[i],1);
-			for(i = 0;i < size;i++)
-				res2 += write(global_fd,&eeprom_sim[i+size],1);
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
 
-			mvwprintw(win, LAST_ROW-2,1,"size: %d type: %d res: %d res2: %d ",size,type,res,res2);
+			for(i = start_addr;i < size+start_addr;i++)
+				res2 += read(global_fd,&eeprom_sim[i],1);
+			mvwprintw(win, LAST_ROW-2,1,
+				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 #else
 			high_byte = receiveByte();
 			low_byte = receiveByte();
 			size = pack(low_byte,high_byte);
-			for(i = 0;i < size;i++)
-				transmitByte(eeprom_read_byte(eepromString+i));
-			for(i = size;i < size*2;i++)
-				transmitByte(eeprom_read_byte(eepromString+i));
+
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			start_addr = pack(low_byte,high_byte);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				eeprom_update_byte(eepromString+i,receiveByte());
+//				transmitByte(eeprom_read_byte(eepromString+i));
 #endif
+			goffset = 0;
+			get_label_offsets();
+
 			break;
 		default:
 			ret_char = generic_menu_function(ret_char);
@@ -339,7 +394,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	high_byte = receiveByte();
 	low_byte = receiveByte();
 	menu_index = pack(low_byte, high_byte);
-	
+
 	for(i = 0;i < 6;i++)
 	{
 		high_byte = receiveByte();
@@ -356,7 +411,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		aux_string[i] = receiveByte();
 #endif
 	ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
-	mvwprintw(win, DISP_OFFSET+20, 2,"%x  %x  ",ret_char,ch);
+//	mvwprintw(win, DISP_OFFSET+20, 2,"%x  %x  ",ret_char,ch);
 	display_menus();
 
 	if(prev_menu_index != menu_index)
@@ -885,7 +940,7 @@ static void init_execchoices(int menu_index)
 	mvwprintw(win, DISP_OFFSET+23, 2,"menu_index (init_execchoices) %d           ",menu_index);
 	wrefresh(win);
 #endif
-	
+
 	if(new_data_ex == 0)
 	{
 		get_label(exec0,tlabel);
@@ -1066,8 +1121,8 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 
 	get_label(curr_menus[index],temp);
 
-//	mvwprintw(win, DISP_OFFSET+19, 2+(index*10),"%s     ",temp);
-//	wrefresh(win);
+	mvwprintw(win, DISP_OFFSET+19, 2+(index*10),"%s     ",temp);
+	wrefresh(win);
 	if(temp[0] != 0)
 	{
 		GDispStringAt(*row,*col,temp2);
