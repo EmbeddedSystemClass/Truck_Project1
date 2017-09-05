@@ -1,7 +1,6 @@
 // main.h - has what's the same for both AVR_menu.c and PIC_menu.c
 
 #define TIME_DELAY1 1
-#define STRING_LEN 100
 #define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
 #define NUM_LABELS 60
@@ -9,7 +8,6 @@
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
 #define DISP_OFFSET 4
-#define NUM_CHECKBOXES 10
 #define NUM_EXECCHOICES 10
 #define SCALE_DISP_ALL 0
 #define SCALE_DISP_SOME 1
@@ -17,37 +15,28 @@
 #define RT_OFFSET 0x70
 #define EEPROM_SIZE 0x400
 
-#define NUM_MENUS 12
-#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES
-
 char *get_label(int index, char *str);
 
 #ifndef MAIN_C
-
-typedef struct menu_func
-{
-//	int _index;
-	UCHAR fptr;								// which function to call (menu_types)
-	int menus[6];							// which menu to goto if _menu_change is the fptr
-	UCHAR index;
-} MENU_FUNC_STRUCT;
-
-//char menu_labels[NUM_LABELS][MAX_LABEL_LEN];
-//char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
-MENU_FUNC_STRUCT menu_structs[NUM_MENU_STRUCTS];
 UCHAR eeprom_sim[1023];
-#else
 #endif
 
 int label_offsets[NUM_LABELS+NUM_RT_LABELS];
 int goffset;
 
-//#define AUX_STRING_LEN 300	// main AVR data is 70% full
-//#define AUX_STRING_LEN 400	// main AVR data is 75% full
-#define AUX_STRING_LEN 520		// main AVR data is 81% full
-//#define AUX_STRING_LEN 600	// main AVR data is 85% full
-//#define AUX_STRING_LEN 800	// main AVR data is 94% full
-//#define AUX_STRING_LEN 900	// main AVR data is 99% full
+#define NUM_CHECKBOXES 10
+#define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
+#define CHECKBOX_STRING_LEN 20
+
+typedef struct checkboxes
+{
+	UCHAR index;
+	UCHAR checked;
+	char string[CHECKBOX_STRING_LEN];
+} CHECKBOXES;
+
+#define AUX_STRING_LEN 500
+
 #define LAST_ROW DISP_OFFSET+54
 #define LAST_ROW_DISP LAST_ROW-11
 #define LAST_COL 63
@@ -103,29 +92,18 @@ enum menu_types
 	spec,		// 25
 	next,		// 26
 
-	choice0,	// 27
-	choice1,
-	choice2,
-	choice3,
-	choice4,
-	choice5,
-	choice6,
-	choice7,
-	choice8,
-	choice9,
-
-	exec0,		// 37
-	exec1,
-	exec2,
-	exec3,
-	exec4,
-	exec5,
-	exec6,
-	exec7,
-	exec8,
-	exec9,
-
-	blank		// 47
+	blank,		// 27
+	rpm,
+	engt,
+	trip,
+	time,
+	airt,
+	mph,
+	oilp,
+	map,
+	oilt,
+	o2,
+	test
 } MENU_TYPES;
 
 // total of 20 menus
@@ -174,17 +152,10 @@ enum key_types
 	KP_B, // 'B'	- ED
 	KP_C, // 'C'	- EE
 	KP_D, // 'D'	- EF
-	SET_DATA1,//	- F0
-	SET_DATA2,//	- F1
-	SET_DATA3,//	- F2
-	SET_DATA4,//	- F3
-	SET_DATA5,//	- F4
-	PUSH_DATA, //	- F5
-	INIT, //		- F6
-	READ_MENUSTR, //- F7
-	READ_EEPROM,//	- F8
-	BURN_EEPROM,//	- F9
-	SPACE	//		- FA
+	INIT, //		- F0
+	READ_EEPROM,//	- F2
+	BURN_EEPROM,//	- F3
+	SPACE	//		- F4
 } KEY_TYPES;
 
 enum non_func_types
@@ -218,19 +189,6 @@ enum rt_types
 // we already don't need the string elem in the PIC so when we find a way to pass the strings
 // in via the aux_string we can do away with string elem
 
-typedef struct checkboxes
-{
-	UCHAR index;
-	UCHAR checked;
-	char string[MAX_LABEL_LEN];
-} CHECKBOXES;
-
-typedef struct execchoices
-{
-	UCHAR index;
-	char string[MAX_LABEL_LEN];
-} EXEC_CHOICES;
-
 int global_fd;
 #define NUM_ENTRY_SIZE 7
 //#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
@@ -253,15 +211,12 @@ void display_labels(void);
 #ifdef TEST_WRITE_DATA
 void set_win(WINDOW *win);
 #endif
-void init_list(void);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
 void get_label_offsets(void);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_labels(int i, char *ramstr);
-int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
-			UCHAR menu4, UCHAR menu5, UCHAR index);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -269,7 +224,6 @@ UCHAR parse_state;
 int no_rt_labels;
 int no_rtparams;
 int total_no_menu_labels;
-int no_menu_labels;
 int no_func_labels;
 int no_data_index;
 int no_menu_structs;
@@ -286,9 +240,9 @@ int pack(UCHAR low_byte, UCHAR high_byte);
 void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte);
 RT_PARAM rt_params[NUM_RT_PARAMS];
 #define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
-#define NO_RT_LABELS_EEPROM_LOCATION 0x03e2
-#define NO_RTPARAMS_EEPROM_LOCATION 0x03e4
-#define NO_MENUS_EEPROM_LOCATION 0x3e6
+#define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
+#define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
+#define NO_MENUS_EEPROM_LOCATION 0x3ea
 #define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
 #if 0
 #define RTPARAMS_OFFSET_EEPROM_LOCATION_LSB 0x03e8	// points to just after all the labels (prompt_info)
@@ -305,7 +259,6 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 // label_offsets is an array that get set to the length of each label by searching
 // for the first 0
 //#ifdef EEPROM_BURN
-//int label_offsets[NUM_MENU_LABELS+NUM_RT_LABELS];
 //#endif
 //#endif
 int total_offset;
@@ -313,9 +266,6 @@ int menu_offset;
 int rt_params_offset;
 int global_fd;
 void set_state_defaults(void);
-EXEC_CHOICES exec_choices[NUM_EXECCHOICES];
-CHECKBOXES check_boxes[NUM_CHECKBOXES];
-UCHAR prev_check_boxes[NUM_CHECKBOXES];
 int curr_checkbox;
 int last_checkbox;
 int curr_execchoice;

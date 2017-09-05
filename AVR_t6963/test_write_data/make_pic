@@ -25,11 +25,14 @@ PIC_menu.o : ../PIC_menu.c ../pic_main.h ../main.h
 sim_write.o : sim_write.c ../pic_main.h ../sfr_helper.h
 	${CC} -c  ${CFLAGS} ${SFLAGS} -o sim_write.o sim_write.c
 
-eeprom_burn.o : ../eeprom_burn.c ../pic_main.h ../sfr_helper.h ../main.h
-	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o ../eeprom_burn.c
+#eeprom_burn.o : eeprom_burn.c ../pic_main.h ../sfr_helper.h ../main.h
+#	${CC} -c  ${CFLAGS} ${SFLAGS} -o eeprom_burn.o eeprom_burn.c
 
-sim_write : PIC_menu.o sim_write.o t6963.o eeprom_burn.o
-	${CC} ${CFLAGS} sim_write.o t6963.o PIC_menu.o eeprom_burn.o -o sim_write -lcurses
+supp.o : ../supp.o ../pic_main.h ../sfr_helper.h ../main.h
+	${CC} -c ${CFLAGS} ${SFLAGS} -o supp.o ../supp.c
+
+sim_write : PIC_menu.o sim_write.o t6963.o supp.o
+	${CC} ${CFLAGS} sim_write.o t6963.o PIC_menu.o supp.o -o sim_write -lcurses
 	
 clean :
 	rm -f *.o *~ *# core  a.out \

@@ -4,6 +4,9 @@
 
 #define LIST_SIZE 50
 
+UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
+CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
 void display_labels(void);
@@ -21,13 +24,59 @@ UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
-int no_rt_labels;
-//int no_rtparams;
 
 int no_func_labels;
 int choice_offset;
 UCHAR get_row(int index);
 UCHAR get_col(int index);
+
+#define NUM_MENUS 12
+#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES
+
+int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+			UCHAR menu4, UCHAR menu5, UCHAR index);
+
+typedef struct menu_func
+{
+//	int _index;
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;
+} MENU_FUNC_STRUCT;
+
+MENU_FUNC_STRUCT menu_structs[20];
+
+/*
+MENU_FUNC_STRUCT menu_structs[] = {
+//												'A' 	'B'		'C'		'D'		'#'		'0'
+	{ _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN  },
+// 1a
+	{ 	_menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A  },
+// 1b
+	{ 	_menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B  },
+// 1c
+	{ 	_exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C  },
+// 1d
+	{ 	_do_chkbox, 	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D  },
+// 1e
+	{ 	_do_chkbox, 	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E  },
+// 2a
+	{ 	_non_func, 		blank, blank, blank, blank, blank, blank, MENU2A  },
+// 2b
+	{ 	_exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B  },
+// 2c
+	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C  },
+// 2d
+	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D  },
+// 2e
+	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E  },
+// 3a
+	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A  },
+// 3b
+	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B  }
+};
+*/
+
 //RT_PARAM rt_params[NUM_RT_PARAMS];
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24

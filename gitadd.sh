@@ -100,7 +100,6 @@ git add AVR_t6963/macros.h
 git add AVR_t6963/binaryMacro.h
 git add AVR_t6963/t6963.h
 git add AVR_t6963/t6963.c
-git add AVR_t6963/eeprom_burn.c
 git add AVR_t6963/AVR_menu.c
 git add AVR_t6963/PIC_menu.c
 git add AVR_t6963/main.c
@@ -109,6 +108,7 @@ git add AVR_t6963/avr_main.h
 git add AVR_t6963/main.h
 git add AVR_t6963/spi.c
 git add AVR_t6963/spi.h
+git add AVR_t6963/supp.c
 git add AVR_t6963/ERM240128.png
 git add AVR_t6963/test_write_data/sim_read.c
 git add AVR_t6963/test_write_data/sim_write.c

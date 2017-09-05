@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
 	char temp_label[MAX_LABEL_LEN];
 
 #endif
-	burn_eeprom();
 	// reserve an extra sample_data space for in case of 'escape'
 	initscr();			/* Start curses mode 		*/
 	clear();

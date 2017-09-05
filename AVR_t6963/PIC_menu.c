@@ -21,6 +21,7 @@ static UCHAR menu_change(UCHAR ch);
 static UCHAR do_exec(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR init_checkboxes(UCHAR ch);
+static UCHAR init_execchoices(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
 static UCHAR do_init(UCHAR ch);
@@ -90,7 +91,7 @@ static UCHAR set_list(int fptr)
 {
 	int i;
 	UCHAR ret_char = 0;
-	char tlabel[MAX_LABEL_LEN];
+//	char tlabel[MAX_LABEL_LEN];
 
 	if(current_fptr < list_size)
 	{
@@ -109,16 +110,13 @@ static UCHAR set_list(int fptr)
 #endif
 			switch(ret_char)
 			{
-				case MENU1C:	// 1st exec_choice
-					curr_execchoice = 0;
-				break;
-				case MENU1D:	// do_chkbox
-				case MENU1E:
+				case MENU1C:	// 1st do_chkbox
+				case MENU1D:	// 2nd do_chkbox
 					init_checkboxes(ret_char);
 				break;
-				case MENU2A:	// non_func
-				break;
+				case MENU2A:	// 1st exec_choice
 				case MENU2B:	// 2nd exec_choice
+					init_execchoices(ret_char);
 					curr_execchoice = 0;
 				break;
 				case MENU2C:	// do_numentry
@@ -144,8 +142,6 @@ static UCHAR set_list(int fptr)
 static UCHAR menu_change(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i;
-	int temp;
 	int menu_index = 0;
 	int curr_menu;
 
@@ -200,53 +196,11 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 	switch(ret_char)
 	{
-		case PUSH_DATA:
-#ifdef TEST_WRITE_DATA
-			res += write(global_fd,&ret_char,1);
-
-			unpack(size,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-
- 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
-			res += write(global_fd,str,size);
-			mvwprintw(win, LAST_ROW_DISP-2,1,"PUSH_DATA wrote %d bytes   ",res);
-#else
-			memcpy(ppic_data,&ret_char,1);
-			memcpy(ppic_data+1,&size,1);
-			memcpy(ppic_data+2,str,size);
-#endif
-			break;
 		case INIT:
 			init_list();
 			break;
-//		case 	SPACE:
-//			break;
-		case	SET_DATA1:
-#ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW_DISP-2,1,"SET_DATA1 ch: %x   size: %d            ",ret_char,size);
-#endif
-			break;
-		case	SET_DATA2:
-#ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW_DISP-2,1,"SET_DATA2 ch: %x   size: %d            ",ret_char,size);
-#endif
-			break;
-		case READ_MENUSTR:
-			res += write(global_fd,&ret_char,1);
-
-			unpack(size,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-
-			unpack(start_addr,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-			send_aux_data = 0;
-			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"read menustr: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
-			break;	
 		case READ_EEPROM:
+#ifdef TEST_WRITE_DATA
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -259,9 +213,11 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
  			send_aux_data = 0;
 			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"read eeprom: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
+				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
+#endif
  			break;
 		case BURN_EEPROM:
+#ifdef TEST_WRITE_DATA
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -277,14 +233,17 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
  			send_aux_data = 0;
 			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"burn eeprom: ch: %x   size: %d  start_addr:  %d    ",ret_char,size,start_addr);
+				"burn e: ch: %x size: %d st addr: %d %d %d",ret_char,size,start_addr,no_rtparams,no_rt_labels);
+#endif
  			break;
+#ifdef TEST_WRITE_DATA
  		case SPACE:
 			write(global_fd,&ret_char,1);
  			break;
+#endif
 		default:
-#ifdef TEST_WRITE_DATA
 			ret_char = generic_menu_function(ret_char);
+#ifdef TEST_WRITE_DATA
 			if(curr_fptr_changed())
 				display_menus(get_curr_menu());
 			wrefresh(win);
@@ -344,6 +303,9 @@ static UCHAR generic_menu_function(UCHAR ch)
 	{
 		unpack(menu_structs[get_curr_menu()].menus[i],&low_byte,&high_byte);
 		write(global_fd, &high_byte,1);
+		// for some reason when sending a 0x0c - 13 it get recieved as a 0x0a - 10
+		// so I changed it in the pack/unpack functions
+//		low_byte = ~low_byte;
 		write(global_fd, &low_byte,1);
 //		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  %d  %d  ",menu_structs[get_curr_menu()].menus[i],high_byte,low_byte);
 	}
@@ -364,20 +326,23 @@ static UCHAR generic_menu_function(UCHAR ch)
 		mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
 	}
 	get_label(menu_list[i],tlabel);
+
 	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
 
 	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
 	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
 
-//#if 0
-	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-		mvwprintw(win, DISP_OFFSET+4,2+(i+2),"%d  ",check_boxes[i].checked);
+//	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
 
+//	for(i = 0;i < NUM_CHECKBOXES/4;i++)
+//		mvwprintw(win, DISP_OFFSET+4,2+(i*2),"%d  ",check_boxes[i].checked);
+
+//	mvwprintw(win, DISP_OFFSET+5,2+(i*7),"%s  ",check_boxes[i].string);
+/*
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
 	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
-//#endif
+*/
 	wrefresh(win);
 #else
 	temp2 = get_fptr();
@@ -505,7 +470,9 @@ static void init_numentry(int menu_index)
 	send_aux_data = 2;
 	temp_int = sample_numbers[menu_index-MENU2C];
 	sprintf(cur_global_number,"%4d",temp_int);
+#ifdef TEST_WRITE_DATA
 	mvwprintw(win, LAST_ROW_DISP-3,2,"init_numentry: %s %d %d %d  ",cur_global_number,temp_int,cur_col,menu_index);
+#endif
 	aux_string[0] = (UCHAR)temp_int;
 	temp_int >>= 8;
 	aux_string[1] = (UCHAR)temp_int;
@@ -679,14 +646,44 @@ static UCHAR init_checkboxes(UCHAR ch)
 {
 	curr_checkbox = 0;
 	int i;
+	int j = 0;
+	int k = 0;
+
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		// store the what's sent in case they hit 'cancel'
-//		aux_string[AUX_STRING_LEN-NUM_CHECKBOXES+i] = check_boxes[i].checked;
+		memcpy(aux_string+(sizeof(CHECKBOXES)*i),&check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)],sizeof(CHECKBOXES));
 		prev_check_boxes[i] = check_boxes[i].checked;
+//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)].string);
+		if(++k > 5)
+		{
+			j++;
+			k = 0;
+		}
 	}
-//					send_aux_data = NUM_CHECKBOXES;
-	send_aux_data = 0;
+	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+}
+//******************************************************************************************//
+//************************************* init_checkboxes ************************************//
+//******************************************************************************************//
+static UCHAR init_execchoices(UCHAR ch)
+{
+	curr_checkbox = 0;
+	int i;
+	int j = 0;
+	int k = 0;
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		memcpy(aux_string+(sizeof(CHECKBOXES)*i),&check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)],sizeof(CHECKBOXES));
+		prev_check_boxes[i] = check_boxes[i].checked;
+//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)].string);
+		if(++k > 5)
+		{
+			j++;
+			k = 0;
+		}
+	}
+	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
@@ -846,37 +843,6 @@ int curr_fptr_changed(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-int get_str_len(void)
-{
-	return cur_col-NUM_ENTRY_BEGIN_COL;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-#if 0
-int pack(UCHAR low_byte, UCHAR high_byte)
-{
-	int temp;
-	int myint;
-	myint = (int)low_byte;
-	temp = (int)high_byte;
-	temp <<= 8;
-	myint |= temp;
-	return myint;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
-{
-	*low_byte = (UCHAR)myint;
-	myint >>= 8;
-	*high_byte = (UCHAR)myint;
-}
-#endif
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
 static UCHAR do_init(UCHAR ch)
 {
 	init_list();
@@ -929,4 +895,3 @@ void init_list(void)
 	send_aux_data = 0;
 }
 #endif
-

@@ -168,6 +168,15 @@ so on.
 Another nice feature would be 'bread-crumbs' e.g. MAIN->MENU1A->MENU1B-> ...
 In that case '*' could always be 'back-to-MAIN' and 'B' could be <back>
 
+Tried to store the MENU_FUNC_STRUCT's in the AVR but ran out of memory unless I reduced the 
+AUX_STRING_LEN to 50. Was trying to read it into the menu_structs array to write it to eeprom.
+The idea being that the PIC could read it from the eeprom on init and then optionally load a
+new one.
+
+There are 2 different versions of the function update_menu_structs in eeprom_burn.c. The one
+for the AVR only uses a local copy of menu_structs while the one for the PIC uses the whole
+array.
+
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.

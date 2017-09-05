@@ -30,7 +30,7 @@
 #include "avr_main.h"
 
 #ifdef TEST_WRITE_DATA
-static char *show_keypress(UCHAR key, int offset, char *string);
+//static char *show_keypress(UCHAR key, int offset, char *string);
 void dispSetCursorX(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
 {
 //	cursor_row = row;
@@ -42,7 +42,6 @@ extern char eepromString[EEPROM_SIZE] EEMEM;
 #define dispSetCursorX(mode, row, col, type) dispSetCursor(mode, row, col, type)
 #endif
 
-#if 1
 static void clean_disp_num(void);
 static void _eclear(void);
 static UCHAR cursor_forward(UCHAR ch);
@@ -88,7 +87,6 @@ static UCHAR do_numentry(UCHAR ch);
 static UCHAR do_init(UCHAR ch);
 static void get_fptr_label(int index, char *str);
 
-#endif
 static int scroll_ptr;
 static int cur_alnum_col;
 static int dirty_flag;
@@ -96,7 +94,7 @@ static UCHAR cur_row, cur_col;	// used by the current menu/dialog function to ke
 static UCHAR alnum_array[NUM_ALNUM+1];
 static UCHAR choose_alnum;
 static UCHAR prev_menu_index;
-static UCHAR new_data_ch, new_data_ex;
+//static UCHAR new_data_ch, new_data_ex;
 
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 
@@ -141,7 +139,7 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 UCHAR read_get_key(UCHAR key)
 {
-	int i;
+	int i,j,k;
 	UCHAR ret_char = key;
 	int size = 0;
 	int start_addr = 0;
@@ -151,129 +149,22 @@ UCHAR read_get_key(UCHAR key)
 	UCHAR low_byte, high_byte;
 	int choice_aux_offset;
 	int exec_aux_offset;
-	
+
 	switch(ret_char)
 	{
-		case PUSH_DATA:
-#ifdef TEST_WRITE_DATA
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			size = pack(low_byte,high_byte);
-
-			res += read(global_fd,&type,1);
-			mvwprintw(win, LAST_ROW-2,1,"size: %d  type:  %d   ",size,type);
-			for(i = 0;i < size;i++)
-				res += read(global_fd,&aux_string[i],1);
-			mvwprintw(win, LAST_ROW-1,1,"size: %d res: %d key: %d type: %d    ",size,res,ret_char,type);
-#else
-			high_byte = receiveByte();
-			low_byte = receiveByte();
-			size = pack(low_byte,high_byte);
-
-			type = receiveByte();
-			for(i = 0;i < size;i++)
-				aux_string[i] = receiveByte();
-#endif
-			switch(type)
-			{
-				case 0:
-				break;
-				case 1:
-//					choice_aux_offset = NUM_CHECKBOXES+1;
-					choice_aux_offset = 0;
-					memcpy(check_boxes[0].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[1].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[2].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[3].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[4].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[5].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[6].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[7].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[8].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					choice_aux_offset += MAX_LABEL_LEN;
-					memcpy(check_boxes[9].string,aux_string+choice_aux_offset,MAX_LABEL_LEN);
-					new_data_ch = 1;
-
-#ifdef TEST_WRITE_DATA
-//					for(i = 0;i < NUM_CHECKBOXES;i++)
-//						mvwprintw(win, LAST_ROW-30+i,1,"%s        ",check_boxes[i].string);
-#endif
-				break;
-				case 2:
-//					exec_aux_offset = NUM_CHECKBOXES+1+(MAX_LABEL_LEN*NUM_EXECCHOICES);
-					exec_aux_offset = 0;
-					memcpy(exec_choices[0].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[1].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[2].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[3].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[4].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[5].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[6].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[7].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[8].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					exec_aux_offset += MAX_LABEL_LEN;
-					memcpy(exec_choices[9].string,aux_string+exec_aux_offset,MAX_LABEL_LEN);
-					new_data_ex = 1;
-
-#ifdef TEST_WRITE_DATA
-//					for(i = 0;i < NUM_EXECCHOICES;i++)
-//						mvwprintw(win, LAST_ROW-20+i,1,"%s        ",exec_choices[i].string);
-#endif
-				break;
-				case 3:
-					new_data_ex = 0;
-				break;
-				default:
-				break;
-			}
-		break;
 		case INIT:
 			init_list();
 			break;
 		case SPACE:
-#if TEST_WRITE_DATA
+#ifdef TEST_WRITE_DATA
 			for(i = 1;i < LAST_ROW+1;i++)
 				mvwprintw(win, i,2,"                                                            ");
 			wrefresh(win);
 #endif
 			break;
-		case SET_DATA1:
-			break;
-		case SET_DATA2:
-			break;
-		case READ_MENUSTR:
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			size = pack(low_byte,high_byte);
-
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			start_addr = pack(low_byte,high_byte);
-
-			for(i = start_addr;i < size+start_addr;i++)
-				res2 += write(global_fd,&eeprom_sim[i],1);
-			mvwprintw(win, LAST_ROW-2,1,
-				"read_menustr - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
-			break;
 		case READ_EEPROM:
-#if TEST_WRITE_DATA
-			
+#ifdef TEST_WRITE_DATA
+
 			read(global_fd,&high_byte,1);
 			read(global_fd,&low_byte,1);
 			size = pack(low_byte,high_byte);
@@ -285,6 +176,47 @@ UCHAR read_get_key(UCHAR key)
 			for(i = start_addr;i < size+start_addr;i++)
 				res2 += write(global_fd,&eeprom_sim[i],1);
 
+			j = 0;
+			k = 0;
+			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
+			mvwprintw(win, LAST_ROW-4,2,
+				"no_rt_labels: %d no_menu_labels: %d no_rtparams: %d  ",no_rt_labels,no_menu_labels,no_rtparams);
+
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW+j-40, 2+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
+				else mvwprintw(win, LAST_ROW+j-40, 2+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			k = 0;
+			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
+			{
+				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
+			}
+
+			goffset = 0;
+			get_label_offsets();
+
+/*
+			for(i = 0;i < no_menu_labels;i++)
+			{
+				mvwprintw(win, LAST_ROW-10+j,2+(k*3),"%2d ",label_offsets[i]);
+				if(++k > 15)
+				{
+					j++;
+					k = 0;
+				}
+			}
+*/
 			mvwprintw(win, LAST_ROW-2,1,
 				"read_eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 #else
@@ -297,11 +229,11 @@ UCHAR read_get_key(UCHAR key)
 			start_addr = pack(low_byte,high_byte);
 
 			for(i = start_addr;i < size+start_addr;i++)
-				transmitByte(eeprom_read_byte(eepromString+i));
+				transmitByte((UCHAR)eeprom_read_byte(eepromString+i));
 #endif
 			break;
-		case BURN_EEPROM:	
-#if TEST_WRITE_DATA
+		case BURN_EEPROM:
+#ifdef TEST_WRITE_DATA
 			read(global_fd,&high_byte,1);
 			read(global_fd,&low_byte,1);
 			size = pack(low_byte,high_byte);
@@ -314,6 +246,26 @@ UCHAR read_get_key(UCHAR key)
 				res2 += read(global_fd,&eeprom_sim[i],1);
 			mvwprintw(win, LAST_ROW-2,1,
 				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
+
+			k = j = 0;
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW+j-40, 2+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
+				else mvwprintw(win, LAST_ROW+j-40, 2+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			k = 0;
+			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
+			{
+				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
+			}
+
 #else
 			high_byte = receiveByte();
 			low_byte = receiveByte();
@@ -324,9 +276,13 @@ UCHAR read_get_key(UCHAR key)
 			start_addr = pack(low_byte,high_byte);
 
 			for(i = start_addr;i < size+start_addr;i++)
-				eeprom_update_byte(eepromString+i,receiveByte());
+				eeprom_update_byte((UCHAR)eepromString+i,receiveByte());
 //				transmitByte(eeprom_read_byte(eepromString+i));
 #endif
+
+//			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+//			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
 			goffset = 0;
 			get_label_offsets();
 
@@ -354,6 +310,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	int res,res2;
 	UCHAR low_byte,high_byte;
 	char tlabel[MAX_LABEL_LEN];
+//	UCHAR tlow;
 
 	res = 0;
 	res2 = 0;
@@ -367,8 +324,11 @@ static UCHAR generic_menu_function(UCHAR ch)
 	{
 		res += read(global_fd,&high_byte,1);
 		res += read(global_fd,&low_byte,1);
+		// for some reason when sending a 13 it get recv'd as a 10
+		// so I changed it in the pack/unpack functions
+//		low_byte = ~low_byte;
 		curr_menus[i] = pack(low_byte,high_byte);
-//		mvwprintw(win, DISP_OFFSET+20, 2+(i*7),"%d %d ",high_byte,low_byte);
+//		mvwprintw(win, DISP_OFFSET+20, 2+(i*7),"%d    ",low_byte);
 //		mvwprintw(win, DISP_OFFSET+21, 2+(i*7),"%d    ",curr_menus[i]);
 		if(curr_menus[i] > blank)
 			curr_menus[i] = 0;
@@ -425,15 +385,12 @@ static UCHAR generic_menu_function(UCHAR ch)
 				display_labels();
 				break;
 			case MENU1C:
-			case MENU2B:
-				init_execchoices(menu_index);
-			break;
 			case MENU1D:
-			case MENU1E:
 				init_checkboxes(menu_index);
 			break;
 			case MENU2A:
-				// non_func
+			case MENU2B:
+				init_execchoices(menu_index);
 			break;
 			case MENU2C:
 			case MENU2D:
@@ -460,15 +417,19 @@ static UCHAR generic_menu_function(UCHAR ch)
 		}
 	}
 #endif
-	for(i = 0;i < AUX_STRING_LEN/2;i++)
+	if(ret_char != READ_EEPROM && ret_char != BURN_EEPROM)
 	{
-		mvwprintw(win, LAST_ROW+j-25, 2+(k*3),"%x  ",aux_string[i]);
-		if(++k > 18)
+		for(i = 0;i < AUX_STRING_LEN;i++)
 		{
-			k = 0;
-			++j;
+			mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%x  ",aux_string[i]);
+			if(++k > 18)
+			{
+				k = 0;
+				++j;
+			}
 		}
 	}
+
 #endif
 	return ret_char;
 }
@@ -796,8 +757,8 @@ static UCHAR do_chkbox(UCHAR ch)
 		case KP_D:		// enter
 		break;
 		case KP_POUND:		// esc
-			for(i = 0;i < NUM_CHECKBOXES;i++)
-				check_boxes[i].checked = prev_check_boxes[i];	// restore old
+//			for(i = 0;i < NUM_CHECKBOXES;i++)
+//				check_boxes[i].checked = prev_check_boxes[i];	// restore old
 		break;
 		case KP_0:
 		break;
@@ -856,54 +817,27 @@ static void init_checkboxes(int menu_index)
 	int i;
 	UCHAR row, col;
 //	scale_disp(SCALE_DISP_SOME);
-	char tlabel[MAX_LABEL_LEN];
 	row = 1;
 	col = 3;
 	curr_checkbox = 0;
+
 	blank_display();
+
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		prev_check_boxes[i] = check_boxes[i].checked;		// save previous in case of escape key to restore
-		check_boxes[i].checked = aux_string[AUX_STRING_LEN-(NUM_CHECKBOXES*menu_index)+i]; // load what's sent from PIC
+//		prev_check_boxes[i] = check_boxes[i].checked;		// save previous in case of escape key to restore
+		memcpy(&check_boxes[i],aux_string+(sizeof(CHECKBOXES)*i),sizeof(CHECKBOXES));
+//		check_boxes[i].checked = aux_string[]; // load what's sent from PIC
 	}
 
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+23, 2,"menu_index (init_checkboxes) %d           ",menu_index);
 	wrefresh(win);
 #endif
-	if(new_data_ch == 0)
-	{
-		get_label(choice0,tlabel);
-		strcpy(check_boxes[0].string,tlabel);
-		get_label(choice1,tlabel);
-		strcpy(check_boxes[1].string,tlabel);
-		get_label(choice2,tlabel);
-		strcpy(check_boxes[2].string,tlabel);
-		get_label(choice3,tlabel);
-		strcpy(check_boxes[3].string,tlabel);
-		get_label(choice4,tlabel);
-		strcpy(check_boxes[4].string,tlabel);
-		get_label(choice5,tlabel);
-		strcpy(check_boxes[5].string,tlabel);
-		get_label(choice6,tlabel);
-		strcpy(check_boxes[6].string,tlabel);
-		get_label(choice7,tlabel);
-		strcpy(check_boxes[7].string,tlabel);
-		get_label(choice8,tlabel);
-		strcpy(check_boxes[8].string,tlabel);
-		get_label(choice9,tlabel);
-		strcpy(check_boxes[9].string,tlabel);
-
-#ifdef TEST_WRITE_DATA
-	}else
-	mvwprintw(win, DISP_OFFSET+21, 2,"                                            ");
-	wrefresh(win);
-#else
-	}
-#endif
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
+//		strcpy(check_boxes[i].string,"test \0");
 		check_boxes[i].index = i;
 		GDispStringAt(row,col,check_boxes[i].string);
 		row++;
@@ -925,13 +859,17 @@ static void init_execchoices(int menu_index)
 {
 	int i;
 	UCHAR row, col;
-	char tlabel[MAX_LABEL_LEN];
 //	scale_disp(SCALE_DISP_SOME);
 	row = 1;
 	col = 3;
 	curr_execchoice = 0;
-//	for(i = 0;i < NUM_EXECCHOICES;i++)
-//		check_boxes[i].checked = aux_string[i];
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+//		prev_check_boxes[i] = check_boxes[i].checked;		// save previous in case of escape key to restore
+		memcpy(&check_boxes[i],aux_string+(sizeof(CHECKBOXES)*i),sizeof(CHECKBOXES));
+//		check_boxes[i].checked = aux_string[]; // load what's sent from PIC
+	}
 
 // setting the list to choice 'n' is all well and good but we need a way for the PIC to send
 // the choices over in case there are more than 1 lists of choices
@@ -941,35 +879,11 @@ static void init_execchoices(int menu_index)
 	wrefresh(win);
 #endif
 
-	if(new_data_ex == 0)
-	{
-		get_label(exec0,tlabel);
-		strcpy(exec_choices[0].string,tlabel);
-		get_label(exec1,tlabel);
-		strcpy(exec_choices[1].string,tlabel);
-		get_label(exec2,tlabel);
-		strcpy(exec_choices[2].string,tlabel);
-		get_label(exec3,tlabel);
-		strcpy(exec_choices[3].string,tlabel);
-		get_label(exec4,tlabel);
-		strcpy(exec_choices[4].string,tlabel);
-		get_label(exec5,tlabel);
-		strcpy(exec_choices[5].string,tlabel);
-		get_label(exec6,tlabel);
-		strcpy(exec_choices[6].string,tlabel);
-		get_label(exec7,tlabel);
-		strcpy(exec_choices[7].string,tlabel);
-		get_label(exec8,tlabel);
-		strcpy(exec_choices[8].string,tlabel);
-		get_label(exec9,tlabel);
-		strcpy(exec_choices[9].string,tlabel);
-	}
-
 	blank_display();
-	for(i = 0;i < NUM_EXECCHOICES;i++)
+	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		exec_choices[i].index = i;
-		GDispStringAt(row,col,exec_choices[i].string);
+		check_boxes[i].index = i;
+		GDispStringAt(row,col,check_boxes[i].string);
 		row++;
 /*
 		if(exec_choices[i].checked == 1)
@@ -982,7 +896,7 @@ static void init_execchoices(int menu_index)
 		}
 */
 	}
-	dispCharAt(1+exec_choices[0].index,0,120);
+	dispCharAt(1+check_boxes[0].index,0,120);
 
 }
 //******************************************************************************************//
@@ -993,7 +907,7 @@ static UCHAR scrollup_checkboxes(UCHAR ch)
 	if(--curr_checkbox < 0)
 		curr_checkbox = last_checkbox;
 	// move cursor to 3 + check_boxes[curr_checkbox]
-//	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
+	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
 	return ch;
 }
 //******************************************************************************************//
@@ -1004,7 +918,7 @@ static UCHAR scrolldown_checkboxes(UCHAR ch)
 	if(++curr_checkbox > last_checkbox)
 		curr_checkbox = 0;
 	// move cursor
-//	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
+	dispCharAt(1+check_boxes[curr_checkbox].index,0,0x21);
 	return ch;
 }
 //******************************************************************************************//
@@ -1012,6 +926,7 @@ static UCHAR scrolldown_checkboxes(UCHAR ch)
 //******************************************************************************************//
 static UCHAR toggle_checkboxes(UCHAR ch)
 {
+
 	if(check_boxes[curr_checkbox].checked == 1)
 	{
 		check_boxes[curr_checkbox].checked = 0;
@@ -1022,6 +937,7 @@ static UCHAR toggle_checkboxes(UCHAR ch)
 		check_boxes[curr_checkbox].checked = 1;
 		dispCharAt(1+check_boxes[curr_checkbox].index,0,120);	// display 'x'
 	}
+
 	return ch;
 }
 //******************************************************************************************//
@@ -1036,8 +952,8 @@ static UCHAR scrollup_execchoice(UCHAR ch)
 //	mvwprintw(win, DISP_OFFSET+22,2,"%d %d   ",temp,curr_execchoice);
 //	wrefresh(win);
 
-	dispCharAt(1+exec_choices[temp].index,0,0x20);
-	dispCharAt(1+exec_choices[curr_execchoice].index,0,120);
+	dispCharAt(1+check_boxes[temp].index,0,0x20);
+	dispCharAt(1+check_boxes[curr_execchoice].index,0,120);
 	return ch;
 }
 //******************************************************************************************//
@@ -1052,8 +968,8 @@ static UCHAR scrolldown_execchoice(UCHAR ch)
 //	mvwprintw(win, DISP_OFFSET+22,2,"%d %d   ",temp,curr_execchoice);
 //	wrefresh(win);
 
-	dispCharAt(1+exec_choices[temp].index,0,0x20);
-	dispCharAt(1+exec_choices[curr_execchoice].index,0,120);
+	dispCharAt(1+check_boxes[temp].index,0,0x20);
+	dispCharAt(1+check_boxes[curr_execchoice].index,0,120);
 	return ch;
 }
 //******************************************************************************************//
@@ -1121,8 +1037,11 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 
 	get_label(curr_menus[index],temp);
 
-	mvwprintw(win, DISP_OFFSET+19, 2+(index*10),"%s     ",temp);
-	wrefresh(win);
+#ifdef TEST_WRITE_DATA
+//	mvwprintw(win, LAST_ROW-2, 2+(index*7),"%s      ",temp);
+//	mvwprintw(win, LAST_ROW-1, 2+(index*3),"%d ",curr_menus[index]);
+//	wrefresh(win);
+#endif
 	if(temp[0] != 0)
 	{
 		GDispStringAt(*row,*col,temp2);
@@ -1301,17 +1220,17 @@ void init_list(void)
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;
-	display_menus();
-	new_data_ch = new_data_ex = 0;
+//	display_menus();
+//	new_data_ch = new_data_ex = 0;
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+#if 0
 int get_str_len(void)
 {
 	return cur_col-NUM_ENTRY_BEGIN_COL;
 }
-#if 0
 //******************************************************************************************//
 //************************************** scr_alnum0 ****************************************//
 //******************************************************************************************//
@@ -1391,11 +1310,9 @@ static void scroll_alnum_list(int dir)
 	}
 	cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = choose_alnum;
 }
-#endif
-#ifdef TEST_WRITE_DATA
+
 static char *show_keypress(UCHAR key, int offset, char *string)
 {
-#if 0
 	char string[10];
 	switch(key)
 	{
@@ -1465,7 +1382,6 @@ static char *show_keypress(UCHAR key, int offset, char *string)
 	}
 	mvwprintw(win, offset, 1,"%s      ",string);
 	wrefresh(win);
-#endif
 	return string;
 }
 #endif

@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char eepromString[STRING_LEN] EEMEM;
+char eepromString[EEPROM_SIZE] EEMEM;
 
 //PROMPT_STRUCT prompts[26];	// this must be large enough for no_prompts
 #endif

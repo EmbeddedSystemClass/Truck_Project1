@@ -6,6 +6,8 @@
 #define MENU_START_COL 15
 #define MENU_BLANK "          "
 
+CHECKBOXES check_boxes[NUM_CHECKBOXES];
+
 //#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
@@ -23,8 +25,6 @@ UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
-int no_rt_labels;
-int no_rtparams;
 //UINT label_info_offset;
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 UCHAR get_row(int index);
