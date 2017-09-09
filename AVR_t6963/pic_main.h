@@ -30,8 +30,7 @@ int choice_offset;
 UCHAR get_row(int index);
 UCHAR get_col(int index);
 
-#define NUM_MENUS 12
-#define NUM_MENU_STRUCTS NUM_MENUS*NUM_MENU_CHOICES
+#define NUM_MENUS 13
 
 int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index);
@@ -44,7 +43,7 @@ typedef struct menu_func
 	UCHAR index;
 } MENU_FUNC_STRUCT;
 
-MENU_FUNC_STRUCT menu_structs[20];
+MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
 
 /*
 MENU_FUNC_STRUCT menu_structs[] = {

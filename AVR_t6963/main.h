@@ -17,10 +17,6 @@
 
 char *get_label(int index, char *str);
 
-#ifndef MAIN_C
-UCHAR eeprom_sim[1023];
-#endif
-
 int label_offsets[NUM_LABELS+NUM_RT_LABELS];
 int goffset;
 
@@ -35,10 +31,15 @@ typedef struct checkboxes
 	char string[CHECKBOX_STRING_LEN];
 } CHECKBOXES;
 
+//#define AUX_STRING_LEN 1024
 #define AUX_STRING_LEN 500
 
+#ifdef TEST_WRITE_DATA
+UCHAR eeprom_sim[EEPROM_SIZE];
+#endif
+
 #define LAST_ROW DISP_OFFSET+54
-#define LAST_ROW_DISP LAST_ROW-11
+#define LAST_ROW_DISP LAST_ROW-12
 #define LAST_COL 63
 int burn_eeprom(void);
 int burn_eeprom2(void);

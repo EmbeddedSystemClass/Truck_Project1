@@ -212,8 +212,13 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			res += write(global_fd, &low_byte,1);
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
  			send_aux_data = 0;
+
+			for(i = start_addr;i < size+start_addr;i++)
+				read(global_fd,&str[i],1);
+
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
+#else
 #endif
  			break;
 		case BURN_EEPROM:
@@ -227,6 +232,10 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			unpack(start_addr,&low_byte,&high_byte);
 			res += write(global_fd, &high_byte,1);
 			res += write(global_fd, &low_byte,1);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				write(global_fd,&str[i],1);
+
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
 			goffset = 0;
 			get_label_offsets();
@@ -234,6 +243,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
  			send_aux_data = 0;
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"burn e: ch: %x size: %d st addr: %d %d %d",ret_char,size,start_addr,no_rtparams,no_rt_labels);
+#else
 #endif
  			break;
 #ifdef TEST_WRITE_DATA
@@ -813,9 +823,11 @@ static UCHAR get_fptr(void)
 //******************************************************************************************//
 static void get_fptr_label(char *str)
 {
+#ifdef TEST_WRITE_DATA
 	char tlabel[MAX_LABEL_LEN];
 //	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
 	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
+#endif
 }
 //******************************************************************************************//
 //******************************************************************************************//

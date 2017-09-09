@@ -13,6 +13,7 @@
 // DEFINEs go here
 //#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
 uint8_t     LED1 = TRUE;      // LED1 is initially "on"
+#define MY_ESOS1
 #define TEMP_DELAY		5000
 #define TEMP_DELAY3		2
 #define TEMP_DELAY2		1000
@@ -21,9 +22,10 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
-#define AVR_SEND_DATA_SIZE 100
+#define AVR_SEND_DATA_SIZE 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
 
-extern UCHAR get_key(UCHAR ch, UCHAR size, UCHAR *str);		// from ../../AVR_t6963/PIC_menu.c
+extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
+
 // size can't be > 255 for now
 
 enum data_types
@@ -58,11 +60,10 @@ enum key_types
 	KP_B, // 'B'	- ED
 	KP_C, // 'C'	- EE
 	KP_D, // 'D'	- EF
-	SPACE,//		- F0
-	SET_DATA1,//	- F1
-	SET_DATA2,//	- F2	
-	PUSH_DATA, //	- F3
-	INIT //			- F4
+	INIT, //		- F0
+	READ_EEPROM,//	- F2
+	BURN_EEPROM,//	- F3
+	SPACE	//		- F4
 } KEY_TYPES2;
 
 enum non_func_type
@@ -540,78 +541,6 @@ ESOS_USER_TASK(echo_spi_task)
 #endif
 		}
     }
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//*************************************** comm1_task ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(comm1_task)
-{
-    static  uint8_t data1;
-
-    ESOS_TASK_BEGIN();
-
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("comm1_task on comm1");
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-	data1 = 0x21;
-	while(TRUE)
-    {
-		if(++data1 > 0x7e)
-			data1 = 0x21;
-
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-        
-		ESOS_TASK_WAIT_TICKS(1);
-
-	}
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//*************************************** comm3_task ***************************************//
-//******************************************************************************************//
-// just echo what's sent from AVR to comm1 (for debugging)
-ESOS_USER_TASK(comm3_task)
-{
-    static  uint8_t data;
-    static  uint8_t data2;
-    static	uint8_t dec;
-//    static ESOS_TASK_HANDLE h_Task3;
-
-    ESOS_TASK_BEGIN();
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("comm3_task");
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-
-	data = 0x21;
-	data2 = 0;
-    while (1)
-    {
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-		ESOS_TASK_WAIT_ON_SEND_UINT82(data);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-
-		if(++data2 > 0x0f)
-			data2 = 0;
-
-		ESOS_TASK_WAIT_TICKS(TDELAY2/2);
-
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-        ESOS_TASK_WAIT_ON_SEND_UINT8(data);
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-        if(++data > 0x7e)
-        	data = 0x21;
-    } // endof while()
     ESOS_TASK_END();
 }
 

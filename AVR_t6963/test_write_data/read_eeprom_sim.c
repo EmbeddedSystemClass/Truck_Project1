@@ -272,6 +272,7 @@ int burn_eeprom(void)
 	i = update_labels(i,"MAP\0");
 	i = update_labels(i,"OIL TEMP\0");
 	i = update_labels(i,"O2\0");
+	i = update_labels(i,"test\0");
 	no_rt_labels = i - no_menu_labels;
 //	choice_offset = i;
 	rt_params_offset = total_offset;

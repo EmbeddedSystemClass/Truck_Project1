@@ -34,6 +34,14 @@
 #define _TRUCK_APP
 #include "Truck_App.h"
 
+/*
+PIC24 UARTS:
+
+UART1 - RS232 to TS-7200
+UART2 - AVR
+UART3 - monitor
+*/
+
 //******************************************************************************************//
 //************************************** data_to_AVR ***************************************//
 //******************************************************************************************//
@@ -65,8 +73,9 @@ ESOS_USER_TASK(data_to_AVR)
 //******************************************************************************************//
 ESOS_USER_TASK(comm2_task)
 {
-    static  uint8_t key1, ret_key, size;
-    int i;
+    static  uint8_t key1, ret_key;
+    
+    int i, size, start_addr;
     static ESOS_TASK_HANDLE h_Sender;
     static int once = 1;
     
@@ -104,7 +113,9 @@ ESOS_USER_TASK(comm2_task)
         {
 			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
 
-			ret_key = get_key((UCHAR)key1,size,(UCHAR*)avr_send_data,0);
+// UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
+
+			ret_key = get_key((UCHAR)key1,size,start_addr,(UCHAR*)avr_send_data,0);
 		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
 				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
@@ -143,6 +154,104 @@ ESOS_USER_TASK(comm2_task)
 		}
 
 	}
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
+//*************************************** comm1_task ***************************************//
+//******************************************************************************************//
+// comm 1 is the TS-7200
+
+ESOS_USER_TASK(comm1_task)
+{
+    static  uint8_t data1, ret_key;
+    int i, size, start_addr, type;
+
+    ESOS_TASK_BEGIN();
+
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("comm1_task on comm1");
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+	data1 = 0x21;
+	while(TRUE)
+    {
+/*
+		if(++data1 > 0x7e)
+			data1 = 0x21;
+
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
+		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
+        ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+		switch(data1)
+		{
+			case INIT:
+				size = AVR_SEND_DATA_SIZE;
+				start_addr = 0;
+				type = 0;
+				for(i = 0;i < size;i++)
+					avr_send_data[i] = 0;
+
+				ret_key = get_key((UCHAR)data1,size,start_addr,(UCHAR*)avr_send_data,0);
+
+				break;
+			case READ_EEPROM:
+				break;
+			case BURN_EEPROM:
+				break;
+			default:
+				break;	
+		}
+		ESOS_TASK_WAIT_TICKS(1);
+
+	}
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
+//*************************************** comm3_task ***************************************//
+//******************************************************************************************//
+// comm 3 is the monitor
+ESOS_USER_TASK(comm3_task)
+{
+    static  uint8_t data;
+    static  uint8_t data2;
+    static	uint8_t dec;
+//    static ESOS_TASK_HANDLE h_Task3;
+
+    ESOS_TASK_BEGIN();
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("comm3_task");
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+
+	data = 0x21;
+	data2 = 0;
+    while (1)
+    {
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+		ESOS_TASK_WAIT_ON_SEND_UINT82(data);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+		if(++data2 > 0x0f)
+			data2 = 0;
+
+		ESOS_TASK_WAIT_TICKS(TDELAY2/2);
+
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+        ESOS_TASK_WAIT_ON_SEND_UINT8(data);
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+        if(++data > 0x7e)
+        	data = 0x21;
+    } // endof while()
     ESOS_TASK_END();
 }
 //******************************************************************************************//

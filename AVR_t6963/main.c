@@ -49,7 +49,8 @@ int main(void)
 //******************************************************************************************//
 	no_rt_labels  = eeprom_read_byte((UCHAR*)NO_RT_LABELS_EEPROM_LOCATION);
 
-	if(no_rt_labels != 0xff)
+//	if(no_rt_labels != 0xff)
+	if(1)
 	{
 #ifdef TTY_DISPLAY
 #warning "TTY_DISPLAY defined"
@@ -61,7 +62,7 @@ int main(void)
 //		no_menu_structs  = eeprom_read_byte((UCHAR*)NO_MENUS_EEPROM_LOCATION);
 #ifdef TTY_DISPLAY
 		printString("no_labels: ");
-		printHexByte(no_labels);
+		printHexByte(no_menu_labels);
 		printString("\r\n");
 		printString("no_rtparams: ");
 		printHexByte(no_rtparams);

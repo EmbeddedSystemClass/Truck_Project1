@@ -37,7 +37,9 @@ void dispSetCursorX(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
 //	cursor_col = col;
 }
 WINDOW *win;
-#else
+UCHAR eeprom_sim[EEPROM_SIZE];
+#endif
+#ifdef MAIN_C
 extern char eepromString[EEPROM_SIZE] EEMEM;
 #define dispSetCursorX(mode, row, col, type) dispSetCursor(mode, row, col, type)
 #endif
@@ -137,6 +139,13 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+/*
+	In real life, the main.c in the AVR will read the 1st keypress and then call this function:
+
+		ret_char = receiveByte();
+		read_get_key(ret_char);
+		...
+*/
 UCHAR read_get_key(UCHAR key)
 {
 	int i,j,k;
@@ -185,6 +194,9 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-4,2,
 				"no_rt_labels: %d no_menu_labels: %d no_rtparams: %d  ",no_rt_labels,no_menu_labels,no_rtparams);
 
+			for(i = 1;i < LAST_ROW+1;i++)
+				mvwprintw(win, i,2,"                                                            ");
+
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
@@ -202,21 +214,6 @@ UCHAR read_get_key(UCHAR key)
 			{
 				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
 			}
-
-			goffset = 0;
-			get_label_offsets();
-
-/*
-			for(i = 0;i < no_menu_labels;i++)
-			{
-				mvwprintw(win, LAST_ROW-10+j,2+(k*3),"%2d ",label_offsets[i]);
-				if(++k > 15)
-				{
-					j++;
-					k = 0;
-				}
-			}
-*/
 			mvwprintw(win, LAST_ROW-2,1,
 				"read_eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 #else
@@ -230,7 +227,14 @@ UCHAR read_get_key(UCHAR key)
 
 			for(i = start_addr;i < size+start_addr;i++)
 				transmitByte((UCHAR)eeprom_read_byte(eepromString+i));
+/*
+			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+*/
 #endif
+			goffset = 0;
+			get_label_offsets();
 			break;
 		case BURN_EEPROM:
 #ifdef TEST_WRITE_DATA
@@ -248,6 +252,9 @@ UCHAR read_get_key(UCHAR key)
 				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 
 			k = j = 0;
+			for(i = 1;i < LAST_ROW+1;i++)
+				mvwprintw(win, i,2,"                                                            ");
+
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
@@ -309,6 +316,9 @@ static UCHAR generic_menu_function(UCHAR ch)
 	UCHAR tfptr;
 	int res,res2;
 	UCHAR low_byte,high_byte;
+#ifdef TTY_DISPLAY
+	UCHAR tlow_byte,thigh_byte;
+#endif
 	char tlabel[MAX_LABEL_LEN];
 //	UCHAR tlow;
 
@@ -355,6 +365,11 @@ static UCHAR generic_menu_function(UCHAR ch)
 	low_byte = receiveByte();
 	menu_index = pack(low_byte, high_byte);
 
+#ifdef TTY_DISPLAY
+	thigh_byte = high_byte;
+	tlow_byte = low_byte;
+#endif
+
 	for(i = 0;i < 6;i++)
 	{
 		high_byte = receiveByte();
@@ -369,6 +384,10 @@ static UCHAR generic_menu_function(UCHAR ch)
 //	aux_data_offset = receiveByte();
 	for(i = 0;i < aux_bytes_to_read;i++)
 		aux_string[i] = receiveByte();
+#ifdef TTY_DISPLAY
+
+#endif
+
 #endif
 	ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
 //	mvwprintw(win, DISP_OFFSET+20, 2,"%x  %x  ",ret_char,ch);
@@ -419,7 +438,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 #endif
 	if(ret_char != READ_EEPROM && ret_char != BURN_EEPROM)
 	{
-		for(i = 0;i < AUX_STRING_LEN;i++)
+		for(i = 0;i < AUX_STRING_LEN/3;i++)
 		{
 			mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%x  ",aux_string[i]);
 			if(++k > 18)

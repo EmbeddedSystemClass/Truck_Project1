@@ -81,8 +81,8 @@ In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's th
 displays the new menus and returns to wait for another read. 
 
 To change/add menus, add the menu type to main.h in the menu_types enum, then make sure the
-update_menu_labels calls in burn_eeprom() in eeprom_burn1.c match. Also make sure that
-NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in eeprom_burn1.c
+update_menu_labels calls in burn_eeprom() in sim_write.c match. Also make sure that
+NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in sim_write.c
 Then add the new menu type in the case statement in set_list - this is essentially the
 initialization for the menu on the sim_write side (PIC). 
 Then on the sim_read side (AVR), add the menu type in the case statement in generic_menu_function
@@ -96,25 +96,7 @@ then we can do something like not send as many bytes in the loop in comm2_task o
 stuff to the AVR with a special cmd that's filtered by the get_key function int PIC_menu.c like
 read some extra data or do a reset or some init function. Very cool stuff!
 
-tried making AUX_STRING_LEN 400 and then did a make size in the main dir and got 95% full so
-make separate sized arrays for each and just copy over what's needed. (currently the size variable
-is only a UCHAR so aux_string can't be > 255)
-
-Added a special 'keypress' call PUSH_DATA which the PIC sends when it want's to send data
-without the AVR going thru the generic_menu_function. In the simulation, make a shortcut key
-that loads the data and then another shortcut key that sends the PUSH_DATA cmd. 
-Added 4 other keypresses called SET_DATA1/2/3/4 which sets the data in aux_string.
-There can be other keypresses like the SET_DATA(n) but they must set the variable 'size' to 
-the length of the data to be pushed by the PUSH_DATA command. 
-
-So now we can have offsets into the aux_string to where the beginning is the names of the 
-choices for the 1st list of check_boxes, the 2nd offset is the 2nd list of check_boxes,
-the 3rd offset is the start of the exec_choices and so on.
-
 bug list:
-- fix the backspace in edit
-- redo the SET_DATA(n) so it copies to beginning of aux_string for whatever it needs
-- bug in copying of checkboxes
 - find out why columns are only 30 (should be 40) font size?
 
 new idea: make all possible labels exist in eeprom and use an array of indexes to find any given
@@ -176,6 +158,10 @@ new one.
 There are 2 different versions of the function update_menu_structs in eeprom_burn.c. The one
 for the AVR only uses a local copy of menu_structs while the one for the PIC uses the whole
 array.
+
+The eeprom.bin file can be edited on the laptop using the sim programs and sent via the ncurses 
+monitor program to the TS-7200 and then relayed to the PIC24 where it can sent with an 
+BURN_EEPROM cmd to the AVR. 
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

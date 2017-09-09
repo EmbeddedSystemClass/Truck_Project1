@@ -1,5 +1,6 @@
 #include "sfr_helper.h"
-#ifndef TEST_WRITE_DATA
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 #include <avr/io.h>
 #include "avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include <avr/eeprom.h>
@@ -7,7 +8,9 @@
 #include "t6963.h"
 #include "macros.h"
 #else
+#ifdef TEST_WRITE_DATA
 #include <ncurses.h>
+#endif
 //#warning "TEST_WRITE_DATA defined"
 #endif
 #include "main.h"
@@ -21,8 +24,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 extern char eepromString[EEPROM_SIZE] EEMEM;
+#endif
+
+#ifdef TEST_WRITE_DATA
+extern UCHAR *peeprom_sim;
 #endif
 
 //******************************************************************************************//
@@ -65,9 +72,11 @@ void get_label_offsets(void)
 		label_offsets[i] = goffset;
 		j = 0;
 #ifdef TEST_WRITE_DATA
-		memcpy(temp_label,eeprom_sim+goffset,MAX_LABEL_LEN);
+		memcpy(temp_label,peeprom_sim+goffset,MAX_LABEL_LEN);
 #else
+#ifdef MAIN_C
 		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
+#endif
 #endif
 		ch = temp_label;
 		while(*ch != 0 && j < MAX_LABEL_LEN)
@@ -87,9 +96,11 @@ char *get_label(int index, char *str)
 
 		// void *dest, const void *src, size_t n
 #ifdef TEST_WRITE_DATA
-	memcpy(str,eeprom_sim+label_offsets[index],MAX_LABEL_LEN);
+	memcpy(str,peeprom_sim+label_offsets[index],MAX_LABEL_LEN);
 #else
+#ifdef MAIN_C
 	eeprom_read_block((void *)str,eepromString+label_offsets[index],MAX_LABEL_LEN);
+#endif
 #endif
 #ifdef SCREEN_EN
 	printString(str);

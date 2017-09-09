@@ -31,6 +31,8 @@
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 
+UCHAR *peeprom_sim;
+
 //******************************************************************************************//
 //****************************************** main ******************************************//
 //******************************************************************************************//
@@ -45,6 +47,7 @@ int main(int argc, char *argv[])
 	int res;
 	int display_offset = 1;
 	char temp_label[MAX_LABEL_LEN];
+	peeprom_sim = &eeprom_sim;
 
 #endif
 	// reserve an extra sample_data space for in case of 'escape'
@@ -81,76 +84,7 @@ int main(int argc, char *argv[])
 
 	goffset = 0;
 	get_label_offsets();
-#if 0
-	mvwprintw(win, display_offset,2,"test  ");
-	wrefresh(win);
-	getch();
-//	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
-//		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
-//	wrefresh(win);
-//	getch();
-	for(i = 0;i < 1023;i++)
-	{
-		mvwprintw(win, display_offset+j,2+k,"%c",eeprom_sim[i]);
-		if(++k > 30)
-		{
-			k = 0;
-			j++;
-		}
-	}
-	wrefresh(win);
-	getch();
 
-	for(i = 0;i < no_menu_labels;i++)
-		mvwprintw(win, display_offset+i,2,"                                                 ");
-	j = 0;
-	for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB;i++)
-	{
-		mvwprintw(win, display_offset,2+(j*2),"%x ", eeprom_sim[i]);
-		j++;
-	}
-	wrefresh(win);
-	getch();
-
-	mvwprintw(win, display_offset,2,"                                            ");
-
-	k = j = 0;
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
-	{
-		mvwprintw(win, display_offset+j,2+(k*4),"%2d ",label_offsets[i]);
-		if(++k > 10)
-		{
-			k = 0;
-			j++;
-		}
-
-	}
-	wrefresh(win);
-	getch();
-
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
-		mvwprintw(win, display_offset+i,2,"                                            ");
-
-	for(i = 0;i < no_menu_labels;i++)
-	{
-		get_label(i,temp_label);
-		mvwprintw(win, display_offset+i,2,"%d: %s  ",i,temp_label);
-	}
-
-	wrefresh(win);
-	getch();
-
-	delwin(win);
-	clrtoeol();
-	refresh();
-	endwin();
-	tcsetattr(fd,TCSANOW,&oldtio);
-	close(fd);
-	exit(1);
-#endif
-
-
-// read	- simulate the AVR
 	j = 0;
 	res = 0;
 	init_list();

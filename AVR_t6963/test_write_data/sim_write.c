@@ -1,8 +1,3 @@
-// test_write_data.c - used to test the data protocol between the AVR and PIC24 where the
-// data string is sent with FF,FE,FD.. and the next 3 bytes are shifted so they don't
-// have the high bits set - displays in ncurses window
-// when this is called with write params - 'w'... it simulates the PIC24
-// when called with just the 'r' param, it simulates the AVR (calls do_read below)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,16 +19,13 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-#define LEN 200
-// really cranking
-#define TIME_DELAY 200000
-// readable
-//#define TIME_DELAY 300000
 
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 static UCHAR get_keypress(UCHAR ch,WINDOW *win, int display_offset);
 static void print_menu(WINDOW *win);
+
+UCHAR *peeprom_sim;
 
 //******************************************************************************************//
 //****************************************** main ******************************************//
@@ -43,6 +35,7 @@ int main(int argc, char *argv[])
 	int fd;
 	int type = 0;
 	int i,j,k;
+	int fp;
 	struct termios oldtio,newtio;
 	WINDOW *win;
 	MENU_FUNC_STRUCT mf;
@@ -55,6 +48,8 @@ int main(int argc, char *argv[])
 	int display_offset = 1;
 	char temp_label[MAX_LABEL_LEN];
 	char tchbox[10];
+	char filename[20];
+	peeprom_sim = &eeprom_sim;
 
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
@@ -79,8 +74,12 @@ int main(int argc, char *argv[])
 	}
 	exit(1);
 */
+    memset(eeprom_sim,0,EEPROM_SIZE);
+
 	burn_eeprom();
-	// reserve an extra sample_data space for in case of 'escape'
+	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
+	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
+	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));	// reserve an extra sample_data space for in case of 'escape'
 	initscr();			/* Start curses mode 		*/
 	clear();
 	noecho();
@@ -146,16 +145,23 @@ int main(int argc, char *argv[])
 					ret_key = 0xff;
 					break;
 				case READ_EEPROM:
+					strcpy(filename,"eeprom.bin\0");
+					fp = open((const char *)filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRUSR | S_IRGRP | S_IWGRP);
+					if(fp < 0)
+					{
+						mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
+						wrefresh(win);
+						getch();
+					}
 					type = 3;
-					size = EEPROM_SIZE-2;
+					size = EEPROM_SIZE;
 					start_addr = 0;
 //					start_addr = EEPROM_SIZE/2;
 //					start_addr = menu_offset;
 //					size = rt_params_offset - menu_offset;
-					get_key(wkey,size,start_addr,aux_string,type);
-					for(i = start_addr;i < size+start_addr;i++)
-//						read(global_fd,&aux_string[i],1);
-						read(global_fd,&eeprom_sim[i],1);
+					get_key(wkey,size,start_addr,eeprom_sim,type);
+//					for(i = start_addr;i < size+start_addr;i++)
+//						read(global_fd,&eeprom_sim[i],1);
 
 					j = k = 0;
 					for(i = 0;i < 22;i++)
@@ -179,6 +185,12 @@ int main(int argc, char *argv[])
 						mvwprintw(win, LAST_ROW_DISP-6,24+(k*3),"%d ", eeprom_sim[i]);
 					}
 					wrefresh(win);
+					if(fp > 0)
+					{
+						for(i = start_addr;i < size;i++)
+							write(fp,&eeprom_sim[i],1);
+						close(fp);
+					}
 					break;
 				case BURN_EEPROM:
 					size = EEPROM_SIZE;
@@ -186,11 +198,30 @@ int main(int argc, char *argv[])
 //					start_addr = EEPROM_SIZE/2;
 //					start_addr = menu_offset;
 //					size = rt_params_offset - menu_offset;
-					burn_eeprom();
-					get_key(wkey,size,start_addr,aux_string,type);
-					for(i = start_addr;i < size+start_addr;i++)
-//						read(global_fd,&aux_string[i],1);
-						write(global_fd,&eeprom_sim[i],1);
+					strcpy(filename,"eeprom.bin\0");
+					if(access(filename,F_OK) != -1)
+					{
+						fp = open((const char *)filename, O_WRONLY);
+						if(fp < 0)
+						{
+							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
+							wrefresh(win);
+							getch();
+						}else
+						{
+							mvwprintw(win, LAST_ROW_DISP,2,"reading file into eeprom_sim");
+							for(i = start_addr;i < size;i++)
+								read(fp,&eeprom_sim[i],1);
+							close(fp);
+						}
+					}else
+					{
+						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
+						burn_eeprom();
+					}
+					get_key(wkey,size,start_addr,peeprom_sim,type);
+//					for(i = start_addr;i < size+start_addr;i++)
+//						write(global_fd,&eeprom_sim[i],1);
 					goffset = 0;
 					get_label_offsets();
 
@@ -273,7 +304,6 @@ int burn_eeprom(void)
 	no_rtparams = 0;
 	total_offset = 0;
 
-    memset(eeprom_sim,0,EEPROM_SIZE);
     i = 0;
 	i = update_labels(i,"home\0");
 	i = update_labels(i,"MENU1a\0");
@@ -347,8 +377,8 @@ int burn_eeprom(void)
 	printString("\r\n");
 */
 #else
-	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
-	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
+//	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
+//	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
 #endif
 	total_offset = 0;
 
@@ -379,7 +409,7 @@ int burn_eeprom(void)
 	printString("\r\n");
 */
 #else
-	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));
+//	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));
 #endif
 
 	i = 0;
@@ -454,7 +484,7 @@ int update_labels(int index, char *ramstr)
 	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
 	len++;
 #ifdef TEST_WRITE_DATA
-	memcpy(eeprom_sim+total_offset,ramstr, len);
+	memcpy(peeprom_sim+total_offset,ramstr, len);
 #else
     eeprom_update_block(ramstr, eepromString+total_offset, len);
 #endif
@@ -474,7 +504,7 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	rt_params[i].dtype = dtype;				// 0 - UCHAR; 1 - UINT; 2 - string
 	rt_params[i].type = type;
 #ifdef TEST_WRITE_DATA
-	memcpy(eeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
+	memcpy(peeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
 #else
     eeprom_update_block(&rt_params[i], eepromString+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset, sizeof(RT_PARAM));
 #endif
