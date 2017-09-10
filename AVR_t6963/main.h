@@ -32,7 +32,7 @@ typedef struct checkboxes
 } CHECKBOXES;
 
 //#define AUX_STRING_LEN 1024
-#define AUX_STRING_LEN 500
+#define AUX_STRING_LEN 600
 
 #ifdef TEST_WRITE_DATA
 UCHAR eeprom_sim[EEPROM_SIZE];
@@ -154,9 +154,13 @@ enum key_types
 	KP_C, // 'C'	- EE
 	KP_D, // 'D'	- EF
 	INIT, //		- F0
-	READ_EEPROM,//	- F2
-	BURN_EEPROM,//	- F3
-	SPACE	//		- F4
+	READ_EEPROM,//	- F1
+	BURN_EEPROM,//	- F2
+	SPACE,	//		- F3
+	SHOW_EEPROM, //	- F4
+	SHOW_MENU_STRUCT, //- F5
+	LOAD_MENU_STRUCT, // - F6
+	BURN_PART		// - F7
 } KEY_TYPES;
 
 enum non_func_types
@@ -226,12 +230,8 @@ int no_rt_labels;
 int no_rtparams;
 int total_no_menu_labels;
 int no_func_labels;
-int no_data_index;
 int no_menu_structs;
 int no_menu_labels;
-//UINT label_info_offset;
-int menu_struct_offset;
-int start_menu_structs;
 
 //char labels[1][MAX_LABEL_LEN];
 // just have 1 copy in ram and reload from eeprom every time we change menus

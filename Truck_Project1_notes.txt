@@ -137,15 +137,10 @@ function will have to be run each time from the init_list function in the AVR.
 
 If the AVR gets labels from the eeprom using the label_offsets array, then the simulation should
 do the same thing, only using an array of 1023 UCHAR's to represent the eeprom. So in all the
-update functions in eeprom_burn.c just use defines that make the chip version read and write eeprom
+update functions in sim_write.c just use defines that make the chip version read and write eeprom
 while the simulation reads/writes the 1023 array. So both the PIC and AVR simulations will have to
 run the update functions to load the eeprom_sim array, but the chip will not run the update functions
 except when reprogramming the eeprom. 
-
-
-The enums can just be MENU1A, MENU2A etc but the menu mgmt in ncurses laptop can just do a lookup
-and show the labels that go to each enum. MENU1A,s label is 'Main', MENU2A's label is 'Options' and
-so on. 
 
 Another nice feature would be 'bread-crumbs' e.g. MAIN->MENU1A->MENU1B-> ...
 In that case '*' could always be 'back-to-MAIN' and 'B' could be <back>
@@ -155,13 +150,27 @@ AUX_STRING_LEN to 50. Was trying to read it into the menu_structs array to write
 The idea being that the PIC could read it from the eeprom on init and then optionally load a
 new one.
 
-There are 2 different versions of the function update_menu_structs in eeprom_burn.c. The one
-for the AVR only uses a local copy of menu_structs while the one for the PIC uses the whole
-array.
-
 The eeprom.bin file can be edited on the laptop using the sim programs and sent via the ncurses 
 monitor program to the TS-7200 and then relayed to the PIC24 where it can sent with an 
 BURN_EEPROM cmd to the AVR. 
+
+The PIC can load the menu_structs array with a default menu using the update_menu_structs()
+while the laptop and/or the TS-7200 can send over a new one. The write simulation creates a file
+called eeprom.bin which is the binary copy of the eeprom. The technician can make a new eeprom,
+send it over to the PIC with a command to burn it to the eeprom.
+
+The AVR has the labels in eeprom, but the prompts for the checkboxes must be sent over everytime.
+There is enough memory to have a buffer that stores several sets of the most recent checkbox
+prompts. Could make a sort of MRU (most recently used) algorithm.
+
+sim_write must burn the eeprom first, then (optionally) read the eeprom, then load the 
+menu_structs.
+
+When sim_write is connected to AVR, it only needs to read the eeprom (if already burnt), 
+then load the menu_structs.
+
+"make set_eeprom_save_fuse" to set fuses so eeprom is saved when reprogramming
+"make clear_eeprom_save_fuse" to set fuses so eeprom gets erased everytime
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

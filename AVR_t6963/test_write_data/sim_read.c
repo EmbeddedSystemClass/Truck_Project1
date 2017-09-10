@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	int res;
 	int display_offset = 1;
 	char temp_label[MAX_LABEL_LEN];
-	peeprom_sim = &eeprom_sim;
+	peeprom_sim = (UCHAR *)&eeprom_sim;
 
 #endif
 	// reserve an extra sample_data space for in case of 'escape'

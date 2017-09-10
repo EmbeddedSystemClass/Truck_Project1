@@ -25,7 +25,7 @@
 #define TIME_DELAY 200000
 // readable
 //#define TIME_DELAY 300000
-
+UCHAR *peeprom_sim;
 //******************************************************************************************//
 //****************************************** main ******************************************//
 //******************************************************************************************//
@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	char temp_label[MAX_LABEL_LEN];
 
 	burn_eeprom();
+	peeprom_sim = eeprom_sim;
 	// reserve an extra sample_data space for in case of 'escape'
 	initscr();			/* Start curses mode 		*/
 	clear();
@@ -103,25 +104,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-/*
-	wrefresh(win);
-	getch();
-
-	for(i = 0;i < 50;i++)	// don't know why this doesn't work
-		mvwprintw(win, display_offset+i,2,"                                                 ");
-	mvwprintw(win, display_offset,2,"no_menu_structs: %d start_menu_structs: %d   ",no_menu_structs,start_menu_structs);
-	j = 1;
-	k = 0;
-	for(i = start_menu_structs;i < (start_menu_structs+(no_menu_structs*sizeof(MENU_FUNC_STRUCT)));i++)
-	{
-		mvwprintw(win, display_offset+j,2+(k*3),"%2d ",eeprom_sim[i]);
-		if(++k > 25)
-		{
-			k = 0;
-			++j;
-		}
-	}
-*/
 	wrefresh(win);
 	getch();
 
@@ -129,10 +111,10 @@ int main(int argc, char *argv[])
 	k = 0;
 	for(i = 0;i < 70;i++)
 		mvwprintw(win, display_offset+i,2,"                                                     ");
-	mvwprintw(win, display_offset,2,"no_menu_structs: %d start_menu_structs: %d   ",no_menu_structs,start_menu_structs);
+	mvwprintw(win, display_offset,2,"no_menu_structs: %d    ",no_menu_structs);
 	for(i = 0;i < no_menu_structs;i++)
 	{
-		memcpy(&mf,eeprom_sim+(sizeof(MENU_FUNC_STRUCT)*i)+start_menu_structs,sizeof(MENU_FUNC_STRUCT));
+		memcpy(&mf,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
 		mvwprintw(win, display_offset+j,2,
 			"%2d %2d %2d %2d %2d %2d %2d %2d",pmf->fptr,pmf->menus[0],pmf->menus[1],
 				pmf->menus[2],pmf->menus[3],pmf->menus[4],pmf->menus[5],pmf->index);
@@ -335,12 +317,7 @@ int burn_eeprom(void)
 #endif
 
 	i = 0;
-	no_data_index = 0;
-
 	total_offset = 0;
-
-	start_menu_structs = rt_params_offset + 10;
-
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
 // 1a
@@ -387,11 +364,7 @@ int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2
 	menu_structs[i].menus[5] = menu5;
 	menu_structs[i].fptr = fptr;
 	menu_structs[i].index = index;
-	if(index > 0)
-		no_data_index++;
 
-//	memcpy(eeprom_sim+total_offset+start_menu_structs,&menu_structs[i], len);
-//	strncpy(menu_labels[index],ramstr,len);
 	total_offset += len;
 	i++;
 	return i;

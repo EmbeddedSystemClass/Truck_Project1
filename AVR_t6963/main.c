@@ -4,6 +4,20 @@
 //******************************************************************************************//
 // main program that drives the t6963 LCD (32 col x 15 row) display - text only
 // see t6963_notes.txt for more details
+
+// for programming AVR:
+//first pin: 	10 SS		(not connected to buspirate)
+//				11 MOSI		yellow clip
+//				12 MISO		black regular clip
+//				13 SCLK		other green clip
+//				RST			whilte clip
+
+// for running AVR:
+//	GRN		first pin
+//	YEL
+//	BLK
+//	RED
+
 #include <avr/io.h>
 #include "avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include "sfr_helper.h"
@@ -12,6 +26,7 @@
 #include "USART.h"
 #include "t6963.h"
 #include "macros.h"
+#include "spi.h"
 #include <string.h>
 #include "main.h"
 #include "avr_main.h"
@@ -32,9 +47,9 @@ int main(void)
 	UINT xword;
 	int do_states = 1;
 //    size_t str_size = sizeof(PROMPT_STRUCT);
-
+//	initSPIslave();
 	initUSART();
-
+#if 0
 	GDispInit();
 	_delay_us(10);
 	GDispSetMode(XOR_MODE);
@@ -93,9 +108,6 @@ int main(void)
 		printHexByte((UCHAR)rt_params_offset);
 		printHexByte((UCHAR)(rt_params_offset>>8));
 		printString("\r\n");
-		printString("menu_struct_offset: ");
-		printHexByte((UCHAR)menu_struct_offset);
-		printHexByte((UCHAR)(menu_struct_offset>>8));
 		printString("\r\n");
 #endif
 #if 0
@@ -134,25 +146,25 @@ int main(void)
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
 	GDispClrTxt();
+#endif
 	_delay_us(10);
-	init_list();
-	display_labels();
+//	init_list();
+//	display_labels();
 	done = 0;
 	char param_string[10];
 
+	xbyte = 0x21;
+//	printString("\r\nstarting...\r\n");
 	while (1)
 	{
 		ret_char = receiveByte();
 		read_get_key(ret_char);
+//		xbyte = SPI_read();
+//		_delay_ms(5);
+//		SPI_write(xbyte);
+//		transmitByte(xbyte);
 
-
-#ifdef TTY_DISPLAY
-				printHexByte(xbyte);
-//			GDispStringAt(2,4,param_string);
-#else
-				transmitByte(xbyte);
-//			GDispStringAt(2,4,param_string);
-#endif
+#ifndef TTY_DISPLAY
 
 		for(i = 0;i < no_rtparams;i++)
 		{
@@ -166,8 +178,10 @@ int main(void)
 				GDispStringAt(rt_params[i].row,rt_params[i].col+10,param_string);
 			}
 		}
+#endif
 	}
 	return (0);									  // this should never happen
+
 }
 
 void set_defaults(void)

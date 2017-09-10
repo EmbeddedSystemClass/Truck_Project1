@@ -155,7 +155,7 @@ UCHAR read_get_key(UCHAR key)
 	int res = 0;
 	int res2 = 0;
 	int type = 0;
-	UCHAR low_byte, high_byte;
+	UCHAR low_byte, high_byte, recByte;
 	int choice_aux_offset;
 	int exec_aux_offset;
 
@@ -226,7 +226,11 @@ UCHAR read_get_key(UCHAR key)
 			start_addr = pack(low_byte,high_byte);
 
 			for(i = start_addr;i < size+start_addr;i++)
-				transmitByte((UCHAR)eeprom_read_byte(eepromString+i));
+			{
+				low_byte = (UCHAR)eeprom_read_byte((const uint8_t *)eepromString+i);
+				transmitByte(low_byte);
+			}
+
 /*
 			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
 			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
@@ -248,6 +252,10 @@ UCHAR read_get_key(UCHAR key)
 
 			for(i = start_addr;i < size+start_addr;i++)
 				res2 += read(global_fd,&eeprom_sim[i],1);
+
+			low_byte = 0x55;
+			write(global_fd,&low_byte,1);
+
 			mvwprintw(win, LAST_ROW-2,1,
 				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 
@@ -273,6 +281,10 @@ UCHAR read_get_key(UCHAR key)
 				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
 			}
 
+			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
 #else
 			high_byte = receiveByte();
 			low_byte = receiveByte();
@@ -283,15 +295,71 @@ UCHAR read_get_key(UCHAR key)
 			start_addr = pack(low_byte,high_byte);
 
 			for(i = start_addr;i < size+start_addr;i++)
-				eeprom_update_byte((UCHAR)eepromString+i,receiveByte());
+			{
+				recByte = receiveByte();
+				if(recByte != 0)
+					eeprom_update_byte((UCHAR*)(eepromString+i),recByte);
 //				transmitByte(eeprom_read_byte(eepromString+i));
+			}
+			low_byte = 0x55;
+			transmitByte(low_byte);
 #endif
-
-//			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
-//			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
-
 			goffset = 0;
 			get_label_offsets();
+
+			break;
+		case BURN_PART:
+#ifdef TEST_WRITE_DATA
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			size = pack(low_byte,high_byte);
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
+
+			for(i = start_addr;i < size+start_addr;i++)
+				res2 += read(global_fd,&eeprom_sim[i],1);
+
+			low_byte = 0x55;
+			write(global_fd,&low_byte,1);
+
+			mvwprintw(win, LAST_ROW-2,1,
+				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
+#else
+
+			high_byte = receiveByte();
+			transmitByte(high_byte);
+			low_byte = receiveByte();
+			transmitByte(low_byte);
+			size = pack(low_byte,high_byte);
+
+			high_byte = receiveByte();
+			transmitByte(high_byte);
+			low_byte = receiveByte();
+			transmitByte(low_byte);
+			start_addr = pack(low_byte,high_byte);
+
+//			for(i = start_addr;i < size+start_addr;i++)
+
+			for(i = 0;i < size;i++)
+			{
+				aux_string[i] = receiveByte();
+				transmitByte(aux_string[i]);
+			}
+//			for(i = 0;i < 240;i++)
+//				transmitByte(aux_string[i]);
+//			_delay_ms(1);
+
+//			low_byte = 0xAA;
+//			transmitByte(low_byte);
+//			_delay_ms(1);
+
+			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString,(size_t)size);
+
+#endif
+			goffset = 0;
+//			get_label_offsets();
 
 			break;
 		default:
@@ -353,6 +421,10 @@ static UCHAR generic_menu_function(UCHAR ch)
 	for(i = 0;i < aux_bytes_to_read;i++)
 		res2 += read(global_fd,&aux_string[i],1);
 
+	low_byte = 0;
+	// write a code of 0 back to sim PIC
+	write(global_fd,&low_byte,1);
+
 	get_fptr_label(tfptr,tlabel);
 	mvwprintw(win, DISP_OFFSET+15, 2,
 	               "fptr: %s   ch:%x    res:%d    res2:%d   ",tlabel,ch,res,res2);
@@ -384,6 +456,15 @@ static UCHAR generic_menu_function(UCHAR ch)
 //	aux_data_offset = receiveByte();
 	for(i = 0;i < aux_bytes_to_read;i++)
 		aux_string[i] = receiveByte();
+
+	// write a code of 0xAA back to sim PIC as a verification that everything is running
+	// if not hooked up to LCD screen
+
+	low_byte = 0xAA;
+	transmitByte(low_byte);
+	for(i = 0;i < 6;i++)
+		transmitByte(curr_menus[i]);
+
 #ifdef TTY_DISPLAY
 
 #endif

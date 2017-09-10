@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 	int type = 0;
 	int i,j,k;
 	int fp;
+	int res;
 	struct termios oldtio,newtio;
 	WINDOW *win;
 	MENU_FUNC_STRUCT mf;
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
 	char temp_label[MAX_LABEL_LEN];
 	char tchbox[10];
 	char filename[20];
-	peeprom_sim = &eeprom_sim;
+	peeprom_sim = (UCHAR *)&eeprom_sim;
 
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
@@ -76,7 +77,6 @@ int main(int argc, char *argv[])
 */
     memset(eeprom_sim,0,EEPROM_SIZE);
 
-	burn_eeprom();
 	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
 	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
 	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));	// reserve an extra sample_data space for in case of 'escape'
@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 					ret_key = 0xff;
 					break;
 				case READ_EEPROM:
+#if 0
 					strcpy(filename,"eeprom.bin\0");
 					fp = open((const char *)filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRUSR | S_IRGRP | S_IWGRP);
 					if(fp < 0)
@@ -153,12 +154,14 @@ int main(int argc, char *argv[])
 						wrefresh(win);
 						getch();
 					}
+#endif
 					type = 3;
 					size = EEPROM_SIZE;
 					start_addr = 0;
 //					start_addr = EEPROM_SIZE/2;
 //					start_addr = menu_offset;
 //					size = rt_params_offset - menu_offset;
+					memset(eeprom_sim,0,EEPROM_SIZE);
 					get_key(wkey,size,start_addr,eeprom_sim,type);
 //					for(i = start_addr;i < size+start_addr;i++)
 //						read(global_fd,&eeprom_sim[i],1);
@@ -185,12 +188,15 @@ int main(int argc, char *argv[])
 						mvwprintw(win, LAST_ROW_DISP-6,24+(k*3),"%d ", eeprom_sim[i]);
 					}
 					wrefresh(win);
+					// write current eeprom image to file
+#if 0
 					if(fp > 0)
 					{
 						for(i = start_addr;i < size;i++)
 							write(fp,&eeprom_sim[i],1);
 						close(fp);
 					}
+#endif
 					break;
 				case BURN_EEPROM:
 					size = EEPROM_SIZE;
@@ -201,7 +207,7 @@ int main(int argc, char *argv[])
 					strcpy(filename,"eeprom.bin\0");
 					if(access(filename,F_OK) != -1)
 					{
-						fp = open((const char *)filename, O_WRONLY);
+						fp = open((const char *)filename, O_RDWR);
 						if(fp < 0)
 						{
 							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
@@ -209,10 +215,25 @@ int main(int argc, char *argv[])
 							getch();
 						}else
 						{
-							mvwprintw(win, LAST_ROW_DISP,2,"reading file into eeprom_sim");
-							for(i = start_addr;i < size;i++)
-								read(fp,&eeprom_sim[i],1);
+							res = 0;
+							lseek(fp,0,SEEK_SET);
+//							for(i = start_addr;i < size;i++)
+							res = read(fp,eeprom_sim,size);
 							close(fp);
+							mvwprintw(win, LAST_ROW_DISP,2,"reading file into eeprom_sim: %d   ",res);
+							j = k = 0;
+							for(i = 0;i < EEPROM_SIZE;i++)
+							{
+								if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+									mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+								else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
+								else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+								if(++k > 30)
+								{
+									k = 0;
+									++j;
+								}
+							}
 						}
 					}else
 					{
@@ -226,6 +247,102 @@ int main(int argc, char *argv[])
 					get_label_offsets();
 
 					break;
+				case BURN_PART:
+					size = 234;
+					start_addr = 0;
+					strcpy(filename,"eeprom.bin\0");
+					mvwprintw(win, LAST_ROW_DISP,2,"starting burn part   ");
+					if(access(filename,F_OK) != -1)
+					{
+						fp = open((const char *)filename, O_RDWR);
+						if(fp < 0)
+						{
+							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
+							wrefresh(win);
+							getch();
+						}else
+						{
+							res = 0;
+							lseek(fp,0,SEEK_SET);
+//							for(i = start_addr;i < size;i++)
+							res = read(fp,eeprom_sim,EEPROM_SIZE);
+							close(fp);
+							mvwprintw(win, LAST_ROW_DISP,2,"reading part into eeprom_sim: %d   ",res);
+							j = k = 0;
+						}
+					}else
+					{
+						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
+						burn_eeprom();
+					}
+					get_key(wkey,size,start_addr,peeprom_sim,type);
+
+//					for(i = start_addr;i < size+start_addr;i++)
+//						write(global_fd,&eeprom_sim[i],1);
+					goffset = 0;
+					get_label_offsets();
+
+					break;
+				case SHOW_EEPROM:
+					for(i = 1;i < LAST_ROW+1;i++)
+						mvwprintw(win, i,2,"                                                            ");
+					j = k = 0;
+					for(i = 0;i < EEPROM_SIZE;i++)
+					{
+						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+						else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
+						else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+						if(++k > 30)
+						{
+							k = 0;
+							++j;
+						}
+					}
+					print_menu(win);
+					goffset = 0;
+					get_label_offsets();
+					break;
+				case SHOW_MENU_STRUCT:
+					for(i = 1;i < LAST_ROW+1;i++)
+						mvwprintw(win, i,2,"                                                            ");
+
+					k = 0;
+					j = 1;
+					for(i = 2;i < LAST_ROW_DISP+1;i++)
+						mvwprintw(win, i,2,"                                                            ");
+					for(i = 0;i < no_menu_structs;i++)
+					{
+						mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
+						for(j = 0;j < 6;j++)
+						{
+							get_label(menu_structs[i].menus[j],temp_label);
+							mvwprintw(win, display_offset+i,6+(j*8),"%s ", temp_label);
+//							mvwprintw(win, display_offset+i,6+(j*8),"%d ",menu_structs[i].menus[j]);
+						}
+					}
+					k = 0;
+					j = 17;
+					for(i = 0;i < no_menu_structs;i++)
+					{
+						memcpy(&mf,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
+						mvwprintw(win, display_offset+j,2,
+							"%2d %2d %2d %2d %2d %2d %2d %2d",pmf->fptr,pmf->menus[0],pmf->menus[1],
+								pmf->menus[2],pmf->menus[3],pmf->menus[4],pmf->menus[5],pmf->index);
+						j++;
+					}
+					mvwprintw(win, LAST_ROW_DISP-1,2,
+						"no_menu_structs: %d  ",no_menu_structs);
+					wrefresh(win);
+					print_menu(win);
+					break;
+				case LOAD_MENU_STRUCT:
+					size = 0;
+					start_addr = 0;
+					type = 0;
+					get_key(wkey,size,start_addr,peeprom_sim,type);
+					break;
+
 				case SPACE:
 					size = 0;
 					type = 0;
@@ -413,12 +530,7 @@ int burn_eeprom(void)
 #endif
 
 	i = 0;
-	no_data_index = 0;
-
 	total_offset = 0;
-
-	start_menu_structs = rt_params_offset + 10;
-
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
 // 1a
@@ -430,7 +542,7 @@ int burn_eeprom(void)
 // 1d
 	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
 // 1e
-	i = update_menu_structs(i, _non_func,		blank, blank, blank,   blank, blank, blank, MENU1E);
+	i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
 // 2a
 	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
 // 2b
@@ -449,71 +561,6 @@ int burn_eeprom(void)
 	no_menu_structs = i;
 	return 0;
 }
-//******************************************************************************************//
-//********************************* update_menu_structs*************************************//
-//******************************************************************************************//
-int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
-			UCHAR menu4, UCHAR menu5, UCHAR index)
-{
-	int len;
-	len = sizeof(MENU_FUNC_STRUCT);
-	menu_structs[i].menus[0] = menu0;
-	menu_structs[i].menus[1] = menu1;
-	menu_structs[i].menus[2] = menu2;
-	menu_structs[i].menus[3] = menu3;
-	menu_structs[i].menus[4] = menu4;
-	menu_structs[i].menus[5] = menu5;
-	menu_structs[i].fptr = fptr;
-	menu_structs[i].index = index;
-	if(index > 0)
-		no_data_index++;
-
-//	memcpy(eeprom_sim+total_offset+start_menu_structs,&menu_structs[i], len);
-//	strncpy(menu_labels[index],ramstr,len);
-	total_offset += len;
-	i++;
-	return i;
-}
-//******************************************************************************************//
-//************************************* update_labels **************************************//
-//******************************************************************************************//
-int update_labels(int index, char *ramstr)
-{
-	int len;
-	len = strlen(ramstr);
-	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
-	len++;
-#ifdef TEST_WRITE_DATA
-	memcpy(peeprom_sim+total_offset,ramstr, len);
-#else
-    eeprom_update_block(ramstr, eepromString+total_offset, len);
-#endif
-//	strncpy(menu_labels[index],ramstr,len);
-	total_offset += len;
-	index++;
-	return index;
-}
-//******************************************************************************************//
-//************************************* update_rtparams*************************************//
-//******************************************************************************************//
-int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type)
-{
-	rt_params[i].row = row;					// row, col tells where the param will appear on screen
-	rt_params[i].col = col;
-	rt_params[i].shown = shown;				// if its shown or not
-	rt_params[i].dtype = dtype;				// 0 - UCHAR; 1 - UINT; 2 - string
-	rt_params[i].type = type;
-#ifdef TEST_WRITE_DATA
-	memcpy(peeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
-#else
-    eeprom_update_block(&rt_params[i], eepromString+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset, sizeof(RT_PARAM));
-#endif
-	total_offset += sizeof(RT_PARAM);
-//	printf("total_offset = %d\n",total_offset);
-	i++;
-	return i;
-}
-
 //******************************************************************************************//
 //*************************************** get_keypress *************************************//
 //******************************************************************************************//
@@ -610,18 +657,23 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				break;
 			case 'V':
 			case 'v':
-				mvwprintw(win, display_offset,50," ");
-				wkey = 0xff;
+				mvwprintw(win, display_offset,50,"BURN_PART ");
+				wkey = BURN_PART;
 				break;
 			case 'R':
 			case 'r':
-				mvwprintw(win, display_offset,50,"");
-				wkey = 0xff;
+				mvwprintw(win, display_offset,50,"SHOW_MENUs");
+				wkey = SHOW_MENU_STRUCT;
 				break;
 			case 'S':
 			case 's':
-				mvwprintw(win, display_offset,50,"");
-				wkey = 0xff;
+				mvwprintw(win, display_offset,50,"SHOW_EEPROM   ");
+				wkey = SHOW_EEPROM;
+				break;
+			case 'L':
+			case 'l':
+				mvwprintw(win, display_offset,50,"LOAD_MENUs   ");
+				wkey = LOAD_MENU_STRUCT;
 				break;
 			case 'T':
 			case 't':
@@ -630,7 +682,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				break;
 			case 'E':
 			case 'e':
-				mvwprintw(win, display_offset,50,"READ_EEPROM ");
+				mvwprintw(win, display_offset,50,"READ_EEPROM   ");
 				wkey = READ_EEPROM;
 				break;
 			case 'P':
@@ -640,7 +692,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				break;
 			case 'X':
 			case 'x':
-				mvwprintw(win, display_offset,50,"BURN_EEPROM ");
+				mvwprintw(win, display_offset,50,"BURN_EEPROM   ");
 				wkey = BURN_EEPROM;
 				break;
 			case 'I':
@@ -667,15 +719,14 @@ static void print_menu(WINDOW *win)
 	mvwprintw(win, LAST_ROW-11,1,"----------------------------- menu ----------------------------");
 	mvwprintw(win, LAST_ROW-10,1,"0->9, A->D, # and * are the keys on the keypad");
 	mvwprintw(win, LAST_ROW-9,1,"Z/z is a shortcut to '*', Y/y is a shortcut to '*'");
-	mvwprintw(win, LAST_ROW-8,1,"");
-	mvwprintw(win, LAST_ROW-7,1,"");
-	mvwprintw(win, LAST_ROW-6,1,"");
-	mvwprintw(win, LAST_ROW-5,1,"I/i is a shortcut to INIT");
-	mvwprintw(win, LAST_ROW-4,1,"E/e is a shortcut to READ_EEPROM");
-	mvwprintw(win, LAST_ROW-3,1,"X/x is a shortcut to BURN_EEPROM");
-	mvwprintw(win, LAST_ROW-2,1,"");
+	mvwprintw(win, LAST_ROW-8,1,"I/i is a shortcut to INIT");
+	mvwprintw(win, LAST_ROW-7,1,"E/e is a shortcut to READ_EEPROM");
+	mvwprintw(win, LAST_ROW-6,1,"X/x is a shortcut to BURN_EEPROM");
+	mvwprintw(win, LAST_ROW-5,1,"S/s is a shortcut to SHOW_EEPROM");
+	mvwprintw(win, LAST_ROW-4,1,"R/r is a shortcut to SHOW_MENU_STRUCT");
+	mvwprintw(win, LAST_ROW-3,1,"L/l is a shortcut to LOAD_MENU_STRUCT");
+	mvwprintw(win, LAST_ROW-2,1,"V/v is a shortcut to BURN_PART");
 	mvwprintw(win, LAST_ROW-1,1,"<space> = blank screen");
-	mvwprintw(win, LAST_ROW,1,"the '*' key always goes to the previous menu");
 	wrefresh(win);
 
 }

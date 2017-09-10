@@ -186,11 +186,11 @@ static UCHAR menu_change(UCHAR ch)
 // pass in the keypress from the PIC24 keypad and pass out the string of UCHARs
 UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 {
-	int i;
+	int i,j,k;
 	UCHAR ret_char = ch;
 	int res = 0;
 	UCHAR low_byte, high_byte;
-
+	UCHAR t1, t2;
 // warning: str passed when not in simulator is pointing to memory in the PIC24
 //	ppic_data = str;
 
@@ -200,7 +200,6 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			init_list();
 			break;
 		case READ_EEPROM:
-#ifdef TEST_WRITE_DATA
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -216,13 +215,13 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			for(i = start_addr;i < size+start_addr;i++)
 				read(global_fd,&str[i],1);
 
+			goffset = 0;
+			get_label_offsets();
+
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
-#else
-#endif
  			break;
 		case BURN_EEPROM:
-#ifdef TEST_WRITE_DATA
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -241,11 +240,122 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			get_label_offsets();
 
  			send_aux_data = 0;
+ 			read(global_fd,&low_byte,1);
 			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"burn e: ch: %x size: %d st addr: %d %d %d",ret_char,size,start_addr,no_rtparams,no_rt_labels);
-#else
-#endif
+				"burn e: ch: %x size: %d st addr: %d  ",low_byte,size,start_addr);
  			break;
+
+		case BURN_PART:
+			j = k = 0;
+			for(i = 0;i < size;i++)
+				aux_string[i] = *(str + i);
+			for(i = 0;i < size;i++)
+			{
+				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",aux_string[i]);
+				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
+				else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			wrefresh(win);
+
+			res += write(global_fd,&ret_char,1);
+
+			unpack(size,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			read(global_fd, &t1, 1);
+			res += write(global_fd, &low_byte,1);
+			read(global_fd, &t2, 1);
+
+			mvwprintw(win, LAST_ROW_DISP-1,1,
+				"burn part: ch: %x  %x ",t1, t2);
+			wrefresh(win);
+
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			read(global_fd, &t1, 1);
+			res += write(global_fd, &low_byte,1);
+			read(global_fd, &t2, 1);
+
+			mvwprintw(win, LAST_ROW_DISP-2,1,
+				"burn part: ch: %x  %x ",t1, t2);
+			wrefresh(win);
+
+			for(i = 0;i < size;i++)
+			{
+//				write(global_fd,&str[i],1);
+//				aux_string[i] = i;
+				write(global_fd,&aux_string[i],1);
+				read(global_fd,&aux_string[i],1);
+//				usleep(10000);
+			}
+
+			j = k = 0;
+
+			for(i = 0;i < 240;i++)
+			{
+				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"%c",aux_string[i]);
+				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-30, 24+k," ");
+				else mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			wrefresh(win);
+
+// 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
+
+			goffset = 0;
+//			get_label_offsets();
+
+ 			break;
+			case LOAD_MENU_STRUCT:
+				i = 0;
+				total_offset = 0;
+				i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
+			// 1a
+				i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
+			// 1b
+				i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+			// 1c
+				i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+			// 1d
+				i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+			// 1e
+				i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
+			// 2a
+				i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
+			// 2b
+				i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+			// 2c
+				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+			// 2d
+				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+			// 2e
+				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+			// 3a
+				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+			// 3b
+				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+
+				no_menu_structs = i;
+				goffset = 0;
+				no_menu_labels = blank;
+				no_rt_labels = test - rpm;
+				get_label_offsets();
+
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, LAST_ROW_DISP-2,1,"load menu_struct: %d %d   ",no_rt_labels,no_menu_labels);
+#endif
+				break;
+
 #ifdef TEST_WRITE_DATA
  		case SPACE:
 			write(global_fd,&ret_char,1);
@@ -273,6 +383,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	int temp3;
 	char tlabel[MAX_LABEL_LEN];
 	UCHAR low_byte, high_byte;
+	UCHAR code = 0;
 
 	// execute function pointer
 	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
@@ -324,6 +435,20 @@ static UCHAR generic_menu_function(UCHAR ch)
 	write(global_fd, &low_byte,1);
 	for(i = 0;i < send_aux_data;i++)
 		write(global_fd,&aux_string[i],1);
+
+	// if code gets read back as an 0xAA, then that means we are
+	// running this simulator hooked up to the AVR
+	// (show everthing is working if no LCD screen is attached)
+	read(global_fd,&code,1);
+	if(code == 0xAA)
+	{
+		for(i = 0;i < 6;i++)
+		{
+			read(global_fd,&code,1);
+			mvwprintw(win, DISP_OFFSET+3,2+(i * 3),"%d ",code);
+		}
+	}
+
 /*
 	unpack(aux_data_offset,&low_byte,&high_byte);
 	write(global_fd, &high_byte,1);
