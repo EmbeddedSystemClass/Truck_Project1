@@ -64,6 +64,8 @@ static UCHAR get_fptr(void);
 static void get_fptr_label(char *str);
 static int get_curr_menu_index(void);
 
+UCHAR taux_string[AUX_STRING_LEN];
+
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 //******************************************************************************************//
 //******************************************************************************************//
@@ -221,34 +223,14 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
  			break;
-		case BURN_EEPROM:
-			res += write(global_fd,&ret_char,1);
-
-			unpack(size,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-
-			unpack(start_addr,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-
-			for(i = start_addr;i < size+start_addr;i++)
-				write(global_fd,&str[i],1);
-
-// 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
-			goffset = 0;
-			get_label_offsets();
-
- 			send_aux_data = 0;
- 			read(global_fd,&low_byte,1);
-			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"burn e: ch: %x size: %d st addr: %d  ",low_byte,size,start_addr);
- 			break;
 
 		case BURN_PART:
+			memset(taux_string,0,AUX_STRING_LEN);
 			j = k = 0;
-			for(i = 0;i < size;i++)
-				aux_string[i] = *(str + i);
+			for(i = start_addr;i < size+start_addr;i++)
+				aux_string[j++] = *(str + i);
+			j = 0;
+				
 			for(i = 0;i < size;i++)
 			{
 				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
@@ -263,6 +245,10 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			}
 			wrefresh(win);
 
+			mvwprintw(win, LAST_ROW_DISP-3,1,
+				"size: %d  start_addr: %d  ",size,start_addr);
+			wrefresh(win);
+
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -271,9 +257,9 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			res += write(global_fd, &low_byte,1);
 			read(global_fd, &t2, 1);
 
-			mvwprintw(win, LAST_ROW_DISP-1,1,
-				"burn part: ch: %x  %x ",t1, t2);
-			wrefresh(win);
+//			mvwprintw(win, LAST_ROW_DISP-2,1,
+//				"burn part size:       %x  %x  %x  %x",t1, t2,high_byte,low_byte);
+//			wrefresh(win);
 
 			unpack(start_addr,&low_byte,&high_byte);
 			res += write(global_fd, &high_byte,1);
@@ -281,26 +267,26 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			res += write(global_fd, &low_byte,1);
 			read(global_fd, &t2, 1);
 
-			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"burn part: ch: %x  %x ",t1, t2);
-			wrefresh(win);
+//			mvwprintw(win, LAST_ROW_DISP-1,1,
+//				"burn part start_addr: %x  %x  %x  %x",t1, t2,high_byte,low_byte);
+//			wrefresh(win);
 
 			for(i = 0;i < size;i++)
 			{
 //				write(global_fd,&str[i],1);
 //				aux_string[i] = i;
 				write(global_fd,&aux_string[i],1);
-				read(global_fd,&aux_string[i],1);
+				read(global_fd,&taux_string[i],1);
 //				usleep(10000);
 			}
 
 			j = k = 0;
 
-			for(i = 0;i < 240;i++)
+			for(i = start_addr;i < size+start_addr;i++)
 			{
-				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
-					mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"%c",aux_string[i]);
-				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-30, 24+k," ");
+				if(taux_string[i] < 0x7e && taux_string[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"%c",taux_string[i]);
+				else if(taux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-30, 24+k," ");
 				else mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"_");
 				if(++k > 30)
 				{

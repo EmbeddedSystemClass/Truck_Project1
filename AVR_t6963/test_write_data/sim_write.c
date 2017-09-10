@@ -198,58 +198,27 @@ int main(int argc, char *argv[])
 					}
 #endif
 					break;
-				case BURN_EEPROM:
-					size = EEPROM_SIZE;
-					start_addr = 0;
-//					start_addr = EEPROM_SIZE/2;
-//					start_addr = menu_offset;
-//					size = rt_params_offset - menu_offset;
-					strcpy(filename,"eeprom.bin\0");
-					if(access(filename,F_OK) != -1)
+				case BURN_PART1:
+				case BURN_PART2:
+				case BURN_PART3:
+					switch(wkey)
 					{
-						fp = open((const char *)filename, O_RDWR);
-						if(fp < 0)
-						{
-							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
-							wrefresh(win);
-							getch();
-						}else
-						{
-							res = 0;
-							lseek(fp,0,SEEK_SET);
-//							for(i = start_addr;i < size;i++)
-							res = read(fp,eeprom_sim,size);
-							close(fp);
-							mvwprintw(win, LAST_ROW_DISP,2,"reading file into eeprom_sim: %d   ",res);
-							j = k = 0;
-							for(i = 0;i < EEPROM_SIZE;i++)
-							{
-								if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-									mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
-								else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
-								else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
-								if(++k > 30)
-								{
-									k = 0;
-									++j;
-								}
-							}
-						}
-					}else
-					{
-						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
-						burn_eeprom();
+						case BURN_PART1:
+						size = 234;
+						start_addr = 0;
+						break;
+						case BURN_PART2:
+//						size = sizeof(RT_PARAM)*no_rtparams;
+						size = sizeof(RT_PARAM)*10;
+						start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
+						break;
+						case BURN_PART3:
+						size = NO_MENUS_EEPROM_LOCATION-NO_MENU_LABELS_EEPROM_LOCATION;
+						start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
+						break;
+						default:
+						break;
 					}
-					get_key(wkey,size,start_addr,peeprom_sim,type);
-//					for(i = start_addr;i < size+start_addr;i++)
-//						write(global_fd,&eeprom_sim[i],1);
-					goffset = 0;
-					get_label_offsets();
-
-					break;
-				case BURN_PART:
-					size = 234;
-					start_addr = 0;
 					strcpy(filename,"eeprom.bin\0");
 					mvwprintw(win, LAST_ROW_DISP,2,"starting burn part   ");
 					if(access(filename,F_OK) != -1)
@@ -267,7 +236,7 @@ int main(int argc, char *argv[])
 //							for(i = start_addr;i < size;i++)
 							res = read(fp,eeprom_sim,EEPROM_SIZE);
 							close(fp);
-							mvwprintw(win, LAST_ROW_DISP,2,"reading part into eeprom_sim: %d   ",res);
+							mvwprintw(win, LAST_ROW_DISP,2,"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
 							j = k = 0;
 						}
 					}else
@@ -275,14 +244,21 @@ int main(int argc, char *argv[])
 						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
 						burn_eeprom();
 					}
-					get_key(wkey,size,start_addr,peeprom_sim,type);
+//					peeprom_sim = eeprom_sim + RT_PARAMS_OFFSET_EEPROM_LOCATION;
+//					peeprom_sim = eeprom_sim + 0x120;
+					key = BURN_PART;
+					get_key(key,size,start_addr,peeprom_sim,type);
 
 //					for(i = start_addr;i < size+start_addr;i++)
 //						write(global_fd,&eeprom_sim[i],1);
-					goffset = 0;
-					get_label_offsets();
+					if(wkey == BURN_PART1)
+					{
+						goffset = 0;
+						get_label_offsets();
+					}
 
 					break;
+
 				case SHOW_EEPROM:
 					for(i = 1;i < LAST_ROW+1;i++)
 						mvwprintw(win, i,2,"                                                            ");
@@ -650,15 +626,20 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				mvwprintw(win, display_offset,50, "ast     ");
 				wkey = KP_AST;
 				break;
-			case 'U':
-			case 'u':
-				mvwprintw(win, display_offset,50,"");
-				wkey = 0xff;
-				break;
 			case 'V':
 			case 'v':
-				mvwprintw(win, display_offset,50,"BURN_PART ");
-				wkey = BURN_PART;
+				mvwprintw(win, display_offset,50,"BURN_PART1 ");
+				wkey = BURN_PART1;
+				break;
+			case 'W':
+			case 'w':
+				mvwprintw(win, display_offset,50,"BURN_PART2 ");
+				wkey = BURN_PART2;
+				break;
+			case 'U':
+			case 'u':
+				mvwprintw(win, display_offset,50,"BURN_PART3 ");
+				wkey = BURN_PART3;
 				break;
 			case 'R':
 			case 'r':
@@ -690,11 +671,6 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 				mvwprintw(win, display_offset,50," ");
 				wkey = 0xff;
 				break;
-			case 'X':
-			case 'x':
-				mvwprintw(win, display_offset,50,"BURN_EEPROM   ");
-				wkey = BURN_EEPROM;
-				break;
 			case 'I':
 			case 'i':
 				mvwprintw(win, display_offset,50,"INIT        ");
@@ -716,16 +692,15 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 static void print_menu(WINDOW *win)
 {
 //	mvwprintw(win, LAST_ROW-6,LAST_COL,"*");
-	mvwprintw(win, LAST_ROW-11,1,"----------------------------- menu ----------------------------");
-	mvwprintw(win, LAST_ROW-10,1,"0->9, A->D, # and * are the keys on the keypad");
-	mvwprintw(win, LAST_ROW-9,1,"Z/z is a shortcut to '*', Y/y is a shortcut to '*'");
-	mvwprintw(win, LAST_ROW-8,1,"I/i is a shortcut to INIT");
-	mvwprintw(win, LAST_ROW-7,1,"E/e is a shortcut to READ_EEPROM");
-	mvwprintw(win, LAST_ROW-6,1,"X/x is a shortcut to BURN_EEPROM");
-	mvwprintw(win, LAST_ROW-5,1,"S/s is a shortcut to SHOW_EEPROM");
-	mvwprintw(win, LAST_ROW-4,1,"R/r is a shortcut to SHOW_MENU_STRUCT");
-	mvwprintw(win, LAST_ROW-3,1,"L/l is a shortcut to LOAD_MENU_STRUCT");
-	mvwprintw(win, LAST_ROW-2,1,"V/v is a shortcut to BURN_PART");
+	mvwprintw(win, LAST_ROW-10,1,"----------------------------- menu ----------------------------");
+	mvwprintw(win, LAST_ROW-9,1,"I/i is a shortcut to INIT");
+	mvwprintw(win, LAST_ROW-8,1,"E/e is a shortcut to READ_EEPROM");
+	mvwprintw(win, LAST_ROW-7,1,"S/s is a shortcut to SHOW_EEPROM");
+	mvwprintw(win, LAST_ROW-6,1,"R/r is a shortcut to SHOW_MENU_STRUCT");
+	mvwprintw(win, LAST_ROW-5,1,"L/l is a shortcut to LOAD_MENU_STRUCT");
+	mvwprintw(win, LAST_ROW-4,1,"V/v is a shortcut to BURN_PART1");
+	mvwprintw(win, LAST_ROW-3,1,"W/w is a shortcut to BURN_PART2");
+	mvwprintw(win, LAST_ROW-2,1,"U/u is a shortcut to BURN_PART3");
 	mvwprintw(win, LAST_ROW-1,1,"<space> = blank screen");
 	wrefresh(win);
 

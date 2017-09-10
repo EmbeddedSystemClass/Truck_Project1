@@ -240,74 +240,7 @@ UCHAR read_get_key(UCHAR key)
 			goffset = 0;
 			get_label_offsets();
 			break;
-		case BURN_EEPROM:
-#ifdef TEST_WRITE_DATA
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			size = pack(low_byte,high_byte);
-
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			start_addr = pack(low_byte,high_byte);
-
-			for(i = start_addr;i < size+start_addr;i++)
-				res2 += read(global_fd,&eeprom_sim[i],1);
-
-			low_byte = 0x55;
-			write(global_fd,&low_byte,1);
-
-			mvwprintw(win, LAST_ROW-2,1,
-				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
-
-			k = j = 0;
-			for(i = 1;i < LAST_ROW+1;i++)
-				mvwprintw(win, i,2,"                                                            ");
-
-			for(i = 0;i < EEPROM_SIZE;i++)
-			{
-				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-					mvwprintw(win, LAST_ROW+j-40, 2+k,"%c",eeprom_sim[i]);
-				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
-				else mvwprintw(win, LAST_ROW+j-40, 2+k,"_");
-				if(++k > 30)
-				{
-					k = 0;
-					++j;
-				}
-			}
-			k = 0;
-			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
-			{
-				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
-			}
-
-			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
-
-#else
-			high_byte = receiveByte();
-			low_byte = receiveByte();
-			size = pack(low_byte,high_byte);
-
-			high_byte = receiveByte();
-			low_byte = receiveByte();
-			start_addr = pack(low_byte,high_byte);
-
-			for(i = start_addr;i < size+start_addr;i++)
-			{
-				recByte = receiveByte();
-				if(recByte != 0)
-					eeprom_update_byte((UCHAR*)(eepromString+i),recByte);
-//				transmitByte(eeprom_read_byte(eepromString+i));
-			}
-			low_byte = 0x55;
-			transmitByte(low_byte);
-#endif
-			goffset = 0;
-			get_label_offsets();
-
-			break;
+			
 		case BURN_PART:
 #ifdef TEST_WRITE_DATA
 			read(global_fd,&high_byte,1);
@@ -355,7 +288,7 @@ UCHAR read_get_key(UCHAR key)
 //			transmitByte(low_byte);
 //			_delay_ms(1);
 
-			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString,(size_t)size);
+			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 
 #endif
 			goffset = 0;
@@ -517,7 +450,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		}
 	}
 #endif
-	if(ret_char != READ_EEPROM && ret_char != BURN_EEPROM)
+	if(ret_char != READ_EEPROM)
 	{
 		for(i = 0;i < AUX_STRING_LEN/3;i++)
 		{

@@ -155,12 +155,14 @@ enum key_types
 	KP_D, // 'D'	- EF
 	INIT, //		- F0
 	READ_EEPROM,//	- F1
-	BURN_EEPROM,//	- F2
-	SPACE,	//		- F3
-	SHOW_EEPROM, //	- F4
-	SHOW_MENU_STRUCT, //- F5
-	LOAD_MENU_STRUCT, // - F6
-	BURN_PART		// - F7
+	SPACE,	//		- F2
+	SHOW_EEPROM, //	- F3
+	SHOW_MENU_STRUCT, //- F4
+	LOAD_MENU_STRUCT, // - F5
+	BURN_PART,		// - F6
+	BURN_PART1,		// - F7
+	BURN_PART2,		// - F8
+	BURN_PART3		// - F9
 } KEY_TYPES;
 
 enum non_func_types
