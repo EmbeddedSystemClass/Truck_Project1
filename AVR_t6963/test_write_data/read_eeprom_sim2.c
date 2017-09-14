@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 			res = read(fp,eeprom_sim,EEPROM_SIZE);
 		}
 	}else
-	{			
+	{
 		strcpy(filename,argv[1]);
 		fp = open((const char *)filename, O_RDWR);
 		if(fp < 0)
@@ -143,13 +143,13 @@ int main(int argc, char *argv[])
 		{
 			sprintf(fpc,"0x%x, ",eeprom_sim[i]);
 			write(fp,&fpc[0],5);
-		}	
+		}
 		else
 		{
 			sprintf(fpc,"0x%2x, ",eeprom_sim[i]);
 			write(fp,&fpc[0],6);
 		}
-#endif		
+#endif
 	}
 	close(fp);
 

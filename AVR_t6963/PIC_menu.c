@@ -230,7 +230,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			for(i = start_addr;i < size+start_addr;i++)
 				aux_string[j++] = *(str + i);
 			j = 0;
-				
+
 			for(i = 0;i < size;i++)
 			{
 				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)

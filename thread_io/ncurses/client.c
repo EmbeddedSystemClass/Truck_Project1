@@ -109,7 +109,7 @@ int init_client(void)
 
 // so just use '6' (if this is compiled for TS-7200) as the tcp protocol number
 //	global_socket = socket (PF_INET, SOCK_STREAM, 6);
-	
+
 	 if (global_socket < 0)
 	 {
 		fprintf(stderr, "socket creation failed\n");
@@ -201,7 +201,7 @@ int main(void)
 	memset(errmsg,0,20);
 
 	rc = init_client();
-	
+
 	if(test_sock() == 0)
 	{
 		printf("trying to open socket...\n");

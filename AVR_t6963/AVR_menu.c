@@ -240,7 +240,7 @@ UCHAR read_get_key(UCHAR key)
 			goffset = 0;
 			get_label_offsets();
 			break;
-			
+
 		case BURN_PART:
 #ifdef TEST_WRITE_DATA
 			read(global_fd,&high_byte,1);
@@ -288,7 +288,7 @@ UCHAR read_get_key(UCHAR key)
 //			transmitByte(low_byte);
 //			_delay_ms(1);
 
-			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
+//			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 
 #endif
 			goffset = 0;

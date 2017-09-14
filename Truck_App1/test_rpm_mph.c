@@ -142,11 +142,11 @@ int main (void)
 	CONFIG_RB14_AS_ANALOG();
 	CONFIG_RB13_AS_ANALOG();
 	CONFIG_RB12_AS_ANALOG();
-*/ 
+*/
 	CONFIG_LED1();
 	CONFIG_LED2();
 	printf("starting program\n");
-/*	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN4 |    \ 
+/*	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN4 |    \
 		ADC_SCAN_AN5 | ADC_SCAN_AN10 | ADC_SCAN_AN11 | ADC_SCAN_AN12,
 		31, ADC_12BIT_FLAG);
 */
@@ -265,8 +265,8 @@ int main (void)
 					res3 |= res4;
 					printf("  %4d ", res3);
 					break;
-						
-			}	
+
+			}
 
 		}
 		printf("\t");

@@ -38,9 +38,10 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 
 int pack(UCHAR low_byte, UCHAR high_byte);
 void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte);
-//extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
+int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+			UCHAR menu4, UCHAR menu5, UCHAR index);
 
-// size can't be > 255 for now
+//extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
 
 enum data_types
 {
@@ -69,54 +70,6 @@ enum shown_types
 	NOSHOWN_SENT,
 	NOSHOWN_NOSENT
 } SHOWN_TYPES;
-
-enum menu_types
-{
-	MAIN,		// 0
-	MENU1A,		// 1
-	MENU1B,		// 2
-	MENU1C,		// 3
-	MENU1D,		// 4
-	MENU1E,		// 5
-	MENU2A,		// 6
-	MENU2B,		// 7
-	MENU2C,		// 8
-	MENU2D,		// 9
-	MENU2E,		// 10
-	MENU3A,		// 11
-	MENU3B,		// 12
-
-	ckenter,	// 13
-	ckup,		// 14
-	ckdown,		// 15
-	cktoggle,	// 16
-	ckesc,		// 17
-
-	entr,		// 18
-	forward,	// 19
-	back,		// 20
-	eclear,		// 21
-	esc,		// 22
-
-	caps,		// 23
-	small,		// 24
-	spec,		// 25
-	next,		// 26
-
-	blank,		// 27
-	rpm,
-	engt,
-	trip,
-	time,
-	airt,
-	mph,
-	oilp,
-	map,
-	oilt,
-	o2,
-	test
-} MENU_TYPES;
-
 
 enum key_types
 {
@@ -176,6 +129,74 @@ enum rt_types
 	RT_OILT,
 	RT_O2,
 } RT_TYPES;
+
+enum menu_types
+{
+	MAIN,		// 0
+	MENU1A,		// 1
+	MENU1B,		// 2
+	MENU1C,		// 3
+	MENU1D,		// 4
+	MENU1E,		// 5
+	MENU2A,		// 6
+	MENU2B,		// 7
+	MENU2C,		// 8
+	MENU2D,		// 9
+	MENU2E,		// 10
+	MENU3A,		// 11
+	MENU3B,		// 12
+
+	ckenter,	// 13
+	ckup,		// 14
+	ckdown,		// 15
+	cktoggle,	// 16
+	ckesc,		// 17
+
+	entr,		// 18
+	forward,	// 19
+	back,		// 20
+	eclear,		// 21
+	esc,		// 22
+
+	caps,		// 23
+	small,		// 24
+	spec,		// 25
+	next,		// 26
+
+	blank,		// 27
+	rpm,
+	engt,
+	trip,
+	time,
+	airt,
+	mph,
+	oilp,
+	map,
+	oilt,
+	o2,
+	test
+} MENU_TYPES;
+
+enum fptr_types
+{
+	_menu_change,
+	_exec_choice,
+	_do_chkbox,
+	_non_func,
+	_do_numentry
+} FPTR_TYPES;
+
+#define NUM_MENUS 13
+
+typedef struct menu_func
+{
+//	int _index;
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;
+} MENU_FUNC_STRUCT;
+
+MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
 
 volatile uint8_t row;
 volatile uint8_t cmd;
@@ -341,7 +362,7 @@ void setOneRowLow(uint8_t u8_x)
 			R2 = 1;
 			R3 = 1;
 			break;
-		case 2:	
+		case 2:
 			R0 = 1;
 			R1 = 1;
 			R2 = 0;
@@ -402,7 +423,7 @@ ESOS_USER_TASK(keypad)
 {
 
     ESOS_TASK_BEGIN();
-	
+
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -572,10 +593,10 @@ ESOS_USER_TASK(echo_spi_task)
 //#endif
 
 
-	data1 = 0x21;		
+	data1 = 0x21;
     while(TRUE)
 	{
-			
+
 //		ESOS_TASK_WAIT_TICKS(TDELAY2);
 //#if 0
 		for(i = 0;i < 24;i++)
@@ -585,7 +606,7 @@ ESOS_USER_TASK(echo_spi_task)
 			ESOS_TASK_WAIT_ON_READ1SPI1(data1);
 			ESOS_TASK_WAIT_ON_WRITE1SPI1(cmd);
 			ESOS_TASK_SIGNAL_AVAILABLE_SPI();
-			
+
 			if(res_array[i] != data1)
 			{
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
@@ -666,7 +687,7 @@ ESOS_USER_TASK(echo_spi_task)
 					res4 &= 0xff00;
 					res3 |= res4;
 					break;
-				case 15:	
+				case 15:
 					ESOS_TASK_WAIT_ON_SEND_STRING(rpm_disp);
 					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
 					ESOS_TASK_WAIT_ON_SEND_STRING(mph_disp);
@@ -678,7 +699,7 @@ ESOS_USER_TASK(echo_spi_task)
 					ESOS_TASK_WAIT_ON_SEND_STRING(res2);
 					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
 					break;
-			}	
+			}
 #endif
 		}
     }
@@ -775,5 +796,26 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
 	*low_byte = ~(*low_byte);
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
+			UCHAR menu4, UCHAR menu5, UCHAR index)
+{
+	int len;
+	len = sizeof(MENU_FUNC_STRUCT);
+	menu_structs[i].menus[0] = menu0;
+	menu_structs[i].menus[1] = menu1;
+	menu_structs[i].menus[2] = menu2;
+	menu_structs[i].menus[3] = menu3;
+	menu_structs[i].menus[4] = menu4;
+	menu_structs[i].menus[5] = menu5;
+	menu_structs[i].fptr = fptr;
+	menu_structs[i].index = index;
+
+//	total_offset += len;
+	i++;
+	return i;
 }
 

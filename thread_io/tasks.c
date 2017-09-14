@@ -215,7 +215,7 @@ UCHAR task1(int test)
 						break;
 					case CLOSE_SOCKET:
 						close_tcp();
-						break;								
+						break;
 					default:
 						break;
 				}	// end of switch
@@ -283,7 +283,7 @@ UCHAR task2(int test)
 			for(bit = 0;bit < actual_bit;bit++)
 			{
 				result2 = result & mask;
-				
+
 				if(result2 != 0)
 				{
 					if(inportstatus[bank] & mask)
@@ -363,7 +363,7 @@ UCHAR task4(int test)
 			usleep(TIME_DELAY);
 		}else
 		{
-			
+
 //			rc = recv_tcp(&test1,1,1);
 //			printf("%c",test1);
 			rc = send_tcp(&test2,1);
@@ -392,7 +392,7 @@ UCHAR task3(int test)
 //			SendByte(0x0d);
 			test2 = 0x21;
 //			usleep(TIME_DELAY*10);
-		}	
+		}
 	}
 //	printf("%c",test1);
 	return test + 3;
@@ -486,7 +486,7 @@ UCHAR task6(int test)
 	int		alen;							/* length of address */
 	port = PROTOPORT;
 	sock_open = 0;
-	
+
 	memset((char  *)&sad,0,sizeof(sad));	/* clear sockaddr structure   */
 	sad.sin_family = AF_INET;				/* set family to Internet     */
 	sad.sin_addr.s_addr = INADDR_ANY;		/* set the local IP address */
@@ -778,13 +778,13 @@ UCHAR task3(int test)
 			case 5:
 				OutPortF(onoff,mask2);
 				break;
-		}		
+		}
 		if(++mask > 8)
 		{
 			if(++bank > 5)
 				bank = 0;
 			mask = 1;
-		}	
+		}
 		mask2 = (UCHAR)mask;
 
 		if(test < 2)

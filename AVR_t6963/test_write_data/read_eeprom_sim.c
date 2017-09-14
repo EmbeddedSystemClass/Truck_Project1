@@ -109,13 +109,13 @@ int main(int argc, char *argv[])
 		{
 			sprintf(fpc,"0x%x, ",eeprom_sim[i]);
 			write(fp,&fpc[0],5);
-		}	
+		}
 		else
 		{
 			sprintf(fpc,"0x%2x, ",eeprom_sim[i]);
 			write(fp,&fpc[0],6);
 		}
-#endif		
+#endif
 	}
 	close(fp);
 

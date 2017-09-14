@@ -74,10 +74,10 @@ ESOS_USER_TASK(data_to_AVR)
 ESOS_USER_TASK(comm2_task)
 {
 	uint8_t key1;
-    
+
 //    int i, size, start_addr;
 //    static int once = 1;
-    
+
     ESOS_TASK_BEGIN();
 
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
@@ -150,7 +150,7 @@ ESOS_USER_TASK(comm2_task)
 				default:
 				break;
 			}
-#endif			
+#endif
 		}
 
 	}
@@ -168,7 +168,7 @@ ESOS_USER_TASK(comm1_task)
     static int i,j,k, size, start_addr, type;
     UCHAR high_byte, low_byte;
 
-    
+
     ESOS_TASK_BEGIN();
 
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
@@ -202,6 +202,23 @@ ESOS_USER_TASK(comm1_task)
 				case KP_D:
 					ret_key = BURN_PART4;
 					break;
+				case KP_AST:
+					i = 0;
+					i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
+					i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
+					i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+					i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+					i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+					i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
+					i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
+					i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+					ret_key = data1;
+					break;					
 				default:
 					ret_key = 0;
 					break;
@@ -243,7 +260,10 @@ ESOS_USER_TASK(comm1_task)
 				case BURN_PART4:		// test section starting at 0x0140 (14 chars like: my name)
 				size = 14;
 				start_addr = 0x140;
+				break;
 				default:
+				size = 0;
+				start_addr = 0;
 				break;
 			}
 			if(ret_key == BURN_PART1)
@@ -275,27 +295,41 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-//				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 				for(i = 0;i < sizeof(RT_PARAM)*NUM_RT_PARAMS;i++)
 				{
-//					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-//					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-//					ESOS_TASK_WAIT_TICKS(1);
+				}
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			}
+			if(ret_key == KP_AST)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				
+				for(i = 0;i < NUM_MENUS;i++)
+				{
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].fptr);
+					for(j = 0;j < 6;j++)
+						ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].menus[j]);
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].index);
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 				}
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 			}
 
-/*
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size>>8);
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(size>>8));
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+
 #if 0
 	// write the key char
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
@@ -361,7 +395,7 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-				
+
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 				ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
@@ -369,9 +403,9 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-				
+
 			}
-#endif					
+#endif
 			ESOS_TASK_WAIT_TICKS(10);
 		}	// end while got mail
 	}	// end while true
