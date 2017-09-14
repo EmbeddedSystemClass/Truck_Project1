@@ -14,7 +14,7 @@ LDFLAGS = ${GNULDFLAGS}
 #SFLAGS = ${GNUSFLAGS}
 SFLAGS = -DDEBUG
 
-all: show_eeprom
+all: show_eeprom show_eeprom2
 
 PIC_menu.o : ../PIC_menu.c ../pic_main.h ../main.h
 	${CC} -c ${CFLAGS} ${SFLAGS} -o PIC_menu.o ../PIC_menu.c
@@ -31,7 +31,10 @@ supp.o : ../supp.c
 show_eeprom : PIC_menu.o read_eeprom_sim.o supp.o 
 	${CC} ${CFLAGS} read_eeprom_sim.o PIC_menu.o supp.o -o show_eeprom -lcurses
 	
+show_eeprom2 : PIC_menu.o read_eeprom_sim2.o supp.o 
+	${CC} ${CFLAGS} read_eeprom_sim2.o PIC_menu.o supp.o -o show_eeprom2 -lcurses
+	
 clean :
 	rm -f *.o *~ *# core  a.out \
-	show_eeprom
+	show_eeprom show_eeprom2
 

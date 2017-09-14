@@ -44,10 +44,44 @@ int main(int argc, char *argv[])
 	peeprom_sim = eeprom_sim;
 	char filename[20];
 	char fpc[10];
-
-	burn_eeprom();
+	int res, size, start_addr;
 
 	// reserve an extra sample_data space for in case of 'escape'
+
+	printf("argc: %d\n",argc);
+	printf("argv: %s\n",argv[1]);
+
+	if(argc < 2)
+	{
+		strcpy(filename,"eeprom.bin\0");
+		if(access(filename,F_OK) != -1)
+		{
+			fp = open((const char *)filename, O_RDWR);
+			if(fp < 0)
+			{
+				printf("can't open eeprom.bin for reading\n");
+				exit(1);
+			}
+			res = 0;
+			lseek(fp,0,SEEK_SET);
+			res = read(fp,eeprom_sim,EEPROM_SIZE);
+		}
+	}else
+	{			
+		strcpy(filename,argv[1]);
+		fp = open((const char *)filename, O_RDWR);
+		if(fp < 0)
+		{
+			printf("can't open %s for reading\n",argv[1]);
+			exit(1);
+		}
+		res = 0;
+		lseek(fp,0,SEEK_SET);
+		res = read(fp,eeprom_sim,EEPROM_SIZE);
+		close(fp);
+		printf("reading part into eeprom_sim: %d %d %d  \n",res,size,start_addr);
+	}
+	j = k = 0;
 
 	initscr();			/* Start curses mode 		*/
 	clear();
@@ -70,7 +104,7 @@ int main(int argc, char *argv[])
 	goffset = 0;
 	get_label_offsets();
 //#if 0
-	mvwprintw(win, display_offset,2,"test  ");
+	mvwprintw(win, 2,2,"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
 	wrefresh(win);
 	getch();
 //	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
@@ -231,136 +265,4 @@ int main(int argc, char *argv[])
 	endwin();
 	exit(1);
 }
-//******************************************************************************************//
-//***************************************** burn_eeprom ************************************//
-//******************************************************************************************//
-int burn_eeprom(void)
-{
-	int i;
-	no_rt_labels = 0;
-	no_menu_labels = 0;
-	no_rtparams = 0;
-	total_offset = 0;
-	char temp[MAX_LABEL_LEN];
 
-    memset(eeprom_sim,0,EEPROM_SIZE);
-
-
-    i = 0;
-	i = update_labels2(i,"home\0");
-	i = update_labels2(i,"MENU1a\0");
-	i = update_labels2(i,"MENU1b\0");
-	i = update_labels2(i,"MENU1c\0");
-	i = update_labels2(i,"MENU1d\0");
-	i = update_labels2(i,"MENU1e\0");
-	i = update_labels2(i,"MENU2a\0");
-	i = update_labels2(i,"MENU2B\0");
-	i = update_labels2(i,"MENU2c\0");
-	i = update_labels2(i,"MENU2d\0");
-	i = update_labels2(i,"MENU2e\0");
-	i = update_labels2(i,"MENU3a\0");
-	i = update_labels2(i,"MENU3b\0");
-
-	i = update_labels2(i,"enter\0");
-	i = update_labels2(i,"up\0");
-	i = update_labels2(i,"down\0");
-	i = update_labels2(i,"toggle\0");
-	i = update_labels2(i,"esc\0");
-
-	i = update_labels2(i,"enter\0");
-	i = update_labels2(i,"forward\0");
-	i = update_labels2(i,"back\0");
-	i = update_labels2(i,"clear\0");
-	i = update_labels2(i,"escape\0");
-
-	i = update_labels2(i,"caps\0");
-	i = update_labels2(i,"small\0");
-	i = update_labels2(i,"spec\0");
-	i = update_labels2(i,"next\0");
-
-	i = update_labels2(i,"\0");
-	menu_offset = total_offset;
-	no_menu_labels = i;
-
-	i = update_labels2(i,"RPM\0");
-	i = update_labels2(i,"ENG TEMP\0");
-	i = update_labels2(i,"TRIP\0");
-	i = update_labels2(i,"TIME\0");
-	i = update_labels2(i,"AIR TEMP\0");
-	i = update_labels2(i,"MPH\0");
-	i = update_labels2(i,"OIL PRES\0");
-	i = update_labels2(i,"MAP\0");
-	i = update_labels2(i,"OIL TEMP\0");
-	i = update_labels2(i,"O2\0");
-	i = update_labels2(i,"test\0");
-	no_rt_labels = i - no_menu_labels;
-//	choice_offset = i;
-	rt_params_offset = total_offset;
-	i = 0;
-
-	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
-	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
-	total_offset = 0;
-
-	i = update_rtparams(i, 1, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
-	i = update_rtparams(i, 2, 0, SHOWN_SENT, 0, RT_ENGT);
-	i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
-	i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_TIME);
-	i = update_rtparams(i, 5, 0, SHOWN_SENT, 0, RT_AIRT);
-	i = update_rtparams(i, 1, 15, SHOWN_SENT, 0, RT_MPH);
-	i = update_rtparams(i, 2, 15, SHOWN_SENT, 0, RT_OILP);
-	i = update_rtparams(i, 3, 15, SHOWN_SENT, 0, RT_MAP);
-	i = update_rtparams(i, 4, 15, SHOWN_SENT, 0, RT_OILT);
-	i = update_rtparams(i, 5, 15, SHOWN_SENT, 0, RT_O2);
-
-	no_rtparams = i;
-// write to the number of rt_params location in eeprom the number of rt_params
-	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));
-
-	i = 0;
-	total_offset = 0;
-//												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
-// 1a
-	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
-// 1b
-	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-// 1c
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-// 1d
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-// 1e
-	i = update_menu_structs(i, _non_func,		blank, blank, blank,   blank, blank, blank, MENU1E);
-// 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-// 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
-// 2c
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-// 2d
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
-// 2e
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-// 3a
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-// 3b
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
-
-	no_menu_structs = i;
-	return 0;
-}
-static int update_labels2(int index, char *ramstr)
-{
-	int len;
-
-
-	len = strlen(ramstr);
-	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
-	len++;
-
-	memcpy(peeprom_sim+total_offset,ramstr, len);
-
-	total_offset += len;
-	index++;
-	return index;
-}

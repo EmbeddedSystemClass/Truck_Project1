@@ -1,3 +1,7 @@
+//
+// "I am not so much concerned with the return on capital as I am with the return of capital." - Will Rogers
+//
+
 #include "../esos/include/esos.h"
 #include "../esos/include/pic24/esos_pic24.h"
 #include "../esos/include/pic24/esos_pic24_rs232.h"
@@ -22,9 +26,19 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
-#define AVR_SEND_DATA_SIZE 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
+//#define AVR_SEND_DATA_SIZE 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
+#define AVR_SEND_DATA_SIZE 300
+#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
+#define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
+#define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
+#define NO_MENUS_EEPROM_LOCATION 0x3ea
+#define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
+#define MAX_LABEL_LEN 10
+#define RT_OFFSET 0x70
 
-extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
+int pack(UCHAR low_byte, UCHAR high_byte);
+void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte);
+//extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
 
 // size can't be > 255 for now
 
@@ -37,11 +51,73 @@ enum data_types
 	RT_HIGH3			// bit 15 of UINT set
 } DATA_TYPES;
 
-#define NUM_RT_PARAMS 12
-
 // warning: these are also defined in the AVR directory
 // got mult defined errors if enums have the same names
 // but got undefined errors if left out ???
+typedef struct rt_params
+{
+	UCHAR row;			// row, col tells where the param will appear on screen
+	UCHAR col;
+	UCHAR shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
+	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
+	UCHAR type;			// rt_types
+} RT_PARAM;
+
+enum shown_types
+{
+	SHOWN_SENT,
+	NOSHOWN_SENT,
+	NOSHOWN_NOSENT
+} SHOWN_TYPES;
+
+enum menu_types
+{
+	MAIN,		// 0
+	MENU1A,		// 1
+	MENU1B,		// 2
+	MENU1C,		// 3
+	MENU1D,		// 4
+	MENU1E,		// 5
+	MENU2A,		// 6
+	MENU2B,		// 7
+	MENU2C,		// 8
+	MENU2D,		// 9
+	MENU2E,		// 10
+	MENU3A,		// 11
+	MENU3B,		// 12
+
+	ckenter,	// 13
+	ckup,		// 14
+	ckdown,		// 15
+	cktoggle,	// 16
+	ckesc,		// 17
+
+	entr,		// 18
+	forward,	// 19
+	back,		// 20
+	eclear,		// 21
+	esc,		// 22
+
+	caps,		// 23
+	small,		// 24
+	spec,		// 25
+	next,		// 26
+
+	blank,		// 27
+	rpm,
+	engt,
+	trip,
+	time,
+	airt,
+	mph,
+	oilp,
+	map,
+	oilt,
+	o2,
+	test
+} MENU_TYPES;
+
+
 enum key_types
 {
 	KP_POUND = 0xE0, // '#'
@@ -61,9 +137,16 @@ enum key_types
 	KP_C, // 'C'	- EE
 	KP_D, // 'D'	- EF
 	INIT, //		- F0
-	READ_EEPROM,//	- F2
-	BURN_EEPROM,//	- F3
-	SPACE	//		- F4
+	READ_EEPROM,//	- F1
+	SPACE,	//		- F2
+	SHOW_EEPROM, //	- F3
+	SHOW_MENU_STRUCT, //- F4
+	LOAD_MENU_STRUCT, // - F5
+	BURN_PART,		// - F6
+	BURN_PART1,		// - F7
+	BURN_PART2,		// - F8
+	BURN_PART3,		// - F9
+	BURN_PART4		// - FA
 } KEY_TYPES2;
 
 enum non_func_type
@@ -80,16 +163,68 @@ enum non_func_type
 	NF_10
 } NON_FUNC_TYPES2;
 
+enum rt_types
+{
+	RT_RPM = RT_OFFSET,
+	RT_ENGT,
+	RT_TRIP,
+	RT_TIME,
+	RT_AIRT,
+	RT_MPH,
+	RT_OILP,
+	RT_MAP,
+	RT_OILT,
+	RT_O2,
+} RT_TYPES;
+
 volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
 volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 #define KEYPAD_DELAY    100
 #define KEYPAD_DEBOUNCE_DELAY 2
+
+#define MAX_LABEL_LEN 10
+#define NUM_LABELS 40
+#define NUM_RT_PARAMS 10
 volatile uint8_t col;
 volatile uint8_t last_code;
 volatile uint8_t user_flag;
+/*
+volatile uint16_t total_offset;
+volatile uint16_t no_menu_labels;
+volatile uint16_t no_rtparams;
+volatile uint16_t no_rt_labels;
+*/
+
 volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
+
+volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
+//#if 0
+{"home\0","MENU1a\0","MENU1b\0","MENU1c\0","MENU1d\0","MENU1e\0","MENU2a\0","MENU2B\0","MENU2c\0","MENU2d\0","MENU2e\0","MENU3a\0","MENU3b\0",\
+\
+"enter\0","up\0","down\0","toggle\0","esc\0","enter\0","forward\0","back\0","clear\0","escape\0",\
+\
+"caps\0","small\0","spec\0","next\0",\
+\
+"\0","RPM\0","ENG TEMP\0","TRIP\0","TIME\0","AIR TEMP\0","MPH\0","OIL PRES\0","MAP\0","OIL TEMP\0","O2\0","test\0",\
+"oh f*ck\0"};
+//#endif
+
+RT_PARAM rt_params[NUM_RT_PARAMS] = {
+ {1, 0, SHOWN_SENT, 1, RT_RPM},
+ {2, 0, SHOWN_SENT, 0, RT_ENGT},
+ {3, 0, SHOWN_SENT, 0, RT_TRIP},
+ {4, 0, SHOWN_SENT, 0, RT_TIME},
+ {5, 0, SHOWN_SENT, 0, RT_AIRT},
+ {1, 15, SHOWN_SENT, 0, RT_MPH},
+ {2, 15, SHOWN_SENT, 0, RT_OILP},
+ {3, 15, SHOWN_SENT, 0, RT_MAP},
+ {4, 15, SHOWN_SENT, 0, RT_OILT},
+ {5, 15, SHOWN_SENT, 0, RT_O2} };
+
+
+UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);
 
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
@@ -99,10 +234,10 @@ ESOS_USER_TASK(comm2_task);
 ESOS_USER_TASK(comm3_task);
 ESOS_USER_TASK(data_to_AVR);
 ESOS_USER_TASK(send_cmd_param);
-ESOS_SEMAPHORE(send_sem);
+//ESOS_SEMAPHORE(send_sem);
 ESOS_USER_TASK(convADC);
-ESOS_USER_TASK(test_timer);
 ESOS_USER_TASK(echo_spi_task);
+
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
@@ -279,23 +414,25 @@ ESOS_USER_TASK(keypad)
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(1);
-/*
+#if 0
 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(e_isrState);
 		ESOS_TASK_WAIT_ON_SEND_UINT8(e_isrState);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+#endif
 		switch (e_isrState)
 		{
 			case STATE_WAIT_FOR_PRESS:
 				if (KEY_PRESSED() && (u8_newKey == 0))
 				{
 	//ensure that key is sampled low for two consecutive interrupt periods
-/*
+#if 0
 					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 					ESOS_TASK_WAIT_ON_SEND_STRING("wait for press");
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+#endif
 					e_isrState = STATE_WAIT_FOR_PRESS2;
 				}
 				break;
@@ -303,11 +440,13 @@ ESOS_USER_TASK(keypad)
 				if (KEY_PRESSED())
 				{
 	// a key is ready
-/*
+#if 0
 					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 					ESOS_TASK_WAIT_ON_SEND_STRING("key pressed");
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+#endif
 					u8_newKey = doKeyScan();
 					e_isrState = STATE_WAIT_FOR_RELEASE;
 				} else e_isrState = STATE_WAIT_FOR_PRESS;
@@ -317,11 +456,14 @@ ESOS_USER_TASK(keypad)
 	//keypad released
 				if (KEY_RELEASED())
 				{
-/*
+					ESOS_SIGNAL_SEMAPHORE(key_sem,1);
+#if 0
 					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 					ESOS_TASK_WAIT_ON_SEND_STRING("key released");
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+#endif
 					e_isrState = STATE_WAIT_FOR_PRESS;
 				}
 				break;
@@ -342,7 +484,7 @@ ESOS_USER_TASK(poll_keypad)
     static uint8_t send_key;
 
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm2_task);
+    cmd_param_task = esos_GetTaskHandle(comm1_task);
 
 	configKeypad();
 
@@ -360,12 +502,11 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if (u8_newKey)
 		{
-			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,send_key);
-
+			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
 #if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-		    ESOS_TASK_WAIT_ON_SEND_UINT82(u8_newKey);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey-0xE2);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 			u8_newKey = 0;
 		}
@@ -610,5 +751,29 @@ void _ISR _ADC1Interrupt (void)
 	} //end for()
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int pack(UCHAR low_byte, UCHAR high_byte)
+{
+	int temp;
+	int myint;
+	low_byte = ~low_byte;
+	myint = (int)low_byte;
+	temp = (int)high_byte;
+	temp <<= 8;
+	myint |= temp;
+	return myint;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
+{
+	*low_byte = (UCHAR)myint;
+	myint >>= 8;
+	*high_byte = (UCHAR)myint;
+	*low_byte = ~(*low_byte);
 }
 

@@ -202,10 +202,8 @@ ESOS_USER_TASK(test1);
 ESOS_USER_TASK(cmd_param)
 {
     static uint16_t data;
-    static ESOS_TASK_HANDLE h_Sender;
     
     ESOS_TASK_BEGIN();
-    h_Sender = esos_GetTaskHandle(test1);
 
     while(TRUE)
     {
@@ -213,7 +211,7 @@ ESOS_USER_TASK(cmd_param)
         while(ESOS_TASK_IVE_GOT_MAIL())
         {
 			// this can also be 8 bytes
-            data = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
+            data = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
 			// do something with data
         }
     }

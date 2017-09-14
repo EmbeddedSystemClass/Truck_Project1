@@ -73,14 +73,12 @@ ESOS_USER_TASK(data_to_AVR)
 //******************************************************************************************//
 ESOS_USER_TASK(comm2_task)
 {
-    static  uint8_t key1, ret_key;
+	uint8_t key1;
     
-    int i, size, start_addr;
-    static ESOS_TASK_HANDLE h_Sender;
-    static int once = 1;
+//    int i, size, start_addr;
+//    static int once = 1;
     
     ESOS_TASK_BEGIN();
-    h_Sender = esos_GetTaskHandle(poll_keypad);
 
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -89,8 +87,6 @@ ESOS_USER_TASK(comm2_task)
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-	size = AVR_SEND_DATA_SIZE;
-
 
 	while(TRUE)
     {
@@ -111,20 +107,24 @@ ESOS_USER_TASK(comm2_task)
         ESOS_TASK_WAIT_FOR_MAIL();
         while(ESOS_TASK_IVE_GOT_MAIL())
         {
-			key1 = __esos_CB_ReadUINT16(h_Sender->pst_Mailbox->pst_CBuffer);
+			key1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(key1);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 // UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
+#if 0
 			ret_key = get_key((UCHAR)key1,size,start_addr,(UCHAR*)avr_send_data,0);
 		    ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 		    for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
 				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
 		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		    
-			ESOS_TASK_WAIT_TICKS(1);
+#endif
+			ESOS_TASK_WAIT_TICKS(100);
 
 // if key returned is one of the non_func codes then do something...
-
+#if 0
 			switch(ret_key)
 			{
 				case NF_1:
@@ -150,12 +150,13 @@ ESOS_USER_TASK(comm2_task)
 				default:
 				break;
 			}
-			
+#endif			
 		}
 
 	}
     ESOS_TASK_END();
 }
+
 //******************************************************************************************//
 //*************************************** comm1_task ***************************************//
 //******************************************************************************************//
@@ -164,8 +165,10 @@ ESOS_USER_TASK(comm2_task)
 ESOS_USER_TASK(comm1_task)
 {
     static  uint8_t data1, ret_key;
-    int i, size, start_addr, type;
+    static int i,j,k, size, start_addr, type;
+    UCHAR high_byte, low_byte;
 
+    
     ESOS_TASK_BEGIN();
 
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
@@ -176,43 +179,207 @@ ESOS_USER_TASK(comm1_task)
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-	data1 = 0x21;
+	memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+
 	while(TRUE)
     {
-/*
-		if(++data1 > 0x7e)
-			data1 = 0x21;
+        ESOS_TASK_WAIT_FOR_MAIL();
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
 
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
-        ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-		switch(data1)
-		{
-			case INIT:
-				size = AVR_SEND_DATA_SIZE;
+			switch(data1)
+			{
+				case KP_A:
+					ret_key = BURN_PART1;
+					break;
+				case KP_B:
+					ret_key = BURN_PART2;
+					break;
+				case KP_C:
+					ret_key = BURN_PART3;
+					break;
+				case KP_D:
+					ret_key = BURN_PART4;
+					break;
+				default:
+					ret_key = 0;
+					break;
+			}
+
+			switch(ret_key)
+			{
+				case BURN_PART1:		// burn the labels section
+				size = 234;
 				start_addr = 0;
-				type = 0;
-				for(i = 0;i < size;i++)
-					avr_send_data[i] = 0;
-
-				ret_key = get_key((UCHAR)data1,size,start_addr,(UCHAR*)avr_send_data,0);
-
+				j = k = 0;
+				memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+				for(i = 0;i < NUM_LABELS;i++)
+				{
+					j = strlen(labels[i]);
+					memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
+					k++;
+					*(avr_send_data+j+k) = 0;
+					k += j;
+				}
 				break;
-			case READ_EEPROM:
+				case BURN_PART2:		// burn the rt_params section starting at 0x0350
+//						size = sizeof(RT_PARAM)*no_rtparams;
+				size = sizeof(RT_PARAM)*NUM_RT_PARAMS;
+				start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
+				j = k = 0;
+				memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+				for(i = 0;i < NUM_RT_PARAMS;i++)
+				{
+					j = sizeof(RT_PARAM);
+					memcpy((void *)avr_send_data+k, (void *)&rt_params[i],j);
+					k += j;
+				}
 				break;
-			case BURN_EEPROM:
+				case BURN_PART3:		// burn the section for the number of's
+				size = NO_MENUS_EEPROM_LOCATION-NO_MENU_LABELS_EEPROM_LOCATION;
+				start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
 				break;
-			default:
-				break;	
-		}
-		ESOS_TASK_WAIT_TICKS(1);
+				case BURN_PART4:		// test section starting at 0x0140 (14 chars like: my name)
+				size = 14;
+				start_addr = 0x140;
+				default:
+				break;
+			}
+			if(ret_key == BURN_PART1)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				for(i = 0;i < k;i++)
+				{
+					if(avr_send_data[i] == 0)
+						ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
+					else ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
+					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+//					ESOS_TASK_WAIT_TICKS(1);
+				}
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			}
 
-	}
+			if(ret_key == BURN_PART2)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
+				k = sizeof(RT_PARAM);
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+//				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+				for(i = 0;i < sizeof(RT_PARAM)*NUM_RT_PARAMS;i++)
+				{
+//					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+//					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+//					ESOS_TASK_WAIT_TICKS(1);
+				}
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+			}
+
+/*
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size);
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size>>8);
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+#if 0
+	// write the key char
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	// unpack the size
+			unpack(size,&low_byte,&high_byte);
+	// write the high_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	// read back the high_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+			ESOS_TASK_WAIT_ON_GET_UINT82(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+	// write the low_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	// read back the low_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+			ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+	// unpack the start_addr
+			unpack(start_addr,&low_byte,&high_byte);
+	// write the high_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	// read back the high_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+			ESOS_TASK_WAIT_ON_GET_UINT82(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+	// write the low_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+	// read back the low_byte
+			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+			ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+// write 1st then read
+			for(i = start_addr;i < start_addr+size;i++)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+				ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+				
+				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+				ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+				
+			}
+#endif					
+			ESOS_TASK_WAIT_TICKS(10);
+		}	// end while got mail
+	}	// end while true
     ESOS_TASK_END();
+}
+UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
+{
+	return ch;
 }
 //******************************************************************************************//
 //*************************************** comm3_task ***************************************//
@@ -263,9 +430,11 @@ void user_init(void)
 //	CONFIG_SPI_MASTER()
 //	CONFIG_SPI_SLAVE();
 //	esos_RegisterTask(echo_spi_task);
-/*
-    CONFIG_KEYPAD();
+	configKeypad();
 	ESOS_INIT_SEMAPHORE(key_sem,0);
+	esos_RegisterTask(keypad);
+	esos_RegisterTask(poll_keypad);
+/*
 	ESOS_INIT_SEMAPHORE(send_sem,0);
 
 	esos_RegisterTask(recvFPGA);
@@ -275,11 +444,7 @@ void user_init(void)
 */
 //	esos_RegisterTask(comm3_task);
 	esos_RegisterTask(comm1_task);
-	esos_RegisterTask(comm2_task);
+//	esos_RegisterTask(comm2_task);
 
-//	esos_RegisterTask(keypad);
-//	esos_RegisterTask(poll_keypad);
 //	esos_RegisterTask(convADC);
 } // end user_init()
-
-
