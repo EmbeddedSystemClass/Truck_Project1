@@ -199,7 +199,17 @@ int main(int argc, char *argv[])
 			k = 0;
 			j++;
 		}
-
+	}
+	k = 0;
+	j = 6;
+	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
+	{
+		mvwprintw(win, display_offset+j+1,2+(k*5),"%4x ",label_offsets[i]);
+		if(++k > 11)
+		{
+			k = 0;
+			j++;
+		}
 	}
 
 	for(i = 0;i < no_menu_labels;i++)

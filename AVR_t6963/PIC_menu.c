@@ -1001,7 +1001,6 @@ void init_list(void)
 	prev_fptr = first_menu;
 	memset(menu_list,0,sizeof(menu_list));
 	menu_list[0] = current_fptr;
-	curr_type = MAIN;
 	dirty_flag = 0;
 	curr_checkbox = 0;
 	last_checkbox = NUM_CHECKBOXES-1;

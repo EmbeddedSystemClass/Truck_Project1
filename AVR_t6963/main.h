@@ -31,8 +31,7 @@ typedef struct checkboxes
 	char string[CHECKBOX_STRING_LEN];
 } CHECKBOXES;
 
-//#define AUX_STRING_LEN 1024
-#define AUX_STRING_LEN 300
+#define AUX_STRING_LEN 1024
 
 #ifdef TEST_WRITE_DATA
 UCHAR eeprom_sim[EEPROM_SIZE];

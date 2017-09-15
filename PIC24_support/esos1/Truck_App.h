@@ -27,7 +27,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
 //#define AVR_SEND_DATA_SIZE 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
-#define AVR_SEND_DATA_SIZE 300
+#define AVR_SEND_DATA_SIZE 1024
 #define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
 #define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
 #define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
@@ -35,13 +35,40 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
 #define MAX_LABEL_LEN 10
 #define RT_OFFSET 0x70
+int get_label(int index, char *str);
+
+volatile int goffset;
 
 int pack(UCHAR low_byte, UCHAR high_byte);
 void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte);
 int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index);
+UCHAR menu_change(UCHAR ch);
+UCHAR do_exec(UCHAR ch);
+UCHAR do_chkbox(UCHAR ch);
+UCHAR non_func(UCHAR ch);
+UCHAR do_numentry(UCHAR ch);
+int prev_list(void);
+volatile int current_fptr;		// pointer into the menu_list[]
+volatile int prev_fptr;
+volatile int list_size;
+volatile int dirty_flag;
+int send_aux_data;
+int curr_checkbox;
+int last_checkbox;
+int curr_execchoice;
+int last_execchoice;
+volatile int first_menu;
 
-//extern UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);		// from ../../AVR_t6963/PIC_menu.c
+
+#define LIST_SIZE 50
+
+volatile int menu_list[LIST_SIZE];	// works like a stack for the how deep into the menus we go
+UCHAR set_list(int fptr);
+UCHAR get_fptr(void);
+void get_fptr_label(char *str);
+int get_curr_menu_index(void);
+int get_curr_menu(void);
 
 enum data_types
 {
@@ -198,6 +225,10 @@ typedef struct menu_func
 
 MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
 
+#define NUM_FPTS 6
+
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry };
+
 volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
@@ -211,12 +242,15 @@ volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 volatile uint8_t col;
 volatile uint8_t last_code;
 volatile uint8_t user_flag;
-/*
+
+#define NUM_RT_LABELS NUM_RT_PARAMS
+
+volatile int label_offsets[NUM_LABELS+NUM_RT_LABELS];
+
 volatile uint16_t total_offset;
 volatile uint16_t no_menu_labels;
 volatile uint16_t no_rtparams;
 volatile uint16_t no_rt_labels;
-*/
 
 volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
 
@@ -246,6 +280,299 @@ RT_PARAM rt_params[NUM_RT_PARAMS] = {
 
 
 UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);
+UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
+{
+	return ch;
+}
+
+UCHAR menu_change(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	int menu_index = 0;
+	int curr_menu;
+
+	curr_menu = get_curr_menu();
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		menu_index++;
+		break;
+		case KP_C:
+		menu_index += 2;
+		break;
+		case KP_D:
+		menu_index += 3;
+		break;
+		case KP_POUND:
+		menu_index += 4;
+		break;
+		case KP_0:
+		menu_index += 5;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	if(ch != KP_AST)
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
+
+	return ret_char;
+}
+UCHAR do_exec(UCHAR ch) 
+{
+	UCHAR ret_char = ch;
+	int menu_index = 0;
+	int curr_menu;
+
+	curr_menu = get_curr_menu();
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		menu_index++;
+		break;
+		case KP_C:
+		menu_index += 2;
+		break;
+		case KP_D:
+		menu_index += 3;
+		break;
+		case KP_POUND:
+		menu_index += 4;
+		break;
+		case KP_0:
+		menu_index += 5;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	if(ch != KP_AST)
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
+
+	return ret_char;
+}
+UCHAR do_chkbox(UCHAR ch) 
+{
+	UCHAR ret_char = ch;
+	int menu_index = 0;
+	int curr_menu;
+
+	curr_menu = get_curr_menu();
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		menu_index++;
+		break;
+		case KP_C:
+		menu_index += 2;
+		break;
+		case KP_D:
+		menu_index += 3;
+		break;
+		case KP_POUND:
+		menu_index += 4;
+		break;
+		case KP_0:
+		menu_index += 5;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	if(ch != KP_AST)
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
+
+	return ret_char;
+}
+UCHAR non_func(UCHAR ch) 
+{
+	UCHAR ret_char = ch;
+	int menu_index = 0;
+	int curr_menu;
+
+	curr_menu = get_curr_menu();
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		menu_index++;
+		break;
+		case KP_C:
+		menu_index += 2;
+		break;
+		case KP_D:
+		menu_index += 3;
+		break;
+		case KP_POUND:
+		menu_index += 4;
+		break;
+		case KP_0:
+		menu_index += 5;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	if(ch != KP_AST)
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
+
+	return ret_char;
+}
+UCHAR do_numentry(UCHAR ch) 
+{
+	UCHAR ret_char = ch;
+	int menu_index = 0;
+	int curr_menu;
+
+	curr_menu = get_curr_menu();
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		menu_index++;
+		break;
+		case KP_C:
+		menu_index += 2;
+		break;
+		case KP_D:
+		menu_index += 3;
+		break;
+		case KP_POUND:
+		menu_index += 4;
+		break;
+		case KP_0:
+		menu_index += 5;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	if(ch != KP_AST)
+		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
+
+	return ret_char;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int prev_list(void)
+{
+	int ret;
+
+	if(current_fptr == 0)
+		ret = -1;
+	else
+	{
+		menu_list[current_fptr] = 0;
+		current_fptr--;
+		dirty_flag = 1;
+		ret = 0;
+	}
+	return ret;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR set_list(int fptr)
+{
+	int i;
+	UCHAR ret_char = 0;
+//	char tlabel[MAX_LABEL_LEN];
+
+	if(current_fptr < list_size)
+	{
+		current_fptr++;
+		menu_list[current_fptr] = fptr;
+		dirty_flag = 1;
+
+		ret_char = get_curr_menu_index();
+		send_aux_data = 0;
+		if(menu_structs[get_curr_menu()].fptr != _menu_change)
+		{
+			switch(ret_char)
+			{
+				case MENU1C:	// 1st do_chkbox
+				case MENU1D:	// 2nd do_chkbox
+//					init_checkboxes(ret_char);
+				break;
+				case MENU2A:	// 1st exec_choice
+				case MENU2B:	// 2nd exec_choice
+//					init_execchoices(ret_char);
+					curr_execchoice = 0;
+				break;
+				case MENU2C:	// do_numentry
+				case MENU2D:
+				case MENU2E:
+				case MENU3A:
+				case MENU3B:
+//					init_numentry(ret_char);
+				break;
+				default:
+					send_aux_data = 0;
+				break;
+			}
+		}
+
+	}
+	return ret_char;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR get_fptr(void)
+{
+	return menu_structs[get_curr_menu()].fptr;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+void get_fptr_label(char *str)
+{
+	char tlabel[MAX_LABEL_LEN];
+//	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
+//	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int get_curr_menu(void)
+{
+	return menu_list[current_fptr];
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int get_curr_menu_index(void)
+{
+	return menu_structs[get_curr_menu()].index;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int curr_fptr_changed(void)
+{
+	int flag = dirty_flag;
+	dirty_flag = 0;
+	return flag;
+}
 
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
@@ -423,7 +750,7 @@ ESOS_USER_TASK(keypad)
 {
 
     ESOS_TASK_BEGIN();
-
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -431,7 +758,7 @@ ESOS_USER_TASK(keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(1);
@@ -505,10 +832,10 @@ ESOS_USER_TASK(poll_keypad)
     static uint8_t send_key;
 
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm1_task);
+    cmd_param_task = esos_GetTaskHandle(comm2_task);
 
 	configKeypad();
-
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -516,7 +843,7 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 
 	while (TRUE)
 	{
@@ -818,4 +1145,43 @@ int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2
 	i++;
 	return i;
 }
+//******************************************************************************************//
+//*********************************** get_label_offsets ************************************//
+//******************************************************************************************//
+void get_label_offsets(void)
+{
+	int i, j;
+	char *ch;
+	char temp_label[MAX_LABEL_LEN];
+
+	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
+	{
+		label_offsets[i] = goffset;
+		j = 0;
+		memcpy(temp_label,avr_send_data+goffset,MAX_LABEL_LEN);
+//		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
+		ch = temp_label;
+		while(*ch != 0 && j < MAX_LABEL_LEN)
+		{
+			ch++;
+			j++;
+		}
+		j++;			// adjust for zero at end
+		goffset += j;
+	}
+}
+//******************************************************************************************//
+//*************************************** get_label ****************************************//
+//******************************************************************************************//
+int get_label(int index, char *str)
+{
+	int i = 0;
+		// void *dest, const void *src, size_t n
+	memcpy(str,avr_send_data+label_offsets[index],MAX_LABEL_LEN);
+	while(str[i] != 0)
+		i++;
+//	eeprom_read_block((void *)str,eepromString+label_offsets[index],MAX_LABEL_LEN);
+	return i;
+}
+
 
