@@ -14,6 +14,7 @@
 //#include "../../AVR_t6963/key_defs.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 // DEFINEs go here
 //#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
 uint8_t     LED1 = TRUE;      // LED1 is initially "on"
@@ -35,6 +36,25 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
 #define MAX_LABEL_LEN 10
 #define RT_OFFSET 0x70
+#define NUM_ENTRY_SIZE 7
+//#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
+#define NUM_ENTRY_BEGIN_COL 3
+#define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE
+#define NUM_ENTRY_ROW 8
+#define NUM_CHECKBOXES 10
+#define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
+#define CHECKBOX_STRING_LEN 20
+
+typedef struct checkboxes
+{
+	UCHAR index;
+	UCHAR checked;
+	char string[CHECKBOX_STRING_LEN];
+} CHECKBOXES;
+
+volatile UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
+volatile CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+
 int get_label(int index, char *str);
 
 volatile int goffset;
@@ -48,6 +68,7 @@ UCHAR do_exec(UCHAR ch);
 UCHAR do_chkbox(UCHAR ch);
 UCHAR non_func(UCHAR ch);
 UCHAR do_numentry(UCHAR ch);
+
 int prev_list(void);
 volatile int current_fptr;		// pointer into the menu_list[]
 volatile int prev_fptr;
@@ -59,7 +80,18 @@ int last_checkbox;
 int curr_execchoice;
 int last_execchoice;
 volatile int first_menu;
+volatile char cur_global_number[NUM_ENTRY_SIZE];
+volatile char new_global_number[NUM_ENTRY_SIZE];
+volatile int sample_numbers[5];
 
+volatile UCHAR cur_col;
+volatile UCHAR cur_row;
+UCHAR enter(UCHAR ch);
+void init_numentry(int menu_index);
+void cursor_forward_stuff(char x);
+void stuff_num(char num);
+void cursor_forward(char ch);
+UCHAR init_checkboxes(UCHAR ch);
 
 #define LIST_SIZE 50
 
@@ -69,6 +101,15 @@ UCHAR get_fptr(void);
 void get_fptr_label(char *str);
 int get_curr_menu_index(void);
 int get_curr_menu(void);
+UCHAR backspace(UCHAR ch);
+void _eclear(void);
+void cursor_backward(void);
+UCHAR init_execchoices(UCHAR ch);
+UCHAR scrollup_checkboxes(UCHAR ch);
+UCHAR scrolldown_checkboxes(UCHAR ch);
+UCHAR scrollup_execchoice(UCHAR ch);
+UCHAR scrolldown_execchoice(UCHAR ch);
+UCHAR toggle_checkboxes(UCHAR ch);
 
 enum data_types
 {
@@ -253,6 +294,7 @@ volatile uint16_t no_rtparams;
 volatile uint16_t no_rt_labels;
 
 volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
+volatile char state[30];
 
 volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
 //#if 0
@@ -292,154 +334,7 @@ UCHAR menu_change(UCHAR ch)
 	int curr_menu;
 
 	curr_menu = get_curr_menu();
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		menu_index++;
-		break;
-		case KP_C:
-		menu_index += 2;
-		break;
-		case KP_D:
-		menu_index += 3;
-		break;
-		case KP_POUND:
-		menu_index += 4;
-		break;
-		case KP_0:
-		menu_index += 5;
-		break;
-		case KP_AST:
-		prev_list();
-		break;
-		default:
-		break;
-	}
-	if(ch != KP_AST)
-		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
-
-	return ret_char;
-}
-UCHAR do_exec(UCHAR ch) 
-{
-	UCHAR ret_char = ch;
-	int menu_index = 0;
-	int curr_menu;
-
-	curr_menu = get_curr_menu();
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		menu_index++;
-		break;
-		case KP_C:
-		menu_index += 2;
-		break;
-		case KP_D:
-		menu_index += 3;
-		break;
-		case KP_POUND:
-		menu_index += 4;
-		break;
-		case KP_0:
-		menu_index += 5;
-		break;
-		case KP_AST:
-		prev_list();
-		break;
-		default:
-		break;
-	}
-	if(ch != KP_AST)
-		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
-
-	return ret_char;
-}
-UCHAR do_chkbox(UCHAR ch) 
-{
-	UCHAR ret_char = ch;
-	int menu_index = 0;
-	int curr_menu;
-
-	curr_menu = get_curr_menu();
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		menu_index++;
-		break;
-		case KP_C:
-		menu_index += 2;
-		break;
-		case KP_D:
-		menu_index += 3;
-		break;
-		case KP_POUND:
-		menu_index += 4;
-		break;
-		case KP_0:
-		menu_index += 5;
-		break;
-		case KP_AST:
-		prev_list();
-		break;
-		default:
-		break;
-	}
-	if(ch != KP_AST)
-		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
-
-	return ret_char;
-}
-UCHAR non_func(UCHAR ch) 
-{
-	UCHAR ret_char = ch;
-	int menu_index = 0;
-	int curr_menu;
-
-	curr_menu = get_curr_menu();
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		menu_index++;
-		break;
-		case KP_C:
-		menu_index += 2;
-		break;
-		case KP_D:
-		menu_index += 3;
-		break;
-		case KP_POUND:
-		menu_index += 4;
-		break;
-		case KP_0:
-		menu_index += 5;
-		break;
-		case KP_AST:
-		prev_list();
-		break;
-		default:
-		break;
-	}
-	if(ch != KP_AST)
-		ret_char = set_list(menu_structs[curr_menu].menus[menu_index]);
-
-	return ret_char;
-}
-UCHAR do_numentry(UCHAR ch) 
-{
-	UCHAR ret_char = ch;
-	int menu_index = 0;
-	int curr_menu;
-
-	curr_menu = get_curr_menu();
+	strcpy(state,"menu_change       \0");
 	switch(ch)
 	{
 		case KP_A:
@@ -511,11 +406,11 @@ UCHAR set_list(int fptr)
 			{
 				case MENU1C:	// 1st do_chkbox
 				case MENU1D:	// 2nd do_chkbox
-//					init_checkboxes(ret_char);
+					init_checkboxes(ret_char);
 				break;
 				case MENU2A:	// 1st exec_choice
 				case MENU2B:	// 2nd exec_choice
-//					init_execchoices(ret_char);
+					init_execchoices(ret_char);
 					curr_execchoice = 0;
 				break;
 				case MENU2C:	// do_numentry
@@ -573,6 +468,441 @@ int curr_fptr_changed(void)
 	dirty_flag = 0;
 	return flag;
 }
+
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR do_numentry(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	char temp;
+
+	strcpy(state,"do_numentry     \0");
+
+	switch(ch)
+	{
+		case KP_0:
+		cursor_forward_stuff(0);
+		break;
+		case KP_1:
+		cursor_forward_stuff(1);
+		break;
+		case KP_2:
+		cursor_forward_stuff(2);
+		break;
+		case KP_3:
+		cursor_forward_stuff(3);
+		break;
+		case KP_4:
+		cursor_forward_stuff(4);
+		break;
+		case KP_5:
+		cursor_forward_stuff(5);
+		break;
+		case KP_6:
+		cursor_forward_stuff(6);
+		break;
+		case KP_7:
+		cursor_forward_stuff(7);
+		break;
+		case KP_8:
+		cursor_forward_stuff(8);
+		break;
+		case KP_9:
+		cursor_forward_stuff(9);
+		break;
+		case KP_A:
+		cursor_forward(ch);
+		break;
+		case KP_B:
+		backspace(ch);
+		break;
+		case KP_C:
+		_eclear();
+		break;
+		case KP_D:
+		enter(ch);
+		prev_list();
+		break;
+		case KP_POUND:
+		prev_list();
+		break;
+		case KP_AST:
+			prev_list();
+		break;
+		default:
+		break;
+	}
+	return ret_char;
+}
+//******************************************************************************************//
+//******************************************* escape ***************************************//
+//******************************************************************************************//
+UCHAR escape(UCHAR ch)
+{
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	cur_col = NUM_ENTRY_BEGIN_COL;
+	return ch;
+}
+//******************************************************************************************//
+//******************************************* enter ****************************************//
+//******************************************************************************************//
+UCHAR enter(UCHAR ch)
+{
+	int limit;
+	int index;
+	if(1)
+//	if(data_entry_mode)
+	{
+		limit = atoi(cur_global_number);
+		if(limit > 32767)
+			strcpy(cur_global_number,"32766\0");
+		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
+		cur_col = NUM_ENTRY_BEGIN_COL;
+
+		index = get_curr_menu_index() - MENU2C;
+		sample_numbers[index] = atoi(new_global_number);
+	}
+	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	return ch;
+}
+//******************************************************************************************//
+//*************************************** init_numentry ************************************//
+//******************************************************************************************//
+void init_numentry(int menu_index)
+{
+	int temp_int;
+	cur_row = NUM_ENTRY_ROW;
+	cur_col = NUM_ENTRY_BEGIN_COL;
+//	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+	send_aux_data = 2;
+	temp_int = sample_numbers[menu_index-MENU2C];
+	sprintf(cur_global_number,"%4d",temp_int);
+	avr_send_data[AVR_SEND_DATA_SIZE-1] = (UCHAR)temp_int;
+	temp_int >>= 8;
+	avr_send_data[AVR_SEND_DATA_SIZE-2] = (UCHAR)temp_int;
+	cur_col = strlen(cur_global_number)+NUM_ENTRY_BEGIN_COL;
+}
+//******************************************************************************************//
+//********************************** cursor_forward_stuff **********************************//
+//******************************************************************************************//
+void cursor_forward_stuff(char x)
+{
+//	if(data_entry_mode)
+	if(1)
+	{
+		stuff_num(x);
+		cursor_forward(x);
+	}
+}
+//******************************************************************************************//
+//*************************************** stuff_num ****************************************//
+//******************************************************************************************//
+void stuff_num(char num)
+{
+	num += 0x30;
+	cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = num;
+}
+//******************************************************************************************//
+//************************************* cursor_forward *************************************//
+//******************************************************************************************//
+void cursor_forward(char ch)
+{
+	if(++cur_col > NUM_ENTRY_END_COL)
+		cur_col = NUM_ENTRY_BEGIN_COL;
+}
+//******************************************************************************************//
+//***************************************** backspace **************************************//
+//******************************************************************************************//
+UCHAR backspace(UCHAR ch)
+{
+//	if(data_entry_mode)
+	if(1)
+	{
+		cursor_backward();
+		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
+	}
+	return ch;
+}
+//******************************************************************************************//
+//**************************************** _eclear *******************************************//
+//******************************************************************************************//
+void _eclear(void)
+{
+	cur_row = NUM_ENTRY_ROW;
+	cur_col = NUM_ENTRY_BEGIN_COL;
+	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
+	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
+}
+//******************************************************************************************//
+//************************************* cursor_backward ************************************//
+//******************************************************************************************//
+void cursor_backward(void)
+{
+	if(--cur_col < NUM_ENTRY_BEGIN_COL)
+		cur_col = NUM_ENTRY_BEGIN_COL;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR do_exec(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	int i;
+	int menu_index = 0;
+
+	strcpy(state,"do_exec    \0");
+
+	switch(ch)
+	{
+		case KP_A:
+		scrollup_execchoice(ch);
+		strcpy(state,"exec up     \0");
+		break;
+		case KP_B:
+		scrolldown_execchoice(ch);
+		strcpy(state,"exec down    \0");
+		break;
+		case KP_C:
+		prev_list();
+		strcpy(state,"exec enter   \0");
+		break;
+		case KP_D:
+		break;
+		case KP_POUND:
+		break;
+		case KP_0:
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+//	if(ch != KP_AST)
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = check_boxes[i].checked;
+
+	return ret_char;
+}
+
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR do_chkbox(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	int i;
+
+	strcpy(state,"do_chkbox        \0");
+
+	switch(ch)
+	{
+		case KP_A:
+		scrollup_checkboxes(ch);
+		strcpy(state,"ckbox up    \0");
+		break;
+		case KP_B:
+		scrolldown_checkboxes(ch);
+		strcpy(state,"ckbox down    \0");
+		break;
+		case KP_C:
+		toggle_checkboxes(ch);
+		strcpy(state,"ckbox  toggle  \0");
+		break;
+		case KP_D:		// enter
+		strcpy(state,"ckbox enter    \0");
+		prev_list();
+		break;
+		case KP_POUND:		// esc
+		strcpy(state,"ckbox esc    \0");
+		for(i = 0;i < NUM_CHECKBOXES;i++)
+			check_boxes[i].checked = prev_check_boxes[i];	// restore old
+		for(i = 0;i < NUM_CHECKBOXES;i++)
+			avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = 0;
+		prev_list();
+		break;
+		case KP_0:
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = check_boxes[i].checked;
+
+	return ret_char;
+}
+//******************************************************************************************//
+//************************************* init_checkboxes ************************************//
+//******************************************************************************************//
+UCHAR init_checkboxes(UCHAR ch)
+{
+	curr_checkbox = 0;
+	int i;
+	int j = 0;
+	int k = 0;
+
+//	for(i = 0;i < NUM_CHECKBOXES;i++)
+//		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = i;
+		
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		memcpy((void*)avr_send_data-(AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1)+(NUM_CHECKBOXES*i),
+			(void*)&check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)], NUM_CHECKBOXES);
+		prev_check_boxes[i] = check_boxes[i].checked;
+//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)].string);
+		if(++k > 5)
+		{
+			j++;
+			k = 0;
+		}
+	}
+	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+}
+//******************************************************************************************//
+//*********************************** init_execchoices *************************************//
+//******************************************************************************************//
+UCHAR init_execchoices(UCHAR ch)
+{
+	curr_checkbox = 0;
+	int i;
+	int j = 0;
+	int k = 0;
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		memcpy((void*)avr_send_data-(AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1)+(NUM_CHECKBOXES*i),
+			(void*)&(check_boxes[ i+((ch-MENU1C)*NUM_CHECKBOXES) ]), NUM_CHECKBOXES);
+		prev_check_boxes[i] = check_boxes[i].checked;
+//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)].string);
+		if(++k > 5)
+		{
+			j++;
+			k = 0;
+		}
+	}
+	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+UCHAR scrollup_checkboxes(UCHAR ch)
+{
+	if(--curr_checkbox < 0)
+		curr_checkbox = last_checkbox;
+	return ch;
+}
+//******************************************************************************************//
+//********************************* scrolldown_checkboxes **********************************//
+//******************************************************************************************//
+UCHAR scrolldown_checkboxes(UCHAR ch)
+{
+	if(++curr_checkbox > last_checkbox)
+		curr_checkbox = 0;
+	return ch;
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+UCHAR scrollup_execchoice(UCHAR ch)
+{
+	if(--curr_execchoice < 0)
+		curr_execchoice = last_execchoice;
+	return ch;
+}
+//******************************************************************************************//
+//********************************* scrolldown_checkboxes **********************************//
+//******************************************************************************************//
+UCHAR scrolldown_execchoice(UCHAR ch)
+{
+	if(++curr_execchoice > last_execchoice)
+		curr_execchoice = 0;
+	return ch;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR do_exec_choice(void)
+{
+	return 0;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR toggle_checkboxes(UCHAR ch)
+{
+	if(check_boxes[curr_checkbox].checked == 1)
+	{
+		check_boxes[curr_checkbox].checked = 0;
+	}
+	else
+	{
+		check_boxes[curr_checkbox].checked = 1;
+	}
+	return ch;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR non_func(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+	switch(ch)
+	{
+		case KP_A:
+		ret_char = NF_1;
+		break;
+		case KP_B:
+		ret_char = NF_2;
+		break;
+		case KP_C:
+		ret_char = NF_3;
+		break;
+		case KP_D:
+		ret_char = NF_4;
+		break;
+		case KP_POUND:
+		ret_char = NF_5;
+		break;
+		case KP_0:
+		ret_char = NF_6;
+		break;
+		case KP_AST:
+		prev_list();
+		break;
+		default:
+		break;
+	}
+	return ret_char;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+#ifdef TEST_WRITE_DATA
+void display_menus(int index)
+{
+	int i;
+	char tlabel[MAX_LABEL_LEN];
+
+	mvwprintw(win, DISP_OFFSET+10,2,"%d  ",index);
+	for(i = 0;i < 6;i++)
+	{
+		get_label(menu_structs[get_curr_menu()].menus[i],tlabel);
+		if(strcmp(tlabel,"blank") != 0)
+			mvwprintw(win, DISP_OFFSET+11+i, 2,"%s              ",tlabel);
+		else
+			mvwprintw(win, DISP_OFFSET+11+i, 2,"                ");
+	}
+}
+#endif
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
@@ -1158,7 +1488,7 @@ void get_label_offsets(void)
 	{
 		label_offsets[i] = goffset;
 		j = 0;
-		memcpy(temp_label,avr_send_data+goffset,MAX_LABEL_LEN);
+		memcpy((void*)&temp_label[0],(void*)avr_send_data+goffset,MAX_LABEL_LEN);
 //		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
 		ch = temp_label;
 		while(*ch != 0 && j < MAX_LABEL_LEN)
@@ -1177,11 +1507,12 @@ int get_label(int index, char *str)
 {
 	int i = 0;
 		// void *dest, const void *src, size_t n
-	memcpy(str,avr_send_data+label_offsets[index],MAX_LABEL_LEN);
+	memcpy((void*)str,(void*)avr_send_data+label_offsets[index],MAX_LABEL_LEN);
 	while(str[i] != 0)
 		i++;
 //	eeprom_read_block((void *)str,eepromString+label_offsets[index],MAX_LABEL_LEN);
 	return i;
 }
+
 
 
