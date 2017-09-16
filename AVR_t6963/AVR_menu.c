@@ -218,23 +218,24 @@ UCHAR read_get_key(UCHAR key)
 				"read_eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 #else
 			high_byte = receiveByte();
+			transmitByte(high_byte);
 			low_byte = receiveByte();
+			transmitByte(low_byte);
 			size = pack(low_byte,high_byte);
 
 			high_byte = receiveByte();
+			transmitByte(high_byte);
 			low_byte = receiveByte();
+			transmitByte(low_byte);
 			start_addr = pack(low_byte,high_byte);
+			memset(aux_string,0,AUX_STRING_LEN);
+			eeprom_read_block((void *)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 
-			for(i = start_addr;i < size+start_addr;i++)
+			for(i = 0;i < size;i++)
 			{
-				low_byte = (UCHAR)eeprom_read_byte((const uint8_t *)eepromString+i);
-				transmitByte(low_byte);
+				low_byte = receiveByte();
+				transmitByte(aux_string[i]);
 			}
-/*
-			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
-*/
 #endif
 			goffset = 0;
 			get_label_offsets();
@@ -259,7 +260,6 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-2,1,
 				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
 #else
-//#if 0
 			high_byte = receiveByte();
 			transmitByte(high_byte);
 			low_byte = receiveByte();
@@ -271,21 +271,16 @@ UCHAR read_get_key(UCHAR key)
 			low_byte = receiveByte();
 			transmitByte(low_byte);
 			start_addr = pack(low_byte,high_byte);
-//#endif
-//			for(i = start_addr;i < size+start_addr;i++)
-//			size = 0xEA;
+
 			for(i = 0;i < size;i++)
 			{
 				aux_string[i] = receiveByte();
 				transmitByte(aux_string[i]);
 			}
-
-//			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString,(size_t)size);
 			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
-
 #endif
 			goffset = 0;
-//			get_label_offsets();
+			get_label_offsets();
 
 			break;
 		default:

@@ -206,7 +206,8 @@ ESOS_USER_TASK(poll_comm2)
 				break;
 		}
 
-		if(wkey <= KP_D && wkey >= KP_POUND)
+//		if(wkey <= KP_D && wkey >= KP_POUND)
+		if(1)
 		{
 			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,wkey);
 //#if 0
@@ -519,7 +520,7 @@ ESOS_USER_TASK(comm1_task)
     static int size;
     static int start_addr;
     static int type;
-	static UCHAR high_byte, low_byte;
+	static UCHAR high_byte, low_byte, conf;
 	static char temp[20];
 
     ESOS_TASK_BEGIN();
@@ -543,7 +544,7 @@ ESOS_USER_TASK(comm1_task)
 
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		    ESOS_TASK_WAIT_ON_SEND_STRING("in key: ");
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1-0xE2);
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
@@ -551,16 +552,50 @@ ESOS_USER_TASK(comm1_task)
 			switch(data1)
 			{
 				case KP_A:
+					size = 234;
+					start_addr = 0;
+					j = k = 0;
+					memset((void*)avr_send_data,0,AVR_SEND_DATA_SIZE);
+					for(i = 0;i < NUM_LABELS;i++)
+					{
+						j = strlen((const char *)labels[i]);
+						memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
+						k++;
+						*(avr_send_data+j+k) = 0;
+						k += j;
+					}
 					ret_key = BURN_PART1;
 					break;
 				case KP_B:
+					size = sizeof(RT_PARAM)*NUM_RT_PARAMS;
+					start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
+					j = k = 0;
+					memset((void *)avr_send_data,0,AVR_SEND_DATA_SIZE);
+					for(i = 0;i < NUM_RT_PARAMS;i++)
+					{
+						j = sizeof(RT_PARAM);
+						memcpy((void *)avr_send_data+k, (void *)&rt_params[i],j);
+						k += j;
+					}
 					ret_key = BURN_PART2;
 					break;
 				case KP_C:
+					size = NO_MENUS_EEPROM_LOCATION-NO_MENU_LABELS_EEPROM_LOCATION;
+					start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
 					ret_key = BURN_PART3;
 					break;
 				case KP_D:
+					strcpy(temp,"~Dan Hampleman~\0");
+//					memset(temp,0xFE,16);
+					memcpy(avr_send_data,temp,16);
+					size = 16;
+					start_addr = 0x140;
 					ret_key = BURN_PART4;
+					break;
+				case READ_EEPROM:
+					ret_key = READ_EEPROM;
+					start_addr = 0;
+					size = AVR_SEND_DATA_SIZE;
 					break;
 				case KP_AST:
 					i = 0;
@@ -585,52 +620,6 @@ ESOS_USER_TASK(comm1_task)
 					break;
 			}
 
-			switch(ret_key)
-			{
-				case BURN_PART1:		// burn the labels section
-				size = 234;
-				start_addr = 0;
-				j = k = 0;
-				memset((void*)avr_send_data,0,AVR_SEND_DATA_SIZE);
-				for(i = 0;i < NUM_LABELS;i++)
-				{
-					j = strlen((const char *)labels[i]);
-					memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
-					k++;
-					*(avr_send_data+j+k) = 0;
-					k += j;
-				}
-				break;
-				case BURN_PART2:		// burn the rt_params section starting at 0x0350
-//						size = sizeof(RT_PARAM)*no_rtparams;
-				size = sizeof(RT_PARAM)*NUM_RT_PARAMS;
-				start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
-				j = k = 0;
-				memset((void *)avr_send_data,0,AVR_SEND_DATA_SIZE);
-				for(i = 0;i < NUM_RT_PARAMS;i++)
-				{
-					j = sizeof(RT_PARAM);
-					memcpy((void *)avr_send_data+k, (void *)&rt_params[i],j);
-					k += j;
-				}
-				break;
-				case BURN_PART3:		// burn the section for the number of's
-				size = NO_MENUS_EEPROM_LOCATION-NO_MENU_LABELS_EEPROM_LOCATION;
-				start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
-				break;
-				case BURN_PART4:		// test section starting at 0x0140 (14 chars like: my name)
-//				strcpy(temp,"~Dan Hampleman~\0");
-				memset(temp,0xFE,16);
-				memcpy(avr_send_data,temp,16);
-				size = 16;
-				start_addr = 0x140;
-				break;
-				default:
-				size = 0;
-				start_addr = 0;
-				break;
-			}
-
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -648,7 +637,7 @@ ESOS_USER_TASK(comm1_task)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 //#if 0
-			if(ret_key >= BURN_PART && ret_key <= BURN_PART4 && size > 0)
+			if(ret_key >= READ_EEPROM && ret_key <= BURN_PART4 && size > 0)
 			{
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -656,7 +645,10 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 // write the key char
-				data1 = BURN_PART;
+				if(ret_key == READ_EEPROM)
+					data1 = READ_EEPROM;
+				else	
+					data1 = BURN_PART;
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
@@ -687,18 +679,15 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(high_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // read back the high_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
-				ESOS_TASK_WAIT_ON_GET_UINT82(high_byte);
+				ESOS_TASK_WAIT_ON_GET_UINT82(conf);
 				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
 
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(conf);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+				
 // write the low_byte
 //				low_byte = 0xEA;
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
