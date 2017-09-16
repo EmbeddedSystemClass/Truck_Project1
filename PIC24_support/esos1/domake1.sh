@@ -2,7 +2,6 @@ clear
 rm out.txt
 cd ESOS1.X
 rm out.txt
-make clean
 make &> out.txt
 cat out.txt | grep Error
 cat out.txt | grep warning

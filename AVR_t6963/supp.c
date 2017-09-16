@@ -39,7 +39,7 @@ int pack(UCHAR low_byte, UCHAR high_byte)
 {
 	int temp;
 	int myint;
-	low_byte = ~low_byte;
+//	low_byte = ~low_byte;
 	myint = (int)low_byte;
 	temp = (int)high_byte;
 	temp <<= 8;
@@ -54,7 +54,7 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*low_byte = (UCHAR)myint;
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
-	*low_byte = ~(*low_byte);
+//	*low_byte = ~(*low_byte);
 }
 
 

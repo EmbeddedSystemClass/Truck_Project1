@@ -78,8 +78,8 @@ ESOS_USER_TASK(poll_comm2)
     static uint8_t wkey;
 
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm2_task);
-
+    cmd_param_task = esos_GetTaskHandle(comm1_task);
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -87,6 +87,7 @@ ESOS_USER_TASK(poll_comm2)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
 
 	while (TRUE)
 	{
@@ -171,7 +172,7 @@ ESOS_USER_TASK(poll_comm2)
 				break;
 			case 'R':
 			case 'r':
-				wkey = SHOW_MENU_STRUCT;
+				wkey = BURN_PART4;
 				break;
 			case 'S':
 			case 's':
@@ -208,18 +209,24 @@ ESOS_USER_TASK(poll_comm2)
 		if(wkey <= KP_D && wkey >= KP_POUND)
 		{
 			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,wkey);
-#if 0
+//#if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(key);
 			if(wkey == KP_POUND)
 				ESOS_TASK_WAIT_ON_SEND_STRING("POUND_SIGN");
 			if(wkey == KP_AST)
 				ESOS_TASK_WAIT_ON_SEND_STRING("ASTERICK");
-			else 
+			else
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(wkey-0xE2);
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
+//#endif
 		}
-		u8_newKey = 0;
+		key = 0;
+		wkey = 0;
 	}
     ESOS_TASK_END();
 }
@@ -341,17 +348,17 @@ ESOS_USER_TASK(comm2_task)
 			if(tlabel[j] > 0x1f && tlabel[j] < 0x7e)
 			{
 				ESOS_TASK_WAIT_ON_SEND_UINT8(tlabel[j]);
-			}	
+			}
 			else
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(tlabel[j]);
 		}
 		ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 		ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	}
-#endif	
-	ESOS_TASK_WAIT_TICKS(500);
+#endif
+	ESOS_TASK_WAIT_TICKS(100);
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
- 
+
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 
@@ -379,9 +386,9 @@ ESOS_USER_TASK(comm2_task)
 	{
 		if(avr_send_data[i] > 0x1F && avr_send_data[i] < 0x7e)
 			ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
-		else if(avr_send_data[i] == 0)	
+		else if(avr_send_data[i] == 0)
 			ESOS_TASK_WAIT_ON_SEND_UINT8('_');
-		else	
+		else
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
 	}
 #endif
@@ -414,7 +421,7 @@ ESOS_USER_TASK(comm2_task)
 #if 0
 			if(key1 == KP_AST)
 				ESOS_TASK_WAIT_ON_SEND_UINT8('*');
-			else if(key1 == KP_POUND)	
+			else if(key1 == KP_POUND)
 				ESOS_TASK_WAIT_ON_SEND_UINT8('#');
 			else
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(key1-0xE2);
@@ -504,10 +511,16 @@ ESOS_USER_TASK(comm2_task)
 
 ESOS_USER_TASK(comm1_task)
 {
-    static  uint8_t data1, ret_key;
-    static int i,j,k, size, start_addr, type;
-    UCHAR high_byte, low_byte;
-
+    static uint8_t data1;
+    static uint8_t ret_key;
+    static int i;
+    static int j;
+    static int k;
+    static int size;
+    static int start_addr;
+    static int type;
+	static UCHAR high_byte, low_byte;
+	static char temp[20];
 
     ESOS_TASK_BEGIN();
 
@@ -525,8 +538,15 @@ ESOS_USER_TASK(comm1_task)
     {
         ESOS_TASK_WAIT_FOR_MAIL();
         while(ESOS_TASK_IVE_GOT_MAIL())
-        {
+		{
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		    ESOS_TASK_WAIT_ON_SEND_STRING("in key: ");
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1-0xE2);
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 			switch(data1)
 			{
@@ -557,14 +577,14 @@ ESOS_USER_TASK(comm1_task)
 					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
 					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
 					i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
-					ret_key = data1;
+					ret_key = 0;
 					break;
 
 				default:
 					ret_key = 0;
 					break;
 			}
-		
+
 			switch(ret_key)
 			{
 				case BURN_PART1:		// burn the labels section
@@ -599,7 +619,10 @@ ESOS_USER_TASK(comm1_task)
 				start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
 				break;
 				case BURN_PART4:		// test section starting at 0x0140 (14 chars like: my name)
-				size = 14;
+//				strcpy(temp,"~Dan Hampleman~\0");
+				memset(temp,0xFE,16);
+				memcpy(avr_send_data,temp,16);
+				size = 16;
 				start_addr = 0x140;
 				break;
 				default:
@@ -607,62 +630,15 @@ ESOS_USER_TASK(comm1_task)
 				start_addr = 0;
 				break;
 			}
-			if(ret_key == BURN_PART1)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				for(i = 0;i < k;i++)
-				{
-					if(avr_send_data[i] == 0)
-						ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-					else ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
-					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-//					ESOS_TASK_WAIT_TICKS(1);
-				}
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
-
-			if(ret_key == BURN_PART2)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
-				k = sizeof(RT_PARAM);
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(k);
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				for(i = 0;i < sizeof(RT_PARAM)*NUM_RT_PARAMS;i++)
-				{
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-				}
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
-			if(ret_key == KP_AST)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				
-				for(i = 0;i < NUM_MENUS;i++)
-				{
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].fptr);
-					for(j = 0;j < 6;j++)
-						ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].menus[j]);
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(menu_structs[i].index);
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				}
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
 
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+		    ESOS_TASK_WAIT_ON_SEND_STRING("ret_key ");
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(ret_key);
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_WAIT_ON_SEND_STRING("size & start_addr:   ");
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size);
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(size>>8));
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
@@ -671,30 +647,50 @@ ESOS_USER_TASK(comm1_task)
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-			if(data1 >= KP_0 && data1 <= KP_4)
+//#if 0
+			if(ret_key >= BURN_PART && ret_key <= BURN_PART4 && size > 0)
 			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ret_key = (*fptr[data1-0xE2])(data1);
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(ret_key);
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
-
-#if 0
-			if(size > 0)
-			{
+				ESOS_TASK_WAIT_ON_SEND_STRING("starting writes/reads   ");
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 // write the key char
+				data1 = BURN_PART;
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+				ESOS_TASK_WAIT_ON_GET_UINT82(data1);
+				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // unpack the size
+//#if 0
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_STRING("size: ");
+
 				unpack(size,&low_byte,&high_byte);
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)size);
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(size>>8));
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
 // write the high_byte
+//				high_byte = 0;
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(high_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // read back the high_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 				ESOS_TASK_WAIT_ON_GET_UINT82(high_byte);
@@ -704,9 +700,14 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // write the low_byte
+//				low_byte = 0xEA;
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // read back the low_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 				ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
@@ -715,13 +716,20 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
 // unpack the start_addr
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_STRING("start_addr: ");
+
 				unpack(start_addr,&low_byte,&high_byte);
 // write the high_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(high_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // read back the high_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 				ESOS_TASK_WAIT_ON_GET_UINT82(high_byte);
@@ -730,11 +738,14 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(high_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
 // write the low_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 				ESOS_TASK_WAIT_ON_SEND_UINT82(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 // read back the low_byte
 				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 				ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
@@ -743,25 +754,59 @@ ESOS_USER_TASK(comm1_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
 				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-// write 1st then read
-				for(i = start_addr;i < start_addr+size;i++)
+
+//#endif
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_STRING("starting block write/read   ");
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+
+				j = 0;
+//				for(i = start_addr;i < start_addr+size;i++)
+//				size = 0xEA;
+				for(i = 0;i < size;i++)
 				{
+// write 1st then read
 					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 					ESOS_TASK_WAIT_ON_SEND_UINT82(avr_send_data[i]);
 					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-
+//					ESOS_TASK_WAIT_TICKS(1);
 					ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 					ESOS_TASK_WAIT_ON_GET_UINT82(low_byte);
 					ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
-
+//					avr_send_data[i] = low_byte;
 					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+					if(ret_key == BURN_PART1)
+					{
+						if(low_byte < 0x1f || low_byte > 0x7e)
+							if(low_byte == 0) ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
+							else ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+						else
+							ESOS_TASK_WAIT_ON_SEND_UINT8(low_byte);
+					}else
+						ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(low_byte);
+#if 0
+					if(low_byte == 0)
+						ESOS_TASK_WAIT_ON_SEND_UINT8(' ');
+					else
+						ESOS_TASK_WAIT_ON_SEND_UINT8(low_byte);
+#endif
 					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
+					j++;
 				}
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_STRING("bytes sent:   ");
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)j);
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(j >> 8));
+//				for(i = 0;i < size;i++)
+//					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			}
-#endif
-			ESOS_TASK_WAIT_TICKS(1);
+//#endif
 		}	// end while got mail
 	}	// end while true
     ESOS_TASK_END();
@@ -806,6 +851,44 @@ ESOS_USER_TASK(comm3_task)
     } // endof while()
     ESOS_TASK_END();
 }
+
+ESOS_USER_TASK(test1)
+{
+    static  uint8_t data1;
+    static  uint8_t data2;
+
+    ESOS_TASK_BEGIN();
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+    ESOS_TASK_WAIT_ON_SEND_STRING("test1");
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+
+	data1 = 0x21;
+	data2 = 0;
+    while (1)
+    {
+
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+		ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
+
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+		if(++data1 > 0x7e)
+			data1 = 0x21;
+
+        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+        ESOS_TASK_WAIT_ON_SEND_UINT8(~data2);
+        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+    } // endof while()
+    ESOS_TASK_END();
+}
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
 //******************************************************************************************//
@@ -815,6 +898,7 @@ void user_init(void)
 //	CONFIG_SPI_MASTER()
 //	CONFIG_SPI_SLAVE();
 //	esos_RegisterTask(echo_spi_task);
+
 	ESOS_INIT_SEMAPHORE(key_sem,0);
 	esos_RegisterTask(keypad);
 	esos_RegisterTask(poll_keypad);
@@ -827,10 +911,12 @@ void user_init(void)
 	esos_RegisterTask(send_cmd_param);
 */
 //	esos_RegisterTask(comm3_task);
-//	esos_RegisterTask(comm1_task);
+//	esos_RegisterTask(test1);
+	esos_RegisterTask(comm1_task);
 	esos_RegisterTask(poll_comm2);
-	esos_RegisterTask(comm2_task);
+//	esos_RegisterTask(comm2_task);
 
 //	esos_RegisterTask(convADC);
 } // end user_init()
+
 

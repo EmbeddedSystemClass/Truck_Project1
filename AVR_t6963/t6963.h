@@ -47,8 +47,9 @@
 //I/O port for data definition
 #ifndef T6963_H
 #define T6963_H
-#if 1
 //Control pin setting
+
+#ifndef DISABLE_LCD
 #define LCD_WR		PORTC0        // LCD Write control line pin number (A0)
 #define LCD_CE		PORTC1       // LCD Enable control line pin number (A1)
 #define LCD_RST		PORTC2        // LCD RST_ line (A2)
@@ -80,7 +81,8 @@
 
 #define SET_DATA_DIR_IN()	DDRB &= 0xFC;	\
 							DDRD &= 0x03;
-
+#else
+#warning "LCD disabled"
 #endif
 
 /*

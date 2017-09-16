@@ -304,8 +304,7 @@ volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
 \
 "caps\0","small\0","spec\0","next\0",\
 \
-"\0","RPM\0","ENG TEMP\0","TRIP\0","TIME\0","AIR TEMP\0","MPH\0","OIL PRES\0","MAP\0","OIL TEMP\0","O2\0","test\0",\
-"oh f*ck\0"};
+"\0","RPM\0","ENG TEMP\0","TRIP\0","TIME\0","AIR TEMP\0","MPH\0","OIL PRES\0","MAP\0","OIL TEMP\0","O2\0","f*ck\0"};
 //#endif
 
 RT_PARAM rt_params[NUM_RT_PARAMS] = {
@@ -334,7 +333,7 @@ UCHAR menu_change(UCHAR ch)
 	int curr_menu;
 
 	curr_menu = get_curr_menu();
-	strcpy(state,"menu_change       \0");
+	strcpy((char *)state,"menu_change       \0");
 	switch(ch)
 	{
 		case KP_A:
@@ -477,7 +476,7 @@ UCHAR do_numentry(UCHAR ch)
 	UCHAR ret_char = ch;
 	char temp;
 
-	strcpy(state,"do_numentry     \0");
+	strcpy((char *)state,"do_numentry     \0");
 
 	switch(ch)
 	{
@@ -554,14 +553,14 @@ UCHAR enter(UCHAR ch)
 	if(1)
 //	if(data_entry_mode)
 	{
-		limit = atoi(cur_global_number);
+		limit = atoi((const char *)cur_global_number);
 		if(limit > 32767)
-			strcpy(cur_global_number,"32766\0");
+			strcpy((char *)cur_global_number,"32766\0");
 		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
 		cur_col = NUM_ENTRY_BEGIN_COL;
 
 		index = get_curr_menu_index() - MENU2C;
-		sample_numbers[index] = atoi(new_global_number);
+		sample_numbers[index] = atoi((const char *)new_global_number);
 	}
 	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
@@ -579,11 +578,11 @@ void init_numentry(int menu_index)
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	send_aux_data = 2;
 	temp_int = sample_numbers[menu_index-MENU2C];
-	sprintf(cur_global_number,"%4d",temp_int);
+	sprintf((char *)cur_global_number,"%4d",temp_int);
 	avr_send_data[AVR_SEND_DATA_SIZE-1] = (UCHAR)temp_int;
 	temp_int >>= 8;
 	avr_send_data[AVR_SEND_DATA_SIZE-2] = (UCHAR)temp_int;
-	cur_col = strlen(cur_global_number)+NUM_ENTRY_BEGIN_COL;
+	cur_col = strlen((const char *)cur_global_number)+NUM_ENTRY_BEGIN_COL;
 }
 //******************************************************************************************//
 //********************************** cursor_forward_stuff **********************************//
@@ -653,21 +652,21 @@ UCHAR do_exec(UCHAR ch)
 	int i;
 	int menu_index = 0;
 
-	strcpy(state,"do_exec    \0");
+	strcpy((char *)state,"do_exec    \0");
 
 	switch(ch)
 	{
 		case KP_A:
 		scrollup_execchoice(ch);
-		strcpy(state,"exec up     \0");
+		strcpy((char *)state,"exec up     \0");
 		break;
 		case KP_B:
 		scrolldown_execchoice(ch);
-		strcpy(state,"exec down    \0");
+		strcpy((char *)state,"exec down    \0");
 		break;
 		case KP_C:
 		prev_list();
-		strcpy(state,"exec enter   \0");
+		strcpy((char *)state,"exec enter   \0");
 		break;
 		case KP_D:
 		break;
@@ -696,28 +695,28 @@ UCHAR do_chkbox(UCHAR ch)
 	UCHAR ret_char = ch;
 	int i;
 
-	strcpy(state,"do_chkbox        \0");
+	strcpy((char *)state,"do_chkbox        \0");
 
 	switch(ch)
 	{
 		case KP_A:
 		scrollup_checkboxes(ch);
-		strcpy(state,"ckbox up    \0");
+		strcpy((char *)state,"ckbox up    \0");
 		break;
 		case KP_B:
 		scrolldown_checkboxes(ch);
-		strcpy(state,"ckbox down    \0");
+		strcpy((char *)state,"ckbox down    \0");
 		break;
 		case KP_C:
 		toggle_checkboxes(ch);
-		strcpy(state,"ckbox  toggle  \0");
+		strcpy((char *)state,"ckbox  toggle  \0");
 		break;
 		case KP_D:		// enter
-		strcpy(state,"ckbox enter    \0");
+		strcpy((char *)state,"ckbox enter    \0");
 		prev_list();
 		break;
 		case KP_POUND:		// esc
-		strcpy(state,"ckbox esc    \0");
+		strcpy((char *)state,"ckbox esc    \0");
 		for(i = 0;i < NUM_CHECKBOXES;i++)
 			check_boxes[i].checked = prev_check_boxes[i];	// restore old
 		for(i = 0;i < NUM_CHECKBOXES;i++)
@@ -749,7 +748,7 @@ UCHAR init_checkboxes(UCHAR ch)
 
 //	for(i = 0;i < NUM_CHECKBOXES;i++)
 //		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = i;
-		
+
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		memcpy((void*)avr_send_data-(AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1)+(NUM_CHECKBOXES*i),
@@ -763,6 +762,7 @@ UCHAR init_checkboxes(UCHAR ch)
 		}
 	}
 	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+	return ch;
 }
 //******************************************************************************************//
 //*********************************** init_execchoices *************************************//
@@ -787,6 +787,7 @@ UCHAR init_execchoices(UCHAR ch)
 		}
 	}
 	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+	return ch;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
@@ -915,6 +916,7 @@ ESOS_USER_TASK(send_cmd_param);
 //ESOS_SEMAPHORE(send_sem);
 ESOS_USER_TASK(convADC);
 ESOS_USER_TASK(echo_spi_task);
+ESOS_USER_TASK(test1);
 
 //ESOS_USER_TASK(fast_echo_spi_task);
 
@@ -1162,7 +1164,7 @@ ESOS_USER_TASK(poll_keypad)
     static uint8_t send_key;
 
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm2_task);
+    cmd_param_task = esos_GetTaskHandle(comm1_task);
 
 	configKeypad();
 /*
@@ -1437,7 +1439,7 @@ int pack(UCHAR low_byte, UCHAR high_byte)
 {
 	int temp;
 	int myint;
-	low_byte = ~low_byte;
+//	low_byte = ~low_byte;
 	myint = (int)low_byte;
 	temp = (int)high_byte;
 	temp <<= 8;
@@ -1452,7 +1454,7 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*low_byte = (UCHAR)myint;
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
-	*low_byte = ~(*low_byte);
+//	*low_byte = ~(*low_byte);
 }
 //******************************************************************************************//
 //******************************************************************************************//
