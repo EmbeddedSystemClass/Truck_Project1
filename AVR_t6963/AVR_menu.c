@@ -277,7 +277,7 @@ UCHAR read_get_key(UCHAR key)
 				aux_string[i] = receiveByte();
 				transmitByte(aux_string[i]);
 			}
-			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
+//			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 #endif
 			goffset = 0;
 			get_label_offsets();
@@ -358,19 +358,18 @@ static UCHAR generic_menu_function(UCHAR ch)
 	low_byte = receiveByte();
 	menu_index = pack(low_byte, high_byte);
 
-#ifdef TTY_DISPLAY
-	thigh_byte = high_byte;
-	tlow_byte = low_byte;
-#endif
-
 	for(i = 0;i < 6;i++)
 	{
 		high_byte = receiveByte();
+//		transmitByte(high_byte);
 		low_byte = receiveByte();
+//		transmitByte(low_byte);
 		curr_menus[i] = pack(low_byte,high_byte);
 	}
 	high_byte = receiveByte();
+//	transmitByte(high_byte);
 	low_byte = receiveByte();
+//	transmitByte(low_byte);
 	aux_bytes_to_read = pack(low_byte, high_byte);
 
 //	aux_bytes_to_read = receiveByte();
@@ -380,11 +379,12 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 	// write a code of 0xAA back to sim PIC as a verification that everything is running
 	// if not hooked up to LCD screen
-
+/*
 	low_byte = 0xAA;
 	transmitByte(low_byte);
-	for(i = 0;i < 6;i++)
-		transmitByte(curr_menus[i]);
+*/
+	for(i = 0;i < aux_bytes_to_read;i++)
+		transmitByte(aux_string[i]);
 
 #ifdef TTY_DISPLAY
 

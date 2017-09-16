@@ -44,6 +44,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define NUM_CHECKBOXES 10
 #define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
 #define CHECKBOX_STRING_LEN 20
+#define TEMP_EEPROM_OFFSET AVR_SEND_DATA_SIZE/5
 
 typedef struct checkboxes
 {
@@ -56,7 +57,7 @@ volatile UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
 volatile CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
 
 int get_label(int index, char *str);
-
+UCHAR get_keypress(UCHAR key1);
 volatile int goffset;
 
 int pack(UCHAR low_byte, UCHAR high_byte);
@@ -304,7 +305,7 @@ volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
 \
 "caps\0","small\0","spec\0","next\0",\
 \
-"\0","RPM\0","ENG TEMP\0","TRIP\0","TIME\0","AIR TEMP\0","MPH\0","OIL PRES\0","MAP\0","OIL TEMP\0","O2\0","f*ck\0"};
+"\0","RPM\0","ENG TEMP\0","TRIP\0","TIME\0","AIR TEMP\0","MPH\0","OIL PRES\0","MAP\0","OIL TEMP\0","O2\0","test\0"};
 //#endif
 
 RT_PARAM rt_params[NUM_RT_PARAMS] = {
@@ -320,10 +321,121 @@ RT_PARAM rt_params[NUM_RT_PARAMS] = {
  {5, 15, SHOWN_SENT, 0, RT_O2} };
 
 
-UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);
-UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
+UCHAR get_keypress(UCHAR key1)
 {
-	return ch;
+	UCHAR wkey;
+
+	switch(key1)
+	{
+		case '0':
+			wkey = KP_0;
+			break;
+		case '1':
+			wkey = KP_1;
+			break;
+		case '2':
+			wkey = KP_2;
+			break;
+		case '3':
+			wkey = KP_3;
+			break;
+		case '4':
+			wkey = KP_4;
+			break;
+		case '5':
+			wkey = KP_5;
+			break;
+		case '6':
+			wkey = KP_6;
+			break;
+		case '7':
+			wkey = KP_7;
+			break;
+		case '8':
+			wkey = KP_8;
+			break;
+		case '9':
+			wkey = KP_9;
+			break;
+		case '*':
+			wkey = KP_AST;
+			break;
+		case '#':
+			wkey = KP_POUND;
+			break;
+		case 'A':
+		case 'a':
+			wkey = KP_A;
+			break;
+		case 'B':
+		case 'b':
+			wkey = KP_B;
+			break;
+		case 'C':
+		case 'c':
+			wkey = KP_C;
+			break;
+		case 'D':
+		case 'd':
+			wkey = KP_D;
+			break;
+// use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
+		case 'Y':
+		case 'y':
+			wkey = KP_POUND;
+			break;
+		case 'Z':
+		case 'z':
+			wkey = KP_AST;
+			break;
+		case 'V':
+		case 'v':
+			wkey = BURN_PART1;
+			break;
+		case 'W':
+		case 'w':
+			wkey = BURN_PART2;
+			break;
+		case 'U':
+		case 'u':
+			wkey = BURN_PART3;
+			break;
+		case 'R':
+		case 'r':
+			wkey = BURN_PART4;
+			break;
+		case 'S':
+		case 's':
+			wkey = SHOW_EEPROM;
+			break;
+		case 'L':
+		case 'l':
+			wkey = LOAD_MENU_STRUCT;
+			break;
+		case 'T':
+		case 't':
+			wkey = 0xff;
+			break;
+		case 'E':
+		case 'e':
+			wkey = READ_EEPROM;
+			break;
+		case 'P':
+		case 'p':
+			wkey = 0xff;
+			break;
+		case 'I':
+		case 'i':
+			wkey = INIT;
+			break;
+		case ' ':
+			wkey = SPACE;
+			break;
+		default:
+			wkey = 0xff;
+			break;
+	}
+	return wkey;
 }
 
 UCHAR menu_change(UCHAR ch)
@@ -917,7 +1029,8 @@ ESOS_USER_TASK(send_cmd_param);
 ESOS_USER_TASK(convADC);
 ESOS_USER_TASK(echo_spi_task);
 ESOS_USER_TASK(test1);
-
+ESOS_USER_TASK(send_comm2);
+ESOS_USER_TASK(get_comm2);
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
@@ -1160,11 +1273,11 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
-    static ESOS_TASK_HANDLE cmd_param_task;
+//    static ESOS_TASK_HANDLE cmd_param_task;
     static uint8_t send_key;
 
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm1_task);
+//    cmd_param_task = esos_GetTaskHandle(comm2_task);
 
 	configKeypad();
 /*
@@ -1182,7 +1295,7 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if (u8_newKey)
 		{
-			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
+//			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey-0xE2);
