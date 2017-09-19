@@ -254,8 +254,8 @@ UCHAR read_get_key(UCHAR key)
 			for(i = start_addr;i < size+start_addr;i++)
 				res2 += read(global_fd,&eeprom_sim[i],1);
 
-			low_byte = 0x55;
-			write(global_fd,&low_byte,1);
+//			low_byte = 0x55;
+//			write(global_fd,&low_byte,1);
 
 			mvwprintw(win, LAST_ROW-2,1,
 				"burn eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
@@ -315,14 +315,26 @@ static UCHAR generic_menu_function(UCHAR ch)
 	res2 = 0;
 #ifdef TEST_WRITE_DATA
 	res += read(global_fd,&tfptr,1);
+	mvwprintw(win, DISP_OFFSET+20,2,"read1 : %d  ",res);
+	wrefresh(win);
 	res += 	read(global_fd,&high_byte,1);
+	mvwprintw(win, DISP_OFFSET+20,2,"read2 : %d  ",res);
+	wrefresh(win);
 	res += 	read(global_fd,&low_byte,1);
+	mvwprintw(win, DISP_OFFSET+20,2,"read3 : %d  ",res);
+	wrefresh(win);
 	menu_index = pack(low_byte,high_byte);
 
 	for(i = 0;i < 6;i++)
 	{
+		mvwprintw(win, DISP_OFFSET+20,2,"read4 : %d  ",res);
+		wrefresh(win);
 		res += read(global_fd,&high_byte,1);
+		mvwprintw(win, DISP_OFFSET+20,2,"read5 : %d  ",res);
+		wrefresh(win);
 		res += read(global_fd,&low_byte,1);
+		mvwprintw(win, DISP_OFFSET+20,2,"read6 : %d  ",res);
+		wrefresh(win);
 		// for some reason when sending a 13 it get recv'd as a 10
 		// so I changed it in the pack/unpack functions
 //		low_byte = ~low_byte;
@@ -333,18 +345,25 @@ static UCHAR generic_menu_function(UCHAR ch)
 			curr_menus[i] = 0;
 	}
 	res += read(global_fd,&high_byte,1);
+	mvwprintw(win, DISP_OFFSET+20,2,"read7 : %d  ",res);
+	wrefresh(win);
 	res += read(global_fd,&low_byte,1);
+	mvwprintw(win, DISP_OFFSET+20,2,"read8 : %d  ",res);
+	wrefresh(win);
 	aux_bytes_to_read = pack(low_byte,high_byte);
-	mvwprintw(win, DISP_OFFSET+14, 2,"%x  %x   %d  ",low_byte, high_byte, res);
-	mvwprintw(win, DISP_OFFSET+13,2,"                             ");
-	mvwprintw(win, DISP_OFFSET+14, 2,
-			"aux_string read:%d menu_index %d  prev index: %d  ",aux_bytes_to_read,menu_index,prev_menu_index);
+	mvwprintw(win, DISP_OFFSET+21, 2,"%x  %x   %d  ",low_byte, high_byte, res);
+	mvwprintw(win, DISP_OFFSET+21,2,"                             ");
+	mvwprintw(win, DISP_OFFSET+21, 2,
+		"aux_string read:%d menu_index %d  prev index: %d  ",
+			aux_bytes_to_read,menu_index,prev_menu_index);
+	wrefresh(win);
+/*
 	for(i = 0;i < aux_bytes_to_read;i++)
 		res2 += read(global_fd,&aux_string[i],1);
-
+*/
 	low_byte = 0;
 	// write a code of 0 back to sim PIC
-	write(global_fd,&low_byte,1);
+//	write(global_fd,&low_byte,1);
 
 	get_fptr_label(tfptr,tlabel);
 	mvwprintw(win, DISP_OFFSET+15, 2,
@@ -374,22 +393,25 @@ static UCHAR generic_menu_function(UCHAR ch)
 
 //	aux_bytes_to_read = receiveByte();
 //	aux_data_offset = receiveByte();
-	for(i = 0;i < aux_bytes_to_read;i++)
-		aux_string[i] = receiveByte();
+//	for(i = 0;i < aux_bytes_to_read;i++)
+//		aux_string[i] = receiveByte();
 
 	// write a code of 0xAA back to sim PIC as a verification that everything is running
 	// if not hooked up to LCD screen
 /*
 	low_byte = 0xAA;
 	transmitByte(low_byte);
-*/
-	for(i = 0;i < aux_bytes_to_read;i++)
+
+	aux_string[0] = (UCHAR)aux_bytes_to_read;
+	aux_string[1] = (UCHAR)(aux_bytes_to_read>>8);
+	aux_string[2] = low_byte;
+	aux_string[3] = high_byte;
+	aux_string[4] = (UCHAR)menu_index;
+	aux_string[5] = (UCHAR)(menu_index>>8);
+	
+	for(i = 0;i < 6;i++)
 		transmitByte(aux_string[i]);
-
-#ifdef TTY_DISPLAY
-
-#endif
-
+*/
 #endif
 	ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
 //	mvwprintw(win, DISP_OFFSET+20, 2,"%x  %x  ",ret_char,ch);
@@ -439,6 +461,20 @@ static UCHAR generic_menu_function(UCHAR ch)
 	}
 #endif
 	if(ret_char != READ_EEPROM)
+		for(i = 0;i < 400;i++)
+		{
+			if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
+				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%c",aux_string[i]);
+			else if(avr_send_data[i] == 0)
+				mvwprintw(win, LAST_ROW+j-30, 2+(k*3)," ");
+			else if( avr_send_data[i] == 0xff)
+				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"_");
+			else
+				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%2x ",aux_string[i]);
+		}
+
+#if 0
+	if(ret_char != READ_EEPROM)
 	{
 		for(i = 0;i < AUX_STRING_LEN/3;i++)
 		{
@@ -450,7 +486,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 			}
 		}
 	}
-
+#endif
 #endif
 	return ret_char;
 }

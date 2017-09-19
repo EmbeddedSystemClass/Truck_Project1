@@ -69,7 +69,7 @@ sim_read.c compiles AVR_menu.c and simulates the AVR
 
 the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
 get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
-to the AVR
+to the AVR (9/16/17) no that's not what I ended up doing.
 
 the main.c in the AVR calls get_key in AVR_menu.c
 
@@ -171,6 +171,22 @@ then load the menu_structs.
 
 "make set_eeprom_save_fuse" to set fuses so eeprom is saved when reprogramming
 "make clear_eeprom_save_fuse" to set fuses so eeprom gets erased everytime
+
+9/16/17 - using comm1 on PIC to go to monitor and comm2 goes to AVR. Testing the loop in
+the comm2_task (for menuing) and in comm1_task (burning eeprom). Either one can be run
+from the keypad or the keyboard. poll_comm2 polls the keyboard (comm1) and sends mail to
+the comm1/2_task. 
+
+9/18/17 - tested the PIC24 sending data to gcc compiled test_read/write & rw2 and had
+all kinds of strange problems. The PIC24 reads and writes data ok using just test_read/write
+but test_rw1/2 do strange things. Put the sim_read on 110 and got it to work upto the 
+point of entering numbers. Need to init the labels and rt_params in 'eeprom_sim' using
+the BURN_PART commands of the PIC24. Since we don't need the labels in the AVR we don't
+need to send over the menu_structs. Use the avr_send_data in PIC24 to init the rest of the
+eeprom_sim.
+
+(receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
+no! 192.168.42.110 won't transmit in minicom until you exit.
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

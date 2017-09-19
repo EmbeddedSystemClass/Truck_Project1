@@ -1,3 +1,25 @@
+// .. "Copyright (c) 2016 Dan Hampleman ("AUTHOR")"
+//    All rights reserved.
+//
+//    Permission to use, copy, modify, and distribute this software and its
+//    documentation for any purpose, without fee, and without written agreement is
+//    hereby granted, provided that the above copyright notice, the following
+//    two paragraphs and the authors appear in all copies of this software.
+//
+//    IN NO EVENT SHALL THE "AUTHORS" BE LIABLE TO ANY PARTY FOR
+//    DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+//    OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE "AUTHORS"
+//    HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//    THE "AUTHORS" SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+//    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+//    AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+//    ON AN "AS IS" BASIS, AND THE "AUTHORS" HAS NO OBLIGATION TO
+//    PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+//
+//    Please maintain this header in its entirety when copying/modifying
+//    these files.
+//
 //
 // "I am not so much concerned with the return on capital as I am with the return of capital." - Will Rogers
 //
@@ -19,7 +41,7 @@
 //#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
 uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define MY_ESOS1
-#define TEMP_DELAY		5000
+#define TIME_DELAY		10
 #define TEMP_DELAY3		2
 #define TEMP_DELAY2		1000
 #define TDELAY 2
@@ -44,7 +66,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define NUM_CHECKBOXES 10
 #define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
 #define CHECKBOX_STRING_LEN 20
-#define TEMP_EEPROM_OFFSET AVR_SEND_DATA_SIZE/5
+#define TEMP_EEPROM_OFFSET 300
 
 typedef struct checkboxes
 {
@@ -55,6 +77,7 @@ typedef struct checkboxes
 
 volatile UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
 volatile CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+volatile int avr_ptr;
 
 int get_label(int index, char *str);
 UCHAR get_keypress(UCHAR key1);
@@ -75,7 +98,7 @@ volatile int current_fptr;		// pointer into the menu_list[]
 volatile int prev_fptr;
 volatile int list_size;
 volatile int dirty_flag;
-int send_aux_data;
+volatile int send_aux_data;
 int curr_checkbox;
 int last_checkbox;
 int curr_execchoice;
@@ -168,7 +191,11 @@ enum key_types
 	BURN_PART1,		//  - F7
 	BURN_PART2,		//  - F8
 	BURN_PART3,		//  - F9
-	BURN_PART4		//  - FA
+	BURN_PART4,		//  - FA
+	TEST1,			//  - FB
+	TEST2,			//  - FC
+	TEST3,			//  - FD
+	TEST4			//  - FE
 } KEY_TYPES2;
 
 enum non_func_type
@@ -295,7 +322,7 @@ volatile uint16_t no_rtparams;
 volatile uint16_t no_rt_labels;
 
 volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
-volatile char state[30];
+//volatile char state[30];
 
 volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
 //#if 0
@@ -390,7 +417,7 @@ UCHAR get_keypress(UCHAR key1)
 			break;
 		case 'V':
 		case 'v':
-			wkey = BURN_PART1;
+			wkey = BURN_PART;
 			break;
 		case 'W':
 		case 'w':
@@ -414,7 +441,7 @@ UCHAR get_keypress(UCHAR key1)
 			break;
 		case 'T':
 		case 't':
-			wkey = 0xff;
+			wkey = TEST2;
 			break;
 		case 'E':
 		case 'e':
@@ -422,8 +449,11 @@ UCHAR get_keypress(UCHAR key1)
 			break;
 		case 'P':
 		case 'p':
-			wkey = 0xff;
+			wkey = TEST3;
 			break;
+		case 'Q':
+		case 'q':
+			wkey = TEST4;
 		case 'I':
 		case 'i':
 			wkey = INIT;
@@ -438,6 +468,10 @@ UCHAR get_keypress(UCHAR key1)
 	return wkey;
 }
 
+//#if 0
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 UCHAR menu_change(UCHAR ch)
 {
 	UCHAR ret_char = ch;
@@ -445,7 +479,7 @@ UCHAR menu_change(UCHAR ch)
 	int curr_menu;
 
 	curr_menu = get_curr_menu();
-	strcpy((char *)state,"menu_change       \0");
+//	strcpy((char *)state,"menu_change       \0");
 	switch(ch)
 	{
 		case KP_A:
@@ -543,52 +577,12 @@ UCHAR set_list(int fptr)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-UCHAR get_fptr(void)
-{
-	return menu_structs[get_curr_menu()].fptr;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-void get_fptr_label(char *str)
-{
-	char tlabel[MAX_LABEL_LEN];
-//	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
-//	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-int get_curr_menu(void)
-{
-	return menu_list[current_fptr];
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-int get_curr_menu_index(void)
-{
-	return menu_structs[get_curr_menu()].index;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-int curr_fptr_changed(void)
-{
-	int flag = dirty_flag;
-	dirty_flag = 0;
-	return flag;
-}
-
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
 UCHAR do_numentry(UCHAR ch)
 {
 	UCHAR ret_char = ch;
 	char temp;
 
-	strcpy((char *)state,"do_numentry     \0");
+//	strcpy((char *)state,"do_numentry     \0");
 
 	switch(ch)
 	{
@@ -688,7 +682,9 @@ void init_numentry(int menu_index)
 	cur_col = NUM_ENTRY_BEGIN_COL;
 //	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
-	send_aux_data = 2;
+
+//	send_aux_data = 2;
+
 	temp_int = sample_numbers[menu_index-MENU2C];
 	sprintf((char *)cur_global_number,"%4d",temp_int);
 	avr_send_data[AVR_SEND_DATA_SIZE-1] = (UCHAR)temp_int;
@@ -764,21 +760,21 @@ UCHAR do_exec(UCHAR ch)
 	int i;
 	int menu_index = 0;
 
-	strcpy((char *)state,"do_exec    \0");
+//strcpy((char *)state,"do_exec    \0");
 
 	switch(ch)
 	{
 		case KP_A:
 		scrollup_execchoice(ch);
-		strcpy((char *)state,"exec up     \0");
+//		strcpy((char *)state,"exec up     \0");
 		break;
 		case KP_B:
 		scrolldown_execchoice(ch);
-		strcpy((char *)state,"exec down    \0");
+//		strcpy((char *)state,"exec down    \0");
 		break;
 		case KP_C:
 		prev_list();
-		strcpy((char *)state,"exec enter   \0");
+//		strcpy((char *)state,"exec enter   \0");
 		break;
 		case KP_D:
 		break;
@@ -807,28 +803,28 @@ UCHAR do_chkbox(UCHAR ch)
 	UCHAR ret_char = ch;
 	int i;
 
-	strcpy((char *)state,"do_chkbox        \0");
+//	strcpy((char *)state,"do_chkbox        \0");
 
 	switch(ch)
 	{
 		case KP_A:
 		scrollup_checkboxes(ch);
-		strcpy((char *)state,"ckbox up    \0");
+//		strcpy((char *)state,"ckbox up    \0");
 		break;
 		case KP_B:
 		scrolldown_checkboxes(ch);
-		strcpy((char *)state,"ckbox down    \0");
+//		strcpy((char *)state,"ckbox down    \0");
 		break;
 		case KP_C:
 		toggle_checkboxes(ch);
-		strcpy((char *)state,"ckbox  toggle  \0");
+//		strcpy((char *)state,"ckbox  toggle  \0");
 		break;
 		case KP_D:		// enter
-		strcpy((char *)state,"ckbox enter    \0");
+//		strcpy((char *)state,"ckbox enter    \0");
 		prev_list();
 		break;
 		case KP_POUND:		// esc
-		strcpy((char *)state,"ckbox esc    \0");
+//		strcpy((char *)state,"ckbox esc    \0");
 		for(i = 0;i < NUM_CHECKBOXES;i++)
 			check_boxes[i].checked = prev_check_boxes[i];	// restore old
 		for(i = 0;i < NUM_CHECKBOXES;i++)
@@ -873,7 +869,7 @@ UCHAR init_checkboxes(UCHAR ch)
 			k = 0;
 		}
 	}
-	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+//	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
 	return ch;
 }
 //******************************************************************************************//
@@ -898,7 +894,7 @@ UCHAR init_execchoices(UCHAR ch)
 			k = 0;
 		}
 	}
-	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+//	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
 	return ch;
 }
 //******************************************************************************************//
@@ -1013,6 +1009,47 @@ void display_menus(int index)
 	}
 }
 #endif
+//#endif
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+UCHAR get_fptr(void)
+{
+	return menu_structs[get_curr_menu()].fptr;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+void get_fptr_label(char *str)
+{
+	char tlabel[MAX_LABEL_LEN];
+//	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
+//	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int get_curr_menu(void)
+{
+	return menu_list[current_fptr];
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int get_curr_menu_index(void)
+{
+	return menu_structs[get_curr_menu()].index;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+int curr_fptr_changed(void)
+{
+	int flag = dirty_flag;
+	dirty_flag = 0;
+	return flag;
+}
+
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1020,17 +1057,17 @@ void display_menus(int index)
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
-ESOS_USER_TASK(comm1_task);
+ESOS_SEMAPHORE(comm2_sem);
 ESOS_USER_TASK(comm2_task);
-ESOS_USER_TASK(comm3_task);
-ESOS_USER_TASK(data_to_AVR);
-ESOS_USER_TASK(send_cmd_param);
+//ESOS_USER_TASK(send_cmd_param);
 //ESOS_SEMAPHORE(send_sem);
-ESOS_USER_TASK(convADC);
-ESOS_USER_TASK(echo_spi_task);
+//ESOS_USER_TASK(convADC);
+//ESOS_USER_TASK(echo_spi_task);
 ESOS_USER_TASK(test1);
 ESOS_USER_TASK(send_comm2);
 ESOS_USER_TASK(get_comm2);
+ESOS_USER_TASK(poll_comm1);
+
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
@@ -1273,11 +1310,11 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
-//    static ESOS_TASK_HANDLE cmd_param_task;
+    static ESOS_TASK_HANDLE cmd_param_task;
     static uint8_t send_key;
 
     ESOS_TASK_BEGIN();
-//    cmd_param_task = esos_GetTaskHandle(comm2_task);
+    cmd_param_task = esos_GetTaskHandle(comm2_task);
 
 	configKeypad();
 /*
@@ -1295,18 +1332,175 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if (u8_newKey)
 		{
-//			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
-#if 0
+			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
+//#if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey-0xE2);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
+//#endif
 			u8_newKey = 0;
 		}
 	}
     ESOS_TASK_END();
 }
+//******************************************************************************************//
+//************************************** poll_comm1  ***************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(poll_comm1)
+{
+    static ESOS_TASK_HANDLE cmd_param_task;
+    static ESOS_TASK_HANDLE comm2_handle;
+    static uint8_t key;
+    static uint8_t wkey;
+    static uint16_t wkey16;
+    static int i,j,k,size,start_addr;
+    static uint8_t low_byte, high_byte;
 
+    ESOS_TASK_BEGIN();
+    comm2_handle = esos_GetTaskHandle(send_comm2);
+    cmd_param_task = esos_GetTaskHandle(comm2_task);
+//    cmd_param_task = esos_GetTaskHandle(test1);
+
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
+		ESOS_TASK_WAIT_ON_GET_UINT8(key);
+		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+
+		wkey = get_keypress(key);
+/*
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(key);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+		if(wkey == BURN_PART)
+		{
+			size = 234;
+			start_addr = 0;
+			j = k = 0;
+			memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+			for(i = 0;i < NUM_LABELS;i++)
+			{
+				j = strlen(labels[i]);
+				memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
+				k++;
+				*(avr_send_data+j+k) = 0;
+				k += j;
+			}
+
+			low_byte = BURN_PART;
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+
+			unpack(size,&low_byte,&high_byte);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,high_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			
+			unpack(start_addr,&low_byte,&high_byte);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,high_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+
+			for(i = 0;i < size;i++)
+			{
+				__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,avr_send_data[i]);
+				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			}
+			
+		}		
+		else if(wkey == READ_EEPROM)
+		{
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+/*
+			for(i = 0;i < 300;i++)
+			{
+				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
+				else if(avr_send_data[i] == 0)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
+				else if( avr_send_data[i] == 0xff)
+					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
+				else
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+			}
+*/
+			for(i = AVR_SEND_DATA_SIZE - TEMP_EEPROM_OFFSET;i < AVR_SEND_DATA_SIZE;i++)
+//			for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
+			{
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+			}
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+		}
+
+		else if(wkey == TEST1)
+		{
+			memset(avr_send_data,0xff,AVR_SEND_DATA_SIZE);
+			avr_ptr = 0;
+		}
+		else if(wkey == KP_2)
+			for(i = 0;i < 500;i++)
+			{
+				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+				key = (UCHAR)i;
+				__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,(UCHAR)i);
+			}
+
+		else if(wkey == TEST2)
+		{
+			for(i = 0;i < 500;i++)
+			{
+				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+				ESOS_TASK_WAIT_ON_SEND_UINT82((UCHAR)i);
+				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			}
+		}
+		else if(wkey == TEST3)
+		{
+			for(i = 0;i < 400;i++)
+			{
+				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
+				else if(avr_send_data[i] == 0)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
+				else if( avr_send_data[i] == 0xff)
+					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
+				else
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+			}
+		
+		}
+/*
+		else if(wkey == KP_5)
+			send_aux_data = 20;
+		else if(wkey == KP_6)
+			send_aux_data = 30;
+		else if(wkey == KP_7)
+			send_aux_data = 50;
+		else if(wkey == KP_8)
+			send_aux_data = 100;
+*/
+
+		else if(wkey == INIT)
+			ESOS_RESTART_TASK(cmd_param_task);
+		else	
+			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,wkey);
+
+	}
+    ESOS_TASK_END();
+}
+//#if 0
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
@@ -1545,6 +1739,7 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
+
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//

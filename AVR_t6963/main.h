@@ -162,8 +162,12 @@ enum key_types
 	BURN_PART1,		//  - F7
 	BURN_PART2,		//  - F8
 	BURN_PART3,		//  - F9
-	BURN_PART4		//  - FA
-} KEY_TYPES;
+	BURN_PART4,		//  - FA
+	TEST1,			//  - FB
+	TEST2,			//  - FC
+	TEST3,			//  - FD
+	TEST4			//  - FE
+} KEY_TYPES2;
 
 enum non_func_types
 {

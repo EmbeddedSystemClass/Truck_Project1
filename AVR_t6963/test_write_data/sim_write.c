@@ -236,7 +236,8 @@ int main(int argc, char *argv[])
 //							for(i = start_addr;i < size;i++)
 							res = read(fp,eeprom_sim,EEPROM_SIZE);
 							close(fp);
-							mvwprintw(win, LAST_ROW_DISP,2,"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
+							mvwprintw(win, LAST_ROW_DISP,2,
+								"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
 							j = k = 0;
 						}
 					}else
