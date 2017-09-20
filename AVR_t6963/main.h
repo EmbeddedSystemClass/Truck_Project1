@@ -136,6 +136,45 @@ enum fptr_types
 // warning: these are also defined in the esos1 directory
 enum key_types
 {
+	SYNC = 0xCF,
+	TEST1,			//	- D0
+	TEST2,			//  - D1
+	TEST3,			//  - D2
+	TEST4,			//  - D3
+	TEST5,			//	- D4
+	TEST6,			//	- D5
+	TEST7,			//	- D6
+	TEST8,			//  - D7
+	INIT, 			//	- D8			
+	SPACE,			//	- D9
+	BURN_PART,		//  - DA
+	BURN_PART1,		//  - DB
+	BURN_PART2,		//  - DC
+	BURN_PART3,		//  - DD
+	BURN_PART4,		//  - DE
+	READ_EEPROM,	//	- DF
+	
+	KP_POUND,	// '#'	- E0
+	KP_AST, // '*'		- E1
+	KP_0, // '0'		- E2
+	KP_1, // '1'		- E3
+	KP_2, // '2'		- E4
+	KP_3, // '3'		- E5
+	KP_4, // '4'		- E6
+	KP_5, // '5'		- E7
+	KP_6, // '6'		- E8
+	KP_7, // '7'		- E9
+	KP_8, // '8'		- EA
+	KP_9, // '9'		- EB
+	KP_A, // 'A'		- EC
+	KP_B, // 'B'		- ED
+	KP_C, // 'C'		- EE
+	KP_D, // 'D'		- EF
+} KEY_TYPES;
+
+
+#if 0
+
 	KP_POUND = 0xE0,
 	KP_AST, // '*'		- E1
 	KP_0, // '0'		- E2
@@ -167,7 +206,7 @@ enum key_types
 	TEST2,			//  - FC
 	TEST3,			//  - FD
 	TEST4			//  - FE
-} KEY_TYPES2;
+#endif
 
 enum non_func_types
 {

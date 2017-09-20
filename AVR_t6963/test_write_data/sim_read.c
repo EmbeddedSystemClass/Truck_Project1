@@ -83,7 +83,15 @@ int main(int argc, char *argv[])
 //	set_blocking (fd, 0);	// non-blocking
 
 	goffset = 0;
-	get_label_offsets();
+//	get_label_offsets();
+
+/*
+	for(i = 0;i < EEPROM_SIZE/2;i++)
+		eeprom_sim[i] = i;
+		
+	for(i = EEPROM_SIZE/2;i < EEPROM_SIZE;i++)
+		eeprom_sim[i] = ~i;
+*/	
 
 	j = 0;
 	res = 0;
@@ -91,14 +99,22 @@ int main(int argc, char *argv[])
 	mvwprintw(win, LAST_ROW,1,"started     ");
 	wrefresh(win);
 	memset(aux_string,0,AUX_STRING_LEN);
+	memset(sync_buf,0,sizeof(sync_buf));
+	sync_buf[0] = 0x55;
+	sync_buf[1] = 0x55;
+	sync_buf[2] = 0x55;
+	sync_buf[3] = 0xAA;
+	sync_buf[4] = 0xAA;
+	sync_buf[5] = 0xAA;
 
 	while(1)
 	{
-		res = read(global_fd,&ch,1);
-		mvwprintw(win, LAST_ROW,1,"data recv'd: %d key: %x   ",res,ch);
+		read(global_fd,&ch,1);
+		mvwprintw(win, LAST_ROW,1,"key: %x   ",ch);
 		wrefresh(win);
 
-		read_get_key(ch);
+//		read_get_key(ch);
+		parse_sync(ch);
 		j++;
 	}
 	delwin(win);

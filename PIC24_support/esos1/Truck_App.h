@@ -1,4 +1,3 @@
-// .. "Copyright (c) 2016 Dan Hampleman ("AUTHOR")"
 //    All rights reserved.
 //
 //    Permission to use, copy, modify, and distribute this software and its
@@ -66,7 +65,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define NUM_CHECKBOXES 10
 #define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
 #define CHECKBOX_STRING_LEN 20
-#define TEMP_EEPROM_OFFSET 300
+#define TEMP_EEPROM_OFFSET 400
 
 typedef struct checkboxes
 {
@@ -110,6 +109,8 @@ volatile int sample_numbers[5];
 
 volatile UCHAR cur_col;
 volatile UCHAR cur_row;
+volatile int sync;
+
 UCHAR enter(UCHAR ch);
 void init_numentry(int menu_index);
 void cursor_forward_stuff(char x);
@@ -165,7 +166,25 @@ enum shown_types
 
 enum key_types
 {
-	KP_POUND = 0xE0,
+	SYNC = 0xCF,
+	TEST1,			//	- D0
+	TEST2,			//  - D1
+	TEST3,			//  - D2
+	TEST4,			//  - D3
+	TEST5,			//	- D4
+	TEST6,			//	- D5
+	TEST7,			//	- D6
+	TEST8,			//  - D7
+	INIT, 			//	- D8			
+	SPACE,			//	- D9
+	BURN_PART,		//  - DA
+	BURN_PART1,		//  - DB
+	BURN_PART2,		//  - DC
+	BURN_PART3,		//  - DD
+	BURN_PART4,		//  - DE
+	READ_EEPROM,	//	- DF
+	
+	KP_POUND,	// '#'	- E0
 	KP_AST, // '*'		- E1
 	KP_0, // '0'		- E2
 	KP_1, // '1'		- E3
@@ -181,22 +200,7 @@ enum key_types
 	KP_B, // 'B'		- ED
 	KP_C, // 'C'		- EE
 	KP_D, // 'D'		- EF
-	INIT, //			- F0
-	SPACE,	//			- F1
-	SHOW_EEPROM, //		- F2
-	SHOW_MENU_STRUCT,// - F3
-	LOAD_MENU_STRUCT,// - F4
-	READ_EEPROM,//		- F5
-	BURN_PART,		//  - F6
-	BURN_PART1,		//  - F7
-	BURN_PART2,		//  - F8
-	BURN_PART3,		//  - F9
-	BURN_PART4,		//  - FA
-	TEST1,			//  - FB
-	TEST2,			//  - FC
-	TEST3,			//  - FD
-	TEST4			//  - FE
-} KEY_TYPES2;
+} KEY_TYPES;
 
 enum non_func_type
 {
@@ -210,7 +214,7 @@ enum non_func_type
 	NF_8,
 	NF_9,
 	NF_10
-} NON_FUNC_TYPES2;
+} NON_FUNC_TYPES;
 
 enum rt_types
 {
@@ -415,6 +419,11 @@ UCHAR get_keypress(UCHAR key1)
 		case 'z':
 			wkey = KP_AST;
 			break;
+
+		case 'E':
+		case 'e':
+			wkey = READ_EEPROM;
+			break;
 		case 'V':
 		case 'v':
 			wkey = BURN_PART;
@@ -433,27 +442,40 @@ UCHAR get_keypress(UCHAR key1)
 			break;
 		case 'S':
 		case 's':
-			wkey = SHOW_EEPROM;
+			wkey = SYNC;
 			break;
 		case 'L':
 		case 'l':
-			wkey = LOAD_MENU_STRUCT;
+			wkey = TEST1;
 			break;
 		case 'T':
 		case 't':
 			wkey = TEST2;
 			break;
-		case 'E':
-		case 'e':
-			wkey = READ_EEPROM;
-			break;
 		case 'P':
 		case 'p':
 			wkey = TEST3;
 			break;
+		case 'X':
+		case 'x':
+			wkey = TEST4;
+			break;
 		case 'Q':
 		case 'q':
-			wkey = TEST4;
+			wkey = TEST5;
+			break;
+		case 'F':
+		case 'f':
+			wkey = TEST6;
+			break;
+		case 'G':
+		case 'g':
+			wkey = TEST7;
+			break;
+		case 'H':
+		case 'h':
+			wkey = TEST8;
+			break;
 		case 'I':
 		case 'i':
 			wkey = INIT;
@@ -1067,7 +1089,7 @@ ESOS_USER_TASK(test1);
 ESOS_USER_TASK(send_comm2);
 ESOS_USER_TASK(get_comm2);
 ESOS_USER_TASK(poll_comm1);
-
+ESOS_USER_TASK(get_sync);
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
@@ -1346,10 +1368,14 @@ ESOS_USER_TASK(poll_keypad)
 //******************************************************************************************//
 //************************************** poll_comm1  ***************************************//
 //******************************************************************************************//
+// later on comm1 will be connected to the TS-7200
+// and comm3 is supposed to be the monitor
+
 ESOS_USER_TASK(poll_comm1)
 {
-    static ESOS_TASK_HANDLE cmd_param_task;
     static ESOS_TASK_HANDLE comm2_handle;
+    static ESOS_TASK_HANDLE getcomm_handle;
+    static ESOS_TASK_HANDLE get_sync_handle;
     static uint8_t key;
     static uint8_t wkey;
     static uint16_t wkey16;
@@ -1357,9 +1383,23 @@ ESOS_USER_TASK(poll_comm1)
     static uint8_t low_byte, high_byte;
 
     ESOS_TASK_BEGIN();
-    comm2_handle = esos_GetTaskHandle(send_comm2);
-    cmd_param_task = esos_GetTaskHandle(comm2_task);
-//    cmd_param_task = esos_GetTaskHandle(test1);
+    comm2_handle = esos_GetTaskHandle(comm2_task);
+    getcomm_handle = esos_GetTaskHandle(get_comm2);
+	get_sync_handle = esos_GetTaskHandle(get_sync);
+	size = -1;
+	
+	j = k = 0;
+//	memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+	for(i = 0;i < NUM_LABELS;i++)
+	{
+		j = strlen(labels[i]);
+		memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
+		k++;
+		*(avr_send_data+j+k) = 0;
+		k += j;
+	}
+	for(i = 240;i < AVR_SEND_DATA_SIZE-240;i++)
+		avr_send_data[i] = i;
 
 	while (TRUE)
 	{
@@ -1367,27 +1407,23 @@ ESOS_USER_TASK(poll_comm1)
 		ESOS_TASK_WAIT_ON_GET_UINT8(key);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
 
-		wkey = get_keypress(key);
-/*
 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(key);
+		ESOS_TASK_WAIT_ON_SEND_UINT8(key);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+
+		wkey = get_keypress(key);
+
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(wkey);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
 		if(wkey == BURN_PART)
 		{
-			size = 234;
-			start_addr = 0;
-			j = k = 0;
-			memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
-			for(i = 0;i < NUM_LABELS;i++)
+			if(size == -1)
 			{
-				j = strlen(labels[i]);
-				memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
-				k++;
-				*(avr_send_data+j+k) = 0;
-				k += j;
+				size = 234;
+				start_addr = 0;
 			}
-
 			low_byte = BURN_PART;
 			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
 			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
@@ -1407,19 +1443,53 @@ ESOS_USER_TASK(poll_comm1)
 			for(i = 0;i < size;i++)
 			{
 				__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,avr_send_data[i]);
-				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+
+				if(avr_send_data[i] == 0xF6)			
+					ESOS_TASK_WAIT_TICKS(TIME_DELAY*10);
 			}
-			
 		}		
 		else if(wkey == READ_EEPROM)
+		{
+			avr_ptr = 0;
+
+			low_byte = READ_EEPROM;
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+
+			unpack(size,&low_byte,&high_byte);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,high_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			
+			unpack(start_addr,&low_byte,&high_byte);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,high_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,low_byte);
+			ESOS_TASK_WAIT_TICKS(TIME_DELAY);
+		}
+
+		else if(wkey == TEST1)
 		{
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+
+			for(i = 0; i < AVR_SEND_DATA_SIZE;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
+
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-/*
-			for(i = 0;i < 300;i++)
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+		}
+		else if(wkey == TEST2)
+		{
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+
+			for(i = TEMP_EEPROM_OFFSET; i < AVR_SEND_DATA_SIZE;i++)
 			{
 				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
 					ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
@@ -1430,44 +1500,15 @@ ESOS_USER_TASK(poll_comm1)
 				else
 					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
 			}
-*/
-			for(i = AVR_SEND_DATA_SIZE - TEMP_EEPROM_OFFSET;i < AVR_SEND_DATA_SIZE;i++)
-//			for(i = 0;i < AVR_SEND_DATA_SIZE;i++)
-			{
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
-
-		else if(wkey == TEST1)
-		{
-			memset(avr_send_data,0xff,AVR_SEND_DATA_SIZE);
-			avr_ptr = 0;
-		}
-		else if(wkey == KP_2)
-			for(i = 0;i < 500;i++)
-			{
-				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
-				key = (UCHAR)i;
-				__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,(UCHAR)i);
-			}
-
-		else if(wkey == TEST2)
-		{
-			for(i = 0;i < 500;i++)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-				ESOS_TASK_WAIT_ON_SEND_UINT82((UCHAR)i);
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
-			}
-		}
 		else if(wkey == TEST3)
 		{
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			for(i = 0;i < 400;i++)
 			{
 				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
@@ -1479,23 +1520,24 @@ ESOS_USER_TASK(poll_comm1)
 				else
 					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
 			}
-		
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
-/*
-		else if(wkey == KP_5)
-			send_aux_data = 20;
-		else if(wkey == KP_6)
-			send_aux_data = 30;
-		else if(wkey == KP_7)
-			send_aux_data = 50;
-		else if(wkey == KP_8)
-			send_aux_data = 100;
-*/
+		else if(wkey == TEST4)
+		{
+			memset(avr_send_data,0xff,AVR_SEND_DATA_SIZE);
+			avr_ptr = 0;
+		}
 
 		else if(wkey == INIT)
-			ESOS_RESTART_TASK(cmd_param_task);
+		{
+			ESOS_RESTART_TASK(comm2_handle);
+			ESOS_RESTART_TASK(getcomm_handle);
+			ESOS_RESTART_TASK(get_sync_handle);
+		}
 		else	
-			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,wkey);
+			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,wkey);
 
 	}
     ESOS_TASK_END();

@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 	char tchbox[10];
 	char filename[20];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
+	syncup = 0;
 
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{

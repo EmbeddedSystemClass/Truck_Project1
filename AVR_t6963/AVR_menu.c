@@ -139,16 +139,43 @@ static UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-/*
-	In real life, the main.c in the AVR will read the 1st keypress and then call this function:
+UCHAR parse_sync(UCHAR key)
+{
+	int i,j,done;
+	UCHAR ret_char = key;
+	UCHAR buf[8];
+	int res = 0;
 
-		ret_char = receiveByte();
-		read_get_key(ret_char);
-		...
-*/
+	i = 0;
+	done = 0;
+
+	do
+	{
+		res += read(global_fd,&buf[i],1);
+		usleep(1000);
+		if(buf[i] != sync_buf[i])
+			done = 1;
+		i++;	
+
+	}while(!done && i < 6);
+
+	if(!done)
+		syncup = 1;
+
+	if(done)
+	{
+		for(i = 0;i < j;i++)
+			read_get_key(buf[i]);
+	}
+
+	return ret_key;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 UCHAR read_get_key(UCHAR key)
 {
-	int i,j,k;
+	int i,j,k,done;
 	UCHAR ret_char = key;
 	int size = 0;
 	int start_addr = 0;
@@ -158,6 +185,44 @@ UCHAR read_get_key(UCHAR key)
 	UCHAR low_byte, high_byte, recByte;
 	int choice_aux_offset;
 	int exec_aux_offset;
+
+
+	if(ret_char > 0x21 && ret_char < 0x7e)
+		mvwprintw(win, LAST_ROW-3,2,"%c  %d   ",ret_char,res);
+	else	
+		mvwprintw(win, LAST_ROW-3,2,"%2x  %d   ",ret_char,res);
+	wrefresh(win);
+
+	if(!syncup)
+	{
+		mvwprintw(win, LAST_ROW-3,20,"not sync'd    ");
+		wrefresh(win);
+		return ret_char;
+	}
+	else if(done)
+	{
+		key = 0x51;
+		write(global_fd,&key,1);
+		usleep(1000);
+		key = 0x52;
+		write(global_fd,&key,1);	
+		usleep(1000);
+		key = 0xA1;
+		write(global_fd,&key,1);
+		usleep(1000);
+		key = 0xA2;
+		write(global_fd,&key,1);	
+		usleep(1000);
+		done = 0;
+		mvwprintw(win, LAST_ROW-6,2,"done1: %2x  %d  ",key,syncup);
+		wrefresh(win);
+		return ret_char;
+	}
+
+//	mvwprintw(win, LAST_ROW-2,1,"                                        ");
+
+	mvwprintw(win, LAST_ROW-7,2,"done2: %2x  %d  ",ret_char,syncup);
+	wrefresh(win);
 
 	switch(ret_char)
 	{
@@ -183,10 +248,17 @@ UCHAR read_get_key(UCHAR key)
 			start_addr = pack(low_byte,high_byte);
 
 			for(i = start_addr;i < size+start_addr;i++)
+//			for(i = 0; i < 500;i++)
+			{
+				usleep(100);
 				res2 += write(global_fd,&eeprom_sim[i],1);
+//				low_byte = ~i;
+//				res2 += write(global_fd,&low_byte,1);
+			}
 
 			j = 0;
 			k = 0;
+/*
 			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
 			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
 			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
@@ -196,36 +268,36 @@ UCHAR read_get_key(UCHAR key)
 
 			for(i = 1;i < LAST_ROW+1;i++)
 				mvwprintw(win, i,2,"                                                            ");
-
+*/
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 					mvwprintw(win, LAST_ROW+j-40, 2+k,"%c",eeprom_sim[i]);
 				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
 				else mvwprintw(win, LAST_ROW+j-40, 2+k,"_");
-				if(++k > 30)
+				if(++k > 40)
 				{
 					k = 0;
 					++j;
 				}
 			}
 			k = 0;
+/*
 			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
 			{
 				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
 			}
+*/
 			mvwprintw(win, LAST_ROW-2,1,
 				"read_eeprom - size: %d start: %d type: %d res: %d res2: %d ",size,start_addr,type,res,res2);
+			wrefresh(win);				
 #else
 			high_byte = receiveByte();
 			transmitByte(high_byte);
-			low_byte = receiveByte();
 			transmitByte(low_byte);
 			size = pack(low_byte,high_byte);
 
-			high_byte = receiveByte();
 			transmitByte(high_byte);
-			low_byte = receiveByte();
 			transmitByte(low_byte);
 			start_addr = pack(low_byte,high_byte);
 			memset(aux_string,0,AUX_STRING_LEN);
@@ -280,11 +352,11 @@ UCHAR read_get_key(UCHAR key)
 //			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 #endif
 			goffset = 0;
-			get_label_offsets();
+//			get_label_offsets();
 
 			break;
 		default:
-			ret_char = generic_menu_function(ret_char);
+//			ret_char = generic_menu_function(ret_char);
 			break;
 	}
 #ifdef TEST_WRITE_DATA
@@ -460,18 +532,22 @@ static UCHAR generic_menu_function(UCHAR ch)
 		}
 	}
 #endif
+
+#if 0
 	if(ret_char != READ_EEPROM)
 		for(i = 0;i < 400;i++)
 		{
-			if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
+			if(aux_string[i] > 0x1f && aux_string[i] < 0x7e)
 				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%c",aux_string[i]);
-			else if(avr_send_data[i] == 0)
+			else if(aux_string[i] == 0)
 				mvwprintw(win, LAST_ROW+j-30, 2+(k*3)," ");
-			else if( avr_send_data[i] == 0xff)
+			else if( aux_string[i] == 0xff)
 				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"_");
 			else
 				mvwprintw(win, LAST_ROW+j-30, 2+(k*3),"%2x ",aux_string[i]);
 		}
+#endif
+
 
 #if 0
 	if(ret_char != READ_EEPROM)

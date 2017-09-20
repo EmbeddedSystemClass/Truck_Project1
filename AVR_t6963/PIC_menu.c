@@ -300,6 +300,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 //			get_label_offsets();
 
  			break;
+#if 0
 			case LOAD_MENU_STRUCT:
 				i = 0;
 				total_offset = 0;
@@ -339,7 +340,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			mvwprintw(win, LAST_ROW_DISP-2,1,"load menu_struct: %d %d   ",no_rt_labels,no_menu_labels);
 #endif
 				break;
-
+#endif
 #ifdef TEST_WRITE_DATA
  		case SPACE:
 			write(global_fd,&ret_char,1);
