@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 	int fd;
 	int i,j,k;
 	UCHAR ch;
+	UCHAR key;
 	struct termios oldtio,newtio;
 	WINDOW *win;
 	int res;
@@ -82,22 +83,61 @@ int main(int argc, char *argv[])
 	set_blocking (fd, 1);	// block on read
 //	set_blocking (fd, 0);	// non-blocking
 
-	goffset = 0;
-//	get_label_offsets();
-
-/*
+#if 0
 	for(i = 0;i < EEPROM_SIZE/2;i++)
 		eeprom_sim[i] = i;
-		
+
 	for(i = EEPROM_SIZE/2;i < EEPROM_SIZE;i++)
 		eeprom_sim[i] = ~i;
-*/	
+#endif
+
+	res = 0;
+	for(i = 0;i < EEPROM_SIZE;i++)
+	{
+		res += read(global_fd,&eeprom_sim[i],1);
+		mvwprintw(win, LAST_ROW-1,1,"%2x %d ",eeprom_sim[i],res);
+		if(i < NO_RT_LABELS_EEPROM_LOCATION)
+			usleep(tdelay*20);
+		wrefresh(win);
+	}
+
+
+	mvwprintw(win, LAST_ROW-1,1,"res: %2d            ",res);
+
+	j = 0;
+	for(i = NO_RT_LABELS_EEPROM_LOCATION;i < NO_MENU_LABELS_EEPROM_LOCATION+2;i++)
+	{
+		mvwprintw(win, LAST_ROW-2,1+(j*3),"%2x ",eeprom_sim[i],res);
+		wrefresh(win);
+		j++;
+	}
+
+	memcpy((void*)&no_rt_labels,(void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+	memcpy((void*)&no_rtparams,(void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+	memcpy((void*)&no_menu_labels,(void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
+	goffset = 0;
+	get_label_offsets(win);
+
+//	no_menu_labels = 27;
+//	no_rt_labels = 10;
+
+//	mvwprintw(win, LAST_ROW-3,1,"eeprom locations: %2d %2d %2d ",no_rt_labels,no_rtparams,no_menu_labels);
+	wrefresh(win);
+
+
 
 	j = 0;
 	res = 0;
+
+	curr_menus[0] = MENU1A;
+	curr_menus[1] = MENU1B;
+	curr_menus[2] = MENU1C;
+	curr_menus[3] = MENU1D;
+	curr_menus[4] = MENU2A;
+	curr_menus[5] = MENU2B;
+
 	init_list();
-	mvwprintw(win, LAST_ROW,1,"started     ");
-	wrefresh(win);
 	memset(aux_string,0,AUX_STRING_LEN);
 	memset(sync_buf,0,sizeof(sync_buf));
 	sync_buf[0] = 0x55;
@@ -107,15 +147,18 @@ int main(int argc, char *argv[])
 	sync_buf[4] = 0xAA;
 	sync_buf[5] = 0xAA;
 
+	syncup = 0;
+	bp = 0;
+	tdelay = 1500;
 	while(1)
 	{
-		read(global_fd,&ch,1);
-		mvwprintw(win, LAST_ROW,1,"key: %x   ",ch);
-		wrefresh(win);
-
-//		read_get_key(ch);
-		parse_sync(ch);
+		read(global_fd,&key,1);
+		mvwprintw(win, LAST_ROW-3,1,"key: %x ",key);
+		read_get_key(key);
+//		parse_sync();
 		j++;
+		if(j > 200)
+			j = 0;
 	}
 	delwin(win);
 	clrtoeol();

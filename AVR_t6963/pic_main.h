@@ -3,6 +3,8 @@
 // and before avr_main.h in the files for the AVR
 
 #define LIST_SIZE 50
+#define LAST_ROW_DISP LAST_ROW-11
+#define LAST_COL 63
 
 UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
 CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
@@ -20,6 +22,7 @@ int get_curr_menu(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
+void get_label_offsets(WINDOW *win);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -102,5 +105,5 @@ UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 int send_aux_data;
-
+int tdelay;
 

@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	char tchbox[10];
 	char filename[20];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
-	syncup = 0;
+//	syncup = 0;
 
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
@@ -76,11 +76,9 @@ int main(int argc, char *argv[])
 	}
 	exit(1);
 */
-    memset(eeprom_sim,0,EEPROM_SIZE);
 
-	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
-	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
-	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));	// reserve an extra sample_data space for in case of 'escape'
+
+
 	initscr();			/* Start curses mode 		*/
 	clear();
 	noecho();
@@ -113,6 +111,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 	i = 0;
+	tdelay = 1500;
 	init_list();
 	size = 0;
 	start_addr = 0;
@@ -122,13 +121,125 @@ int main(int argc, char *argv[])
 	print_menu(win);
 	for(i = 0;i < 5;i++)
 		sample_numbers[i] = 100+(i*10);
-//	memset(aux_string,0,AUX_STRING_LEN);
-	for(i = 0;i < AUX_STRING_LEN;i++)
-		aux_string[i] = i;
+	memset(aux_string,0,AUX_STRING_LEN);
+
+    memset(eeprom_sim,0,EEPROM_SIZE);
+
+	strcpy(filename,"eeprom.bin\0");
+	if(access(filename,F_OK) != -1)
+	{
+		fp = open((const char *)filename, O_RDWR);
+		if(fp < 0)
+		{
+			mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
+			wrefresh(win);
+			getch();
+		}else
+		{
+			res = 0;
+			lseek(fp,0,SEEK_SET);
+//							for(i = start_addr;i < size;i++)
+			res = read(fp,eeprom_sim,EEPROM_SIZE);
+			close(fp);
+			mvwprintw(win, LAST_ROW_DISP,2,
+				"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
+			j = k = 0;
+		}
+	}else
+	{
+		mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
+//		burn_eeprom();
+	}
+/*
+	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
+	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
+	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));	// reserve an extra sample_data space for in case of 'escape'
+*/
+	res = 0;
+
+	for(i = 0;i < EEPROM_SIZE;i++)
+	{
+		res += write(global_fd,&eeprom_sim[i],1);
+//		mvwprintw(win, LAST_ROW_DISP-1,2,"%2x %2d ",eeprom_sim[i],res);
+//		wrefresh(win);
+		usleep(tdelay);
+	}
+
+	mvwprintw(win, LAST_ROW_DISP,2,"res: %2d ",res);
+	wrefresh(win);
+
+		i = 0;
+		total_offset = 0;
+		i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
+	// 1a
+		i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
+	// 1b
+		i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+	// 1c
+		i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+	// 1d
+		i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+	// 1e
+		i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
+	// 2a
+		i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
+	// 2b
+		i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+	// 2c
+		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+	// 2d
+		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+	// 2e
+		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+	// 3a
+		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+	// 3b
+		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+
+		no_menu_structs = i;
+		goffset = 0;
+		no_menu_labels = blank;
+		no_rt_labels = test - rpm;
+		get_label_offsets(win);
+
+//		mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
+
+
+	j = k = 0;
+//	for(i = 0;i < 22;i++)
+//		mvwprintw(win, LAST_ROW_DISP-35+i,24,"                                   ");
+/*
+	for(i = 0;i < EEPROM_SIZE;i++)
+	{
+		if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+			mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+		else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
+		else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+		if(++k > 30)
+		{
+			k = 0;
+			++j;
+		}
+	}
+*/
+/*
+	for(i = NO_RT_LABELS_EEPROM_LOCATION;i < EEPROM_SIZE;i++)
+	{
+		mvwprintw(win, LAST_ROW_DISP+j-40, 2+(k*3),"%2x ",eeprom_sim[i]);
+		if(++k > 15)
+		{
+			k = 0;
+			++j;
+		}
+	}
+
+	wrefresh(win);
+*/
 
 	do {
 		key = wgetch(win);
 		wkey = get_keypress(key,win, display_offset);
+//		mvwprintw(win, LAST_ROW_DISP-1,1,"key: %x  ",wkey);
 		if(wkey != 0xff)
 		{
 			switch(wkey)
@@ -146,16 +257,6 @@ int main(int argc, char *argv[])
 					ret_key = 0xff;
 					break;
 				case READ_EEPROM:
-#if 0
-					strcpy(filename,"eeprom.bin\0");
-					fp = open((const char *)filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRUSR | S_IRGRP | S_IWGRP);
-					if(fp < 0)
-					{
-						mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
-						wrefresh(win);
-						getch();
-					}
-#endif
 					type = 3;
 					size = EEPROM_SIZE;
 					start_addr = 0;
@@ -174,7 +275,7 @@ int main(int argc, char *argv[])
 					{
 						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
-						else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
+						else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-50, 24+k," ");
 						else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
 						if(++k > 30)
 						{
@@ -256,69 +357,9 @@ int main(int argc, char *argv[])
 					if(wkey == BURN_PART1)
 					{
 						goffset = 0;
-						get_label_offsets();
+						get_label_offsets(win);
 					}
 
-					break;
-
-				case SHOW_EEPROM:
-					for(i = 1;i < LAST_ROW+1;i++)
-						mvwprintw(win, i,2,"                                                            ");
-					j = k = 0;
-					for(i = 0;i < EEPROM_SIZE;i++)
-					{
-						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
-						else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
-						else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
-						if(++k > 30)
-						{
-							k = 0;
-							++j;
-						}
-					}
-					print_menu(win);
-					goffset = 0;
-					get_label_offsets();
-					break;
-				case SHOW_MENU_STRUCT:
-					for(i = 1;i < LAST_ROW+1;i++)
-						mvwprintw(win, i,2,"                                                            ");
-
-					k = 0;
-					j = 1;
-					for(i = 2;i < LAST_ROW_DISP+1;i++)
-						mvwprintw(win, i,2,"                                                            ");
-					for(i = 0;i < no_menu_structs;i++)
-					{
-						mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
-						for(j = 0;j < 6;j++)
-						{
-							get_label(menu_structs[i].menus[j],temp_label);
-							mvwprintw(win, display_offset+i,6+(j*8),"%s ", temp_label);
-//							mvwprintw(win, display_offset+i,6+(j*8),"%d ",menu_structs[i].menus[j]);
-						}
-					}
-					k = 0;
-					j = 17;
-					for(i = 0;i < no_menu_structs;i++)
-					{
-						memcpy(&mf,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
-						mvwprintw(win, display_offset+j,2,
-							"%2d %2d %2d %2d %2d %2d %2d %2d",pmf->fptr,pmf->menus[0],pmf->menus[1],
-								pmf->menus[2],pmf->menus[3],pmf->menus[4],pmf->menus[5],pmf->index);
-						j++;
-					}
-					mvwprintw(win, LAST_ROW_DISP-1,2,
-						"no_menu_structs: %d  ",no_menu_structs);
-					wrefresh(win);
-					print_menu(win);
-					break;
-				case LOAD_MENU_STRUCT:
-					size = 0;
-					start_addr = 0;
-					type = 0;
-					get_key(wkey,size,start_addr,peeprom_sim,type);
 					break;
 
 				case SPACE:
@@ -331,7 +372,7 @@ int main(int argc, char *argv[])
 					break;
 				default:
 					wrefresh(win);
-
+					start_addr = 500;
 					ret_key = get_key(wkey,size,start_addr,aux_string,0);
 	//				mvwprintw(win, LAST_ROW-9,1,"non_func: %x %c  ",wkey, wkey-NF_1);
 	//				wrefresh(win);
@@ -542,6 +583,160 @@ int burn_eeprom(void)
 //******************************************************************************************//
 //*************************************** get_keypress *************************************//
 //******************************************************************************************//
+
+//UCHAR get_keypress(UCHAR key1)
+static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
+{
+	UCHAR wkey;
+
+	switch(key)
+	{
+		case '0':
+			wkey = KP_0;
+			break;
+		case '1':
+			wkey = KP_1;
+			break;
+		case '2':
+			wkey = KP_2;
+			break;
+		case '3':
+			wkey = KP_3;
+			break;
+		case '4':
+			wkey = KP_4;
+			break;
+		case '5':
+			wkey = KP_5;
+			break;
+		case '6':
+			wkey = KP_6;
+			break;
+		case '7':
+			wkey = KP_7;
+			break;
+		case '8':
+			wkey = KP_8;
+			break;
+		case '9':
+			wkey = KP_9;
+			break;
+		case '*':
+			wkey = KP_AST;
+			break;
+		case '#':
+			wkey = KP_POUND;
+			break;
+		case 'A':
+		case 'a':
+			wkey = KP_A;
+			break;
+		case 'B':
+		case 'b':
+			wkey = KP_B;
+			break;
+		case 'C':
+		case 'c':
+			wkey = KP_C;
+			break;
+		case 'D':
+		case 'd':
+			wkey = KP_D;
+			break;
+// use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
+		case 'Y':
+		case 'y':
+			wkey = KP_POUND;
+			break;
+		case 'Z':
+		case 'z':
+			wkey = KP_AST;
+			break;
+
+		case 'E':
+		case 'e':
+			wkey = READ_EEPROM;
+			break;
+		case 'V':
+		case 'v':
+			wkey = BURN_PART;
+			break;
+		case 'W':
+		case 'w':
+			wkey = BURN_PART2;
+			break;
+		case 'U':
+		case 'u':
+			wkey = BURN_PART3;
+			break;
+		case 'R':
+		case 'r':
+			wkey = BURN_PART4;
+			break;
+		case 'S':
+		case 's':
+			wkey = SYNC;
+			break;
+		case 'L':
+		case 'l':
+			wkey = TEST1;
+			break;
+		case 'T':
+		case 't':
+			wkey = TEST2;
+			break;
+		case 'P':
+		case 'p':
+			wkey = TEST3;
+			break;
+		case 'X':
+		case 'x':
+			wkey = TEST4;
+			break;
+		case 'N':
+		case 'n':
+			wkey = TEST5;
+			break;
+		case 'F':
+		case 'f':
+			wkey = TEST6;
+			break;
+		case 'G':
+		case 'g':
+			wkey = TEST7;
+			break;
+		case 'H':
+		case 'h':
+			wkey = TEST8;
+			break;
+		case 'J':
+		case 'j':
+			wkey = TEST10;
+			break;
+		case 'M':
+		case 'm':
+			wkey = TEST11;
+			break;
+		case 'K':
+		case 'k':
+			wkey = TEST9;
+			break;
+		case 'I':
+		case 'i':
+			wkey = INIT;
+			break;
+		case ' ':
+			wkey = SPACE;
+			break;
+		default:
+			wkey = 0xff;
+			break;
+	}
+	return wkey;
+}
+
+
+#if 0
 static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 {
 	UCHAR wkey;
@@ -690,7 +885,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 	}
 	return wkey;
 }
-
+#endif
 static void print_menu(WINDOW *win)
 {
 //	mvwprintw(win, LAST_ROW-6,LAST_COL,"*");

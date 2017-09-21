@@ -61,9 +61,9 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 //******************************************************************************************//
 //*********************************** get_label_offsets ************************************//
 //******************************************************************************************//
-void get_label_offsets(void)
+void get_label_offsets(WINDOW *win)
 {
-	int i, j;
+	int i, j,k;
 	char *ch;
 	char temp_label[MAX_LABEL_LEN];
 
@@ -73,6 +73,9 @@ void get_label_offsets(void)
 		j = 0;
 #ifdef TEST_WRITE_DATA
 		memcpy(temp_label,peeprom_sim+goffset,MAX_LABEL_LEN);
+		mvwprintw(win, LAST_ROW-8,2,"%s   ", temp_label);
+		wrefresh(win);
+		
 #else
 #ifdef MAIN_C
 		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);

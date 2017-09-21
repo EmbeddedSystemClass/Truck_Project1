@@ -18,10 +18,11 @@ void set_win(WINDOW *win);
 #endif
 void init_list(void);
 UCHAR read_get_key(UCHAR key);
-UCHAR parse_sync(UCHAR key);
+int parse_sync(void);
 int get_str_len(void);
 int burn_eeprom(void);
 int read_eeprom(void);
+void get_label_offsets(WINDOW *win);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -57,3 +58,5 @@ int menu_index;
 int curr_menus[6];
 int syncup;
 UCHAR sync_buf[10];
+int bp;
+int tdelay;

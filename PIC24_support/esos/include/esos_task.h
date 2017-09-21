@@ -544,7 +544,7 @@ do {                                                    \
  * \sa ESOS_TASK_GET_TASK_HANDLE
  * \hideinitializer
  */
-#define ESOS_KILL_TASK(TaskHandle)    __ESOS_TASK_SET_KILLED_FLAG((TaskHandle))
+#define ESOS_KILL_TASK(TaskHandle)    __ESOS_SET_TASK_KILLED_FLAG((TaskHandle))
 
 
 /**

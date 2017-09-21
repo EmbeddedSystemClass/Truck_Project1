@@ -119,7 +119,7 @@ int main(void)
 	sync_buf[5] = 0xAA;
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd <0) {perror(MODEMDEVICE); 
+	if (fd <0) {perror(MODEMDEVICE);
 		exit(-1); }
 
 
@@ -211,7 +211,7 @@ void read_get_key(UCHAR key)
 	{
 		for(i = 0;i < BUF2_LEN-1;i++)
 			printf("%2x ",buf2[i]);
-		printf("\n\n");	
+		printf("\n\n");
 		buf2index = 0;
 	}
 }

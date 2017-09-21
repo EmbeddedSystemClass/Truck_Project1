@@ -74,6 +74,7 @@ static int prev_list(void)
 {
 	int ret;
 
+//	send_aux_data = 0;
 	if(current_fptr == 0)
 		ret = -1;
 	else
@@ -181,6 +182,158 @@ static UCHAR menu_change(UCHAR ch)
 	return ret_char;
 }
 //******************************************************************************************//
+//********************************* generic_menu_function **********************************//
+//******************************************************************************************//
+static UCHAR generic_menu_function(UCHAR ch)
+{
+	UCHAR ret_char;
+	int i,j;
+	UCHAR temp2;
+	int temp3;
+	char tlabel[MAX_LABEL_LEN];
+	UCHAR low_byte, high_byte;
+	UCHAR code = 0;
+	int start_addr;
+	int res;
+
+	// execute function pointer
+	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
+
+#ifdef TEST_WRITE_DATA
+	get_label(get_curr_menu(),tlabel);
+	mvwprintw(win, DISP_OFFSET+2, 2,"ch: %x label: %s curr menu %d func: %d            ",
+			ch,
+			tlabel,
+			get_curr_menu(),
+//			get_fptr_label(),
+			menu_structs[get_curr_menu()].fptr);
+	wrefresh(win);
+#endif
+/*
+	for(i = 0;i < 6;i++)
+	{
+		memset(tlabel,0,MAX_LABEL_LEN);
+		strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
+//		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
+	}
+*/
+// write 4 bytes: fptr, ch, menu_index & current_param_string
+// then the size of the aux_data, then the aux_data (which can be up to AUX_STRING_LEN)
+// and if the AUX_STRING_LEN is 48 then to total is 4+60+48 = 112
+// so the PIC must allocate this much space for this module to write to so the pic can
+// send it using its own serial interface.
+#ifdef TEST_WRITE_DATA
+	write(global_fd,&ch,1);
+	usleep(tdelay);
+	temp2 = get_fptr();
+	write(global_fd,&temp2,1);
+	usleep(tdelay);
+	temp3 = get_curr_menu_index();
+
+	start_addr = temp3 * 10;	// just for testing
+
+	unpack(temp3,&low_byte, &high_byte);
+	write(global_fd,&high_byte,1);
+	usleep(tdelay);
+	write(global_fd,&low_byte,1);
+	usleep(tdelay);
+
+	for(i = 0;i < 6;i++)
+	{
+		unpack(menu_structs[get_curr_menu()].menus[i],&low_byte,&high_byte);
+		write(global_fd, &high_byte,1);
+		usleep(tdelay);
+		// for some reason when sending a 0x0c - 13 it get recieved as a 0x0a - 10
+		// so I changed it in the pack/unpack functions
+//		low_byte = ~low_byte;
+		write(global_fd, &low_byte,1);
+		usleep(tdelay);
+		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  ",
+			menu_structs[get_curr_menu()].menus[i]);
+	}
+
+#if 0
+	send_aux_data = 2*temp2;
+	for(i = 0;i < send_aux_data;i++)
+		aux_string[i] = i*temp3;
+
+	unpack(send_aux_data,&low_byte,&high_byte);
+	write(global_fd, &high_byte,1);
+	usleep(tdelay);
+	write(global_fd, &low_byte,1);
+	usleep(tdelay);
+
+	unpack(start_addr,&low_byte,&high_byte);
+	write(global_fd, &high_byte,1);
+	usleep(tdelay);
+	write(global_fd, &low_byte,1);
+	usleep(tdelay);
+
+for(i = 0;i < 200;i++)
+//send_aux_data = 200;
+	res = 0;
+//	for(i = 0;i < send_aux_data;i++)
+	{
+		res += write(global_fd,&aux_string[i],1);
+		usleep(tdelay*2);
+		if(i < 10)
+		{
+			mvwprintw(win, DISP_OFFSET+8+j, 2+(i*4),"%2x ",aux_string[i]);
+			wrefresh(win);
+		}
+	}
+#endif
+
+	mvwprintw(win, DISP_OFFSET+5, 1,"index: %d  send_aux_data: %d res:  %d      ",
+		get_curr_menu(),send_aux_data,res);
+
+	// if code gets read back as an 0xAA, then that means we are
+	// running this simulator hooked up to the AVR
+	// (show everthing is working if no LCD screen is attached)
+#if 0
+	read(global_fd,&code,1);
+	if(code == 0xAA)
+	{
+		for(i = 0;i < 6;i++)
+		{
+			read(global_fd,&code,1);
+			mvwprintw(win, DISP_OFFSET+3,2+(i * 3),"%d ",code);
+		}
+	}
+#endif
+/*
+	unpack(aux_data_offset,&low_byte,&high_byte);
+	write(global_fd, &high_byte,1);
+	write(global_fd, &low_byte,1);
+*/
+/*
+	for(i = 0;i < current_fptr;i++)
+	{
+		get_label(menu_list[i],tlabel);
+		mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
+	}
+	get_label(menu_list[i],tlabel);
+
+	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
+
+	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
+	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
+*/
+//	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
+
+//	for(i = 0;i < NUM_CHECKBOXES/4;i++)
+//		mvwprintw(win, DISP_OFFSET+4,2+(i*2),"%d  ",check_boxes[i].checked);
+
+//	mvwprintw(win, DISP_OFFSET+5,2+(i*7),"%s  ",check_boxes[i].string);
+/*
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
+	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
+*/
+	wrefresh(win);
+	return ret_char;
+}
+//******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 // pass in the keypress from the PIC24 keypad and pass out the string of UCHARs
@@ -199,6 +352,9 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 		case INIT:
 			init_list();
 			break;
+		case TEST5:
+			res += write(global_fd,&ret_char,1);
+			break;
 		case READ_EEPROM:
 			res += write(global_fd,&ret_char,1);
 
@@ -216,13 +372,14 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				read(global_fd,&str[i],1);
 
 			goffset = 0;
-			get_label_offsets();
+			get_label_offsets(win);
 
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
  			break;
 
 		case BURN_PART:
+
 			memset(taux_string,0,AUX_STRING_LEN);
 			j = k = 0;
 			for(i = start_addr;i < size+start_addr;i++)
@@ -233,7 +390,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			{
 				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
 					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",aux_string[i]);
-				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
+				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-40, 24+k," ");
 				else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
 				if(++k > 30)
 				{
@@ -284,7 +441,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			{
 				if(taux_string[i] < 0x7e && taux_string[i] > 0x21)
 					mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"%c",taux_string[i]);
-				else if(taux_string[i] == 0)	mvwprintw(win, LAST_ROW+j-30, 24+k," ");
+				else if(taux_string[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-30, 24+k," ");
 				else mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"_");
 				if(++k > 30)
 				{
@@ -358,122 +515,6 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 	return ret_char;
 }
 //******************************************************************************************//
-//********************************* generic_menu_function **********************************//
-//******************************************************************************************//
-static UCHAR generic_menu_function(UCHAR ch)
-{
-	UCHAR ret_char;
-	int i;
-	UCHAR temp2;
-	int temp3;
-	char tlabel[MAX_LABEL_LEN];
-	UCHAR low_byte, high_byte;
-	UCHAR code = 0;
-
-	// execute function pointer
-	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
-
-#ifdef TEST_WRITE_DATA
-	get_label(get_curr_menu(),tlabel);
-	mvwprintw(win, DISP_OFFSET+2, 2,"%s %d func: %d            ",
-			tlabel,
-			get_curr_menu(),
-//			get_fptr_label(),
-			menu_structs[get_curr_menu()].fptr);
-	wrefresh(win);
-#endif
-/*
-	for(i = 0;i < 6;i++)
-	{
-		memset(tlabel,0,MAX_LABEL_LEN);
-		strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
-//		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
-	}
-*/
-// write 4 bytes: fptr, ch, menu_index & current_param_string
-// then the size of the aux_data, then the aux_data (which can be up to AUX_STRING_LEN)
-// and if the AUX_STRING_LEN is 48 then to total is 4+60+48 = 112
-// so the PIC must allocate this much space for this module to write to so the pic can
-// send it using its own serial interface.
-#ifdef TEST_WRITE_DATA
-	write(global_fd,&ch,1);
-	temp2 = get_fptr();
-	write(global_fd,&temp2,1);
-//	write(global_fd,&ch,1);
-	temp3 = get_curr_menu_index();
-	unpack(temp3,&low_byte, &high_byte);
-	write(global_fd,&high_byte,1);
-	write(global_fd,&low_byte,1);
-
-	for(i = 0;i < 6;i++)
-	{
-		unpack(menu_structs[get_curr_menu()].menus[i],&low_byte,&high_byte);
-		write(global_fd, &high_byte,1);
-		// for some reason when sending a 0x0c - 13 it get recieved as a 0x0a - 10
-		// so I changed it in the pack/unpack functions
-//		low_byte = ~low_byte;
-		write(global_fd, &low_byte,1);
-//		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  %d  %d  ",menu_structs[get_curr_menu()].menus[i],high_byte,low_byte);
-	}
-	unpack(send_aux_data,&low_byte,&high_byte);
-	write(global_fd, &high_byte,1);
-	write(global_fd, &low_byte,1);
-	for(i = 0;i < send_aux_data;i++)
-		write(global_fd,&aux_string[i],1);
-
-	// if code gets read back as an 0xAA, then that means we are
-	// running this simulator hooked up to the AVR
-	// (show everthing is working if no LCD screen is attached)
-	read(global_fd,&code,1);
-	if(code == 0xAA)
-	{
-		for(i = 0;i < 6;i++)
-		{
-			read(global_fd,&code,1);
-			mvwprintw(win, DISP_OFFSET+3,2+(i * 3),"%d ",code);
-		}
-	}
-
-/*
-	unpack(aux_data_offset,&low_byte,&high_byte);
-	write(global_fd, &high_byte,1);
-	write(global_fd, &low_byte,1);
-*/
-
-	for(i = 0;i < current_fptr;i++)
-	{
-		get_label(menu_list[i],tlabel);
-		mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-	}
-	get_label(menu_list[i],tlabel);
-
-	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-
-	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
-
-//	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
-
-//	for(i = 0;i < NUM_CHECKBOXES/4;i++)
-//		mvwprintw(win, DISP_OFFSET+4,2+(i*2),"%d  ",check_boxes[i].checked);
-
-//	mvwprintw(win, DISP_OFFSET+5,2+(i*7),"%s  ",check_boxes[i].string);
-/*
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
-	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
-*/
-	wrefresh(win);
-#else
-	temp2 = get_fptr();
-	memcpy(ppic_data,&temp2,1);
-	memcpy(ppic_data+1,&ch,1);
-	temp2 = (UCHAR)get_curr_menu_index();
-	memcpy(ppic_data+2,&temp2,1);
-#endif
-	return ret_char;
-}
-//******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 static UCHAR do_numentry(UCHAR ch)
@@ -535,7 +576,7 @@ static UCHAR do_numentry(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+31,2,"cur: %s %d   ",cur_global_number,cur_col);
+//	mvwprintw(win, DISP_OFFSET+31,2,"cur: %s %d   ",cur_global_number,cur_col);
 	mvwprintw(win, DISP_OFFSET+1,2, "*do_numentry  %x   ",ret_char);
 	wrefresh(win);
 #endif
@@ -739,8 +780,8 @@ static UCHAR do_chkbox(UCHAR ch)
 				check_boxes[i].checked = prev_check_boxes[i];	// restore old
 
 #ifdef TEST_WRITE_DATA
-			for(i = 0;i < NUM_CHECKBOXES;i++)
-				mvwprintw(win, DISP_OFFSET+6,2+(i+2),"%d  ",prev_check_boxes[i]);
+//			for(i = 0;i < NUM_CHECKBOXES;i++)
+//				mvwprintw(win, DISP_OFFSET+6,2+(i+2),"%d  ",prev_check_boxes[i]);
 			wrefresh(win);
 #endif
 		prev_list();
@@ -1015,4 +1056,5 @@ void init_list(void)
 	aux_index = 0;
 	send_aux_data = 0;
 }
+#endif
 #endif

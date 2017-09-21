@@ -7,7 +7,8 @@
 #define NUM_MENU_CHOICES 6
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
-#define DISP_OFFSET 4
+#define DISP_OFFSET 1
+#define LAST_ROW DISP_OFFSET+58
 #define NUM_EXECCHOICES 10
 #define SCALE_DISP_ALL 0
 #define SCALE_DISP_SOME 1
@@ -37,9 +38,6 @@ typedef struct checkboxes
 UCHAR eeprom_sim[EEPROM_SIZE];
 #endif
 
-#define LAST_ROW DISP_OFFSET+54
-#define LAST_ROW_DISP LAST_ROW-12
-#define LAST_COL 63
 int burn_eeprom(void);
 int burn_eeprom2(void);
 
@@ -145,7 +143,7 @@ enum key_types
 	TEST6,			//	- D5
 	TEST7,			//	- D6
 	TEST8,			//  - D7
-	INIT, 			//	- D8			
+	INIT, 			//	- D8
 	SPACE,			//	- D9
 	BURN_PART,		//  - DA
 	BURN_PART1,		//  - DB
@@ -153,7 +151,7 @@ enum key_types
 	BURN_PART3,		//  - DD
 	BURN_PART4,		//  - DE
 	READ_EEPROM,	//	- DF
-	
+
 	KP_POUND,	// '#'	- E0
 	KP_AST, // '*'		- E1
 	KP_0, // '0'		- E2
@@ -170,6 +168,15 @@ enum key_types
 	KP_B, // 'B'		- ED
 	KP_C, // 'C'		- EE
 	KP_D, // 'D'		- EF
+	TEST9,	//			- F0
+	TEST10,	//			- F1
+	TEST11,	//			- F2
+	TEST12,	//			- F3
+	TEST13,	//			- F4
+	TEST14,	//			- F5
+	TEST15,	//			- F6
+	TEST16,	//			- F7
+	TEST17	//			- F8
 } KEY_TYPES;
 
 
@@ -264,7 +271,6 @@ void set_win(WINDOW *win);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
-void get_label_offsets(void);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_labels(int i, char *ramstr);
 UCHAR current_param;
