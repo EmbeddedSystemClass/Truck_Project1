@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 	char tchbox[10];
 	char filename[20];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
+	void *vptr;
 //	syncup = 0;
 
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
@@ -76,9 +77,6 @@ int main(int argc, char *argv[])
 	}
 	exit(1);
 */
-
-
-
 	initscr();			/* Start curses mode 		*/
 	clear();
 	noecho();
@@ -168,39 +166,62 @@ int main(int argc, char *argv[])
 	mvwprintw(win, LAST_ROW_DISP,2,"res: %2d ",res);
 	wrefresh(win);
 
-		i = 0;
-		total_offset = 0;
-		i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
-	// 1a
-		i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
-	// 1b
-		i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-	// 1c
-		i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-	// 1d
-		i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-	// 1e
-		i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
-	// 2a
-		i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-	// 2b
-		i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
-	// 2c
-		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-	// 2d
-		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
-	// 2e
-		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-	// 3a
-		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-	// 3b
-		i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+	res = 0;
+	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
+	{
+		res += write(global_fd,&check_boxes[i].index,1);
+		usleep(tdelay);
+		res += write(global_fd,&check_boxes[i].checked,1);
+		usleep(tdelay);
+		res += write(global_fd,&check_boxes[i].string[0],CHECKBOX_STRING_LEN);
+		usleep(tdelay);
+		mvwprintw(win, LAST_ROW_DISP-1,2,"%d   %d  ",res,i);
+		wrefresh(win);
 
-		no_menu_structs = i;
-		goffset = 0;
-		no_menu_labels = blank;
-		no_rt_labels = test - rpm;
-		get_label_offsets(win);
+/*
+		for(j = 0;j < CHECKBOX_STRING_LEN;j++)
+		{
+			res += write(global_fd,&check_boxes[i].string[j],1);
+			usleep(tdelay);
+		}
+*/
+	}
+	mvwprintw(win, LAST_ROW_DISP-2,2,"%d   ",res);
+	wrefresh(win);
+
+	i = 0;
+	total_offset = 0;
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E, MENU2B, MENU1A, MENU1B, MAIN);
+// 1a
+	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
+// 1b
+	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+// 1c
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+// 1d
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+// 1e
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
+// 2a
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
+// 2b
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+// 2c
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+// 2d
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+// 2e
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+// 3a
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+// 3b
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+
+	no_menu_structs = i;
+	goffset = 0;
+	no_menu_labels = blank;
+	no_rt_labels = test - rpm;
+	get_label_offsets(win);
 
 //		mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
 

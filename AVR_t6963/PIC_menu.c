@@ -93,7 +93,7 @@ static UCHAR set_list(int fptr)
 {
 	int i;
 	UCHAR ret_char = 0;
-//	char tlabel[MAX_LABEL_LEN];
+	char tlabel[MAX_LABEL_LEN];
 
 	if(current_fptr < list_size)
 	{
@@ -106,7 +106,7 @@ static UCHAR set_list(int fptr)
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
 #ifdef TEST_WRITE_DATA
-//			get_fptr_label(tlabel);
+			get_fptr_label(tlabel);
 			mvwprintw(win, DISP_OFFSET,2,"fptr: %d menu_index: %d     ",fptr,ret_char);
 			wrefresh(win);
 #endif
@@ -114,6 +114,7 @@ static UCHAR set_list(int fptr)
 			{
 				case MENU1C:	// 1st do_chkbox
 				case MENU1D:	// 2nd do_chkbox
+				case MENU1E:	// 3rd do_chkbox
 					init_checkboxes(ret_char);
 				break;
 				case MENU2A:	// 1st exec_choice
@@ -208,21 +209,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 //			get_fptr_label(),
 			menu_structs[get_curr_menu()].fptr);
 	wrefresh(win);
-#endif
-/*
-	for(i = 0;i < 6;i++)
-	{
-		memset(tlabel,0,MAX_LABEL_LEN);
-		strcpy(tlabel,menu_labels[menu_structs[get_curr_menu()].menus[i]]);
-//		memcpy(cur_param_string+(i*MAX_LABEL_LEN),tlabel,MAX_LABEL_LEN);
-	}
-*/
-// write 4 bytes: fptr, ch, menu_index & current_param_string
-// then the size of the aux_data, then the aux_data (which can be up to AUX_STRING_LEN)
-// and if the AUX_STRING_LEN is 48 then to total is 4+60+48 = 112
-// so the PIC must allocate this much space for this module to write to so the pic can
-// send it using its own serial interface.
-#ifdef TEST_WRITE_DATA
+
 	write(global_fd,&ch,1);
 	usleep(tdelay);
 	temp2 = get_fptr();
@@ -243,93 +230,21 @@ static UCHAR generic_menu_function(UCHAR ch)
 		unpack(menu_structs[get_curr_menu()].menus[i],&low_byte,&high_byte);
 		write(global_fd, &high_byte,1);
 		usleep(tdelay);
-		// for some reason when sending a 0x0c - 13 it get recieved as a 0x0a - 10
-		// so I changed it in the pack/unpack functions
-//		low_byte = ~low_byte;
 		write(global_fd, &low_byte,1);
 		usleep(tdelay);
-		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  ",
-			menu_structs[get_curr_menu()].menus[i]);
+//		mvwprintw(win, DISP_OFFSET+22+i, 2,"%d  ",
+//		menu_structs[get_curr_menu()].menus[i]);
 	}
 
-#if 0
-	send_aux_data = 2*temp2;
-	for(i = 0;i < send_aux_data;i++)
-		aux_string[i] = i*temp3;
-
-	unpack(send_aux_data,&low_byte,&high_byte);
-	write(global_fd, &high_byte,1);
-	usleep(tdelay);
-	write(global_fd, &low_byte,1);
-	usleep(tdelay);
-
-	unpack(start_addr,&low_byte,&high_byte);
-	write(global_fd, &high_byte,1);
-	usleep(tdelay);
-	write(global_fd, &low_byte,1);
-	usleep(tdelay);
-
-for(i = 0;i < 200;i++)
-//send_aux_data = 200;
-	res = 0;
-//	for(i = 0;i < send_aux_data;i++)
+	for(i = 0;i < 20;i++)
 	{
 		res += write(global_fd,&aux_string[i],1);
-		usleep(tdelay*2);
-		if(i < 10)
-		{
-			mvwprintw(win, DISP_OFFSET+8+j, 2+(i*4),"%2x ",aux_string[i]);
-			wrefresh(win);
-		}
+		usleep(tdelay);
 	}
-#endif
 
-	mvwprintw(win, DISP_OFFSET+5, 1,"index: %d  send_aux_data: %d res:  %d      ",
-		get_curr_menu(),send_aux_data,res);
+	mvwprintw(win, DISP_OFFSET+5, 1,"index: %d  send_aux_data: %d       ",
+		get_curr_menu(),send_aux_data);
 
-	// if code gets read back as an 0xAA, then that means we are
-	// running this simulator hooked up to the AVR
-	// (show everthing is working if no LCD screen is attached)
-#if 0
-	read(global_fd,&code,1);
-	if(code == 0xAA)
-	{
-		for(i = 0;i < 6;i++)
-		{
-			read(global_fd,&code,1);
-			mvwprintw(win, DISP_OFFSET+3,2+(i * 3),"%d ",code);
-		}
-	}
-#endif
-/*
-	unpack(aux_data_offset,&low_byte,&high_byte);
-	write(global_fd, &high_byte,1);
-	write(global_fd, &low_byte,1);
-*/
-/*
-	for(i = 0;i < current_fptr;i++)
-	{
-		get_label(menu_list[i],tlabel);
-		mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-	}
-	get_label(menu_list[i],tlabel);
-
-	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-
-	mvwprintw(win, DISP_OFFSET+18+i, 2,"%s  ",tlabel);
-	mvwprintw(win, DISP_OFFSET+18+i+1, 2,"                                  ");
-*/
-//	mvwprintw(win, DISP_OFFSET+3,2,"curr_checkbox: %d     ",curr_checkbox);
-
-//	for(i = 0;i < NUM_CHECKBOXES/4;i++)
-//		mvwprintw(win, DISP_OFFSET+4,2+(i*2),"%d  ",check_boxes[i].checked);
-
-//	mvwprintw(win, DISP_OFFSET+5,2+(i*7),"%s  ",check_boxes[i].string);
-/*
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-		mvwprintw(win, DISP_OFFSET+5,2+(i+2),"%d  ",prev_check_boxes[i]);
-	mvwprintw(win, DISP_OFFSET+6,2,"exec choice: %d",curr_execchoice);
-*/
 	wrefresh(win);
 	return ret_char;
 }
@@ -344,6 +259,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 	int res = 0;
 	UCHAR low_byte, high_byte;
 	UCHAR t1, t2;
+	void *vptr;
 // warning: str passed when not in simulator is pointing to memory in the PIC24
 //	ppic_data = str;
 
@@ -353,8 +269,10 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			init_list();
 			break;
 		case TEST5:
-			res += write(global_fd,&ret_char,1);
+			write(global_fd,&ret_char,1);
 			break;
+			
+			
 		case READ_EEPROM:
 			res += write(global_fd,&ret_char,1);
 
@@ -806,22 +724,20 @@ static UCHAR do_chkbox(UCHAR ch)
 static UCHAR init_checkboxes(UCHAR ch)
 {
 	curr_checkbox = 0;
-	int i;
-	int j = 0;
-	int k = 0;
+	int i,j,k;
+
+	j = (ch-MENU1C)*NUM_CHECKBOXES;
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		memcpy(aux_string+(sizeof(CHECKBOXES)*i),&check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)],sizeof(CHECKBOXES));
-		prev_check_boxes[i] = check_boxes[i].checked;
-//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)].string);
-		if(++k > 5)
-		{
-			j++;
-			k = 0;
-		}
+		k = j + i;
+//		mvwprintw(win, DISP_OFFSET+20,2,"%d  %d  %d",j,k,ch);
+//		memcpy(aux_string+(sizeof(UCHAR)*i),&check_boxes[k]);
+		prev_check_boxes[i] = check_boxes[k].checked;
+//		mvwprintw(win, DISP_OFFSET+21+i,2," %s ",check_boxes[k].string);
+//		wrefresh(win);
 	}
-	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+//	send_aux_data = sizeof(UCHAR)*NUM_CHECKBOXES;
 }
 //******************************************************************************************//
 //************************************* init_checkboxes ************************************//
@@ -835,16 +751,14 @@ static UCHAR init_execchoices(UCHAR ch)
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		memcpy(aux_string+(sizeof(CHECKBOXES)*i),&check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)],sizeof(CHECKBOXES));
-		prev_check_boxes[i] = check_boxes[i].checked;
-//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)].string);
-		if(++k > 5)
-		{
-			j++;
-			k = 0;
-		}
+		k = j + i;
+//		mvwprintw(win, DISP_OFFSET+20,2,"%d  %d  %d",j,k,ch);
+//		memcpy(aux_string+(sizeof(UCHAR)*i),&check_boxes[k]);
+		prev_check_boxes[i] = check_boxes[k].checked;
+//		mvwprintw(win, DISP_OFFSET+21+i,2," %s ",check_boxes[k].string);
+//		wrefresh(win);
 	}
-	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
+//	send_aux_data = sizeof(UCHAR)*NUM_CHECKBOXES;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//

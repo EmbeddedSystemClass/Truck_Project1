@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
 	int display_offset = 1;
 	char temp_label[MAX_LABEL_LEN];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
-
+	void *vptr;
+	
 #endif
 	// reserve an extra sample_data space for in case of 'escape'
 	initscr();			/* Start curses mode 		*/
@@ -101,8 +102,19 @@ int main(int argc, char *argv[])
 		wrefresh(win);
 	}
 
+	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
+	{
+
+		res += read(global_fd,&check_boxes[i].index,1);
+		res += read(global_fd,&check_boxes[i].checked,1);
+		for(j = 0;j < CHECKBOX_STRING_LEN;j++)
+			res += read(global_fd,&check_boxes[i].string[j],1);
+		mvwprintw(win, LAST_ROW-2,1,"%2d %2d ",i,j);
+		wrefresh(win);
+	}
 
 	mvwprintw(win, LAST_ROW-1,1,"res: %2d            ",res);
+	wrefresh(win);
 
 	j = 0;
 	for(i = NO_RT_LABELS_EEPROM_LOCATION;i < NO_MENU_LABELS_EEPROM_LOCATION+2;i++)
@@ -124,8 +136,6 @@ int main(int argc, char *argv[])
 
 //	mvwprintw(win, LAST_ROW-3,1,"eeprom locations: %2d %2d %2d ",no_rt_labels,no_rtparams,no_menu_labels);
 	wrefresh(win);
-
-
 
 	j = 0;
 	res = 0;

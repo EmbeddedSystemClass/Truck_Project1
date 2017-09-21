@@ -6,7 +6,7 @@
 #define MENU_START_COL 15
 #define MENU_BLANK "          "
 
-CHECKBOXES check_boxes[NUM_CHECKBOXES];
+CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
 
 //#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
