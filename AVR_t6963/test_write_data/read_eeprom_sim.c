@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 	getch();
 	for(i = 0;i < 50;i++)
 		mvwprintw(win, display_offset+i,2,"                                                 ");
-	mvwprintw(win, display_offset,2,"menu_offset: %d  rt_params_offset: %d no_rtparams: %d  ",menu_offset,rt_params_offset,no_rtparams);
+	mvwprintw(win, display_offset,2,"rt_params_offset: %d no_rtparams: %d  ",rt_params_offset,no_rtparams);
 	k = 0;
 	j = 1;
 	for(i = RT_PARAMS_OFFSET_EEPROM_LOCATION;i < RT_PARAMS_OFFSET_EEPROM_LOCATION+(sizeof(RT_PARAM)*no_rtparams);i++)

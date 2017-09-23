@@ -199,10 +199,10 @@ int main(int argc, char *argv[])
 
 	memset(cblabels,255,CBLABEL_SIZE);
 	update_ram();
-	get_cblabel_offsets();
-	get_mlabel_offsets();
+	no_cblabels = get_cblabel_offsets();
+	no_menu_labels = get_mlabel_offsets();
 
-	mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
+	mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d %d ",no_menu_labels,no_rt_labels, blank);
 
 
 	j = k = 0;
@@ -260,9 +260,6 @@ int main(int argc, char *argv[])
 					type = 3;
 					size = EEPROM_SIZE;
 					start_addr = 0;
-//					start_addr = EEPROM_SIZE/2;
-//					start_addr = menu_offset;
-//					size = rt_params_offset - menu_offset;
 					memset(eeprom_sim,0,EEPROM_SIZE);
 					get_key(wkey,size,start_addr,eeprom_sim,type);
 //					for(i = start_addr;i < size+start_addr;i++)

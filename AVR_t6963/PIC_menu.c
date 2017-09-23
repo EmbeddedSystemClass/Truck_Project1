@@ -119,7 +119,6 @@ static UCHAR set_list(int fptr)
 				case MENU2A:	// 1st exec_choice
 				case MENU2B:	// 2nd exec_choice
 					init_checkboxes(ret_char);
-					curr_execchoice = 0;
 				break;
 				case MENU2C:	// do_numentry
 				case MENU2D:
@@ -401,10 +400,13 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			wrefresh(win);
 			res = 0;
 			low_byte = 0;
+
+// send over the check_boxes[i].index and .checked as samples
+// later this will be sent by the PIC
 			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
 			{
 				low_byte = ~low_byte;
-				low_byte &= 1;				
+				low_byte &= 1;
 				res += write(global_fd,&low_byte,1);
 				mvwprintw(win, LAST_ROW_DISP-1,2,"%2d ",res);
 				wrefresh(win);

@@ -97,8 +97,8 @@ enum menu_types
 	small,		// 24
 	spec,		// 25
 	next,		// 26
-
 	blank,		// 27
+
 	rpm,
 	engt,
 	trip,
@@ -109,7 +109,7 @@ enum menu_types
 	map,
 	oilt,
 	o2,
-	test
+	test,
 } MENU_TYPES;
 
 // total of 20 menus
@@ -323,13 +323,10 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 //#endif
 //#endif
 int total_offset;
-int menu_offset;
 int rt_params_offset;
 int no_cblabels;
 int global_fd;
 void set_state_defaults(void);
-int curr_checkbox;
-int last_checkbox;
 int curr_execchoice;
 int last_execchoice;
 int scale_type;

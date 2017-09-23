@@ -61,13 +61,52 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 //******************************************************************************************//
 //*********************************** get_mlabel_offsets ***********************************//
 //******************************************************************************************//
-void get_mlabel_offsets(void)
+int get_mlabel_offsets(void)
 {
 	int i, j,k;
-	char *ch;
+	UCHAR *ch;
+	UCHAR *pch;
 	char temp_label[MAX_LABEL_LEN];
+	int done = 0;
 
 	goffset = 0;
+
+	no_menu_labels = 0;
+	no_rt_labels = 0;
+	rt_params_offset = 0;
+	i = 0;
+	ch = pch = eeprom_sim;
+	pch--;
+// the eeprom image must have an extra '0' at the end of
+// the menu labels and another extra '0' at the end
+// of the rt labels
+	do
+	{
+		if(*ch == 0)
+			no_menu_labels++;
+		i++;
+		ch++;
+		pch++;
+	}while(*ch != 0 || *pch != 0);
+
+	no_menu_labels++;
+
+	if(i > EEPROM_SIZE-10)
+		return -1;
+
+	i = 0;
+	do
+	{
+		if(*ch == 0)
+			no_rt_labels++;
+		i++;
+		ch++;
+		pch++;
+	}while(*ch != 0 || *pch != 0);
+	no_rt_labels;
+
+	if(i > EEPROM_SIZE-10)
+		return -1;
 
 	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
 	{
@@ -89,6 +128,8 @@ void get_mlabel_offsets(void)
 		j++;			// adjust for zero at end
 		goffset += j;
 	}
+	rt_params_offset = goffset;
+	return no_menu_labels;
 }
 //******************************************************************************************//
 //*************************************** get_label ****************************************//
@@ -113,21 +154,21 @@ void get_mlabel(int index, char *str)
 //******************************************************************************************//
 //*********************************** get_mlabel_offsets ***********************************//
 //******************************************************************************************//
-void get_cblabel_offsets(void)
+int get_cblabel_offsets(void)
 {
 	int i, j,k;
 	char *ch;
 	char temp_label[MAX_LABEL_LEN];
 
 	goffset = 0;
-	
+
 	no_cblabels = 0;
 	for(i = 0;i < CBLABEL_SIZE;i++)
 	{
 		if(cblabels[i] == 0 && cblabels[i-1] != 0)
 			no_cblabels++;
 	}
-	
+
 
 	for(i = 0;i < no_cblabels;i++)
 	{
@@ -143,6 +184,7 @@ void get_cblabel_offsets(void)
 		j++;			// adjust for zero at end
 		goffset += j;
 	}
+	return no_cblabels;
 }
 //******************************************************************************************//
 //*************************************** get_label ****************************************//
@@ -283,7 +325,6 @@ int burn_eeprom(void)
 	i = update_mlabels(i,"next\0");
 
 	i = update_mlabels(i,"\0");
-	menu_offset = total_offset;
 	no_menu_labels = i;
 
 	i = update_mlabels(i,"RPM\0");
@@ -297,6 +338,8 @@ int burn_eeprom(void)
 	i = update_mlabels(i,"OIL TEMP\0");
 	i = update_mlabels(i,"O2\0");
 	i = update_mlabels(i,"test\0");
+	i = update_mlabels(i,"\0");
+
 	no_rt_labels = i - no_menu_labels;
 //	choice_offset = i;
 	rt_params_offset = total_offset;
@@ -322,7 +365,7 @@ int burn_eeprom(void)
 	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));
 
 	update_ram();
-	
+
 	return 0;
 }
 #endif

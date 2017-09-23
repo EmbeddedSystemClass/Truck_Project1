@@ -122,14 +122,12 @@ int main(int argc, char *argv[])
 		j++;
 	}
 
+/*
 	memcpy((void*)&no_rt_labels,(void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
 	memcpy((void*)&no_rtparams,(void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
 	memcpy((void*)&no_menu_labels,(void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
-
+*/
 	get_mlabel_offsets();
-
-//	no_menu_labels = 27;
-//	no_rt_labels = 10;
 
 //	mvwprintw(win, LAST_ROW-3,1,"eeprom locations: %2d %2d %2d ",no_rt_labels,no_rtparams,no_menu_labels);
 	wrefresh(win);

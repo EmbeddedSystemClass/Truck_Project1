@@ -46,7 +46,8 @@ int main(int argc, char *argv[])
 	char fpc[10];
 	int res, size, start_addr;
 	int burn = 0;
-	UCHAR ch;
+	UCHAR *ch;
+	UCHAR *pch;
 
 	// reserve an extra sample_data space for in case of 'escape'
 
@@ -89,12 +90,7 @@ int main(int argc, char *argv[])
 //		printf("reading %s into eeprom_sim: %d   \n",argv[1],res);
 	}
 	j = k = 0;
-/*
-	for(i = 0;i < 1023;i++)
-		printf("%2x ",eeprom_sim[i]);
 
-	exit(1);
-*/
 	initscr();			/* Start curses mode 		*/
 	clear();
 	noecho();
@@ -114,17 +110,15 @@ int main(int argc, char *argv[])
 	k = 0;
 // comment out the next #if 0/#endif to test
 
-	no_menu_labels = 28;
-	no_rt_labels = 11;
-	menu_offset = 168;
-	rt_params_offset = 234;
-	no_rtparams = 10;	
+//	no_menu_labels = 28;
+//	no_rt_labels = 11;
+	no_rtparams = 10;
+
 
 	memset(cblabels,255,CBLABEL_SIZE);
 	update_ram();
-	get_mlabel_offsets();
-	get_cblabel_offsets();
-	get_mlabel_offsets();
+	no_menu_labels = get_mlabel_offsets();
+	no_cblabels = get_cblabel_offsets();
 //#if 0
 //	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
 //		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
@@ -155,6 +149,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 
+	mvwprintw(win, display_offset-1,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
 
 	for(i = 0;i < 1023;i++)
 	{
@@ -231,7 +226,7 @@ int main(int argc, char *argv[])
 	for(i = 0;i < 50;i++)
 		mvwprintw(win, display_offset+i,2,"                                                 ");
 
-	mvwprintw(win, display_offset,2,"menu_offset: %d  rt_params_offset: %d no_rtparams: %d  ",menu_offset,rt_params_offset,no_rtparams);
+	mvwprintw(win, display_offset,2,"rt_params_offset: %d no_rtparams: %d  ",rt_params_offset,no_rtparams);
 	k = 0;
 	j = 1;
 	for(i = RT_PARAMS_OFFSET_EEPROM_LOCATION;i < RT_PARAMS_OFFSET_EEPROM_LOCATION+(sizeof(RT_PARAM)*no_rtparams);i++)
@@ -284,7 +279,7 @@ int main(int argc, char *argv[])
 
 	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
-		
+
 	for(i = 0;i < no_menu_structs;i++)
 	{
 		mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
@@ -350,7 +345,7 @@ int main(int argc, char *argv[])
 		mvwprintw(win, display_offset+i,2,"                                                             ");
 
 	mvwprintw(win, display_offset,2,"no_cblabels: %d  ",no_cblabels);
-	
+
 	for(i = 0;i < no_cblabels;i++)
 	{
 		get_cblabel(i,temp_label);
