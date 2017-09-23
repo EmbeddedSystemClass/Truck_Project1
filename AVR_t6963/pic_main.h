@@ -6,8 +6,8 @@
 #define LAST_ROW_DISP LAST_ROW-11
 #define LAST_COL 63
 
-UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
-CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+UCHAR prev_check_boxes[NUM_CHECKBOXES];
+CHECKBOXES check_boxes[NUM_CHECKBOXES];
 
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
@@ -20,9 +20,8 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
-int burn_eeprom(void);
-int read_eeprom(void);
-void get_label_offsets(WINDOW *win);
+void get_mlabel_offsets(void);
+void get_cblabel_offsets(void);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;

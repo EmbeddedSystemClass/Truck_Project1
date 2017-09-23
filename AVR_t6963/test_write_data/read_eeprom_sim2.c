@@ -25,8 +25,8 @@
 #define TIME_DELAY 200000
 // readable
 //#define TIME_DELAY 300000
+
 UCHAR *peeprom_sim;
-static int update_labels2(int index, char *ramstr);
 //******************************************************************************************//
 //****************************************** main ******************************************//
 //******************************************************************************************//
@@ -38,18 +38,21 @@ int main(int argc, char *argv[])
 	WINDOW *win;
 	MENU_FUNC_STRUCT mf;
 	MENU_FUNC_STRUCT *pmf = &mf;
-	int display_offset = 1;
+	int display_offset = 4;
 	char temp_label[MAX_LABEL_LEN];
 	int fp;
 	peeprom_sim = eeprom_sim;
 	char filename[20];
 	char fpc[10];
 	int res, size, start_addr;
+	int burn = 0;
+	UCHAR ch;
 
 	// reserve an extra sample_data space for in case of 'escape'
 
-	printf("argc: %d\n",argc);
-	printf("argv: %s\n",argv[1]);
+//	printf("argc: %d\n",argc);
+//	printf("argv: %s\n",argv[1]);
+//	exit(1);
 
 	if(argc < 2)
 	{
@@ -65,8 +68,11 @@ int main(int argc, char *argv[])
 			res = 0;
 			lseek(fp,0,SEEK_SET);
 			res = read(fp,eeprom_sim,EEPROM_SIZE);
+			close(fp);
+			type = 1;
+//			printf("reading eeprom.bin into eeprom_sim: %d   \n",res);
 		}
-	}else
+	}else if(argc < 3)
 	{
 		strcpy(filename,argv[1]);
 		fp = open((const char *)filename, O_RDWR);
@@ -79,10 +85,16 @@ int main(int argc, char *argv[])
 		lseek(fp,0,SEEK_SET);
 		res = read(fp,eeprom_sim,EEPROM_SIZE);
 		close(fp);
-		printf("reading part into eeprom_sim: %d %d %d  \n",res,size,start_addr);
+		type = 2;
+//		printf("reading %s into eeprom_sim: %d   \n",argv[1],res);
 	}
 	j = k = 0;
+/*
+	for(i = 0;i < 1023;i++)
+		printf("%2x ",eeprom_sim[i]);
 
+	exit(1);
+*/
 	initscr();			/* Start curses mode 		*/
 	clear();
 	noecho();
@@ -101,12 +113,19 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 // comment out the next #if 0/#endif to test
-	goffset = 0;
-	get_label_offsets();
+
+	no_menu_labels = 28;
+	no_rt_labels = 11;
+	menu_offset = 168;
+	rt_params_offset = 234;
+	no_rtparams = 10;	
+
+	memset(cblabels,255,CBLABEL_SIZE);
+	update_ram();
+	get_mlabel_offsets();
+	get_cblabel_offsets();
+	get_mlabel_offsets();
 //#if 0
-	mvwprintw(win, 2,2,"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
-	wrefresh(win);
-	getch();
 //	for(i = total_no_menu_labels;i < total_no_menu_labels+no_func_labels; i++)
 //		mvwprintw(win, display_offset+i-total_no_menu_labels,2,"%d: %s  ",i-total_no_menu_labels,menu_labels[i]);
 //	wrefresh(win);
@@ -121,6 +140,21 @@ int main(int argc, char *argv[])
 		getch();
 	}
 #endif
+
+	wrefresh(win);
+	getch();
+
+	if(type == 1)
+		mvwprintw(win, display_offset-2,1,"reading eeprom.bin into eeprom_sim: %d  ",res);
+	if(type == 2)
+	{
+		mvwprintw(win, display_offset-2,1,"reading %s into eeprom_sim: %d  ",argv[1],res);
+	}
+
+
+	wrefresh(win);
+	getch();
+
 
 	for(i = 0;i < 1023;i++)
 	{
@@ -151,13 +185,14 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
-	close(fp);
 
 	wrefresh(win);
 	getch();
 
 	j = 1;
 	k = 0;
+
+	mvwprintw(win, display_offset-2,1,"                                        ");
 
 	for(i = 0;i < 50;i++)
 		mvwprintw(win, display_offset+i,2,"                                                 ");
@@ -192,9 +227,11 @@ int main(int argc, char *argv[])
 
 	wrefresh(win);
 	getch();
+
 	for(i = 0;i < 50;i++)
 		mvwprintw(win, display_offset+i,2,"                                                 ");
-	mvwprintw(win, display_offset,2,"menu_offset: %d  rt_params_offset: %d ",menu_offset,rt_params_offset);
+
+	mvwprintw(win, display_offset,2,"menu_offset: %d  rt_params_offset: %d no_rtparams: %d  ",menu_offset,rt_params_offset,no_rtparams);
 	k = 0;
 	j = 1;
 	for(i = RT_PARAMS_OFFSET_EEPROM_LOCATION;i < RT_PARAMS_OFFSET_EEPROM_LOCATION+(sizeof(RT_PARAM)*no_rtparams);i++)
@@ -217,6 +254,7 @@ int main(int argc, char *argv[])
 		mvwprintw(win, display_offset,2+(j*3),"%d ", eeprom_sim[i]);
 		j++;
 	}
+
 	mvwprintw(win, display_offset+1,2,"%d %d %d ",no_menu_labels,no_rt_labels,no_rtparams);
 	wrefresh(win);
 	getch();
@@ -227,19 +265,18 @@ int main(int argc, char *argv[])
 	k = j = 0;
 	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
 	{
-		mvwprintw(win, display_offset+j+1,2+(k*5),"%4d ",label_offsets[i]);
+		mvwprintw(win, display_offset+j+1,2+(k*5),"%4d ",mlabel_offsets[i]);
 		if(++k > 11)
 		{
 			k = 0;
 			j++;
 		}
-
 	}
 
 	for(i = 0;i < no_menu_labels;i++)
 	{
-		get_label(i,temp_label);
-		mvwprintw(win, display_offset+i+12,2,"%d: %s  %d",i,temp_label,label_offsets[i]);
+		get_mlabel(i,temp_label);
+		mvwprintw(win, display_offset+i+7,2,"%d: %s  %d",i,temp_label,mlabel_offsets[i]);
 	}
 
 	wrefresh(win);
@@ -247,22 +284,100 @@ int main(int argc, char *argv[])
 
 	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
+		
 	for(i = 0;i < no_menu_structs;i++)
 	{
 		mvwprintw(win, display_offset+i,2,"%d ",menu_structs[i].fptr);
 		for(j = 0;j < 6;j++)
 		{
-			get_label(menu_structs[i].menus[j],temp_label);
+			get_mlabel(menu_structs[i].menus[j],temp_label);
 			mvwprintw(win, display_offset+i,2+(j*10),"%s ", temp_label);
 		}
 	}
 	wrefresh(win);
 	getch();
 
+//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+//		mvwprintw(win, display_offset+i,2,"                                                             ");
+/*
+
+	j = k = 0;
+	for(i = 0;i < 500;i++)
+	{
+		ch = *(cblabels+i);
+		if(ch > 0x2F && ch < 0x7b)
+			mvwprintw(win, display_offset+j+1,2+k,"%c ",ch);
+//			mvwprintw(win, display_offset+j+1,2+(k*3),"%c ",ch);
+//		else
+//			mvwprintw(win, display_offset+j+1,2+(k*3),"%2x ",ch);
+
+		if(++k > 30)
+		{
+			k = 0;
+			j++;
+		}
+	}
+
+	wrefresh(win);
+	getch();
+
+	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+		mvwprintw(win, display_offset+i,2,"                                                             ");
+
+	j = k = 0;
+	for(i = 0;i < 500;i++)
+	{
+		ch = *(cblabels+i);
+		if(ch > 0x2F && ch < 0x7b)
+			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%c     ",i,ch);
+		else
+			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%2x    ",i,ch);
+
+		if(++k > 30)
+		{
+			k = 0;
+			j++;
+		}
+	}
+	wrefresh(win);
+	getch();
+*/
+
+//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+//		mvwprintw(win, display_offset+i,2,"                                                               ");
+
+	for(i = 0;i < no_menu_structs;i++)
+		mvwprintw(win, display_offset+i,2,"                                                             ");
+
+	mvwprintw(win, display_offset,2,"no_cblabels: %d  ",no_cblabels);
+	
+	for(i = 0;i < no_cblabels;i++)
+	{
+		get_cblabel(i,temp_label);
+		mvwprintw(win, display_offset+i+2,2,"%d:  %s  %d      ",i,temp_label,cblabel_offsets[i]);
+	}
+
+	wrefresh(win);
+	getch();
+
+//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+//		mvwprintw(win, display_offset+i,2,"                                                             ");
+
+/*
+	for(i = 0;i < no_cblabels;i++)
+	{
+		get_cblabel(i,temp_label);
+		mvwprintw(win, display_offset+i+30,2,"%s ", temp_label);
+	}
+	wrefresh(win);
+	getch();
+*/
 	delwin(win);
 	clrtoeol();
 	refresh();
 	endwin();
+	printf("\n\n\ndone\n");
 	exit(1);
 }
+
 

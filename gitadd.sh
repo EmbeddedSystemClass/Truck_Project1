@@ -119,6 +119,7 @@ git add AVR_t6963/test_write_data/copy2.sh
 git add AVR_t6963/test_write_data/domake1
 git add AVR_t6963/test_write_data/domake2
 git add AVR_t6963/test_write_data/read_eeprom_sim.c
+git add AVR_t6963/test_write_data/read_eeprom_sim2.c
 git add AVR_t6963/test_write_data/make_show_eeprom
 clear
 git status

@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	char temp_label[MAX_LABEL_LEN];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
 	void *vptr;
-	
+
 #endif
 	// reserve an extra sample_data space for in case of 'escape'
 	initscr();			/* Start curses mode 		*/
@@ -97,11 +97,9 @@ int main(int argc, char *argv[])
 	{
 		res += read(global_fd,&eeprom_sim[i],1);
 		mvwprintw(win, LAST_ROW-1,1,"%2x %d ",eeprom_sim[i],res);
-		if(i < NO_RT_LABELS_EEPROM_LOCATION)
-			usleep(tdelay*20);
 		wrefresh(win);
 	}
-
+/*
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
 
@@ -115,7 +113,7 @@ int main(int argc, char *argv[])
 
 	mvwprintw(win, LAST_ROW-1,1,"res: %2d            ",res);
 	wrefresh(win);
-
+*/
 	j = 0;
 	for(i = NO_RT_LABELS_EEPROM_LOCATION;i < NO_MENU_LABELS_EEPROM_LOCATION+2;i++)
 	{
@@ -128,8 +126,7 @@ int main(int argc, char *argv[])
 	memcpy((void*)&no_rtparams,(void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
 	memcpy((void*)&no_menu_labels,(void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
 
-	goffset = 0;
-	get_label_offsets(win);
+	get_mlabel_offsets();
 
 //	no_menu_labels = 27;
 //	no_rt_labels = 10;
@@ -140,12 +137,12 @@ int main(int argc, char *argv[])
 	j = 0;
 	res = 0;
 
-	curr_menus[0] = MENU1A;
-	curr_menus[1] = MENU1B;
-	curr_menus[2] = MENU1C;
-	curr_menus[3] = MENU1D;
-	curr_menus[4] = MENU2A;
-	curr_menus[5] = MENU2B;
+	curr_menus[0] = MENU1C;
+	curr_menus[1] = MENU1D;
+	curr_menus[2] = MENU1E;
+	curr_menus[3] = MENU2A;
+	curr_menus[4] = MENU2B;
+	curr_menus[5] = MENU1B;
 
 	init_list();
 	memset(aux_string,0,AUX_STRING_LEN);
@@ -159,7 +156,7 @@ int main(int argc, char *argv[])
 
 	syncup = 0;
 	bp = 0;
-	tdelay = 1500;
+	tdelay = 3000;
 	while(1)
 	{
 		read(global_fd,&key,1);

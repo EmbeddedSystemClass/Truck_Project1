@@ -6,7 +6,8 @@
 #define MENU_START_COL 15
 #define MENU_BLANK "          "
 
-CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
+CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
 
 //#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
@@ -20,9 +21,8 @@ void init_list(void);
 UCHAR read_get_key(UCHAR key);
 int parse_sync(void);
 int get_str_len(void);
-int burn_eeprom(void);
-int read_eeprom(void);
-void get_label_offsets(WINDOW *win);
+void get_mlabel_offsets(void);
+void get_cblabel_offsets(void);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;

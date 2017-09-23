@@ -7,39 +7,47 @@
 #define NUM_MENU_CHOICES 6
 #define NUM_RT_PARAMS 12
 #define NUM_RT_LABELS NUM_RT_PARAMS
+
 #define DISP_OFFSET 1
-#define LAST_ROW DISP_OFFSET+58
+#define LAST_ROW DISP_OFFSET + 58
 #define NUM_EXECCHOICES 10
 #define SCALE_DISP_ALL 0
 #define SCALE_DISP_SOME 1
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define EEPROM_SIZE 0x400
+#define TOTAL_NUM_CBLABELS 80
+#define CBLABEL_SIZE 500
 
-char *get_label(int index, char *str);
+void get_mlabel(int index, char *str);
+void get_cblabel(int index, char *str);
 
-int label_offsets[NUM_LABELS+NUM_RT_LABELS];
+int mlabel_offsets[NUM_LABELS+NUM_RT_LABELS];
+int cblabel_offsets[TOTAL_NUM_CBLABELS];
 int goffset;
 
 #define NUM_CHECKBOXES 10
-#define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
-#define CHECKBOX_STRING_LEN 20
+
+int checkbox_offsets[TOTAL_NUM_CBLABELS];
 
 typedef struct checkboxes
 {
 	UCHAR index;
 	UCHAR checked;
-	char string[CHECKBOX_STRING_LEN];
 } CHECKBOXES;
 
-#define AUX_STRING_LEN 1024
+#define AUX_STRING_LEN EEPROM_SIZE/8	// 128
 
 #ifdef TEST_WRITE_DATA
 UCHAR eeprom_sim[EEPROM_SIZE];
 #endif
 
+#ifdef SHOW_EEPROM
 int burn_eeprom(void);
-int burn_eeprom2(void);
+void update_ram(void);
+#endif
+
+char cblabels[CBLABEL_SIZE];
 
 typedef struct rt_params
 {
@@ -142,7 +150,7 @@ enum key_types
 	TEST5,			//	- D4
 	TEST6,			//	- D5
 	TEST7,			//	- D6
-	TEST8,			//  - D7
+	LOAD_RAM,		//  - D7
 	INIT, 			//	- D8
 	SPACE,			//	- D9
 	BURN_PART,		//  - DA
@@ -272,7 +280,8 @@ int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
-int update_labels(int i, char *ramstr);
+int update_mlabels(int i, char *ramstr);
+int update_cblabels(int i, char *ramstr);
 UCHAR current_param;
 UINT temp_UINT;
 UCHAR parse_state;
@@ -316,6 +325,7 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 int total_offset;
 int menu_offset;
 int rt_params_offset;
+int no_cblabels;
 int global_fd;
 void set_state_defaults(void);
 int curr_checkbox;

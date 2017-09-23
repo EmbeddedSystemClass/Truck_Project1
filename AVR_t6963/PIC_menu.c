@@ -21,7 +21,6 @@ static UCHAR menu_change(UCHAR ch);
 static UCHAR do_exec(UCHAR ch);
 static UCHAR do_chkbox(UCHAR ch);
 static UCHAR init_checkboxes(UCHAR ch);
-static UCHAR init_execchoices(UCHAR ch);
 static UCHAR non_func(UCHAR ch);
 static UCHAR do_numentry(UCHAR ch);
 static UCHAR do_init(UCHAR ch);
@@ -119,7 +118,7 @@ static UCHAR set_list(int fptr)
 				break;
 				case MENU2A:	// 1st exec_choice
 				case MENU2B:	// 2nd exec_choice
-					init_execchoices(ret_char);
+					init_checkboxes(ret_char);
 					curr_execchoice = 0;
 				break;
 				case MENU2C:	// do_numentry
@@ -201,7 +200,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
 
 #ifdef TEST_WRITE_DATA
-	get_label(get_curr_menu(),tlabel);
+	get_mlabel(get_curr_menu(),tlabel);
 	mvwprintw(win, DISP_OFFSET+2, 2,"ch: %x label: %s curr menu %d func: %d            ",
 			ch,
 			tlabel,
@@ -271,8 +270,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 		case TEST5:
 			write(global_fd,&ret_char,1);
 			break;
-			
-			
+
 		case READ_EEPROM:
 			res += write(global_fd,&ret_char,1);
 
@@ -289,8 +287,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			for(i = start_addr;i < size+start_addr;i++)
 				read(global_fd,&str[i],1);
 
-			goffset = 0;
-			get_label_offsets(win);
+			get_mlabel_offsets();
 
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
@@ -371,51 +368,53 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 // 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
 
-			goffset = 0;
-//			get_label_offsets();
+//			get_mlabel_offsets();
 
  			break;
-#if 0
-			case LOAD_MENU_STRUCT:
-				i = 0;
-				total_offset = 0;
-				i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
-			// 1a
-				i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
-			// 1b
-				i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-			// 1c
-				i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-			// 1d
-				i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-			// 1e
-				i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
-			// 2a
-				i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-			// 2b
-				i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
-			// 2c
-				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-			// 2d
-				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
-			// 2e
-				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-			// 3a
-				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-			// 3b
-				i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
-				no_menu_structs = i;
-				goffset = 0;
-				no_menu_labels = blank;
-				no_rt_labels = test - rpm;
-				get_label_offsets();
+		case LOAD_RAM:
+			write(global_fd,&ret_char,1);
+			usleep(tdelay);
+			res = 0;
 
-#ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW_DISP-2,1,"load menu_struct: %d %d   ",no_rt_labels,no_menu_labels);
-#endif
-				break;
-#endif
+			for(i = 0;i < CBLABEL_SIZE;i++)
+			{
+				res += write(global_fd,&cblabels[i],1);
+				mvwprintw(win, LAST_ROW_DISP-2,2,"%2x %2d ",cblabels[i],res);
+				wrefresh(win);
+				usleep(tdelay);
+			}
+
+			mvwprintw(win, LAST_ROW_DISP-2,10,"done");
+			wrefresh(win);
+/*
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				res += write(global_fd,&eeprom_sim[i],1);
+				mvwprintw(win, LAST_ROW_DISP-1,2,"%2x %2d ",eeprom_sim[i],res);
+				wrefresh(win);
+				usleep(tdelay);
+			}
+
+			mvwprintw(win, LAST_ROW_DISP,2,"res: %2d ",res);
+*/
+			wrefresh(win);
+			res = 0;
+			low_byte = 0;
+			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+			{
+				low_byte = ~low_byte;
+				low_byte &= 1;				
+				res += write(global_fd,&low_byte,1);
+				mvwprintw(win, LAST_ROW_DISP-1,2,"%2d ",res);
+				wrefresh(win);
+				usleep(tdelay);
+				j = i%NUM_CHECKBOXES;
+				res += write(global_fd,&j,1);
+			}
+			mvwprintw(win, LAST_ROW_DISP-1,10,"done");
+			wrefresh(win);
+			break;
 #ifdef TEST_WRITE_DATA
  		case SPACE:
 			write(global_fd,&ret_char,1);
@@ -721,43 +720,34 @@ static UCHAR do_chkbox(UCHAR ch)
 //******************************************************************************************//
 //************************************* init_checkboxes ************************************//
 //******************************************************************************************//
-static UCHAR init_checkboxes(UCHAR ch)
+static UCHAR init_checkboxes(UCHAR menu_index)
 {
 	curr_checkbox = 0;
 	int i,j,k;
+	char tlabel[MAX_LABEL_LEN];
 
-	j = (ch-MENU1C)*NUM_CHECKBOXES;
+	switch(menu_index)
+	{
+		case MENU1C:
+		case MENU1D:
+		case MENU1E:
+			j = (menu_index-MENU1C)*NUM_CHECKBOXES;
+		break;
+		case MENU2A:
+		case MENU2B:
+			j = (menu_index-MENU2A)*NUM_CHECKBOXES;
+		break;
+	}
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		k = j + i;
-//		mvwprintw(win, DISP_OFFSET+20,2,"%d  %d  %d",j,k,ch);
-//		memcpy(aux_string+(sizeof(UCHAR)*i),&check_boxes[k]);
+		get_cblabel(k,tlabel);
 		prev_check_boxes[i] = check_boxes[k].checked;
-//		mvwprintw(win, DISP_OFFSET+21+i,2," %s ",check_boxes[k].string);
-//		wrefresh(win);
+		mvwprintw(win, DISP_OFFSET+21+i,2," %s ",tlabel);
+		wrefresh(win);
 	}
-//	send_aux_data = sizeof(UCHAR)*NUM_CHECKBOXES;
-}
-//******************************************************************************************//
-//************************************* init_checkboxes ************************************//
-//******************************************************************************************//
-static UCHAR init_execchoices(UCHAR ch)
-{
-	curr_checkbox = 0;
-	int i;
-	int j = 0;
-	int k = 0;
-
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-	{
-		k = j + i;
-//		mvwprintw(win, DISP_OFFSET+20,2,"%d  %d  %d",j,k,ch);
-//		memcpy(aux_string+(sizeof(UCHAR)*i),&check_boxes[k]);
-		prev_check_boxes[i] = check_boxes[k].checked;
-//		mvwprintw(win, DISP_OFFSET+21+i,2," %s ",check_boxes[k].string);
-//		wrefresh(win);
-	}
+	return menu_index;
 //	send_aux_data = sizeof(UCHAR)*NUM_CHECKBOXES;
 }
 //******************************************************************************************//
@@ -868,7 +858,7 @@ static void display_menus(int index)
 	mvwprintw(win, DISP_OFFSET+10,2,"%d  ",index);
 	for(i = 0;i < 6;i++)
 	{
-		get_label(menu_structs[get_curr_menu()].menus[i],tlabel);
+		get_mlabel(menu_structs[get_curr_menu()].menus[i],tlabel);
 		if(strcmp(tlabel,"blank") != 0)
 			mvwprintw(win, DISP_OFFSET+11+i, 2,"%s              ",tlabel);
 		else
@@ -891,7 +881,7 @@ static void get_fptr_label(char *str)
 #ifdef TEST_WRITE_DATA
 	char tlabel[MAX_LABEL_LEN];
 //	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
-	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
+	get_mlabel(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
 #endif
 }
 //******************************************************************************************//

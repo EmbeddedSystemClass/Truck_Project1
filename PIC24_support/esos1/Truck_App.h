@@ -175,7 +175,7 @@ enum key_types
 	TEST5,			//	- D4
 	TEST6,			//	- D5
 	TEST7,			//	- D6
-	TEST8,			//  - D7
+	LOAD_RAM,		//  - D7
 	INIT, 			//	- D8
 	SPACE,			//	- D9
 	BURN_PART,		//  - DA

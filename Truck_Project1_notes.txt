@@ -192,25 +192,37 @@ using the sim or the AVR. This happens when doing an init_checkboxes or init_exe
 (receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
 no! 192.168.42.110 won't transmit in minicom until you exit.
 
-When the Truck_App starts one of the tasks is get_sync.
-It will send to comm2 a sequence of: "0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA"
-assuming the AVR (or sim_read) has the syncup byte set to 0, it will
-read the sequence and set the syncup byte to 1 and the done to 1.
-Then it will send a sequence of "0x51, 0x52, 0xA1, 0xA2" back to the 
-PIC24. Then the get_sync task will wait for the correct sequence to be
-sent back and wake up the comm2_task which is waiting for the
-get_comm2 task to wake up which put itself to sleep when it started up.
-Then get_sync will put itself to sleep. 
+decided not to do this for now:
+{
+	When the Truck_App starts one of the tasks is get_sync.
+	It will send to comm2 a sequence of: "0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA"
+	assuming the AVR (or sim_read) has the syncup byte set to 0, it will
+	read the sequence and set the syncup byte to 1 and the done to 1.
+	Then it will send a sequence of "0x51, 0x52, 0xA1, 0xA2" back to the 
+	PIC24. Then the get_sync task will wait for the correct sequence to be
+	sent back and wake up the comm2_task which is waiting for the
+	get_comm2 task to wake up which put itself to sleep when it started up.
+	Then get_sync will put itself to sleep. 
 
-the read() call in the loop in main of sim_read.c for the
-simulator is the same as the receiveByte() call in the 
-loop of main.c for the AVR. So when the read() gets a char
-it can call a function that checks to see if 
+	the read() call in the loop in main of sim_read.c for the
+	simulator is the same as the receiveByte() call in the 
+	loop of main.c for the AVR. So when the read() gets a char
+	it can call a function that checks to see if 
+}
 
+9/21/17
+Date:   Thu Sep 21 11:22:13 2017 -0600
+    pushed checkbox structs at starup just after sending eeprom data
+Date:   Thu Sep 21 08:12:01 2017 -0600
+    messed with PIC->read_sim - had all kinds of problems, 
+    probably needs decoupling caps - went back to sim_write->sim_read 
+    and commented out xfer of size,start_add and aux_string
+Date:   Tue Sep 19 21:46:19 2017 -0600
+    tested better way to parse sync frame - test_rw1a/b.c
 
-
-
-
+currently the ESOS stuff is doing weird shit - prolly need caps
+went back to sim_write->sim_read and ended up pushing the entire eeprom 
+data along with TOTAL_NUM_CHECKBOXES of the checkboxes arrays.
 
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.

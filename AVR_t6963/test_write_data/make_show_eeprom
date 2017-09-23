@@ -1,6 +1,6 @@
 # GCC/Linux compile flags
 GNUCC = gcc
-GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC
+GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC -DSHOW_EEPROM
 #GNUCFLAGS =  -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA
 GNULDFLAGS = -static
 GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE

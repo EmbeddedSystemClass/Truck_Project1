@@ -52,8 +52,10 @@ int main(int argc, char *argv[])
 	char filename[20];
 	peeprom_sim = (UCHAR *)&eeprom_sim;
 	void *vptr;
+
 //	syncup = 0;
 
+/*
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
 		check_boxes[i].index = (i % 10);
@@ -70,7 +72,7 @@ int main(int argc, char *argv[])
 		sprintf(tchbox,"%2d",i);
 		memcpy(&check_boxes[i].string[strlen(check_boxes[i].string)],tchbox,2);
 	}
-/*
+
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
 		printf("%d %d %s\n",check_boxes[i].index,check_boxes[i].checked,check_boxes[i].string);
@@ -109,19 +111,16 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 	i = 0;
-	tdelay = 1500;
+	tdelay = 1000;
 	init_list();
 	size = 0;
 	start_addr = 0;
 //	char temp1[MAX_LABEL_LEN];
 //	char temp2[MAX_LABEL_LEN];
-	int choice_aux_offset, exec_aux_offset;
 	print_menu(win);
 	for(i = 0;i < 5;i++)
 		sample_numbers[i] = 100+(i*10);
 	memset(aux_string,0,AUX_STRING_LEN);
-
-    memset(eeprom_sim,0,EEPROM_SIZE);
 
 	strcpy(filename,"eeprom.bin\0");
 	if(access(filename,F_OK) != -1)
@@ -167,6 +166,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 
 	res = 0;
+/*
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
 	{
 		res += write(global_fd,&check_boxes[i].index,1);
@@ -178,52 +178,31 @@ int main(int argc, char *argv[])
 		mvwprintw(win, LAST_ROW_DISP-1,2,"%d   %d  ",res,i);
 		wrefresh(win);
 
-/*
+
 		for(j = 0;j < CHECKBOX_STRING_LEN;j++)
 		{
 			res += write(global_fd,&check_boxes[i].string[j],1);
 			usleep(tdelay);
 		}
-*/
 	}
+*/
 	mvwprintw(win, LAST_ROW_DISP-2,2,"%d   ",res);
 	wrefresh(win);
 
 	i = 0;
 	total_offset = 0;
-	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E, MENU2B, MENU1A, MENU1B, MAIN);
-// 1a
-	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
-// 1b
-	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-// 1c
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-// 1d
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-// 1e
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
-// 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-// 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
-// 2c
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-// 2d
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
-// 2e
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-// 3a
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-// 3b
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
 	no_menu_structs = i;
 	goffset = 0;
 	no_menu_labels = blank;
 	no_rt_labels = test - rpm;
-	get_label_offsets(win);
 
-//		mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
+	memset(cblabels,255,CBLABEL_SIZE);
+	update_ram();
+	get_cblabel_offsets();
+	get_mlabel_offsets();
+
+	mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
 
 
 	j = k = 0;
@@ -366,7 +345,7 @@ int main(int argc, char *argv[])
 					}else
 					{
 						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
-						burn_eeprom();
+//						burn_eeprom();
 					}
 //					peeprom_sim = eeprom_sim + RT_PARAMS_OFFSET_EEPROM_LOCATION;
 //					peeprom_sim = eeprom_sim + 0x120;
@@ -378,16 +357,15 @@ int main(int argc, char *argv[])
 					if(wkey == BURN_PART1)
 					{
 						goffset = 0;
-						get_label_offsets(win);
+						get_mlabel_offsets();
 					}
 
 					break;
-
 				case SPACE:
 					size = 0;
 					type = 0;
 					get_key(wkey,size,start_addr,aux_string,type);
-					for(i = 1;i < LAST_ROW+1;i++)
+					for(i = 1;i < LAST_ROW;i++)
 						mvwprintw(win, i,2,"                                                            ");
 					print_menu(win);
 					break;
@@ -451,161 +429,8 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 //******************************************************************************************//
-//***************************************** burn_eeprom ************************************//
-//******************************************************************************************//
-int burn_eeprom(void)
-{
-	int i;
-	no_rt_labels = 0;
-	no_menu_labels = 0;
-	no_rtparams = 0;
-	total_offset = 0;
-
-    i = 0;
-	i = update_labels(i,"home\0");
-	i = update_labels(i,"MENU1a\0");
-	i = update_labels(i,"MENU1b\0");
-	i = update_labels(i,"MENU1c\0");
-	i = update_labels(i,"MENU1d\0");
-	i = update_labels(i,"MENU1e\0");
-	i = update_labels(i,"MENU2a\0");
-	i = update_labels(i,"MENU2B\0");
-	i = update_labels(i,"MENU2c\0");
-	i = update_labels(i,"MENU2d\0");
-	i = update_labels(i,"MENU2e\0");
-	i = update_labels(i,"MENU3a\0");
-	i = update_labels(i,"MENU3b\0");
-
-	i = update_labels(i,"enter\0");
-	i = update_labels(i,"up\0");
-	i = update_labels(i,"down\0");
-	i = update_labels(i,"toggle\0");
-	i = update_labels(i,"esc\0");
-
-	i = update_labels(i,"enter\0");
-	i = update_labels(i,"forward\0");
-	i = update_labels(i,"back\0");
-	i = update_labels(i,"clear\0");
-	i = update_labels(i,"escape\0");
-
-	i = update_labels(i,"caps\0");
-	i = update_labels(i,"small\0");
-	i = update_labels(i,"spec\0");
-	i = update_labels(i,"next\0");
-
-	i = update_labels(i,"\0");
-	menu_offset = total_offset;
-	no_menu_labels = i;
-
-	i = update_labels(i,"RPM\0");
-	i = update_labels(i,"ENG TEMP\0");
-	i = update_labels(i,"TRIP\0");
-	i = update_labels(i,"TIME\0");
-	i = update_labels(i,"AIR TEMP\0");
-	i = update_labels(i,"MPH\0");
-	i = update_labels(i,"OIL PRES\0");
-	i = update_labels(i,"MAP\0");
-	i = update_labels(i,"OIL TEMP\0");
-	i = update_labels(i,"O2\0");
-	i = update_labels(i,"test\0");
-	no_rt_labels = i - no_menu_labels;
-//	choice_offset = i;
-	rt_params_offset = total_offset;
-	i = 0;
-
-#ifndef TEST_WRITE_DATA
-	eeprom_update_word((UINT *)NO_RT_LABELS_EEPROM_LOCATION,no_rt_labels);
-	printString("\r\nno_rt_labels: ");
-	printHexByte((UCHAR)no_rt_labels>>8);
-	printHexByte((UCHAR)no_rt_labels);
-	printString("\r\ndone writing no_rt_labels to eeprom\r\n");
-
-	eeprom_update_word((UINT *)NO_MENU_LABELS_EEPROM_LOCATION,no_menu_labels);
-	printString("\r\nno_menu_labels: ");
-	printHexByte((UCHAR)no_menu_labels>>8);
-	printHexByte((UCHAR)no_menu_labels);
-	printString("\r\ndone writing no_menu_labels to eeprom\r\n");
-
-/*
-	eeprom_update_word((UINT *)RTPARAMS_OFFSET_EEPROM_LOCATION_LSB,total_offset);
-	printString("\r\total_offset: ");
-	printHexByte((UCHAR)total_offset>>8);
-	printHexByte((UCHAR)total_offset);
-	printString("\r\n");
-*/
-#else
-//	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
-//	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
-#endif
-	total_offset = 0;
-
-	i = update_rtparams(i, 1, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
-	i = update_rtparams(i, 2, 0, SHOWN_SENT, 0, RT_ENGT);
-	i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
-	i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_TIME);
-	i = update_rtparams(i, 5, 0, SHOWN_SENT, 0, RT_AIRT);
-	i = update_rtparams(i, 1, 15, SHOWN_SENT, 0, RT_MPH);
-	i = update_rtparams(i, 2, 15, SHOWN_SENT, 0, RT_OILP);
-	i = update_rtparams(i, 3, 15, SHOWN_SENT, 0, RT_MAP);
-	i = update_rtparams(i, 4, 15, SHOWN_SENT, 0, RT_OILT);
-	i = update_rtparams(i, 5, 15, SHOWN_SENT, 0, RT_O2);
-
-	no_rtparams = i;
-// write to the number of rt_params location in eeprom the number of rt_params
-#ifndef TEST_WRITE_DATA
-	eeprom_update_word((UINT *)NO_RTPARAMS_EEPROM_LOCATION,no_rtparams);
-	printString("\r\nno_rtparams: ");
-	printHexByte((UCHAR)no_rtparams>>8);
-	printHexByte((UCHAR)no_rtparams);
-	printString("\r\ndone writing no_rtparams to eeprom\r\n");
-/*
-	eeprom_update_word((UINT *)MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB,total_offset);
-	printString("\r\total_offset: ");
-	printHexByte((UCHAR)total_offset>>8);
-	printHexByte((UCHAR)total_offset);
-	printString("\r\n");
-*/
-#else
-//	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));
-#endif
-
-	i = 0;
-	total_offset = 0;
-//												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
-// 1a
-	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
-// 1b
-	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-// 1c
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-// 1d
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-// 1e
-	i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
-// 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-// 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
-// 2c
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
-// 2d
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
-// 2e
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
-// 3a
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
-// 3b
-	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
-
-	no_menu_structs = i;
-	return 0;
-}
-//******************************************************************************************//
 //*************************************** get_keypress *************************************//
 //******************************************************************************************//
-
-//UCHAR get_keypress(UCHAR key1)
 static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 {
 	UCHAR wkey;
@@ -728,7 +553,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			break;
 		case 'H':
 		case 'h':
-			wkey = TEST8;
+			wkey = LOAD_RAM;
 			break;
 		case 'J':
 		case 'j':
