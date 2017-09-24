@@ -337,4 +337,5 @@ UCHAR new_data_ready;
 UCHAR mod_data_ready;
 UCHAR data_entry_mode;
 UCHAR aux_string[AUX_STRING_LEN];
+int sample_numbers[5];
 

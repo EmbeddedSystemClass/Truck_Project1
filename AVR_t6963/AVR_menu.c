@@ -65,6 +65,8 @@ static UCHAR backspace(UCHAR ch);
 static UCHAR enter(UCHAR ch);
 static UCHAR escape(UCHAR ch);
 static int curr_menu_index;
+static UCHAR prev_ret_char;
+
 #if 0
 static UCHAR scr_alnum0(UCHAR ch);
 static UCHAR scr_alnum1(UCHAR ch);
@@ -120,6 +122,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	char tlabel[MAX_LABEL_LEN];
 	res = 0;
 	res2 = 0;
+
 #ifdef TEST_WRITE_DATA
 	res += read(global_fd,&tfptr,1);
 	res += 	read(global_fd,&high_byte,1);
@@ -206,33 +209,44 @@ static UCHAR generic_menu_function(UCHAR ch)
 		mvwprintw(win, LAST_ROW-1, 1,"ch:%x  fptr:%x index:%d   ",ch,tfptr,curr_menu_index);
 #endif
 		display_menus();
+
+//#if 0
+
 		if(prev_menu_index != curr_menu_index)
 		{
-#if 0
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d                      ",curr_menu_index);
+			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d  %d  %x                  ",curr_menu_index,prev_menu_index,prev_ret_char);
 #endif
-			switch (curr_menu_index)
+			switch (prev_menu_index)
 			{
 				case MAIN:
 				case MENU1A:
 				case MENU1B:
+				break;
 				case MENU1C:
 				case MENU1D:
 				case MENU1E:
+				do_chkbox(KP_D);
+				break;
 				case MENU2A:
 				case MENU2B:
+				do_exec(KP_D);
+				break;
 				case MENU2C:
 				case MENU2D:
 				case MENU2E:
 				case MENU3A:
 				case MENU3B:
+				do_numentry(KP_D);
+				break;
 				break;
 			}
-#endif
 		}
 		prev_menu_index = curr_menu_index;
+		prev_ret_char = ret_char;
 		// show the contents of aux_string
+//#endif
+
 	}
 #ifdef TEST_WRITE_DATA
 	wrefresh(win);
@@ -350,81 +364,6 @@ static UCHAR menu_change(UCHAR ch)
 	wrefresh(win);
 #endif
 	return ret_char;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-// read from serial port and if a sequence of 3 0x55's and 3 0xAA's are sent
-// then set the syncup flag, otherwise call read_get_key with the other chars
-int parse_sync()
-{
-	int i,j,got_seq;
-	UCHAR buf[8];
-	int res = 0;
-	UCHAR key;
-
-	i = 0;
-	got_seq = 1;
-#ifdef TEST_WRITE_DATA
-
-//	mvwprintw(win, LAST_ROW-4,2,"                                ");
-//	mvwprintw(win, LAST_ROW-3,2,"                                ");
-	do
-	{
-		res += read(global_fd,&buf[i],1);
-		usleep(1000);
-//		printf("%2x  %2d \n",buf[i],i);
-		mvwprintw(win, LAST_ROW-4,2+(i*4),"%2x ",buf[i]);
-		mvwprintw(win, LAST_ROW-3,2+(i*4),"%2d ",i);
-		wrefresh(win);
-		if(buf[i] != sync_buf[i])
-			got_seq = 0;
-		i++;
-
-	}while(got_seq && i < 6);
-
-	if(got_seq == 1 && i >= 5)
-		syncup = 1;
-	j = i;
-
-	if(syncup)
-	{
-		key = 0x51;
-		write(global_fd,&key,1);
-		usleep(1000);
-		key = 0x52;
-		write(global_fd,&key,1);
-		usleep(1000);
-		key = 0xA1;
-		write(global_fd,&key,1);
-		usleep(1000);
-		key = 0xA2;
-		write(global_fd,&key,1);
-		usleep(1000);
-		mvwprintw(win, LAST_ROW-4,2,"sync'd            ");
-		wrefresh(win);
-		return 1;
-	}
-	else
-	{
-/*
-		mvwprintw(win, LAST_ROW-5,2,"                                        ");
-		mvwprintw(win, LAST_ROW-6,2,"                                        ");
-		mvwprintw(win, LAST_ROW-7,2,"                                        ");
-		mvwprintw(win, LAST_ROW-8,2,"                                        ");
-		wrefresh(win);
-*/
-		for(i = 0;i < j;i++)
-		{
-			read_get_key(buf[i]);
-			mvwprintw(win, LAST_ROW-5,2+(i*4),"%2x ",buf[i]);
-			mvwprintw(win, LAST_ROW-6,2+(i*4),"%2d ",i);
-			wrefresh(win);
-		}
-		return 0;
-	}
-#endif
-	return 0;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -748,7 +687,17 @@ UCHAR read_get_key(UCHAR key)
 				res += read(global_fd,&rt_params[i].dtype,1);
 				res += read(global_fd,&rt_params[i].type,1);
 			}
+			res = 0;
 			mvwprintw(win, LAST_ROW-4,21,"rt_params: %2d ",res);
+			for(i = 0;i < 5;i++)
+			{
+				res += read(global_fd,&low_byte,1);
+				res += read(global_fd,&high_byte,1);
+				sample_numbers[i] = pack(low_byte,high_byte);
+				mvwprintw(win, LAST_ROW-11,2+(i*6),"%3d ",sample_numbers[i]);
+				mvwprintw(win, LAST_ROW-10+i,2,"res: %d  %x  %x  ",res,low_byte,high_byte);
+			}
+			mvwprintw(win, LAST_ROW-12,2,"res: %d    ",res);
 			wrefresh(win);
 			no_rtparams = NUM_RT_PARAMS;
 /*
@@ -843,6 +792,20 @@ static void get_fptr_label(int fptr, char *str)
 static UCHAR do_numentry(UCHAR ch)
 {
 	UCHAR ret_char = ch;
+
+	if((prev_menu_index != curr_menu_index) && (ch != KP_D && ch != KP_AST && ch != KP_POUND))
+	{
+		blank_choices();
+		init_numentry(curr_menu_index);
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*init_numentry (do_numentry)");
+		wrefresh(win);
+#endif
+		return ch;
+	}
+
+	mvwprintw(win, LAST_ROW-6,2, "                                ");
+	wrefresh(win);
 	switch(ch)
 	{
 		case KP_0:
@@ -891,12 +854,13 @@ static UCHAR do_numentry(UCHAR ch)
 		escape(ch);
 		break;
 		case KP_AST:
+		escape(ch);
 		break;
 		default:
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+17,2, "*do_numentry  %x   ",ret_char);
+		mvwprintw(win, LAST_ROW-6,2, "*do_numentry  %x                    ",ret_char);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -928,10 +892,10 @@ static UCHAR enter(UCHAR ch)
 		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
 		cur_col = NUM_ENTRY_BEGIN_COL;
 		clean_disp_num();
-		mod_data_ready = 1;
+		sample_numbers[prev_menu_index-MENU2C] = atoi((const char *)new_global_number);
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+24, 2,"new: %s       %d    ",new_global_number,limit);
+	mvwprintw(win, LAST_ROW-5, 2,"new: %s %d %x %d    ",new_global_number,limit,ch,prev_menu_index);
 	wrefresh(win);
 #endif
 //	scale_disp(SCALE_DISP_ALL);
@@ -942,28 +906,30 @@ static UCHAR enter(UCHAR ch)
 //******************************************************************************************//
 static void init_numentry(int menu_index)
 {
-#ifdef TEST_WRITE_DATA
-//	mvwprintw(win, 41, 3,"                                   ");
-#endif
-//	scale_disp(SCALE_DISP_SOME);
 	int temp_int = 0;
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
-	temp_int = (int)aux_string[1];
-	temp_int >>= 8;
-	temp_int |= (int)aux_string[0];
-	sprintf(cur_global_number,"%4d",temp_int);
-	clean_disp_num();
-	dispCharAt(NUM_ENTRY_ROW,cur_col,'/');
-	dispCharAt(NUM_ENTRY_ROW,cur_col+NUM_ENTRY_SIZE,'/');
-	new_data_ready = 1;
-	display_edit_value();
+	if(curr_menu_index-MENU2C < 6)
+	{
+		temp_int = sample_numbers[curr_menu_index-MENU2C];
+		sprintf(cur_global_number,"%4d",temp_int);
+		clean_disp_num();
+		dispCharAt(NUM_ENTRY_ROW,cur_col,'/');
+		dispCharAt(NUM_ENTRY_ROW,cur_col+NUM_ENTRY_SIZE,'/');
+		new_data_ready = 1;
+		display_edit_value();
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+23, 2,"init_num_entry %s %d %d       ",cur_global_number,temp_int,cur_col);
-	wrefresh(win);
+		mvwprintw(win, DISP_OFFSET+23, 2,"init_num_entry %s %d       ",cur_global_number,temp_int);
 #endif
+
+	}else{
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, DISP_OFFSET+23, 2,"init_num_entry (opps)           ");
+#endif
+	}
+	wrefresh(win);
 }
 //******************************************************************************************//
 //********************************* display_edit_value *************************************//
@@ -1539,6 +1505,81 @@ static UCHAR non_func(UCHAR ch)
 	wrefresh(win);
 #endif
 	return ret_char;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+// read from serial port and if a sequence of 3 0x55's and 3 0xAA's are sent
+// then set the syncup flag, otherwise call read_get_key with the other chars
+int parse_sync()
+{
+	int i,j,got_seq;
+	UCHAR buf[8];
+	int res = 0;
+	UCHAR key;
+
+	i = 0;
+	got_seq = 1;
+#ifdef TEST_WRITE_DATA
+
+//	mvwprintw(win, LAST_ROW-4,2,"                                ");
+//	mvwprintw(win, LAST_ROW-3,2,"                                ");
+	do
+	{
+		res += read(global_fd,&buf[i],1);
+		usleep(1000);
+//		printf("%2x  %2d \n",buf[i],i);
+		mvwprintw(win, LAST_ROW-4,2+(i*4),"%2x ",buf[i]);
+		mvwprintw(win, LAST_ROW-3,2+(i*4),"%2d ",i);
+		wrefresh(win);
+		if(buf[i] != sync_buf[i])
+			got_seq = 0;
+		i++;
+
+	}while(got_seq && i < 6);
+
+	if(got_seq == 1 && i >= 5)
+		syncup = 1;
+	j = i;
+
+	if(syncup)
+	{
+		key = 0x51;
+		write(global_fd,&key,1);
+		usleep(1000);
+		key = 0x52;
+		write(global_fd,&key,1);
+		usleep(1000);
+		key = 0xA1;
+		write(global_fd,&key,1);
+		usleep(1000);
+		key = 0xA2;
+		write(global_fd,&key,1);
+		usleep(1000);
+		mvwprintw(win, LAST_ROW-4,2,"sync'd            ");
+		wrefresh(win);
+		return 1;
+	}
+	else
+	{
+/*
+		mvwprintw(win, LAST_ROW-5,2,"                                        ");
+		mvwprintw(win, LAST_ROW-6,2,"                                        ");
+		mvwprintw(win, LAST_ROW-7,2,"                                        ");
+		mvwprintw(win, LAST_ROW-8,2,"                                        ");
+		wrefresh(win);
+*/
+		for(i = 0;i < j;i++)
+		{
+			read_get_key(buf[i]);
+			mvwprintw(win, LAST_ROW-5,2+(i*4),"%2x ",buf[i]);
+			mvwprintw(win, LAST_ROW-6,2+(i*4),"%2d ",i);
+			wrefresh(win);
+		}
+		return 0;
+	}
+#endif
+	return 0;
 }
 //******************************************************************************************//
 //******************************************************************************************//

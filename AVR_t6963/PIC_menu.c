@@ -210,7 +210,8 @@ static UCHAR generic_menu_function(UCHAR ch)
 			menu_structs[get_curr_menu()].fptr);
 	wrefresh(win);
 
-	write(global_fd,&ch,1);
+//	write(global_fd,&ch,1);
+	write(global_fd,&ret_char,1);
 	usleep(tdelay);
 	temp2 = get_fptr();
 	write(global_fd,&temp2,1);
@@ -453,6 +454,16 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				usleep(tdelay);
 			}
 
+// sample numbers
+			for(i = 0;i < 5;i++)
+			{
+				unpack(sample_numbers[i],&low_byte,&high_byte);
+				write(global_fd,&low_byte,1);
+				usleep(tdelay);
+				write(global_fd,&high_byte,1);
+				usleep(tdelay);
+			}
+
 			mvwprintw(win, LAST_ROW_DISP-1,10,"done");
 			wrefresh(win);
 			break;
@@ -590,7 +601,7 @@ static void init_numentry(int menu_index)
 	temp_int = sample_numbers[menu_index-MENU2C];
 	sprintf(cur_global_number,"%4d",temp_int);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW_DISP-3,2,"init_numentry: %s %d %d %d  ",cur_global_number,temp_int,cur_col,menu_index);
+	mvwprintw(win, LAST_ROW_DISP-12,2,"init_numentry: %s %d %d %d  ",cur_global_number,temp_int,cur_col,menu_index);
 #endif
 	aux_string[0] = (UCHAR)temp_int;
 	temp_int >>= 8;
@@ -872,8 +883,14 @@ static UCHAR scrollup_checkboxes(int index)
 	{
 		mvwprintw(win, LAST_ROW_DISP-3,2+(i*4),"%d  ",check_boxes[k].checked);
 		k++;
-		wrefresh(win);
 	}
+	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		mvwprintw(win, LAST_ROW_DISP-5,2+(i*4),"%d  ",check_boxes[k].index);
+		k++;
+	}
+	wrefresh(win);
 
 #endif
 	return k;
@@ -899,8 +916,14 @@ static UCHAR scrolldown_checkboxes(int index)
 	{
 		mvwprintw(win, LAST_ROW_DISP-3,2+(i*4),"%d  ",check_boxes[k].checked);
 		k++;
-		wrefresh(win);
 	}
+	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		mvwprintw(win, LAST_ROW_DISP-5,2+(i*4),"%d  ",check_boxes[k].index);
+		k++;
+	}
+	wrefresh(win);
 
 #endif
 	return k;

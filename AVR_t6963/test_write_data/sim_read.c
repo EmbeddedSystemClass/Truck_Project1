@@ -158,6 +158,16 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		read(global_fd,&key,1);
+		if(key == 'q')
+		{
+			delwin(win);
+			clrtoeol();
+			refresh();
+			endwin();
+			tcsetattr(fd,TCSANOW,&oldtio);
+			close(fd);
+			exit(0);
+		}
 		mvwprintw(win, LAST_ROW-3,1,"key: %x ",key);
 		read_get_key(key);
 //		parse_sync();

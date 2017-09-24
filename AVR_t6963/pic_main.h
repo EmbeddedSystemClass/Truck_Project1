@@ -90,7 +90,6 @@ MENU_FUNC_STRUCT menu_structs[] = {
 //#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
-int sample_numbers[5];
 //UINT send_data;
 //UINT recv_data;
 int global_fd;

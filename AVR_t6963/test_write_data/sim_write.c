@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 	i = 0;
-	tdelay = 4000;
+	tdelay = 1000;
 	init_list();
 	size = 0;
 	start_addr = 0;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 //	char temp2[MAX_LABEL_LEN];
 	print_menu(win);
 	for(i = 0;i < 5;i++)
-		sample_numbers[i] = 100+(i*10);
+		sample_numbers[i] = 10+(i*10)+i;
 	memset(aux_string,0,AUX_STRING_LEN);
 
 	strcpy(filename,"eeprom.bin\0");
@@ -416,6 +416,8 @@ int main(int argc, char *argv[])
 //		wkey = key = 0;
 		wrefresh(win);
 	}while(key != 'q');
+
+	write(global_fd,&key,1);
 
 	delwin(win);
 	clrtoeol();
