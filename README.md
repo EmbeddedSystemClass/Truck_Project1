@@ -1,5 +1,8 @@
 <h1>Truck_Project1_notes.txt 8/1/2017</h1>
 <br />
+[demo video](https://www.youtube.com/watch?v=zaYD_nlhRvk)<br />
+<br />
+<br />
 8/7/17<br />
 test AVR to FPGA SPI - AVR just echos back what's recv'd in SPI to FPGA which prints results to serial port<br />
 connection to SPI on AVR will have to be removeable to program to AVR - if this works then start wiring<br />
