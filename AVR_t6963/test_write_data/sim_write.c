@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 	i = 0;
-	tdelay = 1000;
+	tdelay = 4000;
 	init_list();
 	size = 0;
 	start_addr = 0;

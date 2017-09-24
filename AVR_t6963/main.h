@@ -86,18 +86,19 @@ enum menu_types
 	ckdown,		// 15
 	cktoggle,	// 16
 	ckesc,		// 17
+	cclear,		// 18
 
-	entr,		// 18
-	forward,	// 19
-	back,		// 20
-	eclear,		// 21
-	esc,		// 22
+	entr,		// 19
+	forward,	// 20
+	back,		// 21
+	eclear,		// 22
+	esc,		// 23
 
-	caps,		// 23
-	small,		// 24
-	spec,		// 25
-	next,		// 26
-	blank,		// 27
+	caps,		// 24
+	small,		// 25
+	spec,		// 26
+	next,		// 27
+	blank,		// 28
 
 	rpm,
 	engt,

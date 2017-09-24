@@ -143,8 +143,8 @@ static UCHAR generic_menu_function(UCHAR ch)
 	for(i = 0;i < 20;i++)
 	{
 		res2 += read(global_fd,&aux_string[i],1);
-		mvwprintw(win, LAST_ROW-10, 2+(i*3),"%2x ",aux_string[i]);
-		wrefresh(win);
+//		mvwprintw(win, LAST_ROW-10, 2+(i*3),"%2x ",aux_string[i]);
+//		wrefresh(win);
 	}
 
 //	mvwprintw(win, LAST_ROW-21,1,"size %d start_addr %d read: %d    ",aux_bytes_to_read,aux_data_offset,res);
@@ -208,6 +208,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		display_menus();
 		if(prev_menu_index != curr_menu_index)
 		{
+#if 0
 #ifdef TEST_WRITE_DATA
 			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d                      ",curr_menu_index);
 #endif
@@ -216,8 +217,6 @@ static UCHAR generic_menu_function(UCHAR ch)
 				case MAIN:
 				case MENU1A:
 				case MENU1B:
-					display_labels();
-					break;
 				case MENU1C:
 				case MENU1D:
 				case MENU1E:
@@ -230,6 +229,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 				case MENU3B:
 				break;
 			}
+#endif
 		}
 		prev_menu_index = curr_menu_index;
 		// show the contents of aux_string
@@ -313,6 +313,17 @@ static UCHAR menu_change(UCHAR ch)
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 #endif
+
+	if(prev_menu_index != curr_menu_index)
+	{
+		display_labels();
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, DISP_OFFSET+17,2, "*menu_change (init)");
+		wrefresh(win);
+#endif
+		return ch;
+	}
+
 	switch(ch)
 	{
 		case KP_A:
@@ -711,6 +722,7 @@ UCHAR read_get_key(UCHAR key)
 			{
 				res += read(global_fd,&check_boxes[i].checked,1);
 				res += read(global_fd,&check_boxes[i].index,1);
+				memcpy(&prev_check_boxes[i],&check_boxes[i],sizeof(CHECKBOXES));
 //				mvwprintw(win, LAST_ROW-3,25,"%2d  %2d  ",check_boxes[i].checked,res);
 /*
 				mvwprintw(win, LAST_ROW+j-50, 2+(k*2),"%2d ",check_boxes[i].checked);
@@ -1106,6 +1118,7 @@ static UCHAR do_exec(UCHAR ch)
 			{
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
+			mvwprintw(win, DISP_OFFSET+17,10,"enter    ");
 			blank_choices();
 		break;
 		case KP_POUND:		// esc
@@ -1113,6 +1126,7 @@ static UCHAR do_exec(UCHAR ch)
 			{
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
+			mvwprintw(win, DISP_OFFSET+17,10,"esc      ");
 			blank_choices();
 		break;
 		case KP_0:
@@ -1179,6 +1193,7 @@ static UCHAR do_chkbox(UCHAR ch)
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
 			blank_choices();
+			mvwprintw(win, DISP_OFFSET+17,10,"enter    ");
 		break;
 		case KP_POUND:		// esc
 			for(i = 0;i < NUM_CHECKBOXES;i++)
@@ -1186,6 +1201,7 @@ static UCHAR do_chkbox(UCHAR ch)
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
 			blank_choices();
+			mvwprintw(win, DISP_OFFSET+17,10,"esc    ");
 		break;
 		case KP_0:
 			checkboxes_reset(k);
@@ -1199,7 +1215,7 @@ static UCHAR do_chkbox(UCHAR ch)
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",l,k,j);
 
-	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x   %d              ",ret_char,k);
+	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x %d ",ret_char,k);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -1240,6 +1256,8 @@ static void init_checkboxes(int menu_index)
 
 		k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
 
+		prev_check_boxes[k].checked = check_boxes[k].checked;
+
 		if(check_boxes[k].checked == 1)
 		{
 			dispCharAt(1+curr_checkbox,0,120);
@@ -1268,6 +1286,9 @@ static UCHAR checkboxes_reset(int index)
 		k++;
 		dispCharAt(1+curr_checkbox,20,0x20);
 	}
+	mvwprintw(win, DISP_OFFSET+20,2,"reset: curr %d ckbox %d     ",curr_checkbox,check_boxes[k].index);
+	wrefresh(win);
+	
 	curr_checkbox = 0;
 	return k;
 }

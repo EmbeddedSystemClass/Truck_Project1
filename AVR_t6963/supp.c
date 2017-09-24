@@ -307,6 +307,7 @@ int burn_eeprom(void)
 	i = update_mlabels(i,"down\0");
 	i = update_mlabels(i,"toggle\0");
 	i = update_mlabels(i,"esc\0");
+	i = update_mlabels(i,"reset\0");
 
 	i = update_mlabels(i,"enter\0");
 	i = update_mlabels(i,"forward\0");
@@ -381,15 +382,15 @@ void update_ram(void)
 // 1b
 	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
 // 1c
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1C);
 // 1d
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D);
 // 1e
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
 // 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU2A);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2A);
 // 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU2B);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2B);
 // 2c
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
 // 2d
