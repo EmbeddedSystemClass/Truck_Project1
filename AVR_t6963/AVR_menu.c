@@ -78,6 +78,7 @@ static UCHAR scrolldown_checkboxes(int index);
 static UCHAR toggle_checkboxes(int index);
 static UCHAR scrolldown_execchoice(UCHAR ch);
 static UCHAR scrollup_execchoice(UCHAR ch);
+static UCHAR checkboxes_reset(int index);
 /*
 static UCHAR enter_checkboxes(UCHAR ch);
 static UCHAR escape_checkboxes(UCHAR ch);
@@ -125,9 +126,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 	res += 	read(global_fd,&low_byte,1);
 	curr_menu_index = pack(low_byte,high_byte);
 
-	mvwprintw(win, LAST_ROW-1, 1,"ch:%x  fptr:%x res:%d index:%d   ",ch,tfptr,res,curr_menu_index);
-
-	mvwprintw(win, LAST_ROW-2,1,"                                           ");
+//	mvwprintw(win, LAST_ROW-2,1,"                                           ");
 	for(i = 0;i < 6;i++)
 	{
 		res += read(global_fd,&high_byte,1);
@@ -139,6 +138,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		if(curr_menus[i] > blank)
 			curr_menus[i] = 0;
 	}
+
 
 	for(i = 0;i < 20;i++)
 	{
@@ -202,12 +202,15 @@ static UCHAR generic_menu_function(UCHAR ch)
 	if(tfptr <= NUM_FPTS)
 	{
 		ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
-//	mvwprintw(win, DISP_OFFSET+20, 2,"%x  %x  ",ret_char,ch);
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-1, 1,"ch:%x  fptr:%x index:%d   ",ch,tfptr,curr_menu_index);
+#endif
 		display_menus();
-
 		if(prev_menu_index != curr_menu_index)
 		{
-			blank_choices();
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d                      ",curr_menu_index);
+#endif
 			switch (curr_menu_index)
 			{
 				case MAIN:
@@ -218,24 +221,22 @@ static UCHAR generic_menu_function(UCHAR ch)
 				case MENU1C:
 				case MENU1D:
 				case MENU1E:
-					init_checkboxes(curr_menu_index);
-				break;
 				case MENU2A:
 				case MENU2B:
-					init_checkboxes(curr_menu_index);
-				break;
 				case MENU2C:
 				case MENU2D:
 				case MENU2E:
 				case MENU3A:
 				case MENU3B:
-					init_numentry(curr_menu_index);
 				break;
 			}
 		}
 		prev_menu_index = curr_menu_index;
 		// show the contents of aux_string
 	}
+#ifdef TEST_WRITE_DATA
+	wrefresh(win);
+#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -333,7 +334,7 @@ static UCHAR menu_change(UCHAR ch)
 	}
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x   ",show_keypress(ret_char,offset));
-	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x   ",ret_char);
+	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x              ",ret_char);
 	mvwprintw(win, DISP_OFFSET+24, 2,"                           ");
 	wrefresh(win);
 #endif
@@ -505,12 +506,13 @@ UCHAR read_get_key(UCHAR key)
 //			for(i = 0;i < TOTAL_NUM_CBLABELS/2;i++)
 //			for(i = 0;i < no_cblabels/2;i++)
 
+#ifdef TEST_WRITE_DATA
 			mvwprintw(win, LAST_ROW-1, 2,"test5                          ");
 
 			k = j = 0;
-			for(i = 0;i < CBLABEL_SIZE;i++)
+			for(i = 0;i < LAST_ROW/2;i++)
 			{
-				mvwprintw(win, LAST_ROW+i,2,"                                     ");
+				mvwprintw(win, DISP_OFFSET+i,2,"                                     ");
 			}
 
 			mvwprintw(win, LAST_ROW-1, 22,"no_cblabels: %d  ",no_cblabels);
@@ -528,7 +530,7 @@ UCHAR read_get_key(UCHAR key)
 			}
 
 			wrefresh(win);
-
+#endif
 			break;
 		case READ_EEPROM:
 #ifdef TEST_WRITE_DATA
@@ -721,9 +723,22 @@ UCHAR read_get_key(UCHAR key)
 */
 			}
 
-			mvwprintw(win, LAST_ROW-3,33,"res: %2d            ",res);
+			mvwprintw(win, LAST_ROW-4,2,"cblabels: %2d ",res);
 			wrefresh(win);
 			get_cblabel_offsets();
+			res = 0;
+
+			for(i = 0;i < NUM_RT_PARAMS;i++)
+			{
+				res += read(global_fd,&rt_params[i].row,1);
+				res += read(global_fd,&rt_params[i].col,1);
+				res += read(global_fd,&rt_params[i].shown,1);
+				res += read(global_fd,&rt_params[i].dtype,1);
+				res += read(global_fd,&rt_params[i].type,1);
+			}
+			mvwprintw(win, LAST_ROW-4,21,"rt_params: %2d ",res);
+			wrefresh(win);
+			no_rtparams = NUM_RT_PARAMS;
 /*
 			res = 0;
 
@@ -761,7 +776,6 @@ UCHAR read_get_key(UCHAR key)
 
 		//	mvwprintw(win, LAST_ROW-3,1,"eeprom locations: %2d %2d %2d ",no_rt_labels,no_rtparams,no_menu_labels);
 */
-			wrefresh(win);
 #endif
 
 		break;
@@ -1053,15 +1067,29 @@ static void clean_disp_num(void)
 static UCHAR do_exec(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i,j,k;
+	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 
+	if(prev_menu_index != curr_menu_index)
+	{
+		blank_choices();
+		init_checkboxes(curr_menu_index);
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, DISP_OFFSET+17,2, "*init_checkboxes (do_exec)");
+		wrefresh(win);
+#endif
+		return ch;
+	}
+
 	k = (curr_menu_index-MENU1C);
+	l = k;
 	k *= NUM_CHECKBOXES;
 	j = 0;
 
-	wrefresh(win);
-
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+19,2,"                                       ");
+	mvwprintw(win, DISP_OFFSET+20,2,"                                       ");
+#endif
 	switch(ch)
 	{
 		case KP_A:
@@ -1078,26 +1106,28 @@ static UCHAR do_exec(UCHAR ch)
 			{
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
+			blank_choices();
 		break;
 		case KP_POUND:		// esc
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 			{
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
+			blank_choices();
 		break;
 		case KP_0:
+			checkboxes_reset(k);
 		break;
 		case KP_AST:
+			blank_choices();
 		break;
 		default:
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+19,2,"                                  ");
-	mvwprintw(win, DISP_OFFSET+20,2,"                                  ");
-	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",curr_menu_index,k,j);
+//	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",l,k,j);
 
-	mvwprintw(win, DISP_OFFSET+17,2, "*do_exec  %x   %d  ",ret_char,k);
+	mvwprintw(win, DISP_OFFSET+17,2, "*do_exec  %x   %d               ",ret_char,k);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -1108,14 +1138,29 @@ static UCHAR do_exec(UCHAR ch)
 static UCHAR do_chkbox(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i,j,k;
+	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 
-	k = (curr_menu_index-MENU1C);
+	if(prev_menu_index != curr_menu_index)
+	{
+		blank_choices();
+		init_checkboxes(curr_menu_index);
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, DISP_OFFSET+17,2, "*init_checkboxes (do_chkbox)");
+		wrefresh(win);
+#endif
+		return ch;
+	}
+
+	k = curr_menu_index-MENU1C;
+	l = k;
 	k *= NUM_CHECKBOXES;
 	j = 0;
 
-	wrefresh(win);
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+19,2,"                                  ");
+	mvwprintw(win, DISP_OFFSET+20,2,"                                  ");
+#endif
 
 	switch(ch)
 	{
@@ -1133,62 +1178,28 @@ static UCHAR do_chkbox(UCHAR ch)
 			{
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
+			blank_choices();
 		break;
 		case KP_POUND:		// esc
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 			{
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
+			blank_choices();
 		break;
 		case KP_0:
+			checkboxes_reset(k);
 		break;
 		case KP_AST:
+			blank_choices();
 		break;
 		default:
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+19,2,"                                  ");
-	mvwprintw(win, DISP_OFFSET+20,2,"                                  ");
-	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",curr_menu_index,k,j);
+//	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",l,k,j);
 
-	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x   %d  ",ret_char,k);
-	wrefresh(win);
-#endif
-	return ret_char;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-static UCHAR non_func(UCHAR ch)
-{
-	UCHAR ret_char = ch;
-
-#ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
-#endif
-
-	switch(ch)
-	{
-		case KP_A:
-		break;
-		case KP_B:
-		break;
-		case KP_C:
-		break;
-		case KP_D:
-		break;
-		case KP_POUND:
-		break;
-		case KP_0:
-		break;
-		case KP_AST:
-		break;
-		default:
-		break;
-	}
-#ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+17,2, "*non_func  %x   ",ret_char);
+	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x   %d              ",ret_char,k);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -1212,8 +1223,8 @@ static void init_checkboxes(int menu_index)
 
 
 #ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+20, 2,"menu_index (init_checkboxes) %d  %d  ",menu_index,j);
-//	wrefresh(win);
+	mvwprintw(win, DISP_OFFSET+23, 2,"init_checkboxes");
+	wrefresh(win);
 #endif
 
 	j *= NUM_CHECKBOXES;
@@ -1227,29 +1238,58 @@ static void init_checkboxes(int menu_index)
 #endif
 		row++;
 
+		k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+
 		if(check_boxes[k].checked == 1)
 		{
-			dispCharAt(1+check_boxes[k].index,0,120);
+			dispCharAt(1+curr_checkbox,0,120);
 		}
 		else
 		{
-			dispCharAt(1+check_boxes[k].index,0,0x20);
+			dispCharAt(1+curr_checkbox,0,0x20);
 		}
+		curr_checkbox++;
 	}
-	wrefresh(win);
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+static UCHAR checkboxes_reset(int index)
+{
+//	int k = index+curr_checkbox;
+	int i,k;
+	curr_checkbox = 0;
+	k = curr_menu_index * NUM_CHECKBOXES;
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		check_boxes[k].checked = 0;
+		curr_checkbox++;
+		k++;
+		dispCharAt(1+curr_checkbox,20,0x20);
+	}
+	curr_checkbox = 0;
+	return k;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
 //******************************************************************************************//
 static UCHAR scrollup_checkboxes(int index)
 {
-	int k = index+curr_checkbox;
-	dispCharAt(1+check_boxes[k].index,20,0x20);
+//	int k = index+curr_checkbox;
+	int k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+	dispCharAt(1+curr_checkbox,20,0x20);
 
 	if(--curr_checkbox < 0)
-		curr_checkbox = last_checkbox;
+		curr_checkbox = 9;
 	// move cursor to 3 + check_boxes[curr_checkbox]
-	dispCharAt(1+check_boxes[k].index,20,0x21);
+	k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+//	dispCharAt(1+check_boxes[k].index,20,0x21);
+	dispCharAt(1+curr_checkbox,20,0x21);
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+20,2,"up: curr %d ckbox %d     ",curr_checkbox,check_boxes[k].index);
+	wrefresh(win);
+#endif
 	return k;
 }
 //******************************************************************************************//
@@ -1257,13 +1297,18 @@ static UCHAR scrollup_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR scrolldown_checkboxes(int index)
 {
-	int k = index+curr_checkbox;
-	dispCharAt(1+check_boxes[k].index,20,0x20);
+	int k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+	dispCharAt(1+curr_checkbox,20,0x20);
 
-	if(++curr_checkbox > last_checkbox)
+	if(++curr_checkbox > 9)
 		curr_checkbox = 0;
-	// move cursor
-	dispCharAt(1+check_boxes[k].index,20,0x21);
+		
+	k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+	dispCharAt(1+curr_checkbox,20,0x21);
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+20,2,"down: curr %d ckbox %d     ",curr_checkbox,check_boxes[k].index);
+	wrefresh(win);
+#endif
 	return k;
 }
 //******************************************************************************************//
@@ -1271,17 +1316,23 @@ static UCHAR scrolldown_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR toggle_checkboxes(int index)
 {
-	int k = index+curr_checkbox;
+	int k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
+	dispCharAt(1+curr_checkbox,20,0x20);
+
 	if(check_boxes[k].checked == 1)
 	{
 		check_boxes[k].checked = 0;
-		dispCharAt(1+check_boxes[k].index,0,0x20);	// display 'blank'
+		dispCharAt(1+curr_checkbox,0,0x20);	// display 'blank'
 	}
 	else
 	{
 		check_boxes[k].checked = 1;
-		dispCharAt(1+check_boxes[k].index,0,120);	// display 'x'
+		dispCharAt(1+curr_checkbox,0,120);	// display 'x'
 	}
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+20,2,"toggle: curr %d ckbox %d     ",curr_checkbox,check_boxes[k].index);
+	wrefresh(win);
+#endif
 	return k;
 }
 //******************************************************************************************//
@@ -1317,30 +1368,40 @@ static UCHAR scrolldown_execchoice(UCHAR ch)
 	return ch;
 }
 //******************************************************************************************//
-//*********************************** enter_checkboxes *************************************//
+//**************************************** display_labels **********************************//
 //******************************************************************************************//
-#if 0
-static UCHAR enter_checkboxes(UCHAR ch)
+// displays the rt_labels if shown is set
+void display_labels(void)
 {
-	blank_choices();
-//	scale_disp(SCALE_DISP_ALL);
-//	prev_list();
-	return ch;
-}
-//******************************************************************************************//
-//********************************** escape_checkboxes *************************************//
-//******************************************************************************************//
-static UCHAR escape_checkboxes(UCHAR ch)
-{
-	blank_choices();
-//	scale_disp(SCALE_DISP_ALL);
-//	prev_list();
-	return ch;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
+	int i,j;
+	char temp[MAX_LABEL_LEN];
+
+	blank_display();
+
+#ifdef TEST_WRITE_DATA
+//			mvwprintw(win, DISP_OFFSET+23, 2,"display labels: index %d rt_params %d                     ",curr_menu_index,no_rtparams);
+//			wrefresh(win);
 #endif
+
+	for(i = 0;i < no_rtparams;i++)
+	{
+		if(rt_params[i].shown == SHOWN_SENT)
+		{
+//			strcpy(temp,get_rt_label(i));
+			j = i+no_menu_labels;
+			get_mlabel(j,temp);
+			GDispStringAt(rt_params[i].row,rt_params[i].col,temp);
+#ifdef TEST_WRITE_DATA
+//			mvwprintw(win, DISP_OFFSET+24, 2+(i*4),"%d ",j);
+//			mvwprintw(win, DISP_OFFSET+25+i, 2,"%s                   ",temp);
+//			wrefresh(win);
+#endif
+		}
+	}
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 static void blank_choices(void)
 {
 	int row,col,i;
@@ -1352,83 +1413,6 @@ static void blank_choices(void)
 		GDispStringAt(row,col,blank);
 		row++;
 	}
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-char *get_rt_label(int index)
-{
-	return rt_labels[index];
-}
-//******************************************************************************************//
-//**************************************** display_labels **********************************//
-//******************************************************************************************//
-// displays the rt_labels if shown is set
-void display_labels(void)
-{
-	int i;
-	char temp[MAX_LABEL_LEN];
-
-	blank_display();
-	for(i = 0;i < no_rtparams;i++)
-	{
-		if(rt_params[i].shown == SHOWN_SENT)
-		{
-			strcpy(temp,get_rt_label(i));
-			GDispStringAt(rt_params[i].row,rt_params[i].col,temp);
-		}
-	}
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-// reduce output to show just rpm, mph, engine temp and oil pressure at the top
-// amt = SCALE_DISP_ALL - display all rt_params
-// amt = SCALE_DISP_SOME - display limited rt_params
-// amt = SCALE_DISP_NONE - don't display any rt_params
-static void scale_disp(int amt)
-{
-	int i;
-	char blank[] = "               ";
-
-	scale_type = amt;
-	switch (amt)
-	{
-		case SCALE_DISP_ALL:
-			for(i = 0;i < no_rtparams;i++)
-				if(rt_params[i].type == RT_O2)
-					rt_params[i].shown = NOSHOWN_SENT;
-				else
-					rt_params[i].shown = SHOWN_SENT;
-			break;
-		case SCALE_DISP_SOME:
-			for(i = 0;i < no_rtparams;i++)
-			{
-				if(rt_params[i].type == RT_RPM || rt_params[i].type == RT_ENGT || \
-						rt_params[i].type == RT_MPH || rt_params[i].type == RT_OILP)
-					rt_params[i].shown = SHOWN_SENT;
-				else if(rt_params[i].type == RT_O2)
-					rt_params[i].shown = NOSHOWN_SENT;
-				else
-					rt_params[i].shown = NOSHOWN_NOSENT;
-
-				GDispStringAt(rt_params[i].row,rt_params[i].col,blank);
-			}
-			break;
-		case SCALE_DISP_NONE:
-			for(i = 0;i < no_rtparams;i++)
-			{
-				if(rt_params[i].type == RT_O2)
-					rt_params[i].shown = NOSHOWN_SENT;
-				else
-					rt_params[i].shown = NOSHOWN_NOSENT;
-				GDispStringAt(rt_params[i].row,rt_params[i].col,blank);
-			}
-			break;
-		default:
-			break;
-	}
-	display_labels();
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1498,6 +1482,42 @@ void init_list(void)
 	aux_index = 0;
 	display_menus();
 //	new_data_ch = new_data_ex = 0;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static UCHAR non_func(UCHAR ch)
+{
+	UCHAR ret_char = ch;
+
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
+#endif
+
+	switch(ch)
+	{
+		case KP_A:
+		break;
+		case KP_B:
+		break;
+		case KP_C:
+		break;
+		case KP_D:
+		break;
+		case KP_POUND:
+		break;
+		case KP_0:
+		break;
+		case KP_AST:
+		break;
+		default:
+		break;
+	}
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+17,2, "*non_func  %x   ",ret_char);
+	wrefresh(win);
+#endif
+	return ret_char;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1660,5 +1680,87 @@ static char *show_keypress(UCHAR key, int offset, char *string)
 	wrefresh(win);
 	return string;
 }
+//******************************************************************************************//
+//*********************************** enter_checkboxes *************************************//
+//******************************************************************************************//
+static UCHAR enter_checkboxes(UCHAR ch)
+{
+	blank_choices();
+//	scale_disp(SCALE_DISP_ALL);
+//	prev_list();
+	return ch;
+}
+//******************************************************************************************//
+//********************************** escape_checkboxes *************************************//
+//******************************************************************************************//
+static UCHAR escape_checkboxes(UCHAR ch)
+{
+	blank_choices();
+//	scale_disp(SCALE_DISP_ALL);
+//	prev_list();
+	return ch;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+char *get_rt_label(int index)
+{
+	return rt_labels[index];
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+// reduce output to show just rpm, mph, engine temp and oil pressure at the top
+// amt = SCALE_DISP_ALL - display all rt_params
+// amt = SCALE_DISP_SOME - display limited rt_params
+// amt = SCALE_DISP_NONE - don't display any rt_params
+static void scale_disp(int amt)
+{
+	int i;
+	char blank[] = "               ";
+
+	scale_type = amt;
+	switch (amt)
+	{
+		case SCALE_DISP_ALL:
+			for(i = 0;i < no_rtparams;i++)
+				if(rt_params[i].type == RT_O2)
+					rt_params[i].shown = NOSHOWN_SENT;
+				else
+					rt_params[i].shown = SHOWN_SENT;
+			break;
+		case SCALE_DISP_SOME:
+			for(i = 0;i < no_rtparams;i++)
+			{
+				if(rt_params[i].type == RT_RPM || rt_params[i].type == RT_ENGT || \
+						rt_params[i].type == RT_MPH || rt_params[i].type == RT_OILP)
+					rt_params[i].shown = SHOWN_SENT;
+				else if(rt_params[i].type == RT_O2)
+					rt_params[i].shown = NOSHOWN_SENT;
+				else
+					rt_params[i].shown = NOSHOWN_NOSENT;
+
+				GDispStringAt(rt_params[i].row,rt_params[i].col,blank);
+			}
+			break;
+		case SCALE_DISP_NONE:
+			for(i = 0;i < no_rtparams;i++)
+			{
+				if(rt_params[i].type == RT_O2)
+					rt_params[i].shown = NOSHOWN_SENT;
+				else
+					rt_params[i].shown = NOSHOWN_NOSENT;
+				GDispStringAt(rt_params[i].row,rt_params[i].col,blank);
+			}
+			break;
+		default:
+			break;
+	}
+	display_labels();
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 #endif
+
 

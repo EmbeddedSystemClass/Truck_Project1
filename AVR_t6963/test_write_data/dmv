@@ -1,5 +1,5 @@
 make -f make_avr clean
-make -f make_avr  &> warnings.txt
+make -f make_avr  &> warnings2.txt
 make -f make_avr clean
-find2a warning warnings.txt
-find2a error warnings.txt
+find2a warning warnings2.txt
+find2a error warnings2.txt

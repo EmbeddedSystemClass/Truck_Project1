@@ -6,8 +6,8 @@
 #define LAST_ROW_DISP LAST_ROW-11
 #define LAST_COL 63
 
-UCHAR prev_check_boxes[NUM_CHECKBOXES];
-CHECKBOXES check_boxes[NUM_CHECKBOXES];
+CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
+CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
 
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);

@@ -5,7 +5,7 @@
 #define MAX_LABEL_LEN 10
 #define NUM_LABELS 60
 #define NUM_MENU_CHOICES 6
-#define NUM_RT_PARAMS 12
+#define NUM_RT_PARAMS 10
 #define NUM_RT_LABELS NUM_RT_PARAMS
 
 #define DISP_OFFSET 1
@@ -44,8 +44,8 @@ UCHAR eeprom_sim[EEPROM_SIZE];
 
 #ifdef SHOW_EEPROM
 int burn_eeprom(void);
-void update_ram(void);
 #endif
+void update_ram(void);
 
 char cblabels[CBLABEL_SIZE];
 
@@ -60,7 +60,7 @@ typedef struct rt_params
 
 enum shown_types
 {
-	SHOWN_SENT,
+	SHOWN_SENT = 0x14,
 	NOSHOWN_SENT,
 	NOSHOWN_NOSENT
 } SHOWN_TYPES;
@@ -117,8 +117,8 @@ enum menu_types
 enum fptr_types
 {
 	_menu_change,
-	_exec_choice,
 	_do_chkbox,
+	_exec_choice,
 	_non_func,
 	_do_numentry
 /*

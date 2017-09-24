@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 	no_cblabels = get_cblabel_offsets();
 	no_menu_labels = get_mlabel_offsets();
 
-	mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d %d ",no_menu_labels,no_rt_labels, blank);
+//	mvwprintw(win, LAST_ROW_DISP-2,2,"no_menu_labels: %d no_rt_labels %d %d ",no_menu_labels,no_rt_labels, blank);
 
 
 	j = k = 0;

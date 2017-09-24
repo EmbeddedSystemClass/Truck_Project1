@@ -61,11 +61,13 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 //******************************************************************************************//
 //*********************************** get_mlabel_offsets ***********************************//
 //******************************************************************************************//
+// warning this needs to be written for the AVR main
 int get_mlabel_offsets(void)
 {
+#ifdef TEST_WRITE_DATA
 	int i, j,k;
-	UCHAR *ch;
-	UCHAR *pch;
+	char *ch;
+	char *pch;
 	char temp_label[MAX_LABEL_LEN];
 	int done = 0;
 
@@ -112,13 +114,9 @@ int get_mlabel_offsets(void)
 	{
 		mlabel_offsets[i] = goffset;
 		j = 0;
-#ifdef TEST_WRITE_DATA
 		memcpy(temp_label,eeprom_sim+goffset,MAX_LABEL_LEN);
-#else
-#ifdef MAIN_C
-		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
-#endif
-#endif
+
+//		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
 		ch = temp_label;
 		while(*ch != 0 && j < MAX_LABEL_LEN)
 		{
@@ -129,6 +127,7 @@ int get_mlabel_offsets(void)
 		goffset += j;
 	}
 	rt_params_offset = goffset;
+#endif
 	return no_menu_labels;
 }
 //******************************************************************************************//
@@ -144,10 +143,6 @@ void get_mlabel(int index, char *str)
 #ifdef MAIN_C
 	eeprom_read_block((void *)str,eepromString+mlabel_offsets[index],MAX_LABEL_LEN);
 #endif
-#endif
-#ifdef SCREEN_EN
-	printString(str);
-	printString("\r\n");
 #endif
 }
 
@@ -378,6 +373,36 @@ void update_ram(void)
 	int i;
 	i = 0;
 	total_offset = 0;
+
+//												'A' 	'B'		'C'		'D'		'#'		'0'
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU1A, MAIN);
+// 1a
+	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
+// 1b
+	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
+// 1c
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
+// 1d
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
+// 1e
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E);
+// 2a
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU2A);
+// 2b
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU2B);
+// 2c
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+// 2d
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+// 2e
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+// 3a
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+// 3b
+	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
+
+
+#if 0
 //												'A' 	'B'		'C'		'D'		'#'		'0'
 	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E, MENU2A, MENU2B, MENU1B, MAIN);
 // 1a
@@ -404,7 +429,7 @@ void update_ram(void)
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
 // 3b
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
-
+#endif
 	no_menu_structs = i;
 
 	memset(cblabels,0,CBLABEL_SIZE);
@@ -419,7 +444,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "test 7\0");
 	i =  update_cblabels(i, "test 8\0");
 	i =  update_cblabels(i, "test 9\0");
-	i =  update_cblabels(i, "asdf 10\0");
+	i =  update_cblabels(i, "test 10\0");
 	i =  update_cblabels(i, "asdf1 1\0");
 	i =  update_cblabels(i, "asdf1 2\0");
 	i =  update_cblabels(i, "asdf1 3\0");
@@ -429,7 +454,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "asdf1 7\0");
 	i =  update_cblabels(i, "asdf1 8\0");
 	i =  update_cblabels(i, "asdf1 9\0");
-	i =  update_cblabels(i, "hello2 10\0");
+	i =  update_cblabels(i, "asdf1 10\0");
 	i =  update_cblabels(i, "hello2 1\0");
 	i =  update_cblabels(i, "hello2 2\0");
 	i =  update_cblabels(i, "hello2 3\0");

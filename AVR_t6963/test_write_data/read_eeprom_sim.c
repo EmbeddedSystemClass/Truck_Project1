@@ -43,8 +43,32 @@ int main(int argc, char *argv[])
 	peeprom_sim = eeprom_sim;
 	char filename[20];
 	char fpc[10];
+	int res;
 
 	burn_eeprom();
+
+	if(argc > 1)
+	{
+		strcpy(filename,argv[1]);
+		fp = open(filename, O_RDWR | O_CREAT | O_TRUNC, 666);
+		if(fp < 0)
+		{
+			printf("%s\n",strerror(errno));
+			exit(1);
+		}
+		else
+		{
+			res = 0;
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				res += write(fp,&eeprom_sim[i],1);
+			}
+			printf("created file: %s with %d bytes\n",filename,res);
+			close(fp);
+			exit(1);
+		}
+	}
+			
 
 	// reserve an extra sample_data space for in case of 'escape'
 
