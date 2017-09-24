@@ -215,7 +215,7 @@ static UCHAR generic_menu_function(UCHAR ch)
 		if(prev_menu_index != curr_menu_index)
 		{
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d  %d  %x                  ",curr_menu_index,prev_menu_index,prev_ret_char);
+			mvwprintw(win, DISP_OFFSET+23, 2,"changed  %d  %d  %2x                  ",curr_menu_index,prev_menu_index,ret_char);
 #endif
 			switch (prev_menu_index)
 			{
@@ -226,18 +226,18 @@ static UCHAR generic_menu_function(UCHAR ch)
 				case MENU1C:
 				case MENU1D:
 				case MENU1E:
-				do_chkbox(KP_D);
+				do_chkbox(ret_char);
 				break;
 				case MENU2A:
 				case MENU2B:
-				do_exec(KP_D);
+				do_exec(ret_char);
 				break;
 				case MENU2C:
 				case MENU2D:
 				case MENU2E:
 				case MENU3A:
 				case MENU3B:
-				do_numentry(KP_D);
+				do_numentry(ret_char);
 				break;
 				break;
 			}
@@ -332,7 +332,7 @@ static UCHAR menu_change(UCHAR ch)
 	{
 		display_labels();
 #ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET+17,2, "*menu_change (init)");
+		mvwprintw(win, DISP_OFFSET+17,2, "*menu_change (init)             ");
 		wrefresh(win);
 #endif
 		return ch;
@@ -359,7 +359,7 @@ static UCHAR menu_change(UCHAR ch)
 	}
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x   ",show_keypress(ret_char,offset));
-	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x              ",ret_char);
+	mvwprintw(win, DISP_OFFSET+17,2, "*menu_change  %x                      ",ret_char);
 	mvwprintw(win, DISP_OFFSET+24, 2,"                           ");
 	wrefresh(win);
 #endif
@@ -694,11 +694,11 @@ UCHAR read_get_key(UCHAR key)
 				res += read(global_fd,&low_byte,1);
 				res += read(global_fd,&high_byte,1);
 				sample_numbers[i] = pack(low_byte,high_byte);
-				mvwprintw(win, LAST_ROW-11,2+(i*6),"%3d ",sample_numbers[i]);
-				mvwprintw(win, LAST_ROW-10+i,2,"res: %d  %x  %x  ",res,low_byte,high_byte);
+//				mvwprintw(win, LAST_ROW-11,2+(i*6),"%3d ",sample_numbers[i]);
+//				mvwprintw(win, LAST_ROW-10+i,2,"res: %d  %x  %x  ",res,low_byte,high_byte);
 			}
-			mvwprintw(win, LAST_ROW-12,2,"res: %d    ",res);
-			wrefresh(win);
+//			mvwprintw(win, LAST_ROW-12,2,"res: %d    ",res);
+//			wrefresh(win);
 			no_rtparams = NUM_RT_PARAMS;
 /*
 			res = 0;
@@ -795,7 +795,7 @@ static UCHAR do_numentry(UCHAR ch)
 
 	if((prev_menu_index != curr_menu_index) && (ch != KP_D && ch != KP_AST && ch != KP_POUND))
 	{
-		blank_choices();
+//		blank_choices();
 		init_numentry(curr_menu_index);
 #ifdef TEST_WRITE_DATA
 		mvwprintw(win, LAST_ROW-6,2, "*init_numentry (do_numentry)");
@@ -848,21 +848,29 @@ static UCHAR do_numentry(UCHAR ch)
 		_eclear();
 		break;
 		case KP_D:
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_numentry (enter) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		enter(ch);
 		break;
 		case KP_POUND:
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_numentry (esc) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		escape(ch);
 		break;
 		case KP_AST:
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_numentry (ast) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		escape(ch);
 		break;
 		default:
 		break;
 	}
-#ifdef TEST_WRITE_DATA
-		mvwprintw(win, LAST_ROW-6,2, "*do_numentry  %x                    ",ret_char);
-	wrefresh(win);
-#endif
 	return ret_char;
 }
 //******************************************************************************************//
@@ -895,7 +903,7 @@ static UCHAR enter(UCHAR ch)
 		sample_numbers[prev_menu_index-MENU2C] = atoi((const char *)new_global_number);
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW-5, 2,"new: %s %d %x %d    ",new_global_number,limit,ch,prev_menu_index);
+	mvwprintw(win, LAST_ROW-5, 2,"new: %x %d %x   ",ch,prev_menu_index,prev_ret_char);
 	wrefresh(win);
 #endif
 //	scale_disp(SCALE_DISP_ALL);
@@ -1036,7 +1044,7 @@ static void clean_disp_num(void)
 	for(i = 0;i < NUM_ENTRY_SIZE+1;i++)
 	{
 		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL,0x20);
-		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL+1,0x20);
+//		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL+1,0x20);
 	}
 }
 //******************************************************************************************//
@@ -1048,21 +1056,24 @@ static UCHAR do_exec(UCHAR ch)
 	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 
-	if(prev_menu_index != curr_menu_index)
+	if((prev_menu_index != curr_menu_index) && (ch != KP_D && ch != KP_AST && ch != KP_POUND))
 	{
 		blank_choices();
 		init_checkboxes(curr_menu_index);
 #ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET+17,2, "*init_checkboxes (do_exec)");
+		mvwprintw(win, DISP_OFFSET+17,2, "*init_checkboxes (do_exec)         ");
 		wrefresh(win);
 #endif
 		return ch;
 	}
-
+/*
 	k = (curr_menu_index-MENU1C);
 	l = k;
 	k *= NUM_CHECKBOXES;
 	j = 0;
+*/
+	k = (curr_menu_index * NUM_CHECKBOXES);
+	l = k;
 
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+19,2,"                                       ");
@@ -1084,7 +1095,7 @@ static UCHAR do_exec(UCHAR ch)
 			{
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
-			mvwprintw(win, DISP_OFFSET+17,10,"enter    ");
+			mvwprintw(win, DISP_OFFSET+17,10,"enter                  ");
 			blank_choices();
 		break;
 		case KP_POUND:		// esc
@@ -1092,7 +1103,7 @@ static UCHAR do_exec(UCHAR ch)
 			{
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
-			mvwprintw(win, DISP_OFFSET+17,10,"esc      ");
+			mvwprintw(win, DISP_OFFSET+17,10,"esc                        ");
 			blank_choices();
 		break;
 		case KP_0:
@@ -1121,7 +1132,7 @@ static UCHAR do_chkbox(UCHAR ch)
 	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 
-	if(prev_menu_index != curr_menu_index)
+	if((prev_menu_index != curr_menu_index) && (ch != KP_D && ch != KP_AST && ch != KP_POUND))
 	{
 		blank_choices();
 		init_checkboxes(curr_menu_index);
@@ -1131,11 +1142,14 @@ static UCHAR do_chkbox(UCHAR ch)
 #endif
 		return ch;
 	}
-
+/*
 	k = curr_menu_index-MENU1C;
 	l = k;
 	k *= NUM_CHECKBOXES;
 	j = 0;
+*/
+	k = (curr_menu_index * NUM_CHECKBOXES);
+	l = k;
 
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+19,2,"                                  ");
@@ -1159,7 +1173,10 @@ static UCHAR do_chkbox(UCHAR ch)
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
 			blank_choices();
-			mvwprintw(win, DISP_OFFSET+17,10,"enter    ");
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_chkbox (enter) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		break;
 		case KP_POUND:		// esc
 			for(i = 0;i < NUM_CHECKBOXES;i++)
@@ -1167,13 +1184,19 @@ static UCHAR do_chkbox(UCHAR ch)
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
 			blank_choices();
-			mvwprintw(win, DISP_OFFSET+17,10,"esc    ");
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_chkbox (esc) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		break;
 		case KP_0:
 			checkboxes_reset(k);
 		break;
 		case KP_AST:
-			blank_choices();
+#ifdef TEST_WRITE_DATA
+		mvwprintw(win, LAST_ROW-6,2, "*do_chkbox (ast) %x          ",ret_char);
+	wrefresh(win);
+#endif
 		break;
 		default:
 		break;
@@ -1181,7 +1204,7 @@ static UCHAR do_chkbox(UCHAR ch)
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",l,k,j);
 
-	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x %d ",ret_char,k);
+	mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  %x %d               ",ret_char,k);
 	wrefresh(win);
 #endif
 	return ret_char;
@@ -1222,7 +1245,7 @@ static void init_checkboxes(int menu_index)
 
 		k = (curr_menu_index * NUM_CHECKBOXES)+curr_checkbox;	
 
-		prev_check_boxes[k].checked = check_boxes[k].checked;
+//		prev_check_boxes[k].checked = check_boxes[k].checked;
 
 		if(check_boxes[k].checked == 1)
 		{
@@ -1394,7 +1417,7 @@ static void blank_choices(void)
 	int row,col,i;
 	row = 1;
 	col = 0;
-	char blank[] = "                     ";
+	char blank[] = "                        ";
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		GDispStringAt(row,col,blank);
@@ -1408,7 +1431,7 @@ static void blank_display(void)
 {
 	int row,col;
 	for(row = 1;row < 12;row++)
-		for(col = 0;col < COLUMN;col++)
+		for(col = 0;col < COLUMN+3;col++)
 			dispCharAt(row,col,0x20);
 }
 //******************************************************************************************//
@@ -1478,7 +1501,7 @@ static UCHAR non_func(UCHAR ch)
 	UCHAR ret_char = ch;
 
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
+	mvwprintw(win, DISP_OFFSET+17,2, "                              ");
 #endif
 
 	switch(ch)
@@ -1501,7 +1524,7 @@ static UCHAR non_func(UCHAR ch)
 		break;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+17,2, "*non_func  %x   ",ret_char);
+	mvwprintw(win, DISP_OFFSET+17,2, "*non_func  %x                ",ret_char);
 	wrefresh(win);
 #endif
 	return ret_char;
