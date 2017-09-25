@@ -224,6 +224,9 @@ currently the ESOS stuff is doing weird shit - prolly need caps
 went back to sim_write->sim_read and ended up pushing the entire eeprom 
 data along with TOTAL_NUM_CHECKBOXES of the checkboxes arrays.
 
+
+
+
 Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.

@@ -366,6 +366,7 @@ int burn_eeprom(void)
 }
 #endif
 #ifndef SIM_AVR
+#ifndef MAIN_C
 //******************************************************************************************//
 //***************************************** update_ram *************************************//
 //******************************************************************************************//
@@ -376,7 +377,7 @@ void update_ram(void)
 	total_offset = 0;
 
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU1A, MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
 //	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
 // 1a
 	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
@@ -493,5 +494,6 @@ void update_ram(void)
 	i =  update_cblabels(i, "ending 4\0");
 	i =  update_cblabels(i, "ending 5\0");
 }
+#endif
 #endif
 
