@@ -6,7 +6,7 @@
  *     O'Reilly & Associates, Inc.
  *
  ********************************************************
- * llist_threads_rw.c --
+ * llist_threads_rw.c
  *
  * Linked list library with reader/writer locks for
  * threads support

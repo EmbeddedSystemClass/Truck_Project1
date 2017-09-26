@@ -29,7 +29,8 @@ extern pthread_cond_t		threads_ready;
 pthread_mutex_t		tcp_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t		tcp_read_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t		io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t		serial_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t		serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t		serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 extern int   total_count;
 illist_t ill;
 ollist_t oll;
@@ -37,7 +38,7 @@ extern int init_tcp(char *);
 
 UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3, task4, task5, task6};
 //UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3};
-
+static int same_msg;
 int threads_ready_count=0;
 pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -46,6 +47,14 @@ int comm_open = -1;
 extern I_DATA *curr_i_array;
 extern O_DATA *curr_o_array;
 
+#define SERIAL_BUFF_SIZE 100
+
+static UCHAR serial_buff[SERIAL_BUFF_SIZE];
+static int no_serial_buff;
+
+static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
+static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
+static int serial_rec;
 /*********************************************************************/
 static void mydelay(unsigned long i)
 {
@@ -65,8 +74,10 @@ UCHAR task1(int test)
 {
 	I_DATA *pid;
 	O_DATA *pod;
-	I_DATA temp;
-	O_DATA temp2;
+	I_DATA **ppid;
+	O_DATA **ppod;
+	I_DATA tempi1, tempi2;
+	O_DATA tempo1, tempo2;
 	int rc = 0;
 	UCHAR recv_buf[100];
 	UCHAR cmd;
@@ -75,7 +86,7 @@ UCHAR task1(int test)
 	int j = 0;
 
 	illist_init(&ill);
-
+	same_msg = 0;
 	pid = curr_i_array;
 
 	// just insert some sample data for now
@@ -85,8 +96,9 @@ UCHAR task1(int test)
 		illist_insert_data(i,&ill,pid);
 		pid++;
 	}
+	pid = curr_i_array;
 
-//	illist_show(&ill);
+	illist_show(&ill);
 
 	ollist_init(&oll);
 	// just insert some sample data for now
@@ -96,9 +108,10 @@ UCHAR task1(int test)
 		ollist_insert_data(i,&oll,pod);
 		pod++;
 	}
-//	ollist_show(&oll);
+	ollist_show(&oll);
+	pod = curr_o_array;
 
-//	printf("\n\n\n");
+	printf("\n\n\n");
 	UCHAR bank;
 	UCHAR test2;
 	UCHAR rec_no;
@@ -108,29 +121,31 @@ UCHAR task1(int test)
 	{
 		cmd = 0;
 		if(test_sock() == 1)
+//		if(1)
 		{
 			rc = recv_tcp(&cmd,1,1);	// blocking
 			if(rc > 0)
 			{
+				rc = 0;
 				switch(cmd)
 				{
 					// update a single IDATA record
 					case SEND_IDATA:
-						rc = recv_tcp((void *)&rec_no,1,1);
-						rc = recv_tcp((void*)&temp,sizeof(I_DATA),1);	// blocking
-						printf("rec_no: %d \n",rec_no);
-						printf("%d\t%d\t%d\t%d\t%s\n",temp.port,temp.affected_output,temp.type,temp.inverse,temp.label);
-						illist_insert_data(rec_no, &ill, &temp);
+						rc += recv_tcp((UCHAR *)&rec_no,1,1);
+						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
+						printf("send idata: rec: %d rc: %d ",rec_no,rc);
+						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
+						illist_insert_data(rec_no, &ill, &tempi1);
 	//					illist_show(&ill);
 						break;
 					case SEND_ODATA:
 					// update a single ODATA record
-						rc = recv_tcp((void *)&rec_no,1,1);
-						rc = recv_tcp((void*)&temp2,sizeof(O_DATA),1);	// blocking
-						printf("rec_no: %d \n",rec_no);
-						printf("%d\t%s\n",temp2.port,temp2.label);
-						ollist_insert_data(rec_no, &oll, &temp2);
-						ollist_show(&oll);
+						rc += recv_tcp((UCHAR *)&rec_no,1,1);
+						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);	// blocking
+						printf("send odata: rec: %d rc: %d ",rec_no,rc);
+						printf("port: %d\tonoff: %d\tlabel: %s\n\n",tempo1.port,tempo1.onoff,tempo1.label);
+						ollist_insert_data(rec_no, &oll, &tempo1);
+//						ollist_show(&oll);
 						break;
 					case SEND_SHOW:		// F5
 						illist_show(&ill);
@@ -138,47 +153,79 @@ UCHAR task1(int test)
 						ollist_show(&oll);
 						printf("\n\n\n");
 						break;
+					case SEND_ALL_IDATA:
+						pid = &tempi1;
+						ppid = &pid;
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							rc += recv_tcp((UCHAR *)&rec_no,1,1);
+							rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
+							illist_find_data(rec_no, ppid, &ill);
+							if(memcmp( (const void *)&tempi1,(const void *)&tempi2, sizeof(I_DATA) ) != 0)
+								illist_change_data(rec_no,&tempi1,&ill);
+						}
+						break;	
+					case SEND_ALL_ODATA:
+						pod = &tempo1;
+						ppod = &pod;
+						pod = curr_o_array;
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							rc += recv_tcp((void *)&rec_no,1,1);
+							rc += recv_tcp((void*)&tempo1,sizeof(O_DATA),1);	// blocking
+							ollist_find_data(rec_no, ppod, &oll);
+							if(memcmp( (const void *)&tempo1,(const void *)&tempo2,sizeof(O_DATA) ) != 0)
+								ollist_change_data(rec_no,&tempo1,&oll);
+						}
+						break;	
 					case SEND_SERIAL:	// F6
-						SendByte(test2);
-						if(++test2 > 0x7e)
-							test2 = 0x21;
+						test2 = 0x21;
+						for(i = 0;i < 200;i++)
+						{
+							SendByte(test2);
+							if(++test2 > 0x7e)
+								test2 = 0x21;
+						}	
+						printf("sent serial\n");
 						break;
 					case SEND_TEST3:	// F7
 						printf("changing 1st 10 records in both input and output db\n");
-						strcpy(temp.label,"testxyz");
-						temp.port = 22;
-						temp.type = 11;
-						temp.inverse = 33;
-						pid = &temp;
+						strcpy(tempi1.label,"testxyz");
+						tempi1.port = 22;
+						tempi1.type = 11;
+						tempi1.inverse = 33;
+//						tempi1.affected = 44;
+						pid = &tempi1;
 						for(i = 0;i < 10;i++)
 						{
 							illist_insert_data(i,&ill,pid);
-							temp.port++;
-							temp.type++;
-							temp.inverse++;
+							tempi1.port++;
+//							tempi1.affected++;
+							tempi1.type++;
+							tempi1.inverse++;
 						}
-						strcpy(temp2.label,"asdf_xyz");
-						temp2.port= 10;
-						temp2.onoff = 11;
-						pod = &temp2;
+						strcpy(tempo1.label,"asdf_xyz");
+						tempo1.port= 10;
+						tempo1.onoff = 11;
+						pod = &tempo1;
 						for(i = 0;i < 10;i++)
 						{
 							ollist_insert_data(i, &oll,pod);
-							temp2.port++;
-							temp2.onoff++;
+							tempo1.port++;
+							tempo1.onoff++;
 						}
 
 						break;
 					case SEND_TEST4:	// F8
 						pid = curr_i_array;
-						rc = recv_tcp((void *)&num_i_recs,1,1);
+						rc = recv_tcp((UCHAR *)&num_i_recs,1,1);
 						printf("updating %d records\n",num_i_recs);
-						memset(&temp,0,sizeof(I_DATA));
+						memset(&tempi1,0,sizeof(I_DATA));
 						for(i = 0;i < num_i_recs;i++)
 						{
-							printf("%d\t%d\t%d\t%d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
-							memcpy(&temp,pid,sizeof(I_DATA));
-							illist_insert_data(i, &ill, &temp);
+//							printf("%d\t%d\t%d\t%d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+							memcpy(&tempi1,pid,sizeof(I_DATA));
+							illist_insert_data(i, &ill, &tempi1);
 							pid++;
 						}
 						printf("done inserting data\n");
@@ -186,25 +233,55 @@ UCHAR task1(int test)
 						break;
 					case SEND_TEST5:	// F9
 						pod = curr_o_array;
-						rc = recv_tcp((void *)&num_o_recs,1,1);
+						rc = recv_tcp((UCHAR *)&num_o_recs,1,1);
 						printf("updating %d records\n",num_o_recs);
-						memset(&temp2,0,sizeof(O_DATA));
+						memset(&tempo1,0,sizeof(O_DATA));
 						for(i = 0;i < num_i_recs;i++)
 						{
-							printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
-							memcpy(&temp2,pod,sizeof(O_DATA));
-							ollist_insert_data(i, &oll, &temp2);
+//							printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
+							memcpy(&tempo1,pod,sizeof(O_DATA));
+							ollist_insert_data(i, &oll, &tempo1);
 							pod++;
 						}
 						printf("done inserting data\n");
 						break;
 					case SEND_TEST6:
 
+						pid = &tempi1;
+						ppid = &pid;
+						rc = illist_find_data(2,ppid,&ill);
+//						printf("current: %s %d %d\n",tempi1.label,tempi1.port,rc);
+						printf("current: %s %d %d\n",pid->label,pid->port,rc);
+						illist_remove_data(2,ppid,&ill);
+
+
+						printf("changing record 2\n");
+						strcpy(tempi1.label,"changed I");
+						tempi1.port = 22;
+						tempi1.type = 11;
+//						pid->port = 22;
+//						pid->type = 11;
+//						pid->inverse = 33;
+						pid = &tempi1;
+						ppid = &pid;
+						printf("current: %s %d\n",pid->label,pid->port);
+//						printf("%x %x %x\n",&tempi1,pid,*ppid);
+						illist_insert_data(2,&ill,pid);
+
+//						rc = illist_change_data(2,ppid,&ill);
+//						printf("changed: %s %d\n",tempi1.label,rc);
+
+/*
+						strcpy(tempo1.label,"changed O");
+						tempo1.port = 100;
+						tempo1.onoff = 1;
+						
+						pod = &tempo1;
+
 						for(bank = 0;bank < 6;bank++)
 						{
 							printf("%d %x\n",bank,check_inputs(bank));
 						}
-/*
 						printf("a: %x\n",InPortByteA());
 						printf("b: %x\n",InPortByteB());
 						printf("c: %x\n",InPortByteC());
@@ -346,6 +423,7 @@ UCHAR task2(int test)
 }
 
 /*********************************************************************/
+// this just sends a series of ascii chars to the tcp out port (is displayed in tcp_win when opened)
 UCHAR task4(int test)
 {
 	UCHAR test2 = 0x21;
@@ -357,20 +435,10 @@ UCHAR task4(int test)
 
 	while(TRUE)
 	{
-//#if 0
-		if(test_sock() == 0)
-		{
-			usleep(TIME_DELAY);
-		}else
-		{
-
-//			rc = recv_tcp(&test1,1,1);
-//			printf("%c",test1);
-			rc = send_tcp(&test2,1);
-			usleep(TIME_DELAY);
-			if(++test2 > 0x7e)
-				test2 = 0x21;
-		}
+		rc = send_tcp(&test2,1);
+		usleep(TIME_DELAY);
+		if(++test2 > 0x70)
+			test2 = 0x30;
 	}
 //#endif
 	return test + 4;
@@ -384,7 +452,9 @@ UCHAR task3(int test)
 
 	while(TRUE)
 	{
-		usleep(TIME_DELAY);
+		usleep(TIME_DELAY*2);
+	}
+#if 0
 		SendByte(test2);
 		if(++test2 > 0x7e)
 		{
@@ -393,7 +463,7 @@ UCHAR task3(int test)
 			test2 = 0x21;
 //			usleep(TIME_DELAY*10);
 		}
-	}
+#endif
 //	printf("%c",test1);
 	return test + 3;
 }
@@ -438,22 +508,45 @@ static UCHAR check_inputs(int i)
 /*********************************************************************/
 UCHAR task5(int test)
 {
-	unsigned char j;
-	usleep(TIME_DELAY);
+	serial_rec = 0;
+	int i;
+	memset(serial_buff,0,SERIAL_BUFF_SIZE);
+	no_serial_buff = 0;
 
 	while(TRUE)
 	{
+
 		usleep(TIME_DELAY);
-	}
+		if(test < 2)
+		{
+			printf("exiting task 5\n");
+			return 0;
+		}
 
-	if(test < 2)
-	{
-		printf("exiting task 5\n");
-		return 0;
-	}
+		if(comm_open == -1)
+			return -1;
 
-	ReceiveByte();
-	return test + 5;
+		if(no_serial_buff < SERIAL_BUFF_SIZE)
+		{
+			pthread_mutex_lock( &serial_read_lock);
+		//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
+		//	printf("%s\n",(char *)buf);
+			serial_buff[no_serial_buff] = read_serial();
+			pthread_mutex_unlock(&serial_read_lock);
+			no_serial_buff++;
+		}
+		else{
+			printf("serial buff full\n\n");
+			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+			{
+				printf("%c",serial_buff[i]);
+				if((i % 93) == 0)
+					printf("\n");
+			}
+			no_serial_buff = 0;
+			printf("\n\n");
+		}
+	}
 }
 
 // client calls 'connect' to get accept call below to stop
@@ -574,12 +667,15 @@ int send_tcp(UCHAR *str,int len)
 	char errmsg[60];
 	memset(errmsg,0,60);
 	pthread_mutex_lock( &tcp_write_lock);
-	ret = put_sock(str,len,1,errmsg);
+	ret = put_sock(str,len,1,&errmsg[0]);
 	pthread_mutex_unlock(&tcp_write_lock);
 	if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 	{
-		printf("send_tcp: %s\n",errmsg);
+		if(same_msg == 0)
+			printf("send_tcp: %s\n",errmsg);
+		same_msg = 1;	
 	}
+	else same_msg = 0;
 	return ret;
 }
 
@@ -592,7 +688,7 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 	if(test_sock())
 	{
 		pthread_mutex_lock( &tcp_read_lock);
-		ret = get_sock(str,strlen,block,errmsg);
+		ret = get_sock(str,strlen,block,&errmsg[0]);
 		pthread_mutex_unlock(&tcp_read_lock);
 		if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 		{
@@ -608,26 +704,36 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 }
 
 /*********************************************************************/
-int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
+static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 {
-	int rc;
+	int rc = 0;
 	char extra_msg[10];
-	if(block)
-		rc = send(global_socket,buf,buflen,MSG_WAITALL);	// block
-	else
-		rc = send(global_socket,buf,buflen,MSG_DONTWAIT);	// don't block
-	if(rc < 0 && errno != 11)
+	if(test_sock())
 	{
-		strcpy(errmsg,strerror(errno));
-		sprintf(extra_msg," %d",errno);
-		strcat(errmsg,extra_msg);
-		strcat(errmsg," put_sock");
-	}else strcpy(errmsg,"Success\0");
+		if(block)
+			rc = send(global_socket,buf,buflen,MSG_WAITALL);	// block
+		else
+			rc = send(global_socket,buf,buflen,MSG_DONTWAIT);	// don't block
+		if(rc < 0 && errno != 11)
+		{
+			strcpy(errmsg,strerror(errno));
+			sprintf(extra_msg," %d",errno);
+			strcat(errmsg,extra_msg);
+			strcat(errmsg," put_sock");
+		}else strcpy(errmsg,"Success\0");
+	}	
+	else
+	{
+// this keeps printing out until the client logs on	
+		strcpy(errmsg,"sock closed");
+		rc = -1;
+	}
+		
 	return rc;
 }
 
 /*********************************************************************/
-int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
+static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 {
 	int rc;
 	char extra_msg[10];
@@ -660,34 +766,32 @@ void SendByte(unsigned char byte)
 	int cport_nr = 1;
 	if(comm_open == -1)
 		return;
-	pthread_mutex_lock( &serial_lock);
+	pthread_mutex_lock( &serial_write_lock);
 	write_serial(byte);
-	pthread_mutex_unlock(&serial_lock);
+	pthread_mutex_unlock(&serial_write_lock);
 }
 
 /*********************************************************************/
-void ReceiveByte(void)
+UCHAR ReceiveByte(void)
 {
 	int cport_nr = 1;
 	int n,i;
-	unsigned char buf[100];
+//	unsigned char buf[100];
+	UCHAR rec;
 	if(comm_open == -1)
-		return;
-	pthread_mutex_lock( &serial_lock);
-//	n = RS232_PollComport(cport_nr, buf, 100);
-	n = read_serial(&buf[0]);
-	if (n > 0)
+		return -1;
+
+	if(no_serial_buff < SERIAL_BUFF_SIZE)
 	{
-		buf[n] = 0;
-		for(i = 0;i < n;i++)
-		{
-			if(buf[i] < 0x20 && buf[i] > 0x7e)
-				buf[i] = '.';
-		}
+		pthread_mutex_lock( &serial_read_lock);
+	//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
+	//	printf("%s\n",(char *)buf);
+		serial_buff[no_serial_buff] = read_serial();
+		pthread_mutex_unlock(&serial_read_lock);
+		no_serial_buff++;
 	}
-//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
-	printf("%s\n",(char *)buf);
-	pthread_mutex_unlock(&serial_lock);
+//	printf("%c",rec);
+	return rec;
 }
 
 /**********************************************************************/

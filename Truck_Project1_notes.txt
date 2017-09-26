@@ -24,37 +24,102 @@ SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 FPGA to AVR works up to ~30K doing just an echo
 
-8/18/17
-idea for new branch (PIC24_menus)
+//******************************************************************************************//
+//*************************************** AVR_t6963 ****************************************//
+//******************************************************************************************//
 
-(in the old way)
-if fptr field in menu_structs is 0 then goto the menu in the menu field, otherwise execute the function
-in the fptr array of function pointers.
+// the pic gets the key, exec's the fptr, and sends the data
+// the avr gets the data,
+// exec's the fptr based on the key sent,
+// the AVR should call the init before the fptr
+
+key --> PIC
+		fptr(key)
+		(send menu_index and all the menus[]
+		in the current menu_struct) -------------->		AVR
+														(receive same menu_index...)
+														fptr(key)
+
+the fptr's will exec all the func's in the fptr[] array of function pointers:
+(*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
+which are the same func names on both sides but they each do diff. stuff...
+so based on the keypress, both should exec the same func.
+sending the data in between each fptr being exec'd, will just set the menu_index and
+the rest of the menus[] in the current menu_struct. The AVR gets the curr_menu_index
+so when display_menus is called it does a get_mlabel for each of the curr_menus[] sent
+as the current menu_struct so it can display the current menu. The get_mlabel just
+looks up the menu strings from eeprom. The strings for the chkbox labels are stored in
+ram and must be sent beforehand by the LOAD_RAM cmd.
+
+so before the fptr in the AVR is called when a memu with a diff fptr
+(menu_change, do_chkbox, do_exec or do_numentry) it must redraw the
+display and if do_chkbox or do_exec, put up the current check box strings
+so we need to know when the AVR's fptr is called, call the init_ func for
+each do_ckbox, do_exec & do_numentry.
+
+PIC:
+<get keypress and call generic...>
+
+
+static UCHAR generic_menu_function(UCHAR ch)
+{
+	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
+
+	// do all the sending including the keypress
+
+	return ch:
+}
+
+AVR:
+static UCHAR generic_menu_function(UCHAR ch)
+{
+
+	// do all the receiving except the keypress (passed in as ch)
+
+		ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
+		display_menus();
+		if(prev_menu_index != curr_menu_index && ret_char != KP_AST)
+		{
+			switch (prev_menu_index)
+			{
+				case MAIN:
+				case MENU1A:
+				case MENU1B:
+				mvwprintw(win, LAST_ROW-8,1,"case 1");
+				break;
+				case MENU1C:
+				case MENU1D:
+				case MENU1E:
+				do_chkbox(ret_char);
+//				do_exec(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 2");
+				break;
+				case MENU2A:
+				case MENU2B:
+				do_exec(ret_char);
+//				do_chkbox(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 3");
+				break;
+				case MENU2C:
+				case MENU2D:
+				case MENU2E:
+				case MENU3A:
+				case MENU3B:
+				do_numentry(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 4");
+				break;
+				default:
+				break;
+			}
+		}
+		prev_menu_index = curr_menu_index;
+		prev_ret_char = ret_char;
+	}
+	return ret_char;
+}
+
 
 MENU_FUNC_STRUCT;
-
-(the old way)
-
-	UCHAR enabled;		// if shown on the menu
-	UCHAR fptr;			// which function to call (menu_types)
-	UCHAR menu;			// which menu to goto if _menu_change is the fptr
-	UCHAR label;		// which label to display in legend (labels)
-	UCHAR index;		// if > 0 then this is index into sample_data
-
-(the new way)
-
-	UCHAR fptr;								// which function to call (menu_types)
-	int menus[6];							// which menu to goto if _menu_change is the fptr
-	UCHAR index;							// if > 0 then this is index into sample_data
-
-
-types of function ptrs can be:
-
-- goto next menu (use the label param as index to next menu)
-- execute a choice in the checkbox-like list
-- execute a function like: init_checkboxes or start_numentry
-- do a key entry
-- do a 'non-function' which only means something to the PIC24
 
 If the AVR is rebooted then it will send a cmd to the PIC24 (upon startup) saying to re-upload the configuration files.
 If the PIC24 is rebooted, it will (optionally) send a cmd saying that it needs to re-upload the config files.

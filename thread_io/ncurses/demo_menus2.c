@@ -408,7 +408,7 @@ call_files(int code)
 				printf("bad file format for %s\n",isfilename);
 				memset(curr_o_array,0,osize);
 			}
-            show_status2(curr_i_array->label,isfilename,curr_i_array->port,0,index,1);
+            show_status2(curr_i_array->label,isfilename,curr_i_array->port,0,index,2);
     		break;
         case 4:		// Exit
             destroy_menus();
@@ -593,8 +593,11 @@ call_options(int code)
 
 			for(i = 0;i < i_index;i++)
 				pid++;
-//            show_status2(pid->label,isfilename,pid->port,pid->affected_output,pid->type,1);
+				
+//            show_status2(pid->label,curr_i_array->label,pid->port,pid->affected_output,pid->type,1);
+            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,1);
         	ret = iWriteConfig(isfilename,curr_i_array,isize,errmsg);
+            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,2);
         	if(tcp_connected)
         	{
 				cmd =  SEND_IDATA;
@@ -605,21 +608,18 @@ call_options(int code)
 //				ret = send_tcp((void*)pid,sizeof(I_DATA),errmsg);
 				ret = put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
 			}
-
-        	if(ret < 0)
-	            show_status2(errmsg,isfilename,isize,ret,i_index,2);
-			else
-	            show_status2(pid->label,isfilename,pid->port,ret,i_index,2);
-
             break;
+
         case 1:
         	pod = curr_o_array;
 //            show_status2(curr_o_array2->label,curr_o_array->label,o_index,code,0,1);
-			o_index = menu_scroll2((void *)curr_o_array,25,0);
+			o_index = menu_scroll2((void *)curr_o_array,39,0);
 			for(i = 0;i < o_index;i++)
 				pod++;
-//            show_status2(curr_o_array2->label,curr_o_array->label,o_index,code,0,2);
-        	ret = oWriteConfig(osfilename,pod,osize,errmsg);
+
+            show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
+        	ret = oWriteConfig(osfilename,curr_o_array,osize,errmsg);
+            show_status2(pod->label,curr_o_array->label,o_index,osize,0,2);
         	if(tcp_connected)
         	{
 				cmd =  SEND_ODATA;
@@ -632,24 +632,35 @@ call_options(int code)
 				ret = put_sock((void*)&o_index,1,1,errmsg);
 				ret = put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
 			}
-
-        	if(ret < 0)
-	            show_status2(errmsg,osfilename,osize,ret,o_index,3);
-			else
-	            show_status2(pid->label,osfilename,pid->port,ret,o_index,3);
-
             break;
         case 2:
-            show_status2("test 1","",code,0,0,2);
+            show_status2("show all","",code,0,0,2);
 			cmd =  SEND_SHOW;
-//			send_tcp(&cmd,1,errmsg);
 			put_sock(&cmd,1,1,errmsg);
             break;
         case 3:
-            show_status2("test 2","",code,0,0,2);
+            show_status2("update idata","",code,0,0,2);
+			cmd =  SEND_ALL_IDATA;
+			put_sock(&cmd,1,1,errmsg);
+			pid = curr_i_array;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				put_sock(&i,1,1,errmsg);
+				ret = put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
+				pid++;
+			}
             break;
         case 4:
-            show_status2("test 3","",code,0,0,2);
+            show_status2("update idata","",code,0,0,2);
+			cmd =  SEND_ALL_ODATA;
+			put_sock(&cmd,1,1,errmsg);
+			pod = curr_o_array;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				put_sock(&i,1,1,errmsg);
+				ret = put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
+				pod++;
+			}
             break;
         case 5:
             show_status2("test 4","",code,0,0,2);
@@ -1070,6 +1081,7 @@ main(int argc, char *argv[])
 	i = NUM_PORT_BITS;
 
 	isize = sizeof(I_DATA);
+//	printf("sizeof I_DATA: %d\n",isize);
 	isize *= i;
 
 	curr_i_array = (I_DATA *)malloc(isize);
@@ -1082,6 +1094,7 @@ main(int argc, char *argv[])
 	memset((void *)curr_i_array,0,isize);
 
 	osize = sizeof(O_DATA);
+//	printf("sizeof O_DATA: %d\n",osize);
 	osize *= i;
 
 	curr_o_array = (O_DATA *)malloc(osize);
@@ -1106,6 +1119,10 @@ main(int argc, char *argv[])
 		printf("can't find %s %s\n",fptr2,errmsg);
 		return 1;
 	}
+
+//	printf("sizes: %d  %d\n",isize,osize);
+//	getchar();
+
 /*
 	printf("\n\n%s %s %d %lu\n",fptr2,curr_o_array->label,curr_o_array->port,osize);
 	getchar();

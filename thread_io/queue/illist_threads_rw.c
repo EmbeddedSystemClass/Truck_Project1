@@ -166,7 +166,7 @@ int illist_find_data(int index, I_DATA **datapp, illist_t *llistp)
 }
 
 /******************************************************************************/
-#if 0
+//#if 0
 int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 {
 	illist_node_t *cur, *prev;
@@ -177,7 +177,7 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
 	{
-//		printf("%s\n",cur->datap->label);
+//		printf("1:%s\n",cur->datap->label);
 		if (cur->index == index)
 		{
 			I_DATA *newdatap = malloc(sizeof(I_DATA));
@@ -193,7 +193,7 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 			newdatap->inverse = datap->inverse;
 			cur->datap = newdatap;
 			prev->nextp = cur->nextp;
-//			printf("%d\t%s\n",index,cur->datap->label);
+//			printf("2:%d\t%s\n",index,cur->datap->label);
 			free(cur);
 			status = 0;
 			break;
@@ -206,7 +206,7 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 	pthread_rdwr_wunlock_np(&(llistp->rwlock));
 	return status;
 }
-#endif
+//#endif
 /******************************************************************************/
 int illist_show(illist_t *llistp)
 {

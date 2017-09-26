@@ -23,7 +23,8 @@ int recv_tcp(UCHAR *str, int strlen,int block);
 void init_tcp2(void);
 void close_tcp(void);
 int test_sd(int test);
-void SendByte(unsigned char byte);
-void ReceiveByte(void);
+int test_sock(void);
+void SendByte(UCHAR byte);
+UCHAR ReceiveByte(void);
 
 #endif

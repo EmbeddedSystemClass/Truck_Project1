@@ -92,7 +92,7 @@ static int prev_list(void)
 //******************************************************************************************//
 static UCHAR set_list(int fptr)
 {
-	int i;
+	int i,k;
 	UCHAR ret_char = 0;
 	char tlabel[MAX_LABEL_LEN];
 
@@ -103,18 +103,33 @@ static UCHAR set_list(int fptr)
 		dirty_flag = 1;
 
 		send_aux_data = 0;
+
+		mvwprintw(win, LAST_ROW_DISP-7,2, "set_list   %d %d           ",
+			get_curr_menu(),
+			menu_structs[get_curr_menu()].fptr);
+		wrefresh(win);
+	
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
-			switch(ret_char)
+
+			wrefresh(win);
+			k = get_curr_menu_index();
+			switch(k)
 			{
 				case MENU1C:
 				case MENU1D:
 				case MENU1E:
-					init_checkboxes(get_curr_menu_index());
+					init_checkboxes(k);
+					mvwprintw(win, LAST_ROW_DISP-6,2, "init_chk 1  %d  %d  ",
+						k,
+						ret_char);
 				break;
 				case MENU2A:
 				case MENU2B:
-					init_checkboxes(get_curr_menu_index());
+					init_checkboxes(k);
+					mvwprintw(win, LAST_ROW_DISP-6,2, "init_chk 2  %d  %d  ",
+						k,
+						ret_char);
 				break;
 				case MENU2C:
 				case MENU2D:
@@ -128,6 +143,7 @@ static UCHAR set_list(int fptr)
 				break;
 			}
 		}
+
 
 	}
 	return ret_char;
@@ -684,17 +700,7 @@ static UCHAR do_exec(UCHAR ch)
 	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
 
-/*
-	i = get_curr_menu_index();
-	if(prev_menu_index != i)
-	{
-		init_checkboxes(i);
-		mvwprintw(win, DISP_OFFSET+17,2, "*do_exec  (init_chkboxes)     ");
-		wrefresh(win);
-		return ch;
-	}
-*/
-	k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	k = get_curr_menu_index() * NUM_CHECKBOXES;
 	l = k;
 	j = 0;
 
@@ -754,18 +760,7 @@ static UCHAR do_chkbox(UCHAR ch)
 	UCHAR ret_char = ch;
 	int i,j,k,l;
 //	mvwprintw(win, DISP_OFFSET+17,2, "                    ");
-/*
-	i = get_curr_menu_index();
-	if(prev_menu_index != i)
-	{
-		init_checkboxes(i);
-		mvwprintw(win, DISP_OFFSET+17,2, "*do_chkbox  (init_chkboxes)     ");
-		wrefresh(win);
-		return ch;
-	}
-*/
-//	k = get_curr_menu()-MENU1C;
-	k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	k = get_curr_menu_index() * NUM_CHECKBOXES;
 
 	l = k;
 //	k =-MENU1C;
@@ -830,6 +825,8 @@ static UCHAR do_chkbox(UCHAR ch)
 static UCHAR init_checkboxes(UCHAR menu_index)
 {
 	curr_checkbox = 0;
+	mvwprintw(win, LAST_ROW_DISP-3,2, "*init_checkbox  %x   ",menu_index);
+	wrefresh(win);
 	return menu_index;
 }
 //******************************************************************************************//
@@ -840,7 +837,7 @@ static UCHAR checkboxes_reset(int index)
 //	int k = index+curr_checkbox;
 	int i,k;
 	curr_checkbox = 0;
-	k = get_curr_menu_index() * NUM_CHECKBOXES;
+	k = (get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES;
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
@@ -860,25 +857,25 @@ static UCHAR checkboxes_reset(int index)
 static UCHAR scrollup_checkboxes(int index)
 {
 //	int k = index+curr_checkbox;
-	int k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	int k;
 	int i;
 
 	if(--curr_checkbox < 0)
 		curr_checkbox = 9;
 	// move cursor to 3 + check_boxes[curr_checkbox]
-	k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
 //	dispCharAt(1+check_boxes[k].index,20,0x21);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW_DISP-2,2,"up: curr %d ckbox %d %d  ",curr_checkbox,check_boxes[k].index,k);
+	mvwprintw(win, LAST_ROW_DISP-2,2,"up: curr %d ckbox %d %d             ",curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 
-	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		mvwprintw(win, LAST_ROW_DISP-3,2+(i*4),"%d  ",check_boxes[k].checked);
 		k++;
 	}
-	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		mvwprintw(win, LAST_ROW_DISP-5,2+(i*4),"%d  ",check_boxes[k].index);
@@ -894,24 +891,24 @@ static UCHAR scrollup_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR scrolldown_checkboxes(int index)
 {
-	int k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	int k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
 	int i;
 
 	if(++curr_checkbox > 9)
 		curr_checkbox = 0;
 
-	k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW_DISP-2,2,"down: curr %d ckbox %d %d  ",curr_checkbox,check_boxes[k].index,k);
+	mvwprintw(win, LAST_ROW_DISP-2,2,"down: curr %d ckbox %d %d             ",curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 
-	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		mvwprintw(win, LAST_ROW_DISP-3,2+(i*4),"%d  ",check_boxes[k].checked);
 		k++;
 	}
-	k = (get_curr_menu_index() * NUM_CHECKBOXES);
+	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		mvwprintw(win, LAST_ROW_DISP-5,2+(i*4),"%d  ",check_boxes[k].index);
@@ -927,7 +924,7 @@ static UCHAR scrolldown_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR toggle_checkboxes(int index)
 {
-	int k = (get_curr_menu_index() * NUM_CHECKBOXES)+curr_checkbox;
+	int k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
 
 	if(check_boxes[k].checked == 1)
 	{
@@ -938,7 +935,7 @@ static UCHAR toggle_checkboxes(int index)
 		check_boxes[k].checked = 1;
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, LAST_ROW_DISP-2,2,"toggle: curr %d ckbox %d %d  ",curr_checkbox,check_boxes[k].index,k);
+	mvwprintw(win, LAST_ROW_DISP-2,2,"toggle: curr %d ckbox %d %d             ",curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;

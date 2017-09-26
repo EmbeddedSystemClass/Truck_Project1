@@ -69,6 +69,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 	o_datap = o_data;
 	UCHAR num_i_recs = 0;
 	UCHAR num_o_recs = 0;
+	int finished;
 
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
@@ -132,7 +133,8 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 */
 	x = 1;
 	y = 1;
-	while((ch = wgetch(twin)) != KEY_F(2))
+	finished = 1;
+	while((ch = wgetch(twin)) != KEY_F(2) && finished != 0)
 	{
 #if 0
 		if(ch > 0x21 && ch < 0x7e)
@@ -188,6 +190,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					usleep(TIME_DELAY*100);
 					close_sock();
 					disp_msg(twin,"connection closed");
+					finished = 1;
 				}
 				tcp_connected = 0;
 				break;

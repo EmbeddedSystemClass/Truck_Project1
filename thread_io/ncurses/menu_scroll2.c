@@ -70,7 +70,7 @@ int menu_scroll2(void *curr,int num,int which)
 		for(i = 0; i < num; ++i)
 		{
 			sprintf(tempx,"%d",pi->port);
-	//		mvprintw(LINES - 21-i, 0,"%s ",tempx);
+			mvprintw(LINES - 21-i, 0,"%s ",tempx);
 			strcpy(sup_string[i],tempx);
 			sprintf(tempx,"%d",pi->affected_output);
 			strcat(sup_string[i],"  ");
@@ -81,7 +81,7 @@ int menu_scroll2(void *curr,int num,int which)
 			sprintf(tempx,"%d",pi->inverse);
 			strcat(sup_string[i],"  ");
 			strcat(sup_string[i],tempx);
-	//		mvprintw(LINES - 21-i, 0,"%s ",sup_string[i]);
+			mvprintw(LINES - 21-i, 0,"%s ",sup_string[i]);
 			pi++;
 		}
 		pi = (I_DATA *)curr;
@@ -166,9 +166,12 @@ int menu_scroll2(void *curr,int num,int which)
 //    attroff(COLOR_PAIR(2));
     refresh();
 
+//	disp_msg(twin,"demo forms\0",num+5);
+
 	while(!finished)
 	{
 		c = wgetch(twin);
+
 	    switch(c)
 	    {
 	        case KEY_DOWN:
@@ -186,7 +189,7 @@ int menu_scroll2(void *curr,int num,int which)
 			case 10: /* Enter */
 				cur_item = current_item(my_menu);
 				index = item_index(cur_item);
-				disp_msg(twin,"test\0",num);
+				disp_msg(twin,"demo forms\0",num);
 				if(which == 1)
 				{
 					pi = (I_DATA *)curr;
@@ -204,26 +207,76 @@ int menu_scroll2(void *curr,int num,int which)
 				demo_forms(pcurr,which);
 				break;
 			case KEY_F(2):
-				disp_msg(twin,"output on\0",num);
-//				index = 0x7f;
 				finished = 1;
 				break;
 			case KEY_F(3):
-				disp_msg(twin,"output on\0",num);
+				cur_item = current_item(my_menu);
+				index = item_index(cur_item);
+				if(which == 1)
+				{
+				    disp_msg(twin,"not valid\0",num);
+				}
+				else if(which == 0)
+				{
+					disp_msg(twin,"ouput on\0",num);
+					for(i = 0;i < 40;i++)
+					{
+						mvprintw(LINES -63+i, 80,"                                  ");
+					}
+					po = (O_DATA *)curr;
+
+					for(i = 0;i < index;i++)
+					{
+//						mvprintw(LINES -63+i, 80,"%s %d ",po->label,po->onoff);
+//						wrefresh(twin);
+						po++;
+					}
+
+					po->onoff = 1;
+					pcurr = (void*)po;
+				}
 				break;
 			case KEY_F(4):
-				disp_msg(twin,"output off\0",num);
+				cur_item = current_item(my_menu);
+				index = item_index(cur_item);
+				if(which == 1)
+				{
+				    disp_msg(twin,"not valid\0",num);
+				}
+				else if(which == 0)
+				{
+					disp_msg(twin,"ouput off\0",num);
+					for(i = 0;i < 40;i++)
+					{
+						mvprintw(LINES -63+i, 80,"                                  ");
+					}
+					po = (O_DATA *)curr;
+
+					for(i = 0;i < index;i++)
+					{
+//						mvprintw(LINES  -63+i, 80,"%s %d ",po->label,po->onoff);
+//						wrefresh(twin);
+						po++;
+					}
+
+					po->onoff = 0;
+					pcurr = (void*)po;
+				}
+				break;
+			case KEY_F(5):
+				disp_msg(twin,"F5\0",num);
 				break;
 			default:
 				break;
-	    }
+	    } 
+	    
 //	    cur_item = current_item(my_menu);
 //	    index = item_index(cur_item);
 //		mvwprintw(twin,2,2,"index: %d",index);
 	}
 
-//	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
-//    wrefresh(twin);
+	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
+    wrefresh(twin);
 //	mvprintw(LINES - 20, 2,"                            ");
 //     wrefresh(twin);
 /* Unpost and free all the memory taken up */

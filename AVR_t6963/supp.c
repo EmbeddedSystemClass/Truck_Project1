@@ -377,8 +377,8 @@ void update_ram(void)
 	total_offset = 0;
 
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
-//	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
+//	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
 // 1a
 	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
 // 1b

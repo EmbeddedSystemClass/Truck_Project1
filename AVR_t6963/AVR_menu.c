@@ -1313,7 +1313,7 @@ static UCHAR checkboxes_reset(int index)
 static UCHAR scrollup_checkboxes(int index)
 {
 //	int k = index+curr_checkbox;
-	int k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	int k;
 	dispCharAt(1+curr_checkbox,20,0x20);
 
 	if(--curr_checkbox < 0)
@@ -1323,7 +1323,7 @@ static UCHAR scrollup_checkboxes(int index)
 //	dispCharAt(1+check_boxes[k].index,20,0x21);
 	dispCharAt(1+curr_checkbox,20,0x21);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"up: ind %d curr %d ckbox %d     ",curr_chkbox_index, curr_checkbox,check_boxes[k].index);
+	mvwprintw(win, DISP_OFFSET+20,2,"up: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;
@@ -1333,7 +1333,7 @@ static UCHAR scrollup_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR scrolldown_checkboxes(int index)
 {
-	int k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	int k;
 	dispCharAt(1+curr_checkbox,20,0x20);
 
 	if(++curr_checkbox > 9)
@@ -1342,7 +1342,7 @@ static UCHAR scrolldown_checkboxes(int index)
 	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
 	dispCharAt(1+curr_checkbox,20,0x21);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"down: ind %d curr %d ckbox %d     ",curr_chkbox_index, curr_checkbox,check_boxes[k].index);
+	mvwprintw(win, DISP_OFFSET+20,2,"down: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;
@@ -1366,7 +1366,7 @@ static UCHAR toggle_checkboxes(int index)
 		dispCharAt(1+curr_checkbox,0,120);	// display 'x'
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d     ",curr_chkbox_index, curr_checkbox,check_boxes[k].index);
+	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;

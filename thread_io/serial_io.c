@@ -144,11 +144,12 @@ void printString(const char myString[])
 	}
 }
 
-int read_serial(UCHAR *byte)
+UCHAR read_serial(void)
 {
 	int res;
-	res = write(global_handle,byte,1);
-	return res;
+	UCHAR byte;
+	res = read(global_handle,&byte,1);
+	return byte;
 }
 
 void close_serial(void)
