@@ -127,7 +127,7 @@ int illist_removeall_data(illist_t *llistp)
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
 	{
 		datapp = cur->datap;
-		printf("%s_\n",datapp->label);
+//		printf("%s_\n",datapp->label);
 		prev->nextp = cur->nextp;
 		free(cur);
 	}
@@ -218,9 +218,8 @@ int illist_show(illist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-//			printf ("Index: %d ", cur->index);
-			printf("port: %d affected: %d type: %d inverse: %d %s\n",cur->datap->port, \
-			cur->datap->affected_output, cur->datap->type, cur->datap->inverse,cur->datap->label);
+			printf("port: %2d\taffected: %2d\ttype: %2d\tinverse: %2d\t%s\n",cur->datap->port, \
+				cur->datap->affected_output, cur->datap->type, cur->datap->inverse,cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

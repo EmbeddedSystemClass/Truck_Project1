@@ -59,7 +59,7 @@ $Id: ncurses.c,v 1.365 2011/01/22 19:48:33 tom Exp $
 #include "../ioports.h"
 #include "form_sup.h"
 
-void demo_forms(void *curr, int which)
+int demo_forms(void *curr, int which)
 {
 	WINDOW *win;
 	FORM *form;
@@ -166,7 +166,6 @@ void demo_forms(void *curr, int which)
 
 	if ((form = new_form(f)) != 0)
 	{
-
 		display_form(form);
 
 		win = form_win(form);
@@ -200,6 +199,14 @@ void demo_forms(void *curr, int which)
 					beep();
 					break;
 			}
+		}
+		if(finished == 2)
+		{
+			erase_form(form);
+			free_form(form);
+			free_field(f[c]);
+			mvprintw(LINES,2,"escape from demo_forms");
+			return 0;
 		}
 		if(which == 1)
 		{
@@ -250,19 +257,12 @@ void demo_forms(void *curr, int which)
 			curr = (void *)pod;
 		}
 		erase_form(form);
-
 		free_form(form);
 	}
 	for (c = 0; f[c] != 0; c++)
 		free_field(f[c]);
-//	free_fieldtype(fty_middle);
-//	free_fieldtype(fty_passwd);
-//	noraw();
-//	nl();
-//	werase(win);
-//	delwin(win);
-//	wrefresh(win);
-//	refresh();
+
+	return 1;
 }
 
 #ifndef NOMAIN

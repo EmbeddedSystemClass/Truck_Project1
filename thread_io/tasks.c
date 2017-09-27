@@ -46,6 +46,8 @@ static UCHAR check_inputs(int i);
 int comm_open = -1;
 extern I_DATA *curr_i_array;
 extern O_DATA *curr_o_array;
+extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
+extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
 
 #define SERIAL_BUFF_SIZE 100
 
@@ -79,9 +81,12 @@ UCHAR task1(int test)
 	I_DATA tempi1, tempi2;
 	O_DATA tempo1, tempo2;
 	int rc = 0;
-	UCHAR recv_buf[100];
 	UCHAR cmd;
 	UCHAR num_i_recs, num_o_recs;
+	char errmsg[50];
+	char filename[15];
+	char *fptr1;
+	size_t size;
 	int i;
 	int j = 0;
 
@@ -147,152 +152,147 @@ UCHAR task1(int test)
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						ollist_show(&oll);
 						break;
-					case SEND_SHOW:		// F5
+					case SEND_SHOW:		// F5 	(display data)
+						printf("showing current list\n");
 						illist_show(&ill);
-						printf("\n\n");
+						printf("\n");
 						ollist_show(&oll);
-						printf("\n\n\n");
+						printf("\n");
 						break;
-					case SEND_ALL_IDATA:
+					case SEND_ALL_IDATA:	// F9
+						printf("send all IDATA ");
+						rc = 0;
 						pid = &tempi1;
-						ppid = &pid;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							rc += recv_tcp((UCHAR *)&rec_no,1,1);
-							rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-							illist_find_data(rec_no, ppid, &ill);
-							if(memcmp( (const void *)&tempi1,(const void *)&tempi2, sizeof(I_DATA) ) != 0)
-								illist_change_data(rec_no,&tempi1,&ill);
+							rc += recv_tcp((UCHAR *)pid,sizeof(I_DATA),1);
+							illist_insert_data(i,&ill,pid);
 						}
-						break;	
-					case SEND_ALL_ODATA:
+						pid = curr_i_array;
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+							pid++;
+						}	
+
+						printf("%d\n",rc);
+						printf("done\n");
+						break;
+					case SEND_ALL_ODATA:	// F10
+						printf("send all ODATA: ");
 						pod = &tempo1;
-						ppod = &pod;
-						pod = curr_o_array;
+						rc = 0;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							rc += recv_tcp((void *)&rec_no,1,1);
-							rc += recv_tcp((void*)&tempo1,sizeof(O_DATA),1);	// blocking
-							ollist_find_data(rec_no, ppod, &oll);
-							if(memcmp( (const void *)&tempo1,(const void *)&tempo2,sizeof(O_DATA) ) != 0)
-								ollist_change_data(rec_no,&tempo1,&oll);
+							rc += recv_tcp((UCHAR *)pod,sizeof(O_DATA),1);
+							ollist_insert_data(i,&oll,pod);
 						}
-						break;	
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							printf("%2d\t%2d\t%s\n",pod->port,pod->onoff,pod->label);
+							pod++;
+						}
+
+						printf("%d\n",rc);
+						printf("done\n");
+						break;
 					case SEND_SERIAL:	// F6
 						test2 = 0x21;
-						for(i = 0;i < 200;i++)
+						for(i = 0;i < 3000;i++)
 						{
 							SendByte(test2);
 							if(++test2 > 0x7e)
 								test2 = 0x21;
-						}	
+						}
 						printf("sent serial\n");
 						break;
-					case SEND_TEST3:	// F7
-						printf("changing 1st 10 records in both input and output db\n");
-						strcpy(tempi1.label,"testxyz");
-						tempi1.port = 22;
-						tempi1.type = 11;
-						tempi1.inverse = 33;
-//						tempi1.affected = 44;
-						pid = &tempi1;
-						for(i = 0;i < 10;i++)
+					case LOAD_ORG:	// F7
+						printf("loading from org.dat\n");
+						illist_removeall_data(&ill);
+						ollist_removeall_data(&oll);
+						illist_init(&ill);
+						ollist_init(&oll);
+
+						fptr1 = filename;
+						strcpy(filename,"iorg.dat\0");
+						size = sizeof(I_DATA) * NUM_PORT_BITS;
+						rc = iLoadConfig(fptr1,curr_i_array,size,errmsg);
+						pid = curr_i_array;
+						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							illist_insert_data(i,&ill,pid);
-							tempi1.port++;
-//							tempi1.affected++;
-							tempi1.type++;
-							tempi1.inverse++;
+							pid++;
 						}
-						strcpy(tempo1.label,"asdf_xyz");
-						tempo1.port= 10;
-						tempo1.onoff = 11;
-						pod = &tempo1;
-						for(i = 0;i < 10;i++)
-						{
-							ollist_insert_data(i, &oll,pod);
-							tempo1.port++;
-							tempo1.onoff++;
-						}
-
-						break;
-					case SEND_TEST4:	// F8
 						pid = curr_i_array;
-						rc = recv_tcp((UCHAR *)&num_i_recs,1,1);
-						printf("updating %d records\n",num_i_recs);
-						memset(&tempi1,0,sizeof(I_DATA));
-						for(i = 0;i < num_i_recs;i++)
+
+						strcpy(filename,"oorg.dat\0");
+						size = sizeof(O_DATA) * NUM_PORT_BITS;
+						rc = oLoadConfig(fptr1,curr_o_array,size,errmsg);
+						pod = curr_o_array;
+						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-//							printf("%d\t%d\t%d\t%d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+							ollist_insert_data(i,&oll,pod);
+							pod++;
+						}
+						pod = curr_o_array;
+						printf("done\n");
+						break;
+
+					case RESTORE:	// F8	(restore)
+						printf("restored from current data\n");
+						pid = curr_i_array;
+						memset(&tempi1,0,sizeof(I_DATA));
+						memset(&tempo1,0,sizeof(O_DATA));
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
 							memcpy(&tempi1,pid,sizeof(I_DATA));
 							illist_insert_data(i, &ill, &tempi1);
 							pid++;
 						}
-						printf("done inserting data\n");
-						break;
-						break;
-					case SEND_TEST5:	// F9
 						pod = curr_o_array;
-						rc = recv_tcp((UCHAR *)&num_o_recs,1,1);
-						printf("updating %d records\n",num_o_recs);
-						memset(&tempo1,0,sizeof(O_DATA));
-						for(i = 0;i < num_i_recs;i++)
+						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-//							printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
+							printf("%s\t%2d\t%2d\n",pod->label,pod->port,pod->onoff);
 							memcpy(&tempo1,pod,sizeof(O_DATA));
 							ollist_insert_data(i, &oll, &tempo1);
 							pod++;
 						}
-						printf("done inserting data\n");
+						printf("done\n");
 						break;
-					case SEND_TEST6:
 
-						pid = &tempi1;
-						ppid = &pid;
-						rc = illist_find_data(2,ppid,&ill);
-//						printf("current: %s %d %d\n",tempi1.label,tempi1.port,rc);
-						printf("current: %s %d %d\n",pid->label,pid->port,rc);
-						illist_remove_data(2,ppid,&ill);
+					case SAVE_TO_DISK:
+						printf("saving to disk as i/oSave.dat\n");
+						strcpy(filename,"iSave.dat\0");
+						pid = curr_i_array;
+						size = sizeof(I_DATA) * NUM_PORT_BITS;
+						iWriteConfig(filename, curr_i_array, size,errmsg);
 
-
-						printf("changing record 2\n");
-						strcpy(tempi1.label,"changed I");
-						tempi1.port = 22;
-						tempi1.type = 11;
-//						pid->port = 22;
-//						pid->type = 11;
-//						pid->inverse = 33;
-						pid = &tempi1;
-						ppid = &pid;
-						printf("current: %s %d\n",pid->label,pid->port);
-//						printf("%x %x %x\n",&tempi1,pid,*ppid);
-						illist_insert_data(2,&ill,pid);
-
-//						rc = illist_change_data(2,ppid,&ill);
-//						printf("changed: %s %d\n",tempi1.label,rc);
-
-/*
-						strcpy(tempo1.label,"changed O");
-						tempo1.port = 100;
-						tempo1.onoff = 1;
-						
-						pod = &tempo1;
-
-						for(bank = 0;bank < 6;bank++)
-						{
-							printf("%d %x\n",bank,check_inputs(bank));
-						}
-						printf("a: %x\n",InPortByteA());
-						printf("b: %x\n",InPortByteB());
-						printf("c: %x\n",InPortByteC());
-						printf("d: %x\n",InPortByteD());
-						printf("e: %x\n",InPortByteE());
-						printf("f: %x\n\n",InPortByteF());
-*/
+						strcpy(filename,"oSave.dat\0");
+						pod = curr_o_array;
+						size = sizeof(O_DATA) * NUM_PORT_BITS;
+						oWriteConfig(filename, curr_o_array, size,errmsg);
+						printf("done\n");
 						break;
+
+					case CLEAR_SCREEN:
+						for(i = 0;i < 150;i++)
+							printf("\n");
+						break;
+
 					case CLOSE_SOCKET:
 						close_tcp();
 						break;
+
+					case EXIT_PROGRAM:
+						close_tcp();
+						printf("exiting program\n");
+						free(curr_i_array);
+						free(curr_o_array);
+
+						exit(0);
+						break;
+
 					default:
 						break;
 				}	// end of switch
@@ -436,7 +436,7 @@ UCHAR task4(int test)
 	while(TRUE)
 	{
 		rc = send_tcp(&test2,1);
-		usleep(TIME_DELAY);
+		usleep(TIME_DELAY/2);
 		if(++test2 > 0x70)
 			test2 = 0x30;
 	}
@@ -673,7 +673,7 @@ int send_tcp(UCHAR *str,int len)
 	{
 		if(same_msg == 0)
 			printf("send_tcp: %s\n",errmsg);
-		same_msg = 1;	
+		same_msg = 1;
 	}
 	else same_msg = 0;
 	return ret;
@@ -721,14 +721,14 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 			strcat(errmsg,extra_msg);
 			strcat(errmsg," put_sock");
 		}else strcpy(errmsg,"Success\0");
-	}	
+	}
 	else
 	{
-// this keeps printing out until the client logs on	
+// this keeps printing out until the client logs on
 		strcpy(errmsg,"sock closed");
 		rc = -1;
 	}
-		
+
 	return rc;
 }
 
@@ -905,4 +905,79 @@ UCHAR task3(int test)
 //	printf("%c",test1);
 	return test + 3;
 }
+
+
+						printf("changing 1st 10 records in both input and output db\n");
+						strcpy(tempi1.label,"testxyz");
+						tempi1.port = 22;
+						tempi1.type = 11;
+						tempi1.inverse = 33;
+//						tempi1.affected = 44;
+						pid = &tempi1;
+						for(i = 0;i < 10;i++)
+						{
+							illist_insert_data(i,&ill,pid);
+							tempi1.port++;
+//							tempi1.affected++;
+							tempi1.type++;
+							tempi1.inverse++;
+						}
+						strcpy(tempo1.label,"asdf_xyz");
+						tempo1.port= 10;
+						tempo1.onoff = 11;
+						pod = &tempo1;
+						for(i = 0;i < 10;i++)
+						{
+							ollist_insert_data(i, &oll,pod);
+							tempo1.port++;
+							tempo1.onoff++;
+						}
+
+
+#if 0
+						pid = &tempi1;
+						ppid = &pid;
+//						rc = illist_find_data(2,ppid,&ill);
+//						printf("current: %s %d %d\n",tempi1.label,tempi1.port,rc);
+//						printf("current: %s %d %d\n",pid->label,pid->port,rc);
+// don't need to remove - insert will replace the record
+//						illist_remove_data(2,ppid,&ill);
+
+
+						printf("changing record 2\n");
+						strcpy(tempi1.label,"changed I");
+						tempi1.port = 22;
+						tempi1.type = 11;
+//						pid->port = 22;
+//						pid->type = 11;
+//						pid->inverse = 33;
+						pid = &tempi1;
+						ppid = &pid;
+						printf("current: %s %d\n",pid->label,pid->port);
+//						printf("%x %x %x\n",&tempi1,pid,*ppid);
+						illist_insert_data(2,&ill,pid);
+#endif
+//						rc = illist_change_data(2,ppid,&ill);
+//						printf("changed: %s %d\n",tempi1.label,rc);
+
+/*
+						strcpy(tempo1.label,"changed O");
+						tempo1.port = 100;
+						tempo1.onoff = 1;
+
+						pod = &tempo1;
+
+						for(bank = 0;bank < 6;bank++)
+						{
+							printf("%d %x\n",bank,check_inputs(bank));
+						}
+						printf("a: %x\n",InPortByteA());
+						printf("b: %x\n",InPortByteB());
+						printf("c: %x\n",InPortByteC());
+						printf("d: %x\n",InPortByteD());
+						printf("e: %x\n",InPortByteE());
+						printf("f: %x\n\n",InPortByteF());
+*/
+
+
 #endif

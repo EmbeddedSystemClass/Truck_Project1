@@ -51,9 +51,9 @@ extern int comm_open;
  * Thread progress info
  */
 extern void *work_routine(void *arg);
-extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
+//extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
 extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
-extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
+//extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
 extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
 
 I_DATA *curr_i_array;
@@ -131,6 +131,13 @@ extern int main(int argc, char **argv)
 	}
 	memset((void *)curr_i_array,0,isize);
 
+	rc = iLoadConfig(fptr1,curr_i_array,isize,errmsg);
+	if(rc > 0)
+	{
+		printf("%s\n",errmsg);
+		return 1;
+	}
+
 	curr_o_array = (O_DATA *)malloc(osize);
 	if(curr_o_array == NULL)
 	{
@@ -138,13 +145,6 @@ extern int main(int argc, char **argv)
 		return 1;
 	}
 	memset((void *)curr_o_array,0,osize);
-
-	rc = iLoadConfig(fptr1,curr_i_array,isize,errmsg);
-	if(rc > 0)
-	{
-		printf("%s\n",errmsg);
-		return 1;
-	}
 
 	pid = curr_i_array;
 #if 0
@@ -278,8 +278,8 @@ return 0;
 				priority_param.sched_priority = prio_max - i - 2;
 */
 			priority_param.sched_priority = prio_max;
-			printf("setting priority(%d-%d) of thread %d to %d\n", prio_min, \
-			prio_max, i,priority_param.sched_priority);
+//			printf("setting priority(%d-%d) of thread %d to %d\n", prio_min, \
+//			prio_max, i,priority_param.sched_priority);
 			if (pthread_attr_setschedparam(&pthread_custom_attr, &priority_param)!=0)
 				fprintf(stderr,"pthread_attr_setschedparam failed\n");
 			} /* else not inherit */

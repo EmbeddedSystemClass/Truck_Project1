@@ -11,7 +11,7 @@
 
 //#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
-extern void demo_forms(void *cur,int which);
+extern int demo_forms(void *cur,int which);
 
 static void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string, chtype color);
 
@@ -30,7 +30,7 @@ static void disp_msg(WINDOW *win,char *str,int line)
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
 //int menu_scroll2(I_DATA *curr,int num,int which)
-int menu_scroll2(void *curr,int num,int which)
+int menu_scroll2(void *curr,int num,int which,char *filename)
 {
     ITEM **my_items;
     ITEM *cur_item;
@@ -70,7 +70,7 @@ int menu_scroll2(void *curr,int num,int which)
 		for(i = 0; i < num; ++i)
 		{
 			sprintf(tempx,"%d",pi->port);
-			mvprintw(LINES - 21-i, 0,"%s ",tempx);
+//			mvprintw(LINES - 21-i, 0,"%s ",tempx);
 			strcpy(sup_string[i],tempx);
 			sprintf(tempx,"%d",pi->affected_output);
 			strcat(sup_string[i],"  ");
@@ -81,12 +81,12 @@ int menu_scroll2(void *curr,int num,int which)
 			sprintf(tempx,"%d",pi->inverse);
 			strcat(sup_string[i],"  ");
 			strcat(sup_string[i],tempx);
-			mvprintw(LINES - 21-i, 0,"%s ",sup_string[i]);
+//			mvprintw(LINES - 21-i, 0,"%s ",sup_string[i]);
 			pi++;
 		}
 		pi = (I_DATA *)curr;
 	}
-	else if(which == 0)
+	else if(which == 0 || which == 2)
 	{
 		for(i = 0; i < num; ++i)
 		{
@@ -107,7 +107,7 @@ int menu_scroll2(void *curr,int num,int which)
 			my_items[i] = new_item(pi->label, sup_string[i]);
 			pi++;
 	    }
-	    else if(which == 0)
+	    else if(which == 0 || which == 2)
 		{
 			my_items[i] = new_item(po->label, sup_string[i]);
 			po++;
@@ -122,7 +122,7 @@ int menu_scroll2(void *curr,int num,int which)
     my_menu = new_menu((ITEM **)my_items);
 
 /* Create the window to be associated with the menu */
-    twin = newwin(num+3, 40, 4, 40);
+    twin = newwin(num+3, 40, 0, 40);
     keypad(twin, TRUE);
 
 /* Set main window and sub window */
@@ -136,16 +136,7 @@ int menu_scroll2(void *curr,int num,int which)
 /* Print a border around the main window and print a title */
     box(twin, 0, 0);
 
-	if(which == 1)
-	{
-	    print_in_middle(twin, 1, 0, 40, "Choose Input", COLOR_PAIR(1));
-	    disp_msg(twin,"F2 to exit\0",num);
-	}
-	else if(which == 0)
-	{
-	    print_in_middle(twin, 1, 0, 40, "Choose Output", COLOR_PAIR(1));
-	    disp_msg(twin,"F2 to exit; F3 to turn on; F4 off\0",num);
-	}
+    print_in_middle(twin, 1, 0, 40, filename, COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,38,ACS_RTEE);
@@ -176,100 +167,70 @@ int menu_scroll2(void *curr,int num,int which)
 	    {
 	        case KEY_DOWN:
 	            menu_driver(my_menu, REQ_DOWN_ITEM);
+				disp_msg(twin,"key down\0",num);
 	            break;
 	        case KEY_UP:
 	            menu_driver(my_menu, REQ_UP_ITEM);
+				disp_msg(twin,"key up\0",num);
 	            break;
 	        case KEY_NPAGE:
 	            menu_driver(my_menu, REQ_SCR_DPAGE);
+				disp_msg(twin,"page down\0",num);
 	            break;
 	        case KEY_PPAGE:
 	            menu_driver(my_menu, REQ_SCR_UPAGE);
+				disp_msg(twin,"page up\0",num);
 	            break;
 			case 10: /* Enter */
 				cur_item = current_item(my_menu);
 				index = item_index(cur_item);
-				disp_msg(twin,"demo forms\0",num);
-				if(which == 1)
+				switch(which)
 				{
-					pi = (I_DATA *)curr;
-					for(i = 0;i < index;i++)
-						pi++;
-					pcurr = (void*)pi;
+					case 0:		// 0_DATA (choose)
+						po = (O_DATA *)curr;
+						for(i = 0;i < index;i++)
+							po++;
+						pcurr = (void *)po;	
+						if(demo_forms(pcurr,which) != TRUE)
+							finished = 1;
+						disp_msg(twin,"which = 0\0",num);
+					break;
+					case 1:		// I_DATA
+						pi = (I_DATA *)curr;
+						for(i = 0;i < index;i++)
+							pi++;
+						pcurr = (void*)pi;
+						disp_msg(twin,"which = 1\0",num);
+
+						if(demo_forms(pcurr,which) != TRUE)
+							finished = 1;
+					break;
+					case 2:		// O_DATA (toggle output)
+						po = (O_DATA *)curr;
+						for(i = 0;i < index;i++)
+							po++;
+						if(po->onoff > 0)
+							po->onoff = 0;
+						else
+							po->onoff = 1;
+						disp_msg(twin,"which = 0\0",num);
+						finished = 1;
+					break;
+					default:
+					break;
 				}
-				else if(which == 0)
-				{
-					po = (O_DATA *)curr;
-					for(i = 0;i < index;i++)
-						po++;
-					pcurr = (void*)po;
-				}
-				demo_forms(pcurr,which);
 				break;
 			case KEY_F(2):
 				finished = 1;
 				break;
-			case KEY_F(3):
-				cur_item = current_item(my_menu);
-				index = item_index(cur_item);
-				if(which == 1)
-				{
-				    disp_msg(twin,"not valid\0",num);
-				}
-				else if(which == 0)
-				{
-					disp_msg(twin,"ouput on\0",num);
-					for(i = 0;i < 40;i++)
-					{
-						mvprintw(LINES -63+i, 80,"                                  ");
-					}
-					po = (O_DATA *)curr;
-
-					for(i = 0;i < index;i++)
-					{
-//						mvprintw(LINES -63+i, 80,"%s %d ",po->label,po->onoff);
-//						wrefresh(twin);
-						po++;
-					}
-
-					po->onoff = 1;
-					pcurr = (void*)po;
-				}
-				break;
-			case KEY_F(4):
-				cur_item = current_item(my_menu);
-				index = item_index(cur_item);
-				if(which == 1)
-				{
-				    disp_msg(twin,"not valid\0",num);
-				}
-				else if(which == 0)
-				{
-					disp_msg(twin,"ouput off\0",num);
-					for(i = 0;i < 40;i++)
-					{
-						mvprintw(LINES -63+i, 80,"                                  ");
-					}
-					po = (O_DATA *)curr;
-
-					for(i = 0;i < index;i++)
-					{
-//						mvprintw(LINES  -63+i, 80,"%s %d ",po->label,po->onoff);
-//						wrefresh(twin);
-						po++;
-					}
-
-					po->onoff = 0;
-					pcurr = (void*)po;
-				}
 				break;
 			case KEY_F(5):
 				disp_msg(twin,"F5\0",num);
 				break;
 			default:
 				break;
-	    } 
-	    
+	    }
+
 //	    cur_item = current_item(my_menu);
 //	    index = item_index(cur_item);
 //		mvwprintw(twin,2,2,"index: %d",index);
@@ -282,7 +243,7 @@ int menu_scroll2(void *curr,int num,int which)
 /* Unpost and free all the memory taken up */
 //	attron(COLOR_PAIR(2));
 //	attroff(COLOR_PAIR(2));
-	getch();
+//	getch();
     unpost_menu(my_menu);
     free_menu(my_menu);
     for(i = 0; i < num; ++i)

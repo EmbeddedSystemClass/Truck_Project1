@@ -259,9 +259,9 @@ int GetFileFormat(char *filename)
 	i = 0;
 	read(fp,&id,1);
 //	printf("%x\n",id);
-	if(id == 0x55)
+	if(id == 0x55)		// this means it's an input file
 		return 0;
-	else if(id == 0xAA)
+	else if(id == 0xAA)	// output file
 		return 1;
 	else return -1;
 	close(fp);

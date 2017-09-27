@@ -110,6 +110,26 @@ int ollist_remove_data(int index, O_DATA **datapp, ollist_t *llistp)
 }
 
 /******************************************************************************/
+int ollist_removeall_data(ollist_t *llistp)
+{
+	ollist_node_t *cur, *prev;
+
+	/* Initialize to "not found" */
+	O_DATA *datapp = (O_DATA*)NULL;
+
+	pthread_rdwr_wlock_np(&(llistp->rwlock));
+
+	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
+	{
+		datapp = cur->datap;
+//		printf("%s_\n",datapp->label);
+		prev->nextp = cur->nextp;
+		free(cur);
+	}
+	pthread_rdwr_wunlock_np(&(llistp->rwlock));
+	return 0;
+}
+/******************************************************************************/
 int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
 {
 	ollist_node_t *cur, *prev;
@@ -178,8 +198,7 @@ int ollist_show(ollist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-//			printf ("Index: %d ", cur->index);
-			printf("port: %d onoff: %d %s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
+			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

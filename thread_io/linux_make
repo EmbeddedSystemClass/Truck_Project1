@@ -26,7 +26,7 @@ GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 #####################################################
 CC = ${GNUCC}
 
-all : sched
+all : sched init_db list_db
 
 sched.o: sched.c tasks.h serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread sched.c
@@ -51,6 +51,18 @@ rdwr.o: queue/rdwr.c queue/rdwr.h
 	
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
+
+init_db.o: ncurses/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/init_db.c
+
+list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
+
+init_db: config_file.o init_db.o
+	${CC} init_db.o config_file.o -o init_db
+
+list_db: config_file.o list_db.o
+	${CC} list_db.o config_file.o -o list_db
 
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory

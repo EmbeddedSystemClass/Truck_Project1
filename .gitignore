@@ -178,4 +178,6 @@ thread_io/startup.png
 PIC24_support/esos1/ESOS1.X/build/
 PIC24_support/esos1/ESOS1.X/dist/
 PIC24_support/esos1/ESOS1.X/nbproject/private/
-
+*.dat
+*.png
+*.exe

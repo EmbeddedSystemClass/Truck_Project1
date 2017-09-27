@@ -331,6 +331,8 @@ int my_form_driver(FORM * form, int c)
 		return (TRUE);
 	else if(c == KEY_F(3))
 		return (TRUE);
+	else if (c == QUIT)
+		return 2;
 	else
 	{
 //		print_req_type(form_win(form), c,60, 1);

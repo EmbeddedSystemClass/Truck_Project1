@@ -45,6 +45,7 @@ typedef struct ollist {
 int ollist_init (ollist_t *llistp);
 int ollist_insert_data (int index, ollist_t *llistp,O_DATA *datap);
 int ollist_remove_data(int index, O_DATA **datapp, ollist_t *llistp);
+int ollist_removeall_data(ollist_t *llistp);
 int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp);
 int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp);
 int ollist_show(ollist_t *llistp);

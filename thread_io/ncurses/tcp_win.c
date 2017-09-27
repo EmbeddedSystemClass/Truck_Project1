@@ -20,6 +20,9 @@ extern int init_server(void);
 //extern int recv_tcp(char *recv_buf, int len, char *errmsg);
 extern int tcp_connected;
 
+extern I_DATA *curr_i_array;
+extern O_DATA *curr_o_array;
+
 //******************************************************************************************//
 //************************************* clear_screen ***************************************//
 //******************************************************************************************//
@@ -134,7 +137,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 	x = 1;
 	y = 1;
 	finished = 1;
-	while((ch = wgetch(twin)) != KEY_F(2) && finished != 0)
+	while((ch = wgetch(twin)) != KEY_F(2))
 	{
 #if 0
 		if(ch > 0x21 && ch < 0x7e)
@@ -190,7 +193,6 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					usleep(TIME_DELAY*100);
 					close_sock();
 					disp_msg(twin,"connection closed");
-					finished = 1;
 				}
 				tcp_connected = 0;
 				break;
@@ -200,7 +202,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					cmd =  SEND_SHOW;
 //					rc = send_tcp(&cmd,1,errmsg);
 					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"key F5\0");
+					disp_msg(twin,"display data\0");
 				}
 				else
 					disp_msg(twin,"no connection\0");
@@ -211,7 +213,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					cmd =  SEND_SERIAL;
 //					rc = send_tcp(&cmd,1,errmsg);
 					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"key F6\0");
+					disp_msg(twin,"serial test\0");
 				}
 				else
 					disp_msg(twin,"no connection\0");
@@ -219,10 +221,10 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			case KEY_F(7):
 				if(tcp_connected == 1)
 				{
-					cmd = SEND_TEST3;
+					cmd = LOAD_ORG;
 //					rc = send_tcp(&cmd,1,errmsg);
 					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"key F7\0");
+					disp_msg(twin,"load org\0");
 				}
 				else
 					disp_msg(twin,"no connection\0");
@@ -230,14 +232,9 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			case KEY_F(8):
 				if(tcp_connected == 1)
 				{
-					cmd = SEND_TEST4;
-/*
-					rc = send_tcp(&cmd,1,errmsg);
-					rc = send_tcp(&num_o_recs,1,errmsg);
-*/
+					cmd = RESTORE;
 					rc = put_sock(&cmd,1,1,errmsg);
-					rc = put_sock(&num_o_recs,1,1,errmsg);
-					disp_msg(twin,"key F8\0");
+					disp_msg(twin,"restore\0");
 				}
 				else
 					disp_msg(twin,"no connection\0");
@@ -245,14 +242,18 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			case KEY_F(9):
 				if(tcp_connected == 1)
 				{
-					cmd = SEND_TEST5;
-/*
-					rc = send_tcp(&cmd,1,errmsg);
-					rc = send_tcp(&num_i_recs,1,errmsg);
-*/
-					rc = put_sock(&cmd,1,1,errmsg);
-					rc = put_sock(&num_i_recs,1,1,errmsg);
 					disp_msg(twin,"key F9\0");
+					cmd = SEND_ALL_IDATA;
+					rc = put_sock(&cmd,1,1,errmsg);
+					i_datap = i_data;
+					disp_msg(twin,"update idata\0");
+					i_datap = i_data;
+					o_datap = o_data;
+					for(i = 0;i < NUM_PORT_BITS;i++)
+					{
+						rc += put_sock(i_datap,sizeof(I_DATA),1,errmsg);
+						i_datap++;
+					}
 				}
 				else
 					disp_msg(twin,"no connection\0");
@@ -260,10 +261,15 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			case KEY_F(10):
 				if(tcp_connected == 1)
 				{
-					cmd = SEND_TEST6;
-//					rc = send_tcp(&cmd,1,errmsg);
+					cmd = SEND_ALL_ODATA;
 					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"key F10 (don't try F11)\0");
+					disp_msg(twin,"update odata\0");
+					o_datap = o_data;
+					for(i = 0;i < NUM_PORT_BITS;i++)
+					{
+						rc += put_sock(o_datap,sizeof(O_DATA),1,errmsg);
+						o_datap++;
+					}
 				}
 				else
 					disp_msg(twin,"no connection\0");
