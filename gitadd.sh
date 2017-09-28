@@ -1,5 +1,6 @@
 git add README.md
 git add Truck_Project1_notes.txt
+git add todo.txt
 git add gitadd.sh
 git add .gitignore
 
@@ -38,10 +39,9 @@ git add PIC24_support/lib/*
 git add PIC24_support/esos/*
 git add PIC24_support/esos1/Truck_App2.c
 git add PIC24_support/esos1/Truck_App.h
-git add PIC24_support/esos1/ESOS1.X/nbproject
-git add PIC24_support/esos1/ESOS1.X/Makefile
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
+git add Truck_App1/PIC24_support/esos1/domake*.sh
 
 git add thread_io/getadd.sh
 git add thread_io/ioports.c
@@ -82,6 +82,7 @@ git add thread_io/ncurses/form_supplement.c
 git add thread_io/ncurses/form_sup.h
 git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
+git add thread_io/thread_io_notes.txt
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/avrdude.conf
@@ -121,6 +122,8 @@ git add AVR_t6963/test_write_data/domake2
 git add AVR_t6963/test_write_data/read_eeprom_sim.c
 git add AVR_t6963/test_write_data/read_eeprom_sim2.c
 git add AVR_t6963/test_write_data/make_show_eeprom
+git add AVR_t6963/test_write_data/sim_read_extract.sh
+git add AVR_t6963/test_write_data/sim_write_extract.sh
 clear
 git status
 git log --oneline > oneline.txt

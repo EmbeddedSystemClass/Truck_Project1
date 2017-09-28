@@ -374,11 +374,15 @@ call_files(int code)
     I_DATA *pid;
     O_DATA *pod;
 
+
     switch (code)
     {
 		case 0:
 			index = file_menu2(0,isfilename);
 			format = GetFileFormat(isfilename);
+
+
+			show_status2(curr_i_array->label,isfilename,curr_i_array->port,0,0,4);
 
 //		mvprintw(LINES - 23, 0,
 //		        "starting call files: %s  %s   %d  %d           ",isfilename,curr_i_array->label, index,format);
@@ -1222,7 +1226,9 @@ main(int argc, char *argv[])
         init_pair(4, COLOR_GREEN, COLOR_BLACK);
         init_pair(5, COLOR_CYAN, COLOR_BLACK);
     }
-    status = newwin(5, COLS, LINES - 10, 0);
+    status = newwin(5, COLS-10, LINES - 10, 1);
+    wrefresh(status);
+    
     build_menus();
 /*
 	strncpy(fname1,fptr1,40);

@@ -1,4 +1,4 @@
-Truck_Project1_notes.txt 8/1/2017
+Truck_Project1_notes.txt
 
 8/7/17
 test AVR to FPGA SPI - AVR just echos back what's recv'd in SPI to FPGA which prints results to serial port
@@ -24,281 +24,14 @@ SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 FPGA to AVR works up to ~30K doing just an echo
 
-//******************************************************************************************//
-//*************************************** AVR_t6963 ****************************************//
-//******************************************************************************************//
-
-// the pic gets the key, exec's the fptr, and sends the data
-// the avr gets the data,
-// exec's the fptr based on the key sent,
-// the AVR should call the init before the fptr
-
-key --> PIC
-		fptr(key)
-		(send menu_index and all the menus[]
-		in the current menu_struct) -------------->		AVR
-														(receive same menu_index...)
-														fptr(key)
-
-the fptr's will exec all the func's in the fptr[] array of function pointers:
-(*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
-which are the same func names on both sides but they each do diff. stuff...
-so based on the keypress, both should exec the same func.
-sending the data in between each fptr being exec'd, will just set the menu_index and
-the rest of the menus[] in the current menu_struct. The AVR gets the curr_menu_index
-so when display_menus is called it does a get_mlabel for each of the curr_menus[] sent
-as the current menu_struct so it can display the current menu. The get_mlabel just
-looks up the menu strings from eeprom. The strings for the chkbox labels are stored in
-ram and must be sent beforehand by the LOAD_RAM cmd.
-
-so before the fptr in the AVR is called when a memu with a diff fptr
-(menu_change, do_chkbox, do_exec or do_numentry) it must redraw the
-display and if do_chkbox or do_exec, put up the current check box strings
-so we need to know when the AVR's fptr is called, call the init_ func for
-each do_ckbox, do_exec & do_numentry.
-
-PIC:
-<get keypress and call generic...>
-
-
-static UCHAR generic_menu_function(UCHAR ch)
-{
-	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
-
-	// do all the sending including the keypress
-
-	return ch:
-}
-
-AVR:
-static UCHAR generic_menu_function(UCHAR ch)
-{
-
-	// do all the receiving except the keypress (passed in as ch)
-
-		ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
-		display_menus();
-		if(prev_menu_index != curr_menu_index && ret_char != KP_AST)
-		{
-			switch (prev_menu_index)
-			{
-				case MAIN:
-				case MENU1A:
-				case MENU1B:
-				mvwprintw(win, LAST_ROW-8,1,"case 1");
-				break;
-				case MENU1C:
-				case MENU1D:
-				case MENU1E:
-				do_chkbox(ret_char);
-//				do_exec(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 2");
-				break;
-				case MENU2A:
-				case MENU2B:
-				do_exec(ret_char);
-//				do_chkbox(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 3");
-				break;
-				case MENU2C:
-				case MENU2D:
-				case MENU2E:
-				case MENU3A:
-				case MENU3B:
-				do_numentry(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 4");
-				break;
-				default:
-				break;
-			}
-		}
-		prev_menu_index = curr_menu_index;
-		prev_ret_char = ret_char;
-	}
-	return ret_char;
-}
-
-
-MENU_FUNC_STRUCT;
-
-If the AVR is rebooted then it will send a cmd to the PIC24 (upon startup) saying to re-upload the configuration files.
-If the PIC24 is rebooted, it will (optionally) send a cmd saying that it needs to re-upload the config files.
-(or push the data using PUSH_DATA cmd)
-In the AVR, it could be a if statement in the main loop that filters out that cmd.
-
-AVR_menu.c	- runs in AVR
-PIC_menu.c	- in PIC24
-
-sim_write.c compiles PIC_menu.c and simulates the PIC24
-sim_read.c compiles AVR_menu.c and simulates the AVR
-
-the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
-get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
-to the AVR (9/16/17) no that's not what I ended up doing.
-
-the main.c in the AVR calls get_key in AVR_menu.c
-
-The generic_menu_func in PIC gets the keypress, passes it to the func ptr. If the menu_change fptr
-is called then it sets the new set of menus. Then in generic we send the fptr, ch, array of menus
-and aux_string then it exits and waits for another keypress.
-
-In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's the function ptr,
-displays the new menus and returns to wait for another read. 
-
-To change/add menus, add the menu type to main.h in the menu_types enum, then make sure the
-update_menu_labels calls in burn_eeprom() in sim_write.c match. Also make sure that
-NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in sim_write.c
-Then add the new menu type in the case statement in set_list - this is essentially the
-initialization for the menu on the sim_write side (PIC). 
-Then on the sim_read side (AVR), add the menu type in the case statement in generic_menu_function
-in AVR_menu.c where there is an if(prev_menu_index != menu_index).
-This is where the initialization occurs on the AVR when a new menu is started. 
-However, the menu_index is the last param in the call to update_menu_structs (or the index elem
-in MENU_FUNC_STRUCT.
-
-If the ret_key returned from get_key() call in Truck_App.h is one of the NF_x codes from the non_func
-then we can do something like not send as many bytes in the loop in comm2_task or send some extra
-stuff to the AVR with a special cmd that's filtered by the get_key function int PIC_menu.c like
-read some extra data or do a reset or some init function. Very cool stuff!
-
-bug list:
-- find out why columns are only 30 (should be 40) font size?
-
-new idea: make all possible labels exist in eeprom and use an array of indexes to find any given
-label which is terminated by a '0' and just send over the indexes into the labels when displaying
-either the menus, the list of checkbox choices or the exec choices. Then have an array of menus_labels,
-checkbox_labels and execchoice_labels that are bigger than what's currently displayed and implement
-a type of garbage-collecting algorithm which saves the latest labels used so we don't have to access
-the eeprom every time. (NOT!)
-
-Also, make the exec_choices execute the do_numentry function so all exec_choices are pointing to 
-a list of numbers to edit. 
-
-The AVR_menu.c could have a function that accesses the eeprom with an #ifdef which when run in the 
-simulator, will access an array which represents what's in the eeprom.
-
-There can be a 'push_data' function called from the laptop (via thread_io) which burns new labels
-into the eeprom. Longer labels can be in a different array with longer length so when burning new
-labels, we don't have to reprogram the entire eeprom, just do an eeprom update. 
-
-Or just, for now, have label arrays in eeprom with fixed lengths until we start running out of 
-space in the eeprom so we can just do updates on that array index. Also, put the menu_structs in 
-the eeprom too, but always have a copy in memory.
-
-0x300 can be the start of where the location variables are:
-- start of short labels (10 bytes per record)
-- start of long labels (30 bytes per record)
-- no. of short labels
-- no. of long labels
-
-There is no reason to store the menu_structs in eeprom. The menu_structs is stored in the PIC.
-
-There is a function called get_label in the AVR_menu.c which corrisponds to the menu_label array
-in the PIC, but the function is separated by the MAIN_C define. The labels can just start at
-the beginning of eeprom and the long labels can start at some predefined offset so that when
-reprogramming the labels we can just use an update. A function called get_label_offset reads
-threw all the labels and fills an array of ints called label_offsets in the AVR. The label_offsets
-function will have to be run each time from the init_list function in the AVR. 
-
-If the AVR gets labels from the eeprom using the label_offsets array, then the simulation should
-do the same thing, only using an array of 1023 UCHAR's to represent the eeprom. So in all the
-update functions in sim_write.c just use defines that make the chip version read and write eeprom
-while the simulation reads/writes the 1023 array. So both the PIC and AVR simulations will have to
-run the update functions to load the eeprom_sim array, but the chip will not run the update functions
-except when reprogramming the eeprom. 
-
-Another nice feature would be 'bread-crumbs' e.g. MAIN->MENU1A->MENU1B-> ...
-In that case '*' could always be 'back-to-MAIN' and 'B' could be <back>
-
-Tried to store the MENU_FUNC_STRUCT's in the AVR but ran out of memory unless I reduced the 
-AUX_STRING_LEN to 50. Was trying to read it into the menu_structs array to write it to eeprom.
-The idea being that the PIC could read it from the eeprom on init and then optionally load a
-new one.
-
-The eeprom.bin file can be edited on the laptop using the sim programs and sent via the ncurses 
-monitor program to the TS-7200 and then relayed to the PIC24 where it can sent with an 
-BURN_EEPROM cmd to the AVR. 
-
-The PIC can load the menu_structs array with a default menu using the update_menu_structs()
-while the laptop and/or the TS-7200 can send over a new one. The write simulation creates a file
-called eeprom.bin which is the binary copy of the eeprom. The technician can make a new eeprom,
-send it over to the PIC with a command to burn it to the eeprom.
-
-The AVR has the labels in eeprom, but the prompts for the checkboxes must be sent over everytime.
-There is enough memory to have a buffer that stores several sets of the most recent checkbox
-prompts. Could make a sort of MRU (most recently used) algorithm.
-
-sim_write must burn the eeprom first, then (optionally) read the eeprom, then load the 
-menu_structs.
-
-When sim_write is connected to AVR, it only needs to read the eeprom (if already burnt), 
-then load the menu_structs.
-
-"make set_eeprom_save_fuse" to set fuses so eeprom is saved when reprogramming
-"make clear_eeprom_save_fuse" to set fuses so eeprom gets erased everytime
-
-9/16/17 - using comm1 on PIC to go to monitor and comm2 goes to AVR. Testing the loop in
-the comm2_task (for menuing) and in comm1_task (burning eeprom). Either one can be run
-from the keypad or the keyboard. poll_comm2 polls the keyboard (comm1) and sends mail to
-the comm1/2_task. 
-
-9/18/17 - tested the PIC24 sending data to gcc compiled test_read/write & rw2 and had
-all kinds of strange problems. The PIC24 reads and writes data ok using just test_read/write
-but test_rw1/2 do strange things. Put the sim_read on 110 and got it to work upto the 
-point of entering numbers. Need to init the labels and rt_params in 'eeprom_sim' using
-the BURN_PART commands of the PIC24. Since we don't need the labels in the AVR we don't
-need to send over the menu_structs. Use the avr_send_data in PIC24 to init the rest of the
-eeprom_sim.
-
-The prompt strings for the checkboxes and execs will have to be pumped over whether
-using the sim or the AVR. This happens when doing an init_checkboxes or init_execchoices
-
-
-(receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
-no! 192.168.42.110 won't transmit in minicom until you exit.
-
-decided not to do this for now:
-{
-	When the Truck_App starts one of the tasks is get_sync.
-	It will send to comm2 a sequence of: "0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA"
-	assuming the AVR (or sim_read) has the syncup byte set to 0, it will
-	read the sequence and set the syncup byte to 1 and the done to 1.
-	Then it will send a sequence of "0x51, 0x52, 0xA1, 0xA2" back to the 
-	PIC24. Then the get_sync task will wait for the correct sequence to be
-	sent back and wake up the comm2_task which is waiting for the
-	get_comm2 task to wake up which put itself to sleep when it started up.
-	Then get_sync will put itself to sleep. 
-
-	the read() call in the loop in main of sim_read.c for the
-	simulator is the same as the receiveByte() call in the 
-	loop of main.c for the AVR. So when the read() gets a char
-	it can call a function that checks to see if 
-}
-
-9/21/17
-Date:   Thu Sep 21 11:22:13 2017 -0600
-    pushed checkbox structs at starup just after sending eeprom data
-Date:   Thu Sep 21 08:12:01 2017 -0600
-    messed with PIC->read_sim - had all kinds of problems, 
-    probably needs decoupling caps - went back to sim_write->sim_read 
-    and commented out xfer of size,start_add and aux_string
-Date:   Tue Sep 19 21:46:19 2017 -0600
-    tested better way to parse sync frame - test_rw1a/b.c
-
-currently the ESOS stuff is doing weird shit - prolly need caps
-went back to sim_write->sim_read and ended up pushing the entire eeprom 
-data along with TOTAL_NUM_CHECKBOXES of the checkboxes arrays.
-
-
-
-
-Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
-It uses the ESOS library. Each ESOS_USER_TASK will run independently.
-Each task must be registered in user_init.
 
 //******************************************************************************************//
 //************************************* PIC24_support **************************************//
 //******************************************************************************************//
+
+Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
+It uses the ESOS library. Each ESOS_USER_TASK will run independently.
+Each task must be registered in user_init.
 
 Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200
 and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from
@@ -460,11 +193,25 @@ void user_init(void)
 	esos_RegisterTask(test_RE7);
 }
 
+Special character codes sent by the PIC24:
+
+RT_RPM
+RT_ENGT
+RT_TRIP
+RT_TIME
+RT_AIRT
+RT_MPH
+RT_OILP
+RT_MAP
+RT_OILT
+RT_O2
+RT_AUX1
+RT_AUX2
+
 
 //******************************************************************************************//
 //*************************************** AVR_t6963 ****************************************//
 //******************************************************************************************//
-
 
 The AVR is just a driver for the LCD display. The serial port of the AVR communicates with a PIC24.
 The PIC24 sends a stream of data specified by an array of structs rt_params.
@@ -499,106 +246,204 @@ following bytes is sent to the AVR
 0xEE - 'C'
 0xEF - 'D'
 
+(Alternatively, the PIC can get the keypresses from one of the comm ports and double
+as the keypad)
+
 When the PIC24 sends a byte in the range of 0xE0 -> 0xEF that will be interpreted as
 a keypress. The dialog will filter this out using a switch statement. The default will
 just return whatever was passed in. (see get_key() in menus.c)
 
-The array of rt_params is filled in with the function update_rtparams() in eeprom_burn.c
-The program compiled in the eeprom directory is used to burn the eeprom initially.
-The program compiled in the test_write_data directory is compiled to run on a linux box
-and is used to simulate the PIC24 talking to the AVR. So eeprom_burn.c is linked into
-both the main program in the parent directory and the simulator in test_write_data.
 The section of code at the beginning of main.c reads from the eeprom 3 different arrays:
 1) labels
 2) rt_params
 3) menu_structs
 It also reads how many labels, rt_params and menu structs and their offsets into the eeprom.
-(see read_eeprom() function in eeprom_burn.c)
 
-Special character codes sent by the PIC24:
+// the pic gets the key, exec's the fptr from the current menu_structs, and sends the data
+// the avr gets the data,
+// exec's the fptr based on the key sent,
+// the AVR should call the init before the fptr
 
-RT_RPM
-RT_ENGT
-RT_TRIP
-RT_TIME
-RT_AIRT
-RT_MPH
-RT_OILP
-RT_MAP
-RT_OILT
-RT_O2
-RT_AUX1
-RT_AUX2
+key --> PIC
+		fptr(key)
+		(send menu_index and all the menus[]
+		in the current menu_struct) -------------->		AVR
+														(receive same menu_index...)
+														fptr(key)
 
-When the PIC24 is sending data to the AVR, each data is preceded by a one of the following:
-- RT_LOW	- a UCHAR (unsigned char) is sent without the MSB set (0 -> 0x7F)
-- RT_HIGH0	- a UCHAR is sent with the MSB set (0xFF -> 0x80)
-- RT_HIGH1	- a UINT (actually a UCHAR) is sent to make up an unsigned int with neither MSB set
-- RT_HIGH2	- bit 7 of unsigned int is set
-- RT_HIGH3	- bit 15 of unsigned int is set
+the fptr's will exec all the func's in the fptr[] array of function pointers:
 
-The state table in parse_P24.c parses the data stream into UINTs and UCHARs and puts them
-in param_string in do_read() (when used in the simulator) or in main.c where it calls parse_P24().
-Using this scheme allows the AVR to separate the RT_XXX commands from actual data.
+(*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 
-*************************************** details ****************************************
+which are the same func names on both sides but they each do diff. stuff...
+so based on the keypress, both should exec the same func.
+sending the data in between each fptr being exec'd, will just set the menu_index and
+the rest of the menus[] in the current menu_struct. The AVR gets the curr_menu_index
+so when display_menus is called it does a get_mlabel for each of the curr_menus[] sent
+as the current menu_struct so it can display the current menu. The get_mlabel just
+looks up the menu strings from eeprom. The strings for the chkbox labels are stored in
+ram and must be sent beforehand by the LOAD_RAM cmd.
 
-The beginning of eeprom stores all the labels used. Another table directly after the labels
-stores the offsets from the beginning of eeprom to each label. Any part of the code that uses
-the labels can just read them from eeprom as reading doesn't wear out the eeprom like writing
-does. Reading out of eeprom is slower than reading from flash which is slower than ram, but
-the code doesn't read the labels that often. 
+so before the fptr in the AVR is called when a memu with a diff fptr
+(menu_change, do_chkbox, do_exec or do_numentry) it must redraw the
+display and if do_chkbox or do_exec, put up the current check box strings
+so we need to know when the AVR's fptr is called, call the init_ func for
+each do_ckbox, do_exec & do_numentry.
 
-Right after the above tables in eeprom there is an array of rt_params structs. 
-typedef struct rt_params
+PIC:
+<get keypress and call generic...>
+
+
+static UCHAR generic_menu_function(UCHAR ch)
 {
-	UINT label_offset;	// offset from beginning of eeprom
-	UCHAR row;			// row, col tells where the param will appear on screen
-	UCHAR col;	
-	UCHAR shown;		// if its shown or not
-	UCHAR type;			// rt_types
-} RT_PARAM;
+	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
 
-The array of RT_PARAMS is read into an array in ram and can be changed by commands from
-the PIC24 to re-arrange the display.
+	// do all the sending including the keypress
 
-The next section of eeprom stores the default menu setup which is an array of the MENU_STRUCT:
-typedef struct rt_params
+	return ch:
+}
+
+AVR:
+static UCHAR generic_menu_function(UCHAR ch)
 {
-	UCHAR row;			// row, col tells where the param will appear on screen
-	UCHAR col;
-	UCHAR shown;		// if its shown or not
-	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
-	UCHAR type;			// rt_types
-} RT_PARAM;
 
-This array will be read into program memory on startup and can be changed (added to ?) by
-commands from the PIC24.
-	
+	// do all the receiving except the keypress (passed in as ch)
+
+		ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
+		display_menus();
+		if(prev_menu_index != curr_menu_index && ret_char != KP_AST)
+		{
+			switch (prev_menu_index)
+			{
+				case MAIN:
+				case MENU1A:
+				case MENU1B:
+				mvwprintw(win, LAST_ROW-8,1,"case 1");
+				break;
+				case MENU1C:
+				case MENU1D:
+				case MENU1E:
+				do_chkbox(ret_char);
+//				do_exec(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 2");
+				break;
+				case MENU2A:
+				case MENU2B:
+				do_exec(ret_char);
+//				do_chkbox(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 3");
+				break;
+				case MENU2C:
+				case MENU2D:
+				case MENU2E:
+				case MENU3A:
+				case MENU3B:
+				do_numentry(ret_char);
+				mvwprintw(win, LAST_ROW-8,1,"case 4");
+				break;
+				default:
+				break;
+			}
+		}
+		prev_menu_index = curr_menu_index;
+		prev_ret_char = ret_char;
+	}
+	return ret_char;
+}
+
+
+the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
+get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
+to the AVR (9/16/17) no that's not what I ended up doing.
+
+the main.c in the AVR calls get_key in AVR_menu.c
+
+The generic_menu_func in PIC gets the keypress, passes it to the func ptr. If the menu_change fptr
+is called then it sets the new set of menus. Then in generic we send the fptr, ch, array of menus
+and aux_string then it exits and waits for another keypress.
+
+In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's the function ptr,
+displays the new menus and returns to wait for another read. 
+
+To change/add menus, add the menu type to main.h in the menu_types enum, then make sure the
+update_menu_labels calls in burn_eeprom() in sim_write.c match. Also make sure that
+NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in sim_write.c
+Then add the new menu type in the case statement in set_list - this is essentially the
+initialization for the menu on the sim_write side (PIC). 
+Then on the sim_read side (AVR), add the menu type in the case statement in generic_menu_function
+in AVR_menu.c where there is an if(prev_menu_index != menu_index).
+This is where the initialization occurs on the AVR when a new menu is started. 
+However, the menu_index is the last param in the call to update_menu_structs (or the index elem
+in MENU_FUNC_STRUCT.
+
+If the ret_key returned from get_key() call in Truck_App.h is one of the NF_x codes from the non_func
+then we can do something like not send as many bytes in the loop in comm2_task or send some extra
+stuff to the AVR with a special cmd that's filtered by the get_key function int PIC_menu.c like
+read some extra data or do a reset or some init function. Very cool stuff!
+
+9/18/17 - tested the PIC24 sending data to gcc compiled test_read/write & rw2 and had
+all kinds of strange problems. The PIC24 reads and writes data ok using just test_read/write
+but test_rw1/2 do strange things. Put the sim_read on 110 and got it to work upto the 
+point of entering numbers. Need to init the labels and rt_params in 'eeprom_sim' using
+the BURN_PART commands of the PIC24. Since we don't need the labels in the AVR we don't
+need to send over the menu_structs. Use the avr_send_data in PIC24 to init the rest of the
+eeprom_sim.
+
+The prompt strings for the checkboxes and execs will have to be pumped over whether
+using the sim or the AVR. This happens when doing an init_checkboxes or init_execchoices
+
+(receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
+no! 192.168.42.110 won't transmit in minicom until you exit.
+
+decided not to do this for now:
+{
+	When the Truck_App starts one of the tasks is get_sync.
+	It will send to comm2 a sequence of: "0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA"
+	assuming the AVR (or sim_read) has the syncup byte set to 0, it will
+	read the sequence and set the syncup byte to 1 and the done to 1.
+	Then it will send a sequence of "0x51, 0x52, 0xA1, 0xA2" back to the 
+	PIC24. Then the get_sync task will wait for the correct sequence to be
+	sent back and wake up the comm2_task which is waiting for the
+	get_comm2 task to wake up which put itself to sleep when it started up.
+	Then get_sync will put itself to sleep. 
+
+	the read() call in the loop in main of sim_read.c for the
+	simulator is the same as the receiveByte() call in the 
+	loop of main.c for the AVR. So when the read() gets a char
+	it can call a function that checks to see if 
+}
+
+
+currently the ESOS stuff is doing weird shit - prolly need caps
+went back to sim_write->sim_read and ended up pushing the entire eeprom 
+data along with TOTAL_NUM_CHECKBOXES of the checkboxes arrays.
+
 test_write_data:
-The subdirectory called test_write_data has a separate makefile that compiles a program that I used
-to test some of the functionality so I didn't have to keep reflashing the AVR. I used 2 linux boxes
-connected with a crossed over serial cable. The makefile will compile the test_write_data.c
-using menus.c, t6963.c, parse_P24 and USART.c from the main directory, the run copy.sh which will
-tar up the files needed to compile the program on the other machines. You will have to edit the
-copy.sh script to match your machine IP addresses. Then run the extract.sh script on your other
-2 machines (I use ssh to run the other 2 machines on my main box).
-Then run:
-sudo ./test_write r (for the machine that simulates the the AVR) 
-and
-sudo ./test_write w <interations*10> <starting rpm value> <other 
-starting values> <time delay> to simulate the PIC24 or whatever processor is writing the data 
-to the AVR.
 
-PIC24 sends commands that modify the RT_PARAM and MENU_FUNC_STRUCT array to display 
-params in different format on screen. It will also send commands to tell AVR to only
-display certain params. 
+The subdirectory called test_write_data has 2 separate makefiles to compile the sim_read and
+sim_write:
 
-For instance. we may only want to see RPM, MPH and engine temp when a non-trivial dialog 
-is on the screen. It can also send commands to modify a certain dialog, like different 
-labels for checkboxes.
+make -f make_avr - compiles the sim_read
+make -f make_pic - compiles the sim_write
 
-Each menu function that is pointed to by the array of function pointers 
+AVR_menu.c	- runs in AVR
+PIC_menu.c	- in PIC24
+
+domake1 script runs the make_pic makefile and if there are no errors, calls copy1.sh which
+tars up all the necessaray files to compile sim_write and scp copies them to the linux box
+used to run the sim_write (currently 192.168.42.110)
+
+domake2 script runs the make_avr makefile and if there are no errors, calls the copy2.sh which
+tars up all the files and copies them to the linux box to run the sim_read (currently 192.168.42.115)
+
+each linux box has a script called extract.sh which un-tars the tar file sent over and compiles
+everything and starts up the sim_read/write. The sim_read must be started first since it waits
+on a read() to start reading the eeprom image which is sent over as soon as the sim_write starts.
+
+Currently we must, just after the eeprom image is sent over, hit the 'h' key on the sim_write 
+which does a LOAD_RAM command which sends over all the checkbox prompts (cblabels array),
+current state of the checkboxes (checked or not), the indexes for the checkboxes, the
+rt_params array of structs, and the sample_numbers array for the edit boxes.
 
 keypad layout - since the six reassignable keys are on the outside (bottom and left) it makes
 sense to use these as special function keys.
@@ -607,7 +452,33 @@ sense to use these as special function keys.
 7 8 9 C
 * 0 # D
 
-First load from the eeprom the list of MENU_FUNC_STRUCT's which are in groups of 6 (6 possible
+The MENU_FUNC_STRUCT's is an array of the following struct type:
+
+typedef struct menu_func
+{
+	UCHAR fptr;								// which function to call (menu_types)
+	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;
+} MENU_FUNC_STRUCT;
+
+MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
+
+Here's a partial list of what the array of structs are loaded with:
+
+	fptr		menus[0]--->    							  menus[5] index
+
+_menu_change, 	MENU2C, MENU2D, MENU2E,   MENU3A, MENU3B, MENU1C, MAIN		(main)
+_menu_change,	MENU2B, MENU2C, MENU2D,   MENU2E, MENU3A, MENU3B, MENU1A	(MENU1A)
+_menu_change,	MAIN,   MENU2D, MENU1B,   MENU1D, MENU2A, MENU2B, MENU1B	(MENU1B)
+_do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1C	(MENU1C)
+_do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D	(MENU1D)
+
+
+When the system starts, the first menu_struct will be loaded as the current menu.
+the menus[] is an array of 6 ints which are indexes (defined by enum menu_types 
+in main.h) into the list of labels in the eeprom. When the PIC gets a key to change
+menus it will send it over along with the menu index and also the list of menus.
+
 redefined keys for each menu choice) into an array. The 6 redefinable keys are
 'A'
 'B'
@@ -615,8 +486,8 @@ redefined keys for each menu choice) into an array. The 6 redefinable keys are
 'D'
 '#'
 '0'
-If the keypress has been reassigned, the 'enabled' field is set. That means the function for
-the fptr (index into the list of function pointers) will be called. If the fptr is 0, then 
+
+ If the fptr is 0, then 
 look up the menu specified by the menu element and just go to that menu. The function assigned 
 to '*' in generic_menu_function() will always go back to the previous menu. 
 
@@ -625,43 +496,7 @@ This way, we have 3 possible choices:
 2) Dynamically load another set of menus using a special command from the PIC24.
 3) #2 plus burn the new menu set into eeprom.
 
-TODO:
 
-The numentry/alnum dialog should primarily be used for entering a passcode to start the engine.
-The AVR code will handle the password retries and timeouts. e.g. three tries to enter passcode and
-passcode must be entered within 15 seconds or the system locks out totally for 1/2 hour.
-
-Other parameters to have the system offer the user to change:
-	- max rpm before rev-limiter kicks in (turn off ignition momentarily and flash warning light).
-	- engine temperature too high and oil pressure too low level warning signals (lights and buzzer).
-	- set outdoor temp at which block heater comes on. (when plugged into 110vac outlet)
-	- set time of day and length of time other heaters come on.
-	- set frequency of blinkers and how long to stay blinking (if not using the conventional switch)
-	- how long for headlights to stay on after vehicle shuts off.
-
-? do we really need label_offset[]
-if scale_display is called to reduce the display to just rpm, mph, eng temp & oil press then
-the PIC24 should not send those values
-
-checkboxes:
-
-The checkboxes are loaded using the RT_AUX state machine:
-	- a menu choice sends a command to the AVR state machine that tells the PIC24
-		to send either a UCHAR or UINT to modify or a list of binary values that
-		will be listed in the checkboxes
-	- the list of checkboxes will fill an array of structs: checkboxes[NUM_CHECKBOXES]
-	- the list will be displayed on the screen and the user will have the choice
-		of scrolling threw the list (blinking cursor is moved), checking/unchecking
-		the choice and entering the changes
-	- the AVR state machine will tell the PIC24 state machine that the list is ready
-		to be sent back to the PIC24
-
-typedef struct checkboxes
-{
-	UCHAR index;
-	UCHAR checked;
-	char string[20];
-} CHECKBOXES;
 	
 The array of structs will just be enough to display on the screen (or there could be more if
 the scrolling function can move the choices in and out)
@@ -705,14 +540,6 @@ dec		hex		char
 test_write_data (read) - simulates the AVR
 test_write_data (write) - simulates the PIC24
 
-I should be able to use TWD (test_write_data) in write mode connected to the actual
-AVR and alternatively use TWD in read mode connected to the PIC24.
-Also, if the FPGA can be made to output the telemetry data in the same format as the
-PIC24 sends to the AVR. The FPGA currently just reads an index (0->15) into an array
-of the telem data and sends out on UART2. UART1 of the FPGA is an extra UART used for
-monitoring. So for now the PIC24 will poll the FPGA for data (on comm2) and put it 
-in the format for the AVR and send it out on comm3 (to AVR). (comm1 of the PIC24 talks
-to the TS-7200).
 
 FPGA UART2 <->  PIC24 comm2
 				PIC24 comm3 <-> AVR
@@ -775,4 +602,7 @@ SPI goes to FPGA (4k7 pull-up resistors)
 
 FPGA:
 1 UART goes to monitor (5-3v3 conv to RS-232 conv)
+
+"make set_eeprom_save_fuse" to set fuses so eeprom is saved when reprogramming
+"make clear_eeprom_save_fuse" to set fuses so eeprom gets erased everytime
 

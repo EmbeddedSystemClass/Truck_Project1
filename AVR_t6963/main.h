@@ -188,42 +188,6 @@ enum key_types
 	TEST17	//			- F8
 } KEY_TYPES;
 
-
-#if 0
-
-	KP_POUND = 0xE0,
-	KP_AST, // '*'		- E1
-	KP_0, // '0'		- E2
-	KP_1, // '1'		- E3
-	KP_2, // '2'		- E4
-	KP_3, // '3'		- E5
-	KP_4, // '4'		- E6
-	KP_5, // '5'		- E7
-	KP_6, // '6'		- E8
-	KP_7, // '7'		- E9
-	KP_8, // '8'		- EA
-	KP_9, // '9'		- EB
-	KP_A, // 'A'		- EC
-	KP_B, // 'B'		- ED
-	KP_C, // 'C'		- EE
-	KP_D, // 'D'		- EF
-	INIT, //			- F0
-	SPACE,	//			- F1
-	SHOW_EEPROM, //		- F2
-	SHOW_MENU_STRUCT,// - F3
-	LOAD_MENU_STRUCT,// - F4
-	READ_EEPROM,//		- F5
-	BURN_PART,		//  - F6
-	BURN_PART1,		//  - F7
-	BURN_PART2,		//  - F8
-	BURN_PART3,		//  - F9
-	BURN_PART4,		//  - FA
-	TEST1,			//  - FB
-	TEST2,			//  - FC
-	TEST3,			//  - FD
-	TEST4			//  - FE
-#endif
-
 enum non_func_types
 {
 	NF_1 = 0xB0,

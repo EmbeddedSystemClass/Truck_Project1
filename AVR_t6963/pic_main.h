@@ -39,7 +39,6 @@ int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2
 
 typedef struct menu_func
 {
-//	int _index;
 	UCHAR fptr;								// which function to call (menu_types)
 	int menus[6];							// which menu to goto if _menu_change is the fptr
 	UCHAR index;
