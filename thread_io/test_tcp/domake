@@ -1,0 +1,22 @@
+gcc client.c -o client &> warnings1.txt
+gcc server3.c -o server &> warnings2.txt
+cat warnings1.txt | grep error
+cat warnings2.txt | grep error
+
+find2 warning warnings1.txt
+if grep -q error warnings1.txt
+ find2 error warnings1.txt
+ then exit 1
+fi 
+tar cf client.tar client.c client.h
+scp client.tar 192.168.42.110:/home/dan/dev/sched/test_tcp
+
+find2 warning warnings2.txt
+if grep -q error warnings2.txt
+ find2 error warnings2.txt
+ then exit 1
+fi 
+tar cf server.tar server3.c tcp.h
+scp server.tar 192.168.42.115:/home/dan/dev/sched/test_tcp
+
+rm client server *.tar
