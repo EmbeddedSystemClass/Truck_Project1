@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <errno.h>
+#include <dirent.h>
 #include "mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
@@ -89,6 +90,48 @@ UCHAR task1(int test)
 	size_t size;
 	int i;
 	int j = 0;
+	DIR *d;
+	struct dirent *dir;
+	char tempx[30];
+	int num;
+	char *chp;
+
+
+	d = opendir( "." );
+	if( d == NULL )
+	{
+		return -1;
+	}
+	i = 0;
+
+/* this compiles for the embedded linux card but will it run?
+	while(dir = readdir(d))
+	{
+		if(strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
+		  continue;
+
+		memset(tempx,0,sizeof(tempx));
+		strcpy(tempx,dir->d_name);
+//		format = GetFileFormat(tempx);
+
+		chp = tempx;
+		j = 0;
+
+		while(*chp++ != '.' && j < 30)
+			j++;
+
+		strncpy(tempx,chp,j+1);
+
+//		mvprintw(LINES - 21-i++, 5,"%d  %s  ",j,tempx);
+	    if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
+	    {
+//	    	if(GetFileFormat(dir->d_name) == which)
+//				strcpy(dat_names[num++],dir->d_name);
+//			mvprintw(LINES - 21-i++, 0,"%s  %s  %d",dir->d_name,dat_names[k-1],j);
+		}
+	}
+	closedir( d );
+*/
 
 	illist_init(&ill);
 	same_msg = 0;
@@ -139,7 +182,8 @@ UCHAR task1(int test)
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
 						printf("send idata: rec: %d rc: %d ",rec_no,rc);
-						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
+//						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
+//							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
 						illist_insert_data(rec_no, &ill, &tempi1);
 	//					illist_show(&ill);
 						break;
@@ -148,7 +192,7 @@ UCHAR task1(int test)
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);	// blocking
 						printf("send odata: rec: %d rc: %d ",rec_no,rc);
-						printf("port: %d\tonoff: %d\tlabel: %s\n\n",tempo1.port,tempo1.onoff,tempo1.label);
+//						printf("port: %d\tonoff: %d\tlabel: %s\n",tempo1.port,tempo1.onoff,tempo1.label);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						ollist_show(&oll);
 						break;
@@ -173,7 +217,7 @@ UCHAR task1(int test)
 						{
 							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
 							pid++;
-						}	
+						}
 
 						printf("%d\n",rc);
 						printf("done\n");
@@ -245,7 +289,8 @@ UCHAR task1(int test)
 						memset(&tempo1,0,sizeof(O_DATA));
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,
+								pid->type,pid->inverse,pid->label);
 							memcpy(&tempi1,pid,sizeof(I_DATA));
 							illist_insert_data(i, &ill, &tempi1);
 							pid++;

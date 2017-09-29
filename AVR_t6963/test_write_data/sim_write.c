@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 	memcpy((void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),(void*)&no_rtparams,sizeof(UINT));	// reserve an extra sample_data space for in case of 'escape'
 */
 	res = 0;
-
+#ifndef TESTING_AVR
 	for(i = 0;i < EEPROM_SIZE;i++)
 	{
 		res += write(global_fd,&eeprom_sim[i],1);
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
 	mvwprintw(win, LAST_ROW_DISP,2,"res: %2d ",res);
 	wrefresh(win);
-
+#endif
 	res = 0;
 /*
 	for(i = 0;i < TOTAL_NUM_CHECKBOXES;i++)
@@ -259,6 +259,7 @@ int main(int argc, char *argv[])
 				case READ_EEPROM:
 					type = 3;
 					size = EEPROM_SIZE;
+//					size = 234;
 					start_addr = 0;
 					memset(eeprom_sim,0,EEPROM_SIZE);
 					get_key(wkey,size,start_addr,eeprom_sim,type);
@@ -266,9 +267,10 @@ int main(int argc, char *argv[])
 //						read(global_fd,&eeprom_sim[i],1);
 
 					j = k = 0;
-					for(i = 0;i < 22;i++)
-						mvwprintw(win, LAST_ROW_DISP-35+i,24,"                                   ");
-					for(i = start_addr;i < size+start_addr;i++)
+#if 0
+
+//					for(i = start_addr;i < size+start_addr;i++)
+					for(i = 0;i < size;i++)
 					{
 						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
@@ -288,7 +290,6 @@ int main(int argc, char *argv[])
 					}
 					wrefresh(win);
 					// write current eeprom image to file
-#if 0
 					if(fp > 0)
 					{
 						for(i = start_addr;i < size;i++)
@@ -308,12 +309,16 @@ int main(int argc, char *argv[])
 						break;
 						case BURN_PART2:
 //						size = sizeof(RT_PARAM)*no_rtparams;
-						size = sizeof(RT_PARAM)*10;
-						start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
+//						size = sizeof(RT_PARAM)*10;
+//						start_addr = RT_PARAMS_OFFSET_EEPROM_LOCATION;
+						size = 48;
+						start_addr = 0x120;
 						break;
 						case BURN_PART3:
 						size = NO_MENUS_EEPROM_LOCATION-NO_MENU_LABELS_EEPROM_LOCATION;
 						start_addr = NO_MENU_LABELS_EEPROM_LOCATION;
+						for(i = size;i < size+start_addr;i++)
+							eeprom_sim[i] = i - start_addr+0x30;
 						break;
 						default:
 						break;
@@ -504,7 +509,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			break;
 		case 'V':
 		case 'v':
-			wkey = BURN_PART;
+			wkey = BURN_PART1;
 			break;
 		case 'W':
 		case 'w':
@@ -579,170 +584,19 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 	}
 	return wkey;
 }
-
-
-#if 0
-static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
-{
-	UCHAR wkey;
-	if(key != 0xff)
-	{
-		switch(key)
-		{
-			case '0':
-				mvwprintw(win, display_offset,50, "zero    ");
-				wkey = KP_0;
-				break;
-			case '1':
-				mvwprintw(win, display_offset,50, "one     ");
-				wkey = KP_1;
-				break;
-			case '2':
-				mvwprintw(win, display_offset,50, "two     ");
-				wkey = KP_2;
-				break;
-			case '3':
-				mvwprintw(win,display_offset,50, "three    ");
-				wkey = KP_3;
-				break;
-			case '4':
-				mvwprintw(win, display_offset,50, "four    ");
-				wkey = KP_4;
-				break;
-			case '5':
-				mvwprintw(win, display_offset,50, "five    ");
-				wkey = KP_5;
-				break;
-			case '6':
-				mvwprintw(win, display_offset,50, "six     ");
-				wkey = KP_6;
-				break;
-			case '7':
-				mvwprintw(win, display_offset,50, "seven   ");
-				wkey = KP_7;
-				break;
-			case '8':
-				mvwprintw(win, display_offset,50, "eight   ");
-				wkey = KP_8;
-				break;
-			case '9':
-				mvwprintw(win, display_offset,50, "nine    ");
-				wkey = KP_9;
-				break;
-			case '*':
-				mvwprintw(win, display_offset,50, "ast     ");
-				wkey = KP_AST;
-				break;
-			case '#':
-				mvwprintw(win, display_offset,50, "pound   ");
-				wkey = KP_POUND;
-				break;
-			case 'A':
-			case 'a':
-				mvwprintw(win, display_offset,50, "A       ");
-				wkey = KP_A;
-				break;
-			case 'B':
-			case 'b':
-				mvwprintw(win, display_offset,50, "B       ");
-				wkey = KP_B;
-				break;
-			case 'C':
-			case 'c':
-				mvwprintw(win, display_offset,50, "C       ");
-				wkey = KP_C;
-				break;
-			case 'D':
-			case 'd':
-				mvwprintw(win, display_offset,50, "D       ");
-				wkey = KP_D;
-				break;
-// use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
-			case 'Y':
-			case 'y':
-				mvwprintw(win, display_offset,50, "pound   ");
-				wkey = KP_POUND;
-				break;
-			case 'Z':
-			case 'z':
-				mvwprintw(win, display_offset,50, "ast     ");
-				wkey = KP_AST;
-				break;
-			case 'V':
-			case 'v':
-				mvwprintw(win, display_offset,50,"BURN_PART1 ");
-				wkey = BURN_PART1;
-				break;
-			case 'W':
-			case 'w':
-				mvwprintw(win, display_offset,50,"BURN_PART2 ");
-				wkey = BURN_PART2;
-				break;
-			case 'U':
-			case 'u':
-				mvwprintw(win, display_offset,50,"BURN_PART3 ");
-				wkey = BURN_PART3;
-				break;
-			case 'R':
-			case 'r':
-				mvwprintw(win, display_offset,50,"SHOW_MENUs");
-				wkey = SHOW_MENU_STRUCT;
-				break;
-			case 'S':
-			case 's':
-				mvwprintw(win, display_offset,50,"SHOW_EEPROM   ");
-				wkey = SHOW_EEPROM;
-				break;
-			case 'L':
-			case 'l':
-				mvwprintw(win, display_offset,50,"LOAD_MENUs   ");
-				wkey = LOAD_MENU_STRUCT;
-				break;
-			case 'T':
-			case 't':
-				mvwprintw(win, display_offset,50,"");
-				wkey = 0xff;
-				break;
-			case 'E':
-			case 'e':
-				mvwprintw(win, display_offset,50,"READ_EEPROM   ");
-				wkey = READ_EEPROM;
-				break;
-			case 'P':
-			case 'p':
-				mvwprintw(win, display_offset,50," ");
-				wkey = 0xff;
-				break;
-			case 'I':
-			case 'i':
-				mvwprintw(win, display_offset,50,"INIT        ");
-				wkey = INIT;
-				break;
-			case ' ':
-				mvwprintw(win, display_offset,50,"          ");
-				wkey = SPACE;
-				break;
-			default:
-				mvwprintw(win, display_offset,50, "?        ");
-				wkey = 0xff;
-				break;
-		}
-	}
-	return wkey;
-}
-#endif
+//******************************************************************************************//
+//**************************************** print_menu **************************************//
+//******************************************************************************************//
 static void print_menu(WINDOW *win)
 {
 //	mvwprintw(win, LAST_ROW-6,LAST_COL,"*");
-	mvwprintw(win, LAST_ROW-10,1,"----------------------------- menu ----------------------------");
-	mvwprintw(win, LAST_ROW-9,1,"I/i is a shortcut to INIT");
-	mvwprintw(win, LAST_ROW-8,1,"E/e is a shortcut to READ_EEPROM");
-	mvwprintw(win, LAST_ROW-7,1,"S/s is a shortcut to SHOW_EEPROM");
-	mvwprintw(win, LAST_ROW-6,1,"R/r is a shortcut to SHOW_MENU_STRUCT");
-	mvwprintw(win, LAST_ROW-5,1,"L/l is a shortcut to LOAD_MENU_STRUCT");
+	mvwprintw(win, LAST_ROW-8,1,"----------------------------- menu ----------------------------");
+	mvwprintw(win, LAST_ROW-7,1,"I/i is a shortcut to INIT");
+	mvwprintw(win, LAST_ROW-6,1,"E/e is a shortcut to READ_EEPROM");
+	mvwprintw(win, LAST_ROW-5,1,"S/s is a shortcut to SHOW_EEPROM");
 	mvwprintw(win, LAST_ROW-4,1,"V/v is a shortcut to BURN_PART1");
-	mvwprintw(win, LAST_ROW-3,1,"W/w is a shortcut to BURN_PART2");
-	mvwprintw(win, LAST_ROW-2,1,"U/u is a shortcut to BURN_PART3");
+	mvwprintw(win, LAST_ROW-3,1,"H/h is a shortcut to LOAD_RAM");
+	mvwprintw(win, LAST_ROW-2,1,"N/n is a shortcut to show the cblabels");
 	mvwprintw(win, LAST_ROW-1,1,"<space> = blank screen");
 	wrefresh(win);
 

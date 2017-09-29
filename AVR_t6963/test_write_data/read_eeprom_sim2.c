@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 
-	mvwprintw(win, display_offset-1,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
+//	mvwprintw(win, display_offset-1,2,"no_menu_labels: %d no_rt_labels %d  ",no_menu_labels,no_rt_labels);
 
 	for(i = 0;i < 1023;i++)
 	{
@@ -192,10 +192,10 @@ int main(int argc, char *argv[])
 	for(i = 0;i < 50;i++)
 		mvwprintw(win, display_offset+i,2,"                                                 ");
 
-	for(i = 0;i < 1023;i++)
+	for(i = 0;i < 1024;i++)
 	{
 		mvwprintw(win, display_offset+j, 8+(k*3),"%2x ",eeprom_sim[i]);
-		if(++k > 15)
+		if(++k > 31)
 		{
 			k = 0;
 			++j;
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 	j = 2;
 	k = 0;
 	for(i = 0;i < 70;i++)
-		mvwprintw(win, display_offset+i,2,"                                                     ");
+		mvwprintw(win, display_offset+i,2,"                                                                        ");
 	mvwprintw(win, display_offset,2,"no_menu_structs: %d    ",no_menu_structs);
 	for(i = 0;i < no_menu_structs;i++)
 	{

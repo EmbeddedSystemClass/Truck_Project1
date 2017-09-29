@@ -289,7 +289,7 @@ void GDispCharAt (UINT row, UINT col, UCHAR c)
 	GDispDataWr (c - 0x20);
 	GDispCmdSend (DATA_WR);
 #else
-	mvwaddch(win,row+1,col+5,c);
+	mvwaddch(win,row+2,col+5,c);
 #endif
 #endif
 }
@@ -311,7 +311,7 @@ void GDispStringAt(UINT row, UINT col, char *c)
 			return;
 	}
 #else
-	mvwprintw(win,row+1,5+(col+i),"%s",str);
+	mvwprintw(win,row+2,5+(col+i),"%s",str);
 //	mvwprintw(win, 25,5,"test");
 #endif
 #endif

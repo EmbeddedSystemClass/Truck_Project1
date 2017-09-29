@@ -39,7 +39,7 @@ int pack(UCHAR low_byte, UCHAR high_byte)
 {
 	int temp;
 	int myint;
-//	low_byte = ~low_byte;
+	low_byte = ~low_byte;
 	myint = (int)low_byte;
 	temp = (int)high_byte;
 	temp <<= 8;
@@ -54,7 +54,7 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*low_byte = (UCHAR)myint;
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
-//	*low_byte = ~(*low_byte);
+	*low_byte = ~(*low_byte);
 }
 
 
@@ -264,11 +264,8 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	rt_params[i].shown = shown;				// if its shown or not
 	rt_params[i].dtype = dtype;				// 0 - UCHAR; 1 - UINT; 2 - string
 	rt_params[i].type = type;
-#ifdef TEST_WRITE_DATA
 	memcpy(peeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
-#else
-    eeprom_update_block(&rt_params[i], eepromString+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset, sizeof(RT_PARAM));
-#endif
+//    eeprom_update_block(&rt_params[i], eepromString+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset, sizeof(RT_PARAM));
 	total_offset += sizeof(RT_PARAM);
 //	printf("total_offset = %d\n",total_offset);
 	i++;
@@ -288,19 +285,19 @@ int burn_eeprom(void)
 	char temp[MAX_LABEL_LEN];
 
     i = 0;
-	i = update_mlabels(i,"home\0");
-	i = update_mlabels(i,"MENU1a\0");
-	i = update_mlabels(i,"MENU1b\0");
-	i = update_mlabels(i,"MENU1c\0");
-	i = update_mlabels(i,"MENU1d\0");
-	i = update_mlabels(i,"MENU1e\0");
-	i = update_mlabels(i,"MENU2a\0");
-	i = update_mlabels(i,"MENU2B\0");
-	i = update_mlabels(i,"MENU2c\0");
-	i = update_mlabels(i,"MENU2d\0");
-	i = update_mlabels(i,"MENU2e\0");
-	i = update_mlabels(i,"MENU3a\0");
-	i = update_mlabels(i,"MENU3b\0");
+	i = update_mlabels(i,"home\0");		// 0
+	i = update_mlabels(i,"MENU1a\0");	// 1
+	i = update_mlabels(i,"MENU1b\0");	// 2
+	i = update_mlabels(i,"MENU1c\0");	// 3
+	i = update_mlabels(i,"MENU1d\0");	// 4
+	i = update_mlabels(i,"MENU1e\0");	// 5
+	i = update_mlabels(i,"MENU2a\0");	// 6
+	i = update_mlabels(i,"MENU2B\0");	// 7
+	i = update_mlabels(i,"MENU2c\0");	// 8
+	i = update_mlabels(i,"MENU2d\0");	// 9
+	i = update_mlabels(i,"MENU2e\0");	// 10
+	i = update_mlabels(i,"MENU3a\0");	// 11
+	i = update_mlabels(i,"MENU3b\0");	// 12
 
 	i = update_mlabels(i,"enter\0");
 	i = update_mlabels(i,"up\0");
@@ -325,7 +322,7 @@ int burn_eeprom(void)
 
 	i = update_mlabels(i,"RPM\0");
 	i = update_mlabels(i,"ENG TEMP\0");
-	i = update_mlabels(i,"TRIP\0");
+	i = update_mlabels(i,"TRIPPY\0");
 	i = update_mlabels(i,"TIME\0");
 	i = update_mlabels(i,"AIR TEMP\0");
 	i = update_mlabels(i,"MPH\0");
@@ -345,16 +342,16 @@ int burn_eeprom(void)
 	memcpy((void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),(void*)&no_menu_labels,sizeof(UINT));
 	total_offset = 0;
 
-	i = update_rtparams(i, 1, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
-	i = update_rtparams(i, 2, 0, SHOWN_SENT, 0, RT_ENGT);
-	i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
-	i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_TIME);
-	i = update_rtparams(i, 5, 0, SHOWN_SENT, 0, RT_AIRT);
-	i = update_rtparams(i, 1, 15, SHOWN_SENT, 0, RT_MPH);
-	i = update_rtparams(i, 2, 15, SHOWN_SENT, 0, RT_OILP);
-	i = update_rtparams(i, 3, 15, SHOWN_SENT, 0, RT_MAP);
-	i = update_rtparams(i, 4, 15, SHOWN_SENT, 0, RT_OILT);
-	i = update_rtparams(i, 5, 15, SHOWN_SENT, 0, RT_O2);
+	i = update_rtparams(i, 0, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
+	i = update_rtparams(i, 1, 0, NOSHOWN_SENT, 0, RT_ENGT);
+	i = update_rtparams(i, 2, 0, NOSHOWN_NOSENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
+	i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TIME);
+	i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_AIRT);
+	i = update_rtparams(i, 0, 20, SHOWN_SENT, 0, RT_MPH);
+	i = update_rtparams(i, 1, 20, SHOWN_SENT, 0, RT_OILP);
+	i = update_rtparams(i, 2, 20, SHOWN_SENT, 0, RT_MAP);
+	i = update_rtparams(i, 3, 20, SHOWN_SENT, 0, RT_OILT);
+	i = update_rtparams(i, 4, 20, SHOWN_SENT, 0, RT_O2);
 
 	no_rtparams = i;
 // write to the number of rt_params location in eeprom the number of rt_params
@@ -377,8 +374,8 @@ void update_ram(void)
 	total_offset = 0;
 
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-//	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
-	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
+//	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
 // 1a
 	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
 // 1b

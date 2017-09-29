@@ -109,7 +109,7 @@
 #define TEXT_HOME_ADDR      0x0000
 #define GRH_HOME_ADDR       0x0200
 #define CG_HOME_ADDR        0x1400
-#define COLUMN              30      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
+#define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
 #define MAX_ROW_PIXEL       128      //MAX_ROW_PIXEL the physical matrix length (y direction)
 #define MAX_COL_PIXEL       128     //MAX_COL_PIXEL the physical matrix width (x direction)

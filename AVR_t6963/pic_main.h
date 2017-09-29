@@ -77,7 +77,6 @@ MENU_FUNC_STRUCT menu_structs[] = {
 };
 */
 
-//RT_PARAM rt_params[NUM_RT_PARAMS];
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24
 //#ifdef NOAVR

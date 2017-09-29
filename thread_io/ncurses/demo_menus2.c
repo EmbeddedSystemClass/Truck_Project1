@@ -1228,7 +1228,7 @@ main(int argc, char *argv[])
     }
     status = newwin(5, COLS-10, LINES - 10, 1);
     wrefresh(status);
-    
+
     build_menus();
 /*
 	strncpy(fname1,fptr1,40);

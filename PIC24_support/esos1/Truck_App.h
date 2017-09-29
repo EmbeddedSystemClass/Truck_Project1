@@ -1115,15 +1115,15 @@ ESOS_USER_TASK(get_sync);
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
-RE0 - p93 - 5th from right inside top
-RE1 - p94 - 4th from right outside top
-RE2 - p98 - 2nd from right outside top
-RE3 - p99 - 2nd from right inside top
+RE0 - p93 - 5th from right inside top			//	row 0
+RE1 - p94 - 4th from right outside top			//	row 1
+RE2 - p98 - 2nd from right outside top			//	row 2
+RE3 - p99 - 2nd from right inside top			//	row 3
 
-RA0 - p17 - 5th up - outside right
-RA1 - p38 - 7th from right - outside bottom
-RA2 - p58 - 4th up from bottom - inside left
-RA3 - p59 - 5th up from bottom - outside left
+RA0 - p17 - 5th up - outside right				//	col 0
+RA1 - p38 - 7th from right - outside bottom		//	col 1
+RA2 - p58 - 4th up from bottom - inside left	//	col 2
+RA3 - p59 - 5th up from bottom - outside left	//	col 3
 */
 
 #define C0 _RA0

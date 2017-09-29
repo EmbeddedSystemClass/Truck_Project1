@@ -57,6 +57,8 @@ int file_menu2(int which, char *ret_str)
     char *chp;
     int format;
 	struct dirent **namelist;
+	DIR *d;
+	struct dirent *dir;
 
 /* Initialize curses */
     initscr();
@@ -72,8 +74,6 @@ int file_menu2(int which, char *ret_str)
 
 //	mvprintw(LINES-20,2,"num: %d ",num);
 
-	DIR *d;
-	struct dirent *dir;
 	d = opendir( "." );
 	if( d == NULL )
 	{
@@ -81,7 +81,7 @@ int file_menu2(int which, char *ret_str)
 	}
 	i = 0;
 	num = 0;
-	
+
 	memset(dat_names,0,NUM_DAT_NAMES*20);
 
 	k = 0;
@@ -257,9 +257,9 @@ static int walker( char *searching, char *result )
   if( d == NULL ) {
     return 1;
   }
-  while( ( dir = readdir( d ) ) ) 
+  while( ( dir = readdir( d ) ) )
   {
-    if( strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 ) 
+    if( strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 )
     {
       continue;
     }

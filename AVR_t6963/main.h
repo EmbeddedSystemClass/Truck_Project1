@@ -36,7 +36,7 @@ typedef struct checkboxes
 	UCHAR checked;
 } CHECKBOXES;
 
-#define AUX_STRING_LEN EEPROM_SIZE/8	// 128
+#define AUX_STRING_LEN EEPROM_SIZE/4	// 128
 
 #ifdef TEST_WRITE_DATA
 UCHAR eeprom_sim[EEPROM_SIZE];
@@ -60,7 +60,7 @@ typedef struct rt_params
 
 enum shown_types
 {
-	SHOWN_SENT = 0x14,
+	SHOWN_SENT = 05,
 	NOSHOWN_SENT,
 	NOSHOWN_NOSENT
 } SHOWN_TYPES;
@@ -230,8 +230,8 @@ int global_fd;
 //#define NUM_ALNUM 52		// without the '!' - '9'
 #define NUM_ALNUM 85		// include all special chars
 #define ALNUM_SCROLL_LIST_LEN 13
-#define MENU_START_ROW 12
-#define MENU_START_COL 15
+#define MENU_START_ROW 14
+#define MENU_START_COL 3
 #define MENU_BLANK "          "
 #define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 #define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)

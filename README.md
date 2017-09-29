@@ -1,10 +1,24 @@
-<h1>Truck_Project1_notes.txt</h1>
+<h1>Truck_Project1</h1>
 <br />
-8/7/17<br />
-test AVR to FPGA SPI - AVR just echos back what's recv'd in SPI to FPGA which prints results to serial port<br />
-connection to SPI on AVR will have to be removeable to program to AVR - if this works then start wiring<br />
-the master board together<br />
+This project has a subdirectory of each of the 4 processors used in the system<br />
+<li>PIC24_support - A PIC24 processor that uses ESOS and acts as the master</li>
+<li>Truck_App1 - A XILINX Spartan3E FPGA that reads real time information</li>
+<li>AVR_t6963 - A ProMini 328p AVR that drives an LCD display</li>
+<li>thread_io - A TS-7200 with 2 20 port I/O cards for handling IO</li>
 <br />
+Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200<br />
+and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from<br />
+the PIC24FJ128GB110 over the serial port. The path to the FPGA is the SPI and the path to the<br />
+AVR and the TS-7200 are serial ports. The keypad input manages the menuing of the LCD screen<br />
+and can display optionally real time info like engine speed, engine temp, oil pressure, etc.<br />
+There will also be a task to read the ADC's which measure temp sensors and the oil pressure.<br />
+The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-<br />
+shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to<br />
+the PIC24FJ128GB110 via the SPI (as master).<br />
+Other telemetry data can be added later like distributor timing to use for spark advance.<br />
+The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a <br />
+'black box' FDR that records the last so many hours or minutes of the telemetry data to a<br />
+file that can be downloaded later.<br />
 PIC24 UARTS:<br />
 <br />
 UART1 - RS232 to TS-7200<br />
@@ -31,19 +45,6 @@ Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.<br />
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.<br />
 Each task must be registered in user_init.<br />
 <br />
-Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200<br />
-and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from<br />
-the PIC24FJ128GB110 over the serial port. The path to the FPGA is the SPI and the path to the<br />
-AVR and the TS-7200 are serial ports. The keypad input manages the menuing of the LCD screen<br />
-and can display optional real time info like engine speed, engine temp, oil pressure, etc.<br />
-There will also be a task to read the ADC's which measure temp sensors and the oil pressure.<br />
-The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-<br />
-shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to<br />
-the PIC24FJ128GB110 via the SPI (as master).<br />
-Other telemetry data can be added later like distributor timing to use for spark advance.<br />
-The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a <br />
-'black box' FDR that records the last so many hours or minutes of the telemetry data to a<br />
-file that can be downloaded later.<br />
 <br />
 // skeleton example of 2 tasks - test1 task sends mail to cmd_param task<br />
 <br />

@@ -190,7 +190,7 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
 						po = (O_DATA *)curr;
 						for(i = 0;i < index;i++)
 							po++;
-						pcurr = (void *)po;	
+						pcurr = (void *)po;
 						if(demo_forms(pcurr,which) != TRUE)
 							finished = 1;
 						disp_msg(twin,"which = 0\0",num);

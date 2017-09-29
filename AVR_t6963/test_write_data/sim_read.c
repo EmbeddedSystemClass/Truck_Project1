@@ -63,9 +63,11 @@ int main(int argc, char *argv[])
 	keypad(win, TRUE);
 //	nodelay(win, TRUE);
 	box(win,0,0);
+	
 	set_win(win);
 
 	wrefresh(win);
+//	mvwaddch(win,2,3,ACS_LTEE);
 
 	memset(&newtio, 0, sizeof newtio);
 

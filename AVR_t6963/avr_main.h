@@ -2,8 +2,6 @@
 
 #define NUM_ALNUM 85		// include all special chars
 #define ALNUM_SCROLL_LIST_LEN 13
-#define MENU_START_ROW 12
-#define MENU_START_COL 15
 #define MENU_BLANK "          "
 
 CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
@@ -31,7 +29,6 @@ UCHAR parse_state;
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 UCHAR get_row(int index);
 UCHAR get_col(int index);
-RT_PARAM rt_params[NUM_RT_PARAMS];
 // define a separate rt_params for the write part of test_write_data.c_str
 // because we want to handle this as if a separate array is running on the PIC24
 //#ifdef NOAVR

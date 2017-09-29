@@ -279,6 +279,15 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 		case INIT:
 			init_list();
 			break;
+
+		case TEST1:
+			write(global_fd,&ret_char,1);
+			break;
+
+		case TEST2:
+			write(global_fd,&ret_char,1);
+			break;
+
 		case TEST5:
 			write(global_fd,&ret_char,1);
 			break;
@@ -297,27 +306,36 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
  			send_aux_data = 0;
 
 			for(i = start_addr;i < size+start_addr;i++)
-				read(global_fd,&str[i],1);
-
+			{
+				read(global_fd,&eeprom_sim[i],1);
+				mvwprintw(win, LAST_ROW_DISP-3,1,"%d   %x    ",i,eeprom_sim[i]);
+				wrefresh(win);
+			}
 			get_mlabel_offsets();
 
 			mvwprintw(win, LAST_ROW_DISP-2,1,
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
- 			break;
 
-		case BURN_PART:
-
-			memset(taux_string,0,AUX_STRING_LEN);
 			j = k = 0;
-			for(i = start_addr;i < size+start_addr;i++)
-				aux_string[j++] = *(str + i);
-			j = 0;
-
-			for(i = 0;i < size;i++)
+			for(i = 0;i < 234;i++)
 			{
-				if(aux_string[i] < 0x7e && aux_string[i] > 0x21)
-					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",aux_string[i]);
-				else if(aux_string[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-40, 24+k," ");
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-50, 24+k," ");
+				else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			k = 0;
+			j++;
+			for(i = 0x120;i < 0x120+48;i++)
+			{
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-50, 24+k," ");
 				else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
 				if(++k > 30)
 				{
@@ -326,7 +344,26 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				}
 			}
 			wrefresh(win);
+ 			break;
 
+		case BURN_PART:
+
+			j = k = 0;
+#if 0
+			for(i = 0;i < size;i++)
+			{
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-40, 24+k," ");
+				else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			wrefresh(win);
+#endif
 			mvwprintw(win, LAST_ROW_DISP-3,1,
 				"size: %d  start_addr: %d  ",size,start_addr);
 			wrefresh(win);
@@ -335,9 +372,9 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 			unpack(size,&low_byte,&high_byte);
 			res += write(global_fd, &high_byte,1);
-			read(global_fd, &t1, 1);
+//			read(global_fd, &t1, 1);
 			res += write(global_fd, &low_byte,1);
-			read(global_fd, &t2, 1);
+//			read(global_fd, &t2, 1);
 
 //			mvwprintw(win, LAST_ROW_DISP-2,1,
 //				"burn part size:       %x  %x  %x  %x",t1, t2,high_byte,low_byte);
@@ -345,58 +382,35 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 			unpack(start_addr,&low_byte,&high_byte);
 			res += write(global_fd, &high_byte,1);
-			read(global_fd, &t1, 1);
+//			read(global_fd, &t1, 1);
 			res += write(global_fd, &low_byte,1);
-			read(global_fd, &t2, 1);
+//			read(global_fd, &t2, 1);
 
-//			mvwprintw(win, LAST_ROW_DISP-1,1,
-//				"burn part start_addr: %x  %x  %x  %x",t1, t2,high_byte,low_byte);
-//			wrefresh(win);
+			mvwprintw(win, LAST_ROW_DISP-2,1,
+				"burn part start_addr: %x  %x  %x  %x",t1, t2,high_byte,low_byte);
+			wrefresh(win);
 
 			for(i = 0;i < size;i++)
 			{
-//				write(global_fd,&str[i],1);
-//				aux_string[i] = i;
-				write(global_fd,&aux_string[i],1);
-				read(global_fd,&taux_string[i],1);
-//				usleep(10000);
+				res += write(global_fd,&eeprom_sim[i],1);
+				usleep(tdelay);
 			}
-
-			j = k = 0;
-
-			for(i = start_addr;i < size+start_addr;i++)
-			{
-				if(taux_string[i] < 0x7e && taux_string[i] > 0x21)
-					mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"%c",taux_string[i]);
-				else if(taux_string[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-30, 24+k," ");
-				else mvwprintw(win, LAST_ROW_DISP+j-30, 24+k,"_");
-				if(++k > 30)
-				{
-					k = 0;
-					++j;
-				}
-			}
-			wrefresh(win);
-
-// 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
-
-//			get_mlabel_offsets();
-
+			mvwprintw(win, LAST_ROW_DISP-2,20,"res: %d   ",res);
  			break;
 
 		case LOAD_RAM:
 			i = 0;
 			total_offset = 0;
-			i = update_rtparams(i, 1, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
-			i = update_rtparams(i, 2, 0, SHOWN_SENT, 0, RT_ENGT);
-			i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
-			i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_TIME);
-			i = update_rtparams(i, 5, 0, SHOWN_SENT, 0, RT_AIRT);
-			i = update_rtparams(i, 1, 15, SHOWN_SENT, 0, RT_MPH);
-			i = update_rtparams(i, 2, 15, SHOWN_SENT, 0, RT_OILP);
-			i = update_rtparams(i, 3, 15, SHOWN_SENT, 0, RT_MAP);
-			i = update_rtparams(i, 4, 15, SHOWN_SENT, 0, RT_OILT);
-			i = update_rtparams(i, 5, 15, SHOWN_SENT, 0, RT_O2);
+			i = update_rtparams(i, 0, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
+			i = update_rtparams(i, 1, 0, SHOWN_SENT, 0, RT_ENGT);
+			i = update_rtparams(i, 2, 0, SHOWN_SENT, 0, RT_TRIP);	// first element of offset_array has offset of 2nd label
+			i = update_rtparams(i, 3, 0, SHOWN_SENT, 0, RT_TIME);
+			i = update_rtparams(i, 4, 0, SHOWN_SENT, 0, RT_AIRT);
+			i = update_rtparams(i, 0, 18, SHOWN_SENT, 0, RT_MPH);
+			i = update_rtparams(i, 1, 18, SHOWN_SENT, 0, RT_OILP);
+			i = update_rtparams(i, 2, 18, SHOWN_SENT, 0, RT_MAP);
+			i = update_rtparams(i, 3, 18, SHOWN_SENT, 0, RT_OILT);
+			i = update_rtparams(i, 4, 18, SHOWN_SENT, 0, RT_O2);
 
 			no_rtparams = i;
 

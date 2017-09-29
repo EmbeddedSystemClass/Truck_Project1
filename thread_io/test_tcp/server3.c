@@ -206,7 +206,7 @@ int main(void)
 		}
 		i++;
 	}while(test1 != 0xff && i < 10000);
-	
+
 	close(sd2);
 	return 0;
 }

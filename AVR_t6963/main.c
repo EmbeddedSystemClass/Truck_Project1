@@ -158,7 +158,7 @@ int main(void)
 	while (1)
 	{
 		ret_char = receiveByte();
-		transmitByte(ret_char);
+//		transmitByte(ret_char);
 		read_get_key(ret_char);
 //		xbyte = SPI_read();
 //		_delay_ms(5);
