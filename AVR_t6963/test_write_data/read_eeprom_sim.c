@@ -59,6 +59,13 @@ int main(int argc, char *argv[])
 		else
 		{
 			res = 0;
+			j = 0x21;
+			for(i = 300;i < 600;i++)
+			{
+				eeprom_sim[i] = j;
+				if(++j > 0x7e)
+					j = 0x21;
+			}				
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				res += write(fp,&eeprom_sim[i],1);

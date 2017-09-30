@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 {
 	int fd;
 	int type = 0;
-	int i,j,k;
+	int i,j,k,l;
 	WINDOW *win;
 	MENU_FUNC_STRUCT mf;
 	MENU_FUNC_STRUCT *pmf = &mf;
@@ -315,18 +315,22 @@ int main(int argc, char *argv[])
 
 	wrefresh(win);
 	getch();
-
+*/
 	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
 
-	j = k = 0;
-	for(i = 0;i < 500;i++)
+	k = l = 0;
+	j = 1;
+	for(i = 0;i < CBLABEL_SIZE;i++)
 	{
 		ch = *(cblabels+i);
-		if(ch > 0x2F && ch < 0x7b)
-			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%c     ",i,ch);
-		else
-			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%2x    ",i,ch);
+		if(ch == 0)
+			l++;
+		else mvwprintw(win, display_offset+j+1,2+k,"%c",ch);
+//		if(ch > 0x2F && ch < 0x7b)
+//			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%c     ",i,ch);
+//		else
+//			mvwprintw(win, display_offset+j+1,2+(k*7),"%d:%2x    ",i,ch);
 
 		if(++k > 30)
 		{
@@ -334,9 +338,11 @@ int main(int argc, char *argv[])
 			j++;
 		}
 	}
+	mvwprintw(win, display_offset,2,"unused space in cblabels: %d            ",l);
+
 	wrefresh(win);
 	getch();
-*/
+
 
 //	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
 //		mvwprintw(win, display_offset+i,2,"                                                               ");
@@ -346,14 +352,12 @@ int main(int argc, char *argv[])
 
 	mvwprintw(win, display_offset,2,"no_cblabels: %d  ",no_cblabels);
 
-	for(i = 0;i < no_cblabels;i++)
-	{
-		get_cblabel(i,temp_label);
-		mvwprintw(win, display_offset+i+2,2,"%d:  %s  %d      ",i,temp_label,cblabel_offsets[i]);
-	}
 
 	wrefresh(win);
 	getch();
+
+	for(i = 0;i < CBLABEL_SIZE;i++)
+	
 
 //	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
 //		mvwprintw(win, display_offset+i,2,"                                                             ");

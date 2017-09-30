@@ -284,7 +284,7 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 	char temp[MAX_LABEL_LEN];
 	char temp2[4];
 
-	mvwprintw(win, LAST_ROW-8-index, 2,"%d   %d    ",*row,*col);
+//	mvwprintw(win, LAST_ROW-8-index, 2,"%d   %d    ",*row,*col);
 
 	switch (index % 6)
 	{
@@ -481,11 +481,11 @@ UCHAR read_get_key(UCHAR key)
 
 		case TEST1:
 			low_byte = 0x21;
-			for(i = 0;i < COLUMN;i++)
+			for(i = 0;i < ROWS;i++)
 			{
-				for(j = 0;j < ROWS;j++)
+				for(j = 0;j < COLUMN;j++)
 				{
-					GDispCharAt(j,i,low_byte);
+					GDispCharAt(i,j,low_byte);
 					if(++low_byte > 0x7e)
 						low_byte = 0x21;
 				}
@@ -494,6 +494,7 @@ UCHAR read_get_key(UCHAR key)
 
 
 		case TEST2:
+#ifdef TEST_WRITE_DATA
 			mvwhline(win, 1, 5, ACS_HLINE, 41);
 			mvwhline(win, 18, 5, ACS_HLINE, 41);
 			mvwvline(win, 2, 4, ACS_VLINE, 16);
@@ -502,8 +503,12 @@ UCHAR read_get_key(UCHAR key)
 			mvwaddch(win, 18, 4, ACS_LLCORNER);
 			mvwaddch(win, 1, 45, ACS_URCORNER);
 			mvwaddch(win, 18, 45, ACS_LRCORNER);
+#endif
 			break;
 
+		case TEST3:
+			memset(eeprom_sim,0,EEPROM_SIZE);
+			break;
 
 		case TEST5:
 			res = 0;
@@ -562,7 +567,7 @@ UCHAR read_get_key(UCHAR key)
 //			for(i = 0;i < size;i++)
 			{
 				if(eeprom_sim[i] != 0)
-					usleep(tdelay*10);
+					usleep(tdelay*2);
 				else usleep(tdelay);	
 				write(global_fd,&eeprom_sim[i],1);
 
@@ -692,7 +697,7 @@ UCHAR read_get_key(UCHAR key)
 			res = 0;
 			mvwprintw(win, LAST_ROW-2,1,"                                       ");
 
-			mvwprintw(win, LAST_ROW-2,1,"loading checkboxes: ");
+			mvwprintw(win, LAST_ROW-2,1,"loading cblabels: ");
 
 			for(i = 0;i < CBLABEL_SIZE;i++)
 			{
@@ -744,7 +749,7 @@ UCHAR read_get_key(UCHAR key)
 				res += read(global_fd,&rt_params[i].type,1);
 			}
 			res = 0;
-			mvwprintw(win, LAST_ROW-4,21,"rt_params: %2d ",res);
+			mvwprintw(win, LAST_ROW-5,2,"rt_params: %2d ",res);
 			for(i = 0;i < 5;i++)
 			{
 				res += read(global_fd,&low_byte,1);
@@ -756,6 +761,27 @@ UCHAR read_get_key(UCHAR key)
 //			mvwprintw(win, LAST_ROW-12,2,"res: %d    ",res);
 //			wrefresh(win);
 			no_rtparams = NUM_RT_PARAMS;
+
+			res = 0;
+#if 0
+			for(i = 0;i < NUM_MENUS;i++)
+			{
+//				res += read(global_fd,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
+				res += read(global_fd,&menu_structs[i].fptr,1);
+				res += read(global_fd,&menu_structs[i].menus[0],1);
+				res += read(global_fd,&menu_structs[i].menus[1],1);
+				res += read(global_fd,&menu_structs[i].menus[2],1);
+				res += read(global_fd,&menu_structs[i].menus[3],1);
+				res += read(global_fd,&menu_structs[i].menus[4],1);
+				res += read(global_fd,&menu_structs[i].menus[5],1);
+				res += read(global_fd,&menu_structs[i].index,1);
+				mvwprintw(win, LAST_ROW-11,2,"res %d   ",res );
+				wrefresh(win);
+			}
+			mvwprintw(win, LAST_ROW-6,2,"menu_structs: %2d ",res);
+#endif
+			wrefresh(win);
+
 /*
 			res = 0;
 
@@ -771,7 +797,6 @@ UCHAR read_get_key(UCHAR key)
 
 			mvwprintw(win, LAST_ROW-1,24,"res: %2d  ", res);
 */
-			wrefresh(win);
 
 			j = 0;
 /*
@@ -940,7 +965,6 @@ static UCHAR escape(UCHAR ch)
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	clean_disp_num();
 //	scale_disp(SCALE_DISP_ALL);
-	data_entry_mode = 0;
 	return ch;
 }
 //******************************************************************************************//
@@ -949,17 +973,13 @@ static UCHAR escape(UCHAR ch)
 static UCHAR enter(UCHAR ch)
 {
 	int limit;
-//	if(data_entry_mode)
-	if(1)
-	{
-		limit = atoi(cur_global_number);
-		if(limit < 0)
-			strcpy(cur_global_number,"32766\0");
-		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
-		cur_col = NUM_ENTRY_BEGIN_COL;
-		clean_disp_num();
-		sample_numbers[prev_menu_index-MENU2C] = atoi((const char *)new_global_number);
-	}
+	limit = atoi(cur_global_number);
+	if(limit < 0)
+		strcpy(cur_global_number,"32766\0");
+	memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
+	cur_col = NUM_ENTRY_BEGIN_COL;
+	clean_disp_num();
+	sample_numbers[prev_menu_index-MENU2C] = atoi((const char *)new_global_number);
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, LAST_ROW-5, 2,"new: %x %d %x   ",ch,prev_menu_index,prev_ret_char);
 	wrefresh(win);
@@ -984,7 +1004,6 @@ static void init_numentry(int menu_index)
 		clean_disp_num();
 		dispCharAt(NUM_ENTRY_ROW,cur_col,'/');
 		dispCharAt(NUM_ENTRY_ROW,cur_col+NUM_ENTRY_SIZE,'/');
-		new_data_ready = 1;
 		display_edit_value();
 #ifdef TEST_WRITE_DATA
 		mvwprintw(win, DISP_OFFSET+23, 2,"init_num_entry %s %d       ",cur_global_number,temp_int);
@@ -1015,18 +1034,13 @@ static void display_edit_value(void)
 //******************************************************************************************//
 static void cursor_forward_stuff(char x)
 {
-	data_entry_mode = 1;
-//	if(data_entry_mode)
-	if(1)
-	{
-		stuff_num(x);
-		cursor_forward(x);
+	stuff_num(x);
+	cursor_forward(x);
 #ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET+23, 2,"                     ");
-		mvwprintw(win, DISP_OFFSET+20, 2,"stuff: %d   %d  ",x,cur_col);
-		wrefresh(win);
+	mvwprintw(win, DISP_OFFSET+23, 2,"                     ");
+	mvwprintw(win, DISP_OFFSET+20, 2,"stuff: %d   %d  ",x,cur_col);
+	wrefresh(win);
 #endif
-	}
 }
 //******************************************************************************************//
 //*************************************** stuff_num ****************************************//
@@ -1060,16 +1074,12 @@ static UCHAR cursor_forward(UCHAR ch)
 //******************************************************************************************//
 static UCHAR backspace(UCHAR ch)
 {
-//	if(data_entry_mode)
-	if(1)
-	{
-		cursor_backward();
-		dispCharAt(NUM_ENTRY_ROW,cur_col,0x20);
-		cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
+	cursor_backward();
+	dispCharAt(NUM_ENTRY_ROW,cur_col,0x20);
+	cur_global_number[cur_col-NUM_ENTRY_BEGIN_COL] = 0x20;
 #ifdef TEST_WRITE_DATA
-		mvwprintw(win, DISP_OFFSET+24,2,"bs:%s %d  ",cur_global_number,cur_col);
+	mvwprintw(win, DISP_OFFSET+24,2,"bs:%s %d  ",cur_global_number,cur_col);
 #endif
-	}
 //	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	return ch;
 }
@@ -1504,9 +1514,6 @@ void init_list(void)
 	curr_execchoice = 0;
 	scale_type = 0;
 	prev_scale_type = 1;
-	new_data_ready = 0;
-	data_entry_mode = 0;
-	mod_data_ready = 0;
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;

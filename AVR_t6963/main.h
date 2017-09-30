@@ -36,7 +36,11 @@ typedef struct checkboxes
 	UCHAR checked;
 } CHECKBOXES;
 
-#define AUX_STRING_LEN EEPROM_SIZE/4	// 128
+CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
+CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
+
+//#define AUX_STRING_LEN EEPROM_SIZE/8	// 128
+#define AUX_STRING_LEN 300
 
 #ifdef TEST_WRITE_DATA
 UCHAR eeprom_sim[EEPROM_SIZE];
@@ -49,6 +53,20 @@ void update_ram(void);
 
 char cblabels[CBLABEL_SIZE];
 
+#if 0
+typedef struct menu_func
+{
+	UCHAR fptr;								// which function to call (menu_types)
+//	int menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR menus[6];							// which menu to goto if _menu_change is the fptr
+	UCHAR index;
+} MENU_FUNC_STRUCT;
+
+
+#define NUM_MENUS 13
+
+MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
+#endif
 typedef struct rt_params
 {
 	UCHAR row;			// row, col tells where the param will appear on screen
@@ -244,12 +262,8 @@ void set_win(WINDOW *win);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
-int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
 int update_mlabels(int i, char *ramstr);
 int update_cblabels(int i, char *ramstr);
-UCHAR current_param;
-UINT temp_UINT;
-UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 int no_rtparams;
@@ -297,9 +311,6 @@ int last_execchoice;
 int scale_type;
 int prev_scale_type;
 UCHAR aux_index;
-UCHAR new_data_ready;
-UCHAR mod_data_ready;
-UCHAR data_entry_mode;
 UCHAR aux_string[AUX_STRING_LEN];
 int sample_numbers[5];
 

@@ -6,9 +6,6 @@
 #define LAST_ROW_DISP LAST_ROW-11
 #define LAST_COL 63
 
-CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
-CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
-
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
 void display_labels(void);
@@ -23,28 +20,41 @@ int get_str_len(void);
 int get_mlabel_offsets(void);
 int get_cblabel_offsets(void);
 UCHAR current_param;
-UINT temp_UINT;
-UCHAR parse_state;
-//UCHAR cursor_row, cursor_col;
 
 int no_func_labels;
 int choice_offset;
 UCHAR get_row(int index);
 UCHAR get_col(int index);
 
-#define NUM_MENUS 13
-
 int update_menu_structs(int i, UCHAR fptr, UCHAR menu0, UCHAR menu1, UCHAR menu2, UCHAR menu3,
 			UCHAR menu4, UCHAR menu5, UCHAR index);
 
+int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type);
+
+//#if 0
 typedef struct menu_func
 {
 	UCHAR fptr;								// which function to call (menu_types)
 	int menus[6];							// which menu to goto if _menu_change is the fptr
+//	UCHAR menus[6];							// which menu to goto if _menu_change is the fptr
 	UCHAR index;
 } MENU_FUNC_STRUCT;
 
+#define NUM_MENUS 13
+
 MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
+//#endif
+
+#if 0
+typedef struct rt_params
+{
+	UCHAR row;			// row, col tells where the param will appear on screen
+	UCHAR col;
+	UCHAR shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
+	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
+	UCHAR type;			// rt_types
+} RT_PARAM;
+#endif
 
 /*
 MENU_FUNC_STRUCT menu_structs[] = {
@@ -97,9 +107,6 @@ int last_checkbox;
 int scale_type;
 int prev_scale_type;
 UCHAR aux_index;
-UCHAR new_data_ready;
-UCHAR mod_data_ready;
-UCHAR data_entry_mode;
 int send_aux_data;
 int tdelay;
 

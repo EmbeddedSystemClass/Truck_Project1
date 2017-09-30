@@ -4,9 +4,6 @@
 #define ALNUM_SCROLL_LIST_LEN 13
 #define MENU_BLANK "          "
 
-CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
-CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
-
 //#define dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
@@ -22,8 +19,6 @@ int get_str_len(void);
 int get_mlabel_offsets(void);
 int get_cblabel_offsets(void);
 UCHAR current_param;
-UINT temp_UINT;
-UCHAR parse_state;
 //UCHAR cursor_row, cursor_col;
 //UINT label_info_offset;
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
@@ -46,11 +41,8 @@ void set_state_defaults(void);
 int scale_type;
 int prev_scale_type;
 UCHAR aux_index;
-UCHAR new_data_ready;
-UCHAR mod_data_ready;
-UCHAR data_entry_mode;
 int menu_index;
-int curr_menus[6];
+UCHAR curr_menus[6];
 int syncup;
 UCHAR sync_buf[10];
 int bp;

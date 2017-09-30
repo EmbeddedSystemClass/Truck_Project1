@@ -65,8 +65,6 @@ static UCHAR get_fptr(void);
 static void get_fptr_label(char *str);
 static int get_curr_menu_index(void);
 
-UCHAR taux_string[AUX_STRING_LEN];
-
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 //******************************************************************************************//
 //******************************************************************************************//
@@ -288,6 +286,10 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			write(global_fd,&ret_char,1);
 			break;
 
+		case TEST3:		// erase eeprom
+			write(global_fd,&ret_char,1);
+			break;
+
 		case TEST5:
 			write(global_fd,&ret_char,1);
 			break;
@@ -317,7 +319,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
 
 			j = k = 0;
-			for(i = 0;i < 234;i++)
+			for(i = 0;i < 600;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 					mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
@@ -331,6 +333,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			}
 			k = 0;
 			j++;
+/*
 			for(i = 0x120;i < 0x120+48;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
@@ -343,6 +346,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 					++j;
 				}
 			}
+*/
 			wrefresh(win);
  			break;
 
@@ -390,7 +394,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				"burn part start_addr: %x  %x  %x  %x",t1, t2,high_byte,low_byte);
 			wrefresh(win);
 
-			for(i = 0;i < size;i++)
+			for(i = start_addr;i < size+start_addr;i++)
 			{
 				res += write(global_fd,&eeprom_sim[i],1);
 				usleep(tdelay);
@@ -488,6 +492,13 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				usleep(tdelay);
 			}
 
+/*
+			for(i = 0;i < NUM_MENUS;i++)
+			{
+				write(global_fd,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
+				usleep(tdelay);
+			}
+*/
 			mvwprintw(win, LAST_ROW_DISP-1,10,"done");
 			wrefresh(win);
 			break;
@@ -599,7 +610,6 @@ static UCHAR enter(UCHAR ch)
 			strcpy(cur_global_number,"32766\0");
 		memcpy((void*)new_global_number,(void*)cur_global_number,NUM_ENTRY_SIZE);
 		cur_col = NUM_ENTRY_BEGIN_COL;
-		mod_data_ready = 1;
 		index = get_curr_menu_index() - MENU2C;
 		sample_numbers[index] = atoi(new_global_number);
 	}
@@ -1123,9 +1133,6 @@ void init_list(void)
 	curr_execchoice = 0;
 	scale_type = 0;
 	prev_scale_type = 1;
-	new_data_ready = 0;
-	data_entry_mode = 0;
-	mod_data_ready = 0;
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
 	aux_index = 0;

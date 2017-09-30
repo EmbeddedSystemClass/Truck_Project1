@@ -298,9 +298,9 @@ int main(int argc, char *argv[])
 					}
 #endif
 					break;
-				case BURN_PART1:
-				case BURN_PART2:
-				case BURN_PART3:
+				case BURN_PART1:		// 'V'
+				case BURN_PART2:		// 'W'
+				case BURN_PART3:		// 'U'
 					switch(wkey)
 					{
 						case BURN_PART1:
@@ -362,6 +362,43 @@ int main(int argc, char *argv[])
 						get_mlabel_offsets();
 					}
 
+					break;
+				case BURN_PART4:		// 'R'
+
+					strcpy(filename,"eeprom.bin\0");
+					mvwprintw(win, LAST_ROW_DISP,2,"starting burn part   ");
+					if(access(filename,F_OK) != -1)
+					{
+						fp = open((const char *)filename, O_RDWR);
+						if(fp < 0)
+						{
+							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
+							wrefresh(win);
+							getch();
+						}else
+						{
+							res = 0;
+							lseek(fp,0,SEEK_SET);
+//							for(i = start_addr;i < size;i++)
+							res = read(fp,eeprom_sim,EEPROM_SIZE);
+							close(fp);
+							mvwprintw(win, LAST_ROW_DISP,2,
+								"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
+							j = k = 0;
+						}
+					}else
+					{
+						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
+//						burn_eeprom();
+					}
+
+					key = BURN_PART;
+					size = AUX_STRING_LEN;
+					start_addr = 0;
+					get_key(key,size,start_addr,peeprom_sim,type);
+					size = AUX_STRING_LEN;
+					start_addr = AUX_STRING_LEN;
+					get_key(key,size,start_addr,peeprom_sim,type);
 					break;
 				case SPACE:
 					size = 0;

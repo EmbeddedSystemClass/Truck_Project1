@@ -164,7 +164,6 @@ int get_cblabel_offsets(void)
 			no_cblabels++;
 	}
 
-
 	for(i = 0;i < no_cblabels;i++)
 	{
 		cblabel_offsets[i] = goffset;
@@ -257,6 +256,8 @@ int update_cblabels(int index, char *str)
 //******************************************************************************************//
 //************************************* update_rtparams*************************************//
 //******************************************************************************************//
+#ifndef MAIN_C
+#ifndef SIM_AVR
 int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR type)
 {
 	rt_params[i].row = row;					// row, col tells where the param will appear on screen
@@ -264,13 +265,15 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 	rt_params[i].shown = shown;				// if its shown or not
 	rt_params[i].dtype = dtype;				// 0 - UCHAR; 1 - UINT; 2 - string
 	rt_params[i].type = type;
-	memcpy(peeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
+	memcpy(eeprom_sim+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset,&rt_params[i],sizeof(RT_PARAM));
 //    eeprom_update_block(&rt_params[i], eepromString+RT_PARAMS_OFFSET_EEPROM_LOCATION+total_offset, sizeof(RT_PARAM));
 	total_offset += sizeof(RT_PARAM);
 //	printf("total_offset = %d\n",total_offset);
 	i++;
 	return i;
 }
+#endif
+#endif
 //******************************************************************************************//
 //***************************************** burn_eeprom ************************************//
 //******************************************************************************************//
