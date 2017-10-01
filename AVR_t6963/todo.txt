@@ -1,0 +1,77 @@
+TODO:
+
+The ncurses program running on the laptop and talking to the TS-7200 over the TCP cable will:
+1) set the output ports
+2) monitor the input ports for changes
+3) manage the eeprom in the AVR *
+4) read the telemetry data in real time
+5) set other parameters
+
+* The eeprom.bin file can be edited on the laptop using the sim programs and sent via the 
+ncurses monitor program to the TS-7200 and then relayed to the PIC24 where it can sent with 
+a BURN_EEPROM cmd to the AVR. 
+
+For now, just gen up an app that runs as a command line on the linux laptop that talks to
+the TS-7200 over the TCP cable that offers a list of key commands to do stuff and also
+monitor events in a loop that does a non-blocking getch() or getchar().
+
+The PIC to AVR serial data protocol to run the display probably doesn't need the extra
+menus[] array of 6 ints sent over if it has just sent the menu_index if the current
+menu_struct array can be stored in the ram of the AVR.
+
+Need to have the AVR send back some kind of verification after each keypress so the PIC
+knows it is on the same page. 
+
+Need a test box that has the PIC, AVR, LCD and keypad with DB-9 serial port connectors
+brought out so that we can either have the sim_write (simulating the PIC) talk to the
+actual AVR or have the actual PIC talk to the sim_read (simulating the AVR) or when
+all that works, just hook up a null modem cable between the 2 and let the actual PIC
+talk to the actual AVR. 
+
+AVR		<-	sim_write (on linux box)
+PIC
+
+AVR
+PIC		->  sim_read (on linux box)
+
+AVR		<-|
+PIC		->|
+
+See if the TS-7200 can do a readdir() function to lookup the files in the current array so
+it can, upon request from the laptop, send the list of *.dat or other config files to the
+laptop so the ncurses program can copy, move and delete files. 
+
+Need a group field in the O_DATA & I_DATA database so the system can operate on a group of
+inputs or outputs. e.g. turn on/off all lights in the 'running lights' group or headlights.
+
+A dialog in the ncurses program to change the current fields in the menu_structs or the labels
+in the eeprom. Also to change/update the checkbox prompt strings in AVR ram.
+
+Use edit box for password or enable the alnum stuff so user can enter keys other than 0->9
+
+Use a timer on the PIC to make the AVR go back to home or lockout w/password prompt after a
+certain amount of time no keypresses have been entered.
+
+Have a 'script' that can be exec'd to do a certain group of actions, like play 'La Cucaracha'
+on the horns or loudspeaker.
+
+Put GPS module on one of the FPGA serial ports to get directional data to add to the telemetry
+data.
+
+The TS-7200 records the telemetry data to a circular buffer and/or a file on disk that works
+like a tape loop that just records the latest 1 minute, 10 minutes or however amount of time
+there is disk space available for.
+
+Magnets on steering column to determine directon and speed of turning using 2 hall-effect
+switches.
+
+Accelerometer on one of the FPGA serial ports.
+
+Another nice feature would be 'bread-crumbs' e.g. MAIN->MENU1A->MENU1B-> ...
+In that case '*' could always be 'back-to-MAIN' and 'B' could be <back>
+
+If the AVR is rebooted then it will send a cmd to the PIC24 (upon startup) saying to re-upload 
+the configuration files. If the PIC24 is rebooted, it will (optionally) send a cmd saying that 
+it needs to re-upload the config files. (or push the data using PUSH_DATA cmd)
+In the AVR, it could be a if statement in the main loop that filters out that cmd.
+

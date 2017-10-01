@@ -256,48 +256,22 @@ int main(int argc, char *argv[])
 					get_key(wkey,size,start_addr,aux_string,type);
 					ret_key = 0xff;
 					break;
-				case READ_EEPROM:
-					type = 3;
+				case READ_EEPROM1:
 					size = EEPROM_SIZE;
 //					size = 234;
 					start_addr = 0;
 					memset(eeprom_sim,0,EEPROM_SIZE);
 					get_key(wkey,size,start_addr,eeprom_sim,type);
-//					for(i = start_addr;i < size+start_addr;i++)
-//						read(global_fd,&eeprom_sim[i],1);
-
-					j = k = 0;
-#if 0
-
-//					for(i = start_addr;i < size+start_addr;i++)
-					for(i = 0;i < size;i++)
-					{
-						if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-							mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"%c",eeprom_sim[i]);
-						else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-50, 24+k," ");
-						else mvwprintw(win, LAST_ROW_DISP+j-40, 24+k,"_");
-						if(++k > 30)
-						{
-							k = 0;
-							++j;
-						}
-					}
-					j++;
-					k = 0;
-					for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
-					{
-						mvwprintw(win, LAST_ROW_DISP-6,24+(k*3),"%d ", eeprom_sim[i]);
-					}
-					wrefresh(win);
-					// write current eeprom image to file
-					if(fp > 0)
-					{
-						for(i = start_addr;i < size;i++)
-							write(fp,&eeprom_sim[i],1);
-						close(fp);
-					}
-#endif
 					break;
+
+				case READ_EEPROM2:
+					size = EEPROM_SIZE;
+//					size = 234;
+					start_addr = 0;
+					memset(eeprom_sim,0,EEPROM_SIZE);
+					get_key(wkey,size,start_addr,eeprom_sim,type);
+					break;
+
 				case BURN_PART1:		// 'V'
 				case BURN_PART2:		// 'W'
 				case BURN_PART3:		// 'U'
@@ -364,50 +338,33 @@ int main(int argc, char *argv[])
 
 					break;
 				case BURN_PART4:		// 'R'
-
-					strcpy(filename,"eeprom.bin\0");
-					mvwprintw(win, LAST_ROW_DISP,2,"starting burn part   ");
-					if(access(filename,F_OK) != -1)
-					{
-						fp = open((const char *)filename, O_RDWR);
-						if(fp < 0)
-						{
-							mvwprintw(win, LAST_ROW_DISP,2,"can't open file for writing");
-							wrefresh(win);
-							getch();
-						}else
-						{
-							res = 0;
-							lseek(fp,0,SEEK_SET);
-//							for(i = start_addr;i < size;i++)
-							res = read(fp,eeprom_sim,EEPROM_SIZE);
-							close(fp);
-							mvwprintw(win, LAST_ROW_DISP,2,
-								"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
-							j = k = 0;
-						}
-					}else
-					{
-						mvwprintw(win, LAST_ROW_DISP,2,"creating new eeprom");
-//						burn_eeprom();
-					}
-
-					key = BURN_PART;
-					size = AUX_STRING_LEN;
+					for(i = 0;i < 200;i++)
+						eeprom_sim[i] = i;
+					for(i = 200;i < 400;i++)
+						eeprom_sim[i] = i*2;
+						
+					res = 0;
+					wkey = BURN_PART;
+					size = 200;
 					start_addr = 0;
-					get_key(key,size,start_addr,peeprom_sim,type);
-					size = AUX_STRING_LEN;
-					start_addr = AUX_STRING_LEN;
-					get_key(key,size,start_addr,peeprom_sim,type);
+					get_key(wkey,size,start_addr,aux_string,type);
+
+					size = 200;
+					start_addr = 200;
+					get_key(wkey,size,start_addr,aux_string,type);
+
 					break;
+					
 				case SPACE:
 					size = 0;
 					type = 0;
 					get_key(wkey,size,start_addr,aux_string,type);
 					for(i = 1;i < LAST_ROW;i++)
-						mvwprintw(win, i,2,"                                                            ");
+						mvwprintw(win, i,1,"                                                             ");
 					print_menu(win);
+
 					break;
+
 				default:
 					wrefresh(win);
 					start_addr = 500;
@@ -452,7 +409,9 @@ int main(int argc, char *argv[])
 						wrefresh(win);
 					}
 					j++;
+
 					break;
+
 			}
 		}
 //		wkey = key = 0;
@@ -542,7 +501,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 
 		case 'E':
 		case 'e':
-			wkey = READ_EEPROM;
+			wkey = READ_EEPROM1;
 			break;
 		case 'V':
 		case 'v':
@@ -590,7 +549,7 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			break;
 		case 'G':
 		case 'g':
-			wkey = TEST7;
+			wkey = READ_EEPROM2;
 			break;
 		case 'H':
 		case 'h':
@@ -598,15 +557,15 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			break;
 		case 'J':
 		case 'j':
-			wkey = TEST10;
+			wkey = READ_EEPROM2;
 			break;
 		case 'M':
 		case 'm':
-			wkey = TEST11;
+			wkey = TEST7;
 			break;
 		case 'K':
 		case 'k':
-			wkey = TEST9;
+			wkey = TEST11;
 			break;
 		case 'I':
 		case 'i':

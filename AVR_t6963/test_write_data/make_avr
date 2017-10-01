@@ -32,6 +32,6 @@ sim_read : AVR_menu.o sim_read.o t6963.o supp.o
 	${CC} ${CFLAGS} sim_read.o t6963.o AVR_menu.o supp.o -o sim_read -lcurses
 	
 clean :
-	rm -f *.o *~ *# core  a.out \
+	rm -f *.o ../*o *~ *# core  a.out \
 	sim_read
 

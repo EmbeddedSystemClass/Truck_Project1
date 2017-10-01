@@ -35,6 +35,6 @@ sim_write : PIC_menu.o sim_write.o t6963.o supp.o
 	${CC} ${CFLAGS} sim_write.o t6963.o PIC_menu.o supp.o -o sim_write -lcurses
 	
 clean :
-	rm -f *.o *~ *# core  a.out \
+	rm -f *.o ../*o *~ *# core  a.out \
 	sim_write
 

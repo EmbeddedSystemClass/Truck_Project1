@@ -174,18 +174,18 @@ static UCHAR generic_menu_function(UCHAR ch)
 //		transmitByte(low_byte);
 		curr_menus[i] = pack(low_byte,high_byte);
 	}
-	high_byte = receiveByte();
+//	high_byte = receiveByte();
 //	transmitByte(high_byte);
-	low_byte = receiveByte();
+//	low_byte = receiveByte();
 //	transmitByte(low_byte);
-	aux_bytes_to_read = pack(low_byte, high_byte);
+//	aux_bytes_to_read = pack(low_byte, high_byte);
 
-	aux_bytes_to_read = receiveByte();
-	aux_data_offset = receiveByte();
-/*
-	for(i = 0;i < aux_bytes_to_read;i++)
+//	aux_bytes_to_read = receiveByte();
+//	aux_data_offset = receiveByte();
+
+	for(i = 0;i < 20;i++)
 		aux_string[i] = receiveByte();
-*/
+
 	// write a code of 0xAA back to sim PIC as a verification that everything is running
 	// if not hooked up to LCD screen
 /*
@@ -408,59 +408,8 @@ UCHAR read_get_key(UCHAR key)
 	char temp[MAX_LABEL_LEN];
 	char *vptr;
 
-#if 0
-	if(ret_char > 0x21 && ret_char < 0x7e)
-		mvwprintw(win, LAST_ROW-3,2,"%c  %d   ",ret_char,res);
-	else
-		mvwprintw(win, LAST_ROW-3,2,"%2x  %d   ",ret_char,res);
-	wrefresh(win);
-
-	if(!syncup)
-	{
-		mvwprintw(win, LAST_ROW-3,20,"not sync'd    ");
-		wrefresh(win);
-		return ret_char;
-	}
-	else if(done)
-	{
-		done = 0;
-		mvwprintw(win, LAST_ROW-6,2,"done1: %2x  %d  ",key,syncup);
-		wrefresh(win);
-		return ret_char;
-	}
-//	mvwprintw(win, LAST_ROW-2,1,"                                        ");
-
-	mvwprintw(win, LAST_ROW-7,2,"done2: %2x  %d  ",ret_char,syncup);
-	wrefresh(win);
-#endif
-
 	switch(ret_char)
 	{
-#if 0
-		case TEST11:
-#ifdef TEST_WRITE_DATA
-
-			for(i = 0;i < 50;i++)
-			{
-				write(global_fd,&i,1);
-				usleep(tdelay);
-				mvwprintw(win, LAST_ROW-3,1,
-				"%2x                                ",i);
-				wrefresh(win);
-			}
-			k = j = 0;
-			for(i = 500;i < EEPROM_SIZE;i++)
-			{
-				mvwprintw(win, LAST_ROW+j-40, 2+(k*3),"%2x ",eeprom_sim[i]);
-				if(++k > 25)
-				{
-					k = 0;
-					++j;
-				}
-			}
-#endif
-#endif
-			break;
 		case 0xFC:
 #ifdef TEST_WRITE_DATA
 			mvwprintw(win, LAST_ROW-2,1,
@@ -503,11 +452,17 @@ UCHAR read_get_key(UCHAR key)
 			mvwaddch(win, 18, 4, ACS_LLCORNER);
 			mvwaddch(win, 1, 45, ACS_URCORNER);
 			mvwaddch(win, 18, 45, ACS_LRCORNER);
+			mvwprintw(win, LAST_ROW-2,1,"draw box                                        ");
+			wrefresh(win);
 #endif
 			break;
 
 		case TEST3:
+#ifdef TEST_WRITE_DATA
 			memset(eeprom_sim,0,EEPROM_SIZE);
+			mvwprintw(win, LAST_ROW-2,1,"erase eeprom                                        ");
+			wrefresh(win);
+#endif
 			break;
 
 		case TEST5:
@@ -516,7 +471,7 @@ UCHAR read_get_key(UCHAR key)
 //			for(i = 0;i < no_cblabels/2;i++)
 
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-1, 2,"test5                          ");
+			mvwprintw(win, LAST_ROW-1, 2,"print out current cblabels                          ");
 
 			k = j = 0;
 			for(i = 0;i < LAST_ROW/2;i++)
@@ -541,7 +496,27 @@ UCHAR read_get_key(UCHAR key)
 			wrefresh(win);
 #endif
 			break;
-		case READ_EEPROM:
+
+		case TEST6:
+#ifdef TEST_WRITE_DATA
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				if((i%2)  == 0)
+					eeprom_sim[i] = ~i;
+				else
+					eeprom_sim[i] = i;	
+			}
+
+			mvwprintw(win, LAST_ROW-2,1,"test4  - set eeprom to sequence                            ");
+			wrefresh(win);
+#endif
+			break;
+
+		case TEST7:
+			break;
+
+		case READ_EEPROM1:
+		case READ_EEPROM2:
 #ifdef TEST_WRITE_DATA
 
 			read(global_fd,&high_byte,1);
@@ -595,19 +570,24 @@ UCHAR read_get_key(UCHAR key)
 			for(i = 1;i < LAST_ROW+1;i++)
 				mvwprintw(win, i,2,"                                                      ");
 
+			mvwprintw(win, LAST_ROW-50, 2,"|");
+
 			for(i = start_addr;i < size+start_addr;i++)
 //			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-					mvwprintw(win, LAST_ROW+j-40, 2+k,"%c",eeprom_sim[i]);
-				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-40, 24+k," ");
-				else mvwprintw(win, LAST_ROW+j-40, 2+k,"_");
+					mvwprintw(win, LAST_ROW+j-50, 2+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-50, 24+k," ");
+				else mvwprintw(win, LAST_ROW+j-50, 2+k,"_");
 				if(++k > 40)
 				{
 					k = 0;
 					++j;
 				}
 			}
+			k++;
+			mvwprintw(win, LAST_ROW+j-50, 2+k,"|");
+
 			k = 0;
 /*
 			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
@@ -620,19 +600,22 @@ UCHAR read_get_key(UCHAR key)
 			wrefresh(win);
 #else
 			high_byte = receiveByte();
-			transmitByte(high_byte);
-			transmitByte(low_byte);
+			low_byte = receiveByte();
+//			transmitByte(high_byte);
+//			transmitByte(low_byte);
 			size = pack(low_byte,high_byte);
 
-			transmitByte(high_byte);
-			transmitByte(low_byte);
+//			transmitByte(high_byte);
+//			transmitByte(low_byte);
+			high_byte = receiveByte();
+			low_byte = receiveByte();
 			start_addr = pack(low_byte,high_byte);
 			memset(aux_string,0,AUX_STRING_LEN);
 			eeprom_read_block((void *)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
 
 			for(i = 0;i < size;i++)
 			{
-				low_byte = receiveByte();
+//				low_byte = receiveByte();
 				transmitByte(aux_string[i]);
 			}
 #endif
@@ -680,7 +663,7 @@ UCHAR read_get_key(UCHAR key)
 //			transmitByte(low_byte);
 			start_addr = pack(low_byte,high_byte);
 
-			for(i = 0;i < size;i++)
+			for(i = start_addr;i < size+start_addr;i++)
 			{
 				aux_string[i] = receiveByte();
 //				transmitByte(aux_string[i]);
@@ -762,62 +745,37 @@ UCHAR read_get_key(UCHAR key)
 //			wrefresh(win);
 			no_rtparams = NUM_RT_PARAMS;
 
-			res = 0;
-#if 0
-			for(i = 0;i < NUM_MENUS;i++)
-			{
-//				res += read(global_fd,&menu_structs[i],sizeof(MENU_FUNC_STRUCT));
-				res += read(global_fd,&menu_structs[i].fptr,1);
-				res += read(global_fd,&menu_structs[i].menus[0],1);
-				res += read(global_fd,&menu_structs[i].menus[1],1);
-				res += read(global_fd,&menu_structs[i].menus[2],1);
-				res += read(global_fd,&menu_structs[i].menus[3],1);
-				res += read(global_fd,&menu_structs[i].menus[4],1);
-				res += read(global_fd,&menu_structs[i].menus[5],1);
-				res += read(global_fd,&menu_structs[i].index,1);
-				mvwprintw(win, LAST_ROW-11,2,"res %d   ",res );
-				wrefresh(win);
-			}
-			mvwprintw(win, LAST_ROW-6,2,"menu_structs: %2d ",res);
-#endif
 			wrefresh(win);
+#else
 
-/*
 			res = 0;
-
-			mvwprintw(win, LAST_ROW-1,1,"loading eeprom:                   ");
-			for(i = 0;i < EEPROM_SIZE;i++)
+			for(i = 0;i < CBLABEL_SIZE;i++)
 			{
-				res += read(global_fd,&eeprom_sim[i],1);
-			mvwprintw(win, LAST_ROW-1,17,"%2x %d ",eeprom_sim[i],res);
-				if(i < NO_RT_LABELS_EEPROM_LOCATION)
-					usleep(tdelay*20);
-				wrefresh(win);
+				 cblabels[i] = receiveByte();
 			}
 
-			mvwprintw(win, LAST_ROW-1,24,"res: %2d  ", res);
-*/
-
-			j = 0;
-/*
-			for(i = NO_RT_LABELS_EEPROM_LOCATION;i < NO_MENU_LABELS_EEPROM_LOCATION+2;i++)
+			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
 			{
-				mvwprintw(win, LAST_ROW-2,1+(j*3),"%2x ",eeprom_sim[i],res);
-				wrefresh(win);
-				j++;
+				check_boxes[i].checked = receiveByte();
+				check_boxes[i].index = receiveByte();
+				memcpy(&prev_check_boxes[i],&check_boxes[i],sizeof(CHECKBOXES));
 			}
 
-			memcpy((void*)&no_rt_labels,(void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_rtparams,(void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
-			memcpy((void*)&no_menu_labels,(void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+			for(i = 0;i < NUM_RT_PARAMS;i++)
+			{
+				rt_params[i].row = receiveByte();
+				rt_params[i].col = receiveByte();
+				rt_params[i].shown = receiveByte();
+				rt_params[i].dtype = receiveByte();
+				rt_params[i].type = receiveByte();
+			}
 
-			get_mlabel_offsets();
-
-		//	no_menu_labels = 27;
-		//	no_rt_labels = 10;
-
-		//	mvwprintw(win, LAST_ROW-3,1,"eeprom locations: %2d %2d %2d ",no_rt_labels,no_rtparams,no_menu_labels);
-*/
+			for(i = 0;i < 5;i++)
+			{
+				low_byte = receiveByte();
+				high_byte = receiveByte();
+				sample_numbers[i] = pack(low_byte,high_byte);
+			}
 #endif
 
 		break;

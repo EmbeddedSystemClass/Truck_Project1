@@ -177,7 +177,7 @@ enum key_types
 	BURN_PART2,		//  - DC
 	BURN_PART3,		//  - DD
 	BURN_PART4,		//  - DE
-	READ_EEPROM,	//	- DF
+	TEST11,			//  - DF	
 
 	KP_POUND,	// '#'	- E0
 	KP_AST, // '*'		- E1
@@ -195,15 +195,14 @@ enum key_types
 	KP_B, // 'B'		- ED
 	KP_C, // 'C'		- EE
 	KP_D, // 'D'		- EF
-	TEST9,	//			- F0
-	TEST10,	//			- F1
-	TEST11,	//			- F2
-	TEST12,	//			- F3
-	TEST13,	//			- F4
-	TEST14,	//			- F5
-	TEST15,	//			- F6
-	TEST16,	//			- F7
-	TEST17	//			- F8
+	READ_EEPROM1,	//	- F0
+	READ_EEPROM2,	//	- F1
+	TEST12,	//			- F2
+	TEST13,	//			- F3
+	TEST14,	//			- F4
+	TEST15,	//			- F5
+	TEST16,	//			- F6
+	TEST17	//			- F7
 } KEY_TYPES;
 
 enum non_func_types

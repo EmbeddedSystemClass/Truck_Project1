@@ -1,5 +1,6 @@
 git add README.md
 git add Truck_Project1_notes.txt
+git add super_truck_notes.txt
 git add todo.txt
 git add gitadd.sh
 git add .gitignore
@@ -125,6 +126,8 @@ git add AVR_t6963/test_write_data/read_eeprom_sim2.c
 git add AVR_t6963/test_write_data/make_show_eeprom
 git add AVR_t6963/test_write_data/sim_read_extract.sh
 git add AVR_t6963/test_write_data/sim_write_extract.sh
+git add AVR_t6963/test_write_data/hotkeys.txt
+git add AVR_t6963/todo.txt
 clear
 git status
 git log --oneline > oneline.txt

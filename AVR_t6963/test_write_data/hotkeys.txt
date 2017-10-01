@@ -1,0 +1,27 @@
+hotkeys for sim_write:
+
+'E' READ_EEPROM1			- read all 1024 of eeprom but display as text if ascii char
+'G' READ_EEPROM2			- display as hex
+'H' LOAD_RAM				- loads all the stuff for ram cblabels, checkboxes, etc
+'V' BURN_PART1				-
+'W' BURN_PART2
+'U' BURN_PART3
+'R' BURN_PART4
+'S' SYNC
+'L' TEST1					- fill inside box with char's
+'T' TEST2					- draw border around LCD representation
+'P' TEST3					- erase eeprom_sim
+'X' TEST4					- set READ_EEPROM size to 300 and start_addr to 0
+'N' TEST5					- print current cblabels
+'F' TEST6					- fill 0->600 with sequence
+'M' TEST7					- restore eeprom_sim from eeprom.bin
+'K' TEST11
+'I' INIT
+' ' SPACE
+
+
+avail keys:
+J	
+O
+Q
+

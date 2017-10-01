@@ -3,7 +3,7 @@
 // and before avr_main.h in the files for the AVR
 
 #define LIST_SIZE 50
-#define LAST_ROW_DISP LAST_ROW-11
+#define LAST_ROW_DISP LAST_ROW-9
 #define LAST_COL 63
 
 void dispRC(int row, int col);
