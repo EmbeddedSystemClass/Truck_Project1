@@ -28,10 +28,6 @@
 extern char eepromString[EEPROM_SIZE] EEMEM;
 #endif
 
-#ifdef TEST_WRITE_DATA
-extern UCHAR *peeprom_sim;
-#endif
-
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -64,20 +60,43 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 // warning this needs to be written for the AVR main
 int get_mlabel_offsets(void)
 {
-#ifdef TEST_WRITE_DATA
 	int i, j,k;
-	char *ch;
-	char *pch;
-	char temp_label[MAX_LABEL_LEN];
+	UCHAR *ch;
+	UCHAR *pch;
+	UCHAR temp_label[MAX_LABEL_LEN];
 	int done = 0;
+	size_t size;
+	UCHAR tch;
 
 	goffset = 0;
 
+#ifdef TEST_WRITE_DATA
+	ch = pch = eeprom_sim;
+#else
+	size = AUX_STRING_LEN;
+	eeprom_read_block((void*)&aux_string[0],(const void *)eepromString,(size_t)size);
+	ch = pch = aux_string;
+	j = k = 0;
+	for(i = 0;i < AUX_STRING_LEN;i++)
+	{
+		tch = aux_string[i];
+		if(tch == 0)
+			GDispCharAt(j,k,'_');
+		else
+			GDispCharAt(j,k,tch);
+		if(k++ > COLUMN-1)
+		{
+			k = 0;
+			j++;
+		}
+	}
+#endif
 	no_menu_labels = 0;
 	no_rt_labels = 0;
 	rt_params_offset = 0;
 	i = 0;
-	ch = pch = eeprom_sim;
+
+
 	pch--;
 // the eeprom image must have an extra '0' at the end of
 // the menu labels and another extra '0' at the end
@@ -105,7 +124,6 @@ int get_mlabel_offsets(void)
 		ch++;
 		pch++;
 	}while(*ch != 0 || *pch != 0);
-	no_rt_labels;
 
 	if(i > EEPROM_SIZE-10)
 		return -1;
@@ -114,10 +132,12 @@ int get_mlabel_offsets(void)
 	{
 		mlabel_offsets[i] = goffset;
 		j = 0;
+#ifdef TEST_WRITE_DATA
 		memcpy(temp_label,eeprom_sim+goffset,MAX_LABEL_LEN);
-
-//		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
-		ch = temp_label;
+#else
+		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
+#endif
+		ch = &temp_label[0];
 		while(*ch != 0 && j < MAX_LABEL_LEN)
 		{
 			ch++;
@@ -127,7 +147,6 @@ int get_mlabel_offsets(void)
 		goffset += j;
 	}
 	rt_params_offset = goffset;
-#endif
 	return no_menu_labels;
 }
 //******************************************************************************************//
@@ -138,7 +157,7 @@ void get_mlabel(int index, char *str)
 
 		// void *dest, const void *src, size_t n
 #ifdef TEST_WRITE_DATA
-	memcpy(str,peeprom_sim+mlabel_offsets[index],MAX_LABEL_LEN);
+	memcpy(str,eeprom_sim+mlabel_offsets[index],MAX_LABEL_LEN);
 #else
 #ifdef MAIN_C
 	eeprom_read_block((void *)str,eepromString+mlabel_offsets[index],MAX_LABEL_LEN);
@@ -188,9 +207,9 @@ void get_cblabel(int index, char *str)
 
 		// void *dest, const void *src, size_t n
 	memcpy(str,cblabels+cblabel_offsets[index],MAX_LABEL_LEN);
-#ifdef SCREEN_EN
-	printString(str);
-	printString("\r\n");
+#ifdef MAIN_C
+//	printString(str);
+//	printString("\r\n");
 #endif
 }
 
@@ -239,7 +258,7 @@ int update_mlabels(int index, char *ramstr)
 	return index;
 }
 //******************************************************************************************//
-//************************************* update_mlabels *************************************//
+//************************************* update_cbabels *************************************//
 //******************************************************************************************//
 int update_cblabels(int index, char *str)
 {
@@ -478,6 +497,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "xyz3 8\0");
 	i =  update_cblabels(i, "xyz3 9\0");
 	i =  update_cblabels(i, "xyz3 10\0");
+/*
 	i =  update_cblabels(i, "quick4 1\0");
 	i =  update_cblabels(i, "quick4 2\0");
 	i =  update_cblabels(i, "quick4 3\0");
@@ -493,6 +513,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "ending 3\0");
 	i =  update_cblabels(i, "ending 4\0");
 	i =  update_cblabels(i, "ending 5\0");
+*/
 }
 #endif
 #endif

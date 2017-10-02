@@ -16,7 +16,7 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define EEPROM_SIZE 0x400
-#define TOTAL_NUM_CBLABELS 80
+#define TOTAL_NUM_CBLABELS 40
 #define CBLABEL_SIZE 500
 
 void get_mlabel(int index, char *str);
@@ -39,7 +39,6 @@ typedef struct checkboxes
 CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
 CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
 
-//#define AUX_STRING_LEN EEPROM_SIZE/8	// 128
 #define AUX_STRING_LEN 300
 
 #ifdef TEST_WRITE_DATA
@@ -161,23 +160,29 @@ enum fptr_types
 // warning: these are also defined in the esos1 directory
 enum key_types
 {
-	SYNC = 0xCF,
-	TEST1,			//	- D0
-	TEST2,			//  - D1
-	TEST3,			//  - D2
-	TEST4,			//  - D3
-	TEST5,			//	- D4
-	TEST6,			//	- D5
-	TEST7,			//	- D6
-	LOAD_RAM,		//  - D7
-	INIT, 			//	- D8
-	SPACE,			//	- D9
-	BURN_PART,		//  - DA
-	BURN_PART1,		//  - DB
-	BURN_PART2,		//  - DC
-	BURN_PART3,		//  - DD
-	BURN_PART4,		//  - DE
-	TEST11,			//  - DF	
+	TEST1 = 0xC9,
+	TEST2,			//  - CA
+	TEST3,			//  - CB
+	TEST4,			//  - CC
+	TEST5,			//	- CD
+	TEST6,			//	- CE
+	TEST7,			//	- CF
+	TEST8,			//	- D0
+	TEST9,			//	- D1
+	TEST10,			//	- D2
+	TEST11,			//	- D3
+	TEST12,			//	- D4
+	TEST13,			//	- D5
+	TEST14,			//	- D6
+	TEST15,			//	- D7
+	TEST16,			//	- D8
+	TEST17,			//  - D9
+	LOAD_RAM,		//  - DA
+	INIT, 			//	- DB
+	SPACE,			//	- DC
+	BURN_PART,		//  - DD
+	READ_EEPROM1,	//	- DE
+	READ_EEPROM2,	//	- DF
 
 	KP_POUND,	// '#'	- E0
 	KP_AST, // '*'		- E1
@@ -195,14 +200,6 @@ enum key_types
 	KP_B, // 'B'		- ED
 	KP_C, // 'C'		- EE
 	KP_D, // 'D'		- EF
-	READ_EEPROM1,	//	- F0
-	READ_EEPROM2,	//	- F1
-	TEST12,	//			- F2
-	TEST13,	//			- F3
-	TEST14,	//			- F4
-	TEST15,	//			- F5
-	TEST16,	//			- F6
-	TEST17	//			- F7
 } KEY_TYPES;
 
 enum non_func_types

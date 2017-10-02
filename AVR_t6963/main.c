@@ -48,8 +48,9 @@ int main(void)
 	int do_states = 1;
 //    size_t str_size = sizeof(PROMPT_STRUCT);
 //	initSPIslave();
+	_delay_ms(20);
 	initUSART();
-#if 0
+	_delay_ms(20);
 	GDispInit();
 	_delay_us(10);
 	GDispSetMode(XOR_MODE);
@@ -58,7 +59,7 @@ int main(void)
 	_delay_us(10);
 	GDispClrTxt();
 	GDispStringAt(1,1,"LCD is on!");
-
+#if 0
 //******************************************************************************************//
 //******************* read all the data from eeprom into memory  ***************************//
 //******************************************************************************************//
@@ -151,7 +152,6 @@ int main(void)
 //	init_list();
 //	display_labels();
 	done = 0;
-	char param_string[10];
 
 	xbyte = 0x21;
 //	printString("\r\nstarting...\r\n");
@@ -165,6 +165,7 @@ int main(void)
 //		SPI_write(xbyte);
 //		transmitByte(xbyte);
 
+#if 0
 #ifndef TTY_DISPLAY
 
 		for(i = 0;i < no_rtparams;i++)
@@ -179,6 +180,7 @@ int main(void)
 				GDispStringAt(rt_params[i].row,rt_params[i].col+10,param_string);
 			}
 		}
+#endif
 #endif
 	}
 	return (0);									  // this should never happen

@@ -294,6 +294,60 @@ void GDispCharAt (UINT row, UINT col, UCHAR c)
 #endif
 }
 
+void GDispByteAt(UINT row, UINT col, UCHAR byte)
+{
+#ifdef MAIN_C
+	UCHAR temp;
+	GDispGoto(row,col);
+	temp = ('0' + (byte / 100));                        /* Hundreds */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+
+	GDispGoto(row,col+1);
+	temp = ('0' + ((byte / 10) % 10));                      /* Tens */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+	
+	GDispGoto(row,col+2);
+	temp = ('0' + (byte % 10));                             /* Ones */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+#endif
+}
+
+void GDispWordAt(UINT row, UINT col, UINT word)
+{
+#ifdef MAIN_C
+	UINT temp;
+	GDispGoto(row,col);
+	temp = ('0' + (word / 10000));                 /* Ten-thousands */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+
+	GDispGoto(row,col+1);
+	temp = ('0' + ((word / 1000) % 10));               /* Thousands */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+
+	GDispGoto(row,col+2);
+	temp = ('0' + ((word / 100) % 10));                 /* Hundreds */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+
+	GDispGoto(row,col+3);
+	temp = ('0' + ((word / 10) % 10));                      /* Tens */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+
+	GDispGoto(row,col+4);
+	temp = ('0' + (word % 10));                             /* Ones */
+	GDispDataWr(temp - 0x20);
+	GDispCmdSend (DATA_WR);
+#endif
+}
+
+
+
 void GDispStringAt(UINT row, UINT col, char *c)
 {
 #ifndef DISABLE_LCD

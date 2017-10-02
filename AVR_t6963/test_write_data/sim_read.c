@@ -157,6 +157,8 @@ int main(int argc, char *argv[])
 	syncup = 0;
 	bp = 0;
 	tdelay = 3000;
+	size = 300;
+	start_addr = 0;
 	while(1)
 	{
 		read(global_fd,&key,1);

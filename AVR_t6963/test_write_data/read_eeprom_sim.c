@@ -39,15 +39,16 @@ int main(int argc, char *argv[])
 	MENU_FUNC_STRUCT *pmf = &mf;
 	int display_offset = 4;
 	char temp_label[MAX_LABEL_LEN];
-	int fp;
+	int fp, fp2;
 	peeprom_sim = eeprom_sim;
 	char filename[20];
 	char fpc[10];
-	int res;
+	int res, res2;
 
+	memset(eeprom_sim,0xFF,EEPROM_SIZE);
 	burn_eeprom();
 
-	if(argc > 1)
+	if(argc == 2)
 	{
 		strcpy(filename,argv[1]);
 		fp = open(filename, O_RDWR | O_CREAT | O_TRUNC, 666);
@@ -56,23 +57,50 @@ int main(int argc, char *argv[])
 			printf("%s\n",strerror(errno));
 			exit(1);
 		}
-		else
+		res = 0;
+		j = 0x21;
+		for(i = 300;i < 600;i++)
 		{
-			res = 0;
-			j = 0x21;
-			for(i = 300;i < 600;i++)
+			eeprom_sim[i] = j;
+			if(++j > 0x7e)
+				j = 0x21;
+		}				
+		for(i = 0;i < EEPROM_SIZE;i++)
+		{
+			res += write(fp,&eeprom_sim[i],1);
+		}
+		printf("created file: %s with %d bytes\n",filename,res);
+		close(fp);
+		exit(0);
+	}
+	if(argc == 3)
+	{
+		if(access(argv[1],F_OK) != -1)
+		{
+			fp = open(argv[1], O_RDWR, 600);
+			if(fp < 0)
 			{
-				eeprom_sim[i] = j;
-				if(++j > 0x7e)
-					j = 0x21;
-			}				
+				printf("%s\n",strerror(errno));
+				exit(1);
+			}
+			fp2 = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, 666);
+			if(fp < 0)
+			{
+				printf("%s\n",strerror(errno));
+				exit(1);
+			}
+			res = res2 = 0;
+			j = 0x21;
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
-				res += write(fp,&eeprom_sim[i],1);
-			}
-			printf("created file: %s with %d bytes\n",filename,res);
+				res += read(fp,&eeprom_sim[i],1);
+				res2 += write(fp2,&eeprom_sim[i],1);
+//				printf("%d %d %x  ",res,res2,eeprom_sim[i]);
+			}				
+			printf("created file: %s from %s with %d bytes\n",argv[2],argv[1],res);
 			close(fp);
-			exit(1);
+			close(fp2);
+			exit(0);
 		}
 	}
 

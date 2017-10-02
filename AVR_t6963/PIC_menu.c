@@ -64,6 +64,7 @@ static UCHAR set_list(int fptr);
 static UCHAR get_fptr(void);
 static void get_fptr_label(char *str);
 static int get_curr_menu_index(void);
+static UCHAR random_data;
 
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
 //******************************************************************************************//
@@ -276,34 +277,55 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 	switch(ret_char)
 	{
-		case INIT:		// 'I'
+		case INIT:		// 'i'
 			init_list();
 			break;
 
-		case TEST1:		// fill inside box 'L'
+		case TEST1:		// 'g'
+		case TEST2:		// 'h'
+		case TEST3:		// 'j'
+		case TEST4:		// 'k'
+			write(global_fd,&ret_char,1);
+			mvwprintw(win, LAST_ROW_DISP-3,1,"size: %d  start_addr: %d                   ",size,start_addr);
+			break;
+
+		case TEST5:		// 'l'  fill aux_string with random data and write to target 
+//			write(global_fd,&ret_char,1);
+			for(i = 0;i < AUX_STRING_LEN;i++)
+				aux_string[i] = ~i - random_data;
+			random_data++;
+			k = j = 0;
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
+				mvwprintw(win, LAST_ROW_DISP+j-45, 7+(k*3),"%2x ",aux_string[i]);
+				if(++k > 15)
+				{
+					k = 0;
+					++j;
+					mvwprintw(win, LAST_ROW_DISP+j-45,1,"%2d: ",i+1);
+				}
+			}
+			res = 0;
+			write(global_fd,&ret_char,1);
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
+				res += write(global_fd,&aux_string[i],1);
+				usleep(tdelay);
+			}
+			mvwprintw(win, LAST_ROW_DISP-1,1,"filled aux_string with random data and wrote to target %d    ",res);
+			break;
+
+		case TEST6:		// 'm' draw border
+			write(global_fd,&ret_char,1);
+			mvwprintw(win, LAST_ROW_DISP-3,1,"draw border                                   ");
+			break;
+
+		case TEST7:		// 'n' print cblabels
+			mvwprintw(win, LAST_ROW_DISP-3,1,"print cblabels                               ");
 			write(global_fd,&ret_char,1);
 			break;
 
-		case TEST2:		// draw border around box  'T'
-			write(global_fd,&ret_char,1);
-			break;
-
-		case TEST3:		// erase eeprom  'P'
-			write(global_fd,&ret_char,1);
-			break;
-
-		case TEST4:
-			break;
-
-		case TEST5:		// print current cblabels  'N'
-			write(global_fd,&ret_char,1);
-			break;
-
-		case TEST6:		// fill 0->600 with sequence  'F'
-			write(global_fd,&ret_char,1);
-			break;
-
-		case TEST7:		// restore eeprom form eeprom.bin  'M'
+		case TEST8:		// 'o' restore eeprom form eeprom.bin
 			res = 0;
 			strcpy(filename,"eeprom.bin\0");
 			if(access(filename,F_OK) != -1)
@@ -311,7 +333,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				fp = open((const char *)filename, O_RDWR);
 				if(fp < 0)
 				{
-					mvwprintw(win, LAST_ROW,2,"can't open file for writing");
+					mvwprintw(win, LAST_ROW_DISP-1,2,"can't open file for writing");
 					wrefresh(win);
 					getch();
 				}else
@@ -321,12 +343,13 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 		//							for(i = start_addr;i < size;i++)
 					res = read(fp,eeprom_sim,EEPROM_SIZE);
 					close(fp);
-					mvwprintw(win, LAST_ROW_DISP,2,
+					mvwprintw(win, LAST_ROW_DISP-1,2,
 						"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
 					j = k = 0;
 				}
 			}
-			mvwprintw(win, LAST_ROW-3,1,"test7  - restoring eeprom from eeprom.bin res: %d          ",res);
+			mvwprintw(win, LAST_ROW_DISP-3,1,"TEST8  - restoring eeprom from eeprom.bin res: %d          ",res);
+/*
 			k = j = 0;
 			for(i = 0;i < EEPROM_SIZE;i++)
 			{
@@ -340,113 +363,102 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 					++j;
 				}
 			}
-
+*/
 			wrefresh(win);
-			
 			break;
 
-		case READ_EEPROM1:  // 'E'
-		case READ_EEPROM2:	// 'G'
-			res += write(global_fd,&ret_char,1);
-
-			unpack(size,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-
-			unpack(start_addr,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-			res += write(global_fd, &low_byte,1);
-// 			res += write(global_fd,&type,1);		// send the 'type' to tell AVR what to load
- 			send_aux_data = 0;
-
-			for(i = start_addr;i < size+start_addr;i++)
+		case TEST9:		// 'p' copy eeprom2.bin to eeprom_sim in host
+			res = 0;
+			strcpy(filename,"eeprom2.bin\0");
+			if(access(filename,F_OK) != -1)
 			{
-				read(global_fd,&eeprom_sim[i],1);
-				mvwprintw(win, LAST_ROW_DISP-3,1,"%d   %x    ",i,eeprom_sim[i]);
-				wrefresh(win);
-			}
-			get_mlabel_offsets();
-
-			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"read e: ch: %x size: %d st addr: %d rtparams: %d ",ret_char,size,start_addr,no_rtparams);
-
-			j = k = 0;
-			mvwprintw(win, LAST_ROW_DISP-45, 23,"|");
-			if(ret_char == READ_EEPROM1)
-			{
-				for(i = 0;i < EEPROM_SIZE;i++)
+				fp = open((const char *)filename, O_RDWR);
+				if(fp < 0)
 				{
-					if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
-						mvwprintw(win, LAST_ROW_DISP+j-45, 24+k,"%c",eeprom_sim[i]);
-					else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-45, 24+k," ");
-					else mvwprintw(win, LAST_ROW_DISP+j-45, 24+k,"_");
-					if(++k > 30)
-					{
-						k = 0;
-						++j;
-					}
-				}
-				k++;
-				mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"|");
-				mvwprintw(win, LAST_ROW_DISP-2,30,"display all eeprom     ");
-
-			}
-			else
-			{
-				mvwprintw(win, LAST_ROW_DISP-48,1,"0: ");
-				for(i = 0;i < 700;i++)
+					mvwprintw(win, LAST_ROW_DISP-1,2,"can't open file for writing");
+					wrefresh(win);
+					getch();
+				}else
 				{
-					mvwprintw(win, LAST_ROW_DISP+j-48, 7+(k*3),"%2x ",eeprom_sim[i]);
-					if(++k > 15)
-					{
-						k = 0;
-						++j;
-						mvwprintw(win, LAST_ROW_DISP+j-48,1,"%2d: ",i+1);
-					}
+					res = 0;
+					lseek(fp,0,SEEK_SET);
+					res = read(fp,eeprom_sim,EEPROM_SIZE);
+					close(fp);
+					mvwprintw(win, LAST_ROW_DISP-1,2,
+						"reading part into eeprom_sim: %d %d %d  ",res,size,start_addr);
+					j = k = 0;
 				}
-				mvwprintw(win, LAST_ROW_DISP-1,30,"display 1st 700 of eeprom   ");
 			}
-			wrefresh(win);
- 			break;
+			mvwprintw(win, LAST_ROW_DISP-1,1,"TEST9  - copy eeprom2.bin to eeprom_simp[] res: %d          ",res);
 
-		case BURN_PART:
+//			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST10:	// 'x' read aux_string from target
+			write(global_fd,&ret_char,1);
+			res = 0;
+			for(i = 0;i < AUX_STRING_LEN;i++)
+				res += read(global_fd,&aux_string[i],1);
 
-			j = k = 0;
-			mvwprintw(win, LAST_ROW_DISP-3,1,
-				"size: %d  start_addr: %d               ",size,start_addr);
-			wrefresh(win);
-
-			res += write(global_fd,&ret_char,1);
-
-			unpack(size,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-//			read(global_fd, &t1, 1);
-			res += write(global_fd, &low_byte,1);
-//			read(global_fd, &t2, 1);
-
-//			mvwprintw(win, LAST_ROW_DISP-2,1,
-//				"burn part size:       %x  %x  %x  %x",t1, t2,high_byte,low_byte);
-//			wrefresh(win);
-
-			unpack(start_addr,&low_byte,&high_byte);
-			res += write(global_fd, &high_byte,1);
-//			read(global_fd, &t1, 1);
-			res += write(global_fd, &low_byte,1);
-//			read(global_fd, &t2, 1);
-
-			mvwprintw(win, LAST_ROW_DISP-2,1,
-				"burn part start_addr: %d                        ",start_addr);
-			wrefresh(win);
-
-			for(i = start_addr;i < size+start_addr;i++)
+			k = j = 0;
+			for(i = 0;i < AUX_STRING_LEN;i++)
 			{
-				res += write(global_fd,&eeprom_sim[i],1);
-				usleep(tdelay);
+				mvwprintw(win, LAST_ROW_DISP+j-45, 7+(k*3),"%2x ",aux_string[i]);
+				if(++k > 15)
+				{
+					k = 0;
+					++j;
+					mvwprintw(win, LAST_ROW_DISP+j-45,1,"%2d: ",i+1);
+				}
 			}
-			mvwprintw(win, LAST_ROW_DISP-2,20,"res: %d   ",res);
- 			break;
+			mvwprintw(win, LAST_ROW_DISP-1,1,"read aux_string: res %d                       ",res);
+			break;
 
-		case LOAD_RAM:  //  'H'
+		case TEST11:	// 's' - tell AVR to display pattern on screen
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST12:	// 'A'
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST13:	// 'B'
+			write(global_fd,&ret_char,1);
+			k = j = 0;
+//			for(i = start_addr;i < size+start_addr;i++)
+			for(i = 0;i < EEPROM_SIZE;i++)
+			{
+				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"%c",eeprom_sim[i]);
+				else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-45, 2+k," ");
+				else mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+
+			break;
+			
+		case TEST14:	// 'C'
+			mvwprintw(win, LAST_ROW_DISP-3,1,"size: %d  start_addr: %d                   ",size,start_addr);
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST15:	// 'D'
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST16:	// 'E'
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case TEST17:	// 'F'
+			write(global_fd,&ret_char,1);
+			break;
+			
+		case LOAD_RAM:  //  'r'
 			i = 0;
 			total_offset = 0;
 			i = update_rtparams(i, 0, 0, SHOWN_SENT, 1, RT_RPM);	// first label is at offset 0
@@ -474,19 +486,6 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				usleep(tdelay);
 			}
 
-			mvwprintw(win, LAST_ROW_DISP-2,10,"done");
-			wrefresh(win);
-/*
-			for(i = 0;i < EEPROM_SIZE;i++)
-			{
-				res += write(global_fd,&eeprom_sim[i],1);
-				mvwprintw(win, LAST_ROW_DISP-1,2,"%2x %2d ",eeprom_sim[i],res);
-				wrefresh(win);
-				usleep(tdelay);
-			}
-
-			mvwprintw(win, LAST_ROW_DISP,2,"res: %2d ",res);
-*/
 			wrefresh(win);
 			res = 0;
 			low_byte = 0;
@@ -535,9 +534,113 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				write(global_fd,&high_byte,1);
 				usleep(tdelay);
 			}
-			mvwprintw(win, LAST_ROW_DISP-1,10,"done");
+			mvwprintw(win, LAST_ROW_DISP-1,2,"LOAD_RAM done                         ");
 			wrefresh(win);
 			break;
+
+		case BURN_PART:		// 'v'
+			for(i = 1;i < 6;i++)
+				mvwprintw(win, LAST_ROW_DISP-i,1,"                                                   ");
+
+			j = k = 0;
+			mvwprintw(win, LAST_ROW_DISP-2,2,
+				"BURN_PART: size: %d  start_addr: %d    ",size,start_addr);
+			wrefresh(win);
+
+			res += write(global_fd,&ret_char,1);
+
+			unpack(size,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+//			read(global_fd, &t1, 1);
+			res += write(global_fd, &low_byte,1);
+//			read(global_fd, &t2, 1);
+
+//			mvwprintw(win, LAST_ROW_DISP-2,1,
+//				"burn part size:       %x  %x  %x  %x",t1, t2,high_byte,low_byte);
+//			wrefresh(win);
+
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+//			read(global_fd, &t1, 1);
+			res += write(global_fd, &low_byte,1);
+//			read(global_fd, &t2, 1);
+
+			low_byte = 0;
+			for(i = start_addr;i < size+start_addr;i++)
+			{
+				res += write(global_fd,&eeprom_sim[i],1);
+				low_byte += eeprom_sim[i];
+				usleep(tdelay);
+			}
+			mvwprintw(win, LAST_ROW_DISP-1,2,"res: %d chksum: %d     ",res,low_byte);
+ 			break;
+
+		case READ_EEPROM1:  // 'e'
+		case READ_EEPROM2:	// 'f'
+		
+			for(i = LAST_ROW_DISP-1;i > 0;i--)
+				mvwprintw(win, i,1,"                                                             ");
+		
+			res += write(global_fd,&ret_char,1);
+
+			unpack(size,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+
+			unpack(start_addr,&low_byte,&high_byte);
+			res += write(global_fd, &high_byte,1);
+			res += write(global_fd, &low_byte,1);
+
+			low_byte = 0;
+			for(i = start_addr;i < size+start_addr;i++)
+			{
+				read(global_fd,&eeprom_sim[i],1);
+				low_byte += eeprom_sim[i];
+				mvwprintw(win, LAST_ROW_DISP-2,1,"%d   %x    ",i,eeprom_sim[i]);
+				wrefresh(win);
+			}
+			get_mlabel_offsets();
+
+			j = k = 0;
+			mvwprintw(win, LAST_ROW_DISP-45, 23,"|");
+			if(ret_char == READ_EEPROM1)
+			{
+				for(i = start_addr;i < size+start_addr;i++)
+				{
+					if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+						mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"%c",eeprom_sim[i]);
+					else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-45, 2+k," ");
+					else mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"_");
+					if(++k > 30)
+					{
+						k = 0;
+						++j;
+					}
+				}
+				k++;
+				mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"|");
+				mvwprintw(win, LAST_ROW_DISP-1,2,"read: size %d start %d chksum %d         ",size,start_addr,low_byte);
+
+			}
+			else
+			{
+				mvwprintw(win, LAST_ROW_DISP-45,1,"%d: ",i);
+				for(i = start_addr;i < size+start_addr;i++)
+				{
+					mvwprintw(win, LAST_ROW_DISP+j-45, 7+(k*3),"%2x ",eeprom_sim[i]);
+					if(++k > 15)
+					{
+						k = 0;
+						++j;
+						mvwprintw(win, LAST_ROW_DISP+j-45,1,"%2d: ",i+1);
+					}
+				}
+				mvwprintw(win, LAST_ROW_DISP-1,2,"read: size %d start %d chksum %d         ",size,start_addr,low_byte);
+			}
+			wrefresh(win);
+ 			break;
+
+
 #ifdef TEST_WRITE_DATA
  		case SPACE:
 			write(global_fd,&ret_char,1);

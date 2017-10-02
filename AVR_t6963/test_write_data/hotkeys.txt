@@ -1,27 +1,28 @@
 hotkeys for sim_write:
 
-'E' READ_EEPROM1			- read all 1024 of eeprom but display as text if ascii char
-'G' READ_EEPROM2			- display as hex
-'H' LOAD_RAM				- loads all the stuff for ram cblabels, checkboxes, etc
-'V' BURN_PART1				-
-'W' BURN_PART2
-'U' BURN_PART3
-'R' BURN_PART4
-'S' SYNC
-'L' TEST1					- fill inside box with char's
-'T' TEST2					- draw border around LCD representation
-'P' TEST3					- erase eeprom_sim
-'X' TEST4					- set READ_EEPROM size to 300 and start_addr to 0
-'N' TEST5					- print current cblabels
-'F' TEST6					- fill 0->600 with sequence
-'M' TEST7					- restore eeprom_sim from eeprom.bin
-'K' TEST11
-'I' INIT
-' ' SPACE
+'g'	TEST1					- set size = 300 start_addr = 0
+'h'	TEST2					- set size = 300 start_addr = 300
+'j'	TEST3					- set size = 300 start_addr = 600
+'k'	TEST4					- set size = 123 start_addr = 900
+'l'	TEST5					- fill aux_string with random data
+'m'	TEST6					- draw border
+'n'	TEST7					- print cblabels
+'o'	TEST8					- restore eeprom_sim
+'p'	TEST9					- copy eeprom2.bin to eeprom_sim[] in host
+'x'	TEST10					- read aux_string from target
+'r'	LOAD_RAM				- load ram in target with cblabels, checkboxes & rt_params
+'i'	INIT
+' '	SPACE					- clear screen
+'v'	BURN_PART				- burn according to size & start_addr
+'e'	READ_EEPROM1			- read according to size & start_addr and display as ascii char (0's as space, rest as '_'
+'f'	READ_EEPROM2			- read according to size & start_addr and display as hex
+'s' TEST11					- tell AVR to print pattern
 
+'A' TEST12					- print to LCD debug info (no_menus, etc)
+'B' TEST13					- display current eeprom_sim[]
+'C' TEST14					- write test pattern from 0x120->0x330
+'D' TEST15
+'E' TEST16
+'F' TEST17
 
-avail keys:
-J	
-O
-Q
 

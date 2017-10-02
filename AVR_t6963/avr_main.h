@@ -47,3 +47,4 @@ int syncup;
 UCHAR sync_buf[10];
 int bp;
 int tdelay;
+int size, start_addr;

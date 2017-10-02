@@ -17,6 +17,7 @@
 #include <avr/eeprom.h>
 #include "macros.h"
 #include "USART.h"
+#include "t6963.h"
 #else
 #include <unistd.h>
 #include <errno.h>
@@ -169,39 +170,13 @@ static UCHAR generic_menu_function(UCHAR ch)
 	for(i = 0;i < 6;i++)
 	{
 		high_byte = receiveByte();
-//		transmitByte(high_byte);
 		low_byte = receiveByte();
-//		transmitByte(low_byte);
 		curr_menus[i] = pack(low_byte,high_byte);
 	}
-//	high_byte = receiveByte();
-//	transmitByte(high_byte);
-//	low_byte = receiveByte();
-//	transmitByte(low_byte);
-//	aux_bytes_to_read = pack(low_byte, high_byte);
-
-//	aux_bytes_to_read = receiveByte();
-//	aux_data_offset = receiveByte();
 
 	for(i = 0;i < 20;i++)
 		aux_string[i] = receiveByte();
 
-	// write a code of 0xAA back to sim PIC as a verification that everything is running
-	// if not hooked up to LCD screen
-/*
-	low_byte = 0xAA;
-	transmitByte(low_byte);
-
-	aux_string[0] = (UCHAR)aux_bytes_to_read;
-	aux_string[1] = (UCHAR)(aux_bytes_to_read>>8);
-	aux_string[2] = low_byte;
-	aux_string[3] = high_byte;
-	aux_string[4] = (UCHAR)menu_index;
-	aux_string[5] = (UCHAR)(menu_index>>8);
-
-	for(i = 0;i < 6;i++)
-		transmitByte(aux_string[i]);
-*/
 #endif
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, LAST_ROW-4, 1,"fptrs: %d %d                               ",tfptr,prev_fptr);
@@ -397,8 +372,6 @@ UCHAR read_get_key(UCHAR key)
 {
 	int i,j,k,done;
 	UCHAR ret_char = key;
-	int size = 0;
-	int start_addr = 0;
 	int res = 0;
 	int res2 = 0;
 	int type = 0;
@@ -425,24 +398,58 @@ UCHAR read_get_key(UCHAR key)
 			for(i = 1;i < LAST_ROW;i++)
 				mvwprintw(win, i,1,"                                                            ");
 			wrefresh(win);
+#else
+			GDispClrTxt();
 #endif
 			break;
 
 		case TEST1:
-			low_byte = 0x21;
-			for(i = 0;i < ROWS;i++)
-			{
-				for(j = 0;j < COLUMN;j++)
-				{
-					GDispCharAt(i,j,low_byte);
-					if(++low_byte > 0x7e)
-						low_byte = 0x21;
-				}
-			}
+			size = AUX_STRING_LEN;
+			start_addr = 0;
 			break;			
 
-
 		case TEST2:
+			size = AUX_STRING_LEN;
+			start_addr = AUX_STRING_LEN;
+			break;
+			
+		case TEST3:
+			size = AUX_STRING_LEN;
+			start_addr = AUX_STRING_LEN*2;
+			break;
+			
+		case TEST4:
+			size = 123;
+			start_addr = AUX_STRING_LEN*3;
+			break;
+			
+		case TEST5:
+			res = 0;		
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
+#ifdef TEST_WRITE_DATA
+				res += read(global_fd,&aux_string[i],1);
+#else
+				aux_string[i] = receiveByte();
+#endif
+			}
+#ifdef TEST_WRITE_DATA
+			k = j = 0;
+			mvwprintw(win, LAST_ROW-2,1,"get random data for aux_string   %d      ",res);
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
+				mvwprintw(win, LAST_ROW+j-58, 2+(k*3),"%2x ",aux_string[i]);
+				if(++k > 15)
+				{
+					k = 0;
+					++j;
+				}
+			}
+			wrefresh(win);
+#endif
+			break;
+
+		case TEST6:
 #ifdef TEST_WRITE_DATA
 			mvwhline(win, 1, 5, ACS_HLINE, 41);
 			mvwhline(win, 18, 5, ACS_HLINE, 41);
@@ -457,19 +464,7 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST3:
-#ifdef TEST_WRITE_DATA
-			memset(eeprom_sim,0,EEPROM_SIZE);
-			mvwprintw(win, LAST_ROW-2,1,"erase eeprom                                        ");
-			wrefresh(win);
-#endif
-			break;
-
-		case TEST5:
-			res = 0;
-//			for(i = 0;i < TOTAL_NUM_CBLABELS/2;i++)
-//			for(i = 0;i < no_cblabels/2;i++)
-
+		case TEST7:
 #ifdef TEST_WRITE_DATA
 			mvwprintw(win, LAST_ROW-1, 2,"print out current cblabels                          ");
 
@@ -494,86 +489,25 @@ UCHAR read_get_key(UCHAR key)
 			}
 
 			wrefresh(win);
+#else
+			j = k = 0;
+			for(i = 0;i < no_cblabels;i++)
+			{
+				get_cblabel(i,temp);
+				GDispStringAt(j,k,temp);
+				if(++j > 16)
+				{
+					j = 0;
+					k += 10;
+				}	
+			}
 #endif
 			break;
 
-		case TEST6:
+		case TEST9:
 #ifdef TEST_WRITE_DATA
+			k = j = 0;
 			for(i = 0;i < EEPROM_SIZE;i++)
-			{
-				if((i%2)  == 0)
-					eeprom_sim[i] = ~i;
-				else
-					eeprom_sim[i] = i;	
-			}
-
-			mvwprintw(win, LAST_ROW-2,1,"test4  - set eeprom to sequence                            ");
-			wrefresh(win);
-#endif
-			break;
-
-		case TEST7:
-			break;
-
-		case READ_EEPROM1:
-		case READ_EEPROM2:
-#ifdef TEST_WRITE_DATA
-
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			size = pack(low_byte,high_byte);
-
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			start_addr = pack(low_byte,high_byte);
-
-			if(size+start_addr > EEPROM_SIZE)
-			{
-				size = (size < EEPROM_SIZE?EEPROM_SIZE:size);
-				start_addr = 0;
-			}
-
-			mvwprintw(win, LAST_ROW-2,1,
-				"read_eeprom1 - size: %d start: %d    ",size,start_addr);
-			wrefresh(win);
-
-			for(i = start_addr;i < size+start_addr;i++)
-//			for(i = 0; i < 100;i++)
-//			for(i = 0;i < size;i++)
-			{
-				if(eeprom_sim[i] != 0)
-					usleep(tdelay*2);
-				else usleep(tdelay);	
-				write(global_fd,&eeprom_sim[i],1);
-
-				mvwprintw(win, LAST_ROW-3,1,
-				"%2x   %d                               ",eeprom_sim[i],i);
-				wrefresh(win);
-
-//				low_byte = ~i;
-//				res2 += write(global_fd,&low_byte,1);
-			}
-			mvwprintw(win, LAST_ROW-2,1,
-				"read_eeprom1 - size: %d start: %d                 ",size,start_addr);
-			wrefresh(win);
-
-			j = 0;
-			k = 0;
-
-//			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
-//			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
-//			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
-
-//			mvwprintw(win, LAST_ROW-4,2,
-//				"no_rt_labels: %d no_menu_labels: %d no_rtparams: %d  ",no_rt_labels,no_menu_labels,no_rtparams);
-
-			for(i = 1;i < LAST_ROW+1;i++)
-				mvwprintw(win, i,2,"                                                      ");
-
-			mvwprintw(win, LAST_ROW-50, 2,"|");
-
-			for(i = start_addr;i < size+start_addr;i++)
-//			for(i = 0;i < EEPROM_SIZE;i++)
 			{
 				if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
 					mvwprintw(win, LAST_ROW+j-50, 2+k,"%c",eeprom_sim[i]);
@@ -587,94 +521,138 @@ UCHAR read_get_key(UCHAR key)
 			}
 			k++;
 			mvwprintw(win, LAST_ROW+j-50, 2+k,"|");
-
-			k = 0;
-/*
-			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
-			{
-				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
-			}
-*/
-			mvwprintw(win, LAST_ROW-2,1,
-				"read_eeprom2 - size: %d start: %d    ",size,start_addr);
-			wrefresh(win);
-#else
-			high_byte = receiveByte();
-			low_byte = receiveByte();
-//			transmitByte(high_byte);
-//			transmitByte(low_byte);
-			size = pack(low_byte,high_byte);
-
-//			transmitByte(high_byte);
-//			transmitByte(low_byte);
-			high_byte = receiveByte();
-			low_byte = receiveByte();
-			start_addr = pack(low_byte,high_byte);
-			memset(aux_string,0,AUX_STRING_LEN);
-			eeprom_read_block((void *)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
-
-			for(i = 0;i < size;i++)
-			{
-//				low_byte = receiveByte();
-				transmitByte(aux_string[i]);
-			}
 #endif
-			get_mlabel_offsets();
 			break;
 
-		case BURN_PART:
+		case TEST10:
+			res = 0;
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
 #ifdef TEST_WRITE_DATA
-			mvwprintw(win, LAST_ROW-2,1,
-				"burn eeprom start"                               );
-			wrefresh(win);
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			size = pack(low_byte,high_byte);
-
-			read(global_fd,&high_byte,1);
-			read(global_fd,&low_byte,1);
-			start_addr = pack(low_byte,high_byte);
-
-			mvwprintw(win, LAST_ROW-2,1,
-				"burn eeprom - size: %d start: %d ",size,start_addr);
-			wrefresh(win);
-			for(i = start_addr;i < size+start_addr;i++)
-//			for(i = 0;i < size;i++)
-			{
-				res2 += read(global_fd,&eeprom_sim[i],1);
-//				usleep(100);
-				mvwprintw(win, LAST_ROW-3,1,"%2x  %2d %2d",eeprom_sim[i],i,res2);
-				wrefresh(win);
-			}
-
-//			low_byte = 0x55;
-//			write(global_fd,&low_byte,1);
-			mvwprintw(win, LAST_ROW-2,1,"done %d  ",res2);
+				res += write(global_fd,&aux_string[i],1);
+				usleep(tdelay);
 #else
-			high_byte = receiveByte();
-//			transmitByte(high_byte);
-			low_byte = receiveByte();
-//			transmitByte(low_byte);
-			size = pack(low_byte,high_byte);
-
-			high_byte = receiveByte();
-//			transmitByte(high_byte);
-			low_byte = receiveByte();
-//			transmitByte(low_byte);
-			start_addr = pack(low_byte,high_byte);
-
-			for(i = start_addr;i < size+start_addr;i++)
-			{
-				aux_string[i] = receiveByte();
-//				transmitByte(aux_string[i]);
-			}
-			eeprom_update_block((const void*)&aux_string[0],(void *)eepromString+start_addr,(size_t)size);
+				transmitByte(aux_string[i]);
+				_delay_ms(1);
 #endif
-			get_mlabel_offsets();
-
+			}
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, LAST_ROW-1,1,"writing aux_string: %d                               ",res);
+#endif
 			break;
 
-		case LOAD_RAM:
+		case TEST11:
+			i = j = 0;
+			low_byte = 0x21;
+#ifdef TEST_WRITE_DATA
+			GDispClrTxt();
+#endif
+			for(k = 0;k < 5;k++)
+				for(i = 0;i < ROWS;i++)
+				{
+					for(j = 0;j < COLUMN;j++)
+					{
+#ifdef TEST_WRITE_DATA
+						usleep(tdelay/100);
+#else
+						_delay_ms(2);
+#endif
+						GDispCharAt(i,j,low_byte);
+						if(++low_byte > 0x7e)
+						{
+							low_byte = 0x21;
+						}
+#ifdef TEST_WRITE_DATA
+						wrefresh(win);
+#endif
+					}
+				}
+			break;
+			
+			
+		case TEST12:	// print to screen debug info  'A'
+//			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+//			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+//			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
+#ifndef TEST_WRITE_DATA
+		GDispClrTxt();
+		GDispStringAt(0,0,"no_rt_labels");
+		GDispWordAt(0,15,(UINT)no_rt_labels);
+
+		GDispStringAt(1,0,"no_rtparams");
+		GDispWordAt(1,15,(UINT)no_rtparams);
+
+		GDispStringAt(2,0,"no_menu_labels");
+		GDispWordAt(2,15,(UINT)no_menu_labels);
+/*
+		sprintf(temp,"%2x",no_rt_labels);		// no sprintf in AVR library?
+		GDispStringAt(0,0,temp);		
+		sprintf(temp,"%2x",no_rtparams);
+		GDispStringAt(1,0,temp);		
+		sprintf(temp,"%2x",no_menu_labels);
+		GDispStringAt(2,0,temp);		
+*/
+#endif
+			break;
+
+		case TEST13:  // 'B'
+#ifndef TEST_WRITE_DATA
+			GDispClrTxt();
+			GDispStringAt(0,0,"TEST13");
+#else
+			mvwprintw(win, LAST_ROW-1,1,"TEST13");
+#endif
+			break;
+		
+		case TEST14:  // 'C'
+#ifndef TEST_WRITE_DATA
+//			size = 0x210
+			start_addr = 0x120;
+			for(i = 0;i < AUX_STRING_LEN;i++)
+				aux_string[i] = (UCHAR)(i*2);
+			size = AUX_STRING_LEN;	
+			eeprom_update_block((const void*)aux_string,(void *)(eepromString+start_addr),(size_t)size);
+			for(i = 0;i < AUX_STRING_LEN;i++)
+				aux_string[i] = (UCHAR)(~i);
+			size = 0x210 - AUX_STRING_LEN;
+			start_addr = AUX_STRING_LEN;
+			eeprom_update_block((const void*)aux_string,(void *)(eepromString+start_addr),(size_t)size);
+			GDispClrTxt();
+			GDispStringAt(0,0,"TEST14");
+#else
+			mvwprintw(win, LAST_ROW-1,1,"TEST14");
+#endif
+			break;
+		
+		case TEST15:  // 'D'
+#ifndef TEST_WRITE_DATA
+			GDispClrTxt();
+			GDispStringAt(0,0,"TEST15");
+#else
+			mvwprintw(win, LAST_ROW-1,1,"TEST15");
+#endif
+			break;
+		
+		case TEST16:  // 'E'
+#ifndef TEST_WRITE_DATA
+			GDispClrTxt();
+			GDispStringAt(0,0,"TEST16");
+#else
+			mvwprintw(win, LAST_ROW-1,1,"TEST16");
+#endif
+			break;
+		
+		case TEST17:  // 'F'
+#ifndef TEST_WRITE_DATA
+			GDispClrTxt();
+			GDispStringAt(0,0,"TEST17");
+#else
+			mvwprintw(win, LAST_ROW-1,1,"TEST17");
+#endif
+			break;
+		
+		case LOAD_RAM:  // 'r'
 #ifdef TEST_WRITE_DATA
 			prev_menu_index = curr_menu_index = curr_chkbox_index = prev_fptr = 0;
 			res = 0;
@@ -747,7 +725,12 @@ UCHAR read_get_key(UCHAR key)
 
 			wrefresh(win);
 #else
-
+			no_menu_structs = 13;
+			rt_params_offset = 243;
+			no_rtparams = NUM_RT_PARAMS;
+			no_menu_labels = 29;
+			no_rt_labels = 12;
+			
 			res = 0;
 			for(i = 0;i < CBLABEL_SIZE;i++)
 			{
@@ -760,6 +743,7 @@ UCHAR read_get_key(UCHAR key)
 				check_boxes[i].index = receiveByte();
 				memcpy(&prev_check_boxes[i],&check_boxes[i],sizeof(CHECKBOXES));
 			}
+			get_cblabel_offsets();
 
 			for(i = 0;i < NUM_RT_PARAMS;i++)
 			{
@@ -780,14 +764,214 @@ UCHAR read_get_key(UCHAR key)
 
 		break;
 
-		default:
-//			if(ret_char >= KP_POUND && ret_char <= KP_D)
-			ret_char = generic_menu_function(ret_char);
+		case BURN_PART:
+#ifdef TEST_WRITE_DATA
+			mvwprintw(win, LAST_ROW-2,1,
+				"burn eeprom start"                               );
+			wrefresh(win);
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			size = pack(low_byte,high_byte);
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
+
+			mvwprintw(win, LAST_ROW-2,1,
+				"burn eeprom - size: %d start: %d ",size,start_addr);
+			wrefresh(win);
+			for(i = start_addr;i < size+start_addr;i++)
+//			for(i = 0;i < size;i++)
+			{
+				res2 += read(global_fd,&eeprom_sim[i],1);
+//				usleep(100);
+				mvwprintw(win, LAST_ROW-3,1,"%2x  %2d %2d",eeprom_sim[i],i,res2);
+				wrefresh(win);
+			}
+
+//			low_byte = 0x55;
+//			write(global_fd,&low_byte,1);
+			mvwprintw(win, LAST_ROW-2,20,"done %d  ",res2);
+#else
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			size = pack(low_byte,high_byte);
+
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			start_addr = pack(low_byte,high_byte);
+
+			GDispClrTxt();
+			GDispStringAt(0,0,"eeprom update");
+			GDispStringAt(1,0,"size: ");
+			GDispWordAt(1,15,(UINT)size);
+
+			GDispStringAt(2,0,"start_addr");
+			GDispWordAt(2,15,(UINT)start_addr);
+
+//			for(i = start_addr;i < size+start_addr;i++)
+			low_byte = 0;
+			size = (size <= AUX_STRING_LEN ? size : AUX_STRING_LEN);
+			for(i = 0;i < size;i++);
+			{
+				aux_string[i] = receiveByte();
+			}
+			for(i = 0;i < size;i++);
+			{
+				low_byte += aux_string[i];
+			}
+			GDispStringAt(3,0,"checksum");
+			GDispByteAt(3,15,low_byte);
+			_delay_ms(1);
+//			for(i = 0;i < size;i++)
+//				eeprom_update_byte((uint8_t *)&eepromString[start_addr + i], (uint8_t )aux_string[start_addr+i]);
+			eeprom_update_block((const void*)aux_string,(void *)(eepromString+start_addr),(size_t)size);
+//			eeprom_update_block(src, dest, size)
+#endif
+			get_mlabel_offsets();
+			break;
+
+		case READ_EEPROM1:
+		case READ_EEPROM2:
+#ifdef TEST_WRITE_DATA
+
+			for(i = LAST_ROW-1;i > 0;i--)
+				mvwprintw(win, i,1,"                                                             ");
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			size = pack(low_byte,high_byte);
+
+			read(global_fd,&high_byte,1);
+			read(global_fd,&low_byte,1);
+			start_addr = pack(low_byte,high_byte);
+
+			if(size+start_addr > EEPROM_SIZE)
+			{
+				size = (size < EEPROM_SIZE?EEPROM_SIZE:size);
+				start_addr = 0;
+				mvwprintw(win, LAST_ROW-2,1,"reset size: %d start: %d    ",size,start_addr);
+				wrefresh(win);
+			}else
+			{
+				mvwprintw(win, LAST_ROW-2,1,"read_eeprom - size: %d start: %d    ",size,start_addr);
+				wrefresh(win);
+			}
+
+			for(i = start_addr;i < size+start_addr;i++)
+			{
+				if(eeprom_sim[i] != 0)
+					usleep(tdelay*2);
+				else usleep(tdelay);	
+				write(global_fd,&eeprom_sim[i],1);
+
+				mvwprintw(win, LAST_ROW-3,1,"%2x   %d                               ",eeprom_sim[i],i);
+				wrefresh(win);
+
+//				low_byte = ~i;
+//				res2 += write(global_fd,&low_byte,1);
+			}
+
+			j = 0;
+			k = 0;
+
+			if(ret_char == READ_EEPROM1)
+			{
+				for(i = start_addr;i < size+start_addr;i++)
+				{
+					if(eeprom_sim[i] < 0x7e && eeprom_sim[i] > 0x21)
+						mvwprintw(win, LAST_ROW+j-58, 2+k,"%c",eeprom_sim[i]);
+					else if(eeprom_sim[i] == 0)	mvwprintw(win, LAST_ROW+j-58, 2+k," ");
+					else mvwprintw(win, LAST_ROW+j-58, 2+k,"_");
+					if(++k > 30)
+					{
+						k = 0;
+						++j;
+					}
+				}
+				k++;
+				mvwprintw(win, LAST_ROW+j-58, 2+k,"|");
+				mvwprintw(win, LAST_ROW-1,2,"display eeprom: size: start_addr         ",size,start_addr);
+
+			}
+			else
+			{
+				mvwprintw(win, LAST_ROW-58,1,"0: ");
+				for(i = start_addr;i < size+start_addr;i++)
+				{
+					mvwprintw(win, LAST_ROW+j-58, 7+(k*3),"%2x ",eeprom_sim[i]);
+					if(++k > 15)
+					{
+						k = 0;
+						++j;
+						mvwprintw(win, LAST_ROW+j-58,1,"%2d: ",i+1);
+					}
+				}
+				mvwprintw(win, LAST_ROW-1,2,"display eeprom: size: start_addr         ",size,start_addr);
+			}
+			wrefresh(win);
+
+//			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
+//			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
+//			memcpy((void*)&no_menu_labels, (void*)(eeprom_sim+NO_MENU_LABELS_EEPROM_LOCATION),sizeof(UINT));
+
+//			mvwprintw(win, LAST_ROW-4,2,
+//				"no_rt_labels: %d no_menu_labels: %d no_rtparams: %d  ",no_rt_labels,no_menu_labels,no_rtparams);
+
+//			for(i = 1;i < LAST_ROW+1;i++)
+//				mvwprintw(win, i,2,"                                                      ");
+
 /*
-			eeprom_sim[bp] = ret_char;
-			if(++bp >= EEPROM_SIZE)
-				bp = EEPROM_SIZE-500;
+			for(i = NO_MENU_LABELS_EEPROM_LOCATION;i < NO_MENUS_EEPROM_LOCATION;i++,k++)
+			{
+				mvwprintw(win, LAST_ROW-3,2+(k*3),"%d ", eeprom_sim[i]);
+			}
 */
+			mvwprintw(win, LAST_ROW-2,1,
+				"read_eeprom - size: %d start: %d    ",size,start_addr);
+			wrefresh(win);
+#else
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			size = pack(low_byte,high_byte);
+
+			high_byte = receiveByte();
+			low_byte = receiveByte();
+			start_addr = pack(low_byte,high_byte);
+
+			GDispClrTxt();
+			GDispStringAt(0,0,"eeprom read");
+			GDispStringAt(1,0,"size: ");
+			GDispWordAt(1,15,(UINT)size);
+
+			GDispStringAt(2,0,"start_addr");
+			GDispWordAt(2,15,(UINT)start_addr);
+
+			memset(aux_string,0,AUX_STRING_LEN);
+			size = (size <= AUX_STRING_LEN ? size : AUX_STRING_LEN);
+//			for(i = 0;i < size;i++)
+//				aux_string[i] = eeprom_read_byte((const uint8_t *)&eepromString[start_addr+i]);
+			eeprom_read_block((void *)aux_string,(const void *)(eepromString+start_addr),(size_t)size);
+			_delay_ms(1);
+			low_byte = 0;
+			for(i = 0;i < size;i++)
+			{
+				transmitByte(aux_string[i]);
+			}
+			for(i = 0;i < size;i++)
+			{
+				low_byte += aux_string[i]; 
+			}
+			GDispStringAt(3,0,"checksum");
+			GDispByteAt(3,15,low_byte);
+#endif
+			get_mlabel_offsets();
+			break;
+
+
+
+		default:
+			ret_char = generic_menu_function(ret_char);
 			break;
 	}
 #ifdef TEST_WRITE_DATA
@@ -958,7 +1142,7 @@ static void init_numentry(int menu_index)
 	if(curr_menu_index-MENU2C < 6)
 	{
 		temp_int = sample_numbers[curr_menu_index-MENU2C];
-		sprintf(cur_global_number,"%4d",temp_int);
+//		sprintf(cur_global_number,"%4d",temp_int);
 		clean_disp_num();
 		dispCharAt(NUM_ENTRY_ROW,cur_col,'/');
 		dispCharAt(NUM_ENTRY_ROW,cur_col+NUM_ENTRY_SIZE,'/');
@@ -1236,11 +1420,11 @@ static void init_checkboxes(int menu_index)
 
 		if(check_boxes[j+i].checked == 1)
 		{
-			dispCharAt(1+curr_checkbox,0,120);
+			dispCharAt(curr_checkbox,0,120);
 		}
 		else
 		{
-			dispCharAt(1+curr_checkbox,0,0x20);
+			dispCharAt(curr_checkbox,0,0x20);
 		}
 		curr_checkbox++;
 	}

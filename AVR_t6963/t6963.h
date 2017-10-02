@@ -242,6 +242,9 @@ void GDispClrTxt(void);
 void GDispGoto(UINT row, UINT col);
 void GDispChar(UCHAR c);
 void GDispCharAt(UINT row, UINT col, UCHAR c);
+void GDispByteAt(UINT row, UINT col, UCHAR byte);
+void GDispWordAt(UINT row, UINT col, UINT word);
+
 void GDispSetCursor(UCHAR mode, UINT row, UINT col, UCHAR type);
 void GDispSetAttrb(UINT row, UINT col, UCHAR mode);
 void GDispCGCharAt(UINT row, UINT col, UCHAR id);
