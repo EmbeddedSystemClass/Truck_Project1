@@ -7,7 +7,6 @@
 #endif
 #include "sfr_helper.h"
 #include <stdlib.h>
-#include "t6963.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +16,6 @@
 #include <avr/eeprom.h>
 #include "macros.h"
 #include "USART.h"
-#include "t6963.h"
 #else
 #include <unistd.h>
 #include <errno.h>
@@ -27,6 +25,7 @@
 #include <termios.h>
 #include <ncurses.h>
 #endif
+#include "t6963.h"
 #include "main.h"
 #include "avr_main.h"
 
@@ -58,7 +57,7 @@ static void display_menus(void);
 static void init_numentry(int);
 static void scale_disp(int amt);
 static void init_checkboxes(int menu_index);
-//static void init_execchoices(int);
+static void init_execchoices(int menu_index);
 static void blank_choices(void);
 static void display_edit_value(void);
 static UCHAR generic_menu_function(UCHAR ch);
@@ -108,7 +107,7 @@ static int last_checkbox;
 
 //static UCHAR new_data_ch, new_data_ex;
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_chkbox, do_exec, non_func, do_numentry, do_init };
 
 //******************************************************************************************//
 //********************************* generic_menu_function **********************************//
@@ -214,7 +213,8 @@ static UCHAR generic_menu_function(UCHAR ch)
 				case MENU2A:
 				case MENU2B:
 				curr_chkbox_index = curr_menu_index-MENU1C;
-				init_checkboxes(curr_menu_index);
+//				init_checkboxes(curr_menu_index);
+				init_execchoices(curr_menu_index);
 //				mvwprintw(win, LAST_ROW-8,1,"case 3");
 				break;
 				case MENU2C:
@@ -285,6 +285,7 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 		GDispStringAt(*row,*col+3,temp);
 	}
 
+	// if MAX_LABEL_LEN > 10 then menus will be too wide
 	if(*col > MAX_LABEL_LEN*2-1)
 	{
 		*col = 0;
@@ -403,28 +404,28 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST1:
+		case TEST1:				// 'g' set start_addr to 0
 			size = AUX_STRING_LEN;
 			start_addr = 0;
-			break;			
+			break;
 
-		case TEST2:
+		case TEST2:				// 'h' start_addr to 300
 			size = AUX_STRING_LEN;
 			start_addr = AUX_STRING_LEN;
 			break;
-			
-		case TEST3:
+
+		case TEST3:				// 'j' 600
 			size = AUX_STRING_LEN;
 			start_addr = AUX_STRING_LEN*2;
 			break;
-			
-		case TEST4:
+
+		case TEST4:				// 'k' 900 (size 123)
 			size = 123;
 			start_addr = AUX_STRING_LEN*3;
 			break;
-			
-		case TEST5:
-			res = 0;		
+
+		case TEST5:				// 'l' aux_string w/ random data
+			res = 0;
 			for(i = 0;i < AUX_STRING_LEN;i++)
 			{
 #ifdef TEST_WRITE_DATA
@@ -449,7 +450,7 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST6:
+		case TEST6:		// 'm' draw border
 #ifdef TEST_WRITE_DATA
 			mvwhline(win, 1, 5, ACS_HLINE, 41);
 			mvwhline(win, 18, 5, ACS_HLINE, 41);
@@ -464,7 +465,7 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST7:
+		case TEST7:		// 'n' print cblabels
 #ifdef TEST_WRITE_DATA
 			mvwprintw(win, LAST_ROW-1, 2,"print out current cblabels                          ");
 
@@ -499,12 +500,12 @@ UCHAR read_get_key(UCHAR key)
 				{
 					j = 0;
 					k += 10;
-				}	
+				}
 			}
 #endif
 			break;
 
-		case TEST9:
+		case TEST9:			// 'p' copy eeprom2.bin to eeprom_sim
 #ifdef TEST_WRITE_DATA
 			k = j = 0;
 			for(i = 0;i < EEPROM_SIZE;i++)
@@ -524,7 +525,7 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST10:
+		case TEST10:		// 'x' read aux_string from here
 			res = 0;
 			for(i = 0;i < AUX_STRING_LEN;i++)
 			{
@@ -541,7 +542,7 @@ UCHAR read_get_key(UCHAR key)
 #endif
 			break;
 
-		case TEST11:
+		case TEST11:		// 's' display pattern on LCD
 			i = j = 0;
 			low_byte = 0x21;
 #ifdef TEST_WRITE_DATA
@@ -568,8 +569,8 @@ UCHAR read_get_key(UCHAR key)
 					}
 				}
 			break;
-			
-			
+
+
 		case TEST12:	// print to screen debug info  'A'
 //			memcpy((void*)&no_rt_labels, (void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),sizeof(UINT));
 //			memcpy((void*)&no_rtparams, (void*)(eeprom_sim+NO_RTPARAMS_EEPROM_LOCATION),sizeof(UINT));
@@ -587,11 +588,11 @@ UCHAR read_get_key(UCHAR key)
 		GDispWordAt(2,15,(UINT)no_menu_labels);
 /*
 		sprintf(temp,"%2x",no_rt_labels);		// no sprintf in AVR library?
-		GDispStringAt(0,0,temp);		
+		GDispStringAt(0,0,temp);
 		sprintf(temp,"%2x",no_rtparams);
-		GDispStringAt(1,0,temp);		
+		GDispStringAt(1,0,temp);
 		sprintf(temp,"%2x",no_menu_labels);
-		GDispStringAt(2,0,temp);		
+		GDispStringAt(2,0,temp);
 */
 #endif
 			break;
@@ -604,14 +605,14 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-1,1,"TEST13");
 #endif
 			break;
-		
+
 		case TEST14:  // 'C'
 #ifndef TEST_WRITE_DATA
 //			size = 0x210
 			start_addr = 0x120;
 			for(i = 0;i < AUX_STRING_LEN;i++)
 				aux_string[i] = (UCHAR)(i*2);
-			size = AUX_STRING_LEN;	
+			size = AUX_STRING_LEN;
 			eeprom_update_block((const void*)aux_string,(void *)(eepromString+start_addr),(size_t)size);
 			for(i = 0;i < AUX_STRING_LEN;i++)
 				aux_string[i] = (UCHAR)(~i);
@@ -624,7 +625,7 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-1,1,"TEST14");
 #endif
 			break;
-		
+
 		case TEST15:  // 'D'
 #ifndef TEST_WRITE_DATA
 			GDispClrTxt();
@@ -633,7 +634,7 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-1,1,"TEST15");
 #endif
 			break;
-		
+
 		case TEST16:  // 'E'
 #ifndef TEST_WRITE_DATA
 			GDispClrTxt();
@@ -642,7 +643,7 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-1,1,"TEST16");
 #endif
 			break;
-		
+
 		case TEST17:  // 'F'
 #ifndef TEST_WRITE_DATA
 			GDispClrTxt();
@@ -651,7 +652,7 @@ UCHAR read_get_key(UCHAR key)
 			mvwprintw(win, LAST_ROW-1,1,"TEST17");
 #endif
 			break;
-		
+
 		case LOAD_RAM:  // 'r'
 #ifdef TEST_WRITE_DATA
 			prev_menu_index = curr_menu_index = curr_chkbox_index = prev_fptr = 0;
@@ -679,7 +680,7 @@ UCHAR read_get_key(UCHAR key)
 
 			k = j = 0;
 
-			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+			for(i = 0;i < NUM_CBLABELS;i++)
 			{
 				res += read(global_fd,&check_boxes[i].checked,1);
 				res += read(global_fd,&check_boxes[i].index,1);
@@ -725,26 +726,42 @@ UCHAR read_get_key(UCHAR key)
 
 			wrefresh(win);
 #else
+/*
+#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
+#define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
+#define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
+#define NO_MENUS_EEPROM_LOCATION 0x3ea
+*/
+
+			size = NO_MENUS_EEPROM_LOCATION - NO_MENU_LABELS_EEPROM_LOCATION;
+			eeprom_read_block((void *)aux_string,(const void *)(eepromString+NO_MENU_LABELS_EEPROM_LOCATION),(size_t)size);
+
+			memcpy((void*)&no_menu_labels, (void*)(aux_string),sizeof(UINT));
+			memcpy((void*)&no_rt_labels, (void*)(aux_string+
+					(NO_RT_LABELS_EEPROM_LOCATION - NO_MENU_LABELS_EEPROM_LOCATION)),sizeof(UINT));
+			memcpy((void*)&no_rtparams, (void*)(aux_string+
+					(NO_RTPARAMS_EEPROM_LOCATION - NO_MENU_LABELS_EEPROM_LOCATION)),sizeof(UINT));
+
 			no_menu_structs = 13;
 			rt_params_offset = 243;
-			no_rtparams = NUM_RT_PARAMS;
-			no_menu_labels = 29;
-			no_rt_labels = 12;
-			
+//			no_rtparams = NUM_RT_PARAMS;
+//			no_menu_labels = 29;
+//			no_rt_labels = 12;
+
 			res = 0;
 			for(i = 0;i < CBLABEL_SIZE;i++)
 			{
 				 cblabels[i] = receiveByte();
 			}
 
-			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+			for(i = 0;i < NUM_CBLABELS;i++)
 			{
 				check_boxes[i].checked = receiveByte();
 				check_boxes[i].index = receiveByte();
 				memcpy(&prev_check_boxes[i],&check_boxes[i],sizeof(CHECKBOXES));
 			}
 			get_cblabel_offsets();
-
+#if 0
 			for(i = 0;i < NUM_RT_PARAMS;i++)
 			{
 				rt_params[i].row = receiveByte();
@@ -753,7 +770,7 @@ UCHAR read_get_key(UCHAR key)
 				rt_params[i].dtype = receiveByte();
 				rt_params[i].type = receiveByte();
 			}
-
+#endif
 			for(i = 0;i < 5;i++)
 			{
 				low_byte = receiveByte();
@@ -862,7 +879,7 @@ UCHAR read_get_key(UCHAR key)
 			{
 				if(eeprom_sim[i] != 0)
 					usleep(tdelay*2);
-				else usleep(tdelay);	
+				else usleep(tdelay);
 				write(global_fd,&eeprom_sim[i],1);
 
 				mvwprintw(win, LAST_ROW-3,1,"%2x   %d                               ",eeprom_sim[i],i);
@@ -960,7 +977,7 @@ UCHAR read_get_key(UCHAR key)
 			}
 			for(i = 0;i < size;i++)
 			{
-				low_byte += aux_string[i]; 
+				low_byte += aux_string[i];
 			}
 			GDispStringAt(3,0,"checksum");
 			GDispByteAt(3,15,low_byte);
@@ -1277,32 +1294,37 @@ static UCHAR do_exec(UCHAR ch)
 	switch(ch)
 	{
 		case KP_A:
-		j = scrollup_checkboxes(k);
+//		j = scrollup_checkboxes(k);
+		j = scrollup_execchoice(k);
 		break;
 		case KP_B:
-		j = scrolldown_checkboxes(k);
+		j = scrolldown_execchoice(k);
 		break;
 		case KP_C:
-		j = toggle_checkboxes(k);
+//		j = toggle_checkboxes(k);
 		break;
 		case KP_D:		// enter
+/*
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 			{
 				prev_check_boxes[k+i].checked = check_boxes[k+i].checked;
 			}
 //			mvwprintw(win, LAST_ROW-6,2, "*do_exec (enter) %x          ",ret_char);
+*/
 			blank_choices();
 		break;
 		case KP_POUND:		// esc
+/*
 			for(i = 0;i < NUM_CHECKBOXES;i++)
 			{
 				check_boxes[k+i].checked = prev_check_boxes[k+i].checked;
 			}
 //			mvwprintw(win, LAST_ROW-6,2, "*do_exec (esc) %x          ",ret_char);
+*/
 			blank_choices();
 		break;
 		case KP_0:
-			checkboxes_reset(k);
+//			checkboxes_reset(k);
 		break;
 		case KP_AST:
 			blank_choices();
@@ -1313,7 +1335,7 @@ static UCHAR do_exec(UCHAR ch)
 	}
 #ifdef TEST_WRITE_DATA
 //	mvwprintw(win, DISP_OFFSET+20,2," %d %d %d ",l,k,j);
-
+	mvwprintw(win, LAST_ROW-6,2,"*do_exec  %x   %d               ",ret_char,k);
 //	mvwprintw(win, DISP_OFFSET+17,2, "*do_exec  %x   %d               ",ret_char,k);
 	wrefresh(win);
 #endif
@@ -1403,12 +1425,14 @@ static void init_checkboxes(int menu_index)
 
 	blank_display();
 
-#ifdef TEST_WRITE_DATA
-//	mvwprintw(win, DISP_OFFSET+23, 2,"init_checkboxes");
-//	wrefresh(win);
-#endif
 
 	j = curr_chkbox_index * NUM_CHECKBOXES;
+
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+30, 2,"init_checkboxes  %d     ",j);
+	wrefresh(win);
+#endif
+
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
 		get_cblabel(j+i,tlabel);
@@ -1416,17 +1440,47 @@ static void init_checkboxes(int menu_index)
 #ifdef TEST_WRITE_DATA
 //		mvwprintw(win, DISP_OFFSET+21+i, 2,"%d %d %s  ",k,j,tlabel);
 #endif
-		row++;
-
-		if(check_boxes[j+i].checked == 1)
+		if(check_boxes[j+i].checked > 0)
 		{
-			dispCharAt(curr_checkbox,0,120);
+			dispCharAt(row,0,0x78);
+			check_boxes[j+i].checked = 1;
 		}
 		else
 		{
-			dispCharAt(curr_checkbox,0,0x20);
+			dispCharAt(row,0,0x5F);	// underscore
+			check_boxes[j+i].checked = 0;
 		}
-		curr_checkbox++;
+		row++;
+	}
+}
+//******************************************************************************************//
+//*********************************** init_execchoices *************************************//
+//******************************************************************************************//
+static void init_execchoices(int menu_index)
+{
+	int i,j,k;
+	UCHAR row, col;
+	char tlabel[MAX_LABEL_LEN];
+//	scale_disp(SCALE_DISP_SOME);
+	row = 0;
+	col = 3;
+	curr_checkbox = 0;
+
+	blank_display();
+
+
+	j = curr_chkbox_index * NUM_CHECKBOXES;
+
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+30, 2,"init_execchoices   %d    ",j);
+	wrefresh(win);
+#endif
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		get_cblabel(j+i,tlabel);
+		GDispStringAt(row,col,tlabel);
+		row++;
 	}
 }
 //******************************************************************************************//
@@ -1444,7 +1498,7 @@ static UCHAR checkboxes_reset(int index)
 		check_boxes[k+i].checked = 0;
 		curr_checkbox++;
 		k++;
-		dispCharAt(1+curr_checkbox,20,0x20);
+		dispCharAt(1+curr_checkbox,20,0x5F);
 	}
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, DISP_OFFSET+20,2,"reset: curr %d ckbox %d     ",curr_checkbox,check_boxes[k+i].index);
@@ -1458,18 +1512,34 @@ static UCHAR checkboxes_reset(int index)
 //******************************************************************************************//
 static UCHAR scrollup_checkboxes(int index)
 {
-//	int k = index+curr_checkbox;
 	int k;
-	dispCharAt(1+curr_checkbox,20,0x20);
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(curr_checkbox,20,0x5F);
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,3,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
 
 	if(--curr_checkbox < 0)
 		curr_checkbox = 9;
 	// move cursor to 3 + check_boxes[curr_checkbox]
 	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,4,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
 //	dispCharAt(1+check_boxes[k].index,20,0x21);
-	dispCharAt(1+curr_checkbox,20,0x21);
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"up: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+//	dispCharAt(curr_checkbox,20,0x21);
+	mvwprintw(win, DISP_OFFSET+20,2,"chkbox up: ind %d curr %d ckbox %d  k: %d   ",
+									curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;
@@ -1479,16 +1549,33 @@ static UCHAR scrollup_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR scrolldown_checkboxes(int index)
 {
-	int k;
-	dispCharAt(1+curr_checkbox,20,0x20);
+	int i,k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(1+curr_checkbox,20,0x20);
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,3,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
 
 	if(++curr_checkbox > 9)
 		curr_checkbox = 0;
 
 	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
-	dispCharAt(1+curr_checkbox,20,0x21);
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,4,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"down: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+//	dispCharAt(curr_checkbox,20,0x21);
+	mvwprintw(win, DISP_OFFSET+20,2,"chkbox down: ind %d curr %d ckbox %d  k: %d   ",
+								curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;
@@ -1504,15 +1591,16 @@ static UCHAR toggle_checkboxes(int index)
 	if(check_boxes[k].checked == 1)
 	{
 		check_boxes[k].checked = 0;
-		dispCharAt(1+curr_checkbox,0,0x20);	// display 'blank'
+		dispCharAt(curr_checkbox,0,0x5f);	// display '_'
 	}
 	else
 	{
 		check_boxes[k].checked = 1;
-		dispCharAt(1+curr_checkbox,0,120);	// display 'x'
+		dispCharAt(curr_checkbox,0,120);	// display 'x'
 	}
 #ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d  k: %d   ",curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d  k: %d   ",
+						curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
 	wrefresh(win);
 #endif
 	return k;
@@ -1522,6 +1610,39 @@ static UCHAR toggle_checkboxes(int index)
 //******************************************************************************************//
 static UCHAR scrollup_execchoice(UCHAR ch)
 {
+	int k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(curr_checkbox,20,0x5F);
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,3,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
+	if(--curr_checkbox < 0)
+		curr_checkbox = 9;
+	// move cursor to 3 + check_boxes[curr_checkbox]
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,4,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
+//	dispCharAt(1+check_boxes[k].index,20,0x21);
+#ifdef TEST_WRITE_DATA
+//	dispCharAt(curr_checkbox,20,0x21);
+	mvwprintw(win, DISP_OFFSET+20,2,"exec up: ind %d curr %d ckbox %d  k: %d   ",
+									curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+	wrefresh(win);
+#endif
+	return k;
+
+/*
 	UCHAR temp = curr_execchoice;
 	if(--curr_execchoice < 0)
 		curr_execchoice = last_execchoice;
@@ -1532,12 +1653,45 @@ static UCHAR scrollup_execchoice(UCHAR ch)
 	dispCharAt(1+check_boxes[temp].index,0,0x20);
 	dispCharAt(1+check_boxes[curr_execchoice].index,0,120);
 	return ch;
+*/
 }
 //******************************************************************************************//
 //********************************* scrolldown_execchoice **********************************//
 //******************************************************************************************//
 static UCHAR scrolldown_execchoice(UCHAR ch)
 {
+	int i,k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(1+curr_checkbox,20,0x20);
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,3,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
+	if(++curr_checkbox > 9)
+		curr_checkbox = 0;
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+	GDispStringAt(curr_checkbox,3,blank);
+	GDispStringAt(curr_checkbox,4,tlabel);
+//	GDispSetMode(ATTR_REVERSE);
+
+#ifdef TEST_WRITE_DATA
+//	dispCharAt(curr_checkbox,20,0x21);
+	mvwprintw(win, DISP_OFFSET+20,2,"exec down: ind %d curr %d ckbox %d  k: %d   ",
+								curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+	wrefresh(win);
+#endif
+	return k;
+/*
+
 	UCHAR temp = curr_execchoice;
 	if(++curr_execchoice > last_execchoice)
 		curr_execchoice = 0;
@@ -1548,6 +1702,7 @@ static UCHAR scrolldown_execchoice(UCHAR ch)
 	dispCharAt(1+check_boxes[temp].index,0,0x20);
 	dispCharAt(1+check_boxes[curr_execchoice].index,0,120);
 	return ch;
+*/
 }
 //******************************************************************************************//
 //**************************************** display_labels **********************************//
@@ -1651,8 +1806,8 @@ void init_list(void)
 	cur_alnum_col = NUM_ENTRY_BEGIN_COL;
 	dirty_flag = 0;
 	curr_checkbox = 0;
-	last_checkbox = TOTAL_NUM_CBLABELS-1;
-	last_execchoice = TOTAL_NUM_CBLABELS-1;
+	last_checkbox = NUM_CBLABELS-1;
+	last_execchoice = NUM_CBLABELS-1;
 	curr_execchoice = 0;
 	scale_type = 0;
 	prev_scale_type = 1;

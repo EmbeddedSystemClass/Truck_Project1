@@ -392,6 +392,13 @@ eeprom_sim.
 The prompt strings for the checkboxes and execs will have to be pumped over whether
 using the sim or the AVR. This happens when doing an init_checkboxes or init_execchoices
 
+The checkboxes are not mutually exclusive, the exec_choices are, so we need labels
+for all but the check_boxes need only cover the number of check_boxes for do/init_checkboxes
+The execs only cause an event on either/both the PIC & AVR. (could have an array of fptr's
+for just the exec_choices)
+
+
+
 (receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
 no! 192.168.42.110 won't transmit in minicom until you exit.
 
@@ -426,6 +433,33 @@ sim_write:
 make -f make_avr - compiles the sim_read
 make -f make_pic - compiles the sim_write
 
+4 possible conditions:
+
+1) sim_write->AVR			- testing the simulator with actual AVR
+2) PIC->sim_read			- testing the simulator with actual PIC
+3) PIC->AVR					- actual PIC->AVR
+4) sim_write->sim_read		- using null-modem cable with 2 simulators
+
+1) 'LOAD_RAM' sends over the the cblabels[], the checkboxes and rt_params[]
+2) 'LOAD_RAM' sends over the eeprom image, the cblabels[], the checkboxes and rt_params[]
+3) 'LOAD_RAM' sends over the the cblabels[], the checkboxes and rt_params[]
+4) 'LOAD_RAM' sends over the eeprom image, the cblabels[], the checkboxes and rt_params[]
+
+in all case LOAD_RAM sends over everything except eeprom image when sending to AVR
+
+in all cases update_ram() which calls update_menu_structs must be run in either 
+the PIC or sim_write to setup the menu_structs array
+
+update_rtparams currently is sent over in LOAD_RAM but since its now burned into eeprom
+we can do a lookup in the AVR using read_eeprom
+
+
+
+(when testing sim_write -> AVR set the DISABLE_LCD define in make_avr and the TESTING_AVR
+	define in make_pic)
+
+if compiling the AVR then MAIN_C is defined	
+
 AVR_menu.c	- runs in AVR
 PIC_menu.c	- in PIC24
 
@@ -440,7 +474,7 @@ each linux box has a script called extract.sh which un-tars the tar file sent ov
 everything and starts up the sim_read/write. The sim_read must be started first since it waits
 on a read() to start reading the eeprom image which is sent over as soon as the sim_write starts.
 
-Currently we must, just after the eeprom image is sent over, hit the 'h' key on the sim_write 
+Currently we must, just after the eeprom image is sent over, hit the 'r' key on the sim_write 
 which does a LOAD_RAM command which sends over all the checkbox prompts (cblabels array),
 current state of the checkboxes (checked or not), the indexes for the checkboxes, the
 rt_params array of structs, and the sample_numbers array for the edit boxes.

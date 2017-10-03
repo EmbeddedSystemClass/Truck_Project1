@@ -233,7 +233,7 @@ extern UCHAR    CGBuffer[8];    /* Buffer for custom pattern                    
 						SET_WR();	\
 						CLR_RD();
 #endif
-#ifdef NOAVR
+#ifndef MAIN_C
 void set_win(WINDOW *w);
 #endif
 void GDispInit(void);

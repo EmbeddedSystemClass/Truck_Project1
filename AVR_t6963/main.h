@@ -3,9 +3,9 @@
 #define TIME_DELAY1 1
 #define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
-#define NUM_LABELS 60
+#define NUM_LABELS 30
 #define NUM_MENU_CHOICES 6
-#define NUM_RT_PARAMS 10
+#define NUM_RT_PARAMS 11
 #define NUM_RT_LABELS NUM_RT_PARAMS
 
 #define DISP_OFFSET 1
@@ -16,19 +16,19 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define EEPROM_SIZE 0x400
-#define TOTAL_NUM_CBLABELS 40
-#define CBLABEL_SIZE 500
+#define NUM_CBLABELS 40
+#define CBLABEL_SIZE 400		// AVR data is 97% full
 
 void get_mlabel(int index, char *str);
 void get_cblabel(int index, char *str);
 
 int mlabel_offsets[NUM_LABELS+NUM_RT_LABELS];
-int cblabel_offsets[TOTAL_NUM_CBLABELS];
+int cblabel_offsets[NUM_CBLABELS];
 int goffset;
 
 #define NUM_CHECKBOXES 10
 
-int checkbox_offsets[TOTAL_NUM_CBLABELS];
+int checkbox_offsets[NUM_CBLABELS];
 
 typedef struct checkboxes
 {
@@ -36,8 +36,8 @@ typedef struct checkboxes
 	UCHAR checked;
 } CHECKBOXES;
 
-CHECKBOXES check_boxes[TOTAL_NUM_CBLABELS];
-CHECKBOXES prev_check_boxes[TOTAL_NUM_CBLABELS];
+CHECKBOXES check_boxes[NUM_CBLABELS];
+CHECKBOXES prev_check_boxes[NUM_CBLABELS];
 
 #define AUX_STRING_LEN 300
 
@@ -48,7 +48,6 @@ UCHAR eeprom_sim[EEPROM_SIZE];
 #ifdef SHOW_EEPROM
 int burn_eeprom(void);
 #endif
-void update_ram(void);
 
 char cblabels[CBLABEL_SIZE];
 
@@ -286,17 +285,6 @@ RT_PARAM rt_params[NUM_RT_PARAMS];
 #define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
 #define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
 #endif
-// define a separate rt_params for the write part of test_write_data.c_str
-// because we want to handle this as if a separate array is running on the PIC24
-//#ifdef NOAVR
-// we could read the labels into ram when in AVR mode but its just as easy to read them from
-// eeprom directly - doesn't take that much more time, plus it saves ram space in AVR
-// not worried about it when compiling in NOAVR mode on a linux box in 32/64 bit mode.
-// label_offsets is an array that get set to the length of each label by searching
-// for the first 0
-//#ifdef EEPROM_BURN
-//#endif
-//#endif
 int total_offset;
 int rt_params_offset;
 int no_cblabels;

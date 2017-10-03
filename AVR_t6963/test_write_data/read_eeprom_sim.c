@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 			eeprom_sim[i] = j;
 			if(++j > 0x7e)
 				j = 0x21;
-		}				
+		}
 		for(i = 0;i < EEPROM_SIZE;i++)
 		{
 			res += write(fp,&eeprom_sim[i],1);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 				res += read(fp,&eeprom_sim[i],1);
 				res2 += write(fp2,&eeprom_sim[i],1);
 //				printf("%d %d %x  ",res,res2,eeprom_sim[i]);
-			}				
+			}
 			printf("created file: %s from %s with %d bytes\n",argv[2],argv[1],res);
 			close(fp);
 			close(fp2);
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
+	for(i = 0;i < no_menu_structs;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
 	for(i = 0;i < no_menu_structs;i++)
 	{

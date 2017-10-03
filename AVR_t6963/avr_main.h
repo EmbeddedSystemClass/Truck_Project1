@@ -8,6 +8,7 @@
 //#define dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
+void update_ram(void);
 void display_labels(void);
 #ifdef TEST_WRITE_DATA
 void set_win(WINDOW *win);
@@ -24,15 +25,6 @@ UCHAR current_param;
 char rt_labels[NUM_RT_LABELS][MAX_LABEL_LEN];
 UCHAR get_row(int index);
 UCHAR get_col(int index);
-// define a separate rt_params for the write part of test_write_data.c_str
-// because we want to handle this as if a separate array is running on the PIC24
-//#ifdef NOAVR
-// we could read the labels into ram when in AVR mode but its just as easy to read them from
-// eeprom directly - doesn't take that much more time, plus it saves ram space in AVR
-// not worried about it when compiling in NOAVR mode on a linux box in 32/64 bit mode.
-// label_offsets is an array that get set to the length of each label by searching
-// for the first 0
-//#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
 //int sample_data[10];

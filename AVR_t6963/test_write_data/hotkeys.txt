@@ -21,8 +21,8 @@ hotkeys for sim_write:
 'A' TEST12					- print to LCD debug info (no_menus, etc)
 'B' TEST13					- display current eeprom_sim[]
 'C' TEST14					- write test pattern from 0x120->0x330
-'D' TEST15
-'E' TEST16
+'D' TEST15					- display cblabels on sim_write in ascii
+'E' TEST16					- display cblabels on sim_write in hex
 'F' TEST17
 
 

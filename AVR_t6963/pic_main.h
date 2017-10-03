@@ -87,15 +87,6 @@ MENU_FUNC_STRUCT menu_structs[] = {
 };
 */
 
-// define a separate rt_params for the write part of test_write_data.c_str
-// because we want to handle this as if a separate array is running on the PIC24
-//#ifdef NOAVR
-// we could read the labels into ram when in AVR mode but its just as easy to read them from
-// eeprom directly - doesn't take that much more time, plus it saves ram space in AVR
-// not worried about it when compiling in NOAVR mode on a linux box in 32/64 bit mode.
-// label_offsets is an array that get set to the length of each label by searching
-// for the first 0
-//#endif
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
 //UINT send_data;

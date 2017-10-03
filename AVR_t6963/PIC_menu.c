@@ -1,6 +1,5 @@
 #ifndef MAIN_C
 #include "sfr_helper.h"
-#include "t6963.h"
 #ifdef TEST_WRITE_DATA
 #include <unistd.h>
 #include <errno.h>
@@ -11,6 +10,7 @@
 #include <ncurses.h>
 WINDOW *win;
 #endif
+#include "t6963.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ static void get_fptr_label(char *str);
 static int get_curr_menu_index(void);
 static UCHAR random_data;
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_chkbox, do_exec, non_func, do_numentry, do_init };
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -107,7 +107,7 @@ static UCHAR set_list(int fptr)
 			get_curr_menu(),
 			menu_structs[get_curr_menu()].fptr);
 		wrefresh(win);
-	
+
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
 
@@ -271,7 +271,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 	void *vptr;
 	int fp;
 	char filename[20];
-	
+
 // warning: str passed when not in simulator is pointing to memory in the PIC24
 //	ppic_data = str;
 
@@ -289,7 +289,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			mvwprintw(win, LAST_ROW_DISP-3,1,"size: %d  start_addr: %d                   ",size,start_addr);
 			break;
 
-		case TEST5:		// 'l'  fill aux_string with random data and write to target 
+		case TEST5:		// 'l'  fill aux_string with random data and write to target
 //			write(global_fd,&ret_char,1);
 			for(i = 0;i < AUX_STRING_LEN;i++)
 				aux_string[i] = ~i - random_data;
@@ -393,7 +393,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 //			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST10:	// 'x' read aux_string from target
 			write(global_fd,&ret_char,1);
 			res = 0;
@@ -417,11 +417,11 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 		case TEST11:	// 's' - tell AVR to display pattern on screen
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST12:	// 'A'
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST13:	// 'B'
 			write(global_fd,&ret_char,1);
 			k = j = 0;
@@ -440,24 +440,50 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 			}
 
 			break;
-			
+
 		case TEST14:	// 'C'
 			mvwprintw(win, LAST_ROW_DISP-3,1,"size: %d  start_addr: %d                   ",size,start_addr);
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST15:	// 'D'
+			mvwprintw(win, LAST_ROW_DISP-3,1,"display cblabels in ascii                       ");
+			k = j = 0;
+			for(i = 0;i < CBLABEL_SIZE;i++)
+			{
+				if(cblabels[i] < 0x7e && cblabels[i] > 0x21)
+					mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"%c",cblabels[i]);
+				else if(cblabels[i] == 0)	mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"*");
+				else mvwprintw(win, LAST_ROW_DISP+j-45, 2+k,"_");
+				if(++k > 30)
+				{
+					k = 0;
+					++j;
+				}
+			}
+
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST16:	// 'E'
+			mvwprintw(win, LAST_ROW_DISP-3,1,"display cblabels in hex                         ");
+			k = j = 0;
+			for(i = 0;i < CBLABEL_SIZE;i++)
+			{
+				mvwprintw(win, LAST_ROW_DISP+j-45, 2+(k*3),"%2x ",cblabels[i]);
+				if(++k > 15)
+				{
+					k = 0;
+					++j;
+				}
+			}
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case TEST17:	// 'F'
 			write(global_fd,&ret_char,1);
 			break;
-			
+
 		case LOAD_RAM:  //  'r'
 			i = 0;
 			total_offset = 0;
@@ -492,7 +518,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 // send over the check_boxes[i].index and .checked as samples
 // later this will be sent by the PIC
-			for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+			for(i = 0;i < NUM_CBLABELS;i++)
 			{
 				low_byte = ~low_byte;
 				low_byte &= 1;
@@ -510,6 +536,9 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				usleep(tdelay);
 			}
 
+			// if these are in eeprom then this is not necessary
+			//
+#ifndef TESTING_AVR
 			for(i = 0;i < NUM_RT_PARAMS;i++)
 			{
 //				write(global_fd,&rt_params[0],sizeof(RT_PARAM));
@@ -524,7 +553,7 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 				write(global_fd,&rt_params[i].type,1);
 				usleep(tdelay);
 			}
-
+#endif
 // sample numbers
 			for(i = 0;i < 5;i++)
 			{
@@ -577,10 +606,10 @@ UCHAR get_key(UCHAR ch, int size, int start_addr, UCHAR *str, int type)
 
 		case READ_EEPROM1:  // 'e'
 		case READ_EEPROM2:	// 'f'
-		
+
 			for(i = LAST_ROW_DISP-1;i > 0;i--)
 				mvwprintw(win, i,1,"                                                             ");
-		
+
 			res += write(global_fd,&ret_char,1);
 
 			unpack(size,&low_byte,&high_byte);
@@ -1030,7 +1059,8 @@ static UCHAR scrollup_checkboxes(int index)
 //	dispCharAt(1+check_boxes[k].index,20,0x21);
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, LAST_ROW_DISP-2,2,"up: curr %d ckbox %d %d             ",curr_checkbox,check_boxes[k].index,k);
-	wrefresh(win);
+	mvwprintw(win, LAST_ROW_DISP-3,2,"                                            ");
+	mvwprintw(win, LAST_ROW_DISP-5,2,"                                            ");
 
 	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)
@@ -1063,7 +1093,8 @@ static UCHAR scrolldown_checkboxes(int index)
 	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
 #ifdef TEST_WRITE_DATA
 	mvwprintw(win, LAST_ROW_DISP-2,2,"down: curr %d ckbox %d %d             ",curr_checkbox,check_boxes[k].index,k);
-	wrefresh(win);
+	mvwprintw(win, LAST_ROW_DISP-3,2,"                                            ");
+	mvwprintw(win, LAST_ROW_DISP-5,2,"                                            ");
 
 	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES);
 	for(i = 0;i < NUM_CHECKBOXES;i++)

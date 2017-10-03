@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 
-	for(i = 0;i < NUM_LABELS+NUM_RT_LABELS;i++)
+	for(i = 0;i < no_menu_structs;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
 
 	for(i = 0;i < no_menu_structs;i++)
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 
-//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+//	for(i = 0;i < NUM_CBLABELS;i++)
 //		mvwprintw(win, display_offset+i,2,"                                                             ");
 /*
 
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 	wrefresh(win);
 	getch();
 */
-	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+	for(i = 0;i < NUM_CBLABELS;i++)
 		mvwprintw(win, display_offset+i,2,"                                                             ");
 
 	k = l = 0;
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 	getch();
 
 
-//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+//	for(i = 0;i < NUM_CBLABELS;i++)
 //		mvwprintw(win, display_offset+i,2,"                                                               ");
 
 	for(i = 0;i < no_menu_structs;i++)
@@ -357,9 +357,9 @@ int main(int argc, char *argv[])
 	getch();
 
 	for(i = 0;i < CBLABEL_SIZE;i++)
-	
 
-//	for(i = 0;i < TOTAL_NUM_CBLABELS;i++)
+
+//	for(i = 0;i < NUM_CBLABELS;i++)
 //		mvwprintw(win, display_offset+i,2,"                                                             ");
 
 /*

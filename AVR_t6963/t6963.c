@@ -106,7 +106,8 @@ static void GDispCmdAddrSend (UINT Addr, UCHAR cmd);
 static void GDispCmdAddrSend (UINT Addr, UCHAR cmd)
 {
 	UCHAR c;
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
+#ifdef MAIN_C
 	c = Addr & 0x00FF;
 	GDispDataWr (c); //Send LSB of 'Addr' first
 	c = Addr >> 8;
@@ -126,9 +127,10 @@ static void GDispCmdAddrSend (UINT Addr, UCHAR cmd)
  */
 void GDispInit (void)
 {
-#ifndef TEST_WRITE_DATA
+//#ifndef TEST_WRITE_DATA
 	//Reset the LCD module and perform a hardware port init
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
+#ifdef MAIN_C
 	GDispInitPort ();
 	//Set Text Home address to TEXT_HOME_ADDR
 	GDispCmdAddrSend (TEXT_HOME_ADDR, TEXT_HOME_SET);
@@ -141,7 +143,7 @@ void GDispInit (void)
 	//Set Offset register to 0x0002, CG Ram start address = $1400 (CG_HOME_ADDR)
 	//first character code $80 for CG Ram
 	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
-#endif
+//#endif
 #endif
 }
 /*
@@ -156,7 +158,8 @@ void GDispInit (void)
  */
 void GDispSetMode (UCHAR mode)
 {
-#ifndef TEST_WRITE_DATA
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	GDispCmdSend (mode);
 #endif
 }
@@ -172,8 +175,9 @@ void GDispSetMode (UCHAR mode)
  */
 void GDispClrTxt (void)
 {
-#ifndef TEST_WRITE_DATA
-#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+#ifdef MAIN_C
 	UINT row;
 	UINT col;
 	//Set address pointer to address (TEXT_HOME_ADDR)
@@ -191,7 +195,7 @@ void GDispClrTxt (void)
 	}
 	//Set Auto Write OFF
 	GDispCmdSend (AUTO_WR_OFF);
-#endif
+//#endif
 #endif
 }
 /*
@@ -238,7 +242,8 @@ void GDispClrGrh (void)
 void GDispGoto (UINT row, UINT col)
 {
 	UINT addr;
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
+#ifdef MAIN_C
 	addr = row * COLUMN + col + TEXT_HOME_ADDR;
 	GDispCmdAddrSend (addr, ADDR_PTR_SET); //Set address pointer
 #endif
@@ -262,7 +267,8 @@ void GDispGoto (UINT row, UINT col)
  */
 void GDispChar (UCHAR c)
 {
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
+#ifdef MAIN_C
 	GDispDataWr (c - 0x20); //Adjust standard ASCII to T6963 ASCII
 	GDispCmdSend (DATA_WR_INC); //Address pointer increment ON
 #endif
@@ -282,18 +288,20 @@ void GDispChar (UCHAR c)
  */
 void GDispCharAt (UINT row, UINT col, UCHAR c)
 {
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
 
-#ifndef TEST_WRITE_DATA
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	GDispGoto (row, col);
 	GDispDataWr (c - 0x20);
 	GDispCmdSend (DATA_WR);
 #else
 	mvwaddch(win,row+2,col+5,c);
 #endif
-#endif
+//#endif
 }
 
+/*********************************************************************************************************/
 void GDispByteAt(UINT row, UINT col, UCHAR byte)
 {
 #ifdef MAIN_C
@@ -307,7 +315,7 @@ void GDispByteAt(UINT row, UINT col, UCHAR byte)
 	temp = ('0' + ((byte / 10) % 10));                      /* Tens */
 	GDispDataWr(temp - 0x20);
 	GDispCmdSend (DATA_WR);
-	
+
 	GDispGoto(row,col+2);
 	temp = ('0' + (byte % 10));                             /* Ones */
 	GDispDataWr(temp - 0x20);
@@ -315,6 +323,7 @@ void GDispByteAt(UINT row, UINT col, UCHAR byte)
 #endif
 }
 
+/*********************************************************************************************************/
 void GDispWordAt(UINT row, UINT col, UINT word)
 {
 #ifdef MAIN_C
@@ -347,16 +356,17 @@ void GDispWordAt(UINT row, UINT col, UINT word)
 }
 
 
-
+/*********************************************************************************************************/
 void GDispStringAt(UINT row, UINT col, char *c)
 {
-#ifndef DISABLE_LCD
+//#ifndef DISABLE_LCD
 
 	char *str;
 	int i;
 	str = c;
 	i = 0;
-#ifndef TEST_WRITE_DATA
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	while(*(str+i) != 0)
 	{
 		GDispCharAt(row,col+i,*(str+i));
@@ -368,7 +378,7 @@ void GDispStringAt(UINT row, UINT col, char *c)
 	mvwprintw(win,row+2,5+(col+i),"%s",str);
 //	mvwprintw(win, 25,5,"test");
 #endif
-#endif
+//#endif
 }
 /*
 *********************************************************************************************************
@@ -389,8 +399,9 @@ void GDispStringAt(UINT row, UINT col, char *c)
  */
 void GDispSetCursor (UCHAR mode, UINT row, UINT col, UCHAR type)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	UINT addr;
 	addr = row << 8;
 	addr = addr | (col & 0x00FF);
@@ -399,7 +410,7 @@ void GDispSetCursor (UCHAR mode, UINT row, UINT col, UCHAR type)
 	GDispCmdSend (mode);
 	GDispCmdSend (type); //cursor mode
 #endif
-#endif
+//#endif
 }
 /*
 *********************************************************************************************************
@@ -447,8 +458,9 @@ void GDispSetPixel (UINT X, UINT Y, UCHAR color)
  */
 void GDispInitPort (void)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	DDRC |= 0x0F;	// set all used bits as outputs
 	DDRB |= 0x07;
 	DDRD |= 0xFC;
@@ -468,7 +480,7 @@ void GDispInitPort (void)
 	_CB(PORTB,DATA7);
 
 	SET_RST();
-#endif
+//#endif
 #endif
 }
 /*
@@ -483,8 +495,9 @@ void GDispInitPort (void)
  */
 void GDispBusyChk (void)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
   int i;
   GDispCmdRd ();
   GDispChipEn;
@@ -496,7 +509,7 @@ void GDispBusyChk (void)
 	;
 	GDispChipDi; //Chip disable to finish
 #endif
-#endif
+//#endif
 }
 
 /*
@@ -511,8 +524,9 @@ void GDispBusyChk (void)
  */
 void GDispAutoWrChk (void)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	int i;
 	GDispCmdRd ();
 	GDispChipEn;
@@ -521,7 +535,7 @@ void GDispAutoWrChk (void)
 	while(!_BV(DATA3));
 	GDispChipDi;
 #endif
-#endif
+//#endif
 }
 
 /*
@@ -536,8 +550,9 @@ void GDispAutoWrChk (void)
  */
 void GDispDataWr (UCHAR data)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	  int i;
 	  GDispBusyChk (); // Wait for LCD to be ready
 	  Data_Out (data);
@@ -549,7 +564,7 @@ void GDispDataWr (UCHAR data)
 		_delay_us(TIME_DELAY);
 	  GDispChipDi;
 #endif
-#endif
+//#endif
 }
 
 /*
@@ -564,8 +579,9 @@ void GDispDataWr (UCHAR data)
  */
 void GDispAutoDataWr (UCHAR data)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	int i;
 	GDispAutoWrChk (); // Auto write mode check
 	Data_Out (data);
@@ -578,7 +594,7 @@ void GDispAutoDataWr (UCHAR data)
 		_delay_us (TIME_DELAY);
 
 	GDispChipDi;
-#endif
+//#endif
 #endif
 }
 
@@ -594,8 +610,9 @@ void GDispAutoDataWr (UCHAR data)
  */
 void GDispCmdSend (UCHAR cmd)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	int i;
 	GDispBusyChk (); // Wait for LCD to be ready
 	Data_Out (cmd);
@@ -605,7 +622,7 @@ void GDispCmdSend (UCHAR cmd)
 		_delay_us(TIME_DELAY);
 
 	GDispChipDi;
-#endif
+//#endif
 #endif
 }
 
@@ -630,11 +647,12 @@ void GDispCmdSend (UCHAR cmd)
  */
 void Data_Out (UCHAR data)
 {
-#ifndef DISABLE_LCD
-#ifndef TEST_WRITE_DATA
+//#ifndef DISABLE_LCD
+//#ifndef TEST_WRITE_DATA
+#ifdef MAIN_C
 	PORTD = 0xFC & (data << 2);
 	PORTB = 0x03 & (data >> 6);
-#endif
+//#endif
 #endif
 }
 

@@ -141,8 +141,7 @@ int main(int argc, char *argv[])
 		}
 	}else
 	{
-		mvwprintw(win, LAST_ROW_DISP-1,2,"creating new eeprom");
-//		burn_eeprom();
+		mvwprintw(win, LAST_ROW_DISP-1,2,"do a burn_eeprom here?");
 	}
 /*
 	memcpy((void*)(eeprom_sim+NO_RT_LABELS_EEPROM_LOCATION),(void*)&no_rt_labels,sizeof(UINT));
@@ -318,7 +317,7 @@ int main(int argc, char *argv[])
 #endif
 					get_key(wkey,size,start_addr,eeprom_sim,type);
 					break;
-					
+
 				case SPACE:		// (space bar)
 					get_key(wkey,size,start_addr,aux_string,type);
 					for(i = 1;i < LAST_ROW;i++)
@@ -507,22 +506,22 @@ static UCHAR get_keypress(UCHAR key,WINDOW *win, int display_offset)
 			break;
 		case 'A':
 			wkey = TEST12;
-			break;	
+			break;
 		case 'B':
 			wkey = TEST13;
-			break;	
+			break;
 		case 'C':
 			wkey = TEST14;
-			break;	
+			break;
 		case 'D':
 			wkey = TEST15;
-			break;	
+			break;
 		case 'E':
 			wkey = TEST16;
-			break;	
+			break;
 		case 'F':
 			wkey = TEST17;
-			break;	
+			break;
 		default:
 			wkey = 0xff;
 			break;

@@ -207,10 +207,6 @@ void get_cblabel(int index, char *str)
 
 		// void *dest, const void *src, size_t n
 	memcpy(str,cblabels+cblabel_offsets[index],MAX_LABEL_LEN);
-#ifdef MAIN_C
-//	printString(str);
-//	printString("\r\n");
-#endif
 }
 
 #ifndef SIM_AVR
@@ -250,7 +246,7 @@ int update_mlabels(int index, char *ramstr)
 #ifdef TEST_WRITE_DATA
 	memcpy(eeprom_sim+total_offset,ramstr, len);
 #else
-    eeprom_update_block(ramstr, eepromString+total_offset, len);
+    eeprom_update_block(ramstr, eepromString+total_offset, len);	// this is gonna wear out the eeprom
 #endif
 //	strncpy(menu_labels[index],ramstr,len);
 	total_offset += len;
@@ -296,6 +292,7 @@ int update_rtparams(int i, UCHAR row, UCHAR col, UCHAR shown, UCHAR dtype, UCHAR
 //******************************************************************************************//
 //***************************************** burn_eeprom ************************************//
 //******************************************************************************************//
+// this is only used by the show_eeprom programs: read_eeprom_sim.c & read_eeprom_sim2.c
 #ifdef SHOW_EEPROM
 int burn_eeprom(void)
 {
@@ -320,20 +317,17 @@ int burn_eeprom(void)
 	i = update_mlabels(i,"MENU2e\0");	// 10
 	i = update_mlabels(i,"MENU3a\0");	// 11
 	i = update_mlabels(i,"MENU3b\0");	// 12
-
 	i = update_mlabels(i,"enter\0");
 	i = update_mlabels(i,"up\0");
 	i = update_mlabels(i,"down\0");
 	i = update_mlabels(i,"toggle\0");
 	i = update_mlabels(i,"esc\0");
 	i = update_mlabels(i,"reset\0");
-
 	i = update_mlabels(i,"enter\0");
 	i = update_mlabels(i,"forward\0");
 	i = update_mlabels(i,"back\0");
 	i = update_mlabels(i,"clear\0");
 	i = update_mlabels(i,"escape\0");
-
 	i = update_mlabels(i,"caps\0");
 	i = update_mlabels(i,"small\0");
 	i = update_mlabels(i,"spec\0");
@@ -344,7 +338,7 @@ int burn_eeprom(void)
 
 	i = update_mlabels(i,"RPM\0");
 	i = update_mlabels(i,"ENG TEMP\0");
-	i = update_mlabels(i,"TRIPPY\0");
+	i = update_mlabels(i,"TRIP\0");
 	i = update_mlabels(i,"TIME\0");
 	i = update_mlabels(i,"AIR TEMP\0");
 	i = update_mlabels(i,"MPH\0");
@@ -396,7 +390,7 @@ void update_ram(void)
 	total_offset = 0;
 
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E,  MENU2A, MENU2B, MENU2C, MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU2D, MAIN);
 //	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
 // 1a
 	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
@@ -407,11 +401,11 @@ void update_ram(void)
 // 1d
 	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D);
 // 1e
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
+//	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
 // 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2A);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
 // 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2B);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2A);
 // 2c
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
 // 2d
@@ -467,47 +461,64 @@ void update_ram(void)
 	i =  update_cblabels(i, "test 8\0");
 	i =  update_cblabels(i, "test 9\0");
 	i =  update_cblabels(i, "test 10\0");
-	i =  update_cblabels(i, "asdf1 1\0");
-	i =  update_cblabels(i, "asdf1 2\0");
-	i =  update_cblabels(i, "asdf1 3\0");
-	i =  update_cblabels(i, "asdf1 4\0");
-	i =  update_cblabels(i, "asdf1 5\0");
-	i =  update_cblabels(i, "asdf1 6\0");
-	i =  update_cblabels(i, "asdf1 7\0");
-	i =  update_cblabels(i, "asdf1 8\0");
-	i =  update_cblabels(i, "asdf1 9\0");
-	i =  update_cblabels(i, "asdf1 10\0");
-	i =  update_cblabels(i, "hello2 1\0");
-	i =  update_cblabels(i, "hello2 2\0");
-	i =  update_cblabels(i, "hello2 3\0");
-	i =  update_cblabels(i, "hello2 4\0");
-	i =  update_cblabels(i, "hello2 5\0");
-	i =  update_cblabels(i, "hello2 6\0");
-	i =  update_cblabels(i, "hello2 7\0");
-	i =  update_cblabels(i, "hello2 8\0");
-	i =  update_cblabels(i, "hello2 9\0");
-	i =  update_cblabels(i, "hello2 10\0");
-	i =  update_cblabels(i, "xyz3 1\0");
-	i =  update_cblabels(i, "xyz3 2\0");
-	i =  update_cblabels(i, "xyz3 3\0");
-	i =  update_cblabels(i, "xyz3 4\0");
-	i =  update_cblabels(i, "xyz3 5\0");
-	i =  update_cblabels(i, "xyz3 6\0");
-	i =  update_cblabels(i, "xyz3 7\0");
-	i =  update_cblabels(i, "xyz3 8\0");
-	i =  update_cblabels(i, "xyz3 9\0");
-	i =  update_cblabels(i, "xyz3 10\0");
+
+	i =  update_cblabels(i, "asdf 1\0");
+	i =  update_cblabels(i, "asdf 2\0");
+	i =  update_cblabels(i, "asdf 3\0");
+	i =  update_cblabels(i, "asdf 3\0");
+	i =  update_cblabels(i, "asdf 4\0");
+	i =  update_cblabels(i, "asdf 6\0");
+	i =  update_cblabels(i, "asdf 7\0");
+	i =  update_cblabels(i, "asdf 8\0");
+	i =  update_cblabels(i, "asdf 9\0");
+	i =  update_cblabels(i, "asdf 10\0");
+
+	i =  update_cblabels(i, "hello 1\0");
+	i =  update_cblabels(i, "hello 2\0");
+	i =  update_cblabels(i, "hello 3\0");
+	i =  update_cblabels(i, "hello 4\0");
+	i =  update_cblabels(i, "hello 5\0");
+	i =  update_cblabels(i, "hello 6\0");
+	i =  update_cblabels(i, "hello 7\0");
+	i =  update_cblabels(i, "hello 8\0");
+	i =  update_cblabels(i, "hello 9\0");
+	i =  update_cblabels(i, "hello 10\0");
+
+	i =  update_cblabels(i, "funny 1\0");
+	i =  update_cblabels(i, "funny 2\0");
+	i =  update_cblabels(i, "funny 3\0");
+	i =  update_cblabels(i, "funny 4\0");
+	i =  update_cblabels(i, "funny 5\0");
+	i =  update_cblabels(i, "funny 6\0");
+	i =  update_cblabels(i, "funny 7\0");
+	i =  update_cblabels(i, "funny 8\0");
+	i =  update_cblabels(i, "funny 9\0");
+	i =  update_cblabels(i, "funny 10\0");
 /*
-	i =  update_cblabels(i, "quick4 1\0");
-	i =  update_cblabels(i, "quick4 2\0");
-	i =  update_cblabels(i, "quick4 3\0");
-	i =  update_cblabels(i, "quick4 4\0");
-	i =  update_cblabels(i, "quick4 5\0");
-	i =  update_cblabels(i, "quick4 6\0");
-	i =  update_cblabels(i, "quick4 7\0");
-	i =  update_cblabels(i, "quick4 8\0");
-	i =  update_cblabels(i, "quick4 9\0");
-	i =  update_cblabels(i, "quick4 10\0");
+	i =  update_cblabels(i, "quick 1\0");
+	i =  update_cblabels(i, "quick 2\0");
+	i =  update_cblabels(i, "quick 3\0");
+	i =  update_cblabels(i, "quick 4\0");
+	i =  update_cblabels(i, "quick 5\0");
+	i =  update_cblabels(i, "quick 6\0");
+	i =  update_cblabels(i, "quick 7\0");
+	i =  update_cblabels(i, "quick 8\0");
+	i =  update_cblabels(i, "quick 9\0");
+	i =  update_cblabels(i, "quick 10\0");
+
+	i =  update_cblabels(i, "fox and  1\0");
+	i =  update_cblabels(i, "fox and  2\0");
+	i =  update_cblabels(i, "fox and  3\0");
+	i =  update_cblabels(i, "fox and  4\0");
+	i =  update_cblabels(i, "fox and  5\0");
+	i =  update_cblabels(i, "fox and  6\0");
+	i =  update_cblabels(i, "fox and  7\0");
+	i =  update_cblabels(i, "fox and  8\0");
+	i =  update_cblabels(i, "fox and  9\0");
+	i =  update_cblabels(i, "fox and  10\0");
+*/
+
+/*
 	i =  update_cblabels(i, "ending 1\0");
 	i =  update_cblabels(i, "ending 2\0");
 	i =  update_cblabels(i, "ending 3\0");

@@ -1,6 +1,9 @@
 # GCC/Linux compile flags
 GNUCC = gcc
-GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC -DTESTING_AVR
+#use the TESTING_AVR define when using the sim_write with the actual AVR
+#all that TESTING_AVR does is define out the sending of the eeprom image
+#GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC -DTESTING_AVR
+GNUCFLAGS = -Wall -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA -DSIM_PIC
 #GNUCFLAGS =  -std=gnu99 -Wstrict-prototypes -DTEST_WRITE_DATA
 GNULDFLAGS = -static
 GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE
