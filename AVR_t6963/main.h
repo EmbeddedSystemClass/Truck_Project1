@@ -3,6 +3,7 @@
 #define TIME_DELAY1 1
 #define NUM_FPTS 6
 #define MAX_LABEL_LEN 10
+#define MAX_PROMPT_LEN 20
 #define NUM_LABELS 30
 #define NUM_MENU_CHOICES 6
 #define NUM_RT_PARAMS 11
@@ -16,11 +17,13 @@
 #define SCALE_DISP_NONE 2
 #define RT_OFFSET 0x70
 #define EEPROM_SIZE 0x400
-#define NUM_CBLABELS 40
-#define CBLABEL_SIZE 400		// AVR data is 97% full
+#define NUM_CBLABELS 50
+#define CBLABEL_SIZE 600
 
+//int get_prompt_offsets(void);
 void get_mlabel(int index, char *str);
 void get_cblabel(int index, char *str);
+//void get_prompt_label(int index, char *str);
 
 int mlabel_offsets[NUM_LABELS+NUM_RT_LABELS];
 int cblabel_offsets[NUM_CBLABELS];
@@ -38,6 +41,15 @@ typedef struct checkboxes
 
 CHECKBOXES check_boxes[NUM_CBLABELS];
 CHECKBOXES prev_check_boxes[NUM_CBLABELS];
+
+//UCHAR no_prompts;
+//int gprompt_offset;
+
+//UCHAR prompt_indexes[20];
+
+//#define PROMPT_DATA_SIZE 300		// just so the size sent can be a UCHAR
+
+//char prompt_data[PROMPT_DATA_SIZE];
 
 #define AUX_STRING_LEN 300
 
@@ -83,7 +95,7 @@ enum shown_types
 
 enum menu_types
 {
-	MAIN,		// 0
+	MAIN,					// 0
 	MENU1A,		// 1
 	MENU1B,		// 2
 	MENU1C,		// 3
@@ -140,7 +152,7 @@ enum fptr_types
 	_do_numentry
 /*
 	entr,
-	back,
+	back,					
 	esc,
 	caps,
 	small,
@@ -257,8 +269,9 @@ void set_win(WINDOW *win);
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
-int update_mlabels(int i, char *ramstr);
-int update_cblabels(int i, char *ramstr);
+int update_mlabels(int i, char *str);
+int update_cblabels(int i, char *str);
+int update_prompts(int index, char *str);
 //UCHAR cursor_row, cursor_col;
 int no_rt_labels;
 int no_rtparams;
@@ -294,7 +307,6 @@ int curr_execchoice;
 int last_execchoice;
 int scale_type;
 int prev_scale_type;
-UCHAR aux_index;
 UCHAR aux_string[AUX_STRING_LEN];
 int sample_numbers[5];
 

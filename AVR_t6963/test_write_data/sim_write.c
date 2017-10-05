@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 	j = 0;
 	k = 0;
 	i = 0;
-	tdelay = 1000;
+	tdelay = 500;
 	init_list();
 	size = 300;
 	start_addr = 0;
@@ -195,6 +195,31 @@ int main(int argc, char *argv[])
 
 	memset(cblabels,255,CBLABEL_SIZE);
 	update_ram();
+
+
+//		test the new prompt stuff
+#if 0
+	j = k = 0;
+	for(i = 0;i < PROMPT_DATA_SIZE;i++)
+	{
+		mvwprintw(win, LAST_ROW_DISP-44+k, 2+j,"%c",prompt_data[i]);
+		if(++j > 35)
+		{
+			j = 0;
+			k++;
+		}
+	}
+	mvwprintw(win,LAST_ROW_DISP-44+k, 2+j,"|");
+		
+
+	mvwprintw(win, LAST_ROW_DISP-31,2,"no_prompts: %d   ",no_prompts);
+	for(i = 0;i < no_prompts;i++)
+	{
+		get_prompt_label(i,temp_label);
+		mvwprintw(win, LAST_ROW_DISP-29+i, 2,"%s   ",temp_label);
+	}
+	wrefresh(win);
+#endif
 	no_cblabels = get_cblabel_offsets();
 	no_menu_labels = get_mlabel_offsets();
 

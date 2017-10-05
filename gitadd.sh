@@ -127,6 +127,7 @@ git add AVR_t6963/test_write_data/make_show_eeprom
 git add AVR_t6963/test_write_data/sim_read_extract.sh
 git add AVR_t6963/test_write_data/sim_write_extract.sh
 git add AVR_t6963/test_write_data/hotkeys.txt
+git add AVR_t6963/test_write_data/eeprom.bin
 git add AVR_t6963/todo.txt
 git add AVR_t6963/test_eeprom.cx
 git add AVR_t6963/main.cx

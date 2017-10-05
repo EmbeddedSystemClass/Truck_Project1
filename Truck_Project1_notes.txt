@@ -1,9 +1,5 @@
 Truck_Project1_notes.txt
 
-8/7/17
-test AVR to FPGA SPI - AVR just echos back what's recv'd in SPI to FPGA which prints results to serial port
-connection to SPI on AVR will have to be removeable to program to AVR - if this works then start wiring
-the master board together
 
 PIC24 UARTS:
 
@@ -23,7 +19,6 @@ SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
 SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 FPGA to AVR works up to ~30K doing just an echo
-
 
 //******************************************************************************************//
 //************************************* PIC24_support **************************************//
@@ -192,22 +187,6 @@ void user_init(void)
 	esos_RegisterTimer( testTimer, 1);
 	esos_RegisterTask(test_RE7);
 }
-
-Special character codes sent by the PIC24:
-
-RT_RPM
-RT_ENGT
-RT_TRIP
-RT_TIME
-RT_AIRT
-RT_MPH
-RT_OILP
-RT_MAP
-RT_OILT
-RT_O2
-RT_AUX1
-RT_AUX2
-
 
 //******************************************************************************************//
 //*************************************** AVR_t6963 ****************************************//
@@ -397,7 +376,17 @@ for all but the check_boxes need only cover the number of check_boxes for do/ini
 The execs only cause an event on either/both the PIC & AVR. (could have an array of fptr's
 for just the exec_choices)
 
+new idea for display checkbox/exec prompts:
+send over the size of each array of prompts just after the menu_indexes (menus[])
+if the choice is starting a new checkbox/exec - this will eliminate all the checkbox labels
+being stored in ram and doing a lookup everytime for the label.
 
+first send the high/low_byte of the total data to send,
+
+then send the number of prompts to display (byte)
+then send an array of indexes into the prompt string (array of bytes)
+
+then send the prompt string (array of chars)
 
 (receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
 no! 192.168.42.110 won't transmit in minicom until you exit.

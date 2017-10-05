@@ -1,3 +1,4 @@
+#if 1
 //    All rights reserved.
 //
 //    Permission to use, copy, modify, and distribute this software and its
@@ -48,8 +49,9 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
-//#define AVR_SEND_DATA_SIZE 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
-#define AVR_SEND_DATA_SIZE 1024
+//#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
+#define AUX_STRING_LEN 300
+
 #define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
 #define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
 #define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
@@ -63,20 +65,24 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE
 #define NUM_ENTRY_ROW 8
 #define NUM_CHECKBOXES 10
-#define TOTAL_NUM_CHECKBOXES NUM_CHECKBOXES*4
-#define CHECKBOX_STRING_LEN 20
 #define TEMP_EEPROM_OFFSET 400
+#define NUM_CBLABELS 50
+#define CBLABEL_SIZE 600
+char cblabels[CBLABEL_SIZE];
+
+#endif
 
 typedef struct checkboxes
 {
 	UCHAR index;
 	UCHAR checked;
-	char string[CHECKBOX_STRING_LEN];
 } CHECKBOXES;
 
-volatile UCHAR prev_check_boxes[TOTAL_NUM_CHECKBOXES];
-volatile CHECKBOXES check_boxes[TOTAL_NUM_CHECKBOXES];
+volatile CHECKBOXES prev_check_boxes[NUM_CBLABELS];
+volatile CHECKBOXES check_boxes[NUM_CBLABELS];
 volatile int avr_ptr;
+volatile UCHAR random_data;
+volatile int checkbox_offsets[NUM_CBLABELS];
 
 int get_label(int index, char *str);
 UCHAR get_keypress(UCHAR key1);
@@ -91,17 +97,16 @@ UCHAR do_exec(UCHAR ch);
 UCHAR do_chkbox(UCHAR ch);
 UCHAR non_func(UCHAR ch);
 UCHAR do_numentry(UCHAR ch);
+UCHAR do_init(UCHAR ch);
 
 int prev_list(void);
 volatile int current_fptr;		// pointer into the menu_list[]
 volatile int prev_fptr;
 volatile int list_size;
 volatile int dirty_flag;
-volatile int send_aux_data;
 int curr_checkbox;
-int last_checkbox;
 int curr_execchoice;
-int last_execchoice;
+int last_checkbox;
 volatile int first_menu;
 volatile char cur_global_number[NUM_ENTRY_SIZE];
 volatile char new_global_number[NUM_ENTRY_SIZE];
@@ -117,7 +122,7 @@ void init_numentry(int menu_index);
 void cursor_forward_stuff(char x);
 void stuff_num(char num);
 void cursor_forward(char ch);
-UCHAR init_checkboxes(UCHAR ch);
+UCHAR init_checkboxes(int index);
 
 #define LIST_SIZE 50
 
@@ -130,12 +135,11 @@ int get_curr_menu(void);
 UCHAR backspace(UCHAR ch);
 void _eclear(void);
 void cursor_backward(void);
-UCHAR init_execchoices(UCHAR ch);
-UCHAR scrollup_checkboxes(UCHAR ch);
-UCHAR scrolldown_checkboxes(UCHAR ch);
-UCHAR scrollup_execchoice(UCHAR ch);
-UCHAR scrolldown_execchoice(UCHAR ch);
-UCHAR toggle_checkboxes(UCHAR ch);
+int scrollup_checkboxes(int index);
+int scrolldown_checkboxes(int index);
+int scrollup_execchoice(int index);
+int scrolldown_execchoice(int index);
+int toggle_checkboxes(int index);
 
 enum data_types
 {
@@ -167,23 +171,29 @@ enum shown_types
 
 enum key_types
 {
-	SYNC = 0xCF,
-	TEST1,			//	- D0
-	TEST2,			//  - D1
-	TEST3,			//  - D2
-	TEST4,			//  - D3
-	TEST5,			//	- D4
-	TEST6,			//	- D5
-	TEST7,			//	- D6
-	LOAD_RAM,		//  - D7
-	INIT, 			//	- D8
-	SPACE,			//	- D9
-	BURN_PART,		//  - DA
-	BURN_PART1,		//  - DB
-	BURN_PART2,		//  - DC
-	BURN_PART3,		//  - DD
-	BURN_PART4,		//  - DE
-	READ_EEPROM,	//	- DF
+	TEST1 = 0xC9,
+	TEST2,			//  - CA
+	TEST3,			//  - CB
+	TEST4,			//  - CC
+	TEST5,			//	- CD
+	TEST6,			//	- CE
+	TEST7,			//	- CF
+	TEST8,			//	- D0
+	TEST9,			//	- D1
+	TEST10,			//	- D2
+	TEST11,			//	- D3
+	TEST12,			//	- D4
+	TEST13,			//	- D5
+	TEST14,			//	- D6
+	TEST15,			//	- D7
+	TEST16,			//	- D8
+	TEST17,			//  - D9
+	LOAD_RAM,		//  - DA
+	INIT, 			//	- DB
+	SPACE,			//	- DC
+	BURN_PART,		//  - DD
+	READ_EEPROM1,	//	- DE
+	READ_EEPROM2,	//	- DF
 
 	KP_POUND,	// '#'	- E0
 	KP_AST, // '*'		- E1
@@ -201,15 +211,6 @@ enum key_types
 	KP_B, // 'B'		- ED
 	KP_C, // 'C'		- EE
 	KP_D, // 'D'		- EF
-	TEST9,	//			- F0
-	TEST10,	//			- F1
-	TEST11,	//			- F2
-	TEST12,	//			- F3
-	TEST13,	//			- F4
-	TEST14,	//			- F5
-	TEST15,	//			- F6
-	TEST16,	//			- F7
-	TEST17	//			- F8
 } KEY_TYPES;
 
 enum non_func_type
@@ -242,7 +243,7 @@ enum rt_types
 
 enum menu_types
 {
-	MAIN,		// 0
+	MAIN,					// 0
 	MENU1A,		// 1
 	MENU1B,		// 2
 	MENU1C,		// 3
@@ -261,19 +262,20 @@ enum menu_types
 	ckdown,		// 15
 	cktoggle,	// 16
 	ckesc,		// 17
+	cclear,		// 18
 
-	entr,		// 18
-	forward,	// 19
-	back,		// 20
-	eclear,		// 21
-	esc,		// 22
+	entr,		// 19
+	forward,	// 20
+	back,		// 21
+	eclear,		// 22
+	esc,		// 23
 
-	caps,		// 23
-	small,		// 24
-	spec,		// 25
-	next,		// 26
+	caps,		// 24
+	small,		// 25
+	spec,		// 26
+	next,		// 27
+	blank,		// 28
 
-	blank,		// 27
 	rpm,
 	engt,
 	trip,
@@ -284,16 +286,17 @@ enum menu_types
 	map,
 	oilt,
 	o2,
-	test
+	test,
 } MENU_TYPES;
 
 enum fptr_types
 {
 	_menu_change,
-	_exec_choice,
 	_do_chkbox,
+	_exec_choice,
 	_non_func,
-	_do_numentry
+	_do_numentry,
+	_do_init
 } FPTR_TYPES;
 
 #define NUM_MENUS 13
@@ -310,7 +313,7 @@ MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
 
 #define NUM_FPTS 6
 
-static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry };
+static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_chkbox, do_exec, non_func, do_numentry, do_init };
 
 volatile uint8_t row;
 volatile uint8_t cmd;
@@ -335,14 +338,14 @@ volatile uint16_t no_menu_labels;
 volatile uint16_t no_rtparams;
 volatile uint16_t no_rt_labels;
 
-volatile UCHAR avr_send_data[AVR_SEND_DATA_SIZE];
+volatile UCHAR aux_string[AUX_STRING_LEN];
 //volatile char state[30];
 
 volatile char labels[NUM_LABELS][MAX_LABEL_LEN] =
 //#if 0
 {"home\0","MENU1a\0","MENU1b\0","MENU1c\0","MENU1d\0","MENU1e\0","MENU2a\0","MENU2B\0","MENU2c\0","MENU2d\0","MENU2e\0","MENU3a\0","MENU3b\0",\
 \
-"enter\0","up\0","down\0","toggle\0","esc\0","enter\0","forward\0","back\0","clear\0","escape\0",\
+"enter\0","up\0","down\0","toggle\0","esc\0","reset\0","enter\0","forward\0","back\0","clear\0","escape\0",\
 \
 "caps\0","small\0","spec\0","next\0",\
 \
@@ -430,80 +433,76 @@ UCHAR get_keypress(UCHAR key1)
 			wkey = KP_AST;
 			break;
 
-		case 'E':
-		case 'e':
-			wkey = READ_EEPROM;
-			break;
-		case 'V':
-		case 'v':
-			wkey = BURN_PART;
-			break;
-		case 'W':
-		case 'w':
-			wkey = BURN_PART2;
-			break;
-		case 'U':
-		case 'u':
-			wkey = BURN_PART3;
-			break;
-		case 'R':
-		case 'r':
-			wkey = BURN_PART4;
-			break;
-		case 'S':
-		case 's':
-			wkey = SYNC;
-			break;
-		case 'L':
-		case 'l':
-			wkey = TEST1;
-			break;
-		case 'T':
-		case 't':
-			wkey = TEST2;
-			break;
-		case 'P':
-		case 'p':
-			wkey = TEST3;
-			break;
-		case 'X':
-		case 'x':
-			wkey = TEST4;
-			break;
-		case 'Q':
-		case 'q':
-			wkey = TEST5;
-			break;
-		case 'F':
-		case 'f':
-			wkey = TEST6;
-			break;
-		case 'G':
 		case 'g':
-			wkey = TEST7;
+			wkey = TEST1;		// set size = 300, start_addr = 0
 			break;
-		case 'H':
 		case 'h':
-			wkey = TEST8;
+			wkey = TEST2;		// set size = 300, start_addr = 300
 			break;
-		case 'J':
 		case 'j':
-			wkey = TEST10;
+			wkey = TEST3;		// set size = 300, start_addr = 600
 			break;
-		case 'M':
-		case 'm':
-			wkey = TEST11;
-			break;
-		case 'K':
 		case 'k':
-			wkey = TEST9;
+			wkey = TEST4;		// set size = 129, start_addr = 900
 			break;
-		case 'I':
+		case 'l':
+			wkey = TEST5;		// fill aux_string with random data
+			break;
+		case 'm':
+			wkey = TEST6;		// draw border
+			break;
+		case 'n':
+			wkey = TEST7;		// print cblabels
+			break;
+		case 'o':
+			wkey = TEST8;		// restore eeprom.bin
+			break;
+		case 'p':
+			wkey = TEST9;		// copy eeprom2.bin to eeprom.bin in sim_write
+			break;
+		case 'x':
+			wkey = TEST10;		// read aux_string
+			break;
+		case 's':
+			wkey = TEST11;		// tell AVR to print pattern
+			break;
+		case 'r':
+			wkey = LOAD_RAM;	// load all stuff in ram
+			break;
 		case 'i':
 			wkey = INIT;
 			break;
 		case ' ':
 			wkey = SPACE;
+			break;
+		case 'v':
+			wkey = BURN_PART;
+			break;
+		case 'e':
+			wkey = READ_EEPROM1;
+			break;
+		case 'f':
+			wkey = READ_EEPROM2;
+			break;
+#if 0
+		case 'A':
+			wkey = TEST12;
+			break;
+		case 'B':
+			wkey = TEST13;
+			break;
+		case 'C':
+			wkey = TEST14;
+			break;
+		case 'D':
+			wkey = TEST15;
+			break;
+#endif
+		case 'E':
+			wkey = TEST16;
+			break;
+		case 'F':
+			wkey = TEST17;
 			break;
 		default:
 			wkey = 0xff;
@@ -557,6 +556,54 @@ UCHAR menu_change(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
+UCHAR do_init(UCHAR ch)
+{
+	init_list();
+	return ch;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+void init_list(void)
+{
+	int i = 0;
+	UCHAR k;
+#if 0
+	alnum_array[i++] = 33;		// first one is a '!'
+	for(k = 34;k < 48;k++)		// '"' - '/'	14
+		alnum_array[i++] = k;
+	alnum_array[i++] = 32;		// 'space'		1
+	for(k = 58;k < 65;k++)		// ':' - '@'	7
+		alnum_array[i++] = k;
+	for(k = 91;k < 97;k++)		// '[' - '`'	6
+		alnum_array[i++] = k;
+	for(k = 123;k < 127;k++)	// '{' - '~'	4
+		alnum_array[i++] = k;
+	for(k = 65;k < 91;k++)		// 'A' - 'Z'	26
+		alnum_array[i++] = k;
+	for(k = 97;k < 123;k++)		// 'a' - 'z'	26	total: 85 (NUM_ALNUM)
+		alnum_array[i++] = k;
+	choose_alnum = 0x30;
+	scroll_ptr = 25;		// start showing at 'a' (skip '!' - '9')
+	cur_alnum_col = NUM_ENTRY_BEGIN_COL;
+#endif
+	list_size = LIST_SIZE;
+	current_fptr = first_menu;
+	prev_fptr = first_menu;
+	memset(menu_list,0,sizeof(menu_list));
+	menu_list[0] = current_fptr;
+	dirty_flag = 0;
+	curr_checkbox = 0;
+	last_checkbox = NUM_CHECKBOXES-1;
+//	last_execchoice = NUM_EXECCHOICES-1;
+//	scale_type = 0;
+//	prev_scale_type = 1;
+	cur_row = NUM_ENTRY_ROW;
+	cur_col = NUM_ENTRY_BEGIN_COL;
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
 int prev_list(void)
 {
 	int ret;
@@ -577,7 +624,7 @@ int prev_list(void)
 //******************************************************************************************//
 UCHAR set_list(int fptr)
 {
-	int i;
+	int i,k;
 	UCHAR ret_char = 0;
 //	char tlabel[MAX_LABEL_LEN];
 
@@ -585,36 +632,33 @@ UCHAR set_list(int fptr)
 	{
 		current_fptr++;
 		menu_list[current_fptr] = fptr;
-		dirty_flag = 1;
 
 		ret_char = get_curr_menu_index();
-		send_aux_data = 0;
 		if(menu_structs[get_curr_menu()].fptr != _menu_change)
 		{
+			k = get_curr_menu_index();
 			switch(ret_char)
 			{
 				case MENU1C:	// 1st do_chkbox
 				case MENU1D:	// 2nd do_chkbox
-					init_checkboxes(ret_char);
+					init_checkboxes(k);
 				break;
-				case MENU2A:	// 1st exec_choice
-				case MENU2B:	// 2nd exec_choice
-					init_execchoices(ret_char);
-					curr_execchoice = 0;
+				case MENU1E:
+				case MENU2A:
+				case MENU2B:
+					init_checkboxes(k);
 				break;
 				case MENU2C:	// do_numentry
 				case MENU2D:
 				case MENU2E:
 				case MENU3A:
 				case MENU3B:
-//					init_numentry(ret_char);
+					init_numentry(ret_char);
 				break;
 				default:
-					send_aux_data = 0;
 				break;
 			}
 		}
-
 	}
 	return ret_char;
 }
@@ -727,13 +771,11 @@ void init_numentry(int menu_index)
 //	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 
-//	send_aux_data = 2;
-
 	temp_int = sample_numbers[menu_index-MENU2C];
 	sprintf((char *)cur_global_number,"%4d",temp_int);
-	avr_send_data[AVR_SEND_DATA_SIZE-1] = (UCHAR)temp_int;
+	aux_string[AUX_STRING_LEN-1] = (UCHAR)temp_int;
 	temp_int >>= 8;
-	avr_send_data[AVR_SEND_DATA_SIZE-2] = (UCHAR)temp_int;
+	aux_string[AUX_STRING_LEN-2] = (UCHAR)temp_int;
 	cur_col = strlen((const char *)cur_global_number)+NUM_ENTRY_BEGIN_COL;
 }
 //******************************************************************************************//
@@ -801,40 +843,34 @@ void cursor_backward(void)
 UCHAR do_exec(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i;
+	int i,j,k;
 	int menu_index = 0;
 
-//strcpy((char *)state,"do_exec    \0");
+	k = get_curr_menu_index() * NUM_CHECKBOXES;
 
 	switch(ch)
 	{
 		case KP_A:
-		scrollup_execchoice(ch);
-//		strcpy((char *)state,"exec up     \0");
+			j = scrollup_checkboxes(k);
 		break;
 		case KP_B:
-		scrolldown_execchoice(ch);
-//		strcpy((char *)state,"exec down    \0");
+			j = scrolldown_checkboxes(k);
 		break;
 		case KP_C:
-		prev_list();
-//		strcpy((char *)state,"exec enter   \0");
 		break;
 		case KP_D:
+			prev_list();
 		break;
 		case KP_POUND:
 		break;
 		case KP_0:
 		break;
 		case KP_AST:
-		prev_list();
+			prev_list();
 		break;
 		default:
 		break;
 	}
-//	if(ch != KP_AST)
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = check_boxes[i].checked;
 
 	return ret_char;
 }
@@ -845,137 +881,97 @@ UCHAR do_exec(UCHAR ch)
 UCHAR do_chkbox(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i;
-
-//	strcpy((char *)state,"do_chkbox        \0");
+	int i, j, k;
+	k = get_curr_menu_index() * NUM_CHECKBOXES;
 
 	switch(ch)
 	{
 		case KP_A:
-		scrollup_checkboxes(ch);
-//		strcpy((char *)state,"ckbox up    \0");
+			j = scrollup_checkboxes(k);
 		break;
 		case KP_B:
-		scrolldown_checkboxes(ch);
-//		strcpy((char *)state,"ckbox down    \0");
+			j = scrolldown_checkboxes(k);
 		break;
 		case KP_C:
-		toggle_checkboxes(ch);
-//		strcpy((char *)state,"ckbox  toggle  \0");
+			j = toggle_checkboxes(k);
 		break;
 		case KP_D:		// enter
-//		strcpy((char *)state,"ckbox enter    \0");
-		prev_list();
+			for(i = 0;i < NUM_CHECKBOXES;i++)
+				check_boxes[i].checked = prev_check_boxes[i].checked;
+			prev_list();
 		break;
 		case KP_POUND:		// esc
-//		strcpy((char *)state,"ckbox esc    \0");
-		for(i = 0;i < NUM_CHECKBOXES;i++)
-			check_boxes[i].checked = prev_check_boxes[i];	// restore old
-		for(i = 0;i < NUM_CHECKBOXES;i++)
-			avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = 0;
-		prev_list();
+			for(i = 0;i < NUM_CHECKBOXES;i++)
+				prev_check_boxes[i].checked = check_boxes[i].checked;
+			prev_list();
 		break;
 		case KP_0:
+			j = checkboxes_reset(k);
 		break;
 		case KP_AST:
-		prev_list();
+			prev_list();
 		break;
 		default:
 		break;
 	}
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = check_boxes[i].checked;
 
 	return ret_char;
 }
 //******************************************************************************************//
 //************************************* init_checkboxes ************************************//
 //******************************************************************************************//
-UCHAR init_checkboxes(UCHAR ch)
+UCHAR init_checkboxes(int index )
 {
 	curr_checkbox = 0;
-	int i;
-	int j = 0;
-	int k = 0;
-
-//	for(i = 0;i < NUM_CHECKBOXES;i++)
-//		avr_send_data[AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1+i] = i;
-
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-	{
-		memcpy((void*)avr_send_data-(AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1)+(NUM_CHECKBOXES*i),
-			(void*)&check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)], NUM_CHECKBOXES);
-		prev_check_boxes[i] = check_boxes[i].checked;
-//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU1C)*NUM_CHECKBOXES)].string);
-		if(++k > 5)
-		{
-			j++;
-			k = 0;
-		}
-	}
-//	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
-	return ch;
-}
-//******************************************************************************************//
-//*********************************** init_execchoices *************************************//
-//******************************************************************************************//
-UCHAR init_execchoices(UCHAR ch)
-{
-	curr_checkbox = 0;
-	int i;
-	int j = 0;
-	int k = 0;
-
-	for(i = 0;i < NUM_CHECKBOXES;i++)
-	{
-		memcpy((void*)avr_send_data-(AVR_SEND_DATA_SIZE-NUM_CHECKBOXES-1)+(NUM_CHECKBOXES*i),
-			(void*)&(check_boxes[ i+((ch-MENU1C)*NUM_CHECKBOXES) ]), NUM_CHECKBOXES);
-		prev_check_boxes[i] = check_boxes[i].checked;
-//		mvwprintw(win, DISP_OFFSET+5+j,2+(k*8)," %s ",check_boxes[i+((ch-MENU2A+2)*NUM_CHECKBOXES)].string);
-		if(++k > 5)
-		{
-			j++;
-			k = 0;
-		}
-	}
-//	send_aux_data = sizeof(CHECKBOXES)*NUM_CHECKBOXES;
-	return ch;
+	curr_execchoice = 0;
+	return index;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
 //******************************************************************************************//
-UCHAR scrollup_checkboxes(UCHAR ch)
+int checkboxes_reset(int index)
 {
+//	int k = index+curr_checkbox;
+	int i,k;
+	curr_checkbox = 0;
+	k = (get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES;
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		check_boxes[k].checked = 0;
+		curr_checkbox++;
+		k++;
+	}
+
+	curr_checkbox = 0;
+	return k;
+}
+//******************************************************************************************//
+//********************************** scrollup_checkboxes ***********************************//
+//******************************************************************************************//
+int scrollup_checkboxes(int index)
+{
+	int k,i;
+	
 	if(--curr_checkbox < 0)
-		curr_checkbox = last_checkbox;
-	return ch;
+		curr_checkbox = 9;
+
+//	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+
+	return k;
 }
 //******************************************************************************************//
 //********************************* scrolldown_checkboxes **********************************//
 //******************************************************************************************//
-UCHAR scrolldown_checkboxes(UCHAR ch)
+int scrolldown_checkboxes(int index)
 {
-	if(++curr_checkbox > last_checkbox)
+	int k;
+	if(++curr_checkbox > 9)
 		curr_checkbox = 0;
-	return ch;
-}
-//******************************************************************************************//
-//********************************** scrollup_checkboxes ***********************************//
-//******************************************************************************************//
-UCHAR scrollup_execchoice(UCHAR ch)
-{
-	if(--curr_execchoice < 0)
-		curr_execchoice = last_execchoice;
-	return ch;
-}
-//******************************************************************************************//
-//********************************* scrolldown_checkboxes **********************************//
-//******************************************************************************************//
-UCHAR scrolldown_execchoice(UCHAR ch)
-{
-	if(++curr_execchoice > last_execchoice)
-		curr_execchoice = 0;
-	return ch;
+
+//	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+
+	return k;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -987,8 +983,10 @@ UCHAR do_exec_choice(void)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-UCHAR toggle_checkboxes(UCHAR ch)
+int toggle_checkboxes(int index)
 {
+	int k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+
 	if(check_boxes[curr_checkbox].checked == 1)
 	{
 		check_boxes[curr_checkbox].checked = 0;
@@ -997,7 +995,25 @@ UCHAR toggle_checkboxes(UCHAR ch)
 	{
 		check_boxes[curr_checkbox].checked = 1;
 	}
-	return ch;
+	return k;
+}
+//******************************************************************************************//
+//********************************** scrollup_execchoice ***********************************//
+//******************************************************************************************//
+int scrollup_execchoice(int index)
+{
+	if(--curr_execchoice < 0)
+		curr_execchoice = 9;
+	return index;
+}
+//******************************************************************************************//
+//********************************* scrolldown_execchoice **********************************//
+//******************************************************************************************//
+int scrolldown_execchoice(int index)
+{
+	if(++curr_execchoice > 9)
+		curr_execchoice = 0;
+	return index;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1089,9 +1105,7 @@ int get_curr_menu_index(void)
 //******************************************************************************************//
 int curr_fptr_changed(void)
 {
-	int flag = dirty_flag;
-	dirty_flag = 0;
-	return flag;
+	return 0;
 }
 
 //******************************************************************************************//
@@ -1413,17 +1427,17 @@ ESOS_USER_TASK(poll_comm1)
 	_size = -1;
 
 	j = k = 0;
-//	memset(avr_send_data,0,AVR_SEND_DATA_SIZE);
+//	memset(aux_string,0,AUX_STRING_LEN);
 	for(i = 0;i < NUM_LABELS;i++)
 	{
 		j = strlen(labels[i]);
-		memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
+		memcpy((void *)aux_string+k, (void *)&labels[i],j);
 		k++;
-		*(avr_send_data+j+k) = 0;
+		*(aux_string+j+k) = 0;
 		k += j;
 	}
-	for(i = 240;i < AVR_SEND_DATA_SIZE-240;i++)
-		avr_send_data[i] = i;
+	for(i = 240;i < AUX_STRING_LEN-240;i++)
+		aux_string[i] = i;
 
 	while (TRUE)
 	{
@@ -1441,8 +1455,163 @@ ESOS_USER_TASK(poll_comm1)
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(wkey);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
+
+		if(wkey == TEST1)
+		{
+			low_byte = TEST1;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+		}
+		else if(wkey == TEST2)
+		{
+			low_byte = TEST2;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+#if 0
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+
+			for(i = TEMP_EEPROM_OFFSET; i < AUX_STRING_LEN;i++)
+			{
+				if(aux_string[i] > 0x1f && aux_string[i] < 0x7e)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(aux_string[i]);
+				else if(aux_string[i] == 0)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
+				else if( aux_string[i] == 0xff)
+					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
+				else
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(aux_string[i]);
+			}
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+#endif
+		}
+		else if(wkey == TEST3)
+		{
+			low_byte = TEST3;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+#if 0
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			for(i = 0;i < 400;i++)
+			{
+				if(aux_string[i] > 0x1f && aux_string[i] < 0x7e)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(aux_string[i]);
+				else if(aux_string[i] == 0)
+					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
+				else if( aux_string[i] == 0xff)
+					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
+				else
+					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(aux_string[i]);
+			}
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+#endif
+		}
+		else if(wkey == TEST4)
+		{
+			low_byte = TEST4;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+		}
+		else if(wkey == TEST5)
+		{
+			low_byte = TEST5;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+
+			for(i = 0;i < AUX_STRING_LEN;i++)
+				aux_string[i] = ~i - random_data;
+			random_data++;
+
+			for(i = 0;i < AUX_STRING_LEN;i++)
+			{
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,aux_string[i]);
+			}
+		}
+		else if(wkey == TEST6)
+		{
+			low_byte = TEST6;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+		}
+
+		else if(wkey == TEST7)
+		{
+			low_byte = TEST7;
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+		}
+		else if(wkey == TEST8)
+		{
+		}
+		else if(wkey == TEST9)
+		{
+		}
+		else if(wkey == TEST10)
+		{
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		    ESOS_TASK_WAIT_ON_SEND_STRING("read aux_string from target");
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+		}
+		else if(wkey == TEST11)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST12)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST13)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST14)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST15)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST16)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+		else if(wkey == TEST17)
+		{
+			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+		}
+
+		else if(wkey == LOAD_RAM)
+		{
+			for(i = 0;i < CBLABEL_SIZE;i++)
+			{
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,cblabels[i]);
+			}
+			for(i = 0;i < NUM_CBLABELS;i++)
+			{
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,check_boxes[i].checked);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,check_boxes[i].index);
+				memcpy(&prev_check_boxes[i],&check_boxes[i],sizeof(CHECKBOXES));
+			}
+			for(i = 0;i < NUM_RT_PARAMS;i++)
+			{
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,rt_params[i].row);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,rt_params[i].col);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,rt_params[i].shown);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,rt_params[i].dtype);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,rt_params[i].type);
+			}
+			for(i = 0;i < 5;i++)
+			{
+				j = sample_numbers[i];
+				unpack(j,&low_byte,&high_byte);				
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,high_byte);
+			}
+		}
 		if(wkey == BURN_PART)
 		{
+#if 0
 			if(_size == -1)
 			{
 				_size = 234;
@@ -1466,15 +1635,18 @@ ESOS_USER_TASK(poll_comm1)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 			for(i = 0;i < _size;i++)
 			{
-				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,avr_send_data[i]);
+				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,aux_string[i]);
 				ESOS_TASK_WAIT_TICKS(20);
 			}
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)i);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+#endif
 		}
-		else if(wkey == READ_EEPROM)
+
+		else if(wkey == READ_EEPROM1)
 		{
+#if 0
 			avr_ptr = 0;
 //			ESOS_KILL_TASK(get_comm_handle);
 /*
@@ -1508,132 +1680,8 @@ ESOS_USER_TASK(poll_comm1)
 			}
 			ESOS_RESTART_TASK(get_comm_handle);
 */
-		}
 
-		else if(wkey == TEST1)
-		{
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-
-			for(i = 0; i < AVR_SEND_DATA_SIZE;i++)
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-		}
-		else if(wkey == TEST2)
-		{
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-
-			for(i = TEMP_EEPROM_OFFSET; i < AVR_SEND_DATA_SIZE;i++)
-			{
-				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
-					ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
-				else if(avr_send_data[i] == 0)
-					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-				else if( avr_send_data[i] == 0xff)
-					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
-				else
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST3)
-		{
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			for(i = 0;i < 400;i++)
-			{
-				if(avr_send_data[i] > 0x1f && avr_send_data[i] < 0x7e)
-					ESOS_TASK_WAIT_ON_SEND_UINT8(avr_send_data[i]);
-				else if(avr_send_data[i] == 0)
-					ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-				else if( avr_send_data[i] == 0xff)
-					ESOS_TASK_WAIT_ON_SEND_UINT8('_');
-				else
-					ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(avr_send_data[i]);
-			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST4)
-		{
-			memset(avr_send_data+300,0xff,AVR_SEND_DATA_SIZE-300);
-			avr_ptr = 0;
-		}
-		else if(wkey == TEST5)
-		{
-			low_byte = TEST5;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
-		}
-		else if(wkey == TEST6)
-		{
-			_size = TEMP_EEPROM_OFFSET;
-			start_addr = TEMP_EEPROM_OFFSET;
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)_size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(_size>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-
-		else if(wkey == TEST7)
-		{
-			_size = 30;
-			start_addr = 30;
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)_size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(_size>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST8)
-		{
-			_size = 100;
-			start_addr = 0;
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)_size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(_size>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST9)
-		{
-			_size = 300;
-			start_addr = 300;
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)_size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(_size>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST10)
-		{
-			_size = 300;
-			start_addr = 0;
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)_size);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(_size>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)start_addr);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(start_addr>>8));
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
-		else if(wkey == TEST11)
-		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+#endif
 		}
 		else if(wkey == INIT)
 		{
@@ -1902,7 +1950,7 @@ int pack(UCHAR low_byte, UCHAR high_byte)
 {
 	int temp;
 	int myint;
-//	low_byte = ~low_byte;
+	low_byte = ~low_byte;
 	myint = (int)low_byte;
 	temp = (int)high_byte;
 	temp <<= 8;
@@ -1917,7 +1965,7 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*low_byte = (UCHAR)myint;
 	myint >>= 8;
 	*high_byte = (UCHAR)myint;
-//	*low_byte = ~(*low_byte);
+	*low_byte = ~(*low_byte);
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1953,7 +2001,7 @@ void get_label_offsets(void)
 	{
 		label_offsets[i] = goffset;
 		j = 0;
-		memcpy((void*)&temp_label[0],(void*)avr_send_data+goffset,MAX_LABEL_LEN);
+		memcpy((void*)&temp_label[0],(void*)aux_string+goffset,MAX_LABEL_LEN);
 //		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
 		ch = temp_label;
 		while(*ch != 0 && j < MAX_LABEL_LEN)
@@ -1972,7 +2020,7 @@ int get_label(int index, char *str)
 {
 	int i = 0;
 		// void *dest, const void *src, size_t n
-	memcpy((void*)str,(void*)avr_send_data+label_offsets[index],MAX_LABEL_LEN);
+	memcpy((void*)str,(void*)aux_string+label_offsets[index],MAX_LABEL_LEN);
 	while(str[i] != 0)
 		i++;
 //	eeprom_read_block((void *)str,eepromString+label_offsets[index],MAX_LABEL_LEN);

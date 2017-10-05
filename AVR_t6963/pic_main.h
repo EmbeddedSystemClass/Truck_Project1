@@ -19,6 +19,7 @@ int get_curr_menu(void);
 int get_str_len(void);
 int get_mlabel_offsets(void);
 int get_cblabel_offsets(void);
+void update_ram(void);
 UCHAR current_param;
 
 int no_func_labels;
@@ -56,37 +57,6 @@ typedef struct rt_params
 } RT_PARAM;
 #endif
 
-/*
-MENU_FUNC_STRUCT menu_structs[] = {
-//												'A' 	'B'		'C'		'D'		'#'		'0'
-	{ _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU1E, MENU2A,  MAIN  },
-// 1a
-	{ 	_menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A  },
-// 1b
-	{ 	_menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B  },
-// 1c
-	{ 	_exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU1C  },
-// 1d
-	{ 	_do_chkbox, 	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D  },
-// 1e
-	{ 	_do_chkbox, 	ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1E  },
-// 2a
-	{ 	_non_func, 		blank, blank, blank, blank, blank, blank, MENU2A  },
-// 2b
-	{ 	_exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B  },
-// 2c
-	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C  },
-// 2d
-	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D  },
-// 2e
-	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E  },
-// 3a
-	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A  },
-// 3b
-	{ 	_do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B  }
-};
-*/
-
 char cur_global_number[NUM_ENTRY_SIZE];
 char new_global_number[NUM_ENTRY_SIZE];
 //UINT send_data;
@@ -97,7 +67,5 @@ int curr_checkbox;
 int last_checkbox;
 int scale_type;
 int prev_scale_type;
-UCHAR aux_index;
-int send_aux_data;
 int tdelay;
 

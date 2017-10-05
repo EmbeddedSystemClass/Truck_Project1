@@ -164,7 +164,7 @@ ESOS_USER_TASK(get_comm2)
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 
-		avr_send_data[avr_ptr+(AVR_SEND_DATA_SIZE - TEMP_EEPROM_OFFSET)] = data1;
+		aux_string[avr_ptr+(AUX_STRING_LEN - TEMP_EEPROM_OFFSET)] = data1;
 
 		if(++avr_ptr > TEMP_EEPROM_OFFSET - 1)
 		{
@@ -246,30 +246,46 @@ ESOS_USER_TASK(comm2_task)
 	no_rt_labels = test - rpm;
 
 	i = 0;
-	i = update_menu_structs(i, _menu_change, 	MENU1A, MENU1B, MENU1C, MENU1D, MENU2A, MENU2B,  MAIN);
-	i = update_menu_structs(i, _menu_change,	MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1B, MENU1A);
+	
+//												'A' 	'B'		'C'		'D'		'#'		'0'
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E, MENU2A, MENU2B, MENU2C, MAIN);
+//	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
+// 1a
+	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
+// 1b
 	i = update_menu_structs(i, _menu_change,	MAIN,   MENU2D, MENU1B, MENU1D, MENU2A, MENU2B, MENU1B);
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1C);
-	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, blank, MENU1D);
-	i = update_menu_structs(i, _non_func,		test, blank, blank,   blank, blank, blank, MENU1E);
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2A);
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, ckenter, blank, blank, blank, MENU2B);
+// 1c
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1C);
+// 1d
+	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D);
+// 1e
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU1E);
+// 2a
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU2A);
+// 2b
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU2B);
+// 2c
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
+// 2d
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2D);
+// 2e
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2E);
+// 3a
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3A);
+// 3b
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
-	memset((void*)avr_send_data,0xFF,AVR_SEND_DATA_SIZE);
+
+	memset((void*)aux_string,0xFF,AUX_STRING_LEN);
 
 	k = 0;
 	for(i = 0;i < NUM_LABELS;i++)
 	{
 		j = strlen((const char *)labels[i]);
-		memcpy((void *)avr_send_data+k, (void *)&labels[i],j);
-		avr_send_data[k+j] = 0;
+		memcpy((void *)aux_string+k, (void *)&labels[i],j);
+		aux_string[k+j] = 0;
 		k++;
-//		*(avr_send_data+j+k) = 0;
+//		*(aux_string+j+k) = 0;
 		k += j;
 	}
 //	ESOS_TASK_WAIT_TICKS(100);
@@ -284,10 +300,8 @@ ESOS_USER_TASK(comm2_task)
 	curr_checkbox = 0;
 //	last_checkbox = NUM_CHECKBOXES-1;
 //	last_execchoice = NUM_EXECCHOICES-1;
-	curr_execchoice = 0;
 	goffset = 0;
 	get_label_offsets();
-	send_aux_data = 0;
 /*
 	do
 	{
@@ -391,6 +405,7 @@ ESOS_USER_TASK(comm2_task)
 				} // end of for loop
 
 //				send_aux_data = 30;
+#if 0
 				unpack(send_aux_data,&low_byte,&high_byte);
 				__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,high_byte);
 				ESOS_TASK_WAIT_TICKS(TIME_DELAY);
@@ -406,6 +421,7 @@ ESOS_USER_TASK(comm2_task)
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)send_aux_data);
 				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((UCHAR)(send_aux_data>>8));
+#endif
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();

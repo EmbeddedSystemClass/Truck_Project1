@@ -32,7 +32,6 @@ int global_fd;
 void set_state_defaults(void);
 int scale_type;
 int prev_scale_type;
-UCHAR aux_index;
 int menu_index;
 UCHAR curr_menus[6];
 int syncup;
@@ -40,3 +39,4 @@ UCHAR sync_buf[10];
 int bp;
 int tdelay;
 int size, start_addr;
+

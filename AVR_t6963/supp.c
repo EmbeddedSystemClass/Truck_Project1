@@ -166,7 +166,52 @@ void get_mlabel(int index, char *str)
 }
 
 //******************************************************************************************//
-//*********************************** get_mlabel_offsets ***********************************//
+//*********************************** get_prompt_offsets ***********************************//
+//******************************************************************************************//
+#if 0
+int get_prompt_offsets(void)
+{
+	int i, j,k;
+	char *ch;
+	char temp_label[MAX_PROMPT_LEN];
+
+	gprompt_offset = 0;
+
+	no_prompts = 0;
+	for(i = 0;i < PROMPT_DATA_SIZE;i++)
+	{
+		if(prompt_data[i] == 0 && prompt_data[i-1] != 0)
+			no_prompts++;
+	}
+
+	for(i = 0;i < no_prompts;i++)
+	{
+		j = 0;
+		memcpy(temp_label,prompt_data+gprompt_offset,MAX_PROMPT_LEN);
+		ch = temp_label;
+		while(*ch != 0 && j < MAX_PROMPT_LEN)
+		{
+			ch++;
+			j++;
+		}
+		j++;			// adjust for zero at end
+		gprompt_offset += j;
+		prompt_indexes[i] = gprompt_offset;	// zero-assumed - first index is the start of the 2nd string
+	}
+	return no_prompts;
+}
+//******************************************************************************************//
+//*********************************** get_prompt_label *************************************//
+//******************************************************************************************//
+void get_prompt_label(int index, char *str)
+{
+
+		// void *dest, const void *src, size_t n
+	memcpy(str,prompt_data+prompt_indexes[index-1],MAX_PROMPT_LEN);
+}
+#endif
+//******************************************************************************************//
+//********************************** get_cblabel_offsets ***********************************//
 //******************************************************************************************//
 int get_cblabel_offsets(void)
 {
@@ -200,7 +245,7 @@ int get_cblabel_offsets(void)
 	return no_cblabels;
 }
 //******************************************************************************************//
-//*************************************** get_label ****************************************//
+//************************************* get_cblabel ****************************************//
 //******************************************************************************************//
 void get_cblabel(int index, char *str)
 {
@@ -253,6 +298,23 @@ int update_mlabels(int index, char *ramstr)
 	index++;
 	return index;
 }
+//******************************************************************************************//
+//************************************* update_cbabels *************************************//
+//******************************************************************************************//
+#if 0
+int update_prompts(int index, char *str)
+{
+	int len;
+	len = strlen(str);
+	len = (len > MAX_PROMPT_LEN?MAX_PROMPT_LEN:len);
+	len++;
+	memcpy(prompt_data+total_offset,str, len);
+//	strncpy(menu_labels[index],ramstr,len);
+	total_offset += len;
+	index++;
+	return index;
+}
+#endif
 //******************************************************************************************//
 //************************************* update_cbabels *************************************//
 //******************************************************************************************//
@@ -390,7 +452,7 @@ void update_ram(void)
 	total_offset = 0;
 
 //												'A' 	'B'		'C'		'D'		'#'		'0'
-	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU2A, MENU2B, MENU2C, MENU2D, MAIN);
+	i = update_menu_structs(i, _menu_change, 	MENU1C, MENU1D, MENU1E, MENU2A, MENU2B, MENU2C, MAIN);
 //	i = update_menu_structs(i, _menu_change, 	MENU2C, MENU2D, MENU2E,  MENU3A, MENU3B, MENU1C, MAIN);
 // 1a
 	i = update_menu_structs(i, _menu_change,	MENU2B, MENU2C, MENU2D, MENU2E, MENU3A, MENU3B, MENU1A);
@@ -401,11 +463,11 @@ void update_ram(void)
 // 1d
 	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D);
 // 1e
-//	i = update_menu_structs(i, _do_chkbox, 		ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU1E);
 // 2a
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU1E);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU2A);
 // 2b
-	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, cktoggle, ckenter, ckesc, cclear, MENU2A);
+	i = update_menu_structs(i, _exec_choice,	ckup, ckdown, blank, ckenter, blank, blank, MENU2B);
 // 2c
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU2C);
 // 2d
@@ -494,7 +556,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "funny 8\0");
 	i =  update_cblabels(i, "funny 9\0");
 	i =  update_cblabels(i, "funny 10\0");
-/*
+
 	i =  update_cblabels(i, "quick 1\0");
 	i =  update_cblabels(i, "quick 2\0");
 	i =  update_cblabels(i, "quick 3\0");
@@ -505,7 +567,7 @@ void update_ram(void)
 	i =  update_cblabels(i, "quick 8\0");
 	i =  update_cblabels(i, "quick 9\0");
 	i =  update_cblabels(i, "quick 10\0");
-
+/*
 	i =  update_cblabels(i, "fox and  1\0");
 	i =  update_cblabels(i, "fox and  2\0");
 	i =  update_cblabels(i, "fox and  3\0");
@@ -525,6 +587,29 @@ void update_ram(void)
 	i =  update_cblabels(i, "ending 4\0");
 	i =  update_cblabels(i, "ending 5\0");
 */
+#if 0
+	memset(prompt_data,0,PROMPT_DATA_SIZE);
+	total_offset = 0;
+	i = 0;
+	i =  update_prompts(i, "mytest 1\0");
+	i =  update_prompts(i, "atest 224asdf\0");
+	i =  update_prompts(i, "atest 234asdf\0");
+	i =  update_prompts(i, "atest 4asasdf\0");
+	i =  update_prompts(i, "atest 5adasdf\0");
+	i =  update_prompts(i, "atest 6adadfasdf\0");
+	i =  update_prompts(i, "atest 7asdfaasd\0");
+	i =  update_prompts(i, "atest 8adfasdf\0");
+	i =  update_prompts(i, "atest 9asdfadf\0");
+	i =  update_prompts(i, "atest 10asdfadf\0");
+
+	i =  update_prompts(i, "zasdf 1adfad\0");
+	i =  update_prompts(i, "zasdf 2asdfadf\0");
+	i =  update_prompts(i, "zasdf 3adfasdf\0");
+	i =  update_prompts(i, "zasdf 3asdfasd\0");
+	i =  update_prompts(i, "zasdf 4asdfad\0");
+	i =  update_prompts(i, "zasdf 6asdfasd\0");
+	get_prompt_offsets();
+#endif
 }
 #endif
 #endif
