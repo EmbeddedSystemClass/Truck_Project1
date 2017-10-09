@@ -35,7 +35,6 @@ pthread_mutex_t		serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 extern int   total_count;
 illist_t ill;
 ollist_t oll;
-extern int init_tcp(char *);
 
 UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3, task4, task5, task6};
 //UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3};
@@ -146,7 +145,7 @@ UCHAR task1(int test)
 	}
 	pid = curr_i_array;
 
-	illist_show(&ill);
+//	illist_show(&ill);
 
 	ollist_init(&oll);
 	// just insert some sample data for now
@@ -156,7 +155,7 @@ UCHAR task1(int test)
 		ollist_insert_data(i,&oll,pod);
 		pod++;
 	}
-	ollist_show(&oll);
+//	ollist_show(&oll);
 	pod = curr_o_array;
 
 	printf("\n\n\n");
@@ -164,6 +163,8 @@ UCHAR task1(int test)
 	UCHAR test2;
 	UCHAR rec_no;
 	printf("task 1: %d\n",test);
+
+	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
 
 	while(TRUE)
 	{
@@ -181,21 +182,23 @@ UCHAR task1(int test)
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-						printf("send idata: rec: %d rc: %d ",rec_no,rc);
+						printf("send idata: rec: %d rc: %d\n",rec_no,rc);
 //						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
 //							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
 						illist_insert_data(rec_no, &ill, &tempi1);
 	//					illist_show(&ill);
 						break;
+
 					case SEND_ODATA:
 					// update a single ODATA record
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);	// blocking
-						printf("send odata: rec: %d rc: %d ",rec_no,rc);
+						printf("send odata: rec: %d rc: %d\n",rec_no,rc);
 //						printf("port: %d\tonoff: %d\tlabel: %s\n",tempo1.port,tempo1.onoff,tempo1.label);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						ollist_show(&oll);
 						break;
+
 					case SEND_SHOW:		// F5 	(display data)
 						printf("showing current list\n");
 						illist_show(&ill);
@@ -203,8 +206,9 @@ UCHAR task1(int test)
 						ollist_show(&oll);
 						printf("\n");
 						break;
+
 					case SEND_ALL_IDATA:	// F9
-						printf("send all IDATA ");
+						printf("send all IDATA:\n");
 						rc = 0;
 						pid = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -215,31 +219,39 @@ UCHAR task1(int test)
 						pid = curr_i_array;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+							printf("%2d\t%2d\t%2d\t%2d\t%s\n",
+								pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
 							pid++;
 						}
 
 						printf("%d\n",rc);
 						printf("done\n");
 						break;
+
 					case SEND_ALL_ODATA:	// F10
-						printf("send all ODATA: ");
+						printf("send all ODATA: %d\n",sizeof(O_DATA));
 						pod = &tempo1;
 						rc = 0;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)pod,sizeof(O_DATA),1);
-							ollist_insert_data(i,&oll,pod);
+							printf("%2d\t%2d\t%s\t%d\n",pod->port,pod->onoff,pod->label,rc);
+//							ollist_insert_data(i,&oll,pod);
 						}
+
+/*
+						pod = curr_o_array;
+
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							printf("%2d\t%2d\t%s\n",pod->port,pod->onoff,pod->label);
 							pod++;
 						}
-
+*/
 						printf("%d\n",rc);
 						printf("done\n");
 						break;
+
 					case SEND_SERIAL:	// F6
 						test2 = 0x21;
 						for(i = 0;i < 3000;i++)
@@ -250,6 +262,7 @@ UCHAR task1(int test)
 						}
 						printf("sent serial\n");
 						break;
+
 					case LOAD_ORG:	// F7
 						printf("loading from org.dat\n");
 						illist_removeall_data(&ill);
@@ -631,10 +644,12 @@ UCHAR task6(int test)
 
 	sad.sin_port = htons((u_short)port);
 
+// getprotobyname doesn't work on TS-7200 because there's no /etc/protocols file
+// so just use '6'
 #ifdef NOTARGET
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
-		fprintf(stderr, "cannot map \"tcp\" to protocol number");
+		fprintf(stderr, "cannot map \"tcp\" to protocol number\n");
 		exit (1);
 	}
 	listen_sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);

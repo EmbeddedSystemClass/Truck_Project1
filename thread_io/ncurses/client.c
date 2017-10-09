@@ -87,7 +87,8 @@ int init_client(void)
 //	if (argc > 1 ) host = argv[1];
 //	else host = localhost;
 
-	host = "192.168.42.110";
+//	host = "192.168.42.110";
+	host = "192.168.42.145";
 	ptrh = gethostbyname(host);
 	if( ((char *)ptrh) == NULL)
 	{

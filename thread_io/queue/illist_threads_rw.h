@@ -50,15 +50,6 @@ typedef struct i_data
 	UCHAR inverse;			// if true the the opposite polarity is applied to the behavior
 } I_DATA;
 
-/*
-typedef struct o_data
-{
-	char label[20];
-	UCHAR port;				// inputs are from 0 -> 39, outputs are from 40 -> 79
-	UCHAR onoff;			// 1 of on; 0 if off
-} O_DATA;
-*/
-
 typedef struct illist_node {
   int index;
   I_DATA *datap;

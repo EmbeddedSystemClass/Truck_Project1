@@ -14,13 +14,24 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "../mytypes.h"
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <sys/time.h>
+#include "mytypes.h"
 #include "client.h"
 #define closesocket      close
-#define PROTOPORT        5193        /* default protocol port number */
+//#define PROTOPORT        5193        /* default protocol port number */
+#define PROTOPORT        1003        /* default protocol port number */
 
 static int global_socket;
 static int sock_open;
+
+#ifdef COPY_FILE
+#define BUF_SIZE 10000
+UCHAR buf[BUF_SIZE];
+#endif
 
 int test_sock(void)
 {
@@ -49,13 +60,13 @@ static struct  sockaddr_in sad;  /* structure to hold server's address  */
 static struct timeval tv;
 
 /*********************************************************************/
-int init_client(void)
+int init_client(char *host)
 {
 	struct  hostent  *ptrh;   /* pointer to a host table entry       */
 	struct  protoent *ptrp;   /* point to a protocol table entry     */
 //	int     sd;               /* socket descriptor                   */
 	int     port;             /* protocol port number                */
-	char    *host;            /* pointer to host name                */
+//	char    *host;            /* pointer to host name                */
 	int     n;                /* number of characters read           */
 	char    buf[50];        /* buffer for data from the server     */
 	char 	send_buf[50];
@@ -66,8 +77,11 @@ int init_client(void)
 	tv.tv_sec = 1;
 	tv.tv_usec = 500;  // Not init'ing this can cause strange errors
 
+	printf("starting client\n");
+
 	memset((char *)&sad,0,sizeof(sad));  /* clear sockaddr structure */
 	sad.sin_family = AF_INET;            /* set family to Internet   */
+	sad.sin_addr.s_addr = INADDR_ANY;
 
 	/* Check command-line argument for protocol port and extract     */
 	/* port number if on is specified.  Otherwise, use the default   */
@@ -87,7 +101,10 @@ int init_client(void)
 //	if (argc > 1 ) host = argv[1];
 //	else host = localhost;
 
-	host = "192.168.42.115";
+//	host = "192.168.42.115";
+//	host = "192.168.42.145";	// if compiling for target
+#ifndef MAKE_TARGET
+
 	ptrh = gethostbyname(host);
 	if( ((char *)ptrh) == NULL)
 	{
@@ -107,8 +124,10 @@ int init_client(void)
 	 /* Create a socket */
 	global_socket = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
 
+#else
 // so just use '6' (if this is compiled for TS-7200) as the tcp protocol number
-//	global_socket = socket (PF_INET, SOCK_STREAM, 6);
+	global_socket = socket (PF_INET, SOCK_STREAM, 6);
+#endif
 
 	 if (global_socket < 0)
 	 {
@@ -116,10 +135,8 @@ int init_client(void)
 		return -1;
 	 }
 
-#ifndef NOMAIN
 	printf("host = %s global_socket = %d\n",host,global_socket);
 	printf("trying to connect...\n");
-#endif
 	return 1;
 }
 
@@ -136,10 +153,12 @@ int tcp_connect(void)
 	{
 		printf("connected\n");
 
+//#ifndef MAKE_TARGET
 		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -2;
 		if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -3;
+//#endif
 		sock_open = 1;
 		return global_socket;
 	}
@@ -191,8 +210,8 @@ void close_sock(void)
 }
 
 /*********************************************************************/
-#ifndef NOMAIN
-int main(void)
+#ifdef TEST_SEQUENCE
+int main(int argc, char *argv[])
 {
 	char test1,test2;
 	int rc;
@@ -200,11 +219,20 @@ int main(void)
 	char errmsg[20];
 	memset(errmsg,0,20);
 
-	rc = init_client();
+	if(argc < 2)
+	{
+		printf("usage: %s [ip address of server]\n",argv[0]);
+		exit(1);
+	}
+
+//	rc = init_client("192.168.42.146");
+	printf("connecting to %s\n",argv[1]);
+	rc = init_client(argv[1]);
+//	rc = init_client("192.168.42.115");
 
 	if(test_sock() == 0)
 	{
-		printf("trying to open socket...\n");
+//		printf("trying to open socket...\n");
 		if(tcp_connect() > 0)
 		{
 			printf("connected\n");
@@ -215,14 +243,14 @@ int main(void)
 
 	test1 = 0x21;
 	j = 0;
-	for(i = 0;i < 10000;i++)
+	for(i = 0;i < 30000;i++)
 	{
 		rc = put_sock(&test1,1,1,errmsg);
 		if(rc < 0)
 			printf("%s\n",errmsg);
 
 //		usleep(TIME_DELAY);		// defined in mytypes.h
-		usleep(10000);
+		usleep(100);
 		rc = get_sock(&test2,1,1,errmsg);
 		if(rc < 0)
 			printf("%s\n",errmsg);
@@ -241,6 +269,102 @@ int main(void)
 	test1 = 0xff;
 	put_sock(&test1,1,1,errmsg);
 	close_sock();
+	return 0;
+}
+#endif
+
+#ifdef COPY_FILE
+int main(int argc, char *argv[])
+{
+	char test1,test2;
+	int rc;
+	int i,j;
+	char errmsg[20];
+	memset(errmsg,0,20);
+	char filename[20];
+	int fp;
+	off_t fsize;
+	int buf_bytes;
+	int buf_bytes2;
+
+	if(argc < 3)
+	{
+		printf("usage: %s [ip address of server] [file to send]\n",argv[0]);
+		exit(1);
+	}else
+	printf("sending file: %s to: %s\n",argv[2],argv[1]);
+
+	memset(buf,0,BUF_SIZE);
+
+	rc = init_client(argv[1]);
+//	rc = init_client("192.168.42.146");
+//	rc = init_client("192.168.42.115");
+
+	if(test_sock() == 0)
+	{
+		printf("trying to open socket...\n");
+		if(tcp_connect() > 0)
+		{
+			printf("connected\n");
+		}
+		else
+			return -1;
+	}
+
+	strcpy(filename,argv[2]);
+
+//	put_sock((UCHAR*)&filename[0],20,1,errmsg);
+//	printf("%s\n",errmsg);
+
+	if(access(filename,F_OK) != -1)
+	{
+		fp = open((const char *)filename, O_RDWR);
+		if(fp < 0)
+		{
+			printf("can't open file for writing");
+		}else
+		{
+			rc = 0;
+			fsize = lseek(fp,0,SEEK_END);
+			printf("filesize: %ld\n",fsize);
+
+			rc = put_sock((UCHAR *)&fsize,sizeof(off_t),1,errmsg);
+// if server is 32-bit machine the sizeof(off_t) is 4
+// but if client is 64-bit then sizeof(off_t) is 8
+//			rc = put_sock((UCHAR *)&fsize,4,1,errmsg);
+			if(rc < 0)
+			{
+				printf("%s\n",errmsg);
+				exit(1);
+			}
+			printf("rc: %d\n",rc);
+			lseek(fp,0,SEEK_SET);
+
+			buf_bytes = (int)fsize;
+			printf("starting buf_bytes: %d\n",buf_bytes);
+			do
+			{
+				buf_bytes2 = (buf_bytes > BUF_SIZE?BUF_SIZE:buf_bytes);
+				buf_bytes -= BUF_SIZE;
+
+				printf("buf_bytes: %d %d ",buf_bytes2,buf_bytes);
+				rc = read(fp,&buf[0],buf_bytes2);
+
+				rc = put_sock((UCHAR *)&buf[0],buf_bytes2,1,errmsg);
+				if(rc < 0)
+				{
+					printf("%s\n",errmsg);
+					exit(1);
+				}
+				else printf("rc: %d\n",rc);
+//				printf("%s\n",errmsg);
+
+			}while(buf_bytes > 0);
+
+			close_sock();
+			close(fp);
+		}
+	}
 	return 0;
 }
 #endif

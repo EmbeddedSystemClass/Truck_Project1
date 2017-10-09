@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -13,8 +14,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 //#include <ncurses.h>
+#include "mytypes.h"
 #include "tcp.h"
-#include "../mytypes.h"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -69,21 +70,24 @@ int init_server(void)
 
 	sad.sin_port = htons((u_short)port);
 
-	printf("starting server...\n\n\n");
+//	printf("starting server...\n\n\n");
 
 	/* Map TCP transport protocol name to protocol number */
 
-/*	getprotobyname doesn't work on TS-7200 cause there's not /etc/protocols file
-	so just say '6' if compiling for TS-7200
+#ifndef MAKE_TARGET
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
 		fprintf(stderr, "cannot map \"tcp\" to protocol number\n");
 		return -1;
 	}
-*/
+
 	/* Create a socket */
-//	sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
+	sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
+#else
+//	getprotobyname doesn't work on TS-7200 cause there's not /etc/protocols file
+//	so just say '6' if compiling for TS-7200
 	sd = socket (PF_INET, SOCK_STREAM, 6);
+#endif
 	int option = 1;
 //	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 //	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
@@ -134,7 +138,7 @@ int init_server(void)
 //******************************************************************************************//
 //***************************************** send_tcp ***************************************//
 //******************************************************************************************//
-int send_tcp(char *send_buf,int len, char *errmsg)
+int send_tcp(UCHAR *send_buf,int len, char *errmsg)
 {
 	int rc;
 	char extra_msg[10];
@@ -154,13 +158,13 @@ int send_tcp(char *send_buf,int len, char *errmsg)
 //******************************************************************************************//
 //**************************************** recv_tcp ****************************************//
 //******************************************************************************************//
-int recv_tcp(char *recv_buf, int len, char *errmsg)
+int recv_tcp(UCHAR *recv_buf, int len, char *errmsg)
 {
 	int rc;
 	char extra_msg[10];
 
 //	rc = recv(sd2, recv_buf, len, MSG_DONTWAIT);
-	rc = recv(sd2, recv_buf, len, MSG_WAITALL);
+	rc = recv(sd2, recv_buf, (size_t)len, MSG_WAITALL);
 	if(rc < 0)
 	{
 		strcpy(errmsg,strerror(errno));
@@ -179,7 +183,7 @@ int close_sock(void)
 	return 1;
 }
 
-#ifndef NOMAIN
+#ifdef TEST_SEQUENCE
 int main(void)
 {
 	char test1;
@@ -195,7 +199,7 @@ int main(void)
 	i = 0;
 	do
 	{
-		rc = recv_tcp(&test1,1,errmsg);
+		rc = recv_tcp((UCHAR *)&test1,1,errmsg);
 		if(rc < 0)
 			printf("%s\n",errmsg);
 
@@ -215,5 +219,81 @@ int main(void)
 	close(sd2);
 	return 0;
 }
+#endif
 
+#ifdef COPY_FILE
+
+//UCHAR buf[30000];
+UCHAR *buf;
+
+int main(void)
+{
+	char test1;
+	int rc;
+	int i,j;
+	char errmsg[20];
+	memset(errmsg,0,20);
+	int fp;
+	off_t fsize;
+	char filename[20];
+	UCHAR temp[20];
+
+	init_server();
+
+#if 0
+	rc = recv_tcp((UCHAR *)&temp[0],20,errmsg);
+
+	for(i = 0;i < 20;i++)
+		printf("%2x ",temp[i]);
+
+	printf("\n");
+
+	printf("%s\n",temp);
+#endif
+
+	rc = recv_tcp((UCHAR*)&fsize,sizeof(off_t),errmsg);
+	printf("sizeof(off_t): %d\n",sizeof(off_t));
+//	rc = recv_tcp((UCHAR*)&fsize,4,errmsg);
+
+	if(rc < 0)
+	{
+		printf("%s\n",errmsg);
+		exit(1);
+	}
+
+	printf("fsize: %ld \n",fsize);
+
+	buf = (UCHAR *)malloc(fsize);
+	if(buf < 0)
+	{
+		printf("could not malloc %ld\n",fsize);
+		exit(1);
+	}
+	memset(buf,0x20,fsize);
+
+	strcpy(filename,"test.bin");
+	fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 600);
+	if(fp < 0)
+	{
+		printf("could not create file: %s\n",filename);
+		exit(1);
+	}
+
+//	rc = recv_tcp((UCHAR *)&buf[0],4,errmsg);
+
+	rc = recv_tcp((UCHAR *)&buf[0],fsize,errmsg);
+
+	printf("bytes recv'd: %d\n",rc);
+	if(rc < 0)
+		printf("%s\n",errmsg);
+
+	close(sd2);
+	rc = write(fp, buf, fsize);
+	printf("write to file: %d\n",rc);
+	close(fp);
+	free(buf);
+	
+	printf("\n\n");
+	return 0;
+}
 #endif

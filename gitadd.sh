@@ -84,7 +84,15 @@ git add thread_io/ncurses/form_sup.h
 git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
 git add thread_io/thread_io_notes.txt
-git add thread_io/test_tcp/*
+git add thread_io/test_tcp/client.c
+git add thread_io/test_tcp/server.c
+git add thread_io/test_tcp/make_target
+git add thread_io/test_tcp/Makefile
+git add thread_io/test_tcp/mytypes.h
+git add thread_io/test_tcp/client.h
+git add thread_io/test_tcp/test_write.c
+git add thread_io/test_tcp/test_read.c
+git add thread_io/test_tcp/tcp.h
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/avrdude.conf

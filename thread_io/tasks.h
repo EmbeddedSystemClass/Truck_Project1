@@ -20,7 +20,6 @@ UCHAR task6(int test);
 void *work_routine(void *arg);
 int send_tcp(UCHAR *str,int len);
 int recv_tcp(UCHAR *str, int strlen,int block);
-void init_tcp2(void);
 void close_tcp(void);
 int test_sd(int test);
 int test_sock(void);

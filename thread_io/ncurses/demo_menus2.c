@@ -679,32 +679,32 @@ call_options(int code)
 
         case 4:
         	ret = 0;
-            show_status2("update idata","",code,0,0,2);
+            show_status2("update idata","",code,0,0,1);
 			cmd =  SEND_ALL_IDATA;
 			put_sock(&cmd,1,1,errmsg);
 			pid = curr_i_array;
-            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,1);
+            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,2);
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				ret += put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
 				pid++;
 			}
-            show_status2(pid->label,curr_i_array->label,i_index,isize,ret,2);
+            show_status2(pid->label,curr_i_array->label,i_index,isize,ret,3);
             break;
 
         case 5:
         	ret = 0;
-            show_status2("update odata","",code,0,0,2);
+            show_status2("update odata","",code,0,0,1);
 			cmd =  SEND_ALL_ODATA;
 			put_sock(&cmd,1,1,errmsg);
 			pod = curr_o_array;
-            show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
+            show_status2(pod->label,curr_o_array->label,o_index,osize,sizeof(O_DATA),2);
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				ret += put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
 				pod++;
 			}
-            show_status2(pod->label,curr_o_array->label,o_index,osize,ret,2);
+            show_status2(pod->label,curr_o_array->label,o_index,osize,ret,3);
             break;
 
 		case 6:

@@ -1,4 +1,0 @@
-mon_client.c: In function ‘init_client’:
-mon_client.c:81:9: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
-   if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
-         ^

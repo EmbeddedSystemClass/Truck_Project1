@@ -107,7 +107,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 	for(i = 1;i < WIDTH-1;i++)
 		MvWAddCh(twin,HEIGHT-5,i,ACS_HLINE);
 
-	mvwprintw(twin,status_line,1,"F2 - quit F3 - send I_DATA F4 - send O_DATA");
+	mvwprintw(twin,status_line,1,"F2 - quit");
 	mvwprintw(twin,error_line1,1,"%d",num_i_recs);
 	mvwprintw(twin,error_line2,1,"%d",num_o_recs);
 
