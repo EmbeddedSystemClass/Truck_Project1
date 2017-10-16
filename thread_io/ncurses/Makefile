@@ -48,7 +48,7 @@ file_menu2.o: file_menu2.c ../queue/illist_threads_rw.h ../queue/ollist_threads_
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c file_menu2.c
 
 config_file.o: config_file.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c config_file.c
+	${CC} -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c config_file.c
 
 init_db.o: init_db.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c init_db.c
@@ -59,8 +59,18 @@ list_db.o: list_db.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
 client.o: client.c client.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c client.c
 
-client: demo_menus2.o menu_scroll2.o demo_forms4.o form_supplement.o client.o tcp_win.o file_win.o file_menu2.o config_file.o
-	${CC} menu_scroll2.o demo_menus2.o demo_forms4.o form_supplement.o client.o tcp_win.o file_win.o file_menu2.o config_file.o -o client -lmenu -lform -lcurses
+illist_threads_rw.o: ../queue/illist_threads_rw.c ../queue/illist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/illist_threads_rw.c
+
+ollist_threads_rw.o: ../queue/ollist_threads_rw.c ../queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/ollist_threads_rw.c
+
+rdwr.o: ../queue/rdwr.c ../queue/rdwr.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/rdwr.c
+
+client: demo_menus2.o menu_scroll2.o demo_forms4.o form_supplement.o client.o tcp_win.o file_win.o file_menu2.o\
+ config_file.o illist_threads_rw.o ollist_threads_rw.o rdwr.o 
+	${CC} menu_scroll2.o demo_menus2.o demo_forms4.o form_supplement.o client.o tcp_win.o file_win.o file_menu2.o config_file.o  illist_threads_rw.o ollist_threads_rw.o rdwr.o  -o client -lmenu -lform -lcurses
 
 init_db: config_file.o init_db.o
 	${CC} init_db.o config_file.o -o init_db
@@ -69,5 +79,4 @@ list_db: config_file.o list_db.o
 	${CC} list_db.o config_file.o -o list_db
 
 clean :
-	rm -f *.o *~ *# core  \
-	client init_db list_db
+	rm -f *.o *~ *# core client init_db list_db

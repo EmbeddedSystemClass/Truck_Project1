@@ -15,6 +15,7 @@
 //#define BAUDRATE B115200
 #ifdef MAKE_TARGET
 #define MODEMDEVICE "/dev/ttyAM1"
+#warning "MAKE_TARGET defined......."
 #else
 #define MODEMDEVICE "/dev/ttyS0"
 #endif
@@ -27,7 +28,7 @@
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 
-//volatile int STOP=FALSE; 
+//volatile int STOP=FALSE;
 
 int set_interface_attribs (int fd, int speed, int parity)
 {
@@ -100,7 +101,7 @@ int main(void)
 	memset(&newtio, 0, sizeof newtio);
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd <0) {perror(MODEMDEVICE); 
+	if (fd <0) {perror(MODEMDEVICE);
 		exit(-1); }
 
 #ifdef MAKE_TARGET

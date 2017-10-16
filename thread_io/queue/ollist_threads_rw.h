@@ -27,10 +27,11 @@
 typedef struct o_data
 {
 	char label[20];
-	UCHAR port;				// inputs are from 0 -> 39, outputs are from 40 -> 79
+	UCHAR port;
 	UCHAR onoff;			// 1 of on; 0 if off
-	UCHAR temp1,temp2;		// do this so both I_DATA oand O_DATA are 24 bytes
-							// for some reason the target was make O_DATA 24 instead of 22
+	UCHAR type;
+	UINT time_delay;
+	UCHAR pulse_time;
 } O_DATA;
 
 typedef struct ollist_node {

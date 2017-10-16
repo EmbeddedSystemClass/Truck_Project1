@@ -29,7 +29,7 @@ static int global_socket;
 static int sock_open;
 
 #ifdef COPY_FILE
-#define BUF_SIZE 10000
+#define BUF_SIZE 200000
 UCHAR buf[BUF_SIZE];
 #endif
 
@@ -211,6 +211,8 @@ void close_sock(void)
 
 /*********************************************************************/
 #ifdef TEST_SEQUENCE
+
+#warning "TEST_SEQUENCE defined"
 int main(int argc, char *argv[])
 {
 	char test1,test2;
@@ -243,7 +245,8 @@ int main(int argc, char *argv[])
 
 	test1 = 0x21;
 	j = 0;
-	for(i = 0;i < 30000;i++)
+//	for(i = 0;i < 30000;i++)
+	while(1)
 	{
 		rc = put_sock(&test1,1,1,errmsg);
 		if(rc < 0)
@@ -274,6 +277,8 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef COPY_FILE
+
+#warning "COPY_FILE defined"
 int main(int argc, char *argv[])
 {
 	char test1,test2;
@@ -347,7 +352,7 @@ int main(int argc, char *argv[])
 				buf_bytes2 = (buf_bytes > BUF_SIZE?BUF_SIZE:buf_bytes);
 				buf_bytes -= BUF_SIZE;
 
-				printf("buf_bytes: %d %d ",buf_bytes2,buf_bytes);
+//				printf("buf_bytes: %d %d ",buf_bytes2,buf_bytes);
 				rc = read(fp,&buf[0],buf_bytes2);
 
 				rc = put_sock((UCHAR *)&buf[0],buf_bytes2,1,errmsg);
@@ -356,11 +361,11 @@ int main(int argc, char *argv[])
 					printf("%s\n",errmsg);
 					exit(1);
 				}
-				else printf("rc: %d\n",rc);
+//				else printf("rc: %d\n",rc);
 //				printf("%s\n",errmsg);
 
 			}while(buf_bytes > 0);
-
+			printf("\ndone\n");
 			close_sock();
 			close(fp);
 		}

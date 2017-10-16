@@ -45,9 +45,13 @@ typedef struct i_data
 {
 	char label[ILABELSIZE];
 	UCHAR port;
-	UCHAR affected_output;	// (if any) - if > 0 then affected_output-1 is which output is affected
-	UCHAR type;				// how the port behaves in response to the switch changing
-	UCHAR inverse;			// if true the the opposite polarity is applied to the behavior
+	UCHAR affected_output;
+	UINT temp;
+#if 0
+#ifndef NOMAIN
+	UCHAR temp;		// compiled on target sizeof(I_DATA) = 24 while on host is 28
+#endif
+#endif
 } I_DATA;
 
 typedef struct illist_node {

@@ -6,6 +6,10 @@
 #include "../ioports.h"
 #include "test.priv.h"
 #include <menu.h>
+#include "client.h"
+
+#define WIN_WIDTH 56
+#define WIN_WIDTH2 44
 
 //void func(IO_DATA *cur);
 
@@ -41,9 +45,12 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
     I_DATA *pi = (I_DATA *)curr;
     O_DATA *po = (O_DATA *)curr;
     void *pcurr;
-    int index = 0x7f;
+    int index = -1;
     int finished = 0;
     char tempx[6];
+    UCHAR outc;
+	char errmsg[40];
+	int win_width;
 
 /* Initialize curses */
     initscr();
@@ -60,46 +67,104 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
 		po = (O_DATA *)curr;
 
 //	char *sup_string = (char *)calloc(num+1,7);
-	char sup_string[41][20];
+	char sup_string[41][40];
 
 /* Create items */
     my_items = (ITEM **)calloc(num+1, sizeof(ITEM *));
 
 	if(which == 1)
 	{
+		win_width = WIN_WIDTH2;
+		mvprintw(LINES - 21, 0,"%ld ",sizeof(I_DATA));
 		for(i = 0; i < num; ++i)
 		{
-			sprintf(tempx,"%d",pi->port);
+			sprintf(tempx,"%2d",pi->port);
 //			mvprintw(LINES - 21-i, 0,"%s ",tempx);
 			strcpy(sup_string[i],tempx);
-			sprintf(tempx,"%d",pi->affected_output);
-			strcat(sup_string[i],"  ");
+			sprintf(tempx,"%2d",pi->affected_output);
+			strcat(sup_string[i],"           ");
 			strcat(sup_string[i],tempx);
-			sprintf(tempx,"%d",pi->type);
-			strcat(sup_string[i],"  ");
-			strcat(sup_string[i],tempx);
-			sprintf(tempx,"%d",pi->inverse);
-			strcat(sup_string[i],"  ");
-			strcat(sup_string[i],tempx);
-//			mvprintw(LINES - 21-i, 0,"%s ",sup_string[i]);
+//			sprintf(tempx,"%d",pi->type);
+//			strcat(sup_string[i],"  ");
+//			strcat(sup_string[i],tempx);
+//			sprintf(tempx,"%d",pi->inverse);
+//			strcat(sup_string[i],"  ");
+//			strcat(sup_string[i],tempx);
+//			mvprintw(LINES - 10-i, 0,"%s                 ",sup_string[i]);
 			pi++;
 		}
 		pi = (I_DATA *)curr;
 	}
-	else if(which == 0 || which == 2)
+	else if(which == 0)
 	{
+		win_width = WIN_WIDTH;
 		for(i = 0; i < num; ++i)
 		{
-			sprintf(tempx,"%d",po->port);
+			sprintf(tempx,"%2d",po->port);
+			strcat(sup_string[i],"  ");
 			strcpy(sup_string[i],tempx);
-			sprintf(tempx,"%d",po->onoff);
+			strcat(sup_string[i],"   ");
+
+			sprintf(tempx,"%2d",po->onoff);
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"  ");
+
+			sprintf(tempx,"%2d",po->type);
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"  ");
+
+			sprintf(tempx,"%4d",po->time_delay);
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"  ");
+
+			sprintf(tempx,"%4d",po->pulse_time);
 			strcat(sup_string[i],"  ");
 			strcat(sup_string[i],tempx);
+
+//			mvprintw(LINES - 10-i, 0,"%s              ",sup_string[i]);
+//			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
 			po++;
 		}
 		po = (O_DATA *)curr;
 
 	}
+	else if(which == 2)
+	{
+		win_width = WIN_WIDTH2;
+		for(i = 0; i < num; ++i)
+		{
+			sprintf(tempx,"%2d",po->port);
+			strcat(sup_string[i],"  ");
+			strcpy(sup_string[i],tempx);
+			strcat(sup_string[i],"   ");
+
+			if(po->onoff > 0)
+				sprintf(tempx,"ON");
+			else
+				sprintf(tempx,"OFF");
+			strcat(sup_string[i],tempx);
+/*
+			sprintf(tempx,"%2d",po->type);
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"  ");
+
+			sprintf(tempx,"%4d",po->time_delay);
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"  ");
+
+			sprintf(tempx,"%4d",po->pulse_time);
+			strcat(sup_string[i],"  ");
+			strcat(sup_string[i],tempx);
+*/
+//			mvprintw(LINES - 10-i, 0,"%s              ",sup_string[i]);
+//			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
+			po++;
+		}
+		po = (O_DATA *)curr;
+
+	}
+
+
     for(i = 0; i < num; ++i)
     {
 		if(which == 1)
@@ -122,12 +187,16 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
     my_menu = new_menu((ITEM **)my_items);
 
 /* Create the window to be associated with the menu */
-    twin = newwin(num+3, 40, 0, 40);
+
+    twin = newwin(num+3, win_width, 0, 40);
     keypad(twin, TRUE);
 
 /* Set main window and sub window */
     set_menu_win(my_menu, twin);
-    set_menu_sub(my_menu, derwin(twin, num-3, 38, 3, 1));
+/*
+WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
+*/
+    set_menu_sub(my_menu, derwin(twin, num, win_width-2, 3, 1));
     set_menu_format(my_menu, num-3, 1);
 
 /* Set menu mark to the string " * " */
@@ -139,13 +208,21 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
     print_in_middle(twin, 1, 0, 40, filename, COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
+	mvwaddch(twin,num,win_width-1,ACS_RTEE);
+    mvwhline(twin, num, 1, ACS_HLINE, win_width-2);
+
+    mvwaddch(twin, 2, 0, ACS_LTEE);
+    mvwhline(twin, 2, 1, ACS_HLINE, win_width-2);
+    mvwaddch(twin, 2, win_width-1, ACS_RTEE);
+/*
+	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,38,ACS_RTEE);
     mvwhline(twin, num, 1, ACS_HLINE, 38);
 
     mvwaddch(twin, 2, 0, ACS_LTEE);
     mvwhline(twin, 2, 1, ACS_HLINE, 38);
     mvwaddch(twin, 2, 39, ACS_RTEE);
-
+*/
 /* Post the menu */
     post_menu(my_menu);
     wrefresh(twin);
@@ -214,6 +291,11 @@ int menu_scroll2(void *curr,int num,int which,char *filename)
 						else
 							po->onoff = 1;
 						disp_msg(twin,"which = 0\0",num);
+						outc = TOGGLE_OUTPUTS;
+						put_sock(&outc,1,1,errmsg);
+						outc = (UCHAR)index;
+						put_sock(&outc,1,1,errmsg);
+						put_sock(&po->onoff,1,1,errmsg);
 						finished = 1;
 					break;
 					default:

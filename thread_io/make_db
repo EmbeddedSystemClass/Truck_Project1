@@ -1,10 +1,11 @@
 ######################################################################################
 # GNU GCC ARM Embeded Toolchain base directories and binaries 
 ######################################################################################
+#use this one when compiling on 115
 #GCC_BASE = /home/dan/dev/arm/opt/crosstool/gcc-3.4.4-glibc-2.3.2/arm-linux/
-#GCC_BASE = /home/dan/dev/arm/crosstool/gcc3/arm-linux/
-#GCC_BASE = /home/dan/dev/ts-7200/gcc-3.4.4-glibc-2.3.2/arm-linux/
+#or just set the CROSS_COMPILE env var
 GCC_BASE = $(CROSS_COMPILE)
+# use this one when compiling on 103
 #GCC_BASE = /home/dan/dev/arm/crosstool/gcc3/arm-linux/
 GCC_BIN  = $(GCC_BASE)bin/
 GCC_LIB  = $(GCC_BASE)arm-linux/lib/
@@ -81,7 +82,7 @@ endif
 
 INCLUDE_PATHS = -I.$(GCC_INC)
 LIBRARY_PATHS = $(PROJECT_LIB_LIB) $(SYS_LIB_PATHS)
-CC_FLAGS = $(MCU_CC_FLAGS) $(CC_OPTIM_FLAGS) $(CC_DEBUG_FLAGS) -Wall -fno-exceptions -ffunction-sections -fdata-sections 
+#CC_FLAGS = $(MCU_CC_FLAGS) $(CC_OPTIM_FLAGS) $(CC_DEBUG_FLAGS) -Wall -fno-exceptions -ffunction-sections -fdata-sections 
 #-pthread -static-libgcc
 # use -static-libgcc instead of -static to get rid of warning: "Using getprotobyname in statically linked apps requires
 # at runtime the shared libraries from the glibc version used for linking"
@@ -89,8 +90,16 @@ LD_FLAGS = $(MCU_CC_FLAGS) -Wl,--gc-sections $(SYS_LD_FLAGS) -Wl,-Map=$(PROJECT)
 LD_SYS_LIBS = $(SYS_LIBRARIES)
 
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes	doesn't compile "// ..comments.."
-#CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork -DMAKE_TARGET
-CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -DMAKE_TARGET
+# gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
+# gcc3/4 doesn't work with -mapcs-32
+CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t
+#CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
+#this works for either TS-7200 or TS-7800
+#CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32
+#thought this was needed for TS-7800
+#CC_FLAGS = -g -Wstrict-prototypes -march=armv5t -mcpu=arm9
+#CC_FLAGS = -g -Wstrict-prototypes  -march-armv5t	this won't work without the mcpu...
+#CC_FLAGS = -g -float=soft -arch=armv5t
 GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 #CC_FLAGST = ${CC_FLAGS} + GNULDFLAGS_T
 GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE
@@ -102,45 +111,23 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : client server client2 server2 test_write test_read
+all : init_db list_db 
 
-client.o: client.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
+init_db.o: ncurses/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/init_db.c
 
-server.o: server.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
+list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
 
-client: client.o
-	${CC} client.o -o client
+config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
+	${CC} -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
 
-server: server.o
-	${CC} server.o -o server
+init_db: config_file.o init_db.o 
+	${CC} init_db.o config_file.o -o init_db
 
-client2.o: client.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c client.c
-
-server2.o: server.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c server.c
-
-client2: client2.o
-	${CC}  client.o -o client2
-
-server2: server2.o
-	${CC} server.o -o server2
-
-test_write.o: test_write.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_write.c
-
-test_read.o: test_read.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_read.c
-
-test_write: test_write.o
-	${CC} test_write.o -o test_write
-
-test_read: test_read.o
-	${CC} test_read.o -o test_read
+list_db: config_file.o list_db.o 
+	${CC} list_db.o config_file.o  -o list_db
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2 test_write test_read
-	
+	rm -f *.o *~ *# core init_db list_db
 

@@ -17,6 +17,18 @@
 #endif
 #endif
 
+#define STARTY 5
+#define STARTX 0
+
+#define FORM_WIN_STARTY 13
+#define FORM_WIN_STARTX 3
+
+#define NUM_FIELDSX 1
+#define NUM_FIELDSY 4
+
+#define NUM_FIELDSY2 NUM_FIELDSY-3
+#define STARTY2 STARTY-3
+
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH < 20060218)
 #warning "NUCURSES patch defined"
 #endif

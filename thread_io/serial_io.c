@@ -12,11 +12,11 @@
 #include "serial_io.h"
 
 #define BAUDRATE B19200
-#ifdef NOTARGET
-#define MODEMDEVICE "/dev/ttyS0"
-#else
-#define MODEMDEVICE "/dev/ttyAM1"
-#endif
+//#ifdef NOTARGET
+#define MODEMDEVICE "/dev/ttyS1"		// now working with 7800 which has ttyS1 as the 2nd serial port
+//#else
+//#define MODEMDEVICE "/dev/ttyAM1"		// 7200 card uses AM1 as 2nd serial port
+//#endif
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -48,8 +48,8 @@ static int set_interface_attribs (int fd, int speed, int parity)
         tty.c_lflag = 0;                // no signaling chars, no echo,
                                         // no canonical processing
         tty.c_oflag = 0;                // no remapping, no delays
-        tty.c_cc[VMIN]  = 0;            // read doesn't block
-        tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+        tty.c_cc[VMIN]  = 2;            // read doesn't block
+        tty.c_cc[VTIME] = 20;            // 0.5 seconds read timeout
 
         tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
 
@@ -112,7 +112,8 @@ int init_serial(void)
 	}
 
 	set_interface_attribs (global_handle, BAUDRATE, 0);
-	set_blocking (global_handle, 1);
+	set_blocking (global_handle, 1);	// blocking
+//	set_blocking (global_handle, 0);	// non-blocking
 /*
 	for(i = 0;i < LEN;i++)
 	{
@@ -149,7 +150,10 @@ UCHAR read_serial(void)
 	int res;
 	UCHAR byte;
 	res = read(global_handle,&byte,1);
-	return byte;
+	if(res < 0)
+	{
+		printf("\nread error: %s\n",strerror(errno));
+	}else return byte;
 }
 
 void close_serial(void)

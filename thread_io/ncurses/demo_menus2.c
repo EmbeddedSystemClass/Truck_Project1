@@ -84,14 +84,12 @@ top_row				-
 #include <form.h>
 #include "form_sup.h"
 #include "client.h"
+#include "config_file.h"
 
 extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
-
-extern int iWriteConfig2(char *filename, I_DATA *curr_i_array,size_t size,int offset,char *errmsg);
-extern int oWriteConfig2(char *filename, O_DATA *curr_o_array,size_t size,int offset,char *errmsg);
 
 extern int GetFileFormat(char *filename);
 
@@ -101,6 +99,8 @@ extern int file_win(void);
 extern int file_menu2(int which, char *ret_str);
 
 static size_t isize, osize;
+illist_t ill;
+ollist_t oll;
 
 I_DATA *curr_i_array;
 O_DATA *curr_o_array;
@@ -428,8 +428,10 @@ call_files(int code)
             show_status2(curr_o_array->label,osfilename,curr_o_array->port,0,index,4);
     		break;
         case 2:
+			iWriteConfig(isfilename,curr_i_array,isize,errmsg);
         	break;
         case 3:
+			oWriteConfig(osfilename,curr_o_array,osize,errmsg);
 			break;
         case 4:
 			break;
@@ -437,6 +439,7 @@ call_files(int code)
         case 5:		// Exit
 			cmd =  EXIT_PROGRAM;
 			put_sock(&cmd,1,1,errmsg);
+            close_sock();
             destroy_menus();
             endwin();
 
@@ -456,8 +459,8 @@ build_file_menu(MenuNo number)
     {
         MY_DATA0("Open idata"),
         MY_DATA0("Open odata"),
-        MY_DATA0("test1"),
-        MY_DATA0("test2"),
+        MY_DATA0("Save idata"),
+        MY_DATA0("Save odata"),
         MY_DATA0("test3"),
         MY_DATA0("Exit"),
         {(char *) 0, 0, 0}
@@ -515,7 +518,7 @@ call_select(int code)
     switch (code)
     {
         case 0:
-			i = init_client();
+			i = init_client(HOST);
 			show_status2("init_client","",i,0,0,7);
 			if(i > 0)
 			{
@@ -541,6 +544,19 @@ call_select(int code)
 	            tcp_win(curr_i_array, curr_o_array);
             break;
         case 3:
+            show_status2("send serial","",code,0,0,1);
+
+			if(tcp_connected == 1)
+			{
+				cmd =  SEND_SERIAL;
+//					rc = send_tcp(&cmd,1,errmsg);
+				put_sock(&cmd,1,1,errmsg);
+//				disp_msg(twin,"serial test\0");
+			}
+			else
+//				disp_msg(twin,"no connection\0");
+			break;
+
             show_status2("test1","",code,0,0,1);
             break;
         case 4:
@@ -560,7 +576,7 @@ build_select_menu(MenuNo number)
         MY_DATA1("Connect"),
         MY_DATA1("Disconnect"),
         MY_DATA1("TCP Window"),
-        MY_DATA1(""),
+        MY_DATA1("Send Serial"),
         MY_DATA1(""),
         {(char *) 0, 0, 0}
     };
@@ -615,75 +631,116 @@ call_options(int code)
     {
 		// curr_io_array is the entire set of records loaded by LoadConfig
 		// menu scroll returns the index into the db of the record chosen
-        case 0:
+
+        case 0:		// change input record
 			pid = curr_i_array;
             i_index = menu_scroll2((void*)curr_i_array,39,1,isfilename);
+			if(i_index > -1)
+			{
+				for(i = 0;i < i_index;i++)
+					pid++;
 
-			for(i = 0;i < i_index;i++)
-				pid++;
-
-//            show_status2(pid->label,curr_i_array->label,pid->port,pid->affected_output,pid->type,1);
-            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,1);
-        	ret = iWriteConfig(isfilename,curr_i_array,isize,errmsg);
-            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,2);
-        	if(tcp_connected)
-        	{
-				cmd =  SEND_IDATA;
-				ret = put_sock(&cmd,1,1,errmsg);
-				ret = put_sock((void*)&i_index,1,1,errmsg);
-				ret = put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
+	//            show_status2(pid->label,curr_i_array->label,pid->port,pid->affected_output,pid->type,1);
+		        show_status2(pid->label,curr_i_array->label,i_index,isize,0,1);
+		        illist_insert_data(i_index,&ill,pid);
+//		    	ret = iWriteConfig(isfilename,curr_i_array,isize,errmsg);
+//		        show_status2(pid->label,curr_i_array->label,i_index,sizeof(I_DATA),0,2);
+		    	if(tcp_connected)
+		    	{
+					cmd =  SEND_IDATA;
+					ret = put_sock(&cmd,1,1,errmsg);
+					ret = put_sock((void*)&i_index,1,1,errmsg);
+					ret = put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
+				}
 			}
             break;
 
-        case 1:
+        case 1:		// change output record
         	pod = curr_o_array;
 			o_index = menu_scroll2((void *)curr_o_array,39,0,osfilename);
-			for(i = 0;i < o_index;i++)
-				pod++;
+			if(o_index > -1)
+			{
+				for(i = 0;i < o_index;i++)
+					pod++;
 
-            show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
-        	ret = oWriteConfig(osfilename,curr_o_array,osize,errmsg);
-            show_status2(pod->label,curr_o_array->label,o_index,osize,0,2);
-        	if(tcp_connected)
-        	{
-				cmd =  SEND_ODATA;
-				ret = put_sock(&cmd,1,1,errmsg);
-				ret = put_sock((void*)&o_index,1,1,errmsg);
-				ret = put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
+		        show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
+				ollist_insert_data(o_index,&oll,pod);
+//		    	ret = oWriteConfig(osfilename,curr_o_array,osize,errmsg);
+//		        show_status2(pod->label,curr_o_array->label,o_index,osize,0,2);
+		    	if(tcp_connected)
+		    	{
+					cmd =  SEND_ODATA;
+					ret = put_sock(&cmd,1,1,errmsg);
+					ret = put_sock((void*)&o_index,1,1,errmsg);
+					ret = put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
+				}
 			}
             break;
 
-		case 2:
+		case 2:		// toggle outputs
         	pod = curr_o_array;
 			o_index = menu_scroll2((void *)curr_o_array,39,2,osfilename);
-			for(i = 0;i < o_index;i++)
-				pod++;
+			if(o_index > -1)
+			{
+				for(i = 0;i < o_index;i++)
+					pod++;
 
-            show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
-        	ret = oWriteConfig(osfilename,curr_o_array,osize,errmsg);
-            show_status2(pod->label,curr_o_array->label,o_index,osize,0,2);
-        	if(tcp_connected)
-        	{
-				cmd =  SEND_ODATA;
-				ret = put_sock(&cmd,1,1,errmsg);
-				ret = put_sock((void*)&o_index,1,1,errmsg);
-				ret = put_sock((void*)pod,sizeof(O_DATA),1,errmsg);
-			}
+				ollist_insert_data(o_index,&oll,pod);
+		        show_status2(pod->label,curr_o_array->label,o_index,osize,0,1);
+//		    	ret = oWriteConfig(osfilename,curr_o_array,osize,errmsg);
+//		        show_status2(pod->label,curr_o_array->label,o_index,osize,0,2);
+            }
             break;
 
-        case 3:
-            show_status2("show all","",code,0,0,2);
-			cmd =  SEND_SHOW;
+		case 3: // all off
+	    	if(tcp_connected)
+	    	{
+				cmd =  ALL_OFF;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+        	pod = curr_o_array;
+			for(i = 0;i < o_index;i++)
+			{
+				pod->onoff = 0;
+				pod++;
+			}
+
+			break;
+
+		case 4: // all on
+	    	if(tcp_connected)
+	    	{
+				cmd =  ALL_ON;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+        	pod = curr_o_array;
+			for(i = 0;i < o_index;i++)
+			{
+				pod->onoff = 1;
+				pod++;
+			}
+
+			break;
+
+        case 5:		// show list
+            show_status2("show I_DATA","",code,0,0,2);
+			cmd =  SHOW_IDATA;
 			put_sock(&cmd,1,1,errmsg);
             break;
 
-        case 4:
+        case 6:		// show list
+            show_status2("show O_DATA","",code,0,0,2);
+			cmd =  SHOW_ODATA;
+			put_sock(&cmd,1,1,errmsg);
+            break;
+
+        case 7:		// send all idata
         	ret = 0;
             show_status2("update idata","",code,0,0,1);
 			cmd =  SEND_ALL_IDATA;
 			put_sock(&cmd,1,1,errmsg);
 			pid = curr_i_array;
-            show_status2(pid->label,curr_i_array->label,i_index,isize,pid->type,2);
+            show_status2(pid->label,curr_i_array->label,i_index,isize,0,2);
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				ret += put_sock((void*)pid,sizeof(I_DATA),1,errmsg);
@@ -692,7 +749,7 @@ call_options(int code)
             show_status2(pid->label,curr_i_array->label,i_index,isize,ret,3);
             break;
 
-        case 5:
+        case 8:		// send all odata
         	ret = 0;
             show_status2("update odata","",code,0,0,1);
 			cmd =  SEND_ALL_ODATA;
@@ -707,12 +764,12 @@ call_options(int code)
             show_status2(pod->label,curr_o_array->label,o_index,osize,ret,3);
             break;
 
-		case 6:
+		case 9:
 			cmd = CLEAR_SCREEN;
 			ret = put_sock(&cmd,1,1,errmsg);
 			break;
 
-		case 7:
+		case 10:
 			cmd = SAVE_TO_DISK;
 			ret = put_sock(&cmd,1,1,errmsg);
 			break;
@@ -743,11 +800,14 @@ build_options_menu(MenuNo number)
         MY_DATA2("change input record"),		// 0
         MY_DATA2("change output record"),		// 1
         MY_DATA2("toggle outputs"),				// 2
-        MY_DATA2("show llist"),					// 3
-        MY_DATA2("send current idata"),			// 4
-        MY_DATA2("send current odata"),			// 5
-        MY_DATA2("clear screen"),				// 6
-        MY_DATA2("save to i/oSave.dat"),		// 7
+        MY_DATA2("all off"),					// 3
+        MY_DATA2("all on"),						// 4
+        MY_DATA2("show I_DATA"),				// 5
+        MY_DATA2("show O_DATA"),				// 6
+        MY_DATA2("send current idata"),			// 7
+        MY_DATA2("send current odata"),			// 8
+        MY_DATA2("clear screen"),				// 9
+        MY_DATA2("save to current dat file"),	// 10
         {(char *) 0, 0, 0}
     };
 
@@ -1167,26 +1227,32 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
+	illist_init(&ill);
+	pid = curr_i_array;
+
 	if(oLoadConfig(fptr2,curr_o_array,osize,errmsg) != 0)
 	{
 		printf("can't find %s %s\n",fptr2,errmsg);
 		return 1;
 	}
-	printf("%s\n",errmsg);
-/*
+
+	ollist_init(&oll);
 	pod = curr_o_array;
+
+	printf("%s\n",errmsg);
+	
+	pod = curr_o_array;
+/*
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
 		printf("%s\t\t%2d\t\t%2d\n",pod->label,pod->port,pod->onoff);
 		pod++;
 	}
-*/
-	pod = curr_o_array;
 
-//	printf("sizes: %d  %d\n",isize,osize);
-//	getchar();
+	printf("sizes: %d  %d\n",isize,osize);
+	getchar();
 
-/*
+
 	printf("\n\n%s %s %d %lu\n",fptr2,curr_o_array->label,curr_o_array->port,osize);
 	getchar();
 */

@@ -1,22 +1,15 @@
 #ifndef __IOPORTS_H
 #define __IOPORTS_H
-
-#if 0
-#ifdef NOMAIN
-#warning "NOMAIN defined"
-#else
-#warning "NOMAIN not defined"
-#endif
-
-#ifdef NOTARGET
-#warning "NOTARGET defined"
-#else
-#warning "NOTARGET not defined"
-#endif
-#endif
-
+//#warning "IOPORTS defined"
 #define			VUCHAR volatile unsigned char
-#define			PORTBASEADD	0x11E00000
+#define			PORTBASEADD72			0x11E00000
+#define			PORTBASEADD78			0xE8000000
+//#define			IOCARDBASEADD78			0xEC000000	// 8-bit memory
+#define			IOCARDBASEADD78			0xEE000000	// 8-bit io				(this one works)
+//#define			IOCARDBASEADD78			0xED000000	// 16-bit memory
+//#define			IOCARDBASEADD7I			0xEF000000	// 16-bit io
+// (see section 6.2.5 in manual)
+
 //#define NUM_PORTS (OUTPORTF_OFFSET-OUTPORTA_OFFSET)+1
 #define NUM_PORTS 6
 #define NUM_PORT_BITS (NUM_PORTS*8)-8	// PORTC & F only has 6 bits each
@@ -27,15 +20,20 @@
 #define			OUTPORTE_OFFSET		4
 #define			OUTPORTF_OFFSET		5
 #ifndef NOTARGET
-VUCHAR *ports;
+VUCHAR *card_ports;
 #else
-UCHAR *ports;
+UCHAR *card_ports;
 UCHAR fake_port[NUM_PORTS];
 #endif
 UCHAR outportstatus[NUM_PORTS];
 UCHAR current_io_settings;
 size_t pagesize;
 int fd;
+
+/*
+VUCHAR *card_ports	- IOCARDBASEADD72	0xE[C/E/D/F]000000 
+VUCHAR *card_mem 	- PORTBASEADD78		0xE8000000
+*/
 
 /*
  io map starting at base address
@@ -76,6 +74,75 @@ int fd;
 /*
  IO port defines
 
+(from manual: https://wiki.embeddedarm.com/wiki/TS-7800#DIO_Header)
+
+Access to the DIO header is described here. These pins can be driven low, otherwise they are inputs
+with pull-up resistors. The pull-ups are via 2.2k Ohms on the odd numbered pins 1-15. Pin 10 has a
+4.7k pull-up and is a read-only input. The rest are pulled up by the CPLD through 20k-150k nominal
+resistance. The pinout for the DIO header is shown below.
+
+There is no built-in SPI bus on the TS-7800, but SPI is easily implemented in software as
+demonstrated in our sample code.
+
+Although the distinction is transparent to the user, the most of the pins on the DIO and LCD headers are driven by CPLD, which means that they are 5V tolerant. However logic levels of 0-3.3V are still recommended. Applying 5V to a pin that is connected to the CPLD before it has been initialized may damage the CPLD. The only pins that come directly from the FPGA are output pins for the SPI bus. The SPI_MISO pin goes through a separate buffer chip to get to the FPGA so it is also 5V tolerant.
+
+The DIO and LCD headers are controlled by 32 bit registers at 0xe8000004 and 0xe8000008. Bits 15-0 control the DIO header and bits 29-16 control the LCD header. The register at 0xe8000008 is the output register. Writing a 0 drives the pin low but writing a 1 only tri-states. To use these pins for input, write a 1 to the output register and read the register at 0xe8000004. See the #LCD Header and #DIO Header sections for more details.
+
+TS-7800 pinout:
+
+facing top of card with DIO1 at bottom:
+
+	2	4	6	8	10	12	14	16
+	1	3	5	7	9	11	13	15
+  (dot)
+
+1) DIO_01
+2) GND
+3) DIO_03
+4) DIO_04
+5) DIO_05
+6) SPI_FRAME
+7) DIO_07
+8) DIO_08
+9) DIO_09
+10) SPI_MISO
+11) DIO_11
+12) SPI_MOSI
+13) DIO_13
+14) SPI_CLK
+15) DIO_15
+16) 3v3
+
+LCD:
+
+1) +5v
+2) GND
+3) RS
+4) BIAS
+5) END
+6) RW
+7) DB1
+8) DB0
+9) DB3
+10) DB2
+11) DB5
+12) DB4
+13) DB7
+14) DB6	
+
+PC104 on TS-7800: (from 6.2.5 in manual)
+
+To access peripherals on the PC104 bus it is necessary to add the base address from the table below to the offset of the peripheral to get a memory address for accessing the peripheral. For example, for ISA 8-bit I/O address 0x100, add 0xEE000000 to 0x100 to get 0xEE000100.
+
+		Memory		I/O
+8-bit 	0xEC000000 	0xEE000000
+16-bit 	0xED000000 	0xEF000000
+
+IRQs 5, 6, and 7 on the PC104 bus from the TS-7800 are 64 + the PC104 IRQ number. These will be IRQs 69, 70, and 71. 
+
+
+the following is for the TS-7200
+
 DIO lines DIO_0 thru DIO_7 = 0x8084_0004.
 The DDR for this port is at address location 0x8084_0014.
 DIO_8 is accessed via bit 1 of Port F in the EP9302. The Port F data register is at address
@@ -107,22 +174,24 @@ By using some of the DIO1 Header pins as peripheral Chip Select signals, a compl
 interface is available for addressing up to 9 SPI peripherals. The SPI bus pins are defined
 in the table below:
 
+TS-7200 pinout:
+
 DIO1 pin	signal
-1			DIO_0
+1			DIO_08
 2			GND
-3			DIO_1
-4			Port_C0
-5			DIO_2
-6			SPI_Frame
-7			DIO_3
-8			DIO_8
-9			DIO_4
+3			DIO_09
+4			ADC0
+5			DIO_10
+6			ADC4
+7			DIO_11
+8			DIO_16
+9			DIO_12
 10			SPI_MISO
-11			DIO_5
+11			DIO_13
 12			SPI_MOSI
-13			DIO_6
+13			DIO_14
 14			SPI_CLK
-15			DIO_7
+15			DIO_15
 16			+3.3v
 */
 

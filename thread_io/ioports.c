@@ -64,10 +64,9 @@ void init_mem(void)
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-//	pagesize = getpagesize();
-	pagesize = 522;
-	ports = (VUCHAR *)mmap(0, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, PORTBASEADD);
-	assert(ports != MAP_FAILED);
+	pagesize = getpagesize();
+	card_ports = (VUCHAR *)mmap(0, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, IOCARDBASEADD78);
+	assert(card_ports != MAP_FAILED);
 
 	key = lseek(fd, pagesize - 1,SEEK_SET);
 	if(key == -1)
@@ -83,8 +82,9 @@ void init_mem(void)
 		perror("error writing to last byte of file\n");
 		exit(1);
 	}
+	card_ports += 4;
 #else
-	ports = &fake_port[0];
+	card_ports = &fake_port[0];
 #endif
 }
 
@@ -96,7 +96,7 @@ void OutPortA(int onoff, UCHAR bit)
 // TODO: state needs to be set to the current state of the output register
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTA_OFFSET];
+	state = outportstatus[OUTPORTA_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -104,8 +104,9 @@ void OutPortA(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTA_OFFSET] = state;
-	*(ports + ROC_1) = *pstate;
+	outportstatus[OUTPORTA_OFFSET] = state;
+	*(card_ports + ROC_1) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void OutPortB(int onoff, UCHAR bit)
@@ -114,7 +115,7 @@ void OutPortB(int onoff, UCHAR bit)
 	UCHAR *pstate;
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTB_OFFSET];
+	state = outportstatus[OUTPORTB_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -122,8 +123,9 @@ void OutPortB(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTB_OFFSET] = state;
-	*(ports + ROC_2) = *pstate;
+	outportstatus[OUTPORTB_OFFSET] = state;
+	*(card_ports + ROC_2) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void OutPortC(int onoff, UCHAR bit)
@@ -132,7 +134,7 @@ void OutPortC(int onoff, UCHAR bit)
 	UCHAR *pstate;
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTC_OFFSET];
+	state = outportstatus[OUTPORTC_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -140,8 +142,9 @@ void OutPortC(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTC_OFFSET] = state;
-	*(ports + ROC_3) = *pstate;
+	outportstatus[OUTPORTC_OFFSET] = state;
+	*(card_ports + ROC_3) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void OutPortD(int onoff, UCHAR bit)
@@ -150,7 +153,7 @@ void OutPortD(int onoff, UCHAR bit)
 	UCHAR *pstate;
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTD_OFFSET];
+	state = outportstatus[OUTPORTD_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -158,8 +161,9 @@ void OutPortD(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTC_OFFSET] = state;
-	*(ports + ROC_4) = *pstate;
+	outportstatus[OUTPORTD_OFFSET] = state;
+	*(card_ports + ROC_4) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void OutPortE(int onoff, UCHAR bit)
@@ -168,7 +172,7 @@ void OutPortE(int onoff, UCHAR bit)
 	UCHAR *pstate;
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTE_OFFSET];
+	state = outportstatus[OUTPORTE_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -176,8 +180,9 @@ void OutPortE(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTC_OFFSET] = state;
-	*(ports + ROC_5) = *pstate;
+	outportstatus[OUTPORTE_OFFSET] = state;
+	*(card_ports + ROC_5) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void OutPortF(int onoff, UCHAR bit)
@@ -186,7 +191,7 @@ void OutPortF(int onoff, UCHAR bit)
 	UCHAR *pstate;
 	UCHAR state = 0;
 
-//	UCHAR state = pms->outportstatus[OUTPORTF_OFFSET];
+	state = outportstatus[OUTPORTF_OFFSET];
 	mask = 1;
 	mask <<= bit;
 	if(onoff)
@@ -194,8 +199,9 @@ void OutPortF(int onoff, UCHAR bit)
 	else
 		state &= ~mask;
 	pstate = &state;
-//	pms->outportstatus[OUTPORTC_OFFSET] = state;
-	*(ports + ROC_6) = *pstate;
+	outportstatus[OUTPORTF_OFFSET] = state;
+	*(card_ports + ROC_6) = *pstate;
+//	printf("%2x ",state);	
 }
 /**********************************************************************************************************/
 void TurnOffAllOutputs(void)
@@ -211,7 +217,7 @@ void TurnOffAllOutputs(void)
 void OutPortByteA(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTA_OFFSET] = byte;
-	*(ports + ROC_1) = byte;
+	*(card_ports + ROC_1) = byte;
 #ifndef NOTARGET
 	printf("port A: %x\n",byte);
 #endif
@@ -221,7 +227,7 @@ void OutPortByteA(UCHAR byte)
 void OutPortByteB(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTB_OFFSET] = byte;
-	*(ports + ROC_2) = byte;
+	*(card_ports + ROC_2) = byte;
 #ifndef NOTARGET
 	printf("port B: %x\n",byte);
 #endif
@@ -231,7 +237,7 @@ void OutPortByteB(UCHAR byte)
 void OutPortByteC(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTC_OFFSET] = byte;
-	*(ports + ROC_3) = byte;
+	*(card_ports + ROC_3) = byte;
 #ifndef NOTARGET
 	printf("port C: %x\n",byte);
 #endif
@@ -240,7 +246,7 @@ void OutPortByteC(UCHAR byte)
 void OutPortByteD(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTA_OFFSET] = byte;
-	*(ports + ROC_4) = byte;
+	*(card_ports + ROC_4) = byte;
 #ifndef NOTARGET
 	printf("port D: %x\n",byte);
 #endif
@@ -250,7 +256,7 @@ void OutPortByteD(UCHAR byte)
 void OutPortByteE(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTB_OFFSET] = byte;
-	*(ports + ROC_5) = byte;
+	*(card_ports + ROC_5) = byte;
 #ifndef NOTARGET
 	printf("port E: %x\n",byte);
 #endif
@@ -260,7 +266,7 @@ void OutPortByteE(UCHAR byte)
 void OutPortByteF(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTC_OFFSET] = byte;
-	*(ports + ROC_6) = byte;
+	*(card_ports + ROC_6) = byte;
 #ifndef NOTARGET
 	printf("port F: %x\n",byte);
 #endif
@@ -269,28 +275,28 @@ void OutPortByteF(UCHAR byte)
 UCHAR InPortByteA(void)
 {
 	UCHAR state;
-	state = *(ports + DIR_1);
+	state = *(card_ports + DIR_1);
 	return state;
 }
 /***********************************************************************************************************/
 UCHAR InPortByteB(void)
 {
 	UCHAR state;
-	state = *(ports + DIR_2);
+	state = *(card_ports + DIR_2);
 	return state;
 }
 /***********************************************************************************************************/
 UCHAR InPortByteC(void)
 {
 	UCHAR state;
-	state = *(ports + DIR_3);
+	state = *(card_ports + DIR_3);
 	return state;
 }
 /***********************************************************************************************************/
 UCHAR InPortByteD(void)
 {
 	UCHAR state;
-	state = *(ports + DIR_4);
+	state = *(card_ports + DIR_4);
 	return state;
 }
 /***********************************************************************************************************/
@@ -303,14 +309,14 @@ UCHAR InPortByteE(void)
 	return state;
 #endif
 */
-	state = *(ports + DIR_5);
+	state = *(card_ports + DIR_5);
 	return state;
 }
 /***********************************************************************************************************/
 UCHAR InPortByteF(void)
 {
 	UCHAR state;
-	state = *(ports + DIR_6);
+	state = *(card_ports + DIR_6);
 	return state;
 }
 
@@ -604,7 +610,8 @@ int DIO1_in4_7(int port)
 /**********************************************************************************************************/
 void close_mem(void)
 {
-	if(munmap((void *)ports,pagesize) == -1)
+	card_ports -= 4;
+	if(munmap((void *)card_ports,pagesize) == -1)
 		perror("error un-mapping file\n");
 	close(fd);
 }

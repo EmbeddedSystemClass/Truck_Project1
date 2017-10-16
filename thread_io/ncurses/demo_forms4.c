@@ -63,7 +63,7 @@ int demo_forms(void *curr, int which)
 {
 	WINDOW *win;
 	FORM *form;
-	FIELD *f[12];
+	FIELD *f[16];
 	I_DATA *pid;
 	O_DATA *pod;
 //	 *secure;
@@ -100,66 +100,77 @@ int demo_forms(void *curr, int which)
 
 /* describe the form */
 	memset(f, 0, sizeof(f));
-	f[n++] = make_label(0, 15, "Sample Form");
+	f[n++] = make_label(STARTY2-2, 15, "Sample Form");
 
 	if(which == 1)
 	{
-		f[n++] = make_label(2, 0, "Label");
-		f[n++] = make_field(3, 0, 1, 20, 0);
+		f[n++] = make_label(STARTY2, STARTX, "Label");
+		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
 		set_field_type(f[n-1], TYPE_ALNUM,4);
 		init_edit_field(f[n-1],pid->label,1);
 	//	set_field_buffer(f[n-1],0,pid->label);
 
-		f[n++] = make_label(5, 0, "Port");
-		f[n++] = make_field(6, 0, 1, 4, 0);
+		f[n++] = make_label(STARTY, STARTX, "Port");
+		f[n++] = make_field(STARTY+1, STARTX, 1, 4, 0);
 		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pid->port);
 		init_edit_field(f[n-1],tempx,1);
 		field_opts_off(f[n-1],O_ACTIVE);
 
-		f[n++] = make_label(5, 7, "Output");
-		f[n++] = make_field(6, 7, 1, 4, 0);
+		f[n++] = make_label(STARTY, STARTX+7, "Output");
+		f[n++] = make_field(STARTY+1, STARTX+7, 1, 4, 0);
 		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pid->affected_output);
 		init_edit_field(f[n-1],tempx,1);
 
-		f[n++] = make_label(5, 14, "Type");
-		f[n++] = make_field(6, 14, 1, 4, 0);
-		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
-		memset(tempx,0,sizeof(tempx));
-		sprintf(tempx,"%d",pid->type);
-		init_edit_field(f[n-1],tempx,1);
+// FIELD *make_field(int frow, int fcol, int rows, int cols, int nbufs)
 
-		f[n++] = make_label(5, 21, "Inverse");
-		f[n++] = make_field(6, 21, 1, 4, 0);
-		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
-		memset(tempx,0,sizeof(tempx));
-		sprintf(tempx,"%d",pid->inverse);
-		init_edit_field(f[n-1],tempx,1);
 	}else if (which == 0)
 	{
-		f[n++] = make_label(2, 0, "Label");
-		f[n++] = make_field(3, 0, 1, 20, 0);
+		f[n++] = make_label(STARTY2, STARTX, "Label");
+		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
 		set_field_type(f[n-1], TYPE_ALNUM,4);
 		init_edit_field(f[n-1],pod->label,1);
 	//	set_field_buffer(f[n-1],0,pid->label);
 
-		f[n++] = make_label(5, 0, "Port");
-		f[n++] = make_field(6, 0, 1, 4, 0);
+		f[n++] = make_label(STARTY, STARTX, "Port");
+		f[n++] = make_field(STARTY+1, STARTX, 1, 4, 0);
 		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pod->port);
 		init_edit_field(f[n-1],tempx,1);
 		field_opts_off(f[n-1],O_ACTIVE);
 
-		f[n++] = make_label(5, 7, "OnOff");
-		f[n++] = make_field(6, 7, 1, 4, 0);
+		f[n++] = make_label(STARTY, STARTX+7, "OnOff");
+		f[n++] = make_field(STARTY+1, STARTX+7, 1, 4, 0);
 		set_field_type(f[n - 1], TYPE_INTEGER,1,1,0);
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pod->onoff);
 		init_edit_field(f[n-1],tempx,1);
+
+		f[n++] = make_label(STARTY, STARTX+14, "Type");
+		f[n++] = make_field(STARTY+1, STARTX+14, 1, 4, 0);
+		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
+		memset(tempx,0,sizeof(tempx));
+		sprintf(tempx,"%d",pod->type);
+		init_edit_field(f[n-1],tempx,1);
+
+		f[n++] = make_label(STARTY+3, STARTX, "Time Delay");
+		f[n++] = make_field(STARTY+4, STARTX, 1, 4, 0);
+		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
+		memset(tempx,0,sizeof(tempx));
+		sprintf(tempx,"%d",pod->time_delay);
+		init_edit_field(f[n-1],tempx,1);
+
+		f[n++] = make_label(STARTY+3, STARTX+13, "Pulse Time");
+		f[n++] = make_field(STARTY+4, STARTX+13, 1, 4, 0);
+		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
+		memset(tempx,0,sizeof(tempx));
+		sprintf(tempx,"%d",pod->pulse_time);
+		init_edit_field(f[n-1],tempx,1);
+
 	}
 
 	f[n] = (FIELD *) 0;
@@ -215,12 +226,6 @@ int demo_forms(void *curr, int which)
 
 			buffer = field_buffer(f[6],0);
 			pid->affected_output = atoi(buffer);
-
-			buffer = field_buffer(f[8],0);
-			pid->type = atoi(buffer);
-
-			buffer = field_buffer(f[10],0);
-			pid->inverse = atoi(buffer);
 
 			buffer = field_buffer(f[2],0);
 			fp = buffer;
@@ -280,8 +285,7 @@ int main(void)
 	strcpy(idata.label,"test input\0");
 	idata.port = 1;
 	idata.affected_output = 3;
-	idata.type = 4;
-	idata.inverse = 5;
+	odata.type = 4;
 	strcpy(odata.label,"test output\0");
 	odata.port = 2;
 	odata.onoff = 3;

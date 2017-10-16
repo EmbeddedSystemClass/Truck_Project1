@@ -15,6 +15,7 @@
 //#define BAUDRATE B115200
 #ifdef MAKE_TARGET
 #define MODEMDEVICE "/dev/ttyAM1"
+#warning "MAKE_TARGET defined......."
 #else
 #define MODEMDEVICE "/dev/ttyS0"
 #endif
@@ -27,7 +28,7 @@
 int set_interface_attribs (int fd, int speed, int parity);
 void set_blocking (int fd, int should_block);
 
-//volatile int STOP=FALSE; 
+//volatile int STOP=FALSE;
 
 int set_interface_attribs (int fd, int speed, int parity)
 {
@@ -50,8 +51,8 @@ int set_interface_attribs (int fd, int speed, int parity)
         tty.c_lflag = 0;                // no signaling chars, no echo,
                                         // no canonical processing
         tty.c_oflag = 0;                // no remapping, no delays
-        tty.c_cc[VMIN]  = 0;            // read doesn't block
-        tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+        tty.c_cc[VMIN]  = 1;
+        tty.c_cc[VTIME] = 20;
 
         tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
 
@@ -100,7 +101,7 @@ int main(void)
 	memset(&newtio, 0, sizeof newtio);
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd <0) {perror(MODEMDEVICE); 
+	if (fd <0) {perror(MODEMDEVICE);
 		exit(-1); }
 
 #ifdef MAKE_TARGET
@@ -127,41 +128,36 @@ int main(void)
 	printf("\n");
 	i = 0;
 	j = 0;
-	printf("waiting for chars...\n");
+	printf("\n\nwaiting for chars...\n");
 	while(1)
 //	while(j < 2000)
 	{
 		if((j % 93) == 0)
-//		if((j % 32) == 0)
-//		if((j % 64) == 0)
-		{
 			printf("\n");
-			i++;
-		}
-//		usleep(TIME_DELAY);
-//		res2 = write(fd,(void*)&ch,1);
-		res = read(fd,buf,1);
 
-		if(buf[0] > 0x20 && buf[0] < 0x7f)
+		res = read(fd,&buf[0],1);
+
+		if(res < 0)
 		{
-			printf("%c",buf[0]);
-//			j++;
+			printf("%s\n",strerror(errno));
 		}
-/*
-		else if(buf[0] == 0 || buf[0] == 0xff)
-		{
-			printf("bad char\n");
-			usleep(1000);
-		}
-*/
+//		else if (res > 0)
 		else
 		{
-			printf("%x ",buf[0]);
-//			j++;
+			if(buf[0] > 0x20 && buf[0] < 0x7f)
+			{
+				printf("%c",buf[0]);
+				j++;
+			}
+			else
+			{
+				printf("%x ",buf[0]);
+				j++;
+			}
+			j++;
+			if(++ch > 0x7e)
+				ch = 0x21;
 		}
-		j++;
-		if(++ch > 0x7e)
-			ch = 0x21;
 	}
 	ch = 0xff;
 	write(fd,(void *)&ch,1);

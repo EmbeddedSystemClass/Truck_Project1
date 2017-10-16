@@ -11,6 +11,7 @@
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
 #include "setiodata.h"
+#include "config_file.h"
 
 extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
@@ -188,7 +189,10 @@ int main(int argc, char *argv[])
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
 		pod->port = i;
-		pod->onoff = i%2?0:1;
+		pod->onoff = ((i % 2) == 0);
+		pod->type = i % 3;
+		pod->time_delay = i*2;
+		pod->pulse_time = i*3;
 		pod++;
 	}
 
@@ -289,9 +293,11 @@ int main(int argc, char *argv[])
 	pod = curr_o_array;
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
-		printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
+		printf("%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->type,pod->time_delay,pod->pulse_time,pod->label);
 		pod++;
 	}
+
+	printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
 
 	free(curr_i_array);
 	free(curr_o_array);

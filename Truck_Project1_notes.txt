@@ -42,152 +42,6 @@ The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is
 'black box' FDR that records the last so many hours or minutes of the telemetry data to a
 file that can be downloaded later.
 	
-// skeleton example of 2 tasks - test1 task sends mail to cmd_param task
-
-ESOS_USER_TASK(cmd_param);
-ESOS_USER_TASK(test1);
-...
-ESOS_USER_TASK(cmd_param)
-{
-    static uint16_t data;
-    
-    ESOS_TASK_BEGIN();
-
-    while(TRUE)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			// this can also be 8 bytes
-            data = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
-			// do something with data
-        }
-    }
-    ESOS_TASK_END();
-}
-
-ESOS_USER_TASK(test1)
-{
-    static ESOS_TASK_HANDLE cmd_param_task;
-    static uint16_t _cmd_param = 0;
-    
-    ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(cmd_param);
-
-    while(TRUE)
-    {
-		// set _cmd_param to something
-		__esos_CB_WriteUINT16(cmd_param_task->pst_Mailbox->pst_CBuffer,_cmd_param);
-		ESOS_TASK_WAIT_TICKS(2000);
-	}
-    ESOS_TASK_END();
-}	
-void user_init(void) 
-{
-	...
-    esos_RegisterTask(test1);
-    esos_RegisterTask(cmd_param);
-	...
-}
-
-// skeleton example of 2 tasks using a semaphore 
-
-ESOS_USER_TASK(task1);
-ESOS_USER_TASK(task2);
-ESOS_SEMAPHORE(sem1);
-
-#define MY_DELAY 100
-
-ESOS_USER_TASK(task1)
-{
-    ESOS_TASK_BEGIN();
-
-    while(TRUE)
-    {
-        ESOS_SIGNAL_SEMAPHORE(sem1,1);	// send signal task2 to continue
-        ESOS_TASK_WAIT_TICKS(MY_DELAY);
-    }
-    ESOS_TASK_END();
-}
-
-ESOS_USER_TASK(task2)
-{
-    ESOS_TASK_BEGIN();
-    while(TRUE)
-    {
-        ESOS_TASK_WAIT_SEMAPHORE(sem1,1);	// wait here until task1 sends a signal to continue
-        ESOS_TASK_WAIT_TICKS(MY_DELAY/2);	// even though the delay here is shorter it will effectively
-											// be the same as the delay time of task1
-											// if the param is 2 instead of 1 it will wait for 2 signals
-											// from task1
-    }
-    ESOS_TASK_END();
-}
-
-void user_init(void) 
-{
-	...
-    ESOS_INIT_SEMAPHORE(sem1,0);
-    esos_RegisterTask(task1);
-    esos_RegisterTask(task2);
-	...
-} // end user_init()
-
-// skeleton example of waiting on chars from comm3 and sending to comm2 and comm 1
-
-ESOS_USER_TASK(serial_port1)
-{
-	static uint8_t data;
-    ESOS_TASK_BEGIN();
-    while(TRUE)
-	{
-        ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
-        ESOS_TASK_WAIT_ON_GET_UINT83(data);
-        ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-        ESOS_TASK_WAIT_ON_SEND_STRING("Here's the data byte: ");
-        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data);
-        ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);			// print a space character
-        ESOS_TASK_WAIT_ON_SEND_STRING("/n/r");		// print a carriage return
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();		// (what is a carriage anyway?)
-		
-        ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-        ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING2(data);
-        ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-	}
-	ESOS_END_TASK();
-}
-
-// timers
-// using the ESOS_USER_TIMER the fastest possible f is 500Hz (2ms)
-// and using the ESOS_WAIT_TICKS(1) = 250Hz (4ms)
-
-ESOS_USER_TASK(test_RE7)
-{
-    static  uint8_t data = 2;
-    CONFIG_RE7_AS_DIG_OUTPUT();
-    ESOS_TASK_BEGIN();
-    while(1)
-    {
-	    ESOS_TASK_WAIT_TICKS(1);
-	    _LATE7 = ~_LATE7;
-    } // endof while()
-    ESOS_TASK_END();
-}
-
-ESOS_USER_TIMER(testTimer)
-{
-    _LATG15 = ~_LATG15;
-}
-
-void user_init(void)
-{
-    CONFIG_RG15_AS_DIG_OUTPUT();
-	esos_RegisterTimer( testTimer, 1);
-	esos_RegisterTask(test_RE7);
-}
-
 //******************************************************************************************//
 //*************************************** AVR_t6963 ****************************************//
 //******************************************************************************************//
@@ -591,7 +445,7 @@ The dashboard will have programming connectors for:
 
 The TS-7200 has a reset button on board and can be re-wired to bring it out to the
 dashboard. The PIC24 and the AVR can have separate switches to turn each board on
-and off. 
+and off. (but not the TS-7800?)
 
 So the 2 DB9 connectors, the 3 programming jacks, the RJ-45 jack, the reset buttons
 and the on/off switches can be in a panel with a cover so it can be opened only for
@@ -628,4 +482,97 @@ FPGA:
 
 "make set_eeprom_save_fuse" to set fuses so eeprom is saved when reprogramming
 "make clear_eeprom_save_fuse" to set fuses so eeprom gets erased everytime
+
+(10/13/17)
+TS-7800:
+Has 3 UARTS, faster CPU & better OS. Memory access is diff for DIO/LCD & PC104.
+No built-in SPI like the TS-7200 and very little docs on the Marvell processor. 
+Would be nice to have interrupt routine that handles the SPI which the pins could be
+on the DIO. Since the TS-7800 is in a remote box we have to use serial anyway.
+
+The new AVR has (2) SPI ports and can be interrupt driven. So if I could implement the 
+2nd SPI port that's on the PIC24 (there are interrupts avail) I could have one port as
+the slave coming from the FPGA and another as the master going to the AVR. The ESOS
+code for the SPI can be duplicated to work with the 2nd SPI port on the PIC24. 
+
+The FPGA has (2) SPI's which act as masters so have one go the the AVR so it can display
+the realtime data on screen. The other SPI from the FPGA goes to the PIC24. (could have
+just the one SPI from the PIC24 act as master to the AVR for now and skip the one from
+the FPGA) or just use the serial port on the FPGA to send rt data to PIC24. That would
+free up one of the UART's on the PIC24 because it's SPI is going to the AVR. 
+
+Don't use the funciton pointer array in the thread_io, just have dedicated threads
+and have the serial port one with the highest priority.
+
+Order another 2GB SD card for the TS-7800 to back up OS on.
+
+Get all the ssh's to use keygen instead of passwords
+
+Get new AVR to work with old AVR_menu and check out SPI ports.
+
+Add extra behavoir info to the I_DATA struct:
+
+typedef struct o_data
+{
+	char label[20];
+	UCHAR port;
+	UCHAR onoff;			// 1 of on; 0 if off
+//	UCHAR temp1,temp2;		// do this so both I_DATA oand O_DATA are 24 bytes
+							// for some reason the target was make O_DATA 24 instead of 22
+	UCHAR type;
+	UINT time_delay;
+	UCHAR pulse_time;
+} O_DATA;
+
+typedef struct i_data
+{
+	char label[ILABELSIZE];
+	UCHAR port;
+	UCHAR affected_output;
+} I_DATA;
+
+type:
+0) regular - on/off state doesn't change until user tells it to
+1) on for time delay seconds and then it goes back off
+2) goes on/off at a pulse_time rate until turned off again
+4) goes on/off at pulse_time rate for time_delay seconds and then back off
+
+**************** nice to have's: ****************
+
+SPI is built into the processor and has specific pins allocated on the DIO (interrupt?)
+
+Use the ts-bat3 battery backup on the stack.
+
+TS-7800 has (2) SATA connectors for SSD drives. 
+
+One of the TS-7200's have the PC104 pins going thru the bottom - we could put the bat3
+on top of it and the other IO boards underneath which might be safer.
+
+Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
+a Pro-Mini. 
+
+Look into the copy_tcp utility and add some error checking (not working right).
+
+Find out how to get TS-7200 to use the pthreadlib in its lib dir so we don't have to
+send it over as a static.
+
+Look into auto-start for Linux on TS-7xxx.
+
+Instead of ncurses program running on laptop, just gen up a PHP web interface and use
+the brower. (see dev2/TS-7260/www/)
+
+Have 1 or more TS-7xxx cards in the box but just on diff. ethernet addresses and use the
+D-link box. They would have to have scripts to start them up everytime. (use ssh to 
+shutdown)
+
+***************** unrelated ********************
+Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
+a Pro-Mini. 
+
+Use one of the extra TS-7200 boards with an IO card to control lights in shop. (IR interface)
+
+Get missing-tooth wheel to work with FPGA
+
+
+
 

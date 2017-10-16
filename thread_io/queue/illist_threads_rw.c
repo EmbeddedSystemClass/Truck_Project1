@@ -189,8 +189,6 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 			memcpy(newdatap->label,datap->label,ILABELSIZE);
 			newdatap->port = datap->port;
 			newdatap->affected_output = datap->affected_output;
-			newdatap->type = datap->type;
-			newdatap->inverse = datap->inverse;
 			cur->datap = newdatap;
 			prev->nextp = cur->nextp;
 //			printf("2:%d\t%s\n",index,cur->datap->label);
@@ -218,8 +216,8 @@ int illist_show(illist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-			printf("port: %2d\taffected: %2d\ttype: %2d\tinverse: %2d\t%s\n",cur->datap->port, \
-				cur->datap->affected_output, cur->datap->type, cur->datap->inverse,cur->datap->label);
+			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
+				cur->datap->affected_output, cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

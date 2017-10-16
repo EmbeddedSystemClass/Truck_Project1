@@ -1,8 +1,12 @@
 ######################################################################################
 # GNU GCC ARM Embeded Toolchain base directories and binaries 
 ######################################################################################
+#use this one when compiling on 115
 #GCC_BASE = /home/dan/dev/arm/opt/crosstool/gcc-3.4.4-glibc-2.3.2/arm-linux/
-GCC_BASE = /home/dan/dev/arm/crosstool/gcc3/arm-linux/
+#or just set the CROSS_COMPILE env var
+GCC_BASE = $(CROSS_COMPILE)
+# use this one when compiling on 103
+#GCC_BASE = /home/dan/dev/arm/crosstool/gcc3/arm-linux/
 GCC_BIN  = $(GCC_BASE)bin/
 GCC_LIB  = $(GCC_BASE)arm-linux/lib/
 GCC_INC  = $(GCC_BASE)arm-linux/include/
@@ -86,8 +90,16 @@ LD_FLAGS = $(MCU_CC_FLAGS) -Wl,--gc-sections $(SYS_LD_FLAGS) -Wl,-Map=$(PROJECT)
 LD_SYS_LIBS = $(SYS_LIBRARIES)
 
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes	doesn't compile "// ..comments.."
+# gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
+# gcc3/4 doesn't work with -mapcs-32
+CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
-CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32
+#this works for either TS-7200 or TS-7800
+#CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32
+#thought this was needed for TS-7800
+#CC_FLAGS = -g -Wstrict-prototypes -march=armv5t -mcpu=arm9
+#CC_FLAGS = -g -Wstrict-prototypes  -march-armv5t	this won't work without the mcpu...
+#CC_FLAGS = -g -float=soft -arch=armv5t
 GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 #CC_FLAGST = ${CC_FLAGS} + GNULDFLAGS_T
 GNUSFLAGS = -D_SVID_SOURCE -D_XOPEN_SOURCE
@@ -99,7 +111,8 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : sched init_db list_db
+all : sched
+#test_ioports test_inports # test_ports test_spi 
 #llist_test_threads llist_test_threads_rw
 
 sched.o: sched.c tasks.h
@@ -126,24 +139,11 @@ rdwr.o: queue/rdwr.c queue/rdwr.h
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
 
-init_db.o: ncurses/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/init_db.c
-
-list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
-
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-	${CC} -pthread -static sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
-#	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
-
-init_db: config_file.o init_db.o
-	${CC} init_db.o config_file.o -o init_db
-
-list_db: config_file.o list_db.o
-	${CC} list_db.o config_file.o -o list_db
+#	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
 
 clean :
-	rm -f *.o *~ *# core  \
-	sched init_db list_db
+	rm -f *.o *~ *# core  sched
 

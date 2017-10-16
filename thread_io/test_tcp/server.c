@@ -1,3 +1,4 @@
+// 10/10/17 - server doesn't quit work on host
 #if 1
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,6 +102,7 @@ int init_server(void)
 	if (bind(sd, (struct sockaddr *)&sad, sizeof (sad)) < 0)
 	{
 		fprintf(stderr,"bind failed\n");
+		printf("\n%s\n",strerror(errno));
 		return -1;
 	}
 
@@ -108,6 +110,7 @@ int init_server(void)
 	if (listen(sd, QLEN) < 0)
 	{
 		fprintf(stderr,"listen failed\n");
+		printf("\n%s\n",strerror(errno));
 		return -1;
 	}
 
@@ -123,6 +126,7 @@ int init_server(void)
 		{
 			fprintf(stderr, "accept failed\n");
 			closesocket(sd2);
+			printf("\n%s\n",strerror(errno));
 			return -1;
 		}
 	}while(sd2 < 1);
@@ -184,6 +188,8 @@ int close_sock(void)
 }
 
 #ifdef TEST_SEQUENCE
+#warning "TEST_SEQUENCE defined"
+
 int main(void)
 {
 	char test1;
@@ -192,7 +198,11 @@ int main(void)
 	char errmsg[20];
 	memset(errmsg,0,20);
 
-	init_server();
+	if(init_server() < 0)
+	{
+		close(sd2);
+		return 1;
+	}
 
 	j = 0;
 //	for(i = 0;i < 1000;i++)
@@ -201,13 +211,21 @@ int main(void)
 	{
 		rc = recv_tcp((UCHAR *)&test1,1,errmsg);
 		if(rc < 0)
+		{
 			printf("%s\n",errmsg);
+			close(sd2);
+			return 1;
+		}
 
 		printf("%c",test1);
 
 		rc = send_tcp(&test1,1,errmsg);
 		if(rc < 0)
+		{
 			printf("%s\n",errmsg);
+			close(sd2);
+			return 1;
+		}
 		if(++j > 92)
 		{
 			printf("\n");
@@ -223,6 +241,7 @@ int main(void)
 
 #ifdef COPY_FILE
 
+#warning "COPY_FILE defined"
 //UCHAR buf[30000];
 UCHAR *buf;
 
@@ -292,7 +311,7 @@ int main(void)
 	printf("write to file: %d\n",rc);
 	close(fp);
 	free(buf);
-	
+
 	printf("\n\n");
 	return 0;
 }

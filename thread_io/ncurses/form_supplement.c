@@ -134,17 +134,28 @@ void display_form(FORM * f)
 {
 	WINDOW *w;
 	int rows, cols;
+	int x,y;
 
 	scale_form(f, &rows, &cols);
 
-	if ((w = newwin(rows + 2, cols + 4, 0, 0)) != (WINDOW *) 0)
+//	if ((w = newwin(rows + 2, cols + 4, 0, 0)) != (WINDOW *) 0)
+	if ((w = newwin(rows+2, cols + 4, FORM_WIN_STARTY, FORM_WIN_STARTX)) != (WINDOW *) 0)
 	{
 		set_form_win(f, w);
+//		set_form_sub(f, derwin(w, rows, cols, 1, 2));
 		set_form_sub(f, derwin(w, rows, cols, 1, 2));
+//		box(w, 0,0);
 		box(w, 0, 0);
+//		box(w, STARTY, STARTX);
 		keypad(w, TRUE);
 	}
 
+/*
+	x = STARTX;
+	y = STARTY;
+	mvprintw(LINES - 30, 0, "display_forms: %d  %d  %d  %d         ",rows,cols,x,y);
+	refresh();
+*/
 	if (post_form(f) != E_OK)
 		wrefresh(w);
 }

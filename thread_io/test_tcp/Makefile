@@ -51,5 +51,5 @@ server2: server2.o
 	${CC} server.o -o server2
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2
+	rm -f *.o *~ *# core client server client2 server2 test_write test_read
 

@@ -44,12 +44,10 @@ git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
 git add Truck_App1/PIC24_support/esos1/domake*.sh
 
-git add thread_io/getadd.sh
 git add thread_io/ioports.c
 git add thread_io/Makefile
 git add thread_io/sched.c
 git add thread_io/ioports.h
-git add thread_io/test_ioports.c
 git add thread_io/tasks.c
 git add thread_io/tasks.h
 git add thread_io/queue/rdwr.h
@@ -61,14 +59,12 @@ git add thread_io/queue/ollist_threads_rw.c
 git add thread_io/ncurses/client.c
 git add thread_io/ncurses/client.h
 git add thread_io/linux_make
+git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
 git add thread_io/mytypes.h
-git add thread_io/ncurses/comp_forms.sh
 git add thread_io/ncurses/demo_forms2.c
 git add thread_io/ncurses/demo_menus2.c
-git add thread_io/ncurses/edit_field2.c
-git add thread_io/ncurses/edit_field.h
 git add thread_io/ncurses/menu_scroll2.c
 git add thread_io/ncurses/Makefile
 git add thread_io/ncurses/init_db.c
@@ -76,6 +72,7 @@ git add thread_io/ncurses/list_db.c
 git add thread_io/ncurses/setiodata.h
 git add thread_io/ncurses/tcp_win.c
 git add thread_io/ncurses/config_file.c
+git add thread_io/ncurses/config_file.h
 git add thread_io/ncurses/file_win.c
 git add thread_io/ncurses/file_menu2.c
 git add thread_io/ncurses/demo_forms4.c
@@ -84,15 +81,12 @@ git add thread_io/ncurses/form_sup.h
 git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
 git add thread_io/thread_io_notes.txt
-git add thread_io/test_tcp/client.c
-git add thread_io/test_tcp/server.c
+git add thread_io/dmake4
+git add thread_io/test_tcp/*.c
+git add thread_io/test_tcp/*.h
 git add thread_io/test_tcp/make_target
 git add thread_io/test_tcp/Makefile
-git add thread_io/test_tcp/mytypes.h
-git add thread_io/test_tcp/client.h
-git add thread_io/test_tcp/test_write.c
-git add thread_io/test_tcp/test_read.c
-git add thread_io/test_tcp/tcp.h
+git add thread_io/test_tcp/Makefile2
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/avrdude.conf

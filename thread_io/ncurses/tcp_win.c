@@ -165,7 +165,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			case KEY_F(3):
 				if(tcp_connected == 0)
 				{
-					rc = init_client();
+					rc = init_client(HOST);
 					if(rc < 0)
 					{
 						rc = tcp_connect();
@@ -197,15 +197,6 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 				tcp_connected = 0;
 				break;
 			case KEY_F(5):
-				if(tcp_connected == 1)
-				{
-					cmd =  SEND_SHOW;
-//					rc = send_tcp(&cmd,1,errmsg);
-					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"display data\0");
-				}
-				else
-					disp_msg(twin,"no connection\0");
 				break;
 			case KEY_F(6):
 				if(tcp_connected == 1)
@@ -251,7 +242,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					o_datap = o_data;
 					for(i = 0;i < NUM_PORT_BITS;i++)
 					{
-						rc += put_sock(i_datap,sizeof(I_DATA),1,errmsg);
+						rc += put_sock((UCHAR*)i_datap,sizeof(I_DATA),1,errmsg);
 						i_datap++;
 					}
 				}
@@ -267,7 +258,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					o_datap = o_data;
 					for(i = 0;i < NUM_PORT_BITS;i++)
 					{
-						rc += put_sock(o_datap,sizeof(O_DATA),1,errmsg);
+						rc += put_sock((UCHAR*)o_datap,sizeof(O_DATA),1,errmsg);
 						o_datap++;
 					}
 				}

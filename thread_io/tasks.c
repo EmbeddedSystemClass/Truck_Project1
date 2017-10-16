@@ -24,6 +24,7 @@
 #include "queue/illist_threads_rw.h"
 #include "queue/ollist_threads_rw.h"
 #include "tasks.h"
+#include "ncurses/config_file.h"
 
 extern int threads_ready_count;
 extern pthread_cond_t		threads_ready;
@@ -33,8 +34,6 @@ pthread_mutex_t		io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t		serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t		serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 extern int   total_count;
-illist_t ill;
-ollist_t oll;
 
 UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3, task4, task5, task6};
 //UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3};
@@ -44,12 +43,17 @@ pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int i);
 int comm_open = -1;
-extern I_DATA *curr_i_array;
-extern O_DATA *curr_o_array;
-extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
-extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
 
-#define SERIAL_BUFF_SIZE 100
+illist_t ill;
+ollist_t oll;
+
+extern char oFileName[20];
+extern char iFileName[20];
+
+extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
+extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
+
+#define SERIAL_BUFF_SIZE 200
 
 static UCHAR serial_buff[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
@@ -57,6 +61,7 @@ static int no_serial_buff;
 static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 static int serial_rec;
+static int change_output(int index, int onoff);
 /*********************************************************************/
 static void mydelay(unsigned long i)
 {
@@ -74,18 +79,13 @@ static void mydelay(unsigned long i)
 /*********************************************************************/
 UCHAR task1(int test)
 {
-	I_DATA *pid;
-	O_DATA *pod;
-	I_DATA **ppid;
-	O_DATA **ppod;
-	I_DATA tempi1, tempi2;
-	O_DATA tempo1, tempo2;
+	I_DATA tempi1;
+	O_DATA tempo1;
 	int rc = 0;
 	UCHAR cmd;
-	UCHAR num_i_recs, num_o_recs;
+	UCHAR onoff;
 	char errmsg[50];
 	char filename[15];
-	char *fptr1;
 	size_t size;
 	int i;
 	int j = 0;
@@ -94,77 +94,56 @@ UCHAR task1(int test)
 	char tempx[30];
 	int num;
 	char *chp;
-
-
-	d = opendir( "." );
-	if( d == NULL )
-	{
-		return -1;
-	}
-	i = 0;
-
-/* this compiles for the embedded linux card but will it run?
-	while(dir = readdir(d))
-	{
-		if(strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-		  continue;
-
-		memset(tempx,0,sizeof(tempx));
-		strcpy(tempx,dir->d_name);
-//		format = GetFileFormat(tempx);
-
-		chp = tempx;
-		j = 0;
-
-		while(*chp++ != '.' && j < 30)
-			j++;
-
-		strncpy(tempx,chp,j+1);
-
-//		mvprintw(LINES - 21-i++, 5,"%d  %s  ",j,tempx);
-	    if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-	    {
-//	    	if(GetFileFormat(dir->d_name) == which)
-//				strcpy(dat_names[num++],dir->d_name);
-//			mvprintw(LINES - 21-i++, 0,"%s  %s  %d",dir->d_name,dat_names[k-1],j);
-		}
-	}
-	closedir( d );
-*/
-
-	illist_init(&ill);
-	same_msg = 0;
-	pid = curr_i_array;
-
-	// just insert some sample data for now
-
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		illist_insert_data(i,&ill,pid);
-		pid++;
-	}
-	pid = curr_i_array;
-
-//	illist_show(&ill);
-
-	ollist_init(&oll);
-	// just insert some sample data for now
-	pod = curr_o_array;
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		ollist_insert_data(i,&oll,pod);
-		pod++;
-	}
-//	ollist_show(&oll);
-	pod = curr_o_array;
-
-	printf("\n\n\n");
+	size_t isize;
+	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
 	UCHAR rec_no;
-	printf("task 1: %d\n",test);
 
-	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
+	i = NUM_PORT_BITS;
+	isize = sizeof(I_DATA);
+	isize *= i;
+
+	i = NUM_PORT_BITS;
+	osize = sizeof(O_DATA);
+	osize *= i;
+
+	illist_init(&ill);
+	if(access(iFileName,F_OK) != -1)
+	{
+		rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
+		if(rc > 0)
+		{
+			printf("%s\n",errmsg);
+			return 1;
+		}
+	}else		// oh-boy! create a new file!
+	{
+		
+	}
+	illist_show(&ill);
+
+	ollist_init(&oll);
+	if(access(oFileName,F_OK) != -1)
+	{
+		rc = olLoadConfig(oFileName,&oll,osize,errmsg);
+		if(rc > 0)
+		{
+			printf("%s\n",errmsg);
+			return 1;
+		}
+	}else		// oh-boy! create a new file!
+	{
+		
+	}
+	ollist_show(&oll);
+
+	same_msg = 0;
+
+	printf("task 1: v1.01  %d\n",test);
+
+//	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
+//	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
 
 	while(TRUE)
 	{
@@ -182,11 +161,13 @@ UCHAR task1(int test)
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-						printf("send idata: rec: %d rc: %d\n",rec_no,rc);
+						printf("send idata: rec: %d\trc:%d\tsizeof: %d\n",rec_no,rc,sizeof(I_DATA));
 //						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
 //							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
 						illist_insert_data(rec_no, &ill, &tempi1);
-	//					illist_show(&ill);
+//						pid = curr_i_array;
+//						memcpy(pid,&tempi1,sizeof(I_DATA));	
+//						illist_show(&ill);
 						break;
 
 					case SEND_ODATA:
@@ -196,119 +177,106 @@ UCHAR task1(int test)
 						printf("send odata: rec: %d rc: %d\n",rec_no,rc);
 //						printf("port: %d\tonoff: %d\tlabel: %s\n",tempo1.port,tempo1.onoff,tempo1.label);
 						ollist_insert_data(rec_no, &oll, &tempo1);
+//						memcpy(pod,&tempo1,sizeof(O_DATA));	
 //						ollist_show(&oll);
 						break;
 
-					case SEND_SHOW:		// F5 	(display data)
-						printf("showing current list\n");
+					case SHOW_IDATA:
 						illist_show(&ill);
-						printf("\n");
-						ollist_show(&oll);
-						printf("\n");
 						break;
 
-					case SEND_ALL_IDATA:	// F9
+					case SHOW_ODATA:
+						ollist_show(&oll);
+						break;
+
+					case SEND_ALL_IDATA:
 						printf("send all IDATA:\n");
 						rc = 0;
-						pid = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							rc += recv_tcp((UCHAR *)pid,sizeof(I_DATA),1);
-							illist_insert_data(i,&ill,pid);
+							rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
+							illist_insert_data(i,&ill,&tempi1);
 						}
-						pid = curr_i_array;
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							printf("%2d\t%2d\t%2d\t%2d\t%s\n",
-								pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
-							pid++;
-						}
-
 						printf("%d\n",rc);
 						printf("done\n");
 						break;
 
-					case SEND_ALL_ODATA:	// F10
+					case SEND_ALL_ODATA:
 						printf("send all ODATA: %d\n",sizeof(O_DATA));
-						pod = &tempo1;
 						rc = 0;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							rc += recv_tcp((UCHAR *)pod,sizeof(O_DATA),1);
-							printf("%2d\t%2d\t%s\t%d\n",pod->port,pod->onoff,pod->label,rc);
-//							ollist_insert_data(i,&oll,pod);
+							rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
+//							printf("%2d\t%2d\t%s\t%d\n",pod->port,pod->onoff,pod->label,rc);
+							ollist_insert_data(i,&oll,&tempo1);
 						}
-
-/*
-						pod = curr_o_array;
-
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							printf("%2d\t%2d\t%s\n",pod->port,pod->onoff,pod->label);
-							pod++;
-						}
-*/
 						printf("%d\n",rc);
 						printf("done\n");
 						break;
 
-					case SEND_SERIAL:	// F6
+					case SEND_SERIAL:
 						test2 = 0x21;
-						for(i = 0;i < 3000;i++)
+//#if 0
+						for(i = 0;i < 1000;i++)
 						{
-							SendByte(test2);
+							pthread_mutex_lock( &serial_write_lock);
+							write_serial(test2);
+							pthread_mutex_unlock(&serial_write_lock);
+							usleep(TIME_DELAY/200);
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
-						printf("sent serial\n");
+//#endif
+//						printf("sent serial\n");
 						break;
 
 					case LOAD_ORG:	// F7
+#if 0
 						printf("loading from org.dat\n");
 						illist_removeall_data(&ill);
 						ollist_removeall_data(&oll);
 						illist_init(&ill);
 						ollist_init(&oll);
 
-						fptr1 = filename;
-						strcpy(filename,"iorg.dat\0");
+						strcpy(iFileName,"iorg.dat\0");
 						size = sizeof(I_DATA) * NUM_PORT_BITS;
-						rc = iLoadConfig(fptr1,curr_i_array,size,errmsg);
-						pid = curr_i_array;
+//						rc = iLoadConfig(fptr1,curr_i_array,size,errmsg);
+//						pid = curr_i_array;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							illist_insert_data(i,&ill,pid);
 							pid++;
 						}
-						pid = curr_i_array;
+//						pid = curr_i_array;
 
-						strcpy(filename,"oorg.dat\0");
+						strcpy(oFileName,"oorg.dat\0");
 						size = sizeof(O_DATA) * NUM_PORT_BITS;
-						rc = oLoadConfig(fptr1,curr_o_array,size,errmsg);
-						pod = curr_o_array;
+//						rc = oLoadConfig(fptr1,curr_o_array,size,errmsg);
+//						pod = curr_o_array;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_insert_data(i,&oll,pod);
 							pod++;
 						}
-						pod = curr_o_array;
-						printf("done\n");
+//						pod = curr_o_array;
+#endif
+						printf("not implemented\n");
 						break;
 
 					case RESTORE:	// F8	(restore)
 						printf("restored from current data\n");
-						pid = curr_i_array;
+#if 0						
+//						pid = curr_i_array;
 						memset(&tempi1,0,sizeof(I_DATA));
 						memset(&tempo1,0,sizeof(O_DATA));
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,
-								pid->type,pid->inverse,pid->label);
+							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->label);
 							memcpy(&tempi1,pid,sizeof(I_DATA));
 							illist_insert_data(i, &ill, &tempi1);
 							pid++;
 						}
-						pod = curr_o_array;
+//						pod = curr_o_array;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							printf("%s\t%2d\t%2d\n",pod->label,pod->port,pod->onoff);
@@ -317,20 +285,54 @@ UCHAR task1(int test)
 							pod++;
 						}
 						printf("done\n");
+#endif
+						printf("not implemented\n");
 						break;
 
 					case SAVE_TO_DISK:
-						printf("saving to disk as i/oSave.dat\n");
-						strcpy(filename,"iSave.dat\0");
-						pid = curr_i_array;
-						size = sizeof(I_DATA) * NUM_PORT_BITS;
-						iWriteConfig(filename, curr_i_array, size,errmsg);
+						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
+							printf("%s\n",errmsg);
+						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
+							printf("%s\n",errmsg);
+						printf("save to disk\n");
+						break;
 
-						strcpy(filename,"oSave.dat\0");
-						pod = curr_o_array;
-						size = sizeof(O_DATA) * NUM_PORT_BITS;
-						oWriteConfig(filename, curr_o_array, size,errmsg);
-						printf("done\n");
+					case TOGGLE_OUTPUTS:
+						recv_tcp((UCHAR *)&rec_no,1,1);
+						recv_tcp((UCHAR *)&onoff,1,1);
+
+						printf("toggle output: %2d\t%s\n",tempo1.onoff,tempo1.label);
+						ollist_insert_data(rec_no, &oll, &tempo1);
+						change_output(rec_no, onoff);
+						break;
+
+					case ALL_OFF:
+//						pod = curr_o_array;
+						printf("all off\n");
+
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							ollist_find_data(i,&tempo1,&oll);
+							tempo1.onoff = 0;
+							ollist_insert_data(i, &oll, &tempo1);
+							change_output(i, 0);
+							usleep(500);
+							printf("%2d\t%s\n",tempo1.onoff,tempo1.label);
+						}
+						break;
+
+					case ALL_ON:
+//						pod = curr_o_array;
+						printf("all on\n");
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							ollist_find_data(i,&tempo1,&oll);
+							tempo1.onoff = 1;
+							ollist_insert_data(i, &oll, &tempo1);
+							change_output(i, 1);
+							usleep(500);
+							printf("%2d\t%s\n",tempo1.onoff,tempo1.label);
+						}
 						break;
 
 					case CLEAR_SCREEN:
@@ -345,8 +347,8 @@ UCHAR task1(int test)
 					case EXIT_PROGRAM:
 						close_tcp();
 						printf("exiting program\n");
-						free(curr_i_array);
-						free(curr_o_array);
+//						free(curr_i_array);
+//						free(curr_o_array);
 
 						exit(0);
 						break;
@@ -385,16 +387,18 @@ UCHAR task2(int test)
 	O_DATA **otpp = &otp;
 
 	int status = -1;
-	int bank, bank2, bit, actual_bit;
-	int rem;
-	int i;
-	UCHAR mask;
-	UCHAR result;
-	UCHAR result2;
-	int inc;
+	int bank, index;
+	UCHAR result, mask;
 	int onoff;
 	static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 	static UCHAR inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
+
+//#if 0
+	while(1)
+	{
+		usleep(TIME_DELAY);
+	}
+//#endif
 
 	for(bank = 0;bank < 6;bank++)
 	{
@@ -404,81 +408,111 @@ UCHAR task2(int test)
 
 	while(TRUE)
 	{
-		result = 0;
-// if bank=OUTPORTC_OFFSET or bank=OUTPORTF_OFFSET then there are only 4 bits
-		for(bank = 0;bank <= OUTPORTF_OFFSET-OUTPORTA_OFFSET;bank++)
+		for(index = 0;index < NUM_PORTS;index++)
 		{
+			usleep(TIME_DELAY);
+
+			result = 0;
+			if(index > 19)
+				index += 4;		
+
+			bank = index/8;	
+			mask <<= index-bank*8;
+
 			inportstatus[bank] = check_inputs(bank);
-			mask = 1;
 			result = inportstatus[bank] ^ inportstatus2[bank];
-			if(bank == OUTPORTF_OFFSET || bank == OUTPORTC_OFFSET)
-				actual_bit = 4;
-			else
-				actual_bit = 8;
-			for(bit = 0;bit < actual_bit;bit++)
+	
+			if(result)
 			{
-				result2 = result & mask;
-
-				if(result2 != 0)
+				printf("bank: %d\tmask\t%2x\n",bank,mask);
+				pthread_mutex_lock( &io_mem_lock);
+				switch(bank)
 				{
-					if(inportstatus[bank] & mask)
-						onoff = 1;
-					else
-						onoff = 0;
-
-					inc = (bank*8)+bit;	// inc is which input port has changed
-					if(bank > OUTPORTC_OFFSET)
-						inc -= 4;
-//					printf("inc: %d bank: %d bit: %d actual_bit: %d\n",inc,bank,bit,actual_bit);
-					illist_find_data(inc,itpp,&ill);
-					printf("affected_output: %d\tport: %d\t%s\n",itp->affected_output,itp->port,itp->label);
-					ollist_find_data(itp->affected_output,otpp,&oll);
-					printf("output affected: %d\t%d\t%s\n",otp->port,otp->onoff,otp->label);
-
-					otp->onoff = onoff;
-					ollist_insert_data(otp->port,&oll,otp);
-					bank2 = itp->affected_output/8;
-					rem = itp->affected_output%8;
-					mask = 1;
-					for(i = 0;i < rem;i++)
-						mask <<= 1;
-
-					pthread_mutex_lock( &io_mem_lock);
-					switch(bank2)
-					{
-						case 0:
-						OutPortA(onoff, mask);
-						break;
-						case 1:
-						OutPortB(onoff, mask);
-						break;
-						case 2:
-						OutPortC(onoff, mask);
-						break;
-						case 3:
-						OutPortD(onoff, mask);
-						break;
-						case 4:
-						OutPortE(onoff, mask);
-						break;
-						case 5:
-						OutPortF(onoff, mask);
-						break;
-						default:
-						break;
-					}
-					pthread_mutex_unlock(&io_mem_lock);
-
-					printf("bank:%d bank2:%d inc:%d mask:%x on/off:%d rem: %d status:%x\n\n",bank,bank2,inc,mask,onoff,rem,inportstatus[i]);
+					case 0:
+					OutPortA(onoff, mask);
+					break;
+					case 1:
+					OutPortB(onoff, mask);
+					break;
+					case 2:
+					OutPortC(onoff, mask);
+					break;
+					case 3:
+					OutPortD(onoff, mask);
+					break;
+					case 4:
+					OutPortE(onoff, mask);
+					break;
+					case 5:
+					OutPortF(onoff, mask);
+					break;
+					default:
+					break;
 				}
-				mask <<= 1;
+				pthread_mutex_unlock(&io_mem_lock);
+
+				illist_find_data(index,itpp,&ill);
+				printf("affected_output: %d\tport: %d\t%s\n",itp->affected_output,itp->port,itp->label);
+				ollist_find_data(itp->affected_output,otpp,&oll);
+				printf("output affected: %d\t%d\t%s\n",otp->port,otp->onoff,otp->label);
+
+				otp->onoff = ~otp->onoff;
+				otp->onoff &= 1;	
+				ollist_insert_data(otp->port,&oll,otp);
 			}
 			inportstatus2[bank] = inportstatus[bank];
 		}
-		usleep(TIME_DELAY);
 	}
 	return test + 2;
 }
+
+
+/*********************************************************************/
+// pass in the index into the total list of outputs
+// since each card only has 20 outputs, the last 4 bits of PORT C & F are ignored
+// index 0->19 = PORTA(0:7)->PORTC(0:4)
+// index 24->39 = PORTD(0:7)->PORTF(0:4)
+static int change_output(int index, int onoff)
+{
+	int bank;
+	
+	if(index > 19)
+		index += 4;		
+
+	bank = index/8;	
+	index = index-(bank*8);
+//#if 0	
+	pthread_mutex_lock( &io_mem_lock);
+	switch(bank)
+	{
+		case 0:
+		OutPortA(onoff, index);
+		break;
+		case 1:
+		OutPortB(onoff, index);
+		break;
+		case 2:
+		OutPortC(onoff, index);
+		break;
+		case 3:
+		OutPortD(onoff, index);
+		break;
+		case 4:
+		OutPortE(onoff, index);
+		break;
+		case 5:
+		OutPortF(onoff, index);
+		break;
+		default:
+		break;
+	}
+	pthread_mutex_unlock(&io_mem_lock);
+//#endif
+
+//	printf("bank: %d\tindex\t%2x\n",bank,index);
+	return index;
+}
+
 
 /*********************************************************************/
 // this just sends a series of ascii chars to the tcp out port (is displayed in tcp_win when opened)
@@ -492,11 +526,14 @@ UCHAR task4(int test)
 	UCHAR mask = 1;
 
 	while(TRUE)
+		usleep(TIME_DELAY*10);
+
+	while(TRUE)
 	{
 		rc = send_tcp(&test2,1);
-		usleep(TIME_DELAY/2);
-		if(++test2 > 0x70)
-			test2 = 0x30;
+		usleep(TIME_DELAY);
+		if(++test2 > 0x7e)
+			test2 = 0x21;
 	}
 //#endif
 	return test + 4;
@@ -510,57 +547,20 @@ UCHAR task3(int test)
 
 	while(TRUE)
 	{
-		usleep(TIME_DELAY*2);
-	}
-#if 0
-		SendByte(test2);
-		if(++test2 > 0x7e)
+		usleep(TIME_DELAY);
+/*
+		pthread_mutex_lock( &serial_read_lock);
+	//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
+	//	printf("%s\n",(char *)buf);
+		if(no_serial_buff > 20)
 		{
-//			SendByte(0x0a);
-//			SendByte(0x0d);
-			test2 = 0x21;
-//			usleep(TIME_DELAY*10);
+			printf("%2x ",serial_buff[no_serial_buff]);
+			pthread_mutex_unlock(&serial_read_lock);
+			no_serial_buff--;
 		}
-#endif
-//	printf("%c",test1);
-	return test + 3;
-}
-
-/*********************************************************************/
-// check_inputs reads the input port and returns what the actual port
-// is at the machine level
-static UCHAR check_inputs(int i)
-{
-	UCHAR result;
-	int flag = 0;
-	pthread_mutex_lock( &io_mem_lock);
-
-	switch(i)
-	{
-		case 0:
-			result = InPortByteA();
-			break;
-		case 1:
-			result = InPortByteB();
-			break;
-		case 2:
-			result = InPortByteC();
-			break;
-		case 3:
-			result = InPortByteD();
-			break;
-		case 4:
-			result = InPortByteE();
-			break;
-		case 5:
-			result = InPortByteF();
-			break;
-		default:
-			result = 0;
-			break;
+*/
 	}
-	pthread_mutex_unlock(&io_mem_lock);
-	return result;
+	return test + 3;
 }
 
 /*********************************************************************/
@@ -568,13 +568,19 @@ UCHAR task5(int test)
 {
 	serial_rec = 0;
 	int i;
+	int j = 0;
+	UCHAR ch;
 	memset(serial_buff,0,SERIAL_BUFF_SIZE);
 	no_serial_buff = 0;
+//	printf("%4x\n",&serial_buff[no_serial_buff]);
+
+	while(TRUE)
+		usleep(TIME_DELAY*10);
+
 
 	while(TRUE)
 	{
-
-		usleep(TIME_DELAY);
+		usleep(TIME_DELAY/500);
 		if(test < 2)
 		{
 			printf("exiting task 5\n");
@@ -587,22 +593,28 @@ UCHAR task5(int test)
 		if(no_serial_buff < SERIAL_BUFF_SIZE)
 		{
 			pthread_mutex_lock( &serial_read_lock);
-		//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
-		//	printf("%s\n",(char *)buf);
 			serial_buff[no_serial_buff] = read_serial();
+//			printf("%c",serial_buff[no_serial_buff]);
+			if(++j > 93)
+			{
+				printf("\n");
+				j = 0;
+			}
 			pthread_mutex_unlock(&serial_read_lock);
 			no_serial_buff++;
 		}
 		else{
-			printf("serial buff full\n\n");
+//#if 0
+			printf("\n");
 			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 			{
 				printf("%c",serial_buff[i]);
-				if((i % 93) == 0)
-					printf("\n");
+//				if((i % 93) == 0)
+//					printf("\n");
 			}
+//#endif
 			no_serial_buff = 0;
-			printf("\n\n");
+//			printf("\n\n");
 		}
 	}
 }
@@ -715,6 +727,43 @@ UCHAR task6(int test)
 }
 
 /*********************************************************************/
+// check_inputs reads the input port and returns what the actual port
+// is at the machine level
+static UCHAR check_inputs(int i)
+{
+	UCHAR result;
+	int flag = 0;
+	pthread_mutex_lock( &io_mem_lock);
+
+	switch(i)
+	{
+		case 0:
+			result = InPortByteA();
+			break;
+		case 1:
+			result = InPortByteB();
+			break;
+		case 2:
+			result = InPortByteC();
+			break;
+		case 3:
+			result = InPortByteD();
+			break;
+		case 4:
+			result = InPortByteE();
+			break;
+		case 5:
+			result = InPortByteF();
+			break;
+		default:
+			result = 0;
+			break;
+	}
+	pthread_mutex_unlock(&io_mem_lock);
+	return result;
+}
+
+/*********************************************************************/
 int test_sock(void)
 {
 	return sock_open;
@@ -823,7 +872,6 @@ void close_tcp(void)
 /*********************************************************************/
 void SendByte(unsigned char byte)
 {
-	int cport_nr = 1;
 	if(comm_open == -1)
 		return;
 	pthread_mutex_lock( &serial_write_lock);
@@ -834,23 +882,11 @@ void SendByte(unsigned char byte)
 /*********************************************************************/
 UCHAR ReceiveByte(void)
 {
-	int cport_nr = 1;
 	int n,i;
-//	unsigned char buf[100];
 	UCHAR rec;
 	if(comm_open == -1)
 		return -1;
 
-	if(no_serial_buff < SERIAL_BUFF_SIZE)
-	{
-		pthread_mutex_lock( &serial_read_lock);
-	//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
-	//	printf("%s\n",(char *)buf);
-		serial_buff[no_serial_buff] = read_serial();
-		pthread_mutex_unlock(&serial_read_lock);
-		no_serial_buff++;
-	}
-//	printf("%c",rec);
 	return rec;
 }
 
@@ -918,6 +954,9 @@ UCHAR task3(int test)
 	int mask;
 	UCHAR mask2;
 
+	while(TRUE)
+		usleep(TIME_DELAY);
+	
 	while(TRUE)
 	{
 		usleep(TIME_DELAY*10);
@@ -1038,6 +1077,74 @@ UCHAR task3(int test)
 						printf("e: %x\n",InPortByteE());
 						printf("f: %x\n\n",InPortByteF());
 */
+
+
+
+#if 0
+	for(i = 0;i < isize/sizeof(I_DATA);i++)
+	{
+//		printf("%d\t%s\n",pid->port,pid->label);
+		illist_insert_data(i,&ill,pid);
+		pid++;
+	}
+	illist_show(&ill);
+	printf("\n");
+
+	strcpy(temp.label,"test_xyz");
+	temp.port = 56;
+	temp.affected_output = 57;
+	temp.type = 58;
+	pid = &temp;
+	illist_insert_data(5,&ill,pid);
+//	illist_change_data(3,pid,&ill);
+
+//	illist_removeall_data(&ill);
+	illist_show(&ill);
+
+free(curr_i_array);
+free(curr_o_array);
+
+return 0;
+#endif
+
+
+/*
+	d = opendir( "." );
+	if( d == NULL )
+	{
+		return -1;
+	}
+	i = 0;
+*/
+/* this compiles for the embedded linux card but will it run?
+	while(dir = readdir(d))
+	{
+		if(strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
+		  continue;
+
+		memset(tempx,0,sizeof(tempx));
+		strcpy(tempx,dir->d_name);
+//		format = GetFileFormat(tempx);
+
+		chp = tempx;
+		j = 0;
+
+		while(*chp++ != '.' && j < 30)
+			j++;
+
+		strncpy(tempx,chp,j+1);
+
+//		mvprintw(LINES - 21-i++, 5,"%d  %s  ",j,tempx);
+	    if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
+	    {
+//	    	if(GetFileFormat(dir->d_name) == which)
+//				strcpy(dat_names[num++],dir->d_name);
+//			mvprintw(LINES - 21-i++, 0,"%s  %s  %d",dir->d_name,dat_names[k-1],j);
+		}
+	}
+	closedir( d );
+*/
+
 
 
 #endif

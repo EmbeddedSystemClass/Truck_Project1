@@ -86,10 +86,11 @@ int main(int argc, char *argv[])
 		pid = curr_i_array;
 
 		printf("\n");
+		printf("port\taffected_output\t\tlabel\n\n");
 		for(i = 0;i < isize/sizeof(I_DATA);i++)
 		{
 			if(pid->label[0] != 0)
-				printf("%d\t%d\t%d\t%d\t%s\n",pid->port,pid->affected_output,pid->type,pid->inverse,pid->label);
+				printf("%d\t%d\t\t\t%s\n",pid->port,pid->affected_output,pid->label);
 			pid++;
 		}
 
@@ -120,10 +121,12 @@ int main(int argc, char *argv[])
 		pod = curr_o_array;
 
 		printf("\n");
+		printf("port\tonoff\ttype\ttime_delay\tpulse_time\tlabel\n\n");
 		for(i = 0;i < osize/sizeof(O_DATA);i++)
 		{
 			if(pod->label[0] != 0)
-				printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
+				printf("%d\t%d\t%d\t%d\t\t%d\t\t%s\n",
+					pod->port, pod->onoff, pod->type, pod->time_delay, pod->pulse_time, pod->label);
 			pod++;
 		}
 
@@ -139,6 +142,8 @@ int main(int argc, char *argv[])
 		printf("\n\n");
 
 	}
+
+	printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
 
 	free(curr_i_array);
 	free(curr_o_array);

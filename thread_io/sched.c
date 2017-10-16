@@ -51,15 +51,9 @@ extern int comm_open;
  * Thread progress info
  */
 extern void *work_routine(void *arg);
-//extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
-extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size, char *errmsg);
-//extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
-extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size, char *errmsg);
 
-I_DATA *curr_i_array;
-O_DATA *curr_o_array;
-
-//extern illist_t ill;
+char oFileName[20];
+char iFileName[20];
 
 /****************************************************************************************************/
 struct timeval tv;
@@ -71,11 +65,11 @@ static double curtime(void)
 }
 
 /********************************************************************************************************/
-extern int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	int       rtn, t, i, j, *id_arg, prio_min, prio_max;
+	int rtn, t, i, j, *id_arg, prio_min, prio_max;
 	pthread_t threads[NUM_TASKS];
-	int       sched = PTIME_SLICE;
+	int sched = PTIME_SLICE;
 	pthread_attr_t pthread_custom_attr;
 	struct sched_param priority_param;
 	double current_time;
@@ -86,109 +80,30 @@ extern int main(int argc, char **argv)
 	int fd;
 	int sd;
 	int rc;
-	I_DATA *pid;
-	O_DATA *pod;
-
-	size_t isize;
-	size_t osize;
-	char *fptr1;
-	char *fptr2;
 	char errmsg[50];
 	I_DATA temp;
 
 	if(argc < 2)
 	{
 		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
-		return 1;
+		printf("loading default filenames: idata.dat & odata.dat\n");
+		strcpy(iFileName,"idata.dat\0");
+		strcpy(oFileName,"odata.dat\0");
 	}
-	else if(argc < 3)
+	else if(argc == 2)
 	{
 		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
-		return 1;
+		printf("loading %s & odata.dat\n",argv[1]);
+		strcpy(oFileName,argv[1]);
+		strcpy(oFileName,"odata.dat\0");
 	}
-	fptr1 = argv[1];
-	fptr2 = argv[2];
-
-//	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
-	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
-	isize = sizeof(I_DATA);
-	isize *= i;
-//	printf("total size: of i_data %lu\n",isize);
-
-//	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
-	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
-	osize = sizeof(O_DATA);
-	osize *= i;
-//	printf("total size of o_data: %lu\n",osize);
-
-	curr_i_array = (I_DATA *)malloc(isize);
-	if(curr_i_array == NULL)
+	else
 	{
-		printf("problem with malloc for curr_i_array\n");
-		return 1;
-	}
-	memset((void *)curr_i_array,0,isize);
-
-	rc = iLoadConfig(fptr1,curr_i_array,isize,errmsg);
-	if(rc > 0)
-	{
-		printf("%s\n",errmsg);
-		return 1;
+		strcpy(iFileName,argv[1]);
+		strcpy(oFileName,argv[2]);
+		printf("loading: %s & %s\n",argv[1],argv[2]);
 	}
 
-	curr_o_array = (O_DATA *)malloc(osize);
-	if(curr_o_array == NULL)
-	{
-		printf("problem with malloc for curr_o_array\n");
-		return 1;
-	}
-	memset((void *)curr_o_array,0,osize);
-
-	pid = curr_i_array;
-#if 0
-	for(i = 0;i < isize/sizeof(I_DATA);i++)
-	{
-//		printf("%d\t%s\n",pid->port,pid->label);
-		illist_insert_data(i,&ill,pid);
-		pid++;
-	}
-	illist_show(&ill);
-	printf("\n");
-
-	strcpy(temp.label,"test_xyz");
-	temp.port = 56;
-	temp.affected_output = 57;
-	temp.type = 58;
-	pid = &temp;
-	illist_insert_data(5,&ill,pid);
-//	illist_change_data(3,pid,&ill);
-
-//	illist_removeall_data(&ill);
-	illist_show(&ill);
-
-free(curr_i_array);
-free(curr_o_array);
-
-return 0;
-#endif
-
-	rc = oLoadConfig(fptr2,curr_o_array,osize,errmsg);
-	if(rc > 0)
-	{
-		printf("%s\n",errmsg);
-		return 1;
-	}
-
-	pod = curr_o_array;
-/*
-	for(i = 0;i < osize/sizeof(O_DATA);i++)
-	{
-		printf("%d\t%d\t%s\n",pod->port,pod->onoff,pod->label);
-		pod++;
-	}
-*/
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));
 	printf("test4\n");
 
@@ -310,9 +225,6 @@ return 0;
 	printf("socket closed\n");
 //	llist_show(&ll);
 	printf("elapsed time: %f\n",curtime() - current_time);
-
-	free(curr_i_array);
-	free(curr_o_array);
 
 	return 0;
 }

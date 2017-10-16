@@ -49,13 +49,13 @@ static struct  sockaddr_in sad;  /* structure to hold server's address  */
 static struct timeval tv;
 
 /*********************************************************************/
-int init_client(void)
+int init_client(char *host)
 {
 	struct  hostent  *ptrh;   /* pointer to a host table entry       */
 	struct  protoent *ptrp;   /* point to a protocol table entry     */
 //	int     sd;               /* socket descriptor                   */
 	int     port;             /* protocol port number                */
-	char    *host;            /* pointer to host name                */
+//	char    *host;            /* pointer to host name                */
 	int     n;                /* number of characters read           */
 	char    buf[50];        /* buffer for data from the server     */
 	char 	send_buf[50];
@@ -88,7 +88,7 @@ int init_client(void)
 //	else host = localhost;
 
 //	host = "192.168.42.110";
-	host = "192.168.42.145";
+//	host = "192.168.42.146";
 	ptrh = gethostbyname(host);
 	if( ((char *)ptrh) == NULL)
 	{
@@ -193,7 +193,7 @@ void close_sock(void)
 
 /*********************************************************************/
 #ifndef NOMAIN
-int main(void)
+int main(int argc, char *argv[] )
 {
 	char test1;
 	int rc;
@@ -201,7 +201,13 @@ int main(void)
 	char errmsg[20];
 	memset(errmsg,0,20);
 
-	rc = init_client();
+
+	if(argc < 2)
+	{
+		printf("usage: %s [ipaddress of server]\n",argv[0]);
+		exit(1);
+	}
+	rc = init_client(HOST);
 
 	if(test_sock() == 0)
 	{
