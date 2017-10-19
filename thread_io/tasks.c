@@ -1,18 +1,20 @@
+#if 1
 #include <unistd.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <time.h>
 #include <sys/time.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <sched.h>
 #include <sys/types.h>
 #include <pthread.h>
 #define closesocket close
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -58,10 +60,13 @@ extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg
 static UCHAR serial_buff[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
 
+static char dat_names[NUM_DAT_NAMES][DAT_NAME_STR_LEN];
+
 static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 static int serial_rec;
 static int change_output(int index, int onoff);
+
 /*********************************************************************/
 static void mydelay(unsigned long i)
 {
@@ -75,30 +80,33 @@ static void mydelay(unsigned long i)
 		nanosleep(&sleepTime, &rettime);
 	}
 }
-
+#endif
 /*********************************************************************/
 UCHAR task1(int test)
 {
 	I_DATA tempi1;
 	O_DATA tempo1;
 	int rc = 0;
-	UCHAR cmd;
+	UCHAR cmd = 0x21;
 	UCHAR onoff;
 	char errmsg[50];
 	char filename[15];
 	size_t size;
 	int i;
 	int j = 0;
-	DIR *d;
-	struct dirent *dir;
-	char tempx[30];
-	int num;
-	char *chp;
 	size_t isize;
 	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
 	UCHAR rec_no;
+	struct dirent **namelist;
+	DIR *d;
+	struct dirent *dir;
+	int num;
+	char tempx[40];
+	char *chp;
+
+	memset(dat_names,0,sizeof(dat_names));
 
 	i = NUM_PORT_BITS;
 	isize = sizeof(I_DATA);
@@ -121,7 +129,7 @@ UCHAR task1(int test)
 	{
 		
 	}
-	illist_show(&ill);
+//	illist_show(&ill);
 
 	ollist_init(&oll);
 	if(access(oFileName,F_OK) != -1)
@@ -136,7 +144,7 @@ UCHAR task1(int test)
 	{
 		
 	}
-	ollist_show(&oll);
+//	ollist_show(&oll);
 
 	same_msg = 0;
 
@@ -165,8 +173,6 @@ UCHAR task1(int test)
 //						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
 //							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
 						illist_insert_data(rec_no, &ill, &tempi1);
-//						pid = curr_i_array;
-//						memcpy(pid,&tempi1,sizeof(I_DATA));	
 //						illist_show(&ill);
 						break;
 
@@ -179,14 +185,6 @@ UCHAR task1(int test)
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));	
 //						ollist_show(&oll);
-						break;
-
-					case SHOW_IDATA:
-						illist_show(&ill);
-						break;
-
-					case SHOW_ODATA:
-						ollist_show(&oll);
 						break;
 
 					case SEND_ALL_IDATA:
@@ -230,63 +228,76 @@ UCHAR task1(int test)
 //						printf("sent serial\n");
 						break;
 
-					case LOAD_ORG:	// F7
+					case GET_DIR:
+						printf("GET_DIR\n");
+						d = opendir( "." );
+						if( d == NULL )
+						{
+							printf("bad OPEN_DIR\n");
+//							return -1;
+						}
+						num = 0;
+
+						memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
+						memset(tempx,0,sizeof(tempx));
+
+						while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
+						{
+							if(strcmp( dir->d_name, "." ) == 0 ||  \
+								strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
+							  continue;
+
+							memset(tempx,0,sizeof(tempx));
+							strcpy(tempx,dir->d_name);
+
+							chp = tempx;
+							j = 0;
+
+							while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
+								j++;
+
+							strncpy(tempx,chp,j+1);
+
+							if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
+//							if(dir->d_type == DT_REG)
+							{
+								strcpy(dat_names[num++],dir->d_name);
+//								printf("%s\n",dir->d_name);
+							}
+						}
+						closedir( d );
+						printf("number of dat_names: %d\n",num);
 #if 0
-						printf("loading from org.dat\n");
-						illist_removeall_data(&ill);
-						ollist_removeall_data(&oll);
-						illist_init(&ill);
-						ollist_init(&oll);
-
-						strcpy(iFileName,"iorg.dat\0");
-						size = sizeof(I_DATA) * NUM_PORT_BITS;
-//						rc = iLoadConfig(fptr1,curr_i_array,size,errmsg);
-//						pid = curr_i_array;
-						for(i = 0;i < NUM_PORT_BITS;i++)
+						for(i = 0;i < num;i++)
 						{
-							illist_insert_data(i,&ill,pid);
-							pid++;
+							printf("%s\n",dat_names[i]);
 						}
-//						pid = curr_i_array;
-
-						strcpy(oFileName,"oorg.dat\0");
-						size = sizeof(O_DATA) * NUM_PORT_BITS;
-//						rc = oLoadConfig(fptr1,curr_o_array,size,errmsg);
-//						pod = curr_o_array;
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_insert_data(i,&oll,pod);
-							pod++;
-						}
-//						pod = curr_o_array;
 #endif
-						printf("not implemented\n");
-						break;
-
-					case RESTORE:	// F8	(restore)
-						printf("restored from current data\n");
-#if 0						
-//						pid = curr_i_array;
-						memset(&tempi1,0,sizeof(I_DATA));
-						memset(&tempo1,0,sizeof(O_DATA));
-						for(i = 0;i < NUM_PORT_BITS;i++)
+//						memset(tempx,0x20,sizeof(tempx));
+						send_tcp(&num,1);
+						for(i = 0;i < num;i++)
 						{
-							printf("%2d\t%2d\t%2d\t%2d\t%s\n",pid->port,pid->affected_output,pid->label);
-							memcpy(&tempi1,pid,sizeof(I_DATA));
-							illist_insert_data(i, &ill, &tempi1);
-							pid++;
+							cmd = (UCHAR)strlen(dat_names[i]);
+//							printf("%d %s\n",cmd,dat_names[i]);
+							send_tcp(&cmd,1);
+							send_tcp(&dat_names[i],cmd);
 						}
-//						pod = curr_o_array;
-						for(i = 0;i < NUM_PORT_BITS;i++)
+						for(i = 0;i < num;i++)
 						{
-							printf("%s\t%2d\t%2d\n",pod->label,pod->port,pod->onoff);
-							memcpy(&tempo1,pod,sizeof(O_DATA));
-							ollist_insert_data(i, &oll, &tempo1);
-							pod++;
+							getFileCreationTime(dat_names[i],tempx);
+							j = GetFileFormat(dat_names[i]);
+							if(j < 0)
+								test2 = 0xff;
+							else	
+								test2 = (UCHAR)j;
+							printf("%s  ",dat_names[i]);
+							printf("%s  %x   ",tempx,test2);
+							printf("\n");
+							send_tcp(&tempx,TDATE_STAMP_STR_LEN);
+							send_tcp(&test2,1);
 						}
-						printf("done\n");
-#endif
-						printf("not implemented\n");
+//						close_tcp();	-- do this when the host is crashing
+//										-- otherwise the target locks up
 						break;
 
 					case SAVE_TO_DISK:
@@ -341,15 +352,13 @@ UCHAR task1(int test)
 						break;
 
 					case CLOSE_SOCKET:
+						printf("closing socket\n");
 						close_tcp();
 						break;
 
 					case EXIT_PROGRAM:
 						close_tcp();
 						printf("exiting program\n");
-//						free(curr_i_array);
-//						free(curr_o_array);
-
 						exit(0);
 						break;
 
@@ -371,7 +380,6 @@ UCHAR task1(int test)
 	}
 	return test + 1;
 }
-
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
 // and if an output applies to that input, change the output
@@ -465,8 +473,6 @@ UCHAR task2(int test)
 	}
 	return test + 2;
 }
-
-
 /*********************************************************************/
 // pass in the index into the total list of outputs
 // since each card only has 20 outputs, the last 4 bits of PORT C & F are ignored
@@ -512,8 +518,6 @@ static int change_output(int index, int onoff)
 //	printf("bank: %d\tindex\t%2x\n",bank,index);
 	return index;
 }
-
-
 /*********************************************************************/
 // this just sends a series of ascii chars to the tcp out port (is displayed in tcp_win when opened)
 UCHAR task4(int test)
@@ -526,7 +530,7 @@ UCHAR task4(int test)
 	UCHAR mask = 1;
 
 	while(TRUE)
-		usleep(TIME_DELAY*10);
+		usleep(TIME_DELAY);
 
 	while(TRUE)
 	{
@@ -538,7 +542,6 @@ UCHAR task4(int test)
 //#endif
 	return test + 4;
 }
-
 /*********************************************************************/
 UCHAR task3(int test)
 {
@@ -562,7 +565,6 @@ UCHAR task3(int test)
 	}
 	return test + 3;
 }
-
 /*********************************************************************/
 UCHAR task5(int test)
 {
@@ -576,7 +578,6 @@ UCHAR task5(int test)
 
 	while(TRUE)
 		usleep(TIME_DELAY*10);
-
 
 	while(TRUE)
 	{
@@ -618,7 +619,6 @@ UCHAR task5(int test)
 		}
 	}
 }
-
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor
 
@@ -634,7 +634,6 @@ static struct  sockaddr_in sad;  /* structure to hold server's address  */
 static struct timeval tv;
 static int sock_open;
 static int global_socket;
-
 /*********************************************************************/
 UCHAR task6(int test)
 {
@@ -725,7 +724,6 @@ UCHAR task6(int test)
 	}
 	return test + 6;
 }
-
 /*********************************************************************/
 // check_inputs reads the input port and returns what the actual port
 // is at the machine level
@@ -762,13 +760,11 @@ static UCHAR check_inputs(int i)
 	pthread_mutex_unlock(&io_mem_lock);
 	return result;
 }
-
 /*********************************************************************/
 int test_sock(void)
 {
 	return sock_open;
 }
-
 /*********************************************************************/
 int send_tcp(UCHAR *str,int len)
 {
@@ -787,7 +783,6 @@ int send_tcp(UCHAR *str,int len)
 	else same_msg = 0;
 	return ret;
 }
-
 /*********************************************************************/
 int recv_tcp(UCHAR *str, int strlen,int block)
 {
@@ -811,7 +806,6 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 	}
 	return ret;
 }
-
 /*********************************************************************/
 static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 {
@@ -829,6 +823,8 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 			sprintf(extra_msg," %d",errno);
 			strcat(errmsg,extra_msg);
 			strcat(errmsg," put_sock");
+			printf("address: %d\n",global_socket);
+			close_tcp();
 		}else strcpy(errmsg,"Success\0");
 	}
 	else
@@ -837,10 +833,9 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 		strcpy(errmsg,"sock closed");
 		rc = -1;
 	}
-
+//	printf("%c",buf[0]);
 	return rc;
 }
-
 /*********************************************************************/
 static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 {
@@ -859,7 +854,6 @@ static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 	}else strcpy(errmsg,"Success\0");
 	return rc;
 }
-
 /*********************************************************************/
 void close_tcp(void)
 {
@@ -868,7 +862,6 @@ void close_tcp(void)
 	sock_open = 0;
 	close(global_socket);
 }
-
 /*********************************************************************/
 void SendByte(unsigned char byte)
 {
@@ -878,7 +871,6 @@ void SendByte(unsigned char byte)
 	write_serial(byte);
 	pthread_mutex_unlock(&serial_write_lock);
 }
-
 /*********************************************************************/
 UCHAR ReceiveByte(void)
 {
@@ -889,7 +881,6 @@ UCHAR ReceiveByte(void)
 
 	return rec;
 }
-
 /**********************************************************************/
 void *work_routine(void *arg)
 {
@@ -898,7 +889,7 @@ void *work_routine(void *arg)
 	UCHAR pattern = 0;
 	int not_done=30;
 	i = not_done;
-	printf("\nwork_routine()\tthread %d\tI'm Alive\n", *my_id);
+//	printf("\nwork_routine()\tthread %d\tI'm Alive\n", *my_id);
 
 	pthread_mutex_lock(&threads_ready_lock);
 	threads_ready_count++;
@@ -916,7 +907,7 @@ void *work_routine(void *arg)
 		}
 	}
 	pthread_mutex_unlock(&threads_ready_lock);
-	printf("\nwork_routine()\tthread %d\tI'm Proceeding\n", *my_id);
+//	printf("\nwork_routine()\tthread %d\tI'm Proceeding\n", *my_id);
 
 	while(not_done)
 	{
@@ -942,209 +933,4 @@ void *work_routine(void *arg)
 	return(NULL);
 	close_tcp();
 }
-#if 0
-// test
-/*********************************************************************/
-UCHAR task3(int test)
-{
-	printf("task 3: %d\n",test);
-	UCHAR test2 = 0x20;
-	int bank = 0;
-	UCHAR onoff = 0;
-	int mask;
-	UCHAR mask2;
 
-	while(TRUE)
-		usleep(TIME_DELAY);
-	
-	while(TRUE)
-	{
-		usleep(TIME_DELAY*10);
-		printf("bank: %d mask2: %d mask: %d onoff: %d\n",bank,mask2,mask,onoff);
-		switch(bank)
-		{
-			case 0:
-				OutPortA(onoff,mask2);
-				break;
-			case 1:
-				OutPortB(onoff,mask2);
-				break;
-			case 2:
-				OutPortC(onoff,mask2);
-				break;
-			case 3:
-				OutPortD(onoff,mask2);
-				break;
-			case 4:
-				OutPortE(onoff,mask2);
-				break;
-			case 5:
-				OutPortF(onoff,mask2);
-				break;
-		}
-		if(++mask > 8)
-		{
-			if(++bank > 5)
-				bank = 0;
-			mask = 1;
-		}
-		mask2 = (UCHAR)mask;
-
-		if(test < 2)
-		{
-			printf("exiting task 2\n");
-			return 0;
-		}
-		onoff = ~onoff;
-		onoff &= 1;
-//		SendByte(test2);
-		if(++test2 > 0x7e)
-			test2 = 0x21;
-	}
-//	printf("%c",test1);
-	return test + 3;
-}
-
-
-						printf("changing 1st 10 records in both input and output db\n");
-						strcpy(tempi1.label,"testxyz");
-						tempi1.port = 22;
-						tempi1.type = 11;
-						tempi1.inverse = 33;
-//						tempi1.affected = 44;
-						pid = &tempi1;
-						for(i = 0;i < 10;i++)
-						{
-							illist_insert_data(i,&ill,pid);
-							tempi1.port++;
-//							tempi1.affected++;
-							tempi1.type++;
-							tempi1.inverse++;
-						}
-						strcpy(tempo1.label,"asdf_xyz");
-						tempo1.port= 10;
-						tempo1.onoff = 11;
-						pod = &tempo1;
-						for(i = 0;i < 10;i++)
-						{
-							ollist_insert_data(i, &oll,pod);
-							tempo1.port++;
-							tempo1.onoff++;
-						}
-
-
-#if 0
-						pid = &tempi1;
-						ppid = &pid;
-//						rc = illist_find_data(2,ppid,&ill);
-//						printf("current: %s %d %d\n",tempi1.label,tempi1.port,rc);
-//						printf("current: %s %d %d\n",pid->label,pid->port,rc);
-// don't need to remove - insert will replace the record
-//						illist_remove_data(2,ppid,&ill);
-
-
-						printf("changing record 2\n");
-						strcpy(tempi1.label,"changed I");
-						tempi1.port = 22;
-						tempi1.type = 11;
-//						pid->port = 22;
-//						pid->type = 11;
-//						pid->inverse = 33;
-						pid = &tempi1;
-						ppid = &pid;
-						printf("current: %s %d\n",pid->label,pid->port);
-//						printf("%x %x %x\n",&tempi1,pid,*ppid);
-						illist_insert_data(2,&ill,pid);
-#endif
-//						rc = illist_change_data(2,ppid,&ill);
-//						printf("changed: %s %d\n",tempi1.label,rc);
-
-/*
-						strcpy(tempo1.label,"changed O");
-						tempo1.port = 100;
-						tempo1.onoff = 1;
-
-						pod = &tempo1;
-
-						for(bank = 0;bank < 6;bank++)
-						{
-							printf("%d %x\n",bank,check_inputs(bank));
-						}
-						printf("a: %x\n",InPortByteA());
-						printf("b: %x\n",InPortByteB());
-						printf("c: %x\n",InPortByteC());
-						printf("d: %x\n",InPortByteD());
-						printf("e: %x\n",InPortByteE());
-						printf("f: %x\n\n",InPortByteF());
-*/
-
-
-
-#if 0
-	for(i = 0;i < isize/sizeof(I_DATA);i++)
-	{
-//		printf("%d\t%s\n",pid->port,pid->label);
-		illist_insert_data(i,&ill,pid);
-		pid++;
-	}
-	illist_show(&ill);
-	printf("\n");
-
-	strcpy(temp.label,"test_xyz");
-	temp.port = 56;
-	temp.affected_output = 57;
-	temp.type = 58;
-	pid = &temp;
-	illist_insert_data(5,&ill,pid);
-//	illist_change_data(3,pid,&ill);
-
-//	illist_removeall_data(&ill);
-	illist_show(&ill);
-
-free(curr_i_array);
-free(curr_o_array);
-
-return 0;
-#endif
-
-
-/*
-	d = opendir( "." );
-	if( d == NULL )
-	{
-		return -1;
-	}
-	i = 0;
-*/
-/* this compiles for the embedded linux card but will it run?
-	while(dir = readdir(d))
-	{
-		if(strcmp( dir->d_name, "." ) == 0 ||  strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-		  continue;
-
-		memset(tempx,0,sizeof(tempx));
-		strcpy(tempx,dir->d_name);
-//		format = GetFileFormat(tempx);
-
-		chp = tempx;
-		j = 0;
-
-		while(*chp++ != '.' && j < 30)
-			j++;
-
-		strncpy(tempx,chp,j+1);
-
-//		mvprintw(LINES - 21-i++, 5,"%d  %s  ",j,tempx);
-	    if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-	    {
-//	    	if(GetFileFormat(dir->d_name) == which)
-//				strcpy(dat_names[num++],dir->d_name);
-//			mvprintw(LINES - 21-i++, 0,"%s  %s  %d",dir->d_name,dat_names[k-1],j);
-		}
-	}
-	closedir( d );
-*/
-
-
-
-#endif

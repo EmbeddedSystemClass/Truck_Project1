@@ -58,8 +58,14 @@ $Id: ncurses.c,v 1.365 2011/01/22 19:48:33 tom Exp $
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
 #include "form_sup.h"
+#include "client.h"
 
-int demo_forms(void *curr, int which)
+//extern illist_t ill;
+//extern ollist_t oll;
+
+extern int tcp_connected;
+
+int demo_forms(void *curr, int which, int index)
 {
 	WINDOW *win;
 	FORM *form;
@@ -72,9 +78,12 @@ int demo_forms(void *curr, int which)
 	int finished = 0, c;
 	unsigned n = 0;
 	char tempx[50];
+	char errmsg[40];
 	char *buffer;
 	char *fp;
 	int i;
+	UCHAR cmd;
+	int rc;
 
 	if(which == 1)
 		pid = (I_DATA*)curr;
@@ -102,7 +111,7 @@ int demo_forms(void *curr, int which)
 	memset(f, 0, sizeof(f));
 	f[n++] = make_label(STARTY2-2, 15, "Sample Form");
 
-	if(which == 1)
+	if(which == EDIT_ODATA)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -127,7 +136,7 @@ int demo_forms(void *curr, int which)
 
 // FIELD *make_field(int frow, int fcol, int rows, int cols, int nbufs)
 
-	}else if (which == 0)
+	}else if (which == EDIT_IDATA)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -219,7 +228,7 @@ int demo_forms(void *curr, int which)
 			mvprintw(LINES,2,"escape from demo_forms");
 			return 0;
 		}
-		if(which == 1)
+		if(which == EDIT_IDATA)
 		{
 //			buffer = field_buffer(f[4],0);
 //			pid->port = atoi(buffer);
@@ -238,7 +247,15 @@ int demo_forms(void *curr, int which)
 			buffer[19] = 0;
 			strcpy(pid->label,buffer);
 			curr = (void*)pid;
-		}else if(which == 0)
+			if(tcp_connected)
+			{
+				cmd = SEND_IDATA;
+				rc = put_sock((UCHAR*)&cmd,1,1,errmsg);
+				rc = put_sock((UCHAR*)&index,1,1,errmsg);
+				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
+			}
+				
+		}else if(which == EDIT_ODATA)
 		{
 
 //			buffer = field_buffer(f[4],0);
@@ -260,6 +277,14 @@ int demo_forms(void *curr, int which)
 			buffer[19] = 0;
 			strcpy(pod->label,buffer);
 			curr = (void *)pod;
+
+			if(tcp_connected)
+			{
+				cmd = SEND_ODATA;
+				rc = put_sock((UCHAR *)&cmd,1,1,errmsg);
+				rc = put_sock((UCHAR *)&index,1,1,errmsg);
+				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
+			}
 		}
 		erase_form(form);
 		free_form(form);

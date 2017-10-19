@@ -3,6 +3,14 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/param.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <ctype.h>
 #include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
@@ -17,9 +25,11 @@
 //extern void demo_forms(IO_DATA *cur);
 
 static void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string, chtype color);
-static ITEM **my_items;
+static int getFileCreationTime(char *path,char *str);
 extern int GetFileFormat(char *filename);
-#define MENU_WIDTH 29
+#define MENU_WIDTH 50
+
+char sup_string[NUM_DAT_NAMES][DAT_NAME_STR_LEN+4];
 
 //******************************************************************************************//
 //**************************************** disp_msg ****************************************//
@@ -32,35 +42,36 @@ static void disp_msg(WINDOW *win,char *str,int line)
 	mvwprintw(win,line+1,1,"%s ",str);
 }
 
-#define NUM_DAT_NAMES 20
-
-static char dat_names[NUM_DAT_NAMES][20];
-
+/*
+char dat_names[NUM_DAT_NAMES][DAT_NAME_STR_LEN];
+char tdate_string[NUM_DAT_NAMES][TDATE_STAMP_STR_LEN+5];
+UCHAR dat_type[NUM_DAT_NAMES][2];
+*/
 //******************************************************************************************//
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
 
-int file_menu2(int which, char *ret_str)
+int file_menu2(int num, int which, char *ret_str)
 {
     ITEM *cur_item;
+	ITEM **my_items;
     int c;
     MENU *menu;
     WINDOW *win;
     int i,j,k;
-    I_DATA *curr;
-    I_DATA *pio = curr;
-    I_DATA *tpio = curr;
     int index = 0;
     int finished = 0;
     char tempx[40];
-    int num;
     char *chp;
     int format;
 	struct dirent **namelist;
 	DIR *d;
 	struct dirent *dir;
+	int ret;
 
 /* Initialize curses */
+
+/*
     initscr();
     start_color();
     cbreak();
@@ -68,11 +79,26 @@ int file_menu2(int which, char *ret_str)
     keypad(stdscr, TRUE);
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
-
+*/
 //	num = scandir(".", &namelist, 0, alphasort);
 //	my_items = (ITEM **)calloc(num + 1, sizeof(ITEM *));
 
 //	mvprintw(LINES-20,2,"num: %d ",num);
+
+	num = 0;
+
+	strcpy(sup_string[0],"adf");
+	strcpy(sup_string[1],"adfadf");
+	strcpy(sup_string[2],"testxyz");
+	strcpy(sup_string[3],"testabc");
+	strcpy(sup_string[4],"hellotest");
+	strcpy(sup_string[5],"adfatest");
+	strcpy(sup_string[6],"adfadf");
+	strcpy(sup_string[7],"asdfadf");
+	strcpy(sup_string[8],"testadfasdf");
+num = 9;
+
+#if 0
 
 	d = opendir( "." );
 	if( d == NULL )
@@ -80,9 +106,6 @@ int file_menu2(int which, char *ret_str)
 		return -1;
 	}
 	i = 0;
-	num = 0;
-
-	memset(dat_names,0,NUM_DAT_NAMES*20);
 
 	k = 0;
 	while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
@@ -102,27 +125,47 @@ int file_menu2(int which, char *ret_str)
 
 		strncpy(tempx,chp,j+1);
 
-//		mvprintw(LINES - 21-i++, 5,"%d  %s  ",j,tempx);
+//		mvprintw(LINES - 2-i++, 2,"%d  %s  ",j,tempx);
+//		refresh();
 	    if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
 	    {
-	    	if(GetFileFormat(dir->d_name) == which)
+			ret = GetFileFormat(dir->d_name);
+			if(ret == 1 || ret == 0)
+			{
 				strcpy(dat_names[num++],dir->d_name);
-//			mvprintw(LINES - 21-i++, 0,"%s  %s  %d",dir->d_name,dat_names[k-1],j);
+				dat_type[i][1] = 0;				
+				if(ret == 1)
+					dat_type[i][0] = 'O';
+				else dat_type[i][0] = 'I';
+			}
+//			mvprintw(LINES - 2-i++, 2,"%s  %s  %d",dir->d_name,dat_names[num-1],j);
+//			refresh();
 		}
 	}
 	closedir( d );
+//#if 0
+	for(i = 0;i < num;i++)
+	{
+		getFileCreationTime(dat_names[i],tdate_string[i]);
+//		strcpy(tdate_string[i],"test\0");
+		strcat(tdate_string[i]," ");
+		strcat((char *)tdate_string[i],(const char *)&dat_type[i]);
+	}
+//#endif
 
-	my_items = (ITEM **)calloc(num + 2, sizeof(ITEM *));
+#endif
+
+	my_items = (ITEM **)calloc(num + 1, sizeof(ITEM *));
 
 	for(i = 0;i < num;i++)
 	{
 //		mvprintw(LINES - 21-i, 0,"%s  ",dat_names[i]);
-		my_items[i] = new_item(dat_names[i],"input");
+//		my_items[i] = new_item(dat_names[i],tdate_string[i]);
+		my_items[i] = new_item(sup_string[i],"");
 	}
 
 	my_items[i++] = new_item((char*)NULL,(char *)NULL);
 	my_items[i] = (ITEM *)NULL;
-	num += 2;
 
     menu = new_menu((ITEM **)my_items);
 
@@ -133,16 +176,16 @@ int file_menu2(int which, char *ret_str)
 
 /* Set main window and sub window */
     set_menu_win(menu, win);
-    set_menu_sub(menu, derwin(win, num-3, MENU_WIDTH-3, 3, 1));
-    set_menu_format(menu, num-3, 0);
+//    set_menu_sub(menu, derwin(win, num-3, MENU_WIDTH-3, 3, 1));
+    set_menu_sub(menu, derwin(win, num, MENU_WIDTH-2, 3, 1));
+    set_menu_format(menu, num-3, 1);
 
 /* Set menu mark to the string " * " */
     set_menu_mark(menu, " * ");
 
 /* Print a border around the main window and print a title */
     box(win, 0, 0);
-
-
+/*
 	if(which == 1)
 	{
 	    print_in_middle(win, 1, 0, MENU_WIDTH, "Choose Input", COLOR_PAIR(1));
@@ -153,14 +196,14 @@ int file_menu2(int which, char *ret_str)
 	    print_in_middle(win, 1, 0, MENU_WIDTH, "Choose Output", COLOR_PAIR(1));
 	    disp_msg(win,"F2 to exit; F3 to turn on; F4 off\0",num);
 	}
+*/
+	mvwaddch(win,num,0,ACS_LTEE);
+	mvwaddch(win,num,MENU_WIDTH-1,ACS_RTEE);
+    mvwhline(win, num, 1, ACS_HLINE, MENU_WIDTH-2);
 
     mvwaddch(win, 2, 0, ACS_LTEE);
     mvwhline(win, 2, 1, ACS_HLINE, MENU_WIDTH-2);
     mvwaddch(win, 2, MENU_WIDTH-1, ACS_RTEE);
-
-	mvwaddch(win,num,0,ACS_LTEE);
-	mvwaddch(win,num,MENU_WIDTH-2,ACS_RTEE);
-    mvwhline(win, num, 1, ACS_HLINE, MENU_WIDTH-2);
 
 /* Post the menu */
     post_menu(menu);
@@ -204,9 +247,9 @@ int file_menu2(int which, char *ret_str)
 		    }
 		    cur_item = current_item(menu);
 		    index = item_index(cur_item);
-		    memset(ret_str,0,20);
+		    memset(ret_str,0,40);
 		    strcpy(ret_str,item_name(cur_item));
-//			mvprintw(LINES - 20, 2,"%s    %d   ",ret_str,index);
+			mvprintw(LINES - 2, 2,"%ret_str: s    index: %d   ",ret_str,index);
 			refresh();
 		}
 	}
@@ -248,8 +291,10 @@ static void print_in_middle(WINDOW *win, int starty, int startx, int width, char
     refresh();
 }
 
+/*********************************************************************/
+
 #if 0
-static int walker( char *searching, char *result )
+static int walker( char *searching, char *result )		// not Texas Ranger
 {
   DIR           *d;
   struct dirent *dir;

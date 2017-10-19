@@ -537,6 +537,62 @@ type:
 2) goes on/off at a pulse_time rate until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
 
+11/16/17
+made separate make files (make_db) to compile init_db & list_db on both host and target side
+/thread_io (target) - sched
+/thread_io/ncurses (host) - client
+
+did away with curr_i_array & curr_o_array and just used the ill & oll linked lists
+menus:
+1) Host
+	- Open 
+	- Save File
+	- Save As
+	- Delete
+	- Edit idata
+	- Edit odata
+	- Send idata
+	- Send odata
+	- Exit
+
+2) Target
+	- Open 
+	- Save File
+	- Save As
+	- Delete
+	- List idata
+	- List odata
+	- Get idata
+	- Get odata
+
+3) Tool
+	- TCP Address
+	- Connect
+	- Disconnect
+	- Toggle Output
+	- All Off
+	- All On
+
+types:
+
+	SEND_IDATA = 0x70,
+	SEND_ODATA,
+	EDIT_IDATA,
+	EDIT_ODATA,
+	SEND_ALL_IDATA,
+	SEND_ALL_ODATA,
+	SEND_SERIAL,
+	CLOSE_SOCKET,
+	CLEAR_SCREEN,
+	SAVE_TO_DISK,
+	TOGGLE_OUTPUTS,
+	ALL_OFF,
+	ALL_ON,
+	OPEN_DIR,
+	GET_DIR,
+	EXIT_PROGRAM
+
+
 **************** nice to have's: ****************
 
 SPI is built into the processor and has specific pins allocated on the DIO (interrupt?)
@@ -564,6 +620,40 @@ the brower. (see dev2/TS-7260/www/)
 Have 1 or more TS-7xxx cards in the box but just on diff. ethernet addresses and use the
 D-link box. They would have to have scripts to start them up everytime. (use ssh to 
 shutdown)
+
+make an extra field in the O_DATA and I_DATA structs called group for acting on a group
+
+make command line program that runs on the laptop (client) and does simple commands to TS-7200
+
+timer in AVR goes back to main screen or locks out w/password prompt if so much time
+elapses without keypress
+
+need a way to enter password (alnum stuff)
+
+GPS and accel modules on FPGA (serial?)
+
+cadmium sulfide photodetector for measuing light level for display dim
+
+get mlabels function to work from eeprom when running on AVR
+
+need a timer in AVR that sends msg if it needs ram reloaded
+
+LOAD_RAM needs the transmit/receiveByte calls
+
+get alnum to work - just do it like the edit boxes only A->D is printed and
+'*' is escape and '#' is 'enter'
+
+do/init_exec has prompts but not part of check_boxes[]
+
+do_exec's have list of ptr's to exec if on AVR
+
+need some way to tell if AVR goes off the rails so it can reset itself
+
+any checkbox can apply to a 'group' IO
+
+have a 100 or byte section at beginning of dat files (just after the id tag) reserved
+for comments that can be edited and viewed.
+
 
 ***************** unrelated ********************
 Use small HD44780 with a couple small push-buttons to make a liquor dispenser using

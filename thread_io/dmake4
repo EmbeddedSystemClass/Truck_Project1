@@ -2,12 +2,13 @@ make clean
 make &> out.txt
 if grep -q error out.txt
  then 
+ find2 warning out.txt
  find2 error out.txt
  exit 1
 fi
 
 scp sched 192.168.42.145:/home/dan
-
-./dmake2
+rm *.o
+#./dmake2
 
 

@@ -1,3 +1,8 @@
+#ifdef NOTARGET
+#warning "NOTARGET defined"
+#else
+#warning "NOTARGET not defined"
+#endif
 #ifndef CONFIG_FILE
 #warning "CONFIG_FILE not defined"
 extern illist_t ill;
@@ -13,5 +18,5 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
-//int iWriteConfig2(char *filename, I_DATA *curr_io_array,size_t size,int offset,char *errmsg);
-//int oWriteConfig2(char *filename, O_DATA *curr_io_array,size_t size,int offset,char *errmsg);
+int GetFileFormat(char *filename);
+int getFileCreationTime(char *path,char *str);

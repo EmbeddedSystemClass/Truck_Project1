@@ -174,7 +174,8 @@ int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 		rc = recv(global_socket,buf,buflen,MSG_WAITALL);
 	else
 		rc = recv(global_socket,buf,buflen,MSG_DONTWAIT);
-	if(rc < 0 && errno != 11)
+//	if(rc < 0 && errno != 11)
+	if(rc < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		sprintf(extra_msg," %d",errno);

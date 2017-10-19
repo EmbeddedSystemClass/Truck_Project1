@@ -20,9 +20,6 @@ extern int init_server(void);
 //extern int recv_tcp(char *recv_buf, int len, char *errmsg);
 extern int tcp_connected;
 
-extern I_DATA *curr_i_array;
-extern O_DATA *curr_o_array;
-
 //******************************************************************************************//
 //************************************* clear_screen ***************************************//
 //******************************************************************************************//
@@ -52,7 +49,7 @@ static void disp_msg(WINDOW *win,char *str)
 //******************************************************************************************//
 //**************************************** tcp_win *****************************************//
 //******************************************************************************************//
-int tcp_win(I_DATA *i_data, O_DATA *o_data)
+int tcp_win(void)
 {
 	WINDOW *twin;
 	int startx, starty;
@@ -66,30 +63,9 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 	int noerrors = 0;
 	UCHAR cmd;
 	UCHAR param;
-	I_DATA *i_datap;
-	O_DATA *o_datap;
-	i_datap = i_data;
-	o_datap = o_data;
 	UCHAR num_i_recs = 0;
 	UCHAR num_o_recs = 0;
 	int finished;
-
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		if(i_datap->label[0] != 0)
-			num_i_recs++;
-		i_datap++;
-	}
-
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		if(o_datap->label[0] != 0)
-			num_o_recs++;
-		o_datap++;
-	}
-
-	i_datap = i_data;
-	o_datap = o_data;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 	nodelay(stdscr,TRUE);
@@ -162,6 +138,7 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 #endif
 		switch(ch)
 		{
+			// CONNECT
 			case KEY_F(3):
 				if(tcp_connected == 0)
 				{
@@ -180,11 +157,13 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 						}else
 						{
 							tcp_connected = 1;
-							disp_msg(twin,"tcp connected");
+							disp_msg(twin,"tcp connected\0");
 						}
 					}
 				}
 				break;
+
+			// DISCONNECT
 			case KEY_F(4):
 				if(tcp_connected == 1)
 				{
@@ -192,78 +171,29 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 					put_sock(&cmd,1,1,errmsg);
 					usleep(TIME_DELAY*100);
 					close_sock();
-					disp_msg(twin,"connection closed");
+					disp_msg(twin,"connection closed\0");
 				}
 				tcp_connected = 0;
 				break;
+
+			// SEND OPEN_DIR
 			case KEY_F(5):
 				break;
+
+			// SEND GET_DIR
 			case KEY_F(6):
 				if(tcp_connected == 1)
 				{
-					cmd =  SEND_SERIAL;
+					cmd = GET_DIR;
+//					cmd =  SEND_SERIAL;
 //					rc = send_tcp(&cmd,1,errmsg);
 					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"serial test\0");
+//					disp_msg(twin,"serial test\0");
 				}
 				else
 					disp_msg(twin,"no connection\0");
 				break;
-			case KEY_F(7):
-				if(tcp_connected == 1)
-				{
-					cmd = LOAD_ORG;
-//					rc = send_tcp(&cmd,1,errmsg);
-					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"load org\0");
-				}
-				else
-					disp_msg(twin,"no connection\0");
-				break;
-			case KEY_F(8):
-				if(tcp_connected == 1)
-				{
-					cmd = RESTORE;
-					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"restore\0");
-				}
-				else
-					disp_msg(twin,"no connection\0");
-				break;
-			case KEY_F(9):
-				if(tcp_connected == 1)
-				{
-					disp_msg(twin,"key F9\0");
-					cmd = SEND_ALL_IDATA;
-					rc = put_sock(&cmd,1,1,errmsg);
-					i_datap = i_data;
-					disp_msg(twin,"update idata\0");
-					i_datap = i_data;
-					o_datap = o_data;
-					for(i = 0;i < NUM_PORT_BITS;i++)
-					{
-						rc += put_sock((UCHAR*)i_datap,sizeof(I_DATA),1,errmsg);
-						i_datap++;
-					}
-				}
-				else
-					disp_msg(twin,"no connection\0");
-				break;
-			case KEY_F(10):
-				if(tcp_connected == 1)
-				{
-					cmd = SEND_ALL_ODATA;
-					rc = put_sock(&cmd,1,1,errmsg);
-					disp_msg(twin,"update odata\0");
-					o_datap = o_data;
-					for(i = 0;i < NUM_PORT_BITS;i++)
-					{
-						rc += put_sock((UCHAR*)o_datap,sizeof(O_DATA),1,errmsg);
-						o_datap++;
-					}
-				}
-				else
-					disp_msg(twin,"no connection\0");
+			default:	
 				break;
 		}
 		if(tcp_connected == 1)
@@ -283,23 +213,26 @@ int tcp_win(I_DATA *i_data, O_DATA *o_data)
 			{
 				noerrors++;
 				mvwprintw(twin,error_line2,1,"%s %d  %d           ",errmsg,errno,noerrors);
+				wrefresh(twin);
 				errno = 0;
 			}
 
 			usleep(TIME_DELAY);
 
-			if(++x > WIDTH-2)
+			if(errno != 11)
 			{
-				x = 1;
-				if(++y > status_line - 2)
+				if(++x > WIDTH-2)
 				{
-					clr_scr(twin);
-					y = 1;
+					x = 1;
+					if(++y > status_line - 2)
+					{
+						clr_scr(twin);
+						y = 1;
+					}
 				}
+				mvwprintw(twin,y,x,"%c",test);
+				wrefresh(twin);
 			}
-			mvwprintw(twin,y,x,"%c",test);
-
-			wrefresh(twin);
 		}
 	}	// while getch() != F2
 

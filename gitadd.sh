@@ -66,6 +66,7 @@ git add thread_io/mytypes.h
 git add thread_io/ncurses/demo_forms2.c
 git add thread_io/ncurses/demo_menus2.c
 git add thread_io/ncurses/menu_scroll2.c
+git add thread_io/ncurses/menu_scroll3.c
 git add thread_io/ncurses/Makefile
 git add thread_io/ncurses/init_db.c
 git add thread_io/ncurses/list_db.c
@@ -80,6 +81,8 @@ git add thread_io/ncurses/form_supplement.c
 git add thread_io/ncurses/form_sup.h
 git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
+git add thread_io/ncurses/text_entry.c
+git add thread_io/ncurses/text_entry.h
 git add thread_io/thread_io_notes.txt
 git add thread_io/dmake4
 git add thread_io/test_tcp/*.c

@@ -8,19 +8,20 @@
 #include <menu.h>
 #include "client.h"
 
-#define WIN_WIDTH 56
-#define WIN_WIDTH2 44
+#define WIN_WIDTH 50
 
 //void func(IO_DATA *cur);
 
 //#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
-extern illist_t ill;
-extern ollist_t oll;
+//extern illist_t ill;
+//extern ollist_t oll;
 
-extern int tcp_connected;
-
-extern int demo_forms(void *cur,int which, int index);
+//extern int tcp_connected;
+char sup_string[NUM_DAT_NAMES][DAT_NAME_STR_LEN+4];
+char tdate_string[NUM_DAT_NAMES][TDATE_STAMP_STR_LEN+10];
+UCHAR dat_type[NUM_DAT_NAMES];
+UCHAR dat_len[NUM_DAT_NAMES];
 
 static void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string, chtype color);
 
@@ -39,150 +40,106 @@ static void disp_msg(WINDOW *win,char *str,int line)
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
 //int menu_scroll2(I_DATA *curr,int num,int which)
-int menu_scroll2(int num,int which,char *filename)
+int menu_scroll3(int num, int which, UCHAR *str)
 {
     ITEM **my_items;
     ITEM *cur_item;
     int c;
     MENU *my_menu;
     WINDOW *twin;
-    int i;
-	I_DATA i_data;
-	O_DATA o_data;
-    I_DATA *pi = &i_data;
-    O_DATA *po = &o_data;
-    void *pcurr;
+    int i,j,k;
     int index = -1;
     int finished = 0;
-    char tempx[6];
     UCHAR outc;
-	char errmsg[40];
 	int win_width;
-
-/* Initialize curses */
-/*
-    initscr();
-    start_color();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_CYAN, COLOR_BLACK);
-*/
-//	char *sup_string = (char *)calloc(num+1,7);
-	char sup_string[41][40];
+	UCHAR *chptr;
 
 /* Create items */
-    my_items = (ITEM **)calloc(num+1, sizeof(ITEM *));
 
-	if(which == EDIT_IDATA)
+	chptr = str;
+//	num--;
+
+	memset(sup_string,0,(NUM_DAT_NAMES*(DAT_NAME_STR_LEN+4)));
+	memset(tdate_string,0,(NUM_DAT_NAMES*(TDATE_STAMP_STR_LEN+10)));
+	
+	win_width = WIN_WIDTH;
+	for(i = 0; i < num; i++)
 	{
-		win_width = WIN_WIDTH2;
-		mvprintw(LINES - 21, 0,"%ld ",sizeof(I_DATA));
-		for(i = 0; i < num; ++i)
-		{
-			illist_find_data(i,&pi,&ill);
-			sprintf(tempx,"%2d",pi->port);
-//			mvprintw(LINES - 21-i, 0,"%s ",tempx);
-			strcpy(sup_string[i],tempx);
-			sprintf(tempx,"%2d",pi->affected_output);
-			strcat(sup_string[i],"           ");
-			strcat(sup_string[i],tempx);
-//			sprintf(tempx,"%d",pi->type);
-//			strcat(sup_string[i],"  ");
-//			strcat(sup_string[i],tempx);
-//			sprintf(tempx,"%d",pi->inverse);
-//			strcat(sup_string[i],"  ");
-//			strcat(sup_string[i],tempx);
-//			mvprintw(LINES - 10-i, 0,"%s                 ",sup_string[i]);
-		}
+		memcpy((UCHAR*)&dat_len[i],chptr,1);
+		chptr++;
+//			memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
+		memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
+		strcat(sup_string[i],"   ");
+		mvprintw(LINES - 2-i, 2,"%x   ",dat_len[i]);
+		mvprintw(LINES - 2-i, 2,"%s   ",sup_string[i]);
+		refresh();
+		chptr += dat_len[i];
+		dat_type[i] = *(chptr);
+		chptr++;
+		memcpy((UCHAR*)&tdate_string[i],chptr,TDATE_STAMP_STR_LEN);
+		mvprintw(LINES - 2-i, 30,"%s   ",tdate_string[i]);
+		refresh();
+		chptr += TDATE_STAMP_STR_LEN;
+
+#if 0
+		memcpy((UCHAR*)&dat_len,chptr,1);
+		chptr++;
+		memset(sup_string,0,sizeof(sup_string));
+		memcpy((UCHAR*)&sup_string,chptr,dat_len);
+		strcat(sup_string,"  ");
+//		mvprintw(LINES - 2-i, 2,"%d   ",dat_len);
+//		mvprintw(LINES - 2-i, 10,"%s   ",sup_string);
+//		refresh();
+//		sup_string[dat_len+2] = 0;
+		chptr += dat_len;
+		dat_type = *(chptr);
+		chptr++;
+		memset(tdate_string,0,sizeof(tdate_string));
+		memcpy((UCHAR*)&tdate_string,chptr,TDATE_STAMP_STR_LEN);
+//		tdate_string[TDATE_STAMP_STR_LEN] = 0;
+//		mvprintw(LINES - 2-i, 40,"%s   ",tdate_string);
+//		refresh();
+		chptr += TDATE_STAMP_STR_LEN;
+#endif
 	}
-	else if(which == EDIT_ODATA)
+    my_items = (ITEM **)calloc(num, sizeof(ITEM *));
+
+	for(i = 0;i < num;i++)
 	{
-		win_width = WIN_WIDTH;
-		for(i = 0; i < num; ++i)
+		if(dat_type[i] != 0xFF)
 		{
-			ollist_find_data(i,&po,&oll);
-			sprintf(tempx,"%2d",po->port);
-			strcat(sup_string[i],"  ");
-			strcpy(sup_string[i],tempx);
-			strcat(sup_string[i],"   ");
+//#if 0
+			strcat(tdate_string[i]," ");
 
-			if(po->onoff != 0)
-				strcpy(tempx,"ON\0");
-			else strcpy(tempx,"OFF\0");	
-			strcat(sup_string[i],"  ");
-
-			sprintf(tempx,"%2d",po->type);
-			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
-
-			sprintf(tempx,"%4d",po->time_delay);
-			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
-
-			sprintf(tempx,"%4d",po->pulse_time);
-			strcat(sup_string[i],"  ");
-			strcat(sup_string[i],tempx);
-
-//			mvprintw(LINES - 10-i, 0,"%s              ",sup_string[i]);
-//			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
-		}
-	}
-	else if(which == TOGGLE_OUTPUTS)
-	{
-		win_width = WIN_WIDTH2;
-		for(i = 0; i < num; ++i)
-		{
-			sprintf(tempx,"%2d",po->port);
-			strcat(sup_string[i],"  ");
-			strcpy(sup_string[i],tempx);
-			strcat(sup_string[i],"   ");
-
-			if(po->onoff > 0)
-				sprintf(tempx,"ON");
-			else
-				sprintf(tempx,"OFF");
-			strcat(sup_string[i],tempx);
-/*
-			sprintf(tempx,"%2d",po->type);
-			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
-
-			sprintf(tempx,"%4d",po->time_delay);
-			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
-
-			sprintf(tempx,"%4d",po->pulse_time);
-			strcat(sup_string[i],"  ");
-			strcat(sup_string[i],tempx);
-*/
-//			mvprintw(LINES - 10-i, 0,"%s              ",sup_string[i]);
-//			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
+			if(dat_type[i] == 0)
+				strcat(tdate_string[i],"I");
+			else strcat(tdate_string[i],"O");
+//#endif
+//			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string,sup_string);
+			my_items[i] = new_item(sup_string[i],tdate_string[i]);
+//			my_items[i]->index = i;
+//			my_items[i]->y = i;
+//			mvprintw(LINES - 4-i, 2,"%s  %d  %d  %d",my_items[i]->name.str,
+//					my_items[i]->name.length,my_items[i]->index,my_items[i]->y);
+//			refresh();
 		}
 	}
 
-    for(i = 0; i < num; ++i)
-    {
-		if(which == 1)
-		{
-			illist_find_data(i,&pi,&ill);
-			my_items[i] = new_item(pi->label, sup_string[i]);
-	    }
-	    else if(which == 0 || which == 2)
-		{
-			ollist_find_data(i,&po,&oll);
-			my_items[i] = new_item(po->label, sup_string[i]);
-	    }
-    }
-	my_items[++i] = new_item((char*)NULL,(char *)NULL);
-	my_items[i] = (ITEM *)NULL;
+//	my_items[i] = new_item((char*)NULL,(char *)NULL);
+//	i++;
+//	my_items[i] = (ITEM *)NULL;
 
 /* Create menu */
 //	mvprintw(LINES-1, 0,"done");
 //	getch();
     my_menu = new_menu((ITEM **)my_items);
 
+	for(i = 0;i < num;i++)
+	{
+			mvprintw(LINES - 4-i, 2,"%s  %d  %d  %d",my_items[i]->name.str,
+					my_items[i]->name.length,my_items[i]->index,my_items[i]->y);
+			refresh();
+	}
 /* Create the window to be associated with the menu */
 
     twin = newwin(num+3, win_width, 0, 40);
@@ -202,7 +159,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 /* Print a border around the main window and print a title */
     box(twin, 0, 0);
 
-    print_in_middle(twin, 1, 0, 40, filename, COLOR_PAIR(1));
+    print_in_middle(twin, 1, 0, 40, "target dir", COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,win_width-1,ACS_RTEE);
@@ -258,50 +215,30 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 			case 10: /* Enter */
 				cur_item = current_item(my_menu);
 				index = item_index(cur_item);
-
-				switch(which)
+				finished = 1;
+				for(i = 0;i < num;i++)
 				{
-					case EDIT_ODATA:	// 0_DATA (choose)
-						ollist_find_data(index,&po,&oll);
-						if(demo_forms(po,which,index) != TRUE)
-							finished = 1;
-						disp_msg(twin,"EDIT_ODATA\0",num);
-					break;
-					case EDIT_IDATA:		// I_DATA
-						illist_find_data(index,&pi,&ill);
-						if(demo_forms(pi,which,index) != TRUE)
-							finished = 1;
-						disp_msg(twin,"EDIT_IDATA\0",num);
-					break;
-					case TOGGLE_OUTPUTS:	// O_DATA (toggle output)
-						ollist_find_data(index,&po,&oll);
-						if(po->onoff > 0)
-							po->onoff = 0;
-						else
-							po->onoff = 1;
-						disp_msg(twin,"which = 0\0",num);
-						if(tcp_connected)
-						{
-							outc = TOGGLE_OUTPUTS;
-							put_sock(&outc,1,1,errmsg);
-							outc = (UCHAR)index;
-							put_sock(&outc,1,1,errmsg);
-							put_sock(&po->onoff,1,1,errmsg);
-						}
-						finished = 1;
-					break;
-					default:
-						finished = 1;
-					break;
+//					mvprintw(LINES - 10-i, 2,"%d %s  %s     ",index,sup_string[i],tdate_string[i]);
+//					mvprintw(LINES - 10-i, 2,"%d %s       ",index,sup_string[i]);
+//					refresh();
 				}
 
 				break;
 			case KEY_F(2):
 				finished = 1;
+				disp_msg(twin,"F2\0",num);
 				break;
+			case KEY_F(3):
+				disp_msg(twin,"F3\0",num);
+				break;
+			case KEY_F(4):
+				disp_msg(twin,"F4\0",num);
 				break;
 			case KEY_F(5):
 				disp_msg(twin,"F5\0",num);
+				break;
+			case KEY_F(6):
+				disp_msg(twin,"F6\0",num);
 				break;
 			default:
 				break;
@@ -322,8 +259,8 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 //	getch();
     unpost_menu(my_menu);
     free_menu(my_menu);
-    for(i = 0; i < num; ++i)
-        free_item(my_items[i]);
+	for(i = 0; i < num; ++i)
+		free_item(my_items[i]);
 //    endwin();
 //	delwin(twin);
 	werase(twin);

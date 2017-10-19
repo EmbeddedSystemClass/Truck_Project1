@@ -11,16 +11,19 @@ typedef unsigned int UINT;
 // this is the same as NUM_PORT_BITS (should be...)
 #define NUM_DATA_RECS 40
 
+#define NUM_DAT_NAMES 45
+#define DAT_NAME_STR_LEN 25
+//#define TDATE_STAMP_STR_LEN 25	// "Tue Oct 17 16:30:37 2017\0"
+#define TDATE_STAMP_STR_LEN 16		// "Oct 17 16:30:37\0"
+
 enum cmd_types
 {
-	SEND_IDATA = 0x70,
+	SEND_IDATA,
 	SEND_ODATA,
-	SHOW_IDATA,
-	SHOW_ODATA,
+	EDIT_IDATA,
+	EDIT_ODATA,
 	SEND_ALL_IDATA,
 	SEND_ALL_ODATA,
-	RESTORE,
-	LOAD_ORG,
 	SEND_SERIAL,
 	CLOSE_SOCKET,
 	CLEAR_SCREEN,
@@ -28,6 +31,8 @@ enum cmd_types
 	TOGGLE_OUTPUTS,
 	ALL_OFF,
 	ALL_ON,
+	GET_DIR,
 	EXIT_PROGRAM
 }CMD_TYPES;
+
 #endif

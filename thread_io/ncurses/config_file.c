@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <assert.h>
 #include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
@@ -427,6 +428,17 @@ int GetFileFormat(char *filename)
 	else return -1;
 	close(fp);
 	strcpy(errmsg,"Success\0");
+	return 0;
+}
+/*********************************************************************/
+int getFileCreationTime(char *path,char *str) 
+{
+// MM:DD-HH:MM:SS
+    struct stat attr;
+    stat(path, &attr);
+    strncpy(str,ctime(&attr.st_mtime),24);
+    *(str + 19) = 0;
+    strcpy(str,str+4);
 	return 0;
 }
 
