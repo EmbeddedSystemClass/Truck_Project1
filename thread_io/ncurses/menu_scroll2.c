@@ -8,8 +8,8 @@
 #include <menu.h>
 #include "client.h"
 
-#define WIN_WIDTH 56
-#define WIN_WIDTH2 44
+#define OWIN_WIDTH 66
+#define IWIN_WIDTH 31
 
 //void func(IO_DATA *cur);
 
@@ -70,14 +70,15 @@ int menu_scroll2(int num,int which,char *filename)
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
 */
 //	char *sup_string = (char *)calloc(num+1,7);
-	char sup_string[41][40];
+	char sup_string[41][50];
+	memset(sup_string,0,41*50);
 
 /* Create items */
     my_items = (ITEM **)calloc(num+1, sizeof(ITEM *));
 
 	if(which == EDIT_IDATA)
 	{
-		win_width = WIN_WIDTH2;
+		win_width = IWIN_WIDTH;
 		mvprintw(LINES - 21, 0,"%ld ",sizeof(I_DATA));
 		for(i = 0; i < num; ++i)
 		{
@@ -86,7 +87,7 @@ int menu_scroll2(int num,int which,char *filename)
 //			mvprintw(LINES - 21-i, 0,"%s ",tempx);
 			strcpy(sup_string[i],tempx);
 			sprintf(tempx,"%2d",pi->affected_output);
-			strcat(sup_string[i],"           ");
+			strcat(sup_string[i],"   ");
 			strcat(sup_string[i],tempx);
 //			sprintf(tempx,"%d",pi->type);
 //			strcat(sup_string[i],"  ");
@@ -99,39 +100,39 @@ int menu_scroll2(int num,int which,char *filename)
 	}
 	else if(which == EDIT_ODATA)
 	{
-		win_width = WIN_WIDTH;
+		win_width = OWIN_WIDTH;
 		for(i = 0; i < num; ++i)
 		{
 			ollist_find_data(i,&po,&oll);
-			sprintf(tempx,"%2d",po->port);
-			strcat(sup_string[i],"  ");
-			strcpy(sup_string[i],tempx);
-			strcat(sup_string[i],"   ");
+			sprintf(tempx,"%2d ",po->port);
+			strcpy(sup_string[i],"     ");
+			strcat(sup_string[i],tempx);
+			strcat(sup_string[i],"    ");
 
 			if(po->onoff != 0)
-				strcpy(tempx,"ON\0");
-			else strcpy(tempx,"OFF\0");	
-			strcat(sup_string[i],"  ");
+				strcpy(tempx, "ON    ");
+			else strcpy(tempx,"OFF   ");	
+			strcat(sup_string[i],tempx);
 
 			sprintf(tempx,"%2d",po->type);
 			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
+			strcat(sup_string[i],"   ");
 
 			sprintf(tempx,"%4d",po->time_delay);
 			strcat(sup_string[i],tempx);
-			strcat(sup_string[i],"  ");
+			strcat(sup_string[i],"   ");
 
 			sprintf(tempx,"%4d",po->pulse_time);
-			strcat(sup_string[i],"  ");
+			strcat(sup_string[i],"   ");
 			strcat(sup_string[i],tempx);
 
-//			mvprintw(LINES - 10-i, 0,"%s              ",sup_string[i]);
-//			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
+//			mvprintw(LINES - 2-i, 0,"%s      ",sup_string[i]);
+//			mvprintw(LINES - 2-i, 30,"%d ",strlen(sup_string[i]));
 		}
 	}
-	else if(which == TOGGLE_OUTPUTS)
+	else if(which == EDIT_IDATA)
 	{
-		win_width = WIN_WIDTH2;
+		win_width = IWIN_WIDTH;
 		for(i = 0; i < num; ++i)
 		{
 			sprintf(tempx,"%2d",po->port);
@@ -164,12 +165,12 @@ int menu_scroll2(int num,int which,char *filename)
 
     for(i = 0; i < num; ++i)
     {
-		if(which == 1)
+		if(which == EDIT_IDATA)
 		{
 			illist_find_data(i,&pi,&ill);
 			my_items[i] = new_item(pi->label, sup_string[i]);
 	    }
-	    else if(which == 0 || which == 2)
+	    else if(which == EDIT_ODATA || which == TOGGLE_OUTPUTS)
 		{
 			ollist_find_data(i,&po,&oll);
 			my_items[i] = new_item(po->label, sup_string[i]);
@@ -185,7 +186,7 @@ int menu_scroll2(int num,int which,char *filename)
 
 /* Create the window to be associated with the menu */
 
-    twin = newwin(num+3, win_width, 0, 40);
+    twin = newwin(num+3, win_width, 2, 33);
     keypad(twin, TRUE);
 
 /* Set main window and sub window */
@@ -202,7 +203,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 /* Print a border around the main window and print a title */
     box(twin, 0, 0);
 
-    print_in_middle(twin, 1, 0, 40, filename, COLOR_PAIR(1));
+    print_in_middle(twin, 1, 2, 40, filename, COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,win_width-1,ACS_RTEE);
@@ -263,14 +264,26 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 				{
 					case EDIT_ODATA:	// 0_DATA (choose)
 						ollist_find_data(index,&po,&oll);
+//					    mvprintw(LINES - 2, 2,"demo_forms: %s",po->label);
+//						refresh();
+//						getch();
 						if(demo_forms(po,which,index) != TRUE)
+						{
 							finished = 1;
+							ollist_insert_data(index,&oll,&po);
+						}
 						disp_msg(twin,"EDIT_ODATA\0",num);
 					break;
 					case EDIT_IDATA:		// I_DATA
 						illist_find_data(index,&pi,&ill);
+//					    mvprintw(LINES - 2, 2,"demo_forms: %s",pi->label);
+//						refresh();
+//						getch();
 						if(demo_forms(pi,which,index) != TRUE)
+						{
 							finished = 1;
+							illist_insert_data(index,&ill,&pi);
+						}
 						disp_msg(twin,"EDIT_IDATA\0",num);
 					break;
 					case TOGGLE_OUTPUTS:	// O_DATA (toggle output)
@@ -279,7 +292,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 							po->onoff = 0;
 						else
 							po->onoff = 1;
-						disp_msg(twin,"which = 0\0",num);
+						disp_msg(twin,"TOGGLE_OUTPUTS\0",num);
 						if(tcp_connected)
 						{
 							outc = TOGGLE_OUTPUTS;
@@ -312,7 +325,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 //		mvwprintw(twin,2,2,"index: %d",index);
 	}
 
-	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
+//	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
     wrefresh(twin);
 //	mvprintw(LINES - 20, 2,"                            ");
 //     wrefresh(twin);

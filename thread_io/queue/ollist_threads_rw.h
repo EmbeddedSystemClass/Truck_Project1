@@ -24,6 +24,8 @@
 #define FALSE   0
 #endif
 
+#define OLABELSIZE 20
+
 typedef struct o_data
 {
 	char label[20];

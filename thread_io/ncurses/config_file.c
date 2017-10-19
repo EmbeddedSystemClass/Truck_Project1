@@ -13,6 +13,13 @@
 #include "../ioports.h"
 #include "config_file.h"
 
+#ifdef MAKE_TARGET
+#warning "MAKE_TARGET defined"
+#else
+#include "test.priv.h"
+#warning "MAKE_TARGET not defined"
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 #ifndef CONFIG_FILE
 int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
@@ -28,7 +35,14 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
-		return 1;
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	i = lseek(fp,0,SEEK_SET);
@@ -72,7 +86,15 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 	fp = open((const char *)fptr, O_RDWR);
 	if(fp < 0)
 	{
-		return 1;
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	i = lseek(fp,0,SEEK_SET);
@@ -105,16 +127,22 @@ int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 	I_DATA *pio = &io;
 	UCHAR id = 0x55;
 
-#ifdef NOTARGET
+//#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-#else
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-#endif
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-		return 1;
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 	j = 0;
 //	printf("fp = %d\n",fp);
@@ -143,16 +171,22 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 	O_DATA *pio = &io;
 	UCHAR id = 0xAA;
 
-#ifdef NOTARGET
+//#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-#else
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-#endif
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-		return 1;
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	j = 0;
@@ -185,7 +219,14 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
-		return 1;
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	i = lseek(fp,0,SEEK_SET);
@@ -221,7 +262,15 @@ int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	fp = open((const char *)fptr, O_RDWR);
 	if(fp < 0)
 	{
-		return 1;
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	i = lseek(fp,0,SEEK_SET);
@@ -250,16 +299,22 @@ int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	I_DATA *pio = &io;
 	I_DATA *curr_i_array2 = curr_i_array;
 	UCHAR id = 0x55;
-#ifdef NOTARGET
+//#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-#else
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-#endif
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-		return 1;
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 	j = 0;
 //	printf("fp = %d\n",fp);
@@ -290,16 +345,22 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	O_DATA *curr_o_array2 = curr_o_array;
 	UCHAR id = 0xAA;
 
-#ifdef NOTARGET
+//#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-#else
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-#endif
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-		return 1;
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	j = 0;
@@ -319,86 +380,6 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-/***************************************************************************/
-#if 0
-int iWriteConfig2(char *filename, I_DATA *curr_io_array,size_t size,int offset,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i;
-	fptr = (char *)filename;
-	I_DATA *pio;
-	I_DATA *curr_io_array2 = curr_io_array;
-	UCHAR id;
-
-//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-		return -1;
-	}
-	lseek(fp,0,SEEK_SET);
-	i = read(fp,&id,1);
-	if(id != 0x55)
-	{
-		strcpy(errmsg,"iWriteConfig2 \0");
-		strcat(errmsg,"invalid file format - id is not 0x55\0");
-		close(fp);
-		return -1;
-	}
-//	printf("fp:%d offset:%d\n",fp,offset);
-//	printf("seek=%lu\n",lseek(fp,0,SEEK_SET));
-	i = lseek(fp,offset*sizeof(I_DATA),SEEK_SET);
-//	printf("%s seek:%d",strerror(errno),i);
-	pio = curr_io_array2;
-	i = write(fp,(const void*)pio,sizeof(I_DATA));
-//	printf("wrote %d bytes",j);
-//	mvprintw(LINES - 3, 0,"wrote %d bytes\n",j);
-
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-
-/***************************************************************************/
-int oWriteConfig2(char *filename, O_DATA *curr_io_array,size_t size,int offset,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i;
-	fptr = (char *)filename;
-	O_DATA *pio;
-	O_DATA *curr_io_array2 = curr_io_array;
-	UCHAR id;
-
-//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-		return -1;
-	}
-	lseek(fp,0,SEEK_SET);
-	i = read(fp,&id,1);
-	if(id != 0xAA)
-	{
-		strcpy(errmsg,"iWriteConfig2 \0");
-		strcat(errmsg,"invalid file format - id is not 0x55 %d\0");
-		close(fp);
-		return -1;
-	}
-	i = lseek(fp,offset*sizeof(O_DATA),SEEK_SET);
-	pio = curr_io_array2;
-	i = write(fp,(const void*)pio,sizeof(O_DATA));
-
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-#endif
 /////////////////////////////////////////////////////////////////////////////
 int GetFileFormat(char *filename)
 {
@@ -408,13 +389,19 @@ int GetFileFormat(char *filename)
 	fptr = (char *)filename;
 	UCHAR id;
 	char errmsg[40];
-
-	fp = open((const char *)fptr, O_RDWR);
+	fp = open((const char *)fptr, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//	fp = open((const char *)fptr, O_RDONLY);
 	if(fp < 0)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-		return -1;
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+		return -2;
 	}
 
 	i = lseek(fp,0,SEEK_SET);

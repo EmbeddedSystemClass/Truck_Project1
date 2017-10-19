@@ -55,7 +55,7 @@ extern char iFileName[20];
 extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
-#define SERIAL_BUFF_SIZE 200
+#define SERIAL_BUFF_SIZE 500
 
 static UCHAR serial_buff[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
@@ -82,6 +82,7 @@ static void mydelay(unsigned long i)
 }
 #endif
 /*********************************************************************/
+// task to get commands from the host
 UCHAR task1(int test)
 {
 	I_DATA tempi1;
@@ -266,7 +267,7 @@ UCHAR task1(int test)
 							}
 						}
 						closedir( d );
-						printf("number of dat_names: %d\n",num);
+						printf("number of dat files: %d\n",num);
 #if 0
 						for(i = 0;i < num;i++)
 						{
@@ -369,7 +370,7 @@ UCHAR task1(int test)
 		}else	// if test_sock
 		{
 //			printf("no connection %d\n",j);
-			usleep(TIME_DELAY);
+			usleep(TIME_DELAY/1000);
 			j++;
 		}
 		if(test < 2)
@@ -566,6 +567,7 @@ UCHAR task3(int test)
 	return test + 3;
 }
 /*********************************************************************/
+// serial receive task
 UCHAR task5(int test)
 {
 	serial_rec = 0;
@@ -576,12 +578,12 @@ UCHAR task5(int test)
 	no_serial_buff = 0;
 //	printf("%4x\n",&serial_buff[no_serial_buff]);
 
-	while(TRUE)
-		usleep(TIME_DELAY*10);
+//	while(TRUE)
+//		usleep(TIME_DELAY*10);
 
 	while(TRUE)
 	{
-		usleep(TIME_DELAY/500);
+//		usleep(TIME_DELAY/1000);
 		if(test < 2)
 		{
 			printf("exiting task 5\n");
@@ -595,12 +597,14 @@ UCHAR task5(int test)
 		{
 			pthread_mutex_lock( &serial_read_lock);
 			serial_buff[no_serial_buff] = read_serial();
-//			printf("%c",serial_buff[no_serial_buff]);
+/*
+			printf("%c",serial_buff[no_serial_buff]);
 			if(++j > 93)
 			{
 				printf("\n");
 				j = 0;
 			}
+*/
 			pthread_mutex_unlock(&serial_read_lock);
 			no_serial_buff++;
 		}
@@ -635,6 +639,7 @@ static struct timeval tv;
 static int sock_open;
 static int global_socket;
 /*********************************************************************/
+// task to monitor for a client requesting a connection
 UCHAR task6(int test)
 {
 	int ret = -1;
@@ -657,7 +662,7 @@ UCHAR task6(int test)
 
 // getprotobyname doesn't work on TS-7200 because there's no /etc/protocols file
 // so just use '6'
-#ifdef NOTARGET
+#ifndef MAKE_TARGET
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
 		fprintf(stderr, "cannot map \"tcp\" to protocol number\n");
@@ -697,7 +702,7 @@ UCHAR task6(int test)
 	while (TRUE)
 	{
 		if(sock_open == 1)
-			usleep(TIME_DELAY);
+			usleep(TIME_DELAY*10);
 		else
 		{
 			printf("SERVER: Waiting for contact ...\n");
@@ -708,7 +713,7 @@ UCHAR task6(int test)
 				exit (1);
 			}
 			sock_open = 1;
-			printf("socket: %d\n",global_socket);
+			printf("connected to socket: %d\n",global_socket);
 			if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 				return -2;
 			if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)

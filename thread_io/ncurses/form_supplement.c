@@ -318,7 +318,7 @@ int form_virtualize(FORM * f, WINDOW *w)
 			break;
 		default:
 			current = (c < KEY_MAX);
-//			MvPrintw(1, COLS - 20,"%d %d  ",c,current);
+			MvPrintw(1, COLS - 20,"%d %d  ",c,current);
 			break;
 	}
 //	print_req_type(w, c,2, COLS-20);
@@ -350,7 +350,6 @@ int my_form_driver(FORM * form, int c)
 		return (FALSE);
 	}
 }
-
 
 /***************************************************************************/
 void print_req_type(WINDOW *win, int c, int line, int col)

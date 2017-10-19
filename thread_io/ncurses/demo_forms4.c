@@ -85,12 +85,13 @@ int demo_forms(void *curr, int which, int index)
 	UCHAR cmd;
 	int rc;
 
-	if(which == 1)
+	if(which == EDIT_IDATA)
 		pid = (I_DATA*)curr;
-	else if(which == 0)
+	else if(which == EDIT_ODATA)
 		pod = (O_DATA*)curr;
-/*
-	move(18, 0);
+
+#if 0
+	move(50, 0);
 	addstr("Defined edit/traversal keys:   ^Q/ESC- exit form\n");
 	addstr("^N   -- go to next field       ^P  -- go to previous field\n");
 	addstr("Home -- go to first field      End -- go to last field\n");
@@ -102,16 +103,14 @@ int demo_forms(void *curr, int which, int index)
 	addstr("^G   -- delete current word    ^C  -- clear to end of line\n");
 	addstr("^K   -- clear to end of field  ^X  -- clear field\n");
 	addstr("Arrow keys move within a field as you would expect. ^] toggles overlay mode.");
-*/
-//	MvAddStr(4, 57, "Forms Entry Test");
-
 	refresh();
-
+//	MvAddStr(4, 57, "Forms Entry Test");
+#endif
 /* describe the form */
 	memset(f, 0, sizeof(f));
 	f[n++] = make_label(STARTY2-2, 15, "Sample Form");
 
-	if(which == EDIT_ODATA)
+	if(which == EDIT_IDATA)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -136,7 +135,7 @@ int demo_forms(void *curr, int which, int index)
 
 // FIELD *make_field(int frow, int fcol, int rows, int cols, int nbufs)
 
-	}else if (which == EDIT_IDATA)
+	}else if (which == EDIT_ODATA)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -179,7 +178,6 @@ int demo_forms(void *curr, int which, int index)
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pod->pulse_time);
 		init_edit_field(f[n-1],tempx,1);
-
 	}
 
 	f[n] = (FIELD *) 0;
@@ -195,6 +193,17 @@ int demo_forms(void *curr, int which, int index)
 		{
 			switch (form_driver(form, c = form_virtualize(form, win)))
 			{
+/*
+				case KEY_F(4):	// these don't work here
+					mvprintw(LINES - 1, 2,"key f4");
+					refresh();
+					break;
+
+				case KEY_F(5):
+					mvprintw(LINES - 1, 2,"key f5");
+					refresh();
+					break;
+*/
 				case E_OK:
 /*
 					MvAddStr(50, 1, field_buffer(f[2], 0));
@@ -228,25 +237,35 @@ int demo_forms(void *curr, int which, int index)
 			mvprintw(LINES,2,"escape from demo_forms");
 			return 0;
 		}
+//#if 0
 		if(which == EDIT_IDATA)
 		{
 //			buffer = field_buffer(f[4],0);
 //			pid->port = atoi(buffer);
-
+/*
+			buffer = field_buffer(f[2],0);
+		    mvprintw(LINES - 8, 2,"label:   f[2] %s            ",buffer);
+			buffer = field_buffer(f[4],0);
+		    mvprintw(LINES - 7, 2,"port:    f[4] %s            ",buffer);
+			buffer = field_buffer(f[6],0);
+		    mvprintw(LINES - 6, 2,"aff_out: f[6] %s            ",buffer);
+		    refresh();
+*/
 			buffer = field_buffer(f[6],0);
 			pid->affected_output = atoi(buffer);
 
-			buffer = field_buffer(f[2],0);
+			buffer = field_buffer(f[2],0);	// label
 			fp = buffer;
-			for(i = 0;i < 20;i++)
+			for(i = 0;i < ILABELSIZE;i++)
 			{
 				if(*fp == 0x20)
 					*fp = 0;
 				fp++;
 			}
-			buffer[19] = 0;
+			buffer[ILABELSIZE-1] = 0;
 			strcpy(pid->label,buffer);
 			curr = (void*)pid;
+/*
 			if(tcp_connected)
 			{
 				cmd = SEND_IDATA;
@@ -254,30 +273,54 @@ int demo_forms(void *curr, int which, int index)
 				rc = put_sock((UCHAR*)&index,1,1,errmsg);
 				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
 			}
-				
+*/			
 		}else if(which == EDIT_ODATA)
 		{
-
+/*
+			buffer = field_buffer(f[2],0);
+		    mvprintw(LINES - 8, 2,"label: f[2] %s          ",buffer);
+			buffer = field_buffer(f[4],0);
+		    mvprintw(LINES - 7, 2,"port:  f[4] %s          ",buffer);
+			buffer = field_buffer(f[6],0);
+		    mvprintw(LINES - 6, 2,"onoff: f[6] %s          ",buffer);
+			buffer = field_buffer(f[8],0);
+		    mvprintw(LINES - 5, 2,"type:  f[8] %s          ",buffer);
+			buffer = field_buffer(f[10],0);
+		    mvprintw(LINES - 4, 2,"timed: f[10] %s         ",buffer);
+			buffer = field_buffer(f[12],0);
+		    mvprintw(LINES - 3, 2,"pulse: f[12] %s         ",buffer);
+		    refresh();
+*/
+//#if 0
 //			buffer = field_buffer(f[4],0);
 //			pod->port = atoi(buffer);
 
-			buffer = field_buffer(f[6],0);
+			buffer = field_buffer(f[6],0);		// onoff
 			pod->onoff = atoi(buffer);
-//			if(pod->onoff > 1)
-//				pod->onoff = 1;
+			if(pod->onoff > 1)
+				pod->onoff = 1;
 
-			buffer = field_buffer(f[2],0);
+			buffer = field_buffer(f[2],0);		// label
 			fp = buffer;
-			for(i = 0;i < 20;i++)
+			for(i = 0;i < OLABELSIZE;i++)
 			{
 				if(*fp == 0x20)
 					*fp = 0;
 				fp++;
 			}
-			buffer[19] = 0;
+			buffer[OLABELSIZE-1] = 0;
 			strcpy(pod->label,buffer);
-			curr = (void *)pod;
 
+			buffer = field_buffer(f[8],0);		// type
+			pod->type = atoi(buffer);
+			buffer = field_buffer(f[10],0);		// timed
+			pod->time_delay = atoi(buffer);
+			buffer = field_buffer(f[12],0);		// pulse
+			pod->pulse_time = atoi(buffer);
+			
+
+			curr = (void *)pod;
+/*
 			if(tcp_connected)
 			{
 				cmd = SEND_ODATA;
@@ -285,7 +328,9 @@ int demo_forms(void *curr, int which, int index)
 				rc = put_sock((UCHAR *)&index,1,1,errmsg);
 				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
 			}
+*/
 		}
+//#endif
 		erase_form(form);
 		free_form(form);
 	}

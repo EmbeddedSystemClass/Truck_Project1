@@ -19,7 +19,7 @@
 #define			OUTPORTD_OFFSET		3
 #define			OUTPORTE_OFFSET		4
 #define			OUTPORTF_OFFSET		5
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 VUCHAR *card_ports;
 #else
 UCHAR *card_ports;

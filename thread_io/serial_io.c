@@ -12,7 +12,6 @@
 #include "serial_io.h"
 
 #define BAUDRATE B19200
-//#ifdef NOTARGET
 #define MODEMDEVICE "/dev/ttyS1"		// now working with 7800 which has ttyS1 as the 2nd serial port
 //#else
 //#define MODEMDEVICE "/dev/ttyAM1"		// 7200 card uses AM1 as 2nd serial port

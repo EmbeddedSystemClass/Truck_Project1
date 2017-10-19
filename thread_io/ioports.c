@@ -58,7 +58,7 @@ static void mydelay(unsigned long i)
 void init_mem(void)
 {
 	int key;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	fd = open("/dev/mem", O_RDWR|O_SYNC);
 	assert(fd != -1);
 
@@ -218,7 +218,7 @@ void OutPortByteA(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTA_OFFSET] = byte;
 	*(card_ports + ROC_1) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port A: %x\n",byte);
 #endif
 }
@@ -228,7 +228,7 @@ void OutPortByteB(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTB_OFFSET] = byte;
 	*(card_ports + ROC_2) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port B: %x\n",byte);
 #endif
 }
@@ -238,7 +238,7 @@ void OutPortByteC(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTC_OFFSET] = byte;
 	*(card_ports + ROC_3) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port C: %x\n",byte);
 #endif
 }
@@ -247,7 +247,7 @@ void OutPortByteD(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTA_OFFSET] = byte;
 	*(card_ports + ROC_4) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port D: %x\n",byte);
 #endif
 }
@@ -257,7 +257,7 @@ void OutPortByteE(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTB_OFFSET] = byte;
 	*(card_ports + ROC_5) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port E: %x\n",byte);
 #endif
 }
@@ -267,7 +267,7 @@ void OutPortByteF(UCHAR byte)
 {
 //	pms->outportstatus[OUTPORTC_OFFSET] = byte;
 	*(card_ports + ROC_6) = byte;
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("port F: %x\n",byte);
 #endif
 }
@@ -304,7 +304,7 @@ UCHAR InPortByteE(void)
 {
 	UCHAR state;
 /*
-#ifndef NOTARGET
+#ifdef MAKE_TARGET
 	printf("ouch port e access\n");
 	return state;
 #endif

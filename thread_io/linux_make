@@ -20,7 +20,7 @@ T64LDFLAGS_T = ${T64LDFLAGS} -pthread
 GNUCC = gcc
 GNUCFLAGS = -g -ansi -Wstrict-prototypes
 GNULDFLAGS = -static
-CC_FLAGS = -static -DNOTARGET
+CC_FLAGS = -static
 GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 
 #####################################################

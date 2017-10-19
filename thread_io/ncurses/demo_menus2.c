@@ -57,16 +57,8 @@
 #include "config_file.h"
 #include "text_entry.h"
 
-/*
-extern int ilWriteConfig(char *filename, illist_t *ill, size_t size, char *errmsg);
-extern int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg);
-extern int olWriteConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
-extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
-extern int GetFileFormat(char *filename);
-*/
 extern int menu_scroll2(int num,int which,char *filename);
-//extern int menu_scroll3(int num, int which, char *str, char *str2);
-extern int menu_scroll3(int num, int which, UCHAR *str);
+extern int menu_scroll3(int num, int which, UCHAR *str, char *filename);
 extern int tcp_win(void);
 extern int file_win(void);
 extern int file_menu2(int num, int which, char *ret_str);
@@ -332,16 +324,17 @@ destroy_menus(void)
 static void
 call_Host(int code)
 {
+	static int num = 0;
+	static index;
+	static UCHAR *ptr;
     int format;
-    int index,i,j,k;
+    int i,j,k;
     char errmsg[40];
     UCHAR cmd;
 	char filename[40];
 	char save_as_str[40];
 	char tempx[30];
-	int num = 0;
 	char *chp;
-	UCHAR *ptr;
 	UCHAR *ptr2;
 	struct dirent **namelist;
 	DIR *d;
@@ -349,124 +342,154 @@ call_Host(int code)
 	int mem_size;
 	int error;
 
+	d = opendir( "." );
+	if( d == NULL )
+	{
+//				printf("bad OPEN_DIR\n");
+//							return -1;
+	}
+	num = 0;
+
+	memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
+	memset(tempx,0,sizeof(tempx));
+
+	while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
+	{
+		if(strcmp( dir->d_name, "." ) == 0 ||  \
+			strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
+		  continue;
+
+		memset(tempx,0,sizeof(tempx));
+		strcpy(tempx,dir->d_name);
+
+		chp = tempx;
+		j = 0;
+
+		while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
+			j++;
+
+		strncpy(tempx,chp,j+1);
+
+		if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
+	//							if(dir->d_type == DT_REG)
+		{
+			strcpy(dat_names[num],dir->d_name);
+			dat_len[num] = strlen(dat_names[num]);
+
+	//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
+	//					refresh();
+
+			getFileCreationTime(dat_names[num],tdate_stamp[num]);
+			j = GetFileFormat(dat_names[num]);
+			if(j < 0)
+				cmd = 0xff;
+			else	
+				cmd = (UCHAR)j;
+			dat_type[num] = cmd;	
+			num++;
+		}
+	}
+	closedir( d );
+
+	mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
+
+	ptr = (char *)malloc(mem_size);
+	if(ptr == NULL)
+	{
+		mvprintw(LINES-2,2,"mad balloc");
+		refresh();
+		error = -1;
+		getch();
+	}else
+	{
+		ptr2 = ptr;
+		memset(ptr,0,mem_size);
+
+		for(i = 0;i < num;i++)
+		{
+			*ptr2 = (UCHAR)dat_len[i];
+			ptr2++;
+			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
+//			mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
+//			refresh();
+			ptr2 += dat_len[i];
+			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
+			ptr2++;
+			memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
+	//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
+	//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
+	//					refresh();
+			ptr2 += TDATE_STAMP_STR_LEN;
+		}
+	}
+	
     switch (code)
     {
     	// OPEN
 		case 0:
-
-			d = opendir( "." );
-			if( d == NULL )
+			memset(filename,0,sizeof(filename));
+			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+//			mvprintw(LINES-5,30,"%sx  %d",filename,index);
+//			refresh();
+			if(index > 0)
 			{
-//				printf("bad OPEN_DIR\n");
-//							return -1;
-			}
-			num = 0;
+				format = GetFileFormat(filename);
+//				mvprintw(LINES-6,2,"%s  %d   %d",filename,index,format);
+//				refresh();
 
-			memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
-			memset(tempx,0,sizeof(tempx));
-
-			while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
-			{
-				if(strcmp( dir->d_name, "." ) == 0 ||  \
-					strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-				  continue;
-
-				memset(tempx,0,sizeof(tempx));
-				strcpy(tempx,dir->d_name);
-
-				chp = tempx;
-				j = 0;
-
-				while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
-					j++;
-
-				strncpy(tempx,chp,j+1);
-
-				if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-//							if(dir->d_type == DT_REG)
+				if(format == 0)
 				{
-					strcpy(dat_names[num],dir->d_name);
-					dat_len[num] = strlen(dat_names[num]);
-
-//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
-//					refresh();
-
-					getFileCreationTime(dat_names[num],tdate_stamp[num]);
-					j = GetFileFormat(dat_names[num]);
-					if(j < 0)
-						cmd = 0xff;
-					else	
-						cmd = (UCHAR)j;
-					dat_type[num] = cmd;	
-					num++;
+					ilLoadConfig(filename, &ill, isize, errmsg);
+					strcpy(iFileName,filename);
+					mvprintw(LINES-7,2,"%sx  %d   %d",filename,index,format);
+					refresh();
+					menu_scroll2(39, EDIT_IDATA, filename);
 				}
-			}
-			closedir( d );
-
-			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
-
-			ptr = (char *)malloc(mem_size);
-			if(ptr == NULL)
-			{
-				mvprintw(LINES-2,2,"mad balloc");
-				error = -1;
-				getch();
-			}else
-			{
-				ptr2 = ptr;
-				memset(ptr,0,mem_size);
-
-				for(i = 0;i < num;i++)
+				else if(format == 1)
 				{
-					*ptr2 = (UCHAR)dat_len[i];
-					ptr2++;
-					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
-//					mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
-//					refresh();
-					ptr2 += dat_len[i];
-					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
-					ptr2++;
-					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
-//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
-//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
-//					refresh();
-					ptr2 += TDATE_STAMP_STR_LEN;
+					olLoadConfig(filename, &oll, osize, errmsg);
+					strcpy(oFileName,filename);
+					mvprintw(LINES-8,2,"%sx  %d   %d",filename,index,format);
+					refresh();
+					menu_scroll2(39, EDIT_ODATA, filename);
 				}
-				index = menu_scroll3(num,GET_DIR,(char *)ptr);
-
-				free(ptr);
-			}
-//			index = file_menu2(num, 0, filename);
-//			format = GetFileFormat(filename);
-
-
-//			show_status2("test",filename,0,format,index,4);
-#if 0
-			if(format == 0)
-			{
-				ilLoadConfig(filename, &ill, isize, errmsg);
-				strcpy(iFileName,filename);
-			}
-			else if(format == 1)
-			{
-				olLoadConfig(filename, &oll, osize, errmsg);
-				strcpy(oFileName,filename);
-			}
-			else
-			{
-				show_status2("bad file format",filename,0,0,index,4);
-			}
-#endif
+			}			
     		break;
 
 		// SAVE FILE
     	case 1:
+//			strcpy(filename,"idata.dat\0");
+//			ptr2 = filename;
+			memset(filename,0,sizeof(filename));
+			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+			int fp = open((const char *)ptr2, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+			if(fp < 0)
+			{
+				strcpy(errmsg,strerror(errno));
+				mvprintw(LINES-6,30,"%sx %sx  %s",filename,ptr2,errmsg);
+				refresh();
+				close(fp);
+			}
+			else
+			{
+				mvprintw(LINES-6,30,"%sx %sx %d",filename,ptr2, fp);
+				refresh();
+				close(fp);
+			}
+			getFileCreationTime(filename,tempx);
+			mvprintw(LINES-7,30,"%s ",tempx);
+			refresh();
+
+//			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+
+/*
 			if(ilWriteConfig(iFileName,&ill,isize,errmsg) != 0)
 				show_status2(errmsg,oFileName,0,0,index,4);
 			if(olWriteConfig(oFileName,&oll,osize,errmsg) != 0)
 				show_status2(errmsg,oFileName,0,0,index,4);
 			else
 	            show_status2(iFileName,oFileName,0,0,index,4);
+*/
     		break;
 
 		// SAVE AS
@@ -530,7 +553,7 @@ call_Host(int code)
 		default:
 			break;
     }
-
+	free(ptr);
 }
 /*****************************************************************************/
 static void
@@ -587,129 +610,100 @@ build_Host_menu(MenuNo number)
 static void
 call_Target(int code)
 {
+	static UCHAR *ptr;
+	static UCHAR num;
+	static int index;
 	int i,j,k;
 	char test = 0x21;
+	char filename[40];
 	char buf[20];
 	char errmsg[40];
 	UCHAR cmd = 0;
-	static UCHAR num;
 	UCHAR str_len;
-	UCHAR *ptr;
 	UCHAR *ptr2 = NULL;
 	int error = 0;
 	int mem_size;
     (void) code;
-    
+
+	if(tcp_connected)
+	{
+//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
+		ptr2 = ptr+mem_size;
+//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
+//					refresh();
+		cmd = GET_DIR;
+		ptr2 = ptr;
+		error = put_sock(&cmd,1,1,errmsg);
+		if(error < 0)
+			mvprintw(LINES-2,2,"%s",errmsg);
+		error = get_sock(&num,1,1,errmsg);
+		if(error < 0)
+			mvprintw(LINES-2,2,"%s",errmsg);
+
+		for(i = 0;i < num;i++)
+		{
+			error = get_sock((UCHAR*)&dat_len[i],1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+			error = get_sock((UCHAR*)&dat_names[i],dat_len[i],1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+//			show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
+		}
+		for(i = 0;i < num;i++)
+		{
+			error = get_sock((UCHAR *)&tdate_stamp[i],TDATE_STAMP_STR_LEN,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+			error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
+		}
+	}
+
+//#if 0
+/*
+1) dat_len 		1
+2) dat_names	dat_len
+3) dat_type		1
+3) tdate_stamp	TDATE_STAMP_STR_LEN
+4) '0'
+*/
+	mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
+
+	ptr = (char *)malloc(mem_size);
+	if(ptr == NULL)
+	{
+		mvprintw(LINES-2,2,"mad balloc");
+		error = -1;
+		getch();
+	}else
+	{
+		ptr2 = ptr;
+		memset(ptr,0,mem_size);
+		for(i = 0;i < num;i++)
+		{
+			*ptr2 = (UCHAR)dat_len[i];
+			ptr2++;
+			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
+			ptr2 += dat_len[i];
+			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
+			ptr2++;
+			memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
+			ptr2 += TDATE_STAMP_STR_LEN;
+//				mvprintw(LINES-2-i,60,"%2x %d",ptr2,ptr2-ptr);
+//				refresh();
+		}
+	}
+
     switch (code)
     {
 		// OPEN
         case 0:
-			cmd = GET_DIR;
-        	if(tcp_connected)
-        	{
-//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
-				ptr2 = ptr+mem_size;
-//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
-//					refresh();
-				ptr2 = ptr;
-				error = put_sock(&cmd,1,1,errmsg);
-				if(error < 0)
-					mvprintw(LINES-2,2,"%s",errmsg);
-				error = get_sock(&num,1,1,errmsg);
-				if(error < 0)
-					mvprintw(LINES-2,2,"%s",errmsg);
+			memset(filename,0,sizeof(filename));
+			menu_scroll3(num,GET_DIR,(char *)ptr,filename);
 
-	    		for(i = 0;i < num;i++)
-	    		{
-					error = get_sock((UCHAR*)&dat_len[i],1,1,errmsg);
-					if(error < 0)
-						mvprintw(LINES-2,2,"%s",errmsg);
-					error = get_sock((UCHAR*)&dat_names[i],dat_len[i],1,errmsg);
-					if(error < 0)
-						mvprintw(LINES-2,2,"%s",errmsg);
-//					show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
-				}
-				for(i = 0;i < num;i++)
-				{
-					error = get_sock((UCHAR *)&tdate_stamp[i],TDATE_STAMP_STR_LEN,1,errmsg);
-					if(error < 0)
-						mvprintw(LINES-2,2,"%s",errmsg);
-					error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
-					if(error < 0)
-						mvprintw(LINES-2,2,"%s",errmsg);
-//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
-				}
-			}
-
-//#if 0
-/*
-	1) dat_len 		1
-	2) dat_names	dat_len
-	3) dat_type		1
-	3) tdate_stamp	TDATE_STAMP_STR_LEN
-	4) '0'
-*/
-			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
-
-			ptr = (char *)malloc(mem_size);
-			if(ptr == NULL)
-			{
-				mvprintw(LINES-2,2,"mad balloc");
-				error = -1;
-				getch();
-			}else
-			{
-				ptr2 = ptr;
-				memset(ptr,0,mem_size);
-				for(i = 0;i < num;i++)
-				{
-					*ptr2 = (UCHAR)dat_len[i];
-					ptr2++;
-					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
-	//				mvprintw(LINES-2-i,2,"%d  ",dat_len[i]);
-	//				refresh();
-					ptr2 += dat_len[i];
-					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
-					ptr2++;
-					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
-	//				mvprintw(LINES-2-i,30,"%s  ",ptr2);
-	//				refresh();
-					ptr2 += TDATE_STAMP_STR_LEN;
-	//				*ptr2 = 0;
-	//				ptr2++;
-	//				mvprintw(LINES-2-i,60,"%2x %d",ptr2,ptr2-ptr);
-	//				refresh();
-				}
-				// work around for strange bug in menu_scroll3
-				// when adding to my_items we have to go 1 less than num 
-				// so add 1 extra record at the end
-#if 0
-				strcpy(errmsg,"123456789a\0");
-				test = (UCHAR)strlen(errmsg);
-				*ptr2 = test;
-				ptr2++;
-				memcpy((UCHAR*)ptr2,errmsg,test);
-//				mvprintw(LINES-2-i,2,"%d  ",dat_len[i]);
-//				refresh();
-				ptr2 += test;
-				test = 0xff;
-				memcpy((UCHAR*)ptr2,(UCHAR*)&test,1);
-				ptr2++;
-				memset(errmsg,0x20,sizeof(errmsg));
-				errmsg[TDATE_STAMP_STR_LEN] = 0;
-				memcpy((UCHAR*)ptr2,(UCHAR*)errmsg,TDATE_STAMP_STR_LEN);
-//				mvprintw(LINES-2-i,30,"%s  ",ptr2);
-//				refresh();
-				ptr2 += TDATE_STAMP_STR_LEN;
-				
-#endif
-				mvprintw(LINES-1,40,"%2x %2x ",ptr,ptr2);
-				refresh();
-
-				menu_scroll3(num,GET_DIR,(char *)ptr);
-
-				free(ptr);
-			}
             break;
 		// SAVE FILE
         case 1:
@@ -740,6 +734,8 @@ call_Target(int code)
 		default:
 			break;
     }
+
+	free(ptr);
 }
 /*****************************************************************************/
 static void
@@ -812,7 +808,7 @@ call_Tool(int code)
 		// CONNECT
         case 1:		// change output record
 			i = init_client(HOST);
-			show_status2("init_client","",i,0,0,7);
+			show_status2("init_client","",i,0,0,2);
 			if(i > 0)
 			{
 				j = tcp_connect();
@@ -821,12 +817,12 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-            show_status2("Connect","",i,j,tcp_connected,6);
+            show_status2("Connect","",i,j,tcp_connected,62);
             break;
 
 		// DISCONNECT
 		case 2:
-            show_status2("Disconnect","",code,0,i,7);
+            show_status2("Disconnect","",code,0,i,2);
             cmd = CLOSE_SOCKET;
             put_sock(&cmd,1,1,errmsg);
             usleep(TIME_DELAY*100);
@@ -846,7 +842,7 @@ call_Tool(int code)
 				cmd =  ALL_OFF;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-            show_status2("all off","",code,0,0,2);
+            show_status2("all off      ","",code,0,0,2);
 			break;
 
 		//ALL ON
@@ -856,9 +852,24 @@ call_Tool(int code)
 				cmd =  ALL_ON;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-            show_status2("all on","",code,0,0,2);
+            show_status2("all on       ","",code,0,0,2);
             break;
 
+		case 6:
+	    	if(tcp_connected)
+	    	{
+				cmd =  CLEAR_SCREEN;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+            show_status2("clear screen","",code,0,0,2);
+            break;
+		
+		case 7:
+			if(tcp_connected)
+			{
+				cmd = SEND_SERIAL;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}			
 		default:
             break;
 	}
@@ -878,6 +889,8 @@ build_Tool_menu(MenuNo number)
         MY_DATA2("Toggle Outputs"),			// 3
         MY_DATA2("All On"),					// 4
         MY_DATA2("All Off"),				// 5
+        MY_DATA2("Clear Screen"),			// 6
+        MY_DATA2("Send Serial"),			// 7
         {(char *) 0, 0, 0}
     };
 
@@ -1348,4 +1361,27 @@ main(int argc, char *argv[])
     endwin();
     ExitProgram(EXIT_SUCCESS);
 }
+
+#if 0
+				ptr2 = filename;
+				int fp = open((const char *)ptr2, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+				if(fp < 0)
+				{
+					strcpy(errmsg,strerror(errno));
+					mvprintw(LINES-6,30,"%s %s  %s",filename,ptr2,errmsg);
+					refresh();
+					close(fp);
+				}
+				else
+				{
+					mvprintw(LINES-6,30,"%s %s %d",filename,ptr2, fp);
+					refresh();
+					close(fp);
+				}
+				getFileCreationTime(filename,tempx);
+				mvprintw(LINES-7,30,"%s ",tempx);
+				refresh();
+				
+			}				
+#endif
 

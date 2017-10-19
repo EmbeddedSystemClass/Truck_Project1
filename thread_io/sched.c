@@ -10,12 +10,6 @@
  *
  * Examples in setting scheduling policy
  */
-#ifndef NOTARGET
-#warning "NOTARGET not defined"
-#else
-#warning "NOTARGET defined"
-#endif
-
 #include<unistd.h>
 #include<sys/mman.h>
 #include<fcntl.h>

@@ -7,7 +7,8 @@ if grep -q error out.txt
  exit 1
 fi
 
-scp sched 192.168.42.145:/home/dan
+scp sched 'dan@192.168.42.145:/home/dan'
+
 rm *.o
 #./dmake2
 

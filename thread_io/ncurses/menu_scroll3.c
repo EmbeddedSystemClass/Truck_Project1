@@ -8,7 +8,7 @@
 #include <menu.h>
 #include "client.h"
 
-#define WIN_WIDTH 50
+#define WIN_WIDTH 47
 
 //void func(IO_DATA *cur);
 
@@ -40,7 +40,7 @@ static void disp_msg(WINDOW *win,char *str,int line)
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
 //int menu_scroll2(I_DATA *curr,int num,int which)
-int menu_scroll3(int num, int which, UCHAR *str)
+int menu_scroll3(int num, int which, UCHAR *str, char *filename)
 {
     ITEM **my_items;
     ITEM *cur_item;
@@ -70,15 +70,15 @@ int menu_scroll3(int num, int which, UCHAR *str)
 //			memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
 		memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
 		strcat(sup_string[i],"   ");
-		mvprintw(LINES - 2-i, 2,"%x   ",dat_len[i]);
-		mvprintw(LINES - 2-i, 2,"%s   ",sup_string[i]);
-		refresh();
+//		mvprintw(LINES - 2-i, 2,"%x   ",dat_len[i]);
+//		mvprintw(LINES - 2-i, 2,"%s   ",sup_string[i]);
+//		refresh();
 		chptr += dat_len[i];
 		dat_type[i] = *(chptr);
 		chptr++;
 		memcpy((UCHAR*)&tdate_string[i],chptr,TDATE_STAMP_STR_LEN);
-		mvprintw(LINES - 2-i, 30,"%s   ",tdate_string[i]);
-		refresh();
+//		mvprintw(LINES - 2-i, 30,"%s   ",tdate_string[i]);
+//		refresh();
 		chptr += TDATE_STAMP_STR_LEN;
 
 #if 0
@@ -112,8 +112,8 @@ int menu_scroll3(int num, int which, UCHAR *str)
 			strcat(tdate_string[i]," ");
 
 			if(dat_type[i] == 0)
-				strcat(tdate_string[i],"I");
-			else strcat(tdate_string[i],"O");
+				strcat(tdate_string[i],"   I");
+			else strcat(tdate_string[i],"   O");
 //#endif
 //			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string,sup_string);
 			my_items[i] = new_item(sup_string[i],tdate_string[i]);
@@ -134,12 +134,14 @@ int menu_scroll3(int num, int which, UCHAR *str)
 //	getch();
     my_menu = new_menu((ITEM **)my_items);
 
+/*
 	for(i = 0;i < num;i++)
 	{
 			mvprintw(LINES - 4-i, 2,"%s  %d  %d  %d",my_items[i]->name.str,
 					my_items[i]->name.length,my_items[i]->index,my_items[i]->y);
 			refresh();
 	}
+*/
 /* Create the window to be associated with the menu */
 
     twin = newwin(num+3, win_width, 0, 40);
@@ -193,36 +195,39 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 	while(!finished)
 	{
 		c = wgetch(twin);
-
+		
 	    switch(c)
 	    {
 	        case KEY_DOWN:
 	            menu_driver(my_menu, REQ_DOWN_ITEM);
-				disp_msg(twin,"key down\0",num);
+//				disp_msg(twin,"key down\0",num);
 	            break;
 	        case KEY_UP:
 	            menu_driver(my_menu, REQ_UP_ITEM);
-				disp_msg(twin,"key up\0",num);
+//				disp_msg(twin,"key up\0",num);
 	            break;
 	        case KEY_NPAGE:
 	            menu_driver(my_menu, REQ_SCR_DPAGE);
-				disp_msg(twin,"page down\0",num);
+//				disp_msg(twin,"page down\0",num);
 	            break;
 	        case KEY_PPAGE:
 	            menu_driver(my_menu, REQ_SCR_UPAGE);
-				disp_msg(twin,"page up\0",num);
+//				disp_msg(twin,"page up\0",num);
 	            break;
 			case 10: /* Enter */
 				cur_item = current_item(my_menu);
 				index = item_index(cur_item);
+//				mvprintw(LINES - 1, 2,"%d %s       ",index,my_items[index]->name.str);
+				strcpy(filename,my_items[index]->name.str);
+				chptr = filename;
+				i = 0;
+				do{
+					i++;
+					chptr++;
+				}while(*chptr != 0x20 && i < 40);
+				*chptr = 0;
+//				refresh();
 				finished = 1;
-				for(i = 0;i < num;i++)
-				{
-//					mvprintw(LINES - 10-i, 2,"%d %s  %s     ",index,sup_string[i],tdate_string[i]);
-//					mvprintw(LINES - 10-i, 2,"%d %s       ",index,sup_string[i]);
-//					refresh();
-				}
-
 				break;
 			case KEY_F(2):
 				finished = 1;
@@ -249,8 +254,8 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 //		mvwprintw(twin,2,2,"index: %d",index);
 	}
 
-	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
-    wrefresh(twin);
+//	mvprintw(LINES - 20, 2,"index: %d finished: %d",index,finished);
+//  wrefresh(twin);
 //	mvprintw(LINES - 20, 2,"                            ");
 //     wrefresh(twin);
 /* Unpost and free all the memory taken up */
