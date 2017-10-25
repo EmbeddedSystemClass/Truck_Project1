@@ -305,6 +305,30 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 						}
 						disp_msg(twin,"EDIT_IDATA\0",num);
 					break;
+					case EDIT_ODATA2:	// 0_DATA (choose)
+						ollist_find_data(index,&po,&oll2);
+//					    mvprintw(LINES - 2, 2,"demo_forms: %s",po->label);
+//						refresh();
+//						getch();
+						if(demo_forms(po,which,index) != TRUE)
+						{
+							finished = 1;
+							ollist_insert_data(index,&oll2,&po);
+						}
+						disp_msg(twin,"EDIT_ODATA\0",num);
+					break;
+					case EDIT_IDATA2:		// I_DATA
+						illist_find_data(index,&pi,&ill2);
+//					    mvprintw(LINES - 2, 2,"demo_forms: %s",pi->label);
+//						refresh();
+//						getch();
+						if(demo_forms(pi,which,index) != TRUE)
+						{
+							finished = 1;
+							illist_insert_data(index,&ill2,&pi);
+						}
+						disp_msg(twin,"EDIT_IDATA\0",num);
+					break;
 					case TOGGLE_OUTPUTS:	// O_DATA (toggle output)
 						ollist_find_data(index,&po,&oll);
 						if(po->onoff > 0)

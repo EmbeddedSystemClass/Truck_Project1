@@ -603,7 +603,7 @@ UCHAR task2(int test)
 
 				otp->onoff = onoff;
 				ollist_insert_data(otp->port,&oll,otp);
-				change_output(index,otp->onoff);
+				change_output(otp->port,otp->onoff);
 
 			}
 			inportstatus[bank] = result;

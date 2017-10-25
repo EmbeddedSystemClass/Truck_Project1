@@ -639,7 +639,7 @@ call_Target(int code)
 	static int index;
 	int i,j,k;
 	char test = 0x21;
-	char filename[40];
+	static char filename[40];
 	char buf[20];
 	char errmsg[40];
 	UCHAR cmd = 0;
@@ -717,23 +717,24 @@ call_Target(int code)
 					ptr2++;
 					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
 					ptr2 += TDATE_STAMP_STR_LEN;
-		//				mvprintw(LINES-2-i,60,"%2x %d",ptr2,ptr2-ptr);
+//					mvprintw(LINES-2-i,2,"%2x %d",ptr2,ptr2-ptr);
+//					mvprintw(LINES-2-i,2,"%s         %s   ",dat_names[i],tdate_stamp[i]);
 				}
 			}
 			memset(filename,0,sizeof(filename));
-			j = menu_scroll3(num,(char *)ptr,filename);
+			index = menu_scroll3(num,(char *)ptr,filename);
 			free(ptr);
 
-			mvprintw(LINES-1,2,"%d  %s   ",j,filename);
-			if(dat_type[j] == 0)
+			mvprintw(LINES-1,2,"%d  %s   ",index,filename);
+			refresh();
+			if(dat_type[index] == 0)
 			{
-
 		    	cmd = RECV_ALL_IDATA;
 				error = put_sock(&cmd,1,1,errmsg);
 				if(error < 0)
 					mvprintw(LINES-2,2,"%s",errmsg);
-
-				put_sock(&j,1,1,errmsg);		// send the index into the list of filenames
+				index++;
+				put_sock(&index,1,1,errmsg);		// send the index into the list of filenames
 
 				itp = &i_data;
 				itpp = &itp;
@@ -743,20 +744,20 @@ call_Target(int code)
 //					mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
 					illist_insert_data(i,&ill2,&i_data);
 //					j = illist_find_data(i,itpp,&ill2);
-					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+//					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
 				}
-//				menu_scroll2(39, EDIT_IDATA2, filename);
+				menu_scroll2(39, EDIT_IDATA2, filename);
 				refresh();
 			}
-			else if(dat_type[j] == 1)
+			else if(dat_type[index] == 1)
 			{
 
 		    	cmd = RECV_ALL_ODATA;
 				error = put_sock(&cmd,1,1,errmsg);
 				if(error < 0)
 					mvprintw(LINES-2,2,"%s",errmsg);
-
-				put_sock(&j,1,1,errmsg);		// send the index into the list of filenames
+				index++;
+				put_sock(&index,1,1,errmsg);		// send the index into the list of filenames
 
 				otp = &o_data;
 				otpp = &otp;
@@ -766,16 +767,24 @@ call_Target(int code)
 //					mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
 					ollist_insert_data(i,&oll2,&o_data);
 //					j = illist_find_data(i,itpp,&ill2);
-					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+//					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,otp->port,otp->onoff,otp->label);
 				}
-//				menu_scroll2(39, EDIT_ODATA2, filename);
+				menu_scroll2(39, EDIT_ODATA2, filename);
 				refresh();
 			}
+			else
+			{
+				mvprintw(LINES-1,2,"bad dat_type %d  %s   ",index,filename);
+				refresh();
+			}			
 
             break;
 
 		// SAVE FILE
         case 1:
+
+			mvprintw(LINES-1,2,"%d  %s   ",index,filename);
+			refresh();
             break;
 		// SAVE AS
         case 2:
@@ -802,7 +811,7 @@ call_Target(int code)
 				mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
 				illist_insert_data(i,&ill2,&i_data);
 //				j = illist_find_data(i,itpp,&ill2);
-//				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
 			}
 			refresh();
             break;
@@ -825,7 +834,7 @@ call_Target(int code)
 				mvprintw(LINES-2-i,2,"%d %d %s",o_data.port,o_data.onoff,o_data.label);
 				ollist_insert_data(i,&oll2,&o_data);
 //				j = ollist_find_data(i,otpp,&oll2);
-//				mvprintw(LINES-2-i,2,"%d: %d %d %s",j,otp->port,otp->onoff,otp->label);
+				mvprintw(LINES-2-i,2,"%d: %d %d %s",j,otp->port,otp->onoff,otp->label);
 			}
 			refresh();
 			break;

@@ -85,9 +85,9 @@ int demo_forms(void *curr, int which, int index)
 	UCHAR cmd;
 	int rc;
 
-	if(which == EDIT_IDATA)
+	if(which == EDIT_IDATA || which == EDIT_IDATA2)
 		pid = (I_DATA*)curr;
-	else if(which == EDIT_ODATA)
+	else if(which == EDIT_ODATA || which == EDIT_ODATA2)
 		pod = (O_DATA*)curr;
 
 #if 0
@@ -110,7 +110,7 @@ int demo_forms(void *curr, int which, int index)
 	memset(f, 0, sizeof(f));
 	f[n++] = make_label(STARTY2-2, 15, "Sample Form");
 
-	if(which == EDIT_IDATA)
+	if(which == EDIT_IDATA || which == EDIT_IDATA2)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -135,7 +135,7 @@ int demo_forms(void *curr, int which, int index)
 
 // FIELD *make_field(int frow, int fcol, int rows, int cols, int nbufs)
 
-	}else if (which == EDIT_ODATA)
+	}else if (which == EDIT_ODATA || which == EDIT_ODATA2)
 	{
 		f[n++] = make_label(STARTY2, STARTX, "Label");
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
@@ -238,7 +238,7 @@ int demo_forms(void *curr, int which, int index)
 			return 0;
 		}
 //#if 0
-		if(which == EDIT_IDATA)
+		if(which == EDIT_IDATA || which == EDIT_IDATA2)
 		{
 //			buffer = field_buffer(f[4],0);
 //			pid->port = atoi(buffer);
@@ -274,7 +274,7 @@ int demo_forms(void *curr, int which, int index)
 				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
 			}
 */
-		}else if(which == EDIT_ODATA)
+		}else if(which == EDIT_ODATA || which == EDIT_ODATA2)
 		{
 /*
 			buffer = field_buffer(f[2],0);

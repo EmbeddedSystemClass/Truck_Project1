@@ -65,8 +65,8 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 //			memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
 		memcpy((UCHAR*)&sup_string[i],chptr,dat_len[i]);
 		strcat(sup_string[i],"   ");
-//		mvprintw(LINES - 2-i, 2,"%x   ",dat_len[i]);
-//		mvprintw(LINES - 2-i, 2,"%s   ",sup_string[i]);
+//		mvprintw(LINES - 2-i, 2,"%d   ",dat_len[i]);
+//		mvprintw(LINES - 2-i, 4,"%s   ",sup_string[i]);
 //		refresh();
 		chptr += dat_len[i];
 		dat_type[i] = *(chptr);
@@ -97,7 +97,7 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 		chptr += TDATE_STAMP_STR_LEN;
 #endif
 	}
-    my_items = (ITEM **)calloc(num, sizeof(ITEM *));
+    my_items = (ITEM **)calloc(num+2, sizeof(ITEM *));
 
 	for(i = 0;i < num;i++)
 	{
@@ -110,19 +110,19 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 				strcat(tdate_string[i],"   I");
 			else strcat(tdate_string[i],"   O");
 //#endif
-//			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string,sup_string);
+			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string[i],sup_string[i]);
 			my_items[i] = new_item(sup_string[i],tdate_string[i]);
 //			my_items[i]->index = i;
 //			my_items[i]->y = i;
 //			mvprintw(LINES - 4-i, 2,"%s  %d  %d  %d",my_items[i]->name.str,
 //					my_items[i]->name.length,my_items[i]->index,my_items[i]->y);
-//			refresh();
+			refresh();
 		}
 	}
 
-//	my_items[i] = new_item((char*)NULL,(char *)NULL);
-//	i++;
-//	my_items[i] = (ITEM *)NULL;
+	my_items[i] = new_item((char*)NULL,(char *)NULL);
+	i++;
+	my_items[i] = (ITEM *)NULL;
 
 /* Create menu */
 //	mvprintw(LINES-1, 0,"done");
@@ -138,6 +138,8 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 	}
 */
 /* Create the window to be associated with the menu */
+
+//getch();
 
     twin = newwin(num+3, win_width, 0, 40);
     keypad(twin, TRUE);
