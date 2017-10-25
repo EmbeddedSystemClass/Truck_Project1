@@ -31,41 +31,28 @@ size_t pagesize;
 int fd;
 
 /*
-VUCHAR *card_ports	- IOCARDBASEADD72	0xE[C/E/D/F]000000 
+VUCHAR *card_ports	- IOCARDBASEADD72	0xE[C/E/D/F]000000
 VUCHAR *card_mem 	- PORTBASEADD78		0xE8000000
 */
 
-/*
- io map starting at base address
- 7/9/15 - using PC/104 card IR104 set at base address 0x300
-*/
-/* relay output control registers */
-#define			ROC_1	0x300
-#define			ROC_2	0x301
-/* bank 3 only uses first 4 bits */
-#define			ROC_3	0x302
+// card_port can start from IOCARDBASEADD72 - just add 4 for the outputs
+// the inputs can start from "     "
 
-/* digital input reading registers */
-#define			DIR_1	0x304
-#define			DIR_2	0x305
-/* bank 3 only uses first 4 bits */
-#define			DIR_3	0x306
+#define			ROC_1	0x280	// relay output control registers
+#define			ROC_2	0x281
+#define			ROC_3	0x282	// bank 3 only uses first 4 bits
 
-/*
- 7/19/15 - using 2nd PC/104 card at address 280
-*/
+#define			DIR_1	0x284	// digital input reading registers
+#define			DIR_2	0x285
+#define			DIR_3	0x286	// bank 3 only uses first 4 bits
 
-/*  relay output control registers */
-#define			ROC_4	0x280
-#define			ROC_5	0x281
-/* bank 3 only uses first 4 bits */
-#define			ROC_6	0x282
+#define			ROC_4	0x300	// relay output control registers
+#define			ROC_5	0x301
+#define			ROC_6	0x302	// bank 3 only uses first 4 bits
 
-/* digital input reading registers */
-#define			DIR_4	0x284
-#define			DIR_5	0x285
-/* bank 3 only uses first 4 bits */
-#define			DIR_6	0x286
+#define			DIR_4	0x304	// digital input reading registers
+#define			DIR_5	0x305
+#define			DIR_6	0x306	// bank 3 only uses first 4 bits
 
 #define			DELAYTIME 50
 
@@ -128,7 +115,7 @@ LCD:
 11) DB5
 12) DB4
 13) DB7
-14) DB6	
+14) DB6
 
 PC104 on TS-7800: (from 6.2.5 in manual)
 
@@ -138,7 +125,7 @@ To access peripherals on the PC104 bus it is necessary to add the base address f
 8-bit 	0xEC000000 	0xEE000000
 16-bit 	0xED000000 	0xEF000000
 
-IRQs 5, 6, and 7 on the PC104 bus from the TS-7800 are 64 + the PC104 IRQ number. These will be IRQs 69, 70, and 71. 
+IRQs 5, 6, and 7 on the PC104 bus from the TS-7800 are 64 + the PC104 IRQ number. These will be IRQs 69, 70, and 71.
 
 
 the following is for the TS-7200
@@ -226,6 +213,7 @@ MYSTRUCT ms;
 
 void init_mem(void);
 void close_mem(void);
+void ToggleOutPortA(int port);
 void OutPortA(int onoff, UCHAR bit);
 void OutPortB(int onoff, UCHAR bit);
 void OutPortC(int onoff, UCHAR bit);
@@ -319,18 +307,18 @@ enum outputs
 
 enum inputs
 {
-	STARTSWITCH,
-	SHUTDOWN,
-	BRAKES,
-	HEADLIGHTS,
-	LEFTBLINKERI,
-	RIGHTBLINKERI,
-	RUNNINGLIGHTSI,
-	LEFTDOOROPEN,
-	RIGHTDOOROPEN,
-	TESTINPUT9,
-	TESTINPUT10,
-	TESTINPUT11,
+	STARTSWITCH,		0
+	SHUTDOWN,			1
+	BRAKES,				2
+	HEADLIGHTS,			3
+	LEFTBLINKERI,		4
+	RIGHTBLINKERI,		5
+	RUNNINGLIGHTSI,		6
+	LEFTDOOROPEN,		7
+	RIGHTDOOROPEN,		8
+	TESTINPUT9,			9
+	TESTINPUT10,		10
+	TESTINPUT11,		11
 	TESTINPUT12,
 	TESTINPUT13,
 	TESTINPUT14,
@@ -340,10 +328,14 @@ enum inputs
 	TESTINPUT18,
 	TESTINPUT19,
 	// there's a gap here for the same reason as above (see output defines)
-	UNKNOWN1A,
-	UNKNOWN2A,
-	UNKNOWN3A,
+	UNKNOWN1A,			20
+	UNKNOWN2A,			21
+	UNKNOWN3A,			21
 	UNKNOWN4A,
+	TESTINPUT20,
+	TESTINPUT21,
+	TESTINPUT22,
+	TESTINPUT23,
 	TESTINPUT24,
 	TESTINPUT25,
 	TESTINPUT26,
@@ -359,11 +351,7 @@ enum inputs
 	TESTINPUT36,
 	TESTINPUT37,
 	TESTINPUT38,
-	TESTINPUT39,
-	TESTINPUT40,
-	TESTINPUT41,
-	TESTINPUT42,
-	TESTINPUT43
+	TESTINPUT39
 } INPUTS;
 //#define LAST_INPUT_PORT RUNNINGLIGHTSI
 #define LAST_INPUT_PORT TESTINPUT42

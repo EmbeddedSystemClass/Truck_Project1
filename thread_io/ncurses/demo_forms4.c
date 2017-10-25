@@ -273,7 +273,7 @@ int demo_forms(void *curr, int which, int index)
 				rc = put_sock((UCHAR*)&index,1,1,errmsg);
 				put_sock((UCHAR*)&curr,sizeof(I_DATA),1,errmsg);
 			}
-*/			
+*/
 		}else if(which == EDIT_ODATA)
 		{
 /*
@@ -317,7 +317,7 @@ int demo_forms(void *curr, int which, int index)
 			pod->time_delay = atoi(buffer);
 			buffer = field_buffer(f[12],0);		// pulse
 			pod->pulse_time = atoi(buffer);
-			
+
 
 			curr = (void *)pod;
 /*

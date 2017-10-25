@@ -57,7 +57,7 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
-		read(fp,&i_data,sizeof(I_DATA));		
+		read(fp,&i_data,sizeof(I_DATA));
 		illist_insert_data(i, ill, &i_data);
 	}
 
@@ -108,7 +108,7 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 	}
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
-		read(fp,&o_data,sizeof(O_DATA));		
+		read(fp,&o_data,sizeof(O_DATA));
 		ollist_insert_data(i, oll, &o_data);
 	}
 //	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
@@ -418,7 +418,7 @@ int GetFileFormat(char *filename)
 	return 0;
 }
 /*********************************************************************/
-int getFileCreationTime(char *path,char *str) 
+int getFileCreationTime(char *path,char *str)
 {
 // MM:DD-HH:MM:SS
     struct stat attr;

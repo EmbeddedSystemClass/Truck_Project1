@@ -120,7 +120,7 @@ list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
 
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
-	${CC} -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
+	${CC} -DMAKE_TARGET -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
 
 init_db: config_file.o init_db.o 
 	${CC} init_db.o config_file.o -o init_db

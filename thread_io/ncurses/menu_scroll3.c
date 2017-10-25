@@ -14,10 +14,6 @@
 
 //#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
-//extern illist_t ill;
-//extern ollist_t oll;
-
-//extern int tcp_connected;
 char sup_string[NUM_DAT_NAMES][DAT_NAME_STR_LEN+4];
 char tdate_string[NUM_DAT_NAMES][TDATE_STAMP_STR_LEN+10];
 UCHAR dat_type[NUM_DAT_NAMES];
@@ -39,8 +35,7 @@ static void disp_msg(WINDOW *win,char *str,int line)
 //******************************************************************************************//
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
-//int menu_scroll2(I_DATA *curr,int num,int which)
-int menu_scroll3(int num, int which, UCHAR *str, char *filename)
+int menu_scroll3(int num, UCHAR *str, char *filename)
 {
     ITEM **my_items;
     ITEM *cur_item;
@@ -61,7 +56,7 @@ int menu_scroll3(int num, int which, UCHAR *str, char *filename)
 
 	memset(sup_string,0,(NUM_DAT_NAMES*(DAT_NAME_STR_LEN+4)));
 	memset(tdate_string,0,(NUM_DAT_NAMES*(TDATE_STAMP_STR_LEN+10)));
-	
+
 	win_width = WIN_WIDTH;
 	for(i = 0; i < num; i++)
 	{
@@ -195,7 +190,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 	while(!finished)
 	{
 		c = wgetch(twin);
-		
+
 	    switch(c)
 	    {
 	        case KEY_DOWN:

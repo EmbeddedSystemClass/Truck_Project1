@@ -460,7 +460,7 @@ ESOS_USER_TASK(test1)
 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	    ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_TICKS(2);
+		ESOS_TASK_WAIT_TICKS(20);
 
 		if(++data1 > 0x7e)
 			data1 = 0x21;
@@ -499,14 +499,15 @@ void user_init(void)
 	esos_RegisterTask(keypad);
 	esos_RegisterTask(poll_keypad);
 */
+#if 0
 	esos_RegisterTask(poll_comm1);
 	esos_RegisterTask(comm2_task);
 	esos_RegisterTask(send_comm2);
 	esos_RegisterTask(get_comm2);
-
+#endif
 //	esos_RegisterTask(get_sync);
 
-//	esos_RegisterTask(test1);
+	esos_RegisterTask(test1);
 //	esos_RegisterTask(convADC);
 } // end user_init()
 

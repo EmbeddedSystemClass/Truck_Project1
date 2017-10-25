@@ -140,40 +140,10 @@ int tcp_win(void)
 		{
 			// CONNECT
 			case KEY_F(3):
-				if(tcp_connected == 0)
-				{
-					rc = init_client(HOST);
-					if(rc < 0)
-					{
-						rc = tcp_connect();
-						if(rc < 0)
-						{
-							mvwprintw(twin,2,2,"server failed - press any key");
-							if(rc == -2)
-								mvwprintw(twin,3,2,"recv failed on opt");
-							if(rc == -3)
-								mvwprintw(twin,4,2,"send failed on opt");
-							tcp_connected = 0;
-						}else
-						{
-							tcp_connected = 1;
-							disp_msg(twin,"tcp connected\0");
-						}
-					}
-				}
 				break;
 
 			// DISCONNECT
 			case KEY_F(4):
-				if(tcp_connected == 1)
-				{
-					cmd = CLOSE_SOCKET;
-					put_sock(&cmd,1,1,errmsg);
-					usleep(TIME_DELAY*100);
-					close_sock();
-					disp_msg(twin,"connection closed\0");
-				}
-				tcp_connected = 0;
 				break;
 
 			// SEND OPEN_DIR
@@ -182,18 +152,8 @@ int tcp_win(void)
 
 			// SEND GET_DIR
 			case KEY_F(6):
-				if(tcp_connected == 1)
-				{
-					cmd = GET_DIR;
-//					cmd =  SEND_SERIAL;
-//					rc = send_tcp(&cmd,1,errmsg);
-					rc = put_sock(&cmd,1,1,errmsg);
-//					disp_msg(twin,"serial test\0");
-				}
-				else
-					disp_msg(twin,"no connection\0");
 				break;
-			default:	
+			default:
 				break;
 		}
 		if(tcp_connected == 1)

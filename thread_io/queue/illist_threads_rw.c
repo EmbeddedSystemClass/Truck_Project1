@@ -153,7 +153,8 @@ int illist_find_data(int index, I_DATA **datapp, illist_t *llistp)
 		{
 			*datapp = cur->datap;
 			status = 0;
-//			printf("%d  %d  %d  %d\n", cur->datap->in_port,cur->datap->in_bit,cur->datap->out_port,cur->datap->out_bit);
+//			printf("%d  %s\n", cur->datap->port,cur->datap->label);
+//			printf("%d  %s\n", datapp->port,datapp->label);
 			break;
 		}
 		else if (cur->index > index)

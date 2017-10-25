@@ -208,7 +208,8 @@ int main(int argc, char *argv[] )
 		printf("usage: %s [ipaddress of server]\n",argv[0]);
 		exit(1);
 	}
-	rc = init_client(HOST);
+
+	rc = init_client(HOST1);
 
 	if(test_sock() == 0)
 	{

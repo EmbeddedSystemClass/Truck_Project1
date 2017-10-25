@@ -58,14 +58,21 @@
 #include "text_entry.h"
 
 extern int menu_scroll2(int num,int which,char *filename);
-extern int menu_scroll3(int num, int which, UCHAR *str, char *filename);
+extern int menu_scroll3(int num, UCHAR *str, char *filename);
 extern int tcp_win(void);
 extern int file_win(void);
 extern int file_menu2(int num, int which, char *ret_str);
 
 static size_t isize, osize;
+
+// lists for the host
 illist_t ill;
 ollist_t oll;
+
+// lists for the target
+illist_t ill2;
+ollist_t oll2;
+
 
 static char iFileName[40];
 static char oFileName[40];
@@ -331,7 +338,7 @@ call_Host(int code)
     int i,j,k;
     char errmsg[40];
     UCHAR cmd;
-	char filename[40];
+	static char filename[40];
 	char save_as_str[40];
 	char tempx[30];
 	char *chp;
@@ -342,93 +349,93 @@ call_Host(int code)
 	int mem_size;
 	int error;
 
-	d = opendir( "." );
-	if( d == NULL )
-	{
-//				printf("bad OPEN_DIR\n");
-//							return -1;
-	}
-	num = 0;
-
-	memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
-	memset(tempx,0,sizeof(tempx));
-
-	while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
-	{
-		if(strcmp( dir->d_name, "." ) == 0 ||  \
-			strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-		  continue;
-
-		memset(tempx,0,sizeof(tempx));
-		strcpy(tempx,dir->d_name);
-
-		chp = tempx;
-		j = 0;
-
-		while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
-			j++;
-
-		strncpy(tempx,chp,j+1);
-
-		if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-	//							if(dir->d_type == DT_REG)
-		{
-			strcpy(dat_names[num],dir->d_name);
-			dat_len[num] = strlen(dat_names[num]);
-
-	//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
-	//					refresh();
-
-			getFileCreationTime(dat_names[num],tdate_stamp[num]);
-			j = GetFileFormat(dat_names[num]);
-			if(j < 0)
-				cmd = 0xff;
-			else	
-				cmd = (UCHAR)j;
-			dat_type[num] = cmd;	
-			num++;
-		}
-	}
-	closedir( d );
-
-	mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
-
-	ptr = (char *)malloc(mem_size);
-	if(ptr == NULL)
-	{
-		mvprintw(LINES-2,2,"mad balloc");
-		refresh();
-		error = -1;
-		getch();
-	}else
-	{
-		ptr2 = ptr;
-		memset(ptr,0,mem_size);
-
-		for(i = 0;i < num;i++)
-		{
-			*ptr2 = (UCHAR)dat_len[i];
-			ptr2++;
-			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
-//			mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
-//			refresh();
-			ptr2 += dat_len[i];
-			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
-			ptr2++;
-			memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
-	//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
-	//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
-	//					refresh();
-			ptr2 += TDATE_STAMP_STR_LEN;
-		}
-	}
-	
     switch (code)
     {
     	// OPEN
 		case 0:
+			d = opendir( "." );
+			if( d == NULL )
+			{
+		//				printf("bad OPEN_DIR\n");
+		//							return -1;
+			}
+			num = 0;
+
+			memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
+			memset(tempx,0,sizeof(tempx));
+
+			while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
+			{
+				if(strcmp( dir->d_name, "." ) == 0 ||  \
+					strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
+				  continue;
+
+				memset(tempx,0,sizeof(tempx));
+				strcpy(tempx,dir->d_name);
+
+				chp = tempx;
+				j = 0;
+
+				while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
+					j++;
+
+				strncpy(tempx,chp,j+1);
+
+				if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
+			//							if(dir->d_type == DT_REG)
+				{
+					strcpy(dat_names[num],dir->d_name);
+					dat_len[num] = strlen(dat_names[num]);
+
+			//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
+			//					refresh();
+
+					getFileCreationTime(dat_names[num],tdate_stamp[num]);
+					j = GetFileFormat(dat_names[num]);
+					if(j < 0)
+						cmd = 0xff;
+					else
+						cmd = (UCHAR)j;
+					dat_type[num] = cmd;
+					num++;
+				}
+			}
+			closedir( d );
+
+			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
+
+			ptr = (char *)malloc(mem_size);
+			if(ptr == NULL)
+			{
+				mvprintw(LINES-2,2,"mad balloc");
+				refresh();
+				error = -1;
+				getch();
+			}else
+			{
+				ptr2 = ptr;
+				memset(ptr,0,mem_size);
+
+				for(i = 0;i < num;i++)
+				{
+					*ptr2 = (UCHAR)dat_len[i];
+					ptr2++;
+					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
+		//			mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
+		//			refresh();
+					ptr2 += dat_len[i];
+					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
+					ptr2++;
+					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
+			//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
+			//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
+			//					refresh();
+					ptr2 += TDATE_STAMP_STR_LEN;
+				}
+			}
+
 			memset(filename,0,sizeof(filename));
-			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+			index = menu_scroll3(num,(char *)ptr,filename);
 //			mvprintw(LINES-5,30,"%sx  %d",filename,index);
 //			refresh();
 			if(index > 0)
@@ -453,15 +460,18 @@ call_Host(int code)
 					refresh();
 					menu_scroll2(39, EDIT_ODATA, filename);
 				}
-			}			
+			}
     		break;
+
+			free(ptr);
 
 		// SAVE FILE
     	case 1:
+#if 0
 //			strcpy(filename,"idata.dat\0");
 //			ptr2 = filename;
 			memset(filename,0,sizeof(filename));
-			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+			index = menu_scroll3(num,(char *)ptr,filename);
 			int fp = open((const char *)ptr2, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 			if(fp < 0)
 			{
@@ -480,34 +490,49 @@ call_Host(int code)
 			mvprintw(LINES-7,30,"%s ",tempx);
 			refresh();
 
-//			index = menu_scroll3(num,GET_DIR,(char *)ptr,filename);
-
+//			index = menu_scroll3(num,(char *)ptr,filename);
+#endif
+//			mvprintw(LINES-1,2,"filename: %s %s %s  %d   %d",filename,iFileName,oFileName,index,format);
+			format = GetFileFormat(filename);
 /*
-			if(ilWriteConfig(iFileName,&ill,isize,errmsg) != 0)
-				show_status2(errmsg,oFileName,0,0,index,4);
-			if(olWriteConfig(oFileName,&oll,osize,errmsg) != 0)
-				show_status2(errmsg,oFileName,0,0,index,4);
-			else
-	            show_status2(iFileName,oFileName,0,0,index,4);
+			mvprintw(LINES-2,2,"format: %d",format);
+			format = GetFileFormat(iFileName);
+			mvprintw(LINES-3,2,"format: %d",format);
+			format = GetFileFormat(oFileName);
+			mvprintw(LINES-4,2,"format: %d",format);
+			refresh();
 */
+			if(format == 0)
+			{			
+				if(ilWriteConfig(filename,&ill,isize,errmsg) != 0)
+					show_status2(errmsg,filename,0,format,index,4);
+			}
+			else if(format == 1)
+			{
+				if(olWriteConfig(filename,&oll,osize,errmsg) != 0)
+					show_status2(errmsg,filename,0,format,index,4);
+			}
+			else
+	            show_status2(filename,"",0,format,index,4);
+
     		break;
 
 		// SAVE AS
         case 2:
         	file_menu2(0,0,tempx);
-/*        	
+/*
         	text_entry("Filename for both w/o .dat ext or leading i/o:",save_as_str,1);
             show_status2(save_as_str,"",0,0,0,4);
 			strcpy(filename,"i");
 			strcat(filename,save_as_str);
-			strcat(filename,".dat");			
+			strcat(filename,".dat");
 
 			if(ilWriteConfig(filename,&ill,isize,errmsg) != 0)
 				show_status2(errmsg,filename,0,0,index,4);
 
 			strcpy(filename,"o");
 			strcat(filename,save_as_str);
-			strcat(filename,".dat");			
+			strcat(filename,".dat");
 
 			if(olWriteConfig(filename,&oll,osize,errmsg) != 0)
 				show_status2(errmsg,filename,0,0,index,4);
@@ -549,11 +574,10 @@ call_Host(int code)
             ExitProgram(EXIT_SUCCESS);
             printf("\nDONE!\n");
 			break;
-			
+
 		default:
 			break;
     }
-	free(ptr);
 }
 /*****************************************************************************/
 static void
@@ -624,94 +648,134 @@ call_Target(int code)
 	int error = 0;
 	int mem_size;
     (void) code;
-
-	if(tcp_connected)
-	{
-//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
-		ptr2 = ptr+mem_size;
-//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
-//					refresh();
-		cmd = GET_DIR;
-		ptr2 = ptr;
-		error = put_sock(&cmd,1,1,errmsg);
-		if(error < 0)
-			mvprintw(LINES-2,2,"%s",errmsg);
-		error = get_sock(&num,1,1,errmsg);
-		if(error < 0)
-			mvprintw(LINES-2,2,"%s",errmsg);
-
-		for(i = 0;i < num;i++)
-		{
-			error = get_sock((UCHAR*)&dat_len[i],1,1,errmsg);
-			if(error < 0)
-				mvprintw(LINES-2,2,"%s",errmsg);
-			error = get_sock((UCHAR*)&dat_names[i],dat_len[i],1,errmsg);
-			if(error < 0)
-				mvprintw(LINES-2,2,"%s",errmsg);
-//			show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
-		}
-		for(i = 0;i < num;i++)
-		{
-			error = get_sock((UCHAR *)&tdate_stamp[i],TDATE_STAMP_STR_LEN,1,errmsg);
-			if(error < 0)
-				mvprintw(LINES-2,2,"%s",errmsg);
-			error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
-			if(error < 0)
-				mvprintw(LINES-2,2,"%s",errmsg);
-//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
-		}
-	}
-
-//#if 0
-/*
-1) dat_len 		1
-2) dat_names	dat_len
-3) dat_type		1
-3) tdate_stamp	TDATE_STAMP_STR_LEN
-4) '0'
-*/
-	mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
-
-	ptr = (char *)malloc(mem_size);
-	if(ptr == NULL)
-	{
-		mvprintw(LINES-2,2,"mad balloc");
-		error = -1;
-		getch();
-	}else
-	{
-		ptr2 = ptr;
-		memset(ptr,0,mem_size);
-		for(i = 0;i < num;i++)
-		{
-			*ptr2 = (UCHAR)dat_len[i];
-			ptr2++;
-			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
-			ptr2 += dat_len[i];
-			memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
-			ptr2++;
-			memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
-			ptr2 += TDATE_STAMP_STR_LEN;
-//				mvprintw(LINES-2-i,60,"%2x %d",ptr2,ptr2-ptr);
-//				refresh();
-		}
-	}
+	I_DATA i_data;
+	O_DATA o_data;
+	I_DATA *itp;
+	O_DATA *otp;
+	I_DATA **itpp;
+	O_DATA **otpp;
 
     switch (code)
     {
 		// OPEN
         case 0:
+			if(tcp_connected)
+			{
+		//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
+				ptr2 = ptr+mem_size;
+		//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
+				cmd = GET_DIR;
+				ptr2 = ptr;
+				error = put_sock(&cmd,1,1,errmsg);
+				if(error < 0)
+					mvprintw(LINES-2,2,"%s",errmsg);
+				error = get_sock(&num,1,1,errmsg);
+				if(error < 0)
+					mvprintw(LINES-2,2,"%s",errmsg);
+
+				for(i = 0;i < num;i++)
+				{
+					error = get_sock((UCHAR*)&dat_len[i],1,1,errmsg);
+					if(error < 0)
+						mvprintw(LINES-2,2,"%s",errmsg);
+					error = get_sock((UCHAR*)&dat_names[i],dat_len[i],1,errmsg);
+					if(error < 0)
+						mvprintw(LINES-2,2,"%s",errmsg);
+		//			show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
+				}
+				for(i = 0;i < num;i++)
+				{
+					error = get_sock((UCHAR *)&tdate_stamp[i],TDATE_STAMP_STR_LEN,1,errmsg);
+					if(error < 0)
+						mvprintw(LINES-2,2,"%s",errmsg);
+					error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
+					if(error < 0)
+						mvprintw(LINES-2,2,"%s",errmsg);
+		//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
+				}
+			}
+
+			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
+
+			ptr = (char *)malloc(mem_size);
+			if(ptr == NULL)
+			{
+				mvprintw(LINES-2,2,"mad balloc");
+				error = -1;
+				getch();
+			}else
+			{
+				ptr2 = ptr;
+				memset(ptr,0,mem_size);
+				for(i = 0;i < num;i++)
+				{
+					*ptr2 = (UCHAR)dat_len[i];
+					ptr2++;
+					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
+					ptr2 += dat_len[i];
+					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
+					ptr2++;
+					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
+					ptr2 += TDATE_STAMP_STR_LEN;
+		//				mvprintw(LINES-2-i,60,"%2x %d",ptr2,ptr2-ptr);
+				}
+			}
 			memset(filename,0,sizeof(filename));
-			menu_scroll3(num,GET_DIR,(char *)ptr,filename);
+			j = menu_scroll3(num,(char *)ptr,filename);
+			free(ptr);
+
+			mvprintw(LINES-1,2,"%d  %s   ",j,filename);
+			if(dat_type[j] == 0)
+			{
+
+		    	cmd = RECV_ALL_IDATA;
+				error = put_sock(&cmd,1,1,errmsg);
+				if(error < 0)
+					mvprintw(LINES-2,2,"%s",errmsg);
+
+				put_sock(&j,1,1,errmsg);		// send the index into the list of filenames
+
+				itp = &i_data;
+				itpp = &itp;
+				for(i = 0;i < NUM_PORT_BITS;i++)
+				{
+					error = get_sock((UCHAR *)&i_data,sizeof(I_DATA),1,errmsg);
+//					mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
+					illist_insert_data(i,&ill2,&i_data);
+//					j = illist_find_data(i,itpp,&ill2);
+					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+				}
+//				menu_scroll2(39, EDIT_IDATA2, filename);
+				refresh();
+			}
+			else if(dat_type[j] == 1)
+			{
+
+		    	cmd = RECV_ALL_ODATA;
+				error = put_sock(&cmd,1,1,errmsg);
+				if(error < 0)
+					mvprintw(LINES-2,2,"%s",errmsg);
+
+				put_sock(&j,1,1,errmsg);		// send the index into the list of filenames
+
+				otp = &o_data;
+				otpp = &otp;
+				for(i = 0;i < NUM_PORT_BITS;i++)
+				{
+					error = get_sock((UCHAR *)&o_data,sizeof(O_DATA),1,errmsg);
+//					mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
+					ollist_insert_data(i,&oll2,&o_data);
+//					j = illist_find_data(i,itpp,&ill2);
+					mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+				}
+//				menu_scroll2(39, EDIT_ODATA2, filename);
+				refresh();
+			}
 
             break;
+
 		// SAVE FILE
         case 1:
-//			menu_scroll3(num,GET_DIR,(char *)ptr,(char *)ptr3);
-//			menu_scroll3(num,GET_DIR);
-
-//			free(ptr);
-//			free(ptr3);
             break;
 		// SAVE AS
         case 2:
@@ -719,23 +783,122 @@ call_Target(int code)
 		// DELETE
         case 3:
             break;
+
 		// LIST IDATA
         case 4:
+        	cmd = RECV_ALL_IDATA;
+			error = put_sock(&cmd,1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+
+			cmd = 0;
+			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
+
+			itp = &i_data;
+			itpp = &itp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				error = get_sock((UCHAR *)&i_data,sizeof(I_DATA),1,errmsg);
+				mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
+				illist_insert_data(i,&ill2,&i_data);
+//				j = illist_find_data(i,itpp,&ill2);
+//				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+			}
+			refresh();
             break;
+
 		// LIST ODATA
 		case 5:
+        	cmd = RECV_ALL_ODATA;
+			error = put_sock(&cmd,1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+
+			cmd = 0;
+			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
+
+			otp = &o_data;
+			otpp = &otp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				error = get_sock((UCHAR *)&o_data,sizeof(O_DATA),1,errmsg);
+				mvprintw(LINES-2-i,2,"%d %d %s",o_data.port,o_data.onoff,o_data.label);
+				ollist_insert_data(i,&oll2,&o_data);
+//				j = ollist_find_data(i,otpp,&oll2);
+//				mvprintw(LINES-2-i,2,"%d: %d %d %s",j,otp->port,otp->onoff,otp->label);
+			}
+			refresh();
 			break;
-		// GET IDATA
+
+		// SEND IDATA
 		case 6:
+        	cmd = SEND_ALL_IDATA;
+			error = put_sock(&cmd,1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+			itp = &i_data;
+			itpp = &itp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				illist_find_data(i, itpp, &ill2);
+//				mvprintw(LINES-2-i,2,"%d %d %s ",i_data.port,i_data.affected_output,i_data.label);
+//				mvprintw(LINES-2-i,2,"%d %d %s ",itp->port,itp->affected_output,itp->label);
+//				put_sock((UCHAR*)&i_data,sizeof(I_DATA),1,errmsg);
+				put_sock((UCHAR*)itp,sizeof(I_DATA),1,errmsg);
+			}
+			refresh();
 			break;
-		// GET ODATA
+
+		// SEND ODATA
 		case 7:
+        	cmd = SEND_ALL_ODATA;
+			error = put_sock(&cmd,1,1,errmsg);
+			if(error < 0)
+				mvprintw(LINES-2,2,"%s",errmsg);
+			otp = &o_data;
+			otpp = &otp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				ollist_find_data(i,otpp,&oll2);
+//				mvprintw(LINES-2-i,2,"%2d %2d %s           ",o_data.port,o_data.onoff,o_data.label);
+//				mvprintw(LINES-2-i,2,"%2d %2d %s           ",otp->port,otp->onoff,otp->label);
+//				put_sock((UCHAR*)&o_data,sizeof(O_DATA),1,errmsg);
+				put_sock((UCHAR*)otp,sizeof(O_DATA),1,errmsg);
+			}
+			refresh();
+			break;
+
+		// SHOW ALL
+		case 8:
+			cmd = SHOW_DATA;
+			put_sock(&cmd,1,1,errmsg);
+
+//			j = ilLoadConfig(iFileName,&ill,isize,errmsg);
+//			mvprintw(LINES-1,2,"%d   %s   %s  ",j,iFileName,errmsg);
+#if 0
+			itp = &i_data;
+			itpp = &itp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				j = illist_find_data(i,itpp,&ill2);
+				mvprintw(LINES-2-i,2,"%d %d %s",itp->port,itp->affected_output,itp->label);
+//				mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
+			}
+
+			otp = &o_data;
+			otpp = &otp;
+			for(i = 0;i < NUM_PORT_BITS;i++)
+			{
+				j = ollist_find_data(i,otpp,&oll2);
+				mvprintw(LINES-40-i,2,"%d %d %s",otp->port,otp->onoff,otp->label);
+//				mvprintw(LINES-40-i,2,"%d %d %s",o_data.port,o_data.onoff,o_data.label);
+			}
+			refresh();
+#endif
 			break;
 		default:
 			break;
     }
-
-	free(ptr);
 }
 /*****************************************************************************/
 static void
@@ -751,8 +914,9 @@ build_Target_menu(MenuNo number)
         MY_DATA1("Delete"),				// 3
         MY_DATA1("List idata"),			// 4
         MY_DATA1("List odata"),			// 5
-        MY_DATA1("Get idata"),			// 6
-        MY_DATA1("Get odata"),			// 7
+        MY_DATA1("Send idata"),			// 6
+        MY_DATA1("Send odata"),			// 7
+        MY_DATA1("Show All"),			// 8
         {(char *) 0, 0, 0}
     };
 
@@ -804,10 +968,15 @@ call_Tool(int code)
     {
 		// TCP ADDRESS
         case 0:		// change input record
-            break;
-		// CONNECT
-        case 1:		// change output record
-			i = init_client(HOST);
+        	if(tcp_connected)
+        	{
+		        cmd = CLOSE_SOCKET;
+		        put_sock(&cmd,1,1,errmsg);
+		        usleep(TIME_DELAY*10);
+		        close_sock();
+				usleep(TIME_DELAY*10);
+			}
+			i = init_client(HOST1);
 			show_status2("init_client","",i,0,0,2);
 			if(i > 0)
 			{
@@ -817,7 +986,31 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-            show_status2("Connect","",i,j,tcp_connected,62);
+	        show_status2("Connect","",i,j,tcp_connected,3);
+            break;
+		// CONNECT
+        case 1:		// change output record
+/*
+			if(tcp_connected)
+			{
+		        cmd = CLOSE_SOCKET;
+		        put_sock(&cmd,1,1,errmsg);
+		        usleep(TIME_DELAY*100);
+		        close_sock();
+				usleep(TIME_DELAY*50);
+			}
+			i = init_client(HOST2);
+			show_status2("init_client","",i,0,0,2);
+			if(i > 0)
+			{
+				j = tcp_connect();
+				if(j > 0)
+					tcp_connected = 1;
+				else
+					tcp_connected = 0;
+			}
+	        show_status2("Connect","",i,j,tcp_connected,3);
+*/
             break;
 
 		// DISCONNECT
@@ -832,7 +1025,8 @@ call_Tool(int code)
 
 		// TOGGLE OUTPUTS
 		case 3:
-			tcp_win();
+            cmd = TOGGLE_OUTPUTS;
+            put_sock(&cmd,1,1,errmsg);
 			break;
 
 		// ALL OFF
@@ -840,7 +1034,7 @@ call_Tool(int code)
 	    	if(tcp_connected)
 	    	{
 				cmd =  ALL_OFF;
-				ret = put_sock(&cmd,1,1,errmsg);
+//				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("all off      ","",code,0,0,2);
 			break;
@@ -850,26 +1044,30 @@ call_Tool(int code)
 	    	if(tcp_connected)
 	    	{
 				cmd =  ALL_ON;
-				ret = put_sock(&cmd,1,1,errmsg);
+//				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("all on       ","",code,0,0,2);
             break;
 
+		// CLEAR SCREEN
 		case 6:
 	    	if(tcp_connected)
 	    	{
-				cmd =  CLEAR_SCREEN;
+//				cmd =  CLEAR_SCREEN;
+				cmd = TEST_INPUTS2;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("clear screen","",code,0,0,2);
             break;
-		
+
+		// SEND SERIAL
 		case 7:
 			if(tcp_connected)
 			{
-				cmd = SEND_SERIAL;
+//				cmd = SEND_SERIAL;
+				cmd = TEST_INPUTS;
 				ret = put_sock(&cmd,1,1,errmsg);
-			}			
+			}
 		default:
             break;
 	}
@@ -883,8 +1081,8 @@ build_Tool_menu(MenuNo number)
 
     static MENU_DATA table[] =
     {
-        MY_DATA2("Change TCP Addr"),		// 0
-        MY_DATA2("Connect"),				// 1
+        MY_DATA2("Connect 145"),			// 0
+        MY_DATA2("Connect 146"),			// 1
         MY_DATA2("Disconnect"),				// 2
         MY_DATA2("Toggle Outputs"),			// 3
         MY_DATA2("All On"),					// 4
@@ -1243,10 +1441,15 @@ int
 main(int argc, char *argv[])
 {
     int c, rc;
-    int i;
+    int i,j;
 //    size_t size;
-	I_DATA pid;
-	O_DATA pod;
+	I_DATA i_data;
+	O_DATA o_data;
+	I_DATA *itp;
+	O_DATA *otp;
+	I_DATA **itpp;
+	O_DATA **otpp;
+
 	char errmsg[40];
 
 	memset(iFileName,0,sizeof(iFileName));
@@ -1272,7 +1475,7 @@ main(int argc, char *argv[])
 		strcpy(oFileName,argv[2]);
 //		printf("loading: %s & %s\n",argv[1],argv[2]);
 	}
-	
+
 	i = NUM_PORT_BITS;
 	isize = sizeof(I_DATA);
 	isize *= i;
@@ -1292,7 +1495,7 @@ main(int argc, char *argv[])
 		}
 	}else		// oh-boy! create a new file!
 	{
-		
+
 	}
 //	illist_show(&ill);
 
@@ -1307,10 +1510,44 @@ main(int argc, char *argv[])
 		}
 	}else		// oh-boy! create a new file!
 	{
-		
+
 	}
 //	ollist_show(&oll);
 
+
+// init the lists used to manage the target
+	ollist_init(&oll2);
+	illist_init(&ill2);
+
+//	strcpy(iFileName,"idata2.dat\0");
+//	strcpy(oFileName,"odata2.dat\0");
+	rc = ilLoadConfig("idata2.dat",&ill2,isize,errmsg);
+//	printf("%d %s\n",rc,errmsg);
+	rc = olLoadConfig("odata2.dat",&oll2,isize,errmsg);
+//	printf("%d %s\n",rc,errmsg);
+//	illist_show(&ill2);
+//	ollist_show(&oll2);
+#if 0
+	itp = &i_data;
+	itpp = &itp;
+	for(i = 0;i < NUM_PORT_BITS;i++)
+	{
+		j = illist_find_data(i,itpp,&ill2);
+//		mvprintw(LINES-2-i,2,"%d %d %s",itp->port,itp->affected_output,itp->label);
+//		printf("%d %d %d %s\n",j,i_data.port,i_data.affected_output,i_data.label);
+//		printf("%d %d %d %s\n",j,itp->port,itp->affected_output,itp->label);
+	}
+/*
+	otp = &o_data;
+	for(i = 0;i < NUM_PORT_BITS;i++)
+	{
+		j = ollist_find_data(i,&otp,&oll2);
+//				mvprintw(LINES-40-i,2,"%d %d %s",otp->port,otp->onoff,otp->label);
+		printf("%d %d %d %s\n",j, o_data.port,o_data.onoff,o_data.label);
+	}
+*/
+return 1;
+#endif
     setlocale(LC_ALL, "");
 
 
@@ -1381,7 +1618,7 @@ main(int argc, char *argv[])
 				getFileCreationTime(filename,tempx);
 				mvprintw(LINES-7,30,"%s ",tempx);
 				refresh();
-				
-			}				
+
+			}
 #endif
 

@@ -11,12 +11,11 @@
 #define OWIN_WIDTH 66
 #define IWIN_WIDTH 31
 
-//void func(IO_DATA *cur);
-
-//#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-
 extern illist_t ill;
 extern ollist_t oll;
+
+extern illist_t ill2;
+extern ollist_t oll2;
 
 extern int tcp_connected;
 
@@ -38,7 +37,6 @@ static void disp_msg(WINDOW *win,char *str,int line)
 //******************************************************************************************//
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
-//int menu_scroll2(I_DATA *curr,int num,int which)
 int menu_scroll2(int num,int which,char *filename)
 {
     ITEM **my_items;
@@ -76,13 +74,18 @@ int menu_scroll2(int num,int which,char *filename)
 /* Create items */
     my_items = (ITEM **)calloc(num+1, sizeof(ITEM *));
 
-	if(which == EDIT_IDATA)
+
+	if(which == EDIT_IDATA || which == EDIT_IDATA2)
 	{
 		win_width = IWIN_WIDTH;
 		mvprintw(LINES - 21, 0,"%ld ",sizeof(I_DATA));
 		for(i = 0; i < num; ++i)
 		{
-			illist_find_data(i,&pi,&ill);
+			if(which == EDIT_IDATA)
+				illist_find_data(i,&pi,&ill);
+			else if(which == EDIT_IDATA2)
+				illist_find_data(i,&pi,&ill2);
+
 			sprintf(tempx,"%2d",pi->port);
 //			mvprintw(LINES - 21-i, 0,"%s ",tempx);
 			strcpy(sup_string[i],tempx);
@@ -98,12 +101,16 @@ int menu_scroll2(int num,int which,char *filename)
 //			mvprintw(LINES - 10-i, 0,"%s                 ",sup_string[i]);
 		}
 	}
-	else if(which == EDIT_ODATA)
+	else if(which == EDIT_ODATA || which == EDIT_ODATA2)
 	{
 		win_width = OWIN_WIDTH;
 		for(i = 0; i < num; ++i)
 		{
-			ollist_find_data(i,&po,&oll);
+			if(which == EDIT_ODATA)
+				ollist_find_data(i,&po,&oll);
+			else if(which == EDIT_ODATA2)
+				ollist_find_data(i,&po,&oll2);
+
 			sprintf(tempx,"%2d ",po->port);
 			strcpy(sup_string[i],"     ");
 			strcat(sup_string[i],tempx);
@@ -111,7 +118,7 @@ int menu_scroll2(int num,int which,char *filename)
 
 			if(po->onoff != 0)
 				strcpy(tempx, "ON    ");
-			else strcpy(tempx,"OFF   ");	
+			else strcpy(tempx,"OFF   ");
 			strcat(sup_string[i],tempx);
 
 			sprintf(tempx,"%2d",po->type);
@@ -130,6 +137,7 @@ int menu_scroll2(int num,int which,char *filename)
 //			mvprintw(LINES - 2-i, 30,"%d ",strlen(sup_string[i]));
 		}
 	}
+#if 0
 	else if(which == EDIT_IDATA)
 	{
 		win_width = IWIN_WIDTH;
@@ -162,6 +170,7 @@ int menu_scroll2(int num,int which,char *filename)
 //			mvprintw(LINES - 10-i, 30,"%d ",strlen(sup_string[i]));
 		}
 	}
+#endif
 
     for(i = 0; i < num; ++i)
     {
@@ -170,9 +179,19 @@ int menu_scroll2(int num,int which,char *filename)
 			illist_find_data(i,&pi,&ill);
 			my_items[i] = new_item(pi->label, sup_string[i]);
 	    }
-	    else if(which == EDIT_ODATA || which == TOGGLE_OUTPUTS)
+	    else if(which == EDIT_IDATA2)
+	    {
+			illist_find_data(i,&pi,&ill2);
+			my_items[i] = new_item(pi->label, sup_string[i]);
+	    }
+	    else if(which == EDIT_ODATA)
 		{
 			ollist_find_data(i,&po,&oll);
+			my_items[i] = new_item(po->label, sup_string[i]);
+	    }
+	    else if(which == EDIT_ODATA2)
+		{
+			ollist_find_data(i,&po,&oll2);
 			my_items[i] = new_item(po->label, sup_string[i]);
 	    }
     }

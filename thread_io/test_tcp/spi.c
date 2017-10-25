@@ -51,14 +51,14 @@ void test(void)
 	int i;
 	for(i = 0;i < 32;i++)
 	printf("%X : %2x\n",spi_dioptr + i,*(spi_dioptr + i));
-}	
+}
 
 void test2(void)
 {
 	int i;
 	printf("%2x %2x %2x %2x %2x\n",SPI_RO,SPI_RW,SPI_CLK,SPI_MOSI,SPI_MISO);
 	// this returns "1 21 20 8 2"
-}	
+}
 
 
 void close_spi(void)
@@ -163,7 +163,7 @@ void spi_write8(unsigned char c)
 		}
 		c <<= 1;
 		usleep(50);
-		
+
 //		printf("%2x ",m0c0);
 	}
 	SPI_RW = m0c1;

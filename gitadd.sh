@@ -87,6 +87,7 @@ git add thread_io/thread_io_notes.txt
 git add thread_io/dmake4
 git add thread_io/test_tcp/*.c
 git add thread_io/test_tcp/*.h
+git add thread_io/test_tcp/iostate.bin
 git add thread_io/test_tcp/make_target
 git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2

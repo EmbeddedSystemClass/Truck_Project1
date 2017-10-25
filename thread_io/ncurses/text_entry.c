@@ -107,7 +107,7 @@ int text_entry(char *str, char *ret_str, int which)
 					beep();
 					break;
 			}
-			
+
 		}
 //		mvprintw(LINES-2,2,"finished: %d  ",finished);
 //		refresh();

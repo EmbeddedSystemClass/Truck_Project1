@@ -82,7 +82,6 @@ void init_mem(void)
 		perror("error writing to last byte of file\n");
 		exit(1);
 	}
-	card_ports += 4;
 #else
 	card_ports = &fake_port[0];
 #endif
@@ -106,7 +105,7 @@ void OutPortA(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTA_OFFSET] = state;
 	*(card_ports + ROC_1) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void OutPortB(int onoff, UCHAR bit)
@@ -125,7 +124,7 @@ void OutPortB(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTB_OFFSET] = state;
 	*(card_ports + ROC_2) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void OutPortC(int onoff, UCHAR bit)
@@ -144,7 +143,7 @@ void OutPortC(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTC_OFFSET] = state;
 	*(card_ports + ROC_3) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void OutPortD(int onoff, UCHAR bit)
@@ -163,7 +162,7 @@ void OutPortD(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTD_OFFSET] = state;
 	*(card_ports + ROC_4) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void OutPortE(int onoff, UCHAR bit)
@@ -182,7 +181,7 @@ void OutPortE(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTE_OFFSET] = state;
 	*(card_ports + ROC_5) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void OutPortF(int onoff, UCHAR bit)
@@ -201,7 +200,7 @@ void OutPortF(int onoff, UCHAR bit)
 	pstate = &state;
 	outportstatus[OUTPORTF_OFFSET] = state;
 	*(card_ports + ROC_6) = *pstate;
-//	printf("%2x ",state);	
+//	printf("%2x ",state);
 }
 /**********************************************************************************************************/
 void TurnOffAllOutputs(void)
@@ -212,6 +211,28 @@ void TurnOffAllOutputs(void)
 	OutPortByteD(0);
 	OutPortByteE(0);
 	OutPortByteF(0);
+}
+/**********************************************************************************************************/
+void ToggleOutPortA(int port)
+{
+	UCHAR mask;
+	UCHAR *pstate;
+	UCHAR state = 0;
+	UCHAR temp;
+
+	mask = 1;
+	port = (port<7?port:7);
+	mask <<= port;
+	temp = outportstatus[OUTPORTA_OFFSET] & mask;
+	temp = ~temp;
+	temp &= (mask | outportstatus[OUTPORTA_OFFSET]);
+
+	outportstatus[OUTPORTA_OFFSET] = temp;
+	state = temp;
+	pstate = &state;
+//	printf("outportstatus: %x\n",outportstatus[OUTPORTA_OFFSET]);
+	pstate = &state;
+	*(card_ports + ROC_1) = *pstate;
 }
 /**********************************************************************************************************/
 void OutPortByteA(UCHAR byte)
@@ -270,6 +291,16 @@ void OutPortByteF(UCHAR byte)
 #ifdef MAKE_TARGET
 	printf("port F: %x\n",byte);
 #endif
+}
+/***********************************************************************************************************/
+UCHAR InPortByte(int bank)
+{
+	UCHAR state;
+	if(bank > 2)
+		state = *(card_ports + DIR_4 + bank-3);
+	else	
+		state = *(card_ports + DIR_1 + bank);
+	return state;
 }
 /***********************************************************************************************************/
 UCHAR InPortByteA(void)
@@ -610,7 +641,6 @@ int DIO1_in4_7(int port)
 /**********************************************************************************************************/
 void close_mem(void)
 {
-	card_ports -= 4;
 	if(munmap((void *)card_ports,pagesize) == -1)
 		perror("error un-mapping file\n");
 	close(fd);

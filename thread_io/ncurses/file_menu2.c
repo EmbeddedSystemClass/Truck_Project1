@@ -133,7 +133,7 @@ num = 9;
 			if(ret == 1 || ret == 0)
 			{
 				strcpy(dat_names[num++],dir->d_name);
-				dat_type[i][1] = 0;				
+				dat_type[i][1] = 0;
 				if(ret == 1)
 					dat_type[i][0] = 'O';
 				else dat_type[i][0] = 'I';
