@@ -7,7 +7,7 @@ void close_sock(void);
 
 #define HOST1 "192.168.42.145"
 #define HOST2 "192.168.42.146"
-
+#define Host3 "192.168.42.148"
 #ifdef NOMAIN
 #warning "NOMAIN defined"
 #else

@@ -12,10 +12,11 @@
 #include "serial_io.h"
 
 #define BAUDRATE B19200
-#define MODEMDEVICE "/dev/ttyS1"		// now working with 7800 which has ttyS1 as the 2nd serial port
-//#else
-//#define MODEMDEVICE "/dev/ttyAM1"		// 7200 card uses AM1 as 2nd serial port
-//#endif
+#ifdef TS-7800
+#define MODEMDEVICE "/dev/ttyS1"		// 7800 uses ttyS1 as the 2nd serial port
+#else
+#define MODEMDEVICE "/dev/ttyAM1"		// 7200 uses ttyAM1 as 2nd serial port
+#endif
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1

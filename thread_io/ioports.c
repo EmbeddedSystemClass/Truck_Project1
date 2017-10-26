@@ -65,7 +65,7 @@ void init_mem(void)
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	pagesize = getpagesize();
-	card_ports = (VUCHAR *)mmap(0, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, IOCARDBASEADD78);
+	card_ports = (VUCHAR *)mmap(0, pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, PORTBASEADD);
 	assert(card_ports != MAP_FAILED);
 
 	key = lseek(fd, pagesize - 1,SEEK_SET);

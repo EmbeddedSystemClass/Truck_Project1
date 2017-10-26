@@ -2,10 +2,14 @@
 #define __IOPORTS_H
 //#warning "IOPORTS defined"
 #define			VUCHAR volatile unsigned char
-#define			PORTBASEADD72			0x11E00000
-#define			PORTBASEADD78			0xE8000000
+#ifdef TS-7800
+#define			PORTBASEADD			0xEE000000
+#else
+#define			PORTBASEADD			0x11E00000
+#endif
+
 //#define			IOCARDBASEADD78			0xEC000000	// 8-bit memory
-#define			IOCARDBASEADD78			0xEE000000	// 8-bit io				(this one works)
+//#define			IOCARDBASEADD78			0xEE000000	// 8-bit io				(this one works)
 //#define			IOCARDBASEADD78			0xED000000	// 16-bit memory
 //#define			IOCARDBASEADD7I			0xEF000000	// 16-bit io
 // (see section 6.2.5 in manual)

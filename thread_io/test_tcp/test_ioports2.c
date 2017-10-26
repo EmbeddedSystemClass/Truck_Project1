@@ -51,10 +51,13 @@ it is necessary to write the following values to the registers specified:
 // 7/9/15 - using PC/104 card IR104 set at base address 0x300
 
 #define			VUCHAR volatile unsigned char
-#define			PORTBASEADD72			0x11E00000
-#define			PORTBASEADD78			0xE8000000
+#ifdef TS-7800
+#define			PORTBASEADD			0xEE000000
+#else
+#define			PORTBASEADD			0x11E00000
+#endif
 //#define			IOCARDBASEADD78			0xEC000000	// 8-bit memory
-#define			IOCARDBASEADD78			0xEE000000	// 8-bit io				(this one works)
+//#define			IOCARDBASEADD78			0xEE000000	// 8-bit io				(this one works)
 //#define			IOCARDBASEADD78			0xED000000	// 16-bit memory
 //#define			IOCARDBASEADD7I			0xEF000000	// 16-bit io
 // (see section 6.2.5 in manual)
@@ -197,7 +200,7 @@ int main(int argc, char **argv)
 
 	card_pagesize = getpagesize();
 	printf("card_pagesize = %4lx\n",card_pagesize);
-	card_ports = (VUCHAR *)mmap(0, card_pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, IOCARDBASEADD78);
+	card_ports = (VUCHAR *)mmap(0, card_pagesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, PORTBASEADD);
 
 	assert(card_ports != MAP_FAILED);
 
