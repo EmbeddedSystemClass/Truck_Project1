@@ -14,6 +14,9 @@ BAUD  = 19200UL
 ##  need to change this path to match.
 LIBDIR = lib
 
+print-%:
+	@echo '$*=$($*)'
+
 ##########------------------------------------------------------##########
 ##########                 Programmer Defaults                  ##########
 ##########          Set up once, then forget about it           ##########

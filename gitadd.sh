@@ -70,6 +70,7 @@ git add thread_io/ncurses/menu_scroll3.c
 git add thread_io/ncurses/Makefile
 git add thread_io/ncurses/init_db.c
 git add thread_io/ncurses/list_db.c
+git add thread_io/ncurses/make_db
 git add thread_io/ncurses/setiodata.h
 git add thread_io/ncurses/tcp_win.c
 git add thread_io/ncurses/config_file.c

@@ -202,7 +202,6 @@ int main(int argc, char *argv[] )
 	char errmsg[20];
 	memset(errmsg,0,20);
 
-
 	if(argc < 2)
 	{
 		printf("usage: %s [ipaddress of server]\n",argv[0]);

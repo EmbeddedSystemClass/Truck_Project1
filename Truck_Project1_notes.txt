@@ -1,6 +1,5 @@
 Truck_Project1_notes.txt
 
-
 PIC24 UARTS:
 
 UART1 - RS232 to TS-7200
@@ -18,7 +17,24 @@ SPI from FPGA (master) to AVR (slave)
 SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
 SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
-FPGA to AVR works up to ~30K doing just an echo
+
+											|-------|
+								|---------->| LCD 	|
+----|							|A			|-------|
+	|----------> SPI ---------->|V											  Laptop
+F	|							|R <------------------->|						^
+P	|													|						|TCP/IP
+G	|---------------> RS-232* ----------------->| P	|	|RS-232					|
+A	|-------|									| I	|	|						v
+	|		|				|-----------|		| C |<--|					|-----------|
+----|		|				|			|		| 2	|						|			|	
+			|				|  keypad	|------>| 4 |<------ RS-232 --------->| TS-7800	|
+			|				|			|		 ^							|			|
+			|				|-----------|		 |							|-----------|
+			|									 |
+			|------------------> SPI*------------| 
+
+*FPGA -> PIC24 can be either RS-232 or SPI
 
 //******************************************************************************************//
 //************************************* PIC24_support **************************************//
@@ -28,15 +44,18 @@ Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
 It uses the ESOS library. Each ESOS_USER_TASK will run independently.
 Each task must be registered in user_init.
 
-Basically, the  PIC24FJ128GB110 will route message traffic to and from the FPGA, the TS-7200
-and the LCD screen. The AVR chip is the driver for the LCD screen and just gets commands from
-the PIC24FJ128GB110 over the serial port. The path to the FPGA is the SPI and the path to the
-AVR and the TS-7200 are serial ports. The keypad input manages the menuing of the LCD screen
-and can display optional real time info like engine speed, engine temp, oil pressure, etc.
+Basically, the  PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
+TS-7200 and the LCD screen. The AVR chip is the driver for the LCD screen and just gets 
+commands from the PIC24 over the serial port. The path to the FPGA is the SPI and the 
+path to the AVR and the TS-7200 are serial ports. The keypad input (PIC) manages
+the menuing of the LCD screen and can display optional real time info like engine speed,
+engine temp,oil pressure etc.
+
 There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
 The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
 shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
-the PIC24FJ128GB110 via the SPI (as master).
+the PIC via the SPI (as master).
+
 Other telemetry data can be added later like distributor timing to use for spark advance.
 The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
 'black box' FDR that records the last so many hours or minutes of the telemetry data to a
@@ -46,8 +65,23 @@ file that can be downloaded later.
 //*************************************** AVR_t6963 ****************************************//
 //******************************************************************************************//
 
-The AVR is just a driver for the LCD display. The serial port of the AVR communicates with a PIC24.
-The PIC24 sends a stream of data specified by an array of structs rt_params.
+The AVR is just a driver for the LCD display. The serial port of the AVR communicates with a 
+PIC24. The PIC24 sends a stream of data specified by an array of structs rt_params.
+
+10/27/17 - the new AVR ATXMEGA128R4U has all kinds of cool features:
+- 30 IO pins:
+
+	PORTA (8)
+	PORTB (4)
+	PORTC (8)
+	PORTD (6)
+	PORTE (4)
+
+(2) SPI ports
+(5) UARTS
+Event Routing Network (to streamline interrupted peripherals SPI & UART?)
+Examples for interrupt driven UART RX
+
 
 (main.h)
 typedef struct rt_params
@@ -81,10 +115,6 @@ following bytes is sent to the AVR
 
 (Alternatively, the PIC can get the keypresses from one of the comm ports and double
 as the keypad)
-
-When the PIC24 sends a byte in the range of 0xE0 -> 0xEF that will be interpreted as
-a keypress. The dialog will filter this out using a switch statement. The default will
-just return whatever was passed in. (see get_key() in menus.c)
 
 The section of code at the beginning of main.c reads from the eeprom 3 different arrays:
 1) labels
@@ -224,9 +254,10 @@ eeprom_sim.
 
 The prompt strings for the checkboxes and execs will have to be pumped over whether
 using the sim or the AVR. This happens when doing an init_checkboxes or init_execchoices
+(The new AVR has 2k eeprom and could store more labels & prompts)
 
 The checkboxes are not mutually exclusive, the exec_choices are, so we need labels
-for all but the check_boxes need only cover the number of check_boxes for do/init_checkboxes
+for all, but the check_boxes need only cover the number of check_boxes for do/init_checkboxes
 The execs only cause an event on either/both the PIC & AVR. (could have an array of fptr's
 for just the exec_choices)
 
@@ -263,11 +294,6 @@ decided not to do this for now:
 	it can call a function that checks to see if 
 }
 
-
-currently the ESOS stuff is doing weird shit - prolly need caps
-went back to sim_write->sim_read and ended up pushing the entire eeprom 
-data along with TOTAL_NUM_CHECKBOXES of the checkboxes arrays.
-
 test_write_data:
 
 The subdirectory called test_write_data has 2 separate makefiles to compile the sim_read and
@@ -276,27 +302,24 @@ sim_write:
 make -f make_avr - compiles the sim_read
 make -f make_pic - compiles the sim_write
 
-4 possible conditions:
+4 possible setups:
 
 1) sim_write->AVR			- testing the simulator with actual AVR
 2) PIC->sim_read			- testing the simulator with actual PIC
 3) PIC->AVR					- actual PIC->AVR
-4) sim_write->sim_read		- using null-modem cable with 2 simulators
+4) sim_write->sim_read		- using null-modem cable with 2 simulators (linux terminals)
 
-1) 'LOAD_RAM' sends over the the cblabels[], the checkboxes and rt_params[]
-2) 'LOAD_RAM' sends over the eeprom image, the cblabels[], the checkboxes and rt_params[]
-3) 'LOAD_RAM' sends over the the cblabels[], the checkboxes and rt_params[]
-4) 'LOAD_RAM' sends over the eeprom image, the cblabels[], the checkboxes and rt_params[]
-
-in all case LOAD_RAM sends over everything except eeprom image when sending to AVR
+'LOAD_RAM' cmd sends over:
+1) cblabels[] - array of labels for checkboxes and exec prompts
+2) checkboxes settings
+3) rt_params[]
+2) the eeprom image (if using the simulator)
 
 in all cases update_ram() which calls update_menu_structs must be run in either 
 the PIC or sim_write to setup the menu_structs array
 
 update_rtparams currently is sent over in LOAD_RAM but since its now burned into eeprom
 we can do a lookup in the AVR using read_eeprom
-
-
 
 (when testing sim_write -> AVR set the DISABLE_LCD define in make_avr and the TESTING_AVR
 	define in make_pic)
@@ -317,13 +340,14 @@ each linux box has a script called extract.sh which un-tars the tar file sent ov
 everything and starts up the sim_read/write. The sim_read must be started first since it waits
 on a read() to start reading the eeprom image which is sent over as soon as the sim_write starts.
 
-Currently we must, just after the eeprom image is sent over, hit the 'r' key on the sim_write 
-which does a LOAD_RAM command which sends over all the checkbox prompts (cblabels array),
+when using the simulator, just after the eeprom image is sent over, hit the 'r' key on the
+sim_write which does a LOAD_RAM command which sends over all the checkbox prompts (cblabels array),
 current state of the checkboxes (checked or not), the indexes for the checkboxes, the
 rt_params array of structs, and the sample_numbers array for the edit boxes.
 
 keypad layout - since the six reassignable keys are on the outside (bottom and left) it makes
 sense to use these as special function keys.
+
 1 2 3 A
 4 5 6 B
 7 8 9 C
@@ -349,7 +373,7 @@ _menu_change,	MENU2B, MENU2C, MENU2D,   MENU2E, MENU3A, MENU3B, MENU1A	(MENU1A)
 _menu_change,	MAIN,   MENU2D, MENU1B,   MENU1D, MENU2A, MENU2B, MENU1B	(MENU1B)
 _do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1C	(MENU1C)
 _do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D	(MENU1D)
-
+...
 
 When the system starts, the first menu_struct will be loaded as the current menu.
 the menus[] is an array of 6 ints which are indexes (defined by enum menu_types 
@@ -435,13 +459,13 @@ TS-7200.
 
 The dashboard will have a DB9 connector for the TS-7200 monitor and one for the FPGA
 plus a RJ-45 connector to the TS-7200 ethernet port. (Use a crossover ethernet cable
-from the linux laptop to the RJ-45 jack).
+from the linux laptop to the RJ-45 jack - or use a old D-link router as hub in case
+for another client to log into the TS-7200).
 
 The dashboard will have programming connectors for:
 1) the PIC24 - 6 pin din
-2) the AVR - USB connector to the buspirate board *
+2) the new AVR can just use a USB connection.
 3) 14 pin ICD connector to program the FPGA
-* or if we want to use the SPI then the MISO, MOSI, etc could have a disconnect
 
 The TS-7200 has a reset button on board and can be re-wired to bring it out to the
 dashboard. The PIC24 and the AVR can have separate switches to turn each board on
@@ -453,20 +477,22 @@ upgrading, testing and debugging.
 
 FPGA connections:
 
-1) 2 inputs for the mph & rpm and alternately another rpm for the optional
+1) 2 inputs for the mph & rpm and alternately, another rpm for the optional
 		missing tooth wheel.
 2) a tone-generator output which goes to a speaker.
 3) an output which breaks the circuit to the fuel pump.
 4) other optional IO for future expansion.
+
+The inputs to the FPGA should have 5v clamping diodes which go to a 5v-3v3 converter.
 
 PIC24 connections:
 
 1) 8 or 16 inputs for the ADC (eng temp & oil pressure to start with)
 2) other IO for future expansion.
 
-The TS-7200 has connectors for the I/O - inputs from external switches or
-momentary contact push-buttons - outputs go either directly to
-lights (dash indicator lights) or to high-amp relays (headlights, starter relay, etc)
+The TS-7200 has connectors for the I/O (PC-104 card) - inputs from external switches or
+momentary contact push-buttons - outputs go either directly to lights 
+(dash indicator lights) or to high-amp relays (headlights, starter relay, etc)
 
 TS-7200:
 2 UARTs are RS-232 - 1 goes to PIC24, the other is open
@@ -486,9 +512,9 @@ FPGA:
 (10/13/17)
 TS-7800:
 Has 3 UARTS, faster CPU & better OS. Memory access is diff for DIO/LCD & PC104.
-No built-in SPI like the TS-7200 and very little docs on the Marvell processor. 
-Would be nice to have interrupt routine that handles the SPI which the pins could be
-on the DIO. Since the TS-7800 is in a remote box we have to use serial anyway.
+No built-in SPI like the TS-7200 but very little docs on the Marvell processor. 
+(would be nice to have interrupt routine that handles the SPI which the pins could be
+on the DIO. Since the TS-7800 is in a remote box we have to use serial anyway).
 
 The new AVR has (2) SPI ports and can be interrupt driven. So if I could implement the 
 2nd SPI port that's on the PIC24 (there are interrupts avail) I could have one port as
@@ -501,7 +527,17 @@ just the one SPI from the PIC24 act as master to the AVR for now and skip the on
 the FPGA) or just use the serial port on the FPGA to send rt data to PIC24. That would
 free up one of the UART's on the PIC24 because it's SPI is going to the AVR. 
 
-Don't use the funciton pointer array in the thread_io, just have dedicated threads
+(10/25/17)
+added 2 branches: TS-7200 & TS-7800 but made changes in master so the Makefile in
+thread_io can be changed to compile for either one. (search for "-DTS-7800")
+also need to change the init_client(HOSTn) in demo_menus2.c and client.c in ncurses
+according to the defines in client.h: 
+
+#define HOST1 "192.168.42.145"	// TS-7800 with 2 IO cards used for Truck_Project
+#define HOST2 "192.168.42.146"	// TS-7800 with just one IO card (for now)
+#define Host3 "192.168.42.148"	// TS-7200 with 2 IO cards
+
+Don't use the functon pointer array in the thread_io, just have dedicated threads
 and have the serial port one with the highest priority.
 
 Order another 2GB SD card for the TS-7800 to back up OS on.
@@ -536,7 +572,7 @@ type:
 2) goes on/off at a pulse_time rate until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
 
-11/16/17
+10/16/17
 made separate make files (make_db) to compile init_db & list_db on both host and target side
 /thread_io (target) - sched
 /thread_io/ncurses (host) - client
@@ -572,27 +608,21 @@ menus:
 	- All Off
 	- All On
 
-types:
+Need another database which has list of on-off times for each IO port. Have a field in
+the O_DATA database which points to a on-off database (or text file).
+In task2 when we check for a change in the inputs, check for a time-up in a list of
+which active time-up array and then check the time of day to see if that port should
+be turned on or off.
 
-	SEND_IDATA = 0x70,
-	SEND_ODATA,
-	EDIT_IDATA,
-	EDIT_ODATA,
-	SEND_ALL_IDATA,
-	SEND_ALL_ODATA,
-	SEND_SERIAL,
-	CLOSE_SOCKET,
-	CLEAR_SCREEN,
-	SAVE_TO_DISK,
-	TOGGLE_OUTPUTS,
-	ALL_OFF,
-	ALL_ON,
-	OPEN_DIR,
-	GET_DIR,
-	EXIT_PROGRAM
+Use 12vdc->5vdc converter from separate motorcycle battery to power whole system.
+Then have a way to keep the battery charged - either charge it from the car battery
+or use solar panels (or switch between both)
 
 
 **************** nice to have's: ****************
+
+FPGA reads from missing tooth wheel for the crank position and calculates the amount
+of necessary spark advance to control the distributor
 
 SPI is built into the processor and has specific pins allocated on the DIO (interrupt?)
 
@@ -602,9 +632,6 @@ TS-7800 has (2) SATA connectors for SSD drives.
 
 One of the TS-7200's have the PC104 pins going thru the bottom - we could put the bat3
 on top of it and the other IO boards underneath which might be safer.
-
-Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
-a Pro-Mini. 
 
 Look into the copy_tcp utility and add some error checking (not working right).
 
@@ -622,8 +649,6 @@ shutdown)
 
 make an extra field in the O_DATA and I_DATA structs called group for acting on a group
 
-make command line program that runs on the laptop (client) and does simple commands to TS-7200
-
 timer in AVR goes back to main screen or locks out w/password prompt if so much time
 elapses without keypress
 
@@ -631,7 +656,10 @@ need a way to enter password (alnum stuff)
 
 GPS and accel modules on FPGA (serial?)
 
-cadmium sulfide photodetector for measuing light level for display dim
+cadmium sulfide photodetector under windshield for measuing light level to 
+dim display to rpm/mph LED's and LCD screen automatically.
+
+PWM signal from PIC24 controls SCR power to the LCD (to dim display)
 
 get mlabels function to work from eeprom when running on AVR
 
@@ -646,21 +674,53 @@ do/init_exec has prompts but not part of check_boxes[]
 
 do_exec's have list of ptr's to exec if on AVR
 
-need some way to tell if AVR goes off the rails so it can reset itself
+need some way to tell if AVR goes off the rails so it can reset itself (WDT)
 
 any checkbox can apply to a 'group' IO
 
 have a 100 or byte section at beginning of dat files (just after the id tag) reserved
 for comments that can be edited and viewed.
 
+The new AVR has touch-sence capabilities so a touch screen can be laid over the LCD
+which would eliminate the need for a key-pad
+
+Use ESP8266 for remote wireless (bluetooth) control from Android phone (remote start
+- alarm disable - door poppers)
 
 ***************** unrelated ********************
+
 Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
 a Pro-Mini. 
 
-Use one of the extra TS-7200 boards with an IO card to control lights in shop. (IR interface)
+Use one of the extra TS-7200 boards with an IO card to control lights in shop.
+Use an ESP8266 on the TS-7200 to get comamnds from the cell phone over Bluetooth.
 
-Get missing-tooth wheel to work with FPGA
+Use old computer case as box for home automation - use TS-7200 with (2) IO cards and 1 or more
+8 relay boards lights & furnace for shop.
+
+1) 4-bulb overhead light
+2) 2-bulb overhead light
+3) near workbench light
+4) far workbench light
+5) 2-bulb overhead light near door
+6) furnace
+7)
+8)
+
+(2) 8-relay boards and (2) 2-relay boards (10A each) would use up 1 IO card. So order some more
+relay boards.
+
+IO card at 0x280	->		(2) 8-relay & (2) 2-relay boards
+IO card at 0x3000	->		(2) 8-relay & (2) 2-relay boards
+TS-7200
+
+A cigar box near door has 6 push-button switches that can either connect directly to the main box
+or have an AVR processor which sends commands via seial port to main box. In the later case,
+we could have a small LCD screen on the cigar box driven by the AVR.
+
+Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
+a Pro-Mini. 
+
 
 
 

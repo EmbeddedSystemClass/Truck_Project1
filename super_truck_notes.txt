@@ -2,7 +2,8 @@ flat surface - wax paper - fglass on outside of ctl box cover
 
 hookup starter, fp & acc wires
 
-use old alt
+use old alt - see if a mech shop can change the pulley on
+the new 130A 3G alternator from supine to v-belt pulley
 
 mount radiator
 
@@ -16,4 +17,13 @@ figure out dist/reg/coil
 
 kill sw & start sw - use lock out relay?
 
+build dash board
+
+insulate cab
+
+install heater
+
+install seats
+
+put front clip back on
 
