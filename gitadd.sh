@@ -1,6 +1,10 @@
 git add README.md
 git add Truck_Project1_notes.txt
 git add super_truck_notes.txt
+git add monster_box.txt
+git add HDM128GS24L.png
+git add IPC_layout.png
+git add MT-DB-X4_pinout.png
 git add todo.txt
 git add gitadd.sh
 git add .gitignore
@@ -22,8 +26,6 @@ git add Truck_App1/uartLED.vhd
 git add Truck_App1/uartLED2.vhd
 git add Truck_App1/uart_tx.vhd
 git add Truck_App1/uart_rx.vhd
-git add Truck_App1/setdecimalLED.vhd
-git add Truck_App1/board_layout.txt
 git add Truck_App1/rpm.ods
 git add Truck_App1/sensor.vhd
 git add Truck_App1/wrapperLED.vhd
@@ -42,7 +44,6 @@ git add PIC24_support/esos1/Truck_App2.c
 git add PIC24_support/esos1/Truck_App.h
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
-git add Truck_App1/PIC24_support/esos1/domake*.sh
 
 git add thread_io/ioports.c
 git add thread_io/Makefile
@@ -63,7 +64,6 @@ git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
 git add thread_io/mytypes.h
-git add thread_io/ncurses/demo_forms2.c
 git add thread_io/ncurses/demo_menus2.c
 git add thread_io/ncurses/menu_scroll2.c
 git add thread_io/ncurses/menu_scroll3.c
@@ -84,6 +84,7 @@ git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
 git add thread_io/ncurses/text_entry.c
 git add thread_io/ncurses/text_entry.h
+git add thread_io/ncurses/ncurses_cfg.h
 git add thread_io/thread_io_notes.txt
 git add thread_io/dmake4
 git add thread_io/test_tcp/*.c
@@ -95,9 +96,6 @@ git add thread_io/test_tcp/Makefile2
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/avrdude.conf
-git add AVR_t6963/dobus2
-git add AVR_t6963/getinfo
-git add AVR_t6963/gitadd.sh
 git add AVR_t6963/Makefile
 git add AVR_t6963/run-avrdude
 git add AVR_t6963/ProMiniPinout.txt
@@ -119,7 +117,6 @@ git add AVR_t6963/main.h
 git add AVR_t6963/spi.c
 git add AVR_t6963/spi.h
 git add AVR_t6963/supp.c
-git add AVR_t6963/ERM240128.png
 git add AVR_t6963/test_write_data/sim_read.c
 git add AVR_t6963/test_write_data/sim_write.c
 git add AVR_t6963/test_write_data/make_avr
@@ -138,7 +135,8 @@ git add AVR_t6963/test_write_data/eeprom.bin
 git add AVR_t6963/todo.txt
 git add AVR_t6963/test_eeprom.cx
 git add AVR_t6963/main.cx
-clear
+#clear
 git status
 git log --oneline > oneline.txt
 #git log | grep Date
+

@@ -179,7 +179,6 @@ PIC24_support/esos1/ESOS1.X/build/
 PIC24_support/esos1/ESOS1.X/dist/
 PIC24_support/esos1/ESOS1.X/nbproject/private/
 *.dat
-*.png
 *.exe
 AVR_t6963/avr8-gnu-toolchain-linux_x86/
 AVR_t6963/key_defs.h

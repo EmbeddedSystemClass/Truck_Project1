@@ -201,7 +201,7 @@ db1_unit: entity work.db_fsm
 		db=>mph_db);
 
 spi_master_unit: entity work.SPI_MASTER(RTL)
-	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>20000,SLAVE_COUNT=>2)
+	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>5000,SLAVE_COUNT=>2)
 	port map(CLK=>clk, RST=>reset,
 	SCLK=>SCLK_o,
 	CS_N=>SS_o,
@@ -239,6 +239,7 @@ begin
 				led1 <= "1110";
 				if mspi_ready = '1' then
 					led1 <= "0111";
+
 					mspi_din <= stlv_temp1;		-- write
 					mspi_din_vld <= '1';
 					state_dout_next <= start_dout;
@@ -250,9 +251,9 @@ begin
 --				if SS_o(0) = '0' then
 				if mspi_dout_vld = '1' then
 					led1 <= "1011";
-					-- mspi_dout is what gets received by MISO
+-- mspi_dout is what gets received by MISO
 --					if addr(0) = '1' then
---						stlv_temp1 <= mspi_dout;
+						stlv_temp1 <= mspi_dout;
 --					elsif addr(1) = '1' then	
 --						stlv_temp1a <= mspi_dout;
 --					end if;	
@@ -277,20 +278,20 @@ begin
 							temp1:= 33;
 						else temp1:= temp1 + 1;
 						end if;	
---						stlv_temp1 <= conv_std_logic_vector(temp1,8);
-						stlv_temp1 <= X"AA";
+						stlv_temp1 <= conv_std_logic_vector(temp1,8);
+--						stlv_temp1 <= X"AA";
 						addr <= "01";					
 					else	
 						if temp2 < 33 then
 							temp2:= 125;
 						else temp2:= temp2 - 1;	
 						end if;	
---						stlv_temp1 <= conv_std_logic_vector(temp2,8);
-						stlv_temp1 <= X"55";
+						stlv_temp1 <= conv_std_logic_vector(temp2,8);
+--						stlv_temp1 <= X"55";
 						addr <= "10";
 					end if;
 
-					test <= "00" & addr;
+--					test <= "00" & addr;
 					state_dout_next <= idle_dout;
 				end if;
 --				end if;
@@ -374,16 +375,17 @@ begin
 		start_rx <= '1';
 		time_delay_reg <= (others=>'0');
 		time_delay_next <= (others=>'0');
+--		test <= (others=>'0');
 	else if clk'event and clk = '1' then
 		case state_uart_reg1 is
 			when idle1 =>
 				if done_rx = '1' then
 					start_rx <= '0';
 					state_uart_next1 <= start;
---					data_tx <= conv_std_logic_vector(temp_uart,8);
+					data_tx <= conv_std_logic_vector(temp_uart,8);
 --					data_tx <= stlv_temp1a;
-					data_tx <= data_rx;
-
+--					data_tx <= data_rx;
+--					test <= "1010";
 					skip <= not skip;
 					if skip = '1' then
 						if temp_uart > 125 then
@@ -391,6 +393,7 @@ begin
 						else
 							temp_uart:= temp_uart + 1;
 						end if;	
+--						test <= temp_uart(3 downto 0);
 					end if;
 					start_tx <= '1';
 				end if;
@@ -399,12 +402,12 @@ begin
 				state_uart_next1 <= delay;
 			when delay =>
 				start_rx <= '1';
---				if time_delay_reg > TIME_DELAY8 then
---					time_delay_next <= (others=>'0');
+				if time_delay_reg > TIME_DELAY8 then
+					time_delay_next <= (others=>'0');
 					state_uart_next1 <= idle1;
---				else
---					time_delay_next <= time_delay_reg + 1;
---				end if;	
+				else
+					time_delay_next <= time_delay_reg + 1;
+				end if;	
 		end case;
 		time_delay_reg <= time_delay_next;
 		state_uart_reg1 <= state_uart_next1;

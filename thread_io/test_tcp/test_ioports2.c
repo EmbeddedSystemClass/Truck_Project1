@@ -291,7 +291,7 @@ void do_scr(int key)
 			mydelay(100);
 			OutPortA(1,2);
 			mydelay(100);
-			OutPortA(1,4);
+			OutPortA(1,3);
 		break;
 		case 'b':
 			printf("all off\n");
@@ -301,7 +301,7 @@ void do_scr(int key)
 			mydelay(100);
 			OutPortA(0,2);
 			mydelay(100);
-			OutPortA(0,4);
+			OutPortA(0,3);
 		break;
 		case 'c':
 			printf("toggle 4 bulb overhead\n");
@@ -317,7 +317,7 @@ void do_scr(int key)
 		break;
 		case 'f':
 			printf("toggle far workbench\n");
-			ToggleOutPortA(4);
+			ToggleOutPortA(3);
 		break;
 		case 'g':
 			printf("toggle all\n");
@@ -327,7 +327,7 @@ void do_scr(int key)
 			mydelay(100);
 			ToggleOutPortA(2);
 			mydelay(100);
-			ToggleOutPortA(4);
+			ToggleOutPortA(3);
 			mydelay(100);
 		break;
 		case 'h':
@@ -371,9 +371,9 @@ void do_scr(int key)
 
 				mydelay(200);
 
-				OutPortA(1,4);
+				OutPortA(1,3);
 				mydelay(3000);
-				OutPortA(0,4);
+				OutPortA(0,3);
 				mydelay(200);
 			}
 			OutPortA(1,1);

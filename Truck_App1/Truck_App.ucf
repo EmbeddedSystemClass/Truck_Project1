@@ -26,7 +26,7 @@ NET		"tx_mph"	LOC = "P48";
 NET		"MOSI_o"	LOC = "P82";
 NET		"MISO_i"	LOC = "P76";
 NET		"SCLK_o"	LOC = "P74";
-#NET		"SS_o"		LOC = "P65";
+#NET	"SS_o"		LOC = "P65";
 
 # if using slave select for 2 different SPI slaves
 NET	"SS_o[0]"   LOC = "P65";

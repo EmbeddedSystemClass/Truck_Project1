@@ -82,6 +82,22 @@ PIC24. The PIC24 sends a stream of data specified by an array of structs rt_para
 Event Routing Network (to streamline interrupted peripherals SPI & UART?)
 Examples for interrupt driven UART RX
 
+LCD is driven by the AVR:
+
+PORTA -> data (0->7)
+PORTB.0 -> WR
+PORTB.1 -> CE
+PORTB.2 -> RST
+PORTB.3 -> CD
+PORTC.0 -> RD
+
+AVR has (2) comm ports:
+PORTC.2 -> TX1
+PORTC.3 -> RX1
+
+PORTD.2 -> TX2
+PORTD.3 -> RX2
+
 
 (main.h)
 typedef struct rt_params
