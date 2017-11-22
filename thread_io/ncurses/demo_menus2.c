@@ -985,8 +985,13 @@ call_Tool(int code)
 		        close_sock();
 				usleep(TIME_DELAY*10);
 			}
+#ifdef MAKE_SIM
+			i = init_client(Host_Sim);
+			show_status2("init_client",Host_Sim,i,0,0,2);
+#else
 			i = init_client(HOST1);
-			show_status2("init_client","",i,0,0,2);
+			show_status2("init_client",HOST1,i,0,0,2);
+#endif
 			if(i > 0)
 			{
 				j = tcp_connect();

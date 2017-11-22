@@ -29,7 +29,7 @@ to set the mplab PIC24 library to use more than 1
 serial ports see /lib/src/pic24_serial.c
 and search for '#if DEFAULT_UART == 1' (kludge)
 
-UART1:
+UART1: (monitor)
 CONFIG_RD8_AS_DIG_INPUT (); // RX pin must be digital input
 CONFIG_U1RX_TO_RP (RD8_RP); // U1RX <- RD8 rcv pin 68
 CONFIG_RD0_AS_DIG_OUTPUT (); // TX pin must be digital output
@@ -38,7 +38,7 @@ CONFIG_U1TX_TO_RP (RD0_RP); // U1TX -> RD0 tx pin 72
 RD8 - p68 - 5th from top inside left
 RD0 - p72 - 3rd from top inside left
 
-UART2:
+UART2: (AVR)
 CONFIG_RD9_AS_DIG_INPUT (); // RX pin must be digital input
 CONFIG_U2RX_TO_RP (RD9_RP); // U2RX <- RD9 pin 69
 CONFIG_RD11_AS_DIG_OUTPUT (); // TX pin must be digital output
@@ -47,7 +47,7 @@ CONFIG_U2TX_TO_RP (RD11_RP); // U2TX -> RD11 pin 71
 RD9 - p69 - 4th from top outside left
 RD11 - p71 - 3rd from top outside left
 
-UART3:
+UART3: (TS-7200)
 CONFIG_RD4_AS_DIG_INPUT (); // RX pin must be digital input
 CONFIG_U3RX_TO_RP (RD4_RP); // U3RX <- RD4 pin 81
 CONFIG_RD5_AS_DIG_OUTPUT (); // TX pin must be digital output
@@ -56,7 +56,7 @@ CONFIG_U3TX_TO_RP (RD5_RP); // U3TX -> RD5 pin 82
 RD4 - p81 - 3rd from left inside top
 RD5 - p82 - 4th from left outside top
 
-SPI: (not used)
+SPI:
 CONFIG_RF3_AS_DIG_OUTPUT();	// pin 51	start
 CONFIG_RD1_AS_DIG_OUTPUT();	// pin 76	SDOUT
 CONFIG_RD2_AS_DIG_INPUT();	// pin 77	SDIN

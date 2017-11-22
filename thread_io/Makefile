@@ -95,7 +95,7 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 #use this for TS-7200
 #CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
-CC_FLAGS = -static -g -DTS-7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
 #this works for either TS-7200 or TS-7800
 #CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32

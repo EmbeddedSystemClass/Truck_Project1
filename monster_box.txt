@@ -2,9 +2,46 @@ monster box
 
 multi-layer board to go into monster box
 
-Layer A:
+64 pin dip that fits onto 20 pin din of LCD screen from Layer A
+(facing bottom of Layer A with LCD connector at top)
 
-64 pin dip that fits onto 20 pin din of LCD screen 
+													(last 4 on far right)
+top row (pins to LCD): 	21 20 19 ... 1				col_0, col_1, col_2, col_3
+bottom row: (not used until last 4)					row_0, row_1, row_2, row_3
+
+21) LEDK
+20) LEDA
+19) VEE
+18) FS
+17) DATA 7
+16) DATA 6
+15) DATA 5
+14) DATA 4
+13) DATA 3
+12) DATA 2
+11) DATA 1
+10) DATA 0
+9) RST
+8) C/D
+7) CE
+6) RD
+5) WR
+4) VO
+3) VDD
+2) VSS
+1) FG
+
+A0	A1	A2	A3	A4	A5	A6	A7	B0	B1	B2	B3	C0	C1	C2	C3	Vbus	D6	D7	 gnd
+RST R1	E3	E2	E1	E0	D5	D4	D3	D2	D1	D0	C7	C6	C5	C4	3.3v	Vcc Vin	 gnd
+
+VEE goes to gnd threw 20K pot with center tap to VO
+FG & VSS go to ground
+VDD goes to +5v
+
+LEDA is sep +5v (higher current wire - power for LCD back light)
+LEDK is ground
+
+Layer A:
 
 (facing component side)
 
@@ -19,22 +56,8 @@ for serial ports			AVR with USB to the right
 
 64 pin dip to LCD uses top row only
 starting at left:
-21) (no pin) LEDK
-20) LEDA
-19) VEE
-18) FS
-17 -> 10) data bus 7->0
-9) RST
-8) C/D
-7) CD
-6) RD
-5) WR
-4) VO
-3) VDD
-2) VSS
-1) FG
 
-upper/lower pins on far right to LCD pins are for keypad
+8 upper/lower pins on far right to LCD pins are for keypad
 
 64 pin dip socket A:
 2 or 3 VDD
@@ -47,11 +70,11 @@ bottom view with 64 pin dip socket A on bottom:
 
 1)  Vcc
 2)  gnd
-3)  TX1	|	3v3
+3)  TX1	|	3v3		TX/RX1 goes to PIC24
 4)  RX1	|
 5)  TX1	|	5v
 6)  RX1	|
-7)  TX2	|	3v3
+7)  TX2	|	3v3		TX/RX2 goes to FPGA
 8)  RX2	|
 9)  TX2	|	5v
 10) RX2	|
@@ -65,14 +88,14 @@ bottom view with 64 pin dip socket A on bottom:
 18) C1
 19) Vcc
 20) gnd
-21) 
-22)
-23)
-24)
-25)
-26)
-27)
-28)
+21) row_0	| keypad
+22) row_1	|
+23) row_2	|
+24) row_3	|
+25) col_0	|
+26) col_1	|
+27) col_2	|
+28) col_3	|
 29)
 30)
 31)
@@ -87,36 +110,119 @@ bottom view with 64 pin dip socket A on bottom:
 40) gnd
 41)
 42)
-.
-.
-64)
+43)
+44)
+45)
+46)
+47)
+48)
+49)
+50)
+51)
+52)
+53)
+54)
+55)
+56)
+57)
+58)
+59)
+60)
+61) V0		| to LCD
+62) VEE		|
+63) LEDA	|
+64) LEDK	|
+
+LEDA is sep +5v
+LEDK is sep gnd
+VO & VEE go to trim pot for contrast 
 
 bottom view of AVR with USB to the right:
 
 A0	A1	A2	A3	A4	A5	A6	A7	B0	B1	B2	B3	C0	C1	C2	C3	Vbus	D6	D7	 gnd
 RST R1	E3	E2	E1	E0	D5	D4	D3	D2	D1	D0	C7	C6	C5	C4	3.3v	Vcc Vin	 gnd
 
-A0->A7 is data
-B0 WR
-B1 CE
-B2 RST
-B3 CD
-C0 RD
+A0->A7 is data	(see t6963.c)
+
+B0 RST (see t6963.h)
+B1 CD
+B2 CE
+B3 RD
+C0 WR
+E0 FS (in most cases Font Select is logic 1 (6:8 font)
 
 C3 TX1
 C2 RX1
 
-D3 TX2 ?
-D2 RX2 ?
+D3 TX2
+D2 RX2
+
+D4 SS
+D5 MOSI
+D6 MISO
+D7 SCLK
+
+RST reset
+
+available:
+R1
+E0->E3
+D0,D1
+C4->C7
 
 Layer B:
 
+bottom view with 64 pin dip socket A on bottom:
+63	61	59 ... 5	3	1
+64	62	60 ... 6	4	2
+
 ------------------------------------------------------
-		64 pin dip socket
+		64 pin dip socket (Layer B connector)?
+
 PIC24	(1) 3v3 conv chips (mon & TS-7200)
 
+		64 pin dip socket (Layer A connector)
 ------------------------------------------------------
 
+conv chip:
+
+TX/RX1: monitor (UART1)
+TX/RX2: TS-7200 (UART3)
+
+bottom view of conv chip:
+
+TX1  RX1		RX2  TX2
+HV   HV gnd 5v  HV   HV
+LV   LV gnd 3v3 LV   LV
+
+? don't know if I want another 64 pin connector going to a 3rd layer
+if so, then:
+
+1) TX PIC24 mon
+2) RX PIC24 mon
+3) TX PIC24 to TS-7200
+4) RX PIC24 to TS-7200
+5) ADC0
+6) ADC1
+7) ADC2
+8) ADC3
+9) ADC4
+10) ADC5
+11) ADC6
+12) ADC7
+13) ADC8
+14) ADC9
+15) ADC10
+16) ADC11
+17) ADC12
+18) ADC13
+19) ADC14
+20) ADC15
+21) VREF-
+22) VREF+
+.
+.
+64)
 
 Vdd (3.3V) 16, 37, 46, 62, 2
 Vss 15, 36, 45, 65, 75
@@ -191,4 +297,33 @@ RB15 (ADC15) - p44 - 4th from left outside bottom
 RA9 (VREF-) - p28 - 2nd from right outside bottom
 RA10 (VREF+) - p29 - 2nd from right inside bottom
 (RB0 & RB1 are used as ADC inputs by Truck_App1/test_rpm_mph.c)
+
+FPGA needs only serial port connetion to the monster box
+so it can be in a separate box of its own.
+
+connections to FPGA: (11/18/17 - use AVR instead)
+
+rpm	(input)
+mph	(input)
+fuel pump shutoff (output to relay)
+tone generator (output to speaker)
+later on we can have Pro-Mini AVRs that read
+the O2, temp and MAP sensors to do spark advance
+calculations.
+
+connections to outside:
+
+monitor for PIC24*
+15 ADC's from PIC24**
+rpm to AVR
+mph to AVR
+fp shutoff from AVR
+alarm from PIC24 (12v on/off)
+serial port to TS-7XXX
+
+* can rewire to monitor other serial ports
+** all except ADC's total up to 9 so just
+use 1 connector for those and another for
+10 ADC's and add 3rd one later for the 
+other 6 if needed
 

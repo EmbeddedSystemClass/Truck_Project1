@@ -2,7 +2,7 @@
 #define __IOPORTS_H
 //#warning "IOPORTS defined"
 #define			VUCHAR volatile unsigned char
-#ifdef TS-7800
+#ifdef TS_7800
 #define			PORTBASEADD			0xEE000000
 #else
 #define			PORTBASEADD			0x11E00000

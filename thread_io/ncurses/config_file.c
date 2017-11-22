@@ -39,8 +39,10 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -91,8 +93,10 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -139,8 +143,10 @@ int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -183,8 +189,10 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -223,8 +231,10 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -267,8 +277,10 @@ int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -311,8 +323,10 @@ int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -357,8 +371,10 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}
@@ -398,8 +414,10 @@ int GetFileFormat(char *filename)
 #ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
 #else
+#ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#endif
 #endif
 		return -2;
 	}

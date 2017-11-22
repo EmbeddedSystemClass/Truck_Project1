@@ -308,9 +308,9 @@ void __esos_hw_InitCommSystem(void) {
 void __esos_hw_InitCommSystem2(void) {
   // use the MSSTATE PIC24 routines to init the RS232 comm subsystem
   // 8N1 @ 56k7 baud (DEFAULT_BAUDRATE) for now
-  __esos_configUART2(DEFAULT_BAUDRATE) ;
+//  __esos_configUART2(DEFAULT_BAUDRATE) ;
 //  __esos_configUART2(FAST_BAUDRATE) ;
-//  __esos_configUART2(SLOW_BAUDRATE) ;
+  __esos_configUART2(SLOW_BAUDRATE) ;
 
 }  // end __esos_hw_InitCommSystem2()
 
@@ -330,7 +330,7 @@ void __esos_hw_InitCommSystem3(void) {
   // use the MSSTATE PIC24 routines to init the RS232 comm subsystem
   // 8N1 @ 56k7 baud (DEFAULT_BAUDRATE) for now
 //  __esos_configUART3(DEFAULT_BAUDRATE) ;
-  __esos_configUART3(SLOW_BAUDRATE) ;
+  __esos_configUART3(DEFAULT_BAUDRATE) ;
 
 }  // end __esos_hw_InitCommSystem3()
 

@@ -208,7 +208,11 @@ int main(int argc, char *argv[] )
 		exit(1);
 	}
 
+#ifdef MAKE_SIM
+	rc = init_client(Host_Sim);
+#else
 	rc = init_client(HOST1);
+#endif
 
 	if(test_sock() == 0)
 	{

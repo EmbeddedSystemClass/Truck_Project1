@@ -2,12 +2,12 @@ Truck_Project1_notes.txt
 
 PIC24 UARTS:
 
-UART1 - RS232 to TS-7200
+UART1 - monitor
 UART2 - AVR
-UART3 - monitor
+UART3 - RS232 to TS-7200
 
-UART1 uses 3v3 -> 5v -> RS-232 -> serial port to TS-7200
-UART2 uses 3v3 -> 5v -> serial port on AVR
+UART1 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
+UART2 goes straight to serial port on AVR (may need pull-ups)
 UART3 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
 
 There is an SPI bus from the PIC24 to the FPGA: FPGA is master while PIC24 is slave.
@@ -15,7 +15,6 @@ SPI from FPGA (master) to AVR (slave)
 (or) just one bus using (2) SS signals
 
 SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
-SPI signals from FPGA to AVR need a 5<->3v3 converter (with pull-ups?)
 
 
 											|-------|
@@ -229,7 +228,6 @@ static UCHAR generic_menu_function(UCHAR ch)
 	}
 	return ret_char;
 }
-
 
 the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
 get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
@@ -515,7 +513,7 @@ TS-7200:
 The ehternet is for a monitor (use cross-over cable to laptop)
 
 PIC24:
-1 UART goes to PIC24 (5-3v3 conv to RS-232 conv)
+1 UART goes to TS-7XXX (5-3v3 conv to RS-232 conv)
 another UART goes to AVR (5-3v3 conv)
 SPI goes to FPGA (4k7 pull-up resistors)
 
@@ -633,7 +631,6 @@ be turned on or off.
 Use 12vdc->5vdc converter from separate motorcycle battery to power whole system.
 Then have a way to keep the battery charged - either charge it from the car battery
 or use solar panels (or switch between both)
-
 
 **************** nice to have's: ****************
 
