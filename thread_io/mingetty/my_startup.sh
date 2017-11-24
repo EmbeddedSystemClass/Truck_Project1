@@ -1,6 +1,8 @@
 #! /bin/sh
  # /etc/init.d/customstartup
-# copy this file to /etc/rc3.d as S92my_startup.sh
+# copy this file to /etc/init.d
+# then make a symbolic link in /etc/rc.d/rc3.d:
+# ln -s ../../init.d/my_startup.sh S92my_startup.sh
 # then copy mingetty (compiled for ARM) to /sbin
 # then modify the end of /etc/inittab:
 #ge0:2345:wait:/sbin/mingetty --autologin root ttyS0 linux

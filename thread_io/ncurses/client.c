@@ -49,7 +49,7 @@ static struct  sockaddr_in sad;  /* structure to hold server's address  */
 static struct timeval tv;
 
 /*********************************************************************/
-int init_client(char *host)
+int init_client(char *host, char errmsg)
 {
 	struct  hostent  *ptrh;   /* pointer to a host table entry       */
 	struct  protoent *ptrp;   /* point to a protocol table entry     */
@@ -80,7 +80,8 @@ int init_client(char *host)
 	if (port > 0) sad.sin_port = htons((u_short)port);
 	else
 	{
-		fprintf( stderr,"bad port number %d\n", port);
+//		fprintf( stderr,"bad port number %d\n", port);
+		strcpy(errmsg,"bad port number\0");
 		return -1;
 	}
 
@@ -92,7 +93,8 @@ int init_client(char *host)
 	ptrh = gethostbyname(host);
 	if( ((char *)ptrh) == NULL)
 	{
-		fprintf( stderr, "invalid host:  %s\n", host);
+//		fprintf( stderr, "invalid host:  %s\n", host);
+		sprintf( errmsg, "invalid host:  %s", host);
 		return -1;
 	}
 
@@ -102,7 +104,8 @@ int init_client(char *host)
 	//getprotobyname doesn't work on TS-7200 because there's no /etc/protocols file
 	 if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
-		fprintf(stderr, "cannot map \"tcp\" to protocol number");
+//		fprintf(stderr, "cannot map \"tcp\" to protocol number");
+		sprintf(errmsg, "cannot map \"tcp\" to protocol number\0");
 		return -1;
 	}
 	 /* Create a socket */
@@ -113,7 +116,8 @@ int init_client(char *host)
 
 	 if (global_socket < 0)
 	 {
-		fprintf(stderr, "socket creation failed\n");
+//		fprintf(stderr, "socket creation failed\n");
+		sprintf(errmsg, "socket creation failed\0");
 		return -1;
 	 }
 
@@ -209,9 +213,9 @@ int main(int argc, char *argv[] )
 	}
 
 #ifdef MAKE_SIM
-	rc = init_client(Host_Sim);
+	rc = init_client(Host_Sim,errmsg);
 #else
-	rc = init_client(HOST1);
+	rc = init_client(HOST1,errmsg);
 #endif
 
 	if(test_sock() == 0)
@@ -222,6 +226,8 @@ int main(int argc, char *argv[] )
 			printf("connected\n");
 		}
 		else
+		{
+			printf("%s\n",errmsg);
 			return -1;
 	}
 

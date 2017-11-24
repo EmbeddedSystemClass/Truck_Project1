@@ -646,3 +646,155 @@ void close_mem(void)
 	close(fd);
 }
 
+#ifndef TS_7800
+
+/**********************************************************************************************************/
+void lcdinit(void)
+{
+	int fd = open("/dev/mem", O_RDWR);
+
+	gpio = (UINT *)mmap(0, getpagesize(),
+		PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIOBASE);
+	phdr = &gpio[PHDR];
+	padr = &gpio[PADR];
+	paddr = &gpio[PADDR];
+	phddr = &gpio[PHDDR];
+//	printf("1:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+	*paddr = 0x0;								  // All of port A to inputs
+	*phddr |= 0x38;								  // bits 3:5 of port H to outputs
+	*phdr &= ~0x18;								  // de-assert EN, de-assert RS
+	usleep(15000);
+	command(0x38);								  // two rows, 5x7, 8 bit
+	usleep(4100);
+	command(0x38);								  // two rows, 5x7, 8 bit
+	usleep(100);
+	command(0x38);								  // two rows, 5x7, 8 bit
+	command(0x6);								  // cursor increment mode
+	lcdwait();
+	command(0x1);								  // clear display
+	lcdwait();
+	command(0xc);								  // display on, blink off, cursor off
+	lcdwait();
+	command(0x2);								  // return home
+}
+
+/**********************************************************************************************************/
+UINT lcdwait(void)
+{
+	int i, dat, tries = 0;
+	UINT ctrl = *phdr;
+
+	*paddr = 0x0;								  // set port A to inputs
+	ctrl = *phdr;
+
+	do
+	{
+// step 1, apply RS & WR
+		ctrl |= 0x30;							  // de-assert WR
+		ctrl &= ~0x10;							  // de-assert RS
+		*phdr = ctrl;
+
+// step 2, wait
+		i = SETUP;
+		COUNTDOWN(i);
+
+// step 3, assert EN
+		ctrl |= 0x8;
+		*phdr = ctrl;
+
+// step 4, wait
+		i = PULSE;
+		COUNTDOWN(i);
+
+// step 5, de-assert EN, read result
+		dat = *padr;
+		ctrl &= ~0x8;							  // de-assert EN
+		*phdr = ctrl;
+
+// step 6, wait
+		i = HOLD;
+		COUNTDOWN(i);
+	} while (dat & 0x80 && tries++ < 1000);
+	return dat;
+}
+
+/**********************************************************************************************************/
+void command(UINT cmd)
+{
+	int i;
+	UINT ctrl = *phdr;
+
+	*paddr = 0xff;								  // set port A to outputs
+
+// step 1, apply RS & WR, send data
+	*padr = cmd;
+	ctrl &= ~0x30;								  // de-assert RS, assert WR
+	*phdr = ctrl;
+
+// step 2, wait
+	i = SETUP;
+	COUNTDOWN(i);
+
+// step 3, assert EN
+	ctrl |= 0x8;
+	*phdr = ctrl;
+
+// step 4, wait
+	i = PULSE;
+	COUNTDOWN(i);
+
+// step 5, de-assert EN
+	ctrl &= ~0x8;								  // de-assert EN
+	*phdr = ctrl;
+
+// step 6, wait
+	i = HOLD;
+	COUNTDOWN(i);
+}
+
+/**********************************************************************************************************/
+void writechars(UCHAR *dat)
+{
+	int i;
+	UINT ctrl = *phdr;
+
+	do
+	{
+		lcdwait();
+//		printf("1a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+		*paddr = 0xff;							  // set port A to outputs
+//		printf("2a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+
+// step 1, apply RS & WR, send data
+//		printf("3a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+		*padr = *dat++;
+//		printf("4a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+		ctrl |= 0x10;							  // assert RS
+//		printf("5a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+		ctrl &= ~0x20;							  // assert WR
+//		printf("6a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+		*phdr = ctrl;
+//		printf("7a:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
+
+// step 2
+		i = SETUP;
+		COUNTDOWN(i);
+
+// step 3, assert EN
+		ctrl |= 0x8;
+		*phdr = ctrl;
+
+// step 4, wait 800 nS
+		i = PULSE;
+		COUNTDOWN(i);
+
+// step 5, de-assert EN
+		ctrl &= ~0x8;							  // de-assert EN
+		*phdr = ctrl;
+
+// step 6, wait
+		i = HOLD;
+		COUNTDOWN(i);
+	} while(*dat);
+}
+#endif

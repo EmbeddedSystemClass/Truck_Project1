@@ -160,6 +160,67 @@ int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
 }
 
 /******************************************************************************/
+int ollist_toggle_output(int index, ollist_t *llistp)
+{
+	ollist_node_t *cur, *prev;
+	int status = -1; /* assume failure */
+	O_DATA o_data;
+	
+	pthread_rdwr_wlock_np(&(llistp->rwlock));
+
+	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
+	{
+		if (cur->index == index)
+		{
+			memcpy(&o_data,cur->datap,sizeof(O_DATA));
+			printf("%d %s ",o_data.onoff,o_data.label);
+			if(o_data.onoff == 1)
+				o_data.onoff = 0;
+			else o_data.onoff = 1;
+			memcpy(cur->datap,&o_data,sizeof(O_DATA));
+			status = 0;
+			break;
+		}
+		else if (cur->index > index)
+		{
+			break;
+		}
+	}
+	pthread_rdwr_wunlock_np(&(llistp->rwlock));
+	return status;
+}
+
+
+/******************************************************************************/
+int ollist_change_output(int index, ollist_t *llistp, int onoff)
+{
+	ollist_node_t *cur, *prev;
+	int status = -1; /* assume failure */
+	O_DATA o_data;
+	
+	pthread_rdwr_wlock_np(&(llistp->rwlock));
+
+	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
+	{
+		if (cur->index == index)
+		{
+			memcpy(&o_data,cur->datap,sizeof(O_DATA));
+			printf("%d %s ",o_data.onoff,o_data.label);
+			o_data.onoff = onoff;
+			memcpy(cur->datap,&o_data,sizeof(O_DATA));
+			status = 0;
+			break;
+		}
+		else if (cur->index > index)
+		{
+			break;
+		}
+	}
+	pthread_rdwr_wunlock_np(&(llistp->rwlock));
+	return status;
+}
+
+/******************************************************************************/
 int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 {
 	ollist_node_t *cur, *prev;
@@ -172,9 +233,9 @@ int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 		if (cur->index == index)
 		{
 			cur->datap = datap;
-//			prev->nextp = cur->nextp;
-//			printf("%d %s ",index,datap->label);
-//			free(cur);
+			prev->nextp = cur->nextp;
+			printf("%d %s ",index,datap->label);
+			free(cur);
 			status = 0;
 			break;
 		}

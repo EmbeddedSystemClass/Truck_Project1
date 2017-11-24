@@ -361,6 +361,7 @@ call_Host(int code)
 			}
 			num = 0;
 
+			// fill dat_names array with the names of the *.dat files in the current directory
 			memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
 			memset(tempx,0,sizeof(tempx));
 
@@ -402,6 +403,8 @@ call_Host(int code)
 			}
 			closedir( d );
 
+			// and then create another storage space for the dat names
+			// (which is kindof a waist of memory) and copy everything over to it
 			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
 
 			ptr = (char *)malloc(mem_size);
@@ -435,6 +438,7 @@ call_Host(int code)
 			}
 
 			memset(filename,0,sizeof(filename));
+			// menu_scroll3 lets the user pick the dat file to work with
 			index = menu_scroll3(num,(char *)ptr,filename);
 //			mvprintw(LINES-5,30,"%sx  %d",filename,index);
 //			refresh();
@@ -446,18 +450,21 @@ call_Host(int code)
 
 				if(format == 0)
 				{
+					// load the chosen file into the ill/oll array
 					ilLoadConfig(filename, &ill, isize, errmsg);
 					strcpy(iFileName,filename);
-					mvprintw(LINES-7,2,"%sx  %d   %d",filename,index,format);
-					refresh();
+//					mvprintw(LINES-7,2,"%sx  %d   %d",filename,index,format);
+//					refresh();
+					// menu_scroll2 lets the user modify with the fields for 
+					// the chosen dat file
 					menu_scroll2(39, EDIT_IDATA, filename);
 				}
 				else if(format == 1)
 				{
 					olLoadConfig(filename, &oll, osize, errmsg);
 					strcpy(oFileName,filename);
-					mvprintw(LINES-8,2,"%sx  %d   %d",filename,index,format);
-					refresh();
+//					mvprintw(LINES-8,2,"%sx  %d   %d",filename,index,format);
+//					refresh();
 					menu_scroll2(39, EDIT_ODATA, filename);
 				}
 			}
@@ -517,52 +524,18 @@ call_Host(int code)
 
     		break;
 
-		// SAVE AS
-        case 2:
-        	file_menu2(0,0,tempx);
-/*
-        	text_entry("Filename for both w/o .dat ext or leading i/o:",save_as_str,1);
-            show_status2(save_as_str,"",0,0,0,4);
-			strcpy(filename,"i");
-			strcat(filename,save_as_str);
-			strcat(filename,".dat");
-
-			if(ilWriteConfig(filename,&ill,isize,errmsg) != 0)
-				show_status2(errmsg,filename,0,0,index,4);
-
-			strcpy(filename,"o");
-			strcat(filename,save_as_str);
-			strcat(filename,".dat");
-
-			if(olWriteConfig(filename,&oll,osize,errmsg) != 0)
-				show_status2(errmsg,filename,0,0,index,4);
-*/
-        	break;
-
-		// DELETE
-        case 3:
-			break;
-
 		// EDIT IDATA
-        case 4:
+        case 2:
         	index = menu_scroll2(39,EDIT_IDATA,iFileName);
 			break;
 
 		// EDIT ODATA
-		case 5:
+		case 3:
         	index = menu_scroll2(39,EDIT_ODATA,oFileName);
 			break;
 
-		// SEND IDATA
-		case 6:
-			break;
-
-		// SEND ODATA
-		case 7:
-			break;
-
 		// EXIT
-		case 8:
+		case 4:
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
@@ -589,13 +562,9 @@ build_Host_menu(MenuNo number)
     {
         MY_DATA0("Open"),			// 0
         MY_DATA0("Save File"),		// 1
-        MY_DATA0("Save As"),		// 2
-        MY_DATA0("Delete"),			// 3
-        MY_DATA0("Edit idata"),		// 4
-        MY_DATA0("Edit odata"),		// 5
-        MY_DATA0("Send idata"),		// 6
-        MY_DATA0("Send odata"),		// 7
-        MY_DATA0("Exit"),			// 8
+        MY_DATA0("Edit idata"),		// 2
+        MY_DATA0("Edit odata"),		// 3
+        MY_DATA0("Exit"),			// 4
         {(char *) 0, 0, 0}
     };
 
@@ -808,10 +777,10 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				error = get_sock((UCHAR *)&i_data,sizeof(I_DATA),1,errmsg);
-				mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
+//				mvprintw(LINES-2-i,2,"%d %d %s",i_data.port,i_data.affected_output,i_data.label);
 				illist_insert_data(i,&ill2,&i_data);
 //				j = illist_find_data(i,itpp,&ill2);
-				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
+//				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
 			}
 			refresh();
             break;
@@ -831,10 +800,10 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				error = get_sock((UCHAR *)&o_data,sizeof(O_DATA),1,errmsg);
-				mvprintw(LINES-2-i,2,"%d %d %s",o_data.port,o_data.onoff,o_data.label);
+//				mvprintw(LINES-2-i,2,"%d %d %s",o_data.port,o_data.onoff,o_data.label);
 				ollist_insert_data(i,&oll2,&o_data);
 //				j = ollist_find_data(i,otpp,&oll2);
-				mvprintw(LINES-2-i,2,"%d: %d %d %s",j,otp->port,otp->onoff,otp->label);
+//				mvprintw(LINES-2-i,2,"%d: %d %d %s",j,otp->port,otp->onoff,otp->label);
 			}
 			refresh();
 			break;
@@ -850,8 +819,7 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				illist_find_data(i, itpp, &ill2);
-//				mvprintw(LINES-2-i,2,"%d %d %s ",i_data.port,i_data.affected_output,i_data.label);
-//				mvprintw(LINES-2-i,2,"%d %d %s ",itp->port,itp->affected_output,itp->label);
+				mvprintw(LINES-2-i,2,"%d %d %s ",itp->port,itp->affected_output,itp->label);
 //				put_sock((UCHAR*)&i_data,sizeof(I_DATA),1,errmsg);
 				put_sock((UCHAR*)itp,sizeof(I_DATA),1,errmsg);
 			}
@@ -869,8 +837,7 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				ollist_find_data(i,otpp,&oll2);
-//				mvprintw(LINES-2-i,2,"%2d %2d %s           ",o_data.port,o_data.onoff,o_data.label);
-//				mvprintw(LINES-2-i,2,"%2d %2d %s           ",otp->port,otp->onoff,otp->label);
+				mvprintw(LINES-2-i,2,"%2d %2d %s           ",otp->port,otp->onoff,otp->label);
 //				put_sock((UCHAR*)&o_data,sizeof(O_DATA),1,errmsg);
 				put_sock((UCHAR*)otp,sizeof(O_DATA),1,errmsg);
 			}
@@ -975,8 +942,8 @@ call_Tool(int code)
 
     switch (code)
     {
-		// TCP ADDRESS
-        case 0:		// change input record
+		// CONNECT
+        case 0:
         	if(tcp_connected)
         	{
 		        cmd = CLOSE_SOCKET;
@@ -986,10 +953,10 @@ call_Tool(int code)
 				usleep(TIME_DELAY*10);
 			}
 #ifdef MAKE_SIM
-			i = init_client(Host_Sim);
+			i = init_client(Host_Sim,errmsg);
 			show_status2("init_client",Host_Sim,i,0,0,2);
 #else
-			i = init_client(HOST1);
+			i = init_client(HOST1,errmsg);
 			show_status2("init_client",HOST1,i,0,0,2);
 #endif
 			if(i > 0)
@@ -1000,86 +967,65 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-	        show_status2("Connect","",i,j,tcp_connected,3);
+	        show_status2("Connect","errmsg",i,j,tcp_connected,3);
             break;
-		// CONNECT
-        case 1:		// change output record
-/*
-			if(tcp_connected)
+
+		// DISCONNECT
+		case 1:
+			if(tcp_connect)
 			{
+		        show_status2("Disconnect","",code,0,i,2);
 		        cmd = CLOSE_SOCKET;
 		        put_sock(&cmd,1,1,errmsg);
 		        usleep(TIME_DELAY*100);
 		        close_sock();
-				usleep(TIME_DELAY*50);
-			}
-			i = init_client(HOST2);
-			show_status2("init_client","",i,0,0,2);
-			if(i > 0)
-			{
-				j = tcp_connect();
-				if(j > 0)
-					tcp_connected = 1;
-				else
-					tcp_connected = 0;
-			}
-	        show_status2("Connect","",i,j,tcp_connected,3);
-*/
-            break;
-
-		// DISCONNECT
-		case 2:
-            show_status2("Disconnect","",code,0,i,2);
-            cmd = CLOSE_SOCKET;
-            put_sock(&cmd,1,1,errmsg);
-            usleep(TIME_DELAY*100);
-            close_sock();
-            tcp_connected = 0;
+		        tcp_connected = 0;
+            }
             break;
 
 		// TOGGLE OUTPUTS
-		case 3:
-            cmd = TOGGLE_OUTPUTS;
-            put_sock(&cmd,1,1,errmsg);
+		case 2:
+//            cmd = TOGGLE_OUTPUTS;
+//            put_sock(&cmd,1,1,errmsg);
 			break;
 
 		// ALL OFF
-		case 4: // all on
+		case 3: // all on
 	    	if(tcp_connected)
 	    	{
 				cmd =  ALL_OFF;
-//				ret = put_sock(&cmd,1,1,errmsg);
+				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("all off      ","",code,0,0,2);
 			break;
 
 		//ALL ON
-        case 5:
+        case 4:
 	    	if(tcp_connected)
 	    	{
 				cmd =  ALL_ON;
-//				ret = put_sock(&cmd,1,1,errmsg);
+				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("all on       ","",code,0,0,2);
             break;
 
 		// CLEAR SCREEN
-		case 6:
+		case 5:
 	    	if(tcp_connected)
 	    	{
-//				cmd =  CLEAR_SCREEN;
-				cmd = TEST_INPUTS2;
+				cmd =  CLEAR_SCREEN;
+//				cmd = TEST_INPUTS2;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("clear screen","",code,0,0,2);
             break;
 
 		// SEND SERIAL
-		case 7:
+		case 6:
 			if(tcp_connected)
 			{
-//				cmd = SEND_SERIAL;
-				cmd = TEST_INPUTS;
+				cmd = SEND_SERIAL;
+//				cmd = TEST_INPUTS;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
 		default:
@@ -1095,14 +1041,13 @@ build_Tool_menu(MenuNo number)
 
     static MENU_DATA table[] =
     {
-        MY_DATA2("Connect 145"),			// 0
-        MY_DATA2("Connect 146"),			// 1
-        MY_DATA2("Disconnect"),				// 2
-        MY_DATA2("Toggle Outputs"),			// 3
+        MY_DATA2("Connect"),				// 0
+        MY_DATA2("Disconnect"),				// 1
+        MY_DATA2("Toggle Outputs"),			// 2
+        MY_DATA2("All Off"),				// 3
         MY_DATA2("All On"),					// 4
-        MY_DATA2("All Off"),				// 5
-        MY_DATA2("Clear Screen"),			// 6
-        MY_DATA2("Send Serial"),			// 7
+        MY_DATA2("Clear Screen"),			// 5
+        MY_DATA2("Send Serial"),			// 6
         {(char *) 0, 0, 0}
     };
 

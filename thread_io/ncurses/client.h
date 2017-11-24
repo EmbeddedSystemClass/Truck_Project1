@@ -1,5 +1,5 @@
 int test_sock(void);
-int init_client(char *host);
+int init_client(char *host, char errmsg);
 int tcp_connect(void);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);

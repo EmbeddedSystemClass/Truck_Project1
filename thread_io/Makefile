@@ -93,9 +93,9 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 # gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
 # gcc3/4 doesn't work with -mapcs-32
 #use this for TS-7200
-#CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
-CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+#CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
 #this works for either TS-7200 or TS-7800
 #CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32
@@ -144,8 +144,8 @@ config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_thre
 
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-#	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
-	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+#	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
 
 clean :
 	rm -f *.o *~ *# core  sched

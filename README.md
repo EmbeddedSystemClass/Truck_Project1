@@ -1,5 +1,27 @@
 <h1>Truck_Project1</h1>
 <br />
+when compiling for TS-7200:<br />
+edit thread_io/Makefile so it compiles for TS-7200:<br />
+<br />
+#use this for TS-7200<br />
+CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t<br />
+#use this for TS-7800<br />
+#CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t<br />
+<br />
+make sure target ip address is according to thread_io/client.h:<br />
+<br />
+#define HOST1 "192.168.42.145"	// TS-7800 with 2 IO cards used for Truck_Project<br />
+#define HOST2 "192.168.42.146"	// TS-7800 with just one IO card (for now)<br />
+#define Host3 "192.168.42.148"	// TS-7200 with 2 IO cards<br />
+#define Host_Sim "192.168.42.110"	// simulated host on linux box<br />
+<br />
+and edit thread_io/ncurses/demo_menus2.c so init_client(HOSTx)<br />
+calls the right HOSTx<br />
+<br />
+if using the make file for the simulator: thread_io/linux_make, <br />
+make sure Host_Sim define in client.h is set to the ip address <br />
+of the right linux box that the sched simulator is running on<br />
+<br />
 PIC24 UARTS:<br />
 <br />
 UART1 - RS232 to TS-7200<br />

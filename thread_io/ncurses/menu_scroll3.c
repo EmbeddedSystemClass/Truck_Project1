@@ -110,13 +110,13 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 				strcat(tdate_string[i],"   I");
 			else strcat(tdate_string[i],"   O");
 //#endif
-			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string[i],sup_string[i]);
+//			mvprintw(LINES - 4-i, 0,"%2d    %s     %s ",i,tdate_string[i],sup_string[i]);
 			my_items[i] = new_item(sup_string[i],tdate_string[i]);
 //			my_items[i]->index = i;
 //			my_items[i]->y = i;
 //			mvprintw(LINES - 4-i, 2,"%s  %d  %d  %d",my_items[i]->name.str,
 //					my_items[i]->name.length,my_items[i]->index,my_items[i]->y);
-			refresh();
+//			refresh();
 		}
 	}
 

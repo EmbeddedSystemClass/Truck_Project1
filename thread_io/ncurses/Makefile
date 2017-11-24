@@ -17,6 +17,7 @@ GNUCC = gcc
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes
 GNUCFLAGS = -static
 GNULDFLAGS = -static
+# use this when testing simulator (thread_io/linux_make)
 #CC_FLAGS = -DNOMAIN -DMAKE_SIM ${GNUCFLAGS}
 CC_FLAGS = -DNOMAIN  ${GNUCFLAGS}
 

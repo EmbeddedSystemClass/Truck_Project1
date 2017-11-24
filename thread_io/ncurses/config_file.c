@@ -42,6 +42,8 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 #ifndef MAKE_SIM
 		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
 		refresh();
+#else
+		printf("%s  %s\n",errmsg,filename);
 #endif
 #endif
 		return -2;
@@ -60,6 +62,7 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
 		read(fp,&i_data,sizeof(I_DATA));
+//		printf("%d %d %d %s\n",i_data.port,i_data.affected_output,i_data.temp,i_data.label);
 		illist_insert_data(i, ill, &i_data);
 	}
 

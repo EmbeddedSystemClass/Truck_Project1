@@ -197,8 +197,8 @@ UCHAR task1(int test)
 
 	printf("task 1: v1.01  %d\n",test);
 
-//	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
-//	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
+	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
+	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
 
 	while(TRUE)
 	{
@@ -221,10 +221,11 @@ UCHAR task1(int test)
 						ollist_show(&oll);
 //						close_tcp();
 						break;
+
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-						printf("send idata: rec: %d\trc:%d\tsizeof: %d\n",rec_no,rc,sizeof(I_DATA));
+						printf("send idata: rec: %d\trc:%\n",rec_no,rc);
 //						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
 //							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
 						illist_insert_data(rec_no, &ill, &tempi1);
@@ -258,7 +259,7 @@ UCHAR task1(int test)
 						break;
 
 					case SEND_ALL_ODATA:
-						printf("send all ODATA: %d\n",sizeof(O_DATA));
+						printf("send all ODATA: ");
 						rc = 0;
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -273,7 +274,7 @@ UCHAR task1(int test)
 						break;
 
 					case RECV_ALL_IDATA:
-						printf("recv all IDATA:\n");
+						printf("recv all IDATA: ");
 						rc = 0;
 //						itp = &tempi1;
 						recv_tcp((UCHAR*)&fname_index,1,1);
@@ -296,7 +297,7 @@ UCHAR task1(int test)
 						break;
 
 					case RECV_ALL_ODATA:
-						printf("recv all ODATA: %d\n",sizeof(O_DATA));
+						printf("recv all ODATA: ");
 						rc = 0;
 //						otp = &tempo1;
 						recv_tcp((UCHAR*)&fname_index,1,1);
@@ -320,22 +321,6 @@ UCHAR task1(int test)
 						printf("done\n");
 //						close_tcp();
 						break;
-
-/*
-O_DATA
-	char label[20];
-	UCHAR port;
-	UCHAR onoff;			// 1 of on; 0 if off
-	UCHAR type;
-	UINT time_delay;
-	UCHAR pulse_time;
-
-I_DATA
-	char label[ILABELSIZE];
-	UCHAR port;
-	UCHAR affected_output;
-	UINT temp;
-*/
 
 					case SEND_SERIAL:
 						test2 = 0x21;
@@ -438,21 +423,6 @@ I_DATA
 						break;
 
 					case TEST_INPUTS2:
-						j = 0;
-
-/*
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							printf("%2d %2d : ",real_banks[i].bank,real_banks[i].index);
-							if(++j > 9)
-							{
-								printf("\n");
-								j = 0;
-							}
-						}
-						printf("\n: ");
-*/
-						print_inputstatus(0);
 						break;
 
 					case TOGGLE_OUTPUTS:
@@ -460,7 +430,7 @@ I_DATA
 						recv_tcp((UCHAR *)&onoff,1,1);
 
 						printf("toggle output: %2d\t%s\n",tempo1.onoff,tempo1.label);
-						ollist_insert_data(rec_no, &oll, &tempo1);
+						ollist_toggle_output(rec_no,&oll);
 						change_output(rec_no, onoff);
 						break;
 
@@ -470,12 +440,9 @@ I_DATA
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							ollist_find_data(i,otp,&oll);
-							tempo1.onoff = 0;
-							ollist_insert_data(i, &oll, otp);
+							ollist_change_output(i, &oll, 0);
 							change_output(i, 0);
 							usleep(500);
-//							printf("%2d\t%s\n",tempo1.onoff,tempo1.label);
 						}
 						break;
 
@@ -485,12 +452,9 @@ I_DATA
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							ollist_find_data(i,otp,&oll);
-							tempo1.onoff = 1;
-							ollist_insert_data(i, &oll, otp);
-							change_output(i, 1);
+							ollist_change_output(i, &oll, 1);
+							change_output(i, 0);
 							usleep(500);
-//							printf("%2d\t%s\n",tempo1.onoff,tempo1.label);
 						}
 						break;
 
@@ -518,7 +482,6 @@ I_DATA
 		{
 //			printf("no connection %d\n",j);
 			usleep(TIME_DELAY/1000);
-			j++;
 		}
 		if(test < 2)
 		{
@@ -560,8 +523,6 @@ UCHAR task2(int test)
 	inportstatus[4] =  ~InPortByteE();
 	inportstatus[5] =  ~InPortByteF();
 	pthread_mutex_unlock( &io_mem_lock);
-
-//	print_inputstatus(0);
 
 	while(TRUE)
 	{
@@ -784,8 +745,6 @@ UCHAR task5(int test)
 
 #define PROTOPORT         5193						/* default protocol port number */
 #define QLEN              6							/* size of request queue        */
-
-void * serverthread(void * parm);					//* thread function prototype    */
 
 pthread_mutex_t  mut;
 static int visits =  0;								  /* counts client connections     */
@@ -1059,41 +1018,3 @@ void *work_routine(void *arg)
 	close_tcp();
 }
 
-#if 0
-	result = InPortByte(0);
-	printf("%2x ",result);
-
-	result = InPortByte(1);
-	printf("%2x ",result);
-
-	result = InPortByte(2);
-	printf("%2x ",result);
-
-	result = InPortByte(3);
-	printf("%2x ",result);
-
-	result = InPortByte(4);
-	printf("%2x ",result);
-
-	result = InPortByte(5);
-	printf("%2x\n",result);
-
-
-	result = InPortByteA();
-	printf("%2x ",result);
-
-	result = InPortByteB();
-	printf("%2x ",result);
-
-	result = InPortByteC();
-	printf("%2x ",result);
-
-	result = InPortByteD();
-	printf("%2x ",result);
-
-	result = InPortByteE();
-	printf("%2x ",result);
-
-	result = InPortByteF();
-	printf("%2x\n",result);
-#endif
