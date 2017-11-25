@@ -27,6 +27,7 @@
 #include "queue/ollist_threads_rw.h"
 #include "tasks.h"
 #include "ncurses/config_file.h"
+#include "lcd_func.h"
 
 extern int threads_ready_count;
 extern pthread_cond_t		threads_ready;
@@ -137,6 +138,8 @@ UCHAR task1(int test)
 	char *chp;
 	int fname_index;
 	UCHAR mask;
+	char buf[300];
+	static buf_ptr;
 
 	// the check_inputs & change_outputs functions
 	// use the array to adjust from index to bank
@@ -163,14 +166,18 @@ UCHAR task1(int test)
 	osize = sizeof(O_DATA);
 	osize *= i;
 
+	lcd_init();
+	buf_ptr = 0;
+
 	illist_init(&ill);
 	if(access(iFileName,F_OK) != -1)
 	{
 		rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
 		if(rc > 0)
 		{
-			printf("%s\n",errmsg);
-			return 1;
+//			printf("%s\n",errmsg);
+			myprintf1(errmsg);
+//			return 1;
 		}
 	}else		// oh-boy! create a new file!
 	{
@@ -184,8 +191,7 @@ UCHAR task1(int test)
 		rc = olLoadConfig(oFileName,&oll,osize,errmsg);
 		if(rc > 0)
 		{
-			printf("%s\n",errmsg);
-			return 1;
+			myprintf1(errmsg);
 		}
 	}else		// oh-boy! create a new file!
 	{
@@ -195,10 +201,23 @@ UCHAR task1(int test)
 
 	same_msg = 0;
 
-	printf("task 1: v1.01  %d\n",test);
+	myprintf1("task 1: v1.01 \0");
 
-	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
-	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
+//	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
+//	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
+
+	test2 = 0x21;
+	for(i = 0;i < 300;i++)
+	{
+		buf[i] = test2;
+		if(++test2 > 0x7e)
+			test2 = 0x21;
+	}
+	for(i = 0;i < 300;i++)
+	{
+		if((i % 9) == 0)
+			buf[i] = 0;
+	}
 
 	while(TRUE)
 	{
@@ -215,19 +234,18 @@ UCHAR task1(int test)
 				{
 					// update a single IDATA record
 					case SHOW_DATA:
-						printf("\nI_DATA:\n");
-						illist_show(&ill);
-						printf("\nO_DATA:\n");
-						ollist_show(&oll);
+						myprintf1("I_DATA: \0");
+//						illist_show(&ill);
+						strcpy(buf,"O_DATA:\0");
+						myprintf1(buf);
+//						ollist_show(&oll);
 //						close_tcp();
 						break;
 
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-						printf("send idata: rec: %d\trc:%\n",rec_no,rc);
-//						printf("%d\t%d\t%d\t%d\t%s\n\n",tempi1.port,
-//							tempi1.affected_output,tempi1.type,tempi1.inverse,tempi1.label);
+						myprintf3("send idata: " ,rec_no,rc);
 						illist_insert_data(rec_no, &ill, &tempi1);
 //						illist_show(&ill);
 						break;
@@ -420,10 +438,48 @@ UCHAR task1(int test)
 						break;
 
 					case TEST_INPUTS:
+						shift_left();
 						break;
 
 					case TEST_INPUTS2:
+						shift_right();
 						break;
+					
+					case TEST_LCD:
+						do
+						{
+							buf_ptr++;
+							if(buf_ptr > 100)
+								buf_ptr = 0;
+						}while(buf[buf_ptr] != 0);
+						buf_ptr++;
+						myprintf1(buf+buf_ptr);
+						printf("%s\n",buf+buf_ptr);
+						break;						
+
+					case TEST_LCD2:
+						do
+						{
+							buf_ptr++;
+							if(buf_ptr > 100)
+								buf_ptr = 0;
+						}while(buf[buf_ptr] != 0);
+						buf_ptr++;
+						myprintf2("hello\0",buf_ptr);
+						printf("%s\n",buf+buf_ptr);
+						break;						
+
+					case TEST_LCD3:
+						do
+						{
+							buf_ptr++;
+							if(buf_ptr > 100)
+								buf_ptr = 0;
+						}while(buf[buf_ptr] != 0);
+						buf_ptr++;
+						myprintf3(buf+buf_ptr,buf_ptr,buf_ptr+1);
+						printf("%s\n",buf+buf_ptr);
+						break;						
 
 					case TOGGLE_OUTPUTS:
 						recv_tcp((UCHAR *)&rec_no,1,1);
@@ -461,6 +517,7 @@ UCHAR task1(int test)
 					case CLEAR_SCREEN:
 						for(i = 0;i < 150;i++)
 							printf("\n");
+						lcd_cls();	
 						break;
 
 					case CLOSE_SOCKET:

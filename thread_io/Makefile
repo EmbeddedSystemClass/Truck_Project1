@@ -46,7 +46,7 @@ OPTIMIZE_FOR      =
 DEBUG_LEVEL       = 
 OPTIM_LEVEL       = 
 PROJECT_OBJECTS   = main.o
-PROJECT_LIB_PATHS = -L.
+PROJECT_LIB_PATHS = -L/lib
 PROJECT_LIBRARIES =
 PROJECT_SYMBOLS   = -DTOOLCHAIN_GCC_ARM -DNO_RELOC='0'  
 
@@ -119,13 +119,13 @@ all : sched
 #llist_test_threads llist_test_threads_rw
 
 sched.o: sched.c tasks.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread sched.c
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c sched.c
 
 ioports.o: ioports.c ioports.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ioports.c
 
 tasks.o: tasks.c tasks.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread tasks.c
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c tasks.c
 
 serial_io.o: serial_io.c serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
@@ -142,9 +142,12 @@ rdwr.o: queue/rdwr.c queue/rdwr.h
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
 
-sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
+lcd_func.o: lcd_func.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
+
+sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 #	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
 
 clean :

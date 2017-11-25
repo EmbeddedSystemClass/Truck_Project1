@@ -51,6 +51,8 @@ git add thread_io/sched.c
 git add thread_io/ioports.h
 git add thread_io/tasks.c
 git add thread_io/tasks.h
+git add thread_io/lcd_func.c
+git add thread_io/lcd_func.h
 git add thread_io/queue/rdwr.h
 git add thread_io/queue/rdwr.c
 git add thread_io/queue/illist_threads_rw.h

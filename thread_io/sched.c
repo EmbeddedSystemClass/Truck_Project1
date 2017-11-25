@@ -77,6 +77,7 @@ int main(int argc, char **argv)
 	char errmsg[50];
 	I_DATA temp;
 
+
 	if(argc < 2)
 	{
 		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
@@ -99,7 +100,6 @@ int main(int argc, char **argv)
 	}
 
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));
-	printf("test4\n");
 
 	current_time = curtime();
 

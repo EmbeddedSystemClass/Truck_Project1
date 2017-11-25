@@ -547,6 +547,43 @@ call_Host(int code)
             ExitProgram(EXIT_SUCCESS);
             printf("\nDONE!\n");
 			break;
+		case 5:
+			cmd = TEST_INPUTS;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;			
+		case 6:
+			cmd = TEST_INPUTS2;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;			
+		case 7:
+			cmd = TEST_LCD;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;			
+
+		case 8:
+			cmd = TEST_LCD2;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;			
+
+		case 9:
+			cmd = TEST_LCD3;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;			
 
 		default:
 			break;
@@ -565,6 +602,11 @@ build_Host_menu(MenuNo number)
         MY_DATA0("Edit idata"),		// 2
         MY_DATA0("Edit odata"),		// 3
         MY_DATA0("Exit"),			// 4
+        MY_DATA0("Shift Left"),		// 5
+        MY_DATA0("Shift Right"),	// 6
+        MY_DATA0("Test LCD1"),		// 7
+        MY_DATA0("Test LCD2"),		// 8
+        MY_DATA0("Test LCD3"),		// 9
         {(char *) 0, 0, 0}
     };
 

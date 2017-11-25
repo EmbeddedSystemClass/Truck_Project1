@@ -6,31 +6,6 @@
 #define			PORTBASEADD			0xEE000000
 #else
 #define			PORTBASEADD			0x11E00000
-#define			LCDBASEADD			0x80840000
-#define PADR    0							// address offset of LCD
-#define PADDR   (0x10 / sizeof(UINT))		// address offset of DDR LCD
-#define PHDR    (0x40 / sizeof(UINT))		// bits 3-5: EN, RS, WR
-#define PHDDR   (0x44 / sizeof(UINT))		// DDR for above
-
-// These delay values are calibrated for the EP9301
-// CPU running at 166 Mhz, but should work also at 200 Mhz
-#define SETUP   15
-#define PULSE   36
-#define HOLD    22
-
-#define COUNTDOWN(x)    asm volatile ( \
-"1:\n"\
-"subs %1, %1, #1;\n"\
-"bne 1b;\n"\
-: "=r" ((x)) : "r" ((x)) \
-);
-
-volatile UINT *gpio;
-volatile UINT *phdr;
-volatile UINT *phddr;
-volatile UINT *padr;
-volatile UINT *paddr;
-
 #endif
 
 //#define			IOCARDBASEADD78			0xEC000000	// 8-bit memory
@@ -268,13 +243,6 @@ void setDIO1_0_3(int io);
 void setDIO1_4_7(int io);
 int DIO1_in0_3(int port);
 int DIO1_in4_7(int port);
-
-#ifndef TS_7800
-void command(UINT);
-void writechars(UCHAR *);
-UINT lcdwait(void);
-void lcdinit(void);
-#endif
 
 // currently there are (2) IO cards each with 20 ports
 // so each card has (3) byte-wide ports (A,B & C) but C only has
