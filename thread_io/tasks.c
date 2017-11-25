@@ -455,6 +455,17 @@ UCHAR task1(int test)
 						buf_ptr++;
 						myprintf1(buf+buf_ptr);
 						printf("%s\n",buf+buf_ptr);
+
+						for(i = 0;i < 1000;i++)
+						{
+							if(setdioline(0,i&1) == -1)
+								printf("a");
+							if(setdioline(7,i&1) == -1)
+								printf("a");
+							usleep(1000);
+						}
+						printf("done\n");
+						
 						break;						
 
 					case TEST_LCD2:
