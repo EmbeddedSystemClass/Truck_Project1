@@ -42,6 +42,7 @@ enum cmd_types
 	TEST_LCD,
 	TEST_LCD2,
 	TEST_LCD3,
+	ENABLE_LCD,
 	EXIT_PROGRAM
 }CMD_TYPES;
 

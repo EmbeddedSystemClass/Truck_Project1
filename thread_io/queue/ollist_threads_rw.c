@@ -165,6 +165,7 @@ int ollist_toggle_output(int index, ollist_t *llistp)
 	ollist_node_t *cur, *prev;
 	int status = -1; /* assume failure */
 	O_DATA o_data;
+	int onoff;
 	
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
@@ -173,10 +174,11 @@ int ollist_toggle_output(int index, ollist_t *llistp)
 		if (cur->index == index)
 		{
 			memcpy(&o_data,cur->datap,sizeof(O_DATA));
-			printf("%d %s ",o_data.onoff,o_data.label);
+//			printf("%d %s ",o_data.onoff,o_data.label);
 			if(o_data.onoff == 1)
 				o_data.onoff = 0;
 			else o_data.onoff = 1;
+			onoff = o_data.onoff;
 			memcpy(cur->datap,&o_data,sizeof(O_DATA));
 			status = 0;
 			break;
@@ -187,7 +189,7 @@ int ollist_toggle_output(int index, ollist_t *llistp)
 		}
 	}
 	pthread_rdwr_wunlock_np(&(llistp->rwlock));
-	return status;
+	return onoff;
 }
 
 
@@ -205,7 +207,7 @@ int ollist_change_output(int index, ollist_t *llistp, int onoff)
 		if (cur->index == index)
 		{
 			memcpy(&o_data,cur->datap,sizeof(O_DATA));
-			printf("%d %s ",o_data.onoff,o_data.label);
+//			printf("%d %s ",o_data.onoff,o_data.label);
 			o_data.onoff = onoff;
 			memcpy(cur->datap,&o_data,sizeof(O_DATA));
 			status = 0;

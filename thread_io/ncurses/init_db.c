@@ -78,63 +78,47 @@ int main(int argc, char *argv[])
 
 	pid = curr_i_array;
 
-	strcpy(pid->label,"STARTSWITCH\0");
+	strcpy(pid->label,"STARTSWITCH\0");			// 0
 	pid++;
-	strcpy(pid->label,"SHUTDOWN\0");
+	strcpy(pid->label,"SHUTDOWN\0");			// 1
+	pid++;	
+	strcpy(pid->label,"BRAKES\0");				// 2
 	pid++;
-	strcpy(pid->label,"BRAKES\0");
+	strcpy(pid->label,"HEADLIGHTS\0");			// 3
 	pid++;
-	strcpy(pid->label,"HEADLIGHTS\0");
+	strcpy(pid->label,"LEFTBLINKERI\0");		// 4
 	pid++;
-	strcpy(pid->label,"LEFTBLINKERI\0");
+	strcpy(pid->label,"RIGHTBLINKERI\0");		// 5
 	pid++;
-	strcpy(pid->label,"RIGHTBLINKERI\0");
+	strcpy(pid->label,"RUNNINGLIGHTSI\0");		// 6
 	pid++;
-	strcpy(pid->label,"RUNNINGLIGHTSI\0");
+	strcpy(pid->label,"LEFTDOOROPEN\0");		// 7
 	pid++;
-	strcpy(pid->label,"LEFTDOOROPEN\0");
+	strcpy(pid->label,"RIGHTDOOROPEN\0");		// 8
 	pid++;
-	strcpy(pid->label,"RIGHTDOOROPEN\0");
+	strcpy(pid->label,"TESTINPUT9\0");			// 9
 	pid++;
-	strcpy(pid->label,"TESTINPUT1\0");
+	strcpy(pid->label,"TESTINPUT10\0");			// 10
 	pid++;
-	strcpy(pid->label,"TESTINPUT2\0");
+	strcpy(pid->label,"TESTINPUT11\0");			// 11
 	pid++;
-	strcpy(pid->label,"TESTINPUT3\0");
+	strcpy(pid->label,"TESTINPUT12\0");			// 12
 	pid++;
-	strcpy(pid->label,"TESTINPUT4\0");
+	strcpy(pid->label,"TESTINPUT13\0");			// 13
 	pid++;
-	strcpy(pid->label,"TESTINPUT5\0");
+	strcpy(pid->label,"TESTINPUT14\0");			// 14
 	pid++;
-	strcpy(pid->label,"TESTINPUT6\0");
+	strcpy(pid->label,"TESTINPUT15\0");			// 15
 	pid++;
-	strcpy(pid->label,"TESTINPUT7\0");
+	strcpy(pid->label,"TESTINPUT16\0");			// 16
 	pid++;
-	strcpy(pid->label,"TESTINPUT8\0");
+	strcpy(pid->label,"TESTINPUT17\0");			// 17
 	pid++;
-	strcpy(pid->label,"TESTINPUT9\0");
+	strcpy(pid->label,"TESTINPUT18\0");			// 18
 	pid++;
-	strcpy(pid->label,"TESTINPUT10\0");
+	strcpy(pid->label,"TESTINPUT19\0");			// 19
 	pid++;
-	strcpy(pid->label,"TESTINPUT11\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT12\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT13\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT14\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT15\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT16\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT17\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT18\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT19\0");
-	pid++;
-	strcpy(pid->label,"TESTINPUT20\0");
+	strcpy(pid->label,"TESTINPUT20\0");			
 	pid++;
 	strcpy(pid->label,"TESTINPUT21\0");
 	pid++;
@@ -155,6 +139,22 @@ int main(int argc, char *argv[])
 	strcpy(pid->label,"TESTINPUT29\0");
 	pid++;
 	strcpy(pid->label,"TESTINPUT30\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT31\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT32\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT33\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT34\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT35\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT36\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT37\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT38\0");
 	pid++;
 	strcpy(pid->label,"NULL\0");
 
@@ -250,31 +250,31 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"BACKUPLIGHTS\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT1\0");
+	strcpy(pod->label,"TESTOUTPUT26\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT2\0");
+	strcpy(pod->label,"TESTOUTPUT27\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT3\0");
+	strcpy(pod->label,"TESTOUTPUT28\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT4\0");
+	strcpy(pod->label,"TESTOUTPUT29\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT5\0");
+	strcpy(pod->label,"TESTOUTPUT30\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT6\0");
+	strcpy(pod->label,"TESTOUTPUT31\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT7\0");
+	strcpy(pod->label,"TESTOUTPUT32\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT8\0");
+	strcpy(pod->label,"TESTOUTPUT33\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT9\0");
+	strcpy(pod->label,"TESTOUTPUT34\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT10\0");
+	strcpy(pod->label,"TESTOUTPUT35\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT11\0");
+	strcpy(pod->label,"TESTOUTPUT36\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT12\0");
+	strcpy(pod->label,"TESTOUTPUT37\0");
 	pod++;
-	strcpy(pod->label,"TESTOUTPUT13\0");
+	strcpy(pod->label,"TESTOUTPUT38\0");
 	pod++;
 	strcpy(pod->label,"NULL\0");
 

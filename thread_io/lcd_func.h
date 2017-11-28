@@ -52,12 +52,12 @@ static UINT lcd_wait(void);
 static void lcdinit(void);
 static void lcd_cursor(int row, int col, int page);
 static void add_col(void);
-int setbiobit(UCHAR *ptr,int n,int v);
-UCHAR dio_get_ddr(void);
+static int setbiobit(UCHAR *ptr,int n,int v);
+static UCHAR dio_get_ddr(void);
 int getdioline(int n);
 int setdioline(int n,int v);
-int getdioddr(int n);
-int setdioddr(int n,int v);
+static int getdioddr(int n);
+static int setdioddr(int n,int v);
 
 void myprintf1(char *str);
 void myprintf2(char *str, int i);
@@ -66,6 +66,9 @@ void shift_left(void);
 void shift_right(void);
 void lcd_home(void);
 void lcd_cls(void);
+
+int lcd_enabled;
+
 #endif
 #endif
 

@@ -793,10 +793,10 @@ call_Target(int code)
 
 		// SAVE FILE
         case 1:
-
-			mvprintw(LINES-1,2,"%d  %s   ",index,filename);
-			refresh();
+			cmd = SAVE_TO_DISK;
+			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
             break;
+            
 		// SAVE AS
         case 2:
             break;
@@ -1056,7 +1056,6 @@ call_Tool(int code)
 	    	if(tcp_connected)
 	    	{
 				cmd =  CLEAR_SCREEN;
-//				cmd = TEST_INPUTS2;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
             show_status2("clear screen","",code,0,0,2);
@@ -1067,9 +1066,19 @@ call_Tool(int code)
 			if(tcp_connected)
 			{
 				cmd = SEND_SERIAL;
-//				cmd = TEST_INPUTS;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
+			break;
+
+		// ENABLE LCD
+		case 7:
+			if(tcp_connected)
+			{
+				cmd = ENABLE_LCD;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			break;
+		
 		default:
             break;
 	}
@@ -1090,6 +1099,7 @@ build_Tool_menu(MenuNo number)
         MY_DATA2("All On"),					// 4
         MY_DATA2("Clear Screen"),			// 5
         MY_DATA2("Send Serial"),			// 6
+        MY_DATA2("Enable LCD"),				// 7
         {(char *) 0, 0, 0}
     };
 

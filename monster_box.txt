@@ -31,9 +31,6 @@ bottom row: (not used until last 4)					row_0, row_1, row_2, row_3
 2) VSS
 1) FG
 
-A0	A1	A2	A3	A4	A5	A6	A7	B0	B1	B2	B3	C0	C1	C2	C3	Vbus	D6	D7	 gnd
-RST R1	E3	E2	E1	E0	D5	D4	D3	D2	D1	D0	C7	C6	C5	C4	3.3v	Vcc Vin	 gnd
-
 VEE goes to gnd threw 20K pot with center tap to VO
 FG & VSS go to ground
 VDD goes to +5v
@@ -68,43 +65,73 @@ bottom view with 64 pin dip socket A on bottom:
 63	61	59 ... 5	3	1
 64	62	60 ... 6	4	2
 
+UART1 - monitor/FPGA*
+UART2 - AVR
+UART3 - RS232 to TS-7200
+
+*if SPI to AVR doesn't work then use UART1 to talk to FPGA
+
+UART1:
+RX - p68 - 5th from top inside left
+TX - p72 - 3rd from top inside left
+
+UART2:
+RX - p69 - 4th from top outside left
+TX - p71 - 3rd from top outside left
+
+UART3:
+RX - p81 - 3rd from left inside top
+TX - p82 - 4th from left outside top
+
 1)  Vcc
 2)  gnd
-3)  TX1	|	3v3		TX/RX1 goes to PIC24
-4)  RX1	|
-5)  TX1	|	5v
+
+1st AVR UART (C2,C3) PIC24 UART2 (AVR)
+
+3)  TX1	|	3v3		C3 TX1 - 5th over from right on top
+4)  RX1	|			C2 RX1 - 6th over from right on top
+5)  TX1	|	5v		(same as above, just 5v)
 6)  RX1	|
-7)  TX2	|	3v3		TX/RX2 goes to FPGA
-8)  RX2	|
-9)  TX2	|	5v
-10) RX2	|
-11) D7	SCLK
-12) D6	MISO
-13) D5	MOSI
-14) D4	SS
+
+2nd AVR UART ( PIC24 UART1 (monitor)
+
+7)  RX2	|	3v3		D2 RX2 - 10th over from left on bottom
+8)  TX2	|			D3 TX2 - 9th over from left on bottom
+9)  RX2	|	5v		(same as above, just 5v)
+10) TX2	|
+
+11) D7	SCLK	- 2nd from right on top
+12) D6	MISO	- 3rd from right on top
+13) D5	MOSI	- 7th from left on bottom
+14) D4	SS		- 8th from left on bottom
 15) RST (AVR)
 16) BOOT | jumper
 17) BOOT |
 18) C1
 19) Vcc
 20) gnd
-21) row_0	| keypad
-22) row_1	|
-23) row_2	|
-24) row_3	|
-25) col_0	|
-26) col_1	|
-27) col_2	|
-28) col_3	|
-29)
-30)
-31)
-32)
-33)
-34)
-35)
-36)
-37)
+21)
+22)
+23) - broken pin
+24)
+25) - broken pin
+26) - broken pin
+27) - broken pin
+28)
+29) - broken pin
+
+keypad
+
+30) row_0	5th from right inside top
+31) row_1	4th from right outside top
+32) row_2	2nd from right outside top
+33) row_3	2nd from right inside top
+
+34) col_0	5th up - outside right
+35) col_1	7th from right - outside bottom
+36) col_2	4th up from bottom - inside left
+37) col_3	5th up from bottom - outside left
+
 38)
 39) Vcc
 40) gnd
@@ -164,7 +191,7 @@ D7 SCLK
 
 RST reset
 
-available:
+available:	(could almost use the other pins on AVR for keypad
 R1
 E0->E3
 D0,D1
@@ -194,88 +221,6 @@ bottom view of conv chip:
 TX1  RX1		RX2  TX2
 HV   HV gnd 5v  HV   HV
 LV   LV gnd 3v3 LV   LV
-
-? don't know if I want another 64 pin connector going to a 3rd layer
-if so, then:
-
-1) TX PIC24 mon
-2) RX PIC24 mon
-3) TX PIC24 to TS-7200
-4) RX PIC24 to TS-7200
-5) ADC0
-6) ADC1
-7) ADC2
-8) ADC3
-9) ADC4
-10) ADC5
-11) ADC6
-12) ADC7
-13) ADC8
-14) ADC9
-15) ADC10
-16) ADC11
-17) ADC12
-18) ADC13
-19) ADC14
-20) ADC15
-21) VREF-
-22) VREF+
-.
-.
-64)
-
-Vdd (3.3V) 16, 37, 46, 62, 2
-Vss 15, 36, 45, 65, 75
-using	Vdd 16 - sixth from bottom inside right
-		Vss 36 - sixth from right bottom row
-apply 3.3v (4.7k pullup) to pin 13 without the Pickit3 and after programming the chip using "make and program the chip" (2 icons to right of 2 hammers)
-so the chip will run without the Pickit3.
-Pikit3 programmer 5-pin connector goes on top with white wire to inside
-
-
-PIC24FJ128GB110 module (underside view):
-		76 78 <---> 96 98 100
-		77 79 <--->	97 99 NC
-75 NC							2  1
-73 74							4  3
-71 72							^  ^
-69 70							|  |
-^  68							|  |
-|  ^							v  v
-|  |							20 19
-v  v							22 21
-53 54							24 23
-51 52							NC 25
-      NC 49 47 <---> 29 27
-	  50 48 46 <---> 28 26
-
-
-UART1:
-RX - p68 - 5th from top inside left
-TX - p72 - 3rd from top inside left
-
-UART2:
-RX - p69 - 4th from top outside left
-TX - p71 - 3rd from top outside left
-
-UART3:
-RX - p81 - 3rd from left inside top
-TX - p82 - 4th from left outside top
-
-
-KeyPad:
-
-ROWS:
-row_0 - p93 - 5th from right inside top
-row_1 - p94 - 4th from right outside top
-row_2 - p98 - 2nd from right outside top
-row_3 - p99 - 2nd from right inside top
-
-COLUMNS:
-col_0 - p17 - 5th up - outside right
-col_1 - p38 - 7th from right - outside bottom
-col_2 - p58 - 4th up from bottom - inside left
-col_3 - p59 - 5th up from bottom - outside left
 
 ADC:
 RB0 (ADC0) - p25 - 1st from bottom outside right

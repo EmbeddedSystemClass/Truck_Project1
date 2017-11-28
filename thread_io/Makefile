@@ -114,7 +114,7 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : sched
+all : sched 
 #test_ioports test_inports # test_ports test_spi 
 #llist_test_threads llist_test_threads_rw
 

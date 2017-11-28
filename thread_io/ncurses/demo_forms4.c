@@ -166,8 +166,8 @@ int demo_forms(void *curr, int which, int index)
 		init_edit_field(f[n-1],tempx,1);
 
 		f[n++] = make_label(STARTY+3, STARTX, "Time Delay");
-		f[n++] = make_field(STARTY+4, STARTX, 1, 4, 0);
-		set_field_type(f[n - 1], TYPE_INTEGER,1,0,255);
+		f[n++] = make_field(STARTY+4, STARTX, 1, 6, 0);
+		set_field_type(f[n - 1], TYPE_INTEGER,1,0,10000);
 		memset(tempx,0,sizeof(tempx));
 		sprintf(tempx,"%d",pod->time_delay);
 		init_edit_field(f[n-1],tempx,1);

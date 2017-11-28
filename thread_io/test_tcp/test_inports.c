@@ -212,21 +212,6 @@ int main(int argc, char **argv)
 	// the memory for the DIO actually starts at E8000003 but the card_mem
 	// must be mmap'd at an even address
 
-	OutPortA(0,0);
-	mydelay(100);
-	OutPortA(0,1);
-	mydelay(100);
-	OutPortA(0,2);
-	mydelay(100);
-	OutPortA(0,4);
-	mydelay(100);
-	OutPortA(0,5);
-	mydelay(100);
-	OutPortA(0,6);
-	mydelay(100);
-	OutPortA(0,7);
-	mydelay(100);
-
 	inportstatus[0] = InPortByteA();
 	inportstatus[1] = InPortByteB();
 	inportstatus[2] = InPortByteC();
@@ -237,16 +222,22 @@ int main(int argc, char **argv)
 	for(i = 0;i < 6;i++)
 		printf("%2x ",inportstatus[i]);
 
-	printf("\n");
+/*
+	printf("\n1st card:\n");
 
 	for(i = 0x280;i < 0x291;i++)
 		printf("%2x %2x\n",card_ports + i, *(card_ports + i));
-//		printf("%2x ",*(card_ports + i));
+*/
+	printf("\ntest_inports\n");
+	printf("\n2nd card:\n");
 
-	for(j = 0;j < 20;j++)
+	for(i = 0x300;i < 0x306;i++)
+		printf("%2x %2x :",card_ports + i, *(card_ports + i));
+
+	for(j = 0;j < 10;j++)
 	for(i = 0;i < 16;i++)
 	{
-
+/*
 		temp = InPortByteA();
 		if(temp != inportstatus[0])
 		{
@@ -265,12 +256,14 @@ int main(int argc, char **argv)
 			printf("inputC: %2x \n",temp);
 			inportstatus[2] = temp;
 		}
+*/
 		temp = InPortByteD();
 		if(temp != inportstatus[3])
 		{
-			printf("inputD: %2x \n",temp);
 			inportstatus[3] = temp;
+			printf("inputD: %2x\n",~temp);
 		}
+/*
 		temp = InPortByteE();
 		if(temp != inportstatus[4])
 		{
@@ -283,6 +276,7 @@ int main(int argc, char **argv)
 			printf("inputF: %2x \n",temp);
 			inportstatus[5] = temp;
 		}
+*/
 #if 0
 		port = i / 2;
 		bit = i & 1;
@@ -290,88 +284,18 @@ int main(int argc, char **argv)
 		OutPortA(bit,0);
 //		printf("%d %d\n",bit,port);
 #endif
+		
 		mydelay(100);
 //		for(i = 0x280;i < 0x292;i++)
 //			printf("%2x %2x\n",card_ports + i, *(card_ports + i));
 	}
 
-	OutPortA(1,0);
-	mydelay(100);
-	OutPortA(0,1);
-	mydelay(100);
-	OutPortA(1,2);
-	mydelay(100);
-	OutPortA(0,3);
-	mydelay(100);
-	OutPortA(1,4);
-	mydelay(100);
-	OutPortA(0,5);
-	mydelay(100);
-	OutPortA(1,6);
-	mydelay(100);
-	OutPortA(0,7);
-	mydelay(100);
+	for(i = 0x300;i < 0x306;i++)
+		printf("%2x %2x :",card_ports + i, *(card_ports + i));
+
 
 	printf("\n");
 
-	for(i = 0x280;i < 0x291;i++)
-		printf("%2x %2x\n",card_ports + i, *(card_ports + i));
-//		printf("%2x ",*(card_ports + i));
-
-	for(i = 0;i < 8;i++)
-	{
-		OutPortA(0,i);
-		mydelay(100);
-	}
-
-#if 0
-	do
-	{
-		key = getch(stdin);
-		switch(key)
-		{
-			case 'a':
-				OutPortA(1, 0);		// turn on port 0
-			break;
-			case 'b':
-				OutPortA(0, 0);		// turn off port 0
-			break;
-			case 'd':
-				OutPortA(1, 1);		// turn on port 1
-			break;
-			case 'd':
-				OutPortA(0, 1);		// turn off port 1
-			break;
-			case 'e':
-				OutPortA(1, 2);
-			break;
-			case 'f':
-				OutPortA(0, 2);
-			break;
-			case 'g':
-				OutPortA(1, 3);
-			break;
-			case 'h':
-				OutPortA(0, 3);
-			break;
-			case 'i':
-				OutPortA(1, 4);
-			break;
-			case 'j':
-				OutPortA(0, 4);
-			break;
-
-			temp = InPortByteA();
-			if(temp != inportstatus[0])
-			{
-				printf("input: %2x \n",temp);
-				inportstatus[0] = temp;
-			}
-
-		}
-
-	}while(key != 'q' && key != 'Q' );
-#endif
 
 	if(munmap((void *)card_ports,card_pagesize) == -1)
 		perror("error un-mapping card_ports file\n");

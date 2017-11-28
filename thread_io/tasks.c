@@ -77,6 +77,7 @@ static int mask2int(UCHAR mask);
 
 typedef struct
 {
+	int i;
 	int bank;
 	int index;
 }REAL_BANKS;
@@ -90,8 +91,7 @@ static int mask2int(UCHAR mask)
 	int i = 0;
 	do
 	{
-		mask >>= 1;
-		i++;
+		mask >>= 1;		i++;
 	}while(mask);
 	return i - 1;
 }
@@ -129,6 +129,7 @@ UCHAR task1(int test)
 	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
+	int testx;
 	UCHAR rec_no;
 	struct dirent **namelist;
 	DIR *d;
@@ -146,15 +147,20 @@ UCHAR task1(int test)
 	// since there are only 4 bits in banks 3 & 5
 	for(i = 0;i < 20;i++)
 	{
+		real_banks[i].i = i;
 		real_banks[i].bank = i/8;
 		real_banks[i].index = i - real_banks[i].bank*8;
 	}
 
 	for(i = 20;i < 40;i++)
 	{
+		real_banks[i].i = i;
 		real_banks[i].bank = (i+4)/8;
 		real_banks[i].index = i - (real_banks[i].bank*8)+4;
 	}
+
+	for(i = 0;i < 40;i++)
+		printf("%d %d\n",real_banks[i].bank,real_banks[i].index);
 
 	memset(dat_names,0,sizeof(dat_names));
 
@@ -166,7 +172,6 @@ UCHAR task1(int test)
 	osize = sizeof(O_DATA);
 	osize *= i;
 
-	lcd_init();
 	buf_ptr = 0;
 
 	illist_init(&ill);
@@ -200,6 +205,7 @@ UCHAR task1(int test)
 //	ollist_show(&oll);
 
 	same_msg = 0;
+	lcd_init();
 
 	myprintf1("task 1: v1.01 \0");
 
@@ -254,7 +260,7 @@ UCHAR task1(int test)
 					// update a single ODATA record
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);	// blocking
-						printf("send odata: rec: %d rc: %d\n",rec_no,rc);
+						myprintf1("send odata\0");
 //						printf("port: %d\tonoff: %d\tlabel: %s\n",tempo1.port,tempo1.onoff,tempo1.label);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));
@@ -262,41 +268,41 @@ UCHAR task1(int test)
 						break;
 
 					case SEND_ALL_IDATA:
-						printf("send all IDATA:\n");
+						myprintf1("send all IDATA:\0");
 						rc = 0;
 						itp = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
-							printf("%2d\t%2d\t%s\n",itp->port,itp->affected_output,itp->label);
+//							printf("%2d\t%2d\t%s\n",itp->port,itp->affected_output,itp->label);
 							illist_insert_data(i,&ill,itp);
 						}
-						printf("%d\n",rc);
-						printf("done\n");
+//						printf("%d\n",rc);
+						myprintf1("done\0");
 //						close_tcp();
 						break;
 
 					case SEND_ALL_ODATA:
-						printf("send all ODATA: ");
+						myprintf1("send all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)otp,sizeof(O_DATA),1);
-							printf("%2d\t%2d\t%s\n",otp->port,otp->onoff,otp->label);
+//							printf("%2d\t%2d\t%s\n",otp->port,otp->onoff,otp->label);
 							ollist_insert_data(i,&oll,otp);
 						}
-						printf("%d\n",rc);
-						printf("done\n");
+//						printf("%d\n",rc);
+						myprintf1("done\0");
 //						close_tcp();
 						break;
 
 					case RECV_ALL_IDATA:
-						printf("recv all IDATA: ");
+						myprintf1("recv all IDATA: \0");
 						rc = 0;
 //						itp = &tempi1;
 						recv_tcp((UCHAR*)&fname_index,1,1);
-						printf("index: %d\n",fname_index);
+						myprintf2("index: \0",fname_index);
 						if(fname_index > 0)
 						{
 							fname_index--;
@@ -309,17 +315,17 @@ UCHAR task1(int test)
 //							printf("%2d\t%2d\t%s\trc: %2d\n",tempi1.port,tempi1.affected_output,tempi1.label,rc);
 //							printf("%2d\t%2d\t%s\n",itp->port,itp->affected_output,itp->label);
 						}
-						printf("%d\n",rc);
-						printf("done\n");
+//						myprintf1("%d\n",rc);
+						myprintf1("done\0");
 //						close_tcp();
 						break;
 
 					case RECV_ALL_ODATA:
-						printf("recv all ODATA: ");
+						myprintf1("recv all ODATA: \0");
 						rc = 0;
 //						otp = &tempo1;
 						recv_tcp((UCHAR*)&fname_index,1,1);
-						printf("index: %d\n",fname_index);
+						myprintf2("index: \0",fname_index);
 						if(fname_index > 0)
 						{
 							fname_index--;
@@ -335,8 +341,8 @@ UCHAR task1(int test)
 									otp->pulse_time,otp->label);
 */
 						}
-						printf("%d\n",rc);
-						printf("done\n");
+//						printf("%d\n",rc);
+						myprintf1("done\0");
 //						close_tcp();
 						break;
 
@@ -361,7 +367,7 @@ UCHAR task1(int test)
 						d = opendir( "." );
 						if( d == NULL )
 						{
-							printf("bad OPEN_DIR\n");
+							myprintf1("bad OPEN_DIR\0");
 //							return -1;
 						}
 						num = 0;
@@ -395,10 +401,10 @@ UCHAR task1(int test)
 						}
 						closedir( d );
 //#if 0
-						printf("number of dat files: %d\n",num);
+//						printf("number of dat files: %d\n",num);
 						for(i = 0;i < num;i++)
 						{
-							printf("%s\n",dat_names[i]);
+//							printf("%s\n",dat_names[i]);
 						}
 //#endif
 //						memset(tempx,0x20,sizeof(tempx));
@@ -431,10 +437,10 @@ UCHAR task1(int test)
 
 					case SAVE_TO_DISK:
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
-							printf("%s\n",errmsg);
+							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
-							printf("%s\n",errmsg);
-						printf("save to disk\n");
+							myprintf1(errmsg);
+//						printf("save to disk\n");
 						break;
 
 					case TEST_INPUTS:
@@ -442,10 +448,14 @@ UCHAR task1(int test)
 						break;
 
 					case TEST_INPUTS2:
+						testx = ollist_toggle_output(20,&oll);
+						change_output(20, testx);
+						printf("%d \n",testx);
 						shift_right();
 						break;
 					
 					case TEST_LCD:
+/*
 						do
 						{
 							buf_ptr++;
@@ -453,9 +463,14 @@ UCHAR task1(int test)
 								buf_ptr = 0;
 						}while(buf[buf_ptr] != 0);
 						buf_ptr++;
-						myprintf1(buf+buf_ptr);
 						printf("%s\n",buf+buf_ptr);
+						myprintf1(buf+buf_ptr);
+*/						
+						testx = ollist_toggle_output(21,&oll);
+						change_output(21, testx);
+						printf("%d \n",testx);
 
+/*
 						for(i = 0;i < 1000;i++)
 						{
 							if(setdioline(0,i&1) == -1)
@@ -464,11 +479,11 @@ UCHAR task1(int test)
 								printf("a");
 							usleep(1000);
 						}
-						printf("done\n");
-						
+*/
 						break;						
 
 					case TEST_LCD2:
+/*
 						do
 						{
 							buf_ptr++;
@@ -477,10 +492,16 @@ UCHAR task1(int test)
 						}while(buf[buf_ptr] != 0);
 						buf_ptr++;
 						myprintf2("hello\0",buf_ptr);
+*/
+						testx = ollist_toggle_output(22,&oll);
+						change_output(22, testx);
+						printf("%d \n",testx);
+
 						printf("%s\n",buf+buf_ptr);
 						break;						
 
 					case TEST_LCD3:
+/*
 						do
 						{
 							buf_ptr++;
@@ -490,45 +511,59 @@ UCHAR task1(int test)
 						buf_ptr++;
 						myprintf3(buf+buf_ptr,buf_ptr,buf_ptr+1);
 						printf("%s\n",buf+buf_ptr);
+*/
+						testx = ollist_toggle_output(23,&oll);
+						change_output(23, testx);
+						printf("%d \n",testx);
+
 						break;						
 
 					case TOGGLE_OUTPUTS:
 						recv_tcp((UCHAR *)&rec_no,1,1);
 						recv_tcp((UCHAR *)&onoff,1,1);
 
-						printf("toggle output: %2d\t%s\n",tempo1.onoff,tempo1.label);
-						ollist_toggle_output(rec_no,&oll);
-						change_output(rec_no, onoff);
 						break;
 
 					case ALL_OFF:
 //						pod = curr_o_array;
-						printf("all off\n");
+						myprintf1("all off\0");
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_change_output(i, &oll, 0);
 							change_output(i, 0);
-							usleep(500);
+							usleep(10000);
 						}
 						break;
 
 					case ALL_ON:
 //						pod = curr_o_array;
-						printf("all on\n");
+						myprintf1("all on\0");
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_change_output(i, &oll, 1);
-							change_output(i, 0);
-							usleep(500);
+							printf("%d ",i);
+							change_output(i, 1);
+							usleep(10000);
 						}
 						break;
 
 					case CLEAR_SCREEN:
-						for(i = 0;i < 150;i++)
-							printf("\n");
-						lcd_cls();	
+//						for(i = 0;i < 150;i++)
+//							printf("\n");
+						lcd_cls();
+
+						testx = ollist_toggle_output(24,&oll);
+						change_output(24, testx);
+						printf("%d \n",testx);
+
+						break;
+
+					case ENABLE_LCD:
+						testx = ollist_toggle_output(25,&oll);
+						change_output(25, testx);
+						printf("%d \n",testx);
 						break;
 
 					case CLOSE_SOCKET:
@@ -576,7 +611,28 @@ UCHAR task2(int test)
 	UCHAR result,result2, mask;
 	int onoff,i;
 
+
 #if 0
+
+typedef struct o_data
+{
+	char label[20];
+	UCHAR port;
+	UCHAR onoff;			// 1 of on; 0 if off
+	UCHAR type;
+	UINT time_delay;
+	UCHAR pulse_time;
+} O_DATA;
+
+/*
+type:
+0) regular - on/off state doesn't change until user tells it to
+1) on for time delay seconds and then it goes back off
+2) goes on/off at a pulse_time rate until turned off again
+4) goes on/off at pulse_time rate for time_delay seconds and then back off
+5) toggle switch realized in momentary push-buton: push & release of a 
+	momentary push-button turns bit on or off
+*/
 	while(1)
 	{
 		usleep(TIME_DELAY);
@@ -603,26 +659,27 @@ UCHAR task2(int test)
 			
 			if(result != inportstatus[bank])
 			{
-//				printf("%2x %2x ",result,inportstatus[bank]);
 				mask = result ^ inportstatus[bank];
-//				printf("%2x %2x %2x ",mask,result,inportstatus[bank]);
 
 				index = mask2int(mask);
-//				printf("%2x ",index);
 				
 				if((mask & result) == mask)
 				{
 					onoff = ON;
-					printf("ON  ");
 				}
 				else
 				{
 					onoff = OFF;
-					printf("OFF ");
 				}
-//				printf("bit: %2d of bank: %2d\n",real_banks[index+bank*8].index,bank);
+//				printf("bank: %d index: %d\n",bank,index);
+				for(i = 0;i < 40;i++)
+				{
+					if(real_banks[i].bank == bank && real_banks[i].index == index)
+					{
+						index = real_banks[i].i;
+					}
+				}
 				
-				index = index+bank*8;
 				illist_find_data(index,itpp,&ill);
 				printf("affected_output: %d\tport: %d\t%s\n",
 						itp->affected_output,itp->port,itp->label);
@@ -701,7 +758,10 @@ static int change_output(int index, int onoff)
 	pthread_mutex_unlock(&io_mem_lock);
 //#endif
 
-//	printf("bank: %d\tindex\t%2x\n",bank,index);
+//	printf("bank: %d\tindex\t%2x\n\n",bank,index);
+	
+	lcd_cls();
+	myprintf3("bank:\0",bank,index);
 	return index;
 }
 /*********************************************************************/

@@ -33,6 +33,7 @@ static void mydelay(unsigned long i)
 /*********************************************************************************************************/
 void lcd_init(void)
 {
+	lcd_enabled = 1;
 	lcdinit();
 	lcd_wait();
 	line = 0;
@@ -50,7 +51,6 @@ static void lcd_cursor(int row, int col, int page)
 
 	offset = (page*20)+(row*64)+col;
 
-	printf("offset = %d\n",offset);
 	lcd_cmd(HOME+offset);
 }
 /*
@@ -65,11 +65,15 @@ static add_buf(char *str)
 /*********************************************************************************************************/
 void lcd_home(void)
 {
+	if(!lcd_enabled)
+		return;
 	lcd_cmd(HOME);
 }
 /*********************************************************************************************************/
 void lcd_cls(void)
 {
+	if(!lcd_enabled)
+		return;
 	lcd_cmd(CLEAR);
 	lcd_cmd(HOME);
 	col = line = 0;
@@ -91,6 +95,12 @@ void myprintf1(char *str)
 {
 	char *ptr = str;
 	char temp[2];
+
+	if(!lcd_enabled)
+	{
+		printf("%s\n",str);
+		return;
+	}
 #if 0
 	printf("line: %2d col: %2d ",line,col);
 	
@@ -104,7 +114,6 @@ void myprintf1(char *str)
 	add_col();
 	lcd_cmd(HOME+col);
 	col += (int)strlen(str);
-//	printf("col: %d\n",col);
 	lcd_write((UCHAR *)ptr);
 	temp[0] = 0x20;
 	temp[1] = 0;
@@ -120,10 +129,15 @@ void myprintf2(char *str, int x)
 	char temp[4];
 	int i;
 
+	if(!lcd_enabled)
+	{
+		printf("%s %d\n",str,x);
+		return;
+	}
+
 	add_col();
 	lcd_cmd(HOME+col);
 	col += (int)strlen(str);
-	printf("col: %d\n",col);
 
 	lcd_write((UCHAR *)ptr);
 	temp[0] = 0x20;
@@ -148,10 +162,15 @@ void myprintf3(char *str, int x, int y)
 	char temp[4];
 	int i;
 
+	if(!lcd_enabled)
+	{
+		printf("%s %d %d\n",str,x,y);
+		return;
+	}
+
 	add_col();
 	lcd_cmd(HOME+col);
 	col += (int)strlen(str);
-	printf("col: %d\n",col);
 
 	lcd_write((UCHAR *)ptr);
 	temp[0] = 0x20;
@@ -180,12 +199,16 @@ void myprintf3(char *str, int x, int y)
 /**********************************************************************************************************/
 void shift_left(void)
 {
+	if(!lcd_enabled)
+		return;
 	lcd_cmd(SHIFTLEFT);
 }
 
 /**********************************************************************************************************/
 void shift_right(void)
 {
+	if(!lcd_enabled)
+		return;
 	lcd_cmd(SHIFTRIGHT);
 }
 
@@ -248,7 +271,7 @@ volatile UINT *portfd;
 }
 
 /**********************************************************************************************************/
-UINT lcd_wait(void)
+static UINT lcd_wait(void)
 {
 	int i, dat, tries = 0;
 	UINT ctrl = *phdr;
@@ -288,7 +311,7 @@ UINT lcd_wait(void)
 }
 
 /**********************************************************************************************************/
-void lcd_cmd(UINT cmd)
+static void lcd_cmd(UINT cmd)
 {
 	int i;
 	UINT ctrl = *phdr;
@@ -322,7 +345,7 @@ void lcd_cmd(UINT cmd)
 }
 
 /**********************************************************************************************************/
-void lcd_write(UCHAR *dat)
+static void lcd_write(UCHAR *dat)
 {
 	int i;
 	UINT ctrl = *phdr;
@@ -360,39 +383,7 @@ void lcd_write(UCHAR *dat)
 	} while(*dat);
 }
 
-void print_mem(void)
-{
-	int i;
-/*
-	phdr = &gpio[PHDR];
-	padr = &gpio[PADR];
-	paddr = &gpio[PADDR];
-	phddr = &gpio[PHDDR];
-	dio_addr = &gpio[DIOADR];
-	dio_ddr = &gpio[DIODDR];
-
-#define PADR    0							// address offset of LCD
-#define PADDR   (0x10 / sizeof(UINT))		// address offset of DDR LCD
-#define PHDR    (0x40 / sizeof(UINT))		// bits 3-5: EN, RS, WR
-#define PHDDR   (0x44 / sizeof(UINT))		// DDR for above
-#define DIODDR	(0x14 / sizeof(UINT))
-#define DIOADR	(0x04 / sizeof(UINT))
-#define PORTFB  (0x30 / sizeof(UINT))
-#define PORTFD	(0x34 / sizeof(UINT))
-
-
-*/
-	printf("phdr:     %4x %4x\n",phdr,*phdr);			// 40
-	printf("padr:     %4x %4x\n",padr,*padr);			// 0
-	printf("paddr:    %4x %4x\n",paddr,*paddr);			// 10
-	printf("phddr:    %4x %4x\n",phddr,*phddr);			// 44
-	printf("dio_addr: %4x %4x\n",dio_addr,*dio_addr);	// 4
-	printf("dio_ddr:  %4x %4x\n",dio_ddr,*dio_ddr);		// 14
-	printf("portfb:   %4x %4x\n",portfb,*portfb);		// 30
-	printf("portfd:   %4x %4x\n",portfd,*portfd);		// 34
-}
-
-int setbiobit(UCHAR *ptr,int n,int v)
+static int setbiobit(UCHAR *ptr,int n,int v)
 {
 	unsigned char d;
 
@@ -404,12 +395,12 @@ int setbiobit(UCHAR *ptr,int n,int v)
 }
 
 
-UCHAR dio_get_ddr(void)
+static UCHAR dio_get_ddr(void)
 {
 	return(*dio_ddr);
 }
 
-UCHAR dio_set_ddr(UCHAR b)
+static UCHAR dio_set_ddr(UCHAR b)
 {
 	*dio_ddr=b;
 	return(b);
@@ -465,7 +456,7 @@ int setdioline(int n,int v)
  *                return 0 or 1, or -1 on error
  */
 
-int getdioddr(int n)
+static int getdioddr(int n)
 {
 	int d;
 
@@ -481,7 +472,7 @@ int getdioddr(int n)
  * specified is altered.
  */
 
-int setdioddr(int n,int v)
+static int setdioddr(int n,int v)
 {
 	unsigned char d;
 
@@ -501,6 +492,39 @@ int setdioddr(int n,int v)
 //#endif
 
 #ifndef MAKE_TARGET
+
+void print_mem(void)
+{
+	int i;
+/*
+	phdr = &gpio[PHDR];
+	padr = &gpio[PADR];
+	paddr = &gpio[PADDR];
+	phddr = &gpio[PHDDR];
+	dio_addr = &gpio[DIOADR];
+	dio_ddr = &gpio[DIODDR];
+
+#define PADR    0							// address offset of LCD
+#define PADDR   (0x10 / sizeof(UINT))		// address offset of DDR LCD
+#define PHDR    (0x40 / sizeof(UINT))		// bits 3-5: EN, RS, WR
+#define PHDDR   (0x44 / sizeof(UINT))		// DDR for above
+#define DIODDR	(0x14 / sizeof(UINT))
+#define DIOADR	(0x04 / sizeof(UINT))
+#define PORTFB  (0x30 / sizeof(UINT))
+#define PORTFD	(0x34 / sizeof(UINT))
+
+
+*/
+	printf("phdr:     %4x %4x\n",phdr,*phdr);			// 40
+	printf("padr:     %4x %4x\n",padr,*padr);			// 0
+	printf("paddr:    %4x %4x\n",paddr,*paddr);			// 10
+	printf("phddr:    %4x %4x\n",phddr,*phddr);			// 44
+	printf("dio_addr: %4x %4x\n",dio_addr,*dio_addr);	// 4
+	printf("dio_ddr:  %4x %4x\n",dio_ddr,*dio_ddr);		// 14
+	printf("portfb:   %4x %4x\n",portfb,*portfb);		// 30
+	printf("portfd:   %4x %4x\n",portfd,*portfd);		// 34
+}
+
 int main(void)
 {
 	char buf[300];

@@ -40,8 +40,8 @@ SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
 
 
 											|-------|
-								|---------->| LCD 	|
-----|							|A			|-------|
+----|			*				|---------->| LCD 	|
+	|---------> RS-232 -------->|A			|-------|
 	|----------> SPI ---------->|V											  Laptop
 F	|							|R <------------------->|						^
 P	|													|						|TCP/IP
@@ -53,9 +53,10 @@ A	|-------|									| I	|	|						v
 			|				|			|		 ^							|			|
 			|				|-----------|		 |							|-----------|
 			|									 |
-			|------------------> SPI*------------| 
+			|------------------> SPI** ----------| 
 
-*FPGA -> PIC24 can be either RS-232 or SPI
+* can use either SPI or RS-232
+**FPGA -> PIC24 can be either RS-232 or SPI (if SPI doesn't work then use serial to PIC24)
 
 //******************************************************************************************//
 //************************************* PIC24_support **************************************//
@@ -721,6 +722,18 @@ which would eliminate the need for a key-pad
 
 Use ESP8266 for remote wireless (bluetooth) control from Android phone (remote start
 - alarm disable - door poppers)
+
+If the SPI from FPGA to AVR doesn't work then there will just have to be no rpm/mph
+on the display or have the input from the rpm/mph going to both the FPGA and the AVR
+just for redundancy. Use the timers on the AVR to calc the rpm/mph. 
+(or use the 3rd serial line from the PIC24 which was supposed to go to the monitor)
+
+Use LCD port on TS-7200 with HD44780 2x16 line LCD as output from sched (in lieu of printf's)
+and then use 2-4 buttons on TS-7200 box going to DIO port as inputs to use as scroll up,
+down, etc. Print error and status msg's to fifo buffer so user can scroll back up the list.
+Another button shifts to left to see whole msg. This allow the one serial port on the 
+TS-7200 to be free'd up by the console (JP2) or at least the one or two that only have 1
+serial port. The TS-7800 has 2 (or at least 2 headers)
 
 ***************** unrelated ********************
 
