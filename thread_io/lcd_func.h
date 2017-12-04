@@ -58,7 +58,11 @@ int getdioline(int n);
 int setdioline(int n,int v);
 static int getdioddr(int n);
 static int setdioddr(int n,int v);
+static void inc_bufptrs(void);
 
+static void display_current(int special_case);
+void scroll_up(void);
+void scroll_down(void);
 void myprintf1(char *str);
 void myprintf2(char *str, int i);
 void myprintf3(char *str, int i, int j);

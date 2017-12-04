@@ -73,18 +73,17 @@ ollist_t oll;
 illist_t ill2;
 ollist_t oll2;
 
-
 static char iFileName[40];
 static char oFileName[40];
 int tcp_connected = 0;
 
 typedef enum
 {
-    eBanner = -1
-    ,eHost
-    ,eTarget
-    ,eTool
-    ,eMAX
+	eBanner = -1
+	,eHost
+	,eTarget
+	,eTool
+	,eMAX
 } MenuNo;
 
 #define okMenuNo(n) (((n) > eBanner) && ((n) < eMAX))
@@ -93,9 +92,9 @@ typedef enum
 
 typedef struct
 {
-    NCURSES_CONST char *name;
-    void (*func) (int);
-    unsigned mask;
+	NCURSES_CONST char *name;
+	void (*func) (int);
+	unsigned mask;
 } MENU_DATA;
 
 static void call_Host(int);
@@ -121,212 +120,236 @@ static char tdate_stamp[NUM_DAT_NAMES][TDATE_STAMP_STR_LEN];
 static void
 show_status2(char *str, char *str2, int a, int b, int c, int line)
 {
-    wmove(status, line, 0);
-    wprintw(status, "%s  %s  %d  %d   %d   ",str,str2,a,b,c);
-    wclrtoeol(status);
-    wrefresh(status);
+	wmove(status, line, 0);
+	wprintw(status, "%s  %s  %d  %d   %d   ",str,str2,a,b,c);
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static int
 menu_virtualize(int c)
 {
-    int result;
+	int result;
 
-    if (c == '\n' || c == KEY_EXIT)
-        result = (MAX_COMMAND + 1);
-    else if (c == 'u')
-        result = (REQ_SCR_ULINE);
-    else if (c == 'd')
-        result = (REQ_SCR_DLINE);
-    else if (c == 'b' || c == KEY_NPAGE)
-        result = (REQ_SCR_UPAGE);
-    else if (c == 'f' || c == KEY_PPAGE)
-        result = (REQ_SCR_DPAGE);
-    else if (c == 'l' || c == KEY_LEFT || c == KEY_BTAB)
-        result = (REQ_LEFT_ITEM);
-    else if (c == 'n' || c == KEY_DOWN)
-        result = (REQ_NEXT_ITEM);
-    else if (c == 'p' || c == KEY_UP)
-        result = (REQ_PREV_ITEM);
-    else if (c == 'r' || c == KEY_RIGHT || c == '\t')
-        result = (REQ_RIGHT_ITEM);
-    else if (c == ' ')
-        result = (REQ_TOGGLE_ITEM);
-    else
-    {
-        if (c != KEY_MOUSE)
-            beep();
-        result = (c);
-    }
-    return result;
+	if (c == '\n' || c == KEY_EXIT)
+		result = (MAX_COMMAND + 1);
+	else if (c == 'u')
+		result = (REQ_SCR_ULINE);
+	else if (c == 'd')
+		result = (REQ_SCR_DLINE);
+	else if (c == 'b' || c == KEY_NPAGE)
+		result = (REQ_SCR_UPAGE);
+	else if (c == 'f' || c == KEY_PPAGE)
+		result = (REQ_SCR_DPAGE);
+	else if (c == 'l' || c == KEY_LEFT || c == KEY_BTAB)
+		result = (REQ_LEFT_ITEM);
+	else if (c == 'n' || c == KEY_DOWN)
+		result = (REQ_NEXT_ITEM);
+	else if (c == 'p' || c == KEY_UP)
+		result = (REQ_PREV_ITEM);
+	else if (c == 'r' || c == KEY_RIGHT || c == '\t')
+		result = (REQ_RIGHT_ITEM);
+	else if (c == ' ')
+		result = (REQ_TOGGLE_ITEM);
+	else
+	{
+		if (c != KEY_MOUSE)
+			beep();
+		result = (c);
+	}
+	return result;
 }
+
+
 /*****************************************************************************/
 static int
 menu_getc(MENU * m)
 {
-    return wGetchar(menu_win(m));
+	return wGetchar(menu_win(m));
 }
+
+
 /*****************************************************************************/
 static int
 menu_offset(MenuNo number)
 {
-    int result = 0;
+	int result = 0;
 
-    if (okMenuNo(number))
-    {
-        int spc_desc, spc_rows, spc_cols;
+	if (okMenuNo(number))
+	{
+		int spc_desc, spc_rows, spc_cols;
 
 #ifdef NCURSES_VERSION
-        menu_spacing(mpBanner, &spc_desc, &spc_rows, &spc_cols);
+		menu_spacing(mpBanner, &spc_desc, &spc_rows, &spc_cols);
 #else
-        spc_rows = 0;
+		spc_rows = 0;
 #endif
 
 /* FIXME: MENU.itemlen seems the only way to get actual width of items */
-        result = (number - (eBanner + 1)) * (menu_itemwidth(mpBanner) + spc_rows);
-    }
-    return result;
+		result = (number - (eBanner + 1)) * (menu_itemwidth(mpBanner) + spc_rows);
+	}
+	return result;
 }
+
+
 /*****************************************************************************/
 static void
 my_menu_init(MENU * menu)
 {
-    mvwprintw(status, 2, 0, "menu_init %p", (void *) menu);
-    wclrtoeol(status);
-    wrefresh(status);
+	mvwprintw(status, 2, 0, "menu_init %p", (void *) menu);
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static void
 my_menu_term(MENU * menu)
 {
-    mvwprintw(status, 2, 0, "menu_term %p", (void *) menu);
-    wclrtoeol(status);
-    wrefresh(status);
+	mvwprintw(status, 2, 0, "menu_term %p", (void *) menu);
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static void
 my_item_init(MENU * menu)
 {
-    ITEM *item = current_item(menu);
-    const char *name = item_name(item);
+	ITEM *item = current_item(menu);
+	const char *name = item_name(item);
 
 //    mvwprintw(status, 4, 0, "item_init %s", name);
-    wclrtoeol(status);
-    wrefresh(status);
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static void
 my_item_term(MENU * menu)
 {
-    ITEM *item = current_item(menu);
-    const char *name = item_name(item);
+	ITEM *item = current_item(menu);
+	const char *name = item_name(item);
 
 //    mvwprintw(status, 4, 0, "item_term %s", name);
-    wclrtoeol(status);
-    wrefresh(status);
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static MENU *
 menu_create(ITEM ** items, int count, int ncols, MenuNo number)
 {
-    MENU *result;
-    WINDOW *menuwin;
-    int mrows, mcols;
-    int y = okMenuNo(number) ? MENU_Y : 0;
-    int x = menu_offset(number);
-    int margin = (y == MENU_Y) ? 1 : 0;
-    int maxcol = (ncols + x) < COLS ? ncols : (COLS - x - 1);
-    int maxrow = (count + 1) / ncols;
+	MENU *result;
+	WINDOW *menuwin;
+	int mrows, mcols;
+	int y = okMenuNo(number) ? MENU_Y : 0;
+	int x = menu_offset(number);
+	int margin = (y == MENU_Y) ? 1 : 0;
+	int maxcol = (ncols + x) < COLS ? ncols : (COLS - x - 1);
+	int maxrow = (count + 1) / ncols;
 
-    if ((maxrow + y) >= (LINES - 4))
-        maxrow = LINES - 4 - y;
+	if ((maxrow + y) >= (LINES - 4))
+		maxrow = LINES - 4 - y;
 
-    result = new_menu(items);
+	result = new_menu(items);
 
-    if (has_colors())
-    {
-        set_menu_fore(result, (chtype) COLOR_PAIR(1));
-        set_menu_back(result, (chtype) COLOR_PAIR(2));
-    }
+	if (has_colors())
+	{
+		set_menu_fore(result, (chtype) COLOR_PAIR(1));
+		set_menu_back(result, (chtype) COLOR_PAIR(2));
+	}
 
-    set_menu_format(result, maxrow, maxcol);
-    scale_menu(result, &mrows, &mcols);
+	set_menu_format(result, maxrow, maxcol);
+	scale_menu(result, &mrows, &mcols);
 
 //	mvprintw(LINES - 3,0,"mrows: %d  mcols:%d    ",mrows,mcols);
 
-    if (mcols + (2 * margin + x) >= COLS)
-        mcols = COLS - (2 * margin + x);
+	if (mcols + (2 * margin + x) >= COLS)
+		mcols = COLS - (2 * margin + x);
 /*
-    mvprintw(LINES - 2,0,"mrows: %d  mcols:%d maxcol: %d maxrow: %d x: %d y: %d  ",
-                    mrows,mcols,maxcol,maxrow,x,y);
-    getch();
+	mvprintw(LINES - 2,0,"mrows: %d  mcols:%d maxcol: %d maxrow: %d x: %d y: %d  ",
+					mrows,mcols,maxcol,maxrow,x,y);
+	getch();
 */
 
-    menuwin = newwin(mrows + (2 * margin), mcols + (2 * margin), y, x);
-    set_menu_win(result, menuwin);
-    keypad(menuwin, TRUE);
-    if (margin)
-        box(menuwin, 0, 0);
+	menuwin = newwin(mrows + (2 * margin), mcols + (2 * margin), y, x);
+	set_menu_win(result, menuwin);
+	keypad(menuwin, TRUE);
+	if (margin)
+		box(menuwin, 0, 0);
 
-    set_menu_sub(result, derwin(menuwin, mrows, mcols, margin, margin));
+	set_menu_sub(result, derwin(menuwin, mrows, mcols, margin, margin));
 
-    post_menu(result);
+	post_menu(result);
 
-    set_menu_init(result, my_menu_init);
-    set_menu_term(result, my_menu_term);
-    set_item_init(result, my_item_init);
-    set_item_term(result, my_item_term);
-    return result;
+	set_menu_init(result, my_menu_init);
+	set_menu_term(result, my_menu_term);
+	set_item_init(result, my_item_init);
+	set_item_term(result, my_item_term);
+	return result;
 }
+
+
 /*****************************************************************************/
 static void
 menu_destroy(MENU * m)
 {
-    int count;
+	int count;
 
-    if (m != 0)
-    {
-        ITEM **items = menu_items(m);
-        const char *blob = 0;
+	if (m != 0)
+	{
+		ITEM **items = menu_items(m);
+		const char *blob = 0;
 
-        count = item_count(m);
-        if ((count > 0) && (m == mpTool))
-        {
-            blob = item_name(*items);
-        }
+		count = item_count(m);
+		if ((count > 0) && (m == mpTool))
+		{
+			blob = item_name(*items);
+		}
 
-        unpost_menu(m);
-        free_menu(m);
+		unpost_menu(m);
+		free_menu(m);
 
 /* free the extra data allocated in build_Tool_menu() */
-        if ((count > 0) && (m == mpTool))
-        {
-            if (blob && loaded_file)
-            {
-                free((void *) blob);
-            }
-            free(items);
-            items = 0;
-        }
-    }
+		if ((count > 0) && (m == mpTool))
+		{
+			if (blob && loaded_file)
+			{
+				free((void *) blob);
+			}
+			free(items);
+			items = 0;
+		}
+	}
 }
+
+
 /*****************************************************************************/
 /* force the given menu to appear */
 static void
 menu_display(MENU * m)
 {
-    touchwin(menu_win(m));
-    wrefresh(menu_win(m));
+	touchwin(menu_win(m));
+	wrefresh(menu_win(m));
 }
+
+
 /*****************************************************************************/
 static void
 destroy_menus(void)
 {
-    menu_destroy(mpHost);
-    menu_destroy(mpTarget);
-    menu_destroy(mpTool);
-    menu_destroy(mpBanner);
+	menu_destroy(mpHost);
+	menu_destroy(mpTarget);
+	menu_destroy(mpTool);
+	menu_destroy(mpBanner);
 }
+
+
 /*****************************************************************************/
 static void
 call_Host(int code)
@@ -334,10 +357,10 @@ call_Host(int code)
 	static int num = 0;
 	static index;
 	static UCHAR *ptr;
-    int format;
-    int i,j,k;
-    char errmsg[40];
-    UCHAR cmd;
+	int format;
+	int i,j,k;
+	char errmsg[40];
+	UCHAR cmd;
 	static char filename[40];
 	char save_as_str[40];
 	char tempx[30];
@@ -349,27 +372,27 @@ call_Host(int code)
 	int mem_size;
 	int error;
 
-    switch (code)
-    {
-    	// OPEN
+	switch (code)
+	{
+// OPEN
 		case 0:
 			d = opendir( "." );
 			if( d == NULL )
 			{
-		//				printf("bad OPEN_DIR\n");
-		//							return -1;
+//				printf("bad OPEN_DIR\n");
+//							return -1;
 			}
 			num = 0;
 
-			// fill dat_names array with the names of the *.dat files in the current directory
+// fill dat_names array with the names of the *.dat files in the current directory
 			memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
 			memset(tempx,0,sizeof(tempx));
 
 			while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
 			{
-				if(strcmp( dir->d_name, "." ) == 0 ||  \
+				if(strcmp( dir->d_name, "." ) == 0 || \
 					strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-				  continue;
+					continue;
 
 				memset(tempx,0,sizeof(tempx));
 				strcpy(tempx,dir->d_name);
@@ -383,13 +406,13 @@ call_Host(int code)
 				strncpy(tempx,chp,j+1);
 
 				if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-			//							if(dir->d_type == DT_REG)
+//							if(dir->d_type == DT_REG)
 				{
 					strcpy(dat_names[num],dir->d_name);
 					dat_len[num] = strlen(dat_names[num]);
 
-			//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
-			//					refresh();
+//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
+//					refresh();
 
 					getFileCreationTime(dat_names[num],tdate_stamp[num]);
 					j = GetFileFormat(dat_names[num]);
@@ -403,8 +426,8 @@ call_Host(int code)
 			}
 			closedir( d );
 
-			// and then create another storage space for the dat names
-			// (which is kindof a waist of memory) and copy everything over to it
+// and then create another storage space for the dat names
+// (which is kindof a waist of memory) and copy everything over to it
 			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
 
 			ptr = (char *)malloc(mem_size);
@@ -424,21 +447,21 @@ call_Host(int code)
 					*ptr2 = (UCHAR)dat_len[i];
 					ptr2++;
 					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_names[i],dat_len[i]);
-		//			mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
-		//			refresh();
+//			mvprintw(LINES-2-i,2,"%d  %s ",dat_len[i],dat_names[i]);
+//			refresh();
 					ptr2 += dat_len[i];
 					memcpy((UCHAR*)ptr2,(UCHAR*)&dat_type[i],1);
 					ptr2++;
 					memcpy((UCHAR*)ptr2,(UCHAR*)&tdate_stamp[i],TDATE_STAMP_STR_LEN);
-			//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
-			//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
-			//					refresh();
+//					mvprintw(LINES-2-i,20,"%s  ",tdate_stamp[i]);
+//					mvprintw(LINES-2-i,40,"%s  ",ptr2);
+//					refresh();
 					ptr2 += TDATE_STAMP_STR_LEN;
 				}
 			}
 
 			memset(filename,0,sizeof(filename));
-			// menu_scroll3 lets the user pick the dat file to work with
+// menu_scroll3 lets the user pick the dat file to work with
 			index = menu_scroll3(num,(char *)ptr,filename);
 //			mvprintw(LINES-5,30,"%sx  %d",filename,index);
 //			refresh();
@@ -450,13 +473,13 @@ call_Host(int code)
 
 				if(format == 0)
 				{
-					// load the chosen file into the ill/oll array
+// load the chosen file into the ill/oll array
 					ilLoadConfig(filename, &ill, isize, errmsg);
 					strcpy(iFileName,filename);
 //					mvprintw(LINES-7,2,"%sx  %d   %d",filename,index,format);
 //					refresh();
-					// menu_scroll2 lets the user modify with the fields for 
-					// the chosen dat file
+// menu_scroll2 lets the user modify with the fields for
+// the chosen dat file
 					menu_scroll2(39, EDIT_IDATA, filename);
 				}
 				else if(format == 1)
@@ -468,12 +491,12 @@ call_Host(int code)
 					menu_scroll2(39, EDIT_ODATA, filename);
 				}
 			}
-    		break;
+			break;
 
 			free(ptr);
 
-		// SAVE FILE
-    	case 1:
+// SAVE FILE
+		case 1:
 #if 0
 //			strcpy(filename,"idata.dat\0");
 //			ptr2 = filename;
@@ -510,7 +533,7 @@ call_Host(int code)
 			refresh();
 */
 			if(format == 0)
-			{			
+			{
 				if(ilWriteConfig(filename,&ill,isize,errmsg) != 0)
 					show_status2(errmsg,filename,0,format,index,4);
 			}
@@ -520,126 +543,106 @@ call_Host(int code)
 					show_status2(errmsg,filename,0,format,index,4);
 			}
 			else
-	            show_status2(filename,"",0,format,index,4);
+				show_status2(filename,"",0,format,index,4);
 
-    		break;
-
-		// EDIT IDATA
-        case 2:
-        	index = menu_scroll2(39,EDIT_IDATA,iFileName);
 			break;
 
-		// EDIT ODATA
+// EDIT IDATA
+		case 2:
+			index = menu_scroll2(39,EDIT_IDATA,iFileName);
+			break;
+
+// EDIT ODATA
 		case 3:
-        	index = menu_scroll2(39,EDIT_ODATA,oFileName);
+			index = menu_scroll2(39,EDIT_ODATA,oFileName);
 			break;
 
-		// EXIT
+// EXIT
 		case 4:
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
 				put_sock(&cmd,1,1,errmsg);
-		        close_sock();
-            }
-            destroy_menus();
-            endwin();
-            ExitProgram(EXIT_SUCCESS);
-            printf("\nDONE!\n");
+				close_sock();
+			}
+			destroy_menus();
+			endwin();
+			ExitProgram(EXIT_SUCCESS);
+			printf("\nDONE!\n");
 			break;
+
 		case 5:
-			cmd = TEST_INPUTS;
+			cmd = LCD_SHIFT_LEFT;
 			if(tcp_connected)
 			{
 				put_sock(&cmd,1,1,errmsg);
 			}
-			break;			
+			break;
+
 		case 6:
-			cmd = TEST_INPUTS2;
+			cmd = LCD_SHIFT_RIGHT;
 			if(tcp_connected)
 			{
 				put_sock(&cmd,1,1,errmsg);
 			}
-			break;			
-		case 7:
-			cmd = TEST_LCD;
-			if(tcp_connected)
-			{
-				put_sock(&cmd,1,1,errmsg);
-			}
-			break;			
-
-		case 8:
-			cmd = TEST_LCD2;
-			if(tcp_connected)
-			{
-				put_sock(&cmd,1,1,errmsg);
-			}
-			break;			
-
-		case 9:
-			cmd = TEST_LCD3;
-			if(tcp_connected)
-			{
-				put_sock(&cmd,1,1,errmsg);
-			}
-			break;			
+			break;
 
 		default:
 			break;
-    }
+	}
 }
+
+
 /*****************************************************************************/
 static void
 build_Host_menu(MenuNo number)
 {
 #define MY_DATA0(name) { name, call_Host, 0 }
 
-    static MENU_DATA table[] =
-    {
-        MY_DATA0("Open"),			// 0
-        MY_DATA0("Save File"),		// 1
-        MY_DATA0("Edit idata"),		// 2
-        MY_DATA0("Edit odata"),		// 3
-        MY_DATA0("Exit"),			// 4
-        MY_DATA0("Shift Left"),		// 5
-        MY_DATA0("Shift Right"),	// 6
-        MY_DATA0("Test LCD1"),		// 7
-        MY_DATA0("Test LCD2"),		// 8
-        MY_DATA0("Test LCD3"),		// 9
-        {(char *) 0, 0, 0}
-    };
+	static MENU_DATA table[] =
+	{
+		MY_DATA0("Open"),						  // 0
+		MY_DATA0("Save File"),					  // 1
+		MY_DATA0("Edit idata"),					  // 2
+		MY_DATA0("Edit odata"),					  // 3
+		MY_DATA0("Exit"),						  // 4
+		MY_DATA0("Shift Left"),					  // 5
+		MY_DATA0("Shift Right"),				  // 6
+		{(char *) 0, 0, 0}
+	};
 
-    static ITEM **items;
+	static ITEM **items;
 
-    ITEM **ip;
-    MENU_DATA *ap = 0;
-    MENU_DATA *myList = 0;
-    int i;
-    size_t count = 0;
+	ITEM **ip;
+	MENU_DATA *ap = 0;
+	MENU_DATA *myList = 0;
+	int i;
+	size_t count = 0;
 
-    if (ap == 0)
-    {
-        count = SIZEOF(table) - 1;
-        items = typeCalloc(ITEM *, count + 1);
-        ap = table;
-    }
+	if (ap == 0)
+	{
+		count = SIZEOF(table) - 1;
+		items = typeCalloc(ITEM *, count + 1);
+		ap = table;
+	}
 
-    ip = items;
-    for (i = 0; ap[i].name != 0; ++i)
-    {
-        ap[i].func = call_Host;
-        ap[i].mask = (unsigned) i;
-        *ip = new_item(ap[i].name, empty);
-        set_item_userptr(*ip, (void *) &table[i]);
-        ++ip;
-    }
-    *ip = 0;
+	ip = items;
+	for (i = 0; ap[i].name != 0; ++i)
+	{
+		ap[i].func = call_Host;
+		ap[i].mask = (unsigned) i;
+		*ip = new_item(ap[i].name, empty);
+		set_item_userptr(*ip, (void *) &table[i]);
+		++ip;
+	}
+	*ip = 0;
 
-    mpHost = menu_create(items, (int) count, 1, number);
-    if (myList != 0)
-        free(myList);
+	mpHost = menu_create(items, (int) count, 1, number);
+	if (myList != 0)
+		free(myList);
 }
+
+
 /*****************************************************************************/
 // manage tcp connection to TS-7XXX
 static void
@@ -648,6 +651,7 @@ call_Target(int code)
 	static UCHAR *ptr;
 	static UCHAR num;
 	static int index;
+	static UCHAR sindex;
 	int i,j,k;
 	char test = 0x21;
 	static char filename[40];
@@ -658,7 +662,7 @@ call_Target(int code)
 	UCHAR *ptr2 = NULL;
 	int error = 0;
 	int mem_size;
-    (void) code;
+	(void) code;
 	I_DATA i_data;
 	O_DATA o_data;
 	I_DATA *itp;
@@ -666,15 +670,15 @@ call_Target(int code)
 	I_DATA **itpp;
 	O_DATA **otpp;
 
-    switch (code)
-    {
-		// OPEN
-        case 0:
+	switch (code)
+	{
+// OPEN
+		case 0:
 			if(tcp_connected)
 			{
-		//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
+//					mvprintw(LINES-1,2,"%x %x ",ptr,ptr2);
 				ptr2 = ptr+mem_size;
-		//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
+//					mvprintw(LINES-1,20,"%x %x %d",ptr,ptr2,mem_size);
 				cmd = GET_DIR;
 				ptr2 = ptr;
 				error = put_sock(&cmd,1,1,errmsg);
@@ -692,7 +696,7 @@ call_Target(int code)
 					error = get_sock((UCHAR*)&dat_names[i],dat_len[i],1,errmsg);
 					if(error < 0)
 						mvprintw(LINES-2,2,"%s",errmsg);
-		//			show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
+//			show_status2(dat_names[i],"",dat_len[i],num,i,i+1);
 				}
 				for(i = 0;i < num;i++)
 				{
@@ -702,10 +706,10 @@ call_Target(int code)
 					error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
 					if(error < 0)
 						mvprintw(LINES-2,2,"%s",errmsg);
-		//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
+					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
 				}
 			}
-
+			refresh();
 			mem_size = (DAT_NAME_STR_LEN*(NUM_DAT_NAMES))+(TDATE_STAMP_STR_LEN*(NUM_DAT_NAMES))+NUM_DAT_NAMES*5;
 
 			ptr = (char *)malloc(mem_size);
@@ -736,16 +740,15 @@ call_Target(int code)
 			index = menu_scroll3(num,(char *)ptr,filename);
 			free(ptr);
 
-			mvprintw(LINES-1,2,"%d  %s   ",index,filename);
-			refresh();
 			if(dat_type[index] == 0)
 			{
-		    	cmd = RECV_ALL_IDATA;
+				cmd = RECV_ALL_IDATA;
 				error = put_sock(&cmd,1,1,errmsg);
 				if(error < 0)
-					mvprintw(LINES-2,2,"%s",errmsg);
+					mvprintw(LINES-2,2,"error: %s",errmsg);
 				index++;
-				put_sock(&index,1,1,errmsg);		// send the index into the list of filenames
+				sindex = (UCHAR)index;
+				error = put_sock(&sindex,1,1,errmsg);	  // send the index into the list of filenames
 
 				itp = &i_data;
 				itpp = &itp;
@@ -763,12 +766,13 @@ call_Target(int code)
 			else if(dat_type[index] == 1)
 			{
 
-		    	cmd = RECV_ALL_ODATA;
+				cmd = RECV_ALL_ODATA;
 				error = put_sock(&cmd,1,1,errmsg);
 				if(error < 0)
 					mvprintw(LINES-2,2,"%s",errmsg);
 				index++;
-				put_sock(&index,1,1,errmsg);		// send the index into the list of filenames
+				sindex = (UCHAR)index;
+				put_sock(&sindex,1,1,errmsg);	  // send the index into the list of filenames
 
 				otp = &o_data;
 				otpp = &otp;
@@ -787,32 +791,32 @@ call_Target(int code)
 			{
 				mvprintw(LINES-1,2,"bad dat_type %d  %s   ",index,filename);
 				refresh();
-			}			
+			}
 
-            break;
+			break;
 
-		// SAVE FILE
-        case 1:
+// SAVE FILE
+		case 1:
 			cmd = SAVE_TO_DISK;
-			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
-            break;
-            
-		// SAVE AS
-        case 2:
-            break;
-		// DELETE
-        case 3:
-            break;
+			put_sock(&cmd,1,1,errmsg);			  // if > 0 then this would be an index into the dat_names[] array
+			break;
 
-		// LIST IDATA
-        case 4:
-        	cmd = RECV_ALL_IDATA;
+// SAVE AS
+		case 2:
+			break;
+// DELETE
+		case 3:
+			break;
+
+// LIST IDATA
+		case 4:
+			cmd = RECV_ALL_IDATA;
 			error = put_sock(&cmd,1,1,errmsg);
 			if(error < 0)
 				mvprintw(LINES-2,2,"%s",errmsg);
 
 			cmd = 0;
-			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
+			put_sock(&cmd,1,1,errmsg);			  // if > 0 then this would be an index into the dat_names[] array
 
 			itp = &i_data;
 			itpp = &itp;
@@ -825,17 +829,17 @@ call_Target(int code)
 //				mvprintw(LINES-2-i,2,"%d: %d %d %s ",j,itp->port,itp->affected_output,itp->label);
 			}
 			refresh();
-            break;
+			break;
 
-		// LIST ODATA
+// LIST ODATA
 		case 5:
-        	cmd = RECV_ALL_ODATA;
+			cmd = RECV_ALL_ODATA;
 			error = put_sock(&cmd,1,1,errmsg);
 			if(error < 0)
 				mvprintw(LINES-2,2,"%s",errmsg);
 
 			cmd = 0;
-			put_sock(&cmd,1,1,errmsg);		// if > 0 then this would be an index into the dat_names[] array
+			put_sock(&cmd,1,1,errmsg);			  // if > 0 then this would be an index into the dat_names[] array
 
 			otp = &o_data;
 			otpp = &otp;
@@ -850,9 +854,9 @@ call_Target(int code)
 			refresh();
 			break;
 
-		// SEND IDATA
+// SEND IDATA
 		case 6:
-        	cmd = SEND_ALL_IDATA;
+			cmd = SEND_ALL_IDATA;
 			error = put_sock(&cmd,1,1,errmsg);
 			if(error < 0)
 				mvprintw(LINES-2,2,"%s",errmsg);
@@ -868,9 +872,9 @@ call_Target(int code)
 			refresh();
 			break;
 
-		// SEND ODATA
+// SEND ODATA
 		case 7:
-        	cmd = SEND_ALL_ODATA;
+			cmd = SEND_ALL_ODATA;
 			error = put_sock(&cmd,1,1,errmsg);
 			if(error < 0)
 				mvprintw(LINES-2,2,"%s",errmsg);
@@ -886,7 +890,7 @@ call_Target(int code)
 			refresh();
 			break;
 
-		// SHOW ALL
+// SHOW ALL
 		case 8:
 			cmd = SHOW_DATA;
 			put_sock(&cmd,1,1,errmsg);
@@ -916,58 +920,62 @@ call_Target(int code)
 			break;
 		default:
 			break;
-    }
+	}
 }
+
+
 /*****************************************************************************/
 static void
 build_Target_menu(MenuNo number)
 {
 #define MY_DATA1(name) { name, call_Target, 1 }
 
-    static MENU_DATA table[] =
-    {
-        MY_DATA1("Open"),				// 0
-        MY_DATA1("Save File"),			// 1
-        MY_DATA1("Save As"),			// 2
-        MY_DATA1("Delete"),				// 3
-        MY_DATA1("List idata"),			// 4
-        MY_DATA1("List odata"),			// 5
-        MY_DATA1("Send idata"),			// 6
-        MY_DATA1("Send odata"),			// 7
-        MY_DATA1("Show All"),			// 8
-        {(char *) 0, 0, 0}
-    };
+	static MENU_DATA table[] =
+	{
+		MY_DATA1("Open"),						  // 0
+		MY_DATA1("Save File"),					  // 1
+		MY_DATA1("Save As"),					  // 2
+		MY_DATA1("Delete"),						  // 3
+		MY_DATA1("List idata"),					  // 4
+		MY_DATA1("List odata"),					  // 5
+		MY_DATA1("Send idata"),					  // 6
+		MY_DATA1("Send odata"),					  // 7
+		MY_DATA1("Show All"),					  // 8
+		{(char *) 0, 0, 0}
+	};
 
-    static ITEM **items;
+	static ITEM **items;
 
-    ITEM **ip;
-    MENU_DATA *ap = 0;
-    MENU_DATA *myList = 0;
-    int i;
-    size_t count = 0;
+	ITEM **ip;
+	MENU_DATA *ap = 0;
+	MENU_DATA *myList = 0;
+	int i;
+	size_t count = 0;
 
-    if (ap == 0)
-    {
-        count = SIZEOF(table) - 1;
-        items = typeCalloc(ITEM *, count + 1);
-        ap = table;
-    }
+	if (ap == 0)
+	{
+		count = SIZEOF(table) - 1;
+		items = typeCalloc(ITEM *, count + 1);
+		ap = table;
+	}
 
-    ip = items;
-    for (i = 0; ap[i].name != 0; ++i)
-    {
-        ap[i].func = call_Target;
-        ap[i].mask = (unsigned) i;
-        *ip = new_item(ap[i].name, empty);
-        set_item_userptr(*ip, (void *) &table[i]);
-        ++ip;
-    }
-    *ip = 0;
+	ip = items;
+	for (i = 0; ap[i].name != 0; ++i)
+	{
+		ap[i].func = call_Target;
+		ap[i].mask = (unsigned) i;
+		*ip = new_item(ap[i].name, empty);
+		set_item_userptr(*ip, (void *) &table[i]);
+		++ip;
+	}
+	*ip = 0;
 
-    mpTarget = menu_create(items, (int) count, 1, number);
-    if (myList != 0)
-        free(myList);
+	mpTarget = menu_create(items, (int) count, 1, number);
+	if (myList != 0)
+		free(myList);
 }
+
+
 /*****************************************************************************/
 static void
 call_Tool(int code)
@@ -976,22 +984,22 @@ call_Tool(int code)
 	static int o_index;
 	int i,j;
 	int ret;
-    (void) code;
-    I_DATA *pid;
-    O_DATA *pod;
-    char errmsg[60];
-    UCHAR cmd;
+	(void) code;
+	I_DATA *pid;
+	O_DATA *pod;
+	char errmsg[60];
+	UCHAR cmd;
 
-    switch (code)
-    {
-		// CONNECT
-        case 0:
-        	if(tcp_connected)
-        	{
-		        cmd = CLOSE_SOCKET;
-		        put_sock(&cmd,1,1,errmsg);
-		        usleep(TIME_DELAY*10);
-		        close_sock();
+	switch (code)
+	{
+// CONNECT
+		case 0:
+			if(tcp_connected)
+			{
+				cmd = CLOSE_SOCKET;
+				put_sock(&cmd,1,1,errmsg);
+				usleep(TIME_DELAY*10);
+				close_sock();
 				usleep(TIME_DELAY*10);
 			}
 #ifdef MAKE_SIM
@@ -1009,249 +1017,299 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-	        show_status2("Connect","errmsg",i,j,tcp_connected,3);
-            break;
+			show_status2("Connect","errmsg",i,j,tcp_connected,3);
+			break;
 
-		// DISCONNECT
+// DISCONNECT
 		case 1:
 			if(tcp_connect)
 			{
-		        show_status2("Disconnect","",code,0,i,2);
-		        cmd = CLOSE_SOCKET;
-		        put_sock(&cmd,1,1,errmsg);
-		        usleep(TIME_DELAY*100);
-		        close_sock();
-		        tcp_connected = 0;
-            }
-            break;
+				show_status2("Disconnect","",code,0,i,2);
+				cmd = CLOSE_SOCKET;
+				put_sock(&cmd,1,1,errmsg);
+				usleep(TIME_DELAY*100);
+				close_sock();
+				tcp_connected = 0;
+			}
+			break;
 
-		// TOGGLE OUTPUTS
 		case 2:
-//            cmd = TOGGLE_OUTPUTS;
-//            put_sock(&cmd,1,1,errmsg);
+			if(tcp_connected)
+			{
+		        cmd = ENABLE_START;
+		        put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("starter seq on  ","",code,0,0,2);
 			break;
 
-		// ALL OFF
-		case 3: // all on
-	    	if(tcp_connected)
-	    	{
-				cmd =  ALL_OFF;
-				ret = put_sock(&cmd,1,1,errmsg);
+		case 3:
+			if(tcp_connected)
+			{
+		        cmd = ON_ACC;
+		        put_sock(&cmd,1,1,errmsg);
 			}
-            show_status2("all off      ","",code,0,0,2);
+			show_status2("ACC ON      ","",code,0,0,2);
 			break;
 
-		//ALL ON
-        case 4:
-	    	if(tcp_connected)
-	    	{
-				cmd =  ALL_ON;
-				ret = put_sock(&cmd,1,1,errmsg);
+		case 4:
+			if(tcp_connected)
+			{
+		        cmd = OFF_ACC;
+		        put_sock(&cmd,1,1,errmsg);
 			}
-            show_status2("all on       ","",code,0,0,2);
-            break;
+			show_status2("ACC OFF      ","",code,0,0,2);
+			break;
 
-		// CLEAR SCREEN
 		case 5:
-	    	if(tcp_connected)
-	    	{
-				cmd =  CLEAR_SCREEN;
+			if(tcp_connected)
+			{
+				cmd =  ON_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-            show_status2("clear screen","",code,0,0,2);
-            break;
+			show_status2("FUEL PUMP ON      ","",code,0,0,2);
+			break;
 
-		// SEND SERIAL
 		case 6:
 			if(tcp_connected)
 			{
-				cmd = SEND_SERIAL;
+				cmd =  OFF_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
+			show_status2("FUEL PUMP OFF       ","",code,0,0,2);
 			break;
 
-		// ENABLE LCD
 		case 7:
 			if(tcp_connected)
 			{
-				cmd = ENABLE_LCD;
+				cmd =  ON_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
+			show_status2("FAN ON","",code,0,0,2);
 			break;
-		
+
+		case 8:
+			if(tcp_connected)
+			{
+				cmd = OFF_FAN;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("FAN OFF","",code,0,0,2);
+			break;
+
+		case 9:
+			if(tcp_connected)
+			{
+				cmd = SHUTDOWN;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("SHUTDOWN","",code,0,0,2);
+			break;
+
+		case 10:
+			if(tcp_connected)
+			{
+				cmd = CLEAR_SCREEN;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("clear lcd screen","",code,0,0,2);
+			break;
+
 		default:
-            break;
+			break;
 	}
 //	show_status2("test 0","",code,0,0,1);
 }
+
+
 /*****************************************************************************/
 static void
 build_Tool_menu(MenuNo number)
 {
 #define MY_DATA2(name) { name, call_Tool, 2 }
 
-    static MENU_DATA table[] =
-    {
-        MY_DATA2("Connect"),				// 0
-        MY_DATA2("Disconnect"),				// 1
-        MY_DATA2("Toggle Outputs"),			// 2
-        MY_DATA2("All Off"),				// 3
-        MY_DATA2("All On"),					// 4
-        MY_DATA2("Clear Screen"),			// 5
-        MY_DATA2("Send Serial"),			// 6
-        MY_DATA2("Enable LCD"),				// 7
-        {(char *) 0, 0, 0}
-    };
+	static MENU_DATA table[] =
+	{
+		MY_DATA2("Connect"),					  // 0
+		MY_DATA2("Disconnect"),					  // 1
+		MY_DATA2("Enable Start"),				  // 2
+		MY_DATA2("On Acc"),						  // 3
+		MY_DATA2("Off Acc"),					  // 4
+		MY_DATA2("On Fuel Pump"),				  // 5
+		MY_DATA2("Off Fuel Pump"),				  // 6
+		MY_DATA2("On Fan"),						  // 7
+		MY_DATA2("Off Fan"),					  // 8
+		MY_DATA2("Shutdown"),					  // 9
+		MY_DATA2("Clear Screen"),				  // 10
+		{(char *) 0, 0, 0}
+	};
 
-    static ITEM **items;
+	static ITEM **items;
 
-    ITEM **ip;
-    MENU_DATA *ap = 0;
-    MENU_DATA *myList = 0;
-    int i;
-    size_t count = 0;
+	ITEM **ip;
+	MENU_DATA *ap = 0;
+	MENU_DATA *myList = 0;
+	int i;
+	size_t count = 0;
 
-    if (ap == 0)
-    {
-        count = SIZEOF(table) - 1;
-        items = typeCalloc(ITEM *, count + 1);
-        ap = table;
-    }
+	if (ap == 0)
+	{
+		count = SIZEOF(table) - 1;
+		items = typeCalloc(ITEM *, count + 1);
+		ap = table;
+	}
 
-    ip = items;
-    for (i = 0; ap[i].name != 0; ++i)
-    {
-        ap[i].func = call_Tool;
-        ap[i].mask = (unsigned) i;
-        *ip = new_item(ap[i].name, empty);
-        set_item_userptr(*ip, (void *) &table[i]);
-        ++ip;
-    }
-    *ip = 0;
+	ip = items;
+	for (i = 0; ap[i].name != 0; ++i)
+	{
+		ap[i].func = call_Tool;
+		ap[i].mask = (unsigned) i;
+		*ip = new_item(ap[i].name, empty);
+		set_item_userptr(*ip, (void *) &table[i]);
+		++ip;
+	}
+	*ip = 0;
 
-    mpTool = menu_create(items, (int) count, 1, number);
-    if (myList != 0)
-        free(myList);
+	mpTool = menu_create(items, (int) count, 1, number);
+	if (myList != 0)
+		free(myList);
 }
+
+
 /*****************************************************************************/
 static int
 perform_Host_menu(int cmd)
 {
-    return menu_driver(mpHost, cmd);
+	return menu_driver(mpHost, cmd);
 }
+
+
 /*****************************************************************************/
 static int
 perform_Target_menu(int cmd)
 {
-    return menu_driver(mpTarget, cmd);
+	return menu_driver(mpTarget, cmd);
 }
+
+
 /*****************************************************************************/
 static int
 perform_Tool_menu(int cmd)
 {
-    return menu_driver(mpTool, cmd);
+	return menu_driver(mpTool, cmd);
 }
+
+
 /*****************************************************************************/
 static int
 menu_number(void)
 {
-    return item_index(current_item(mpBanner)) - (eBanner + 1);
+	return item_index(current_item(mpBanner)) - (eBanner + 1);
 }
+
+
 /*****************************************************************************/
 static MENU *
 current_menu(void)
 {
-    MENU *result;
+	MENU *result;
 
-    switch (menu_number())
-    {
-        case eHost:
-            result = mpHost;
-            break;
-        case eTarget:
-            result = mpTarget;
-            break;
-        case eTool:
-            result = mpTool;
-            break;
-        default:
-            result = 0;
-            break;
-    }
-    return result;
+	switch (menu_number())
+	{
+		case eHost:
+			result = mpHost;
+			break;
+		case eTarget:
+			result = mpTarget;
+			break;
+		case eTool:
+			result = mpTool;
+			break;
+		default:
+			result = 0;
+			break;
+	}
+	return result;
 }
+
+
 /*****************************************************************************/
 static void
 call_menus(int code)
 {
-    (void) code;
+	(void) code;
 }
+
+
 /*****************************************************************************/
 static void
 build_menus(void)
 {
-    static MENU_DATA table[] =
-    {
-        {"Host", call_menus, 0},
-        {"Target", call_menus, 1},
-        {"Tool", call_menus, 2},
-        {(char *) 0, 0, 0}
-    };
-    static ITEM *items[SIZEOF(table)];
+	static MENU_DATA table[] =
+	{
+		{"Host", call_menus, 0},
+		{"Target", call_menus, 1},
+		{"Tool", call_menus, 2},
+		{(char *) 0, 0, 0}
+	};
+	static ITEM *items[SIZEOF(table)];
 
-    ITEM **ip = items;
-    int n;
+	ITEM **ip = items;
+	int n;
 
-    for (n = 0; table[n].name != 0; ++n)
-    {
-        *ip = new_item(table[n].name, empty);
-        set_item_userptr(*ip, (void *) &table[n]);
-        ++ip;
-    }
-    *ip = (ITEM *) 0;
+	for (n = 0; table[n].name != 0; ++n)
+	{
+		*ip = new_item(table[n].name, empty);
+		set_item_userptr(*ip, (void *) &table[n]);
+		++ip;
+	}
+	*ip = (ITEM *) 0;
 
-    mpBanner = menu_create(items, SIZEOF(table) - 1, SIZEOF(table) - 1, eBanner);
-    set_menu_mark(mpBanner, ">");
+	mpBanner = menu_create(items, SIZEOF(table) - 1, SIZEOF(table) - 1, eBanner);
+	set_menu_mark(mpBanner, ">");
 
-    build_Host_menu(eHost);
-    build_Tool_menu(eTool);
-    build_Target_menu(eTarget);
+	build_Host_menu(eHost);
+	build_Tool_menu(eTool);
+	build_Target_menu(eTarget);
 }
+
+
 /*****************************************************************************/
 static int
 move_menu(MENU * menu, MENU * current, int by_y, int by_x)
 {
-    WINDOW *top_win = menu_win(menu);
-    WINDOW *sub_win = menu_sub(menu);
-    int y0, x0;
-    int y1, x1;
-    int result;
+	WINDOW *top_win = menu_win(menu);
+	WINDOW *sub_win = menu_sub(menu);
+	int y0, x0;
+	int y1, x1;
+	int result;
 
-    getbegyx(top_win, y0, x0);
-    y0 += by_y;
-    x0 += by_x;
+	getbegyx(top_win, y0, x0);
+	y0 += by_y;
+	x0 += by_x;
 
-    getbegyx(sub_win, y1, x1);
-    y1 += by_y;
-    x1 += by_x;
+	getbegyx(sub_win, y1, x1);
+	y1 += by_y;
+	x1 += by_x;
 
-    if ((result = mvwin(top_win, y0, x0)) != ERR)
-    {
+	if ((result = mvwin(top_win, y0, x0)) != ERR)
+	{
 #if defined(NCURSES_VERSION_PATCH) && (NCURSES_VERSION_PATCH < 20060218)
 // this isn't defined
-        sub_win->_begy = y1;
-        sub_win->_begx = x1;
+		sub_win->_begy = y1;
+		sub_win->_begx = x1;
 #else
-        mvwin(sub_win, y1, x1);
+		mvwin(sub_win, y1, x1);
 #endif
-        if (menu == current)
-        {
-            touchwin(top_win);
-            wnoutrefresh(top_win);
-        }
-    }
-    return result;
+		if (menu == current)
+		{
+			touchwin(top_win);
+			wnoutrefresh(top_win);
+		}
+	}
+	return result;
 }
+
+
 /*****************************************************************************/
 /*
  * Move the menus around on the screen, to test mvwin().
@@ -1259,200 +1317,208 @@ move_menu(MENU * menu, MENU * current, int by_y, int by_x)
 static void
 move_menus(MENU * current, int by_y, int by_x)
 {
-    if (move_menu(mpBanner, current, by_y, by_x) != ERR)
-    {
-        erase();
-        wnoutrefresh(stdscr);
-        move_menu(mpHost, current, by_y, by_x);
-        move_menu(mpTarget, current, by_y, by_x);
-        move_menu(mpTool, current, by_y, by_x);
-        doupdate();
-    }
+	if (move_menu(mpBanner, current, by_y, by_x) != ERR)
+	{
+		erase();
+		wnoutrefresh(stdscr);
+		move_menu(mpHost, current, by_y, by_x);
+		move_menu(mpTarget, current, by_y, by_x);
+		move_menu(mpTool, current, by_y, by_x);
+		doupdate();
+	}
 }
+
+
 /*****************************************************************************/
 static void
 show_status1(int ch, MENU * menu, int line)
 {
-    wmove(status, line, 1);
-    wprintw(status, "key %s, menu %d, mark %s, match %s",
-        keyname(ch),
-        menu_number(),
-        menu_mark(menu),
-        menu_pattern(menu));
-    wclrtoeol(status);
-    wrefresh(status);
+	wmove(status, line, 1);
+	wprintw(status, "key %s, menu %d, mark %s, match %s",
+		keyname(ch),
+		menu_number(),
+		menu_mark(menu),
+		menu_pattern(menu));
+	wclrtoeol(status);
+	wrefresh(status);
 }
+
+
 /*****************************************************************************/
 static void
 perform_menus(void)
 {
-    MENU *this_menu;
-    MENU *last_menu = mpHost;
-    int code = E_UNKNOWN_COMMAND;
-    int cmd;
-    int ch = ERR;
+	MENU *this_menu;
+	MENU *last_menu = mpHost;
+	int code = E_UNKNOWN_COMMAND;
+	int cmd;
+	int ch = ERR;
 
 #ifdef NCURSES_MOUSE_VERSION
-    mousemask(ALL_MOUSE_EVENTS, (mmask_t *) 0);
+	mousemask(ALL_MOUSE_EVENTS, (mmask_t *) 0);
 #endif
 
-    menu_display(last_menu);
+	menu_display(last_menu);
 
-    for (;;)
-    {
+	for (;;)
+	{
 /*
-        if (ch != ERR)
-        {
-            show_status1(ch, last_menu,0);
-        }
+		if (ch != ERR)
+		{
+			show_status1(ch, last_menu,0);
+		}
 */
-        ch = menu_getc(mpBanner);
+		ch = menu_getc(mpBanner);
 
 /*
  * Provide for moving the menu around in the screen using shifted
  * cursor keys.
  */
-        switch (ch)
-        {
-            case KEY_SF:
-                move_menus(last_menu, 1, 0);
-                continue;
-            case KEY_SR:
-                move_menus(last_menu, -1, 0);
-                continue;
-            case KEY_SLEFT:
-                move_menus(last_menu, 0, -1);
-                continue;
-            case KEY_SRIGHT:
-                move_menus(last_menu, 0, 1);
-                continue;
-        }
-        cmd = menu_virtualize(ch);
+		switch (ch)
+		{
+			case KEY_SF:
+				move_menus(last_menu, 1, 0);
+				continue;
+			case KEY_SR:
+				move_menus(last_menu, -1, 0);
+				continue;
+			case KEY_SLEFT:
+				move_menus(last_menu, 0, -1);
+				continue;
+			case KEY_SRIGHT:
+				move_menus(last_menu, 0, 1);
+				continue;
+		}
+		cmd = menu_virtualize(ch);
 
-        switch (cmd)
-        {
+		switch (cmd)
+		{
 /*
  * The banner menu acts solely to select one of the other menus.
  * Move between its items, wrapping at the left/right limits.
  */
-            case REQ_LEFT_ITEM:
-            case REQ_RIGHT_ITEM:
-                code = menu_driver(mpBanner, cmd);
-                if (code == E_REQUEST_DENIED)
-                {
-                    if (menu_number() > 0)
-                        code = menu_driver(mpBanner, REQ_FIRST_ITEM);
-                    else
-                        code = menu_driver(mpBanner, REQ_LAST_ITEM);
-                }
-                break;
-            default:
-                switch (menu_number())
-                {
-                    case eHost:
-                        code = perform_Host_menu(cmd);
-                        break;
-                    case eTarget:
-                        code = perform_Target_menu(cmd);
-                        break;
-                    case eTool:
-                        code = perform_Tool_menu(cmd);
-                        break;
-                }
+			case REQ_LEFT_ITEM:
+			case REQ_RIGHT_ITEM:
+				code = menu_driver(mpBanner, cmd);
+				if (code == E_REQUEST_DENIED)
+				{
+					if (menu_number() > 0)
+						code = menu_driver(mpBanner, REQ_FIRST_ITEM);
+					else
+						code = menu_driver(mpBanner, REQ_LAST_ITEM);
+				}
+				break;
+			default:
+				switch (menu_number())
+				{
+					case eHost:
+						code = perform_Host_menu(cmd);
+						break;
+					case eTarget:
+						code = perform_Target_menu(cmd);
+						break;
+					case eTool:
+						code = perform_Tool_menu(cmd);
+						break;
+				}
 
-                if ((code == E_REQUEST_DENIED) && (cmd == KEY_MOUSE))
-                {
-                    code = menu_driver(mpBanner, cmd);
-                }
+				if ((code == E_REQUEST_DENIED) && (cmd == KEY_MOUSE))
+				{
+					code = menu_driver(mpBanner, cmd);
+				}
 
-                break;
-        }
+				break;
+		}
 
-        if (code == E_OK)
-        {
-            this_menu = current_menu();
-            if (this_menu != last_menu)
-            {
-                move(1, 0);
-                clrtobot();
-                box(menu_win(this_menu), 0, 0);
-                refresh();
+		if (code == E_OK)
+		{
+			this_menu = current_menu();
+			if (this_menu != last_menu)
+			{
+				move(1, 0);
+				clrtobot();
+				box(menu_win(this_menu), 0, 0);
+				refresh();
 
 /* force the current menu to appear */
-                menu_display(this_menu);
+				menu_display(this_menu);
 
-                last_menu = this_menu;
-            }
-        }
-        wrefresh(menu_win(last_menu));
-        if (code == E_UNKNOWN_COMMAND
-            || code == E_NOT_POSTED)
-        {
-            ITEM *item = current_item(last_menu);
-            MENU_DATA *td = (MENU_DATA *) item_userptr(item);
-            td->func((int) td->mask);
+				last_menu = this_menu;
+			}
+		}
+		wrefresh(menu_win(last_menu));
+		if (code == E_UNKNOWN_COMMAND
+			|| code == E_NOT_POSTED)
+		{
+			ITEM *item = current_item(last_menu);
+			MENU_DATA *td = (MENU_DATA *) item_userptr(item);
+			td->func((int) td->mask);
 //            show_status2("func","",td->mask,0,0,3);
-        }
-        if (code == E_REQUEST_DENIED)
-            beep();
-        continue;
-    }
+		}
+		if (code == E_REQUEST_DENIED)
+			beep();
+		continue;
+	}
 
 #ifdef NCURSES_MOUSE_VERSION
-    mousemask(0, (mmask_t *) 0);
+	mousemask(0, (mmask_t *) 0);
 #endif
 }
+
 
 #if HAVE_RIPOFFLINE
 /*****************************************************************************/
 static int
 rip_footer(WINDOW *win, int cols)
 {
-    wbkgd(win, A_REVERSE);
-    werase(win);
-    wmove(win, 0, 0);
-    wprintw(win, "footer: %d columns", cols);
-    wnoutrefresh(win);
-    return OK;
+	wbkgd(win, A_REVERSE);
+	werase(win);
+	wmove(win, 0, 0);
+	wprintw(win, "footer: %d columns", cols);
+	wnoutrefresh(win);
+	return OK;
 }
+
 
 /*****************************************************************************/
 static int
 rip_header(WINDOW *win, int cols)
 {
-    wbkgd(win, A_REVERSE);
-    werase(win);
-    wmove(win, 0, 0);
-    wprintw(win, "header: %d columns", cols);
-    wnoutrefresh(win);
-    return OK;
+	wbkgd(win, A_REVERSE);
+	werase(win);
+	wmove(win, 0, 0);
+	wprintw(win, "header: %d columns", cols);
+	wnoutrefresh(win);
+	return OK;
 }
-#endif                                            /* HAVE_RIPOFFLINE */
+#endif											  /* HAVE_RIPOFFLINE */
 /*****************************************************************************/
 static void
 usage(void)
 {
-    static const char *const tbl[] =
-    {
-        "Usage: demo_menus [options] [menu-file]"
-        ,""
-        ,"Options:"
+	static const char *const tbl[] =
+	{
+		"Usage: demo_menus [options] [menu-file]"
+		,""
+		,"Options:"
 #if HAVE_RIPOFFLINE
-        ,"  -f       rip-off footer line (can repeat)"
-        ,"  -h       rip-off header line (can repeat)"
+		,"  -f       rip-off footer line (can repeat)"
+		,"  -h       rip-off header line (can repeat)"
 #endif
-    };
-    size_t n;
-    for (n = 0; n < SIZEOF(tbl); n++)
-        fprintf(stderr, "%s\n", tbl[n]);
-    ExitProgram(EXIT_FAILURE);
+	};
+	size_t n;
+	for (n = 0; n < SIZEOF(tbl); n++)
+		fprintf(stderr, "%s\n", tbl[n]);
+	ExitProgram(EXIT_FAILURE);
 }
+
+
 /*****************************************************************************/
 int
 main(int argc, char *argv[])
 {
-    int c, rc;
-    int i,j;
+	int c, rc;
+	int i,j;
 //    size_t size;
 	I_DATA i_data;
 	O_DATA o_data;
@@ -1504,7 +1570,7 @@ main(int argc, char *argv[])
 			printf("%s\n",errmsg);
 			return 1;
 		}
-	}else		// oh-boy! create a new file!
+	}else										  // oh-boy! create a new file!
 	{
 
 	}
@@ -1519,12 +1585,11 @@ main(int argc, char *argv[])
 			printf("%s\n",errmsg);
 			return 1;
 		}
-	}else		// oh-boy! create a new file!
+	}else										  // oh-boy! create a new file!
 	{
 
 	}
 //	ollist_show(&oll);
-
 
 // init the lists used to manage the target
 	ollist_init(&oll2);
@@ -1557,79 +1622,82 @@ main(int argc, char *argv[])
 		printf("%d %d %d %s\n",j, o_data.port,o_data.onoff,o_data.label);
 	}
 */
-return 1;
+	return 1;
 #endif
-    setlocale(LC_ALL, "");
-
+	setlocale(LC_ALL, "");
 
 #if 0
-    while ((c = getopt(argc, argv, "a:de:fhmp:s:t:")) != -1)
-    {
-        switch (c)
-        {
+	while ((c = getopt(argc, argv, "a:de:fhmp:s:t:")) != -1)
+	{
+		switch (c)
+		{
 #if HAVE_RIPOFFLINE
-            case 'f':
-                ripoffline(-1, rip_footer);
-                break;
-            case 'h':
-                ripoffline(1, rip_header);
-                break;
-#endif                                /* HAVE_RIPOFFLINE */
-            default:
-                usage();
-        }
-    }
+			case 'f':
+				ripoffline(-1, rip_footer);
+				break;
+			case 'h':
+				ripoffline(1, rip_header);
+				break;
+#endif								  /* HAVE_RIPOFFLINE */
+			default:
+				usage();
+		}
+	}
 #endif
-    initscr();
-    noraw();
-    cbreak();
-    noecho();
+	initscr();
+	noraw();
+	cbreak();
+	noecho();
 
-    if (has_colors())
-    {
-        start_color();
-        init_pair(1, COLOR_RED, COLOR_BLACK);
-        init_pair(2, COLOR_BLUE, COLOR_WHITE);
-        init_pair(3, COLOR_WHITE, COLOR_BLUE);
-        init_pair(4, COLOR_GREEN, COLOR_BLACK);
-        init_pair(5, COLOR_CYAN, COLOR_BLACK);
-    }
-    status = newwin(5, COLS-10, LINES - 10, 1);
-    wrefresh(status);
+	if (has_colors())
+	{
+		start_color();
+		init_pair(1, COLOR_RED, COLOR_BLACK);
+		init_pair(2, COLOR_BLUE, COLOR_WHITE);
+		init_pair(3, COLOR_WHITE, COLOR_BLUE);
+		init_pair(4, COLOR_GREEN, COLOR_BLACK);
+		init_pair(5, COLOR_CYAN, COLOR_BLACK);
+	}
+	status = newwin(5, COLS-10, LINES - 10, 1);
+	wrefresh(status);
 
-    build_menus();
+	build_menus();
 /*
 	strncpy(fname1,fptr1,40);
 	strncpy(fname2,fptr2,40);
 	show_status2(fname1,sfilename,0,0,0,2);
 */
-    perform_menus();
-    destroy_menus();
+	perform_menus();
+	destroy_menus();
 
-    endwin();
-    ExitProgram(EXIT_SUCCESS);
+	endwin();
+	ExitProgram(EXIT_SUCCESS);
 }
 
+
 #if 0
-				ptr2 = filename;
-				int fp = open((const char *)ptr2, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-				if(fp < 0)
-				{
-					strcpy(errmsg,strerror(errno));
-					mvprintw(LINES-6,30,"%s %s  %s",filename,ptr2,errmsg);
-					refresh();
-					close(fp);
-				}
-				else
-				{
-					mvprintw(LINES-6,30,"%s %s %d",filename,ptr2, fp);
-					refresh();
-					close(fp);
-				}
-				getFileCreationTime(filename,tempx);
-				mvprintw(LINES-7,30,"%s ",tempx);
-				refresh();
+ptr2 = filename;
+int fp = open((const char *)ptr2, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+if(fp < 0)
+{
+	strcpy(errmsg,strerror(errno));
+	mvprintw(LINES-6,30,"%s %s  %s",filename,ptr2,errmsg);
+	refresh();
+	close(fp);
+}
 
-			}
+
+else
+{
+	mvprintw(LINES-6,30,"%s %s %d",filename,ptr2, fp);
+	refresh();
+	close(fp);
+}
+
+
+getFileCreationTime(filename,tempx);
+mvprintw(LINES-7,30,"%s ",tempx);
+refresh();
+
+}
 #endif
-

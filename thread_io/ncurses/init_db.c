@@ -78,55 +78,55 @@ int main(int argc, char *argv[])
 
 	pid = curr_i_array;
 
-	strcpy(pid->label,"STARTSWITCH\0");			// 0
+	strcpy(pid->label,"STARTER\0");
 	pid++;
-	strcpy(pid->label,"SHUTDOWN\0");			// 1
-	pid++;	
-	strcpy(pid->label,"BRAKES\0");				// 2
+	strcpy(pid->label,"ACCON\0");
 	pid++;
-	strcpy(pid->label,"HEADLIGHTS\0");			// 3
+	strcpy(pid->label,"COOLINGFAN\0");
 	pid++;
-	strcpy(pid->label,"LEFTBLINKERI\0");		// 4
+	strcpy(pid->label,"FUELPUMP\0");
 	pid++;
-	strcpy(pid->label,"RIGHTBLINKERI\0");		// 5
+	strcpy(pid->label,"PRELUBE\0");
 	pid++;
-	strcpy(pid->label,"RUNNINGLIGHTSI\0");		// 6
+	strcpy(pid->label,"HEADLAMP\0");
 	pid++;
-	strcpy(pid->label,"LEFTDOOROPEN\0");		// 7
+	strcpy(pid->label,"BRIGHTS\0");
 	pid++;
-	strcpy(pid->label,"RIGHTDOOROPEN\0");		// 8
+	strcpy(pid->label,"LEFTBLINKER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT9\0");			// 9
+	strcpy(pid->label,"RIGHTBLINKER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT10\0");			// 10
+	strcpy(pid->label,"RUNNINGLIGHTS\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT11\0");			// 11
+	strcpy(pid->label,"ALARMSPEAKER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT12\0");			// 12
+	strcpy(pid->label,"ALARMLIGHT\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT13\0");			// 13
+	strcpy(pid->label,"BATTERYCHARGERELAY\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT14\0");			// 14
+	strcpy(pid->label,"DASHHEATER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT15\0");			// 15
+	strcpy(pid->label,"BATTERYCOMPHEATER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT16\0");			// 16
+	strcpy(pid->label,"CRANKCASEHEATER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT17\0");			// 17
+	strcpy(pid->label,"TRAILERBRAKES\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT18\0");			// 18
+	strcpy(pid->label,"TRAILERLEFTBLINKER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT19\0");			// 19
+	strcpy(pid->label,"TRAILERRIGHTBLINKER\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT20\0");			
+	strcpy(pid->label,"INTRUDERALARM\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT21\0");
+	strcpy(pid->label,"DOMELIGHT\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT22\0");
+	strcpy(pid->label,"LIGHTBAR\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT23\0");
+	strcpy(pid->label,"BLINKINDICATE\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT24\0");
+	strcpy(pid->label,"BRAKELIGHTS\0");
+	pid++;
+	strcpy(pid->label,"BACKUPLIGHTS\0");
 	pid++;
 	strcpy(pid->label,"TESTINPUT25\0");
 	pid++;
@@ -189,22 +189,24 @@ int main(int argc, char *argv[])
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
 		pod->port = i;
-		pod->onoff = ((i % 2) == 0);
-		pod->type = i % 3;
-		pod->time_delay = i*2;
-		pod->pulse_time = i*3;
+		pod->onoff = 0;
+		pod->type = 0;
+		pod->time_delay = 0;
+		pod->pulse_time = 0;
 		pod++;
 	}
 
 	pod = curr_o_array;
 
+	strcpy(pod->label,"STARTER\0");
+	pod++;
+	strcpy(pod->label,"ACCON\0");
+	pod++;
 	strcpy(pod->label,"COOLINGFAN\0");
 	pod++;
 	strcpy(pod->label,"FUELPUMP\0");
 	pod++;
 	strcpy(pod->label,"PRELUBE\0");
-	pod++;
-	strcpy(pod->label,"STARTER\0");
 	pod++;
 	strcpy(pod->label,"HEADLAMP\0");
 	pod++;
@@ -242,13 +244,11 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"BLINKINDICATE\0");
 	pod++;
-	strcpy(pod->label,"ENGINERUN\0");
-	pod++;
-	strcpy(pod->label,"ACCON\0");
-	pod++;
 	strcpy(pod->label,"BRAKELIGHTS\0");
 	pod++;
 	strcpy(pod->label,"BACKUPLIGHTS\0");
+	pod++;
+	strcpy(pod->label,"TESTOUTPUT25\0");
 	pod++;
 	strcpy(pod->label,"TESTOUTPUT26\0");
 	pod++;

@@ -36,6 +36,9 @@ ioports.o: ioports.c ioports.h
 tasks.o: tasks.c tasks.h serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c -pthread tasks.c
 
+lcd_func.o: lcd_func.c lcd_func.h 
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c lcd_func.c
+
 serial_io.o: serial_io.c serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
 
@@ -63,9 +66,9 @@ config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_thre
 #list_db: config_file.o list_db.o
 #	${CC} list_db.o config_file.o -o list_db
 
-sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o
+sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-	${CC} -pthread sched.o ioports.o tasks.o ollist_threads_rw.o illist_threads_rw.o rdwr.o serial_io.o config_file.o -o sched
+	${CC} -pthread sched.o ioports.o tasks.o ollist_threads_rw.o illist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o -o sched
 
 clean :
 	rm -f *.o *~ *# core  \

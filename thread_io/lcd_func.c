@@ -1,11 +1,11 @@
-#include<unistd.h>
-#include<sys/types.h>
-#include<sys/mman.h>
-#include<stdio.h>
-#include<fcntl.h>
-#include<assert.h>
-#include<time.h>
-#include<stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <time.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
 #include "mytypes.h"
@@ -13,22 +13,14 @@
 
 #ifndef TS_7800
 
-#define BUF_SIZE 1000;
+#define LCD_BUF_LINES 20
+#define LCD_BUF_COLS 32
 static int line;
 static int col;
-//static char buffer[BUF_SIZE];
-//static char *buf_ptr;
-
-static void mydelay(unsigned long i)
-{
-	unsigned long j;
-
-	do
-	{
-		for(j = 0;j < 10000;j++);
-			i--;
-	}while(i > 0);
-}
+static UCHAR buffer[LCD_BUF_LINES][LCD_BUF_COLS];
+static UCHAR *buf_ptr;
+static int cur_buf_line;
+static int cur_buf_size;
 
 /*********************************************************************************************************/
 void lcd_init(void)
@@ -38,30 +30,11 @@ void lcd_init(void)
 	lcd_wait();
 	line = 0;
 	col = 0;
-//	memset(buffer,0,BUF_SIZE);
-//	buf_ptr = buffer;
+	memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
+	buf_ptr = buffer[0];
+	cur_buf_line = cur_buf_size = 0;
 }
-/*********************************************************************************************************/
-// row 0 ends at 39
-// row 1 starts at 64 and goes to 83 on 1st page
-// and starts at 84 and goes to 103 on 2nd page
-static void lcd_cursor(int row, int col, int page)
-{
-	int offset;
 
-	offset = (page*20)+(row*64)+col;
-
-	lcd_cmd(HOME+offset);
-}
-/*
-static add_buf(char *str)
-{
-	memcpy(buf_ptr,str);
-	buf_ptr += strlen(str);
-	buf_ptr++;
-	buf_ptr = 0;
-}
-*/
 /*********************************************************************************************************/
 void lcd_home(void)
 {
@@ -69,6 +42,7 @@ void lcd_home(void)
 		return;
 	lcd_cmd(HOME);
 }
+
 /*********************************************************************************************************/
 void lcd_cls(void)
 {
@@ -79,10 +53,11 @@ void lcd_cls(void)
 	col = line = 0;
 }
 
+/*********************************************************************************************************/
 static void add_col(void)
 {
 	if(col > 103)
-		col = 0;	
+		col = 0;
 
 	if(col > 39 && col < 64)
 	{
@@ -101,32 +76,21 @@ void myprintf1(char *str)
 		printf("%s\n",str);
 		return;
 	}
-#if 0
-	printf("line: %2d col: %2d ",line,col);
-	
-	if(col > 63)
-	{
-		line = (~line) & 0x01;
-		col = 0;
-	}
-	lcd_cursor(line,col,0);
-#endif
-	add_col();
-	lcd_cmd(HOME+col);
-	col += (int)strlen(str);
-	lcd_write((UCHAR *)ptr);
-	temp[0] = 0x20;
-	temp[1] = 0;
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
-	col++;
+
+	cur_buf_line = cur_buf_size;
+//	printf("%d\n",cur_buf_line);
+	inc_bufptrs();
+	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
+	sprintf((char*)buffer[cur_buf_line],"%s",str);
+	display_current(0);
 }
 
 /**********************************************************************************************************/
 void myprintf2(char *str, int x)
 {
 	char *ptr = str;
-	char temp[4];
+	char temp[35];
+	char temp2[4];
 	int i;
 
 	if(!lcd_enabled)
@@ -135,31 +99,22 @@ void myprintf2(char *str, int x)
 		return;
 	}
 
-	add_col();
-	lcd_cmd(HOME+col);
-	col += (int)strlen(str);
-
-	lcd_write((UCHAR *)ptr);
-	temp[0] = 0x20;
-	temp[1] = 0;
-	col += (int)strlen(temp);
-	lcd_write((UCHAR *)temp);
-	sprintf(temp,"%2d",x);
-	col += (int)strlen(temp);
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
-	temp[0] = 0x20;
-	temp[1] = 0;
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
-	col += 2;
+	sprintf(temp,"%s",str);
+	sprintf(temp2,"% d",x);
+	strcat(temp,temp2);
+	cur_buf_line = cur_buf_size;
+	inc_bufptrs();
+	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
+	strcpy((char *)buffer[cur_buf_line],temp);
+	display_current(0);
 }
 
 /**********************************************************************************************************/
 void myprintf3(char *str, int x, int y)
 {
 	char *ptr = str;
-	char temp[4];
+	char temp[35];
+	char temp2[4];
 	int i;
 
 	if(!lcd_enabled)
@@ -168,32 +123,110 @@ void myprintf3(char *str, int x, int y)
 		return;
 	}
 
-	add_col();
-	lcd_cmd(HOME+col);
-	col += (int)strlen(str);
+	cur_buf_line = cur_buf_size;
+//	printf("%d\n",cur_buf_line);
+	inc_bufptrs();
+	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 
-	lcd_write((UCHAR *)ptr);
-	temp[0] = 0x20;
-	temp[1] = 0;
-	lcd_write((UCHAR *)temp);
-	sprintf(temp,"%2d",x);
-	col += (int)strlen(temp);
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
+	sprintf(temp,"%s",str);
+	sprintf(temp2,"% d",x);
+	strcat(temp,temp2);
+	sprintf(temp2,"% d",y);
+	strcat(temp,temp2);
+	strcpy((char *)buffer[cur_buf_line],temp);
+	display_current(0);
+}
 
-	temp[0] = 0x20;
-	temp[1] = 0;
-	col += (int)strlen(temp);
-	lcd_write((UCHAR *)temp);
-	sprintf(temp,"%2d",y);
-	col += (int)strlen(temp);
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
-	temp[0] = 0x20;
-	temp[1] = 0;
-	ptr = temp;
-	lcd_write((UCHAR *)ptr);
-	col += 2;
+/**********************************************************************************************************/
+static void inc_bufptrs(void)
+{
+	int i;
+	if(cur_buf_size > LCD_BUF_LINES-2)
+		for(i = 0;i < cur_buf_size;i++)
+		{
+			memcpy(buffer[i],buffer[i+1],LCD_BUF_COLS);
+//			printf("%s\n",buffer[i]);
+		}
+
+	cur_buf_size = (cur_buf_size>=LCD_BUF_LINES-1?LCD_BUF_LINES-1:++cur_buf_size);
+
+	if(++cur_buf_line >= LCD_BUF_LINES-1)
+		cur_buf_line = LCD_BUF_LINES-1;
+
+//	printf("cur_buf_size: %d cur_buf_line %d (inc)\n",cur_buf_size,cur_buf_line);
+}
+
+/**********************************************************************************************************/
+static void display_current(int special_case)
+{
+	int i;
+
+	lcd_cmd(CLEAR);
+	lcd_cmd(HOME);
+	col = line = 0;
+
+//	printf("cur_buf_size: %d cur_buf_line %d\n",cur_buf_size,cur_buf_line);
+
+	if(cur_buf_size == 0)
+	{
+		lcd_write(buffer[0]);
+	}else
+	{
+		if(special_case == 0)
+		{
+			lcd_write(buffer[cur_buf_line-1]);
+			lcd_wait();
+			lcd_cmd(ROW2);
+			lcd_wait();
+			lcd_write(buffer[cur_buf_line]);
+			lcd_wait();
+		}
+		else if(special_case == 1)
+		{
+			lcd_write(buffer[cur_buf_size-1]);
+			lcd_wait();
+			lcd_cmd(ROW2);
+			lcd_wait();
+			lcd_write(buffer[cur_buf_size]);
+			lcd_wait();
+		}
+	
+	}
+//	printf("%s\n",buffer[cur_buf_line]);
+}
+
+/*********************************************************************************************************/
+void scroll_up(void)
+{
+	if(cur_buf_size < 3)
+		return;
+
+//	printf("line: %d size: %d\n",cur_buf_line,cur_buf_size);
+
+	cur_buf_line--;
+	if(cur_buf_line < 1)
+		cur_buf_line = cur_buf_size-1;
+
+//	printf("scroll_up: %d\n",cur_buf_line);
+	display_current(0);
+}
+
+/*********************************************************************************************************/
+void scroll_down(void)
+{
+	if(cur_buf_size < 3)
+		return;
+//	printf("line: %d size: %d\n",cur_buf_line,cur_buf_size);
+	
+	if(++cur_buf_line > cur_buf_size-1)
+	{
+		display_current(1);
+		cur_buf_line = 1;
+	}
+//	printf("line: %d size: %d\n",cur_buf_line,cur_buf_size);
+
+//	printf("scroll_down: %d\n",cur_buf_line);
+	display_current(0);
 }
 
 /**********************************************************************************************************/
@@ -204,6 +237,7 @@ void shift_left(void)
 	lcd_cmd(SHIFTLEFT);
 }
 
+
 /**********************************************************************************************************/
 void shift_right(void)
 {
@@ -212,11 +246,13 @@ void shift_right(void)
 	lcd_cmd(SHIFTRIGHT);
 }
 
+
 /**********************************************************************************************************/
 static void lcdinit(void)
 {
 	int fd = open("/dev/mem", O_RDWR);
 	int psize = getpagesize();
+	int i;
 
 // if compiling with -static we have to use the MAP_FIXED flag
 //	gpio = (UINT *)mmap(0, getpagesize(),PROT_READ|PROT_WRITE, MAP_SHARED, fd, LCDBASEADD);
@@ -240,7 +276,7 @@ volatile UINT *dio_addr;
 volatile UINT *dio_ddr;
 volatile UINT *portfb;
 volatile UINT *portfd;
-	
+
 #define PADR    0							// address offset of LCD
 #define PADDR   (0x10 / sizeof(UINT))		// address offset of DDR LCD
 #define PHDR    (0x40 / sizeof(UINT))		// bits 3-5: EN, RS, WR
@@ -250,7 +286,7 @@ volatile UINT *portfd;
 #define PORTFB  (0x30 / sizeof(UINT))
 #define PORTFD	(0x34 / sizeof(UINT))
 */
-	
+
 //	printf("1:  %4x %4x \n", gpio[PADR],gpio[PADDR]);
 	*paddr = 0x0;								  // All of port A to inputs
 	*phddr |= 0x38;								  // bits 3:5 of port H to outputs
@@ -268,7 +304,11 @@ volatile UINT *portfd;
 	lcd_cmd(0xc);								  // display on, blink off, cursor off
 	lcd_wait();
 	lcd_cmd(0x2);								  // return home
+
+	for(i = 0;i < 6;i++)							// set the 1st 6 bits of DIO to inputs
+		setdioddr(i,0);
 }
+
 
 /**********************************************************************************************************/
 static UINT lcd_wait(void)
@@ -310,6 +350,7 @@ static UINT lcd_wait(void)
 	return dat;
 }
 
+
 /**********************************************************************************************************/
 static void lcd_cmd(UINT cmd)
 {
@@ -343,6 +384,7 @@ static void lcd_cmd(UINT cmd)
 	i = HOLD;
 	COUNTDOWN(i);
 }
+
 
 /**********************************************************************************************************/
 static void lcd_write(UCHAR *dat)
@@ -383,6 +425,7 @@ static void lcd_write(UCHAR *dat)
 	} while(*dat);
 }
 
+
 static int setbiobit(UCHAR *ptr,int n,int v)
 {
 	unsigned char d;
@@ -400,11 +443,13 @@ static UCHAR dio_get_ddr(void)
 	return(*dio_ddr);
 }
 
+
 static UCHAR dio_set_ddr(UCHAR b)
 {
 	*dio_ddr=b;
 	return(b);
 }
+
 
 //#if 0
 int getdioline(int n)
@@ -489,9 +534,22 @@ static int setdioddr(int n,int v)
 	}
 	return(v);
 }
+
+
 //#endif
 
 #ifndef MAKE_TARGET
+/*********************************************************************************************************/
+static void mydelay(unsigned long i)
+{
+	unsigned long j;
+
+	do
+	{
+		for(j = 0;j < 10000;j++);
+		i--;
+	}while(i > 0);
+}
 
 void print_mem(void)
 {
@@ -513,157 +571,169 @@ void print_mem(void)
 #define PORTFB  (0x30 / sizeof(UINT))
 #define PORTFD	(0x34 / sizeof(UINT))
 
-
 */
-	printf("phdr:     %4x %4x\n",phdr,*phdr);			// 40
-	printf("padr:     %4x %4x\n",padr,*padr);			// 0
-	printf("paddr:    %4x %4x\n",paddr,*paddr);			// 10
-	printf("phddr:    %4x %4x\n",phddr,*phddr);			// 44
-	printf("dio_addr: %4x %4x\n",dio_addr,*dio_addr);	// 4
-	printf("dio_ddr:  %4x %4x\n",dio_ddr,*dio_ddr);		// 14
-	printf("portfb:   %4x %4x\n",portfb,*portfb);		// 30
-	printf("portfd:   %4x %4x\n",portfd,*portfd);		// 34
+	printf("phdr:     %4x %4x\n",phdr,*phdr);	  // 40
+	printf("padr:     %4x %4x\n",padr,*padr);	  // 0
+	printf("paddr:    %4x %4x\n",paddr,*paddr);	  // 10
+	printf("phddr:    %4x %4x\n",phddr,*phddr);	  // 44
+// 4
+	printf("dio_addr: %4x %4x\n",dio_addr,*dio_addr);
+// 14
+	printf("dio_ddr:  %4x %4x\n",dio_ddr,*dio_ddr);
+	printf("portfb:   %4x %4x\n",portfb,*portfb);  // 30
+	printf("portfd:   %4x %4x\n",portfd,*portfd);  // 34
 }
+
 
 int main(void)
 {
-	char buf[300];
-	static buf_ptr;
-	UCHAR test2;
 	int i,j,key;
 
-	test2 = 0x21;
-	for(i = 0;i < 300;i++)
-	{
-		buf[i] = test2;
-		if(++test2 > 0x7e)
-			test2 = 0x21;
-	}
-	for(i = 0;i < 300;i++)
-	{
-		if((i % 9) == 0)
-			buf[i] = 0;
-	}
-
+	i = j = 0;
 	lcd_init();
 
+	printf("c - clear screen\n");
+	printf("l - left shift\n");
+	printf("r - right shift\n");
+	printf("h - home cursor\n");
+	printf("u - scroll_up\n");
+	printf("d - scroll_down\n");
+	printf("p - print new string to buffer\n");
+	printf("q - quit\n");
+
+//	buffer[LCD_BUF_LINES][LCD_BUF_COLS];
+
+	myprintf1("line 1 this is a test      a\0");
+	myprintf1("line 2 this is a test      b\0");
+	myprintf1("line 3 this is a test      c\0");
+	myprintf1("line 4 this is a test      d\0");
+	myprintf1("line 5 this is a test      e\0");
+	myprintf1("line 6 this is a test      f\0");
+	myprintf1("line 7 this is a test      g\0");
+	myprintf1("line 8 this is a test      h\0");
+	myprintf1("line 9 this is a test      i\0");
+	myprintf1("line 10 this is a test      j\0");
+/*
+	myprintf1("line 11 this is a test       k\0");
+	mydelay(1000);
+	myprintf1("line 12 this is a test       l\0");
+	mydelay(1000);
+	myprintf1("line 13 this is a test       m\0");
+	mydelay(1000);
+	myprintf1("line 14 this is a test       n\0");
+	mydelay(1000);
+	myprintf1("line 15 this is a test       o\0");
+	mydelay(1000);
+	myprintf1("line 16 this is a test       p\0");
+	mydelay(1000);
+	myprintf1("line 17 this is a test       q\0");
+	mydelay(1000);
+	myprintf1("line 18 this is a test       r\0");
+	mydelay(1000);
+	myprintf1("line 19 this is a test       s\0");
+	mydelay(1000);
+	myprintf1("line 20 this is a test       t\0");
+	mydelay(1000);
+*/
 	do
 	{
 		key = getc(stdin);
 		switch(key)
 		{
 			case 'c':
-				lcd_cls();			
-			break;
+				lcd_cls();
+				memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
+				buf_ptr = buffer[0];
+				cur_buf_line = cur_buf_size = 0;
+				i = j = 0;
+				break;
 			case 'l':
 				for(i = 0;i < 6;i++)
 				{
 					mydelay(5);
 					shift_left();
 				}
-			break;
+				break;
 			case 'r':
 				for(i = 0;i < 6;i++)
 				{
 					mydelay(5);
 					shift_right();
 				}
-			break;
+				break;
 			case 'm':
-				print_mem();
-			break;
-			case '1':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(0,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '2':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(1,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '3':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(2,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '4':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(3,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '5':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(4,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '6':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(5,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '7':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(6,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;
-			case '8':
-				for(i = 0;i < 2000;i++)
-				{
-					if(setdioline(7,i&1) == -1)
-						printf("a");
-					mydelay(1);
-				}
-				printf("done\n");
-			break;	
+				printf("c - clear screen\n");
+				printf("l - left shift\n");
+				printf("r - right shift\n");
+				printf("h - home cursor\n");
+				printf("u - scroll_up\n");
+				printf("d - scroll_down\n");
+				printf("p - print new string to buffer\n");
+				printf("q - quit\n");
+				break;
 			case 'p':
-				do
-				{
-					buf_ptr++;
-					if(buf_ptr > 100)
-						buf_ptr = 0;
-				}while(buf[buf_ptr] != 0);
-
-				buf_ptr++;
-				myprintf1(buf+buf_ptr);
-				printf("%s\n",buf+buf_ptr);
-			break;
+				myprintf3("new string \0",i,j);
+				i++;
+				j += 2;
+				break;
 			case 'h':
 				lcd_home();
-			break;
+				break;
+			case 'i':	
+				for(i = 0;i < cur_buf_size+1;i++)
+				{
+					printf("%s\n",buffer[i]);
+				}
+				break;
+			case 'u':
+				scroll_up();
+				break;
+			case 'd':
+				scroll_down();
+				break;
+			case 't':
+				myprintf1("line 11 this is a test       k\0");
+				myprintf1("line 12 this is a test       l\0");
+				myprintf1("line 13 this is a test       m\0");
+				myprintf1("line 14 this is a test       n\0");
+				myprintf1("line 15 this is a test       o\0");
+				break;
+			case 'v':
+				myprintf1("line 16 hello a test       p\0");
+				myprintf1("line 17 hello a test       q\0");
+				myprintf1("line 18 hello a test       r\0");
+				myprintf1("line 19 hello a test       s\0");
+				myprintf1("line 20 hello a test       t\0");
+				break;
+			case 'w':
+				myprintf1("16 hello a test       p\0");
+				myprintf1("17 hello a test       q\0");
+				myprintf1("18 hello a test       r\0");
+				myprintf1("19 hello a test       s\0");
+				myprintf1("20 hello a test       t\0");
+				break;
+			case '1':
+				break;
+			case '2':
+				break;
+			case '3':
+				break;
+			case '4':
+				break;
+			case '5':
+				break;
+			case '6':
+				break;
+			case '7':
+				break;
+			case '8':
+				break;
+			case '9':
+				break;
 			default:
-			break;				
-		}		
-	}while(key != 'q');	
+				break;
+		}
+	}while(key != 'q');
 }
 #endif
 #endif
-

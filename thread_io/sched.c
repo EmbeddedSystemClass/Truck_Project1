@@ -10,11 +10,11 @@
  *
  * Examples in setting scheduling policy
  */
-#include<unistd.h>
-#include<sys/mman.h>
-#include<fcntl.h>
-#include<assert.h>
-#include<time.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,24 +49,24 @@ extern void *work_routine(void *arg);
 char oFileName[20];
 char iFileName[20];
 
-/****************************************************************************************************/
-struct timeval tv;
-
-static double curtime(void)
+typedef struct
 {
-	gettimeofday (&tv, NULL);
-	return tv.tv_sec + tv.tv_usec / 1000000.0;
-}
+	pthread_t pthread;
+	int sched;
+	int prio_min;
+	int prio_max;
+	char label[20];
+}THREADS;
 
 /********************************************************************************************************/
 int main(int argc, char **argv)
 {
 	int rtn, t, i, j, *id_arg, prio_min, prio_max;
-	pthread_t threads[NUM_TASKS];
+//	pthread_t threads[NUM_TASKS];
+	THREADS _threads[NUM_TASKS];
 	int sched = PTIME_SLICE;
 	pthread_attr_t pthread_custom_attr;
 	struct sched_param priority_param;
-	double current_time;
 	char str2[10];
 	char buf[200];
 	UCHAR test1 = 0x21;
@@ -77,18 +77,19 @@ int main(int argc, char **argv)
 	char errmsg[50];
 	I_DATA temp;
 
-
 	if(argc < 2)
 	{
-		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
-		printf("loading default filenames: idata.dat & odata.dat\n");
+//		serprintf1("usage: [idata filename][odata filename]\0");
+//		serprintf1("loading default filenames: idata.dat & odata.dat\0");
 		strcpy(iFileName,"idata.dat\0");
 		strcpy(oFileName,"odata.dat\0");
 	}
 	else if(argc == 2)
 	{
-		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
-		printf("loading %s & odata.dat\n",argv[1]);
+//		serprintf1("usage:[odata filename]\0");
+//		serprintf1(argv[0]);
+//		serprintf1(argv[1]);
+//		printf("loading %s & odata.dat\n",argv[1]);
 		strcpy(oFileName,argv[1]);
 		strcpy(oFileName,"odata.dat\0");
 	}
@@ -96,21 +97,16 @@ int main(int argc, char **argv)
 	{
 		strcpy(iFileName,argv[1]);
 		strcpy(oFileName,argv[2]);
-		printf("loading: %s & %s\n",argv[1],argv[2]);
+//		printf("loading: %s & %s\n",argv[1],argv[2]);
 	}
 
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));
-
-	current_time = curtime();
-
-	printf("\n\n");
 
 	comm_open = -1;
 
 	if(fd = init_serial() < 0)
 	{
-		printf("can't open comm port\n");
-		return 0;
+		myprintf1("can't open comm port\0");
 	}
 	else
 	{
@@ -124,89 +120,110 @@ int main(int argc, char **argv)
 	for(i = 0;i < NUM_TASKS;i++)
 		id_arg[i] = i;
 
-	sched = PTIME_SLICE;
+/*
+ TIME_SLICE              1
+ FIFO                    2
+ PRIOR                   3
+ PTIME_SLICE             4
+ PFIFO                   5
+*/
+	_threads[GET_HOST_CMD].sched = TIME_SLICE;
+	_threads[MONITOR_INPUTS].sched = PFIFO;
+	_threads[TIMER].sched = PTIME_SLICE;
+	_threads[UNUSED].sched = TIME_SLICE;
+	_threads[SERIAL_RECV].sched = TIME_SLICE;
+	_threads[TCP_MONITOR].sched = TIME_SLICE;
 
-	/* spawn the threads */
+	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
+	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
+	strcpy(_threads[TIMER].label,"TIMER\0");
+	strcpy(_threads[UNUSED].label,"UNUSED\0");
+	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
+	strcpy(_threads[TCP_MONITOR].label,"TCP_MONITOR\0");
+
+/* spawn the threads */
 	for (i = 0; i < NUM_TASKS; i++)
 	{
+/*
 		if (sched == DEFAULT)
 		{
-			if (pthread_create(&(threads[i]), NULL,	work_routine, (void *) &(id_arg[i])) !=0)
-			perror("main() pthread create with NULL attr obj failed"),exit(1);
+			if (pthread_create(&(threads[i]), NULL, work_routine, (void *) &(id_arg[i])) !=0)
+				perror("main() pthread create with NULL attr obj failed"),exit(1);
 
 		} else
-		{
-			/*
-			* Just for the fun of it, let's up our priority, and
-			* run with policy FIFO
-			*/
-
-			priority_param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-			pthread_setschedparam(pthread_self(), SCHED_FIFO, &priority_param);
-
-			if (sched == INHERIT)
-			{
-				pthread_attr_init(&pthread_custom_attr);
-				pthread_attr_setinheritsched(&pthread_custom_attr, PTHREAD_INHERIT_SCHED);
-			} else
-			{
-			/*
-			* Now, for the rest of the threads
-			*/
-			pthread_attr_init(&pthread_custom_attr);
-			pthread_attr_setinheritsched(&pthread_custom_attr, PTHREAD_EXPLICIT_SCHED);
-			if (sched == FIFO)
-			{
-				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_FIFO);
-				prio_min = sched_get_priority_max(SCHED_FIFO); /* PRI_FIFO_MIN;*/
-				prio_max = prio_min; /* force to all same priority */
-			}
-			if (sched == TIME_SLICE)
-			{
-				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_RR);
-				prio_min = sched_get_priority_max(SCHED_RR); /* PRI_RR_MIN; */
-				prio_max = prio_min; /* force to all same priority */
-			}
-			if (sched == PFIFO)
-			{
-				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_FIFO);
-				prio_max = sched_get_priority_max(SCHED_FIFO); /* PRI_FIFO_MAX; */
-				prio_min = sched_get_priority_min(SCHED_FIFO); /* PRI_FIFO_MIN; */
-			}
-			if (sched == PTIME_SLICE)
-			{
-				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_RR);
-				prio_max = sched_get_priority_max(SCHED_RR); /* PRI_RR_MAX; */
-				prio_min = sched_get_priority_min(SCHED_RR); /* PRI_RR_MIN; */
-			}
-//			priority_param.sched_priority = prio_min + 	(i)*(prio_max - prio_min)/(NUM_TASKS-1);
-/*
-			if(i == 5)
-				priority_param.sched_priority = prio_max;
-			else
-				priority_param.sched_priority = prio_max - i - 2;
 */
-			priority_param.sched_priority = prio_max;
-//			printf("setting priority(%d-%d) of thread %d to %d\n", prio_min, \
-//			prio_max, i,priority_param.sched_priority);
-			if (pthread_attr_setschedparam(&pthread_custom_attr, &priority_param)!=0)
-				fprintf(stderr,"pthread_attr_setschedparam failed\n");
-			} /* else not inherit */
+		priority_param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+		pthread_setschedparam(pthread_self(), SCHED_FIFO, &priority_param);
+/*
+		if (sched == INHERIT)
+		{
+			pthread_attr_init(&pthread_custom_attr);
+			pthread_attr_setinheritsched(&pthread_custom_attr, PTHREAD_INHERIT_SCHED);
+		} else
+*/
 
+		pthread_attr_init(&pthread_custom_attr);
+		pthread_attr_setinheritsched(&pthread_custom_attr, PTHREAD_EXPLICIT_SCHED);
 
-			if (pthread_create(&(threads[i]), &pthread_custom_attr, work_routine, (void *) &(id_arg[i])) !=0)
+		switch(_threads[i].sched)
+		{
+			case FIFO:
+				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_FIFO);
+				_threads[i].prio_min = sched_get_priority_min(SCHED_FIFO);
+				_threads[i].prio_max = sched_get_priority_max(SCHED_FIFO);
+				priority_param.sched_priority = _threads[i].prio_min + \
+					1*(_threads[i].prio_max - _threads[i].prio_min)/(NUM_TASKS-1);
+				break;
+			case TIME_SLICE:
+				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_RR);
+				_threads[i].prio_min = sched_get_priority_min(SCHED_RR);
+				_threads[i].prio_max = sched_get_priority_max(SCHED_RR);
+				priority_param.sched_priority = _threads[i].prio_min;
+				break;
+			case PFIFO:
+				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_FIFO);
+				_threads[i].prio_max = sched_get_priority_max(SCHED_FIFO);
+				_threads[i].prio_min = sched_get_priority_min(SCHED_FIFO);
+				priority_param.sched_priority = _threads[i].prio_max;
+				break;
+			case PTIME_SLICE:
+				pthread_attr_setschedpolicy(&pthread_custom_attr, SCHED_RR);
+				_threads[i].prio_max = sched_get_priority_max(SCHED_RR);
+				_threads[i].prio_min = sched_get_priority_min(SCHED_RR);
+				priority_param.sched_priority = _threads[i].prio_min + \
+					4*(_threads[i].prio_max - _threads[i].prio_min)/(NUM_TASKS-1);
+				break;
+			default:
+				break;
+		}
+//		printf("%s %d %d \n", _threads[i].label,_threads[i].prio_min, _threads[i].prio_max);
+
+//			if(i == 5)
+//				priority_param.sched_priority = _threads[i].prio_max;
+//			else
+//		priority_param.sched_priority = _threads[i].prio_max - i - 2;
+
+//		priority_param.sched_priority = _threads[i].prio_max;
+
+//		printf("setting priority(%d-%d) of thread %s to %d\n", _threads[i].prio_min, \
+			_threads[i].prio_max, _threads[i].label,priority_param.sched_priority);
+
+		if (pthread_attr_setschedparam(&pthread_custom_attr, &priority_param)!=0)
+			fprintf(stderr,"pthread_attr_setschedparam failed\n");
+
+		if (pthread_create(&(_threads[i].pthread),
+			&pthread_custom_attr,
+			work_routine,
+			(void *) &(id_arg[i])) !=0)
 			perror("main() pthread create with attr obj failed"),exit(1);
-
-
-		} /* else not default */
-	} /* For Num Threads */
+	}
 
 /*	printf("\nmain()\t\t\t\t%d threads created. Main running fifo at max\n", NUM_TASKS); */
 
-	/* wait until all threads have finished */
+/* wait until all threads have finished */
 	for (i = 0; i < NUM_TASKS; i++)
 	{
-		if (pthread_join(threads[i], NULL) !=0)
+		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
 	}
 /*	close_mem(); */
@@ -216,10 +233,8 @@ int main(int argc, char **argv)
 //	send(sd,str2,5,0);
 	usleep(100000);
 //	closesocket(sd);
-	printf("socket closed\n");
+//	printf("socket closed\n");
 //	llist_show(&ll);
-	printf("elapsed time: %f\n",curtime() - current_time);
 
 	return 0;
 }
-

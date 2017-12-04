@@ -27,25 +27,26 @@ static void print_in_middle(WINDOW *win, int starty, int startx, int width, char
 static void disp_msg(WINDOW *win,char *str,int line)
 {
 	wmove(win,line+1,1);
-	// this overwrites the vert line char at the end of line
+// this overwrites the vert line char at the end of line
 	wclrtoeol(win);
 	mvwprintw(win,line+1,1,"%s ",str);
 }
+
 
 //******************************************************************************************//
 //************************************** menu_scroll2 **************************************//
 //******************************************************************************************//
 int menu_scroll3(int num, UCHAR *str, char *filename)
 {
-    ITEM **my_items;
-    ITEM *cur_item;
-    int c;
-    MENU *my_menu;
-    WINDOW *twin;
-    int i,j,k;
-    int index = -1;
-    int finished = 0;
-    UCHAR outc;
+	ITEM **my_items;
+	ITEM *cur_item;
+	int c;
+	MENU *my_menu;
+	WINDOW *twin;
+	int i,j,k;
+	int index = -1;
+	int finished = 0;
+	UCHAR outc;
 	int win_width;
 	UCHAR *chptr;
 
@@ -97,7 +98,7 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 		chptr += TDATE_STAMP_STR_LEN;
 #endif
 	}
-    my_items = (ITEM **)calloc(num+2, sizeof(ITEM *));
+	my_items = (ITEM **)calloc(num+2, sizeof(ITEM *));
 
 	for(i = 0;i < num;i++)
 	{
@@ -127,7 +128,7 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 /* Create menu */
 //	mvprintw(LINES-1, 0,"done");
 //	getch();
-    my_menu = new_menu((ITEM **)my_items);
+	my_menu = new_menu((ITEM **)my_items);
 
 /*
 	for(i = 0;i < num;i++)
@@ -141,51 +142,51 @@ int menu_scroll3(int num, UCHAR *str, char *filename)
 
 //getch();
 
-    twin = newwin(num+3, win_width, 0, 40);
-    keypad(twin, TRUE);
+	twin = newwin(num+3, win_width, 0, 40);
+	keypad(twin, TRUE);
 
 /* Set main window and sub window */
-    set_menu_win(my_menu, twin);
+	set_menu_win(my_menu, twin);
 /*
 WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 */
-    set_menu_sub(my_menu, derwin(twin, num, win_width-2, 3, 1));
-    set_menu_format(my_menu, num-3, 1);
+	set_menu_sub(my_menu, derwin(twin, num, win_width-2, 3, 1));
+	set_menu_format(my_menu, num-3, 1);
 
 /* Set menu mark to the string " * " */
-    set_menu_mark(my_menu, " * ");
+	set_menu_mark(my_menu, " * ");
 
 /* Print a border around the main window and print a title */
-    box(twin, 0, 0);
+	box(twin, 0, 0);
 
-    print_in_middle(twin, 1, 0, 40, "target dir", COLOR_PAIR(1));
+	print_in_middle(twin, 1, 0, 40, "target dir", COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,win_width-1,ACS_RTEE);
-    mvwhline(twin, num, 1, ACS_HLINE, win_width-2);
+	mvwhline(twin, num, 1, ACS_HLINE, win_width-2);
 
-    mvwaddch(twin, 2, 0, ACS_LTEE);
-    mvwhline(twin, 2, 1, ACS_HLINE, win_width-2);
-    mvwaddch(twin, 2, win_width-1, ACS_RTEE);
+	mvwaddch(twin, 2, 0, ACS_LTEE);
+	mvwhline(twin, 2, 1, ACS_HLINE, win_width-2);
+	mvwaddch(twin, 2, win_width-1, ACS_RTEE);
 /*
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,38,ACS_RTEE);
-    mvwhline(twin, num, 1, ACS_HLINE, 38);
+	mvwhline(twin, num, 1, ACS_HLINE, 38);
 
-    mvwaddch(twin, 2, 0, ACS_LTEE);
-    mvwhline(twin, 2, 1, ACS_HLINE, 38);
-    mvwaddch(twin, 2, 39, ACS_RTEE);
+	mvwaddch(twin, 2, 0, ACS_LTEE);
+	mvwhline(twin, 2, 1, ACS_HLINE, 38);
+	mvwaddch(twin, 2, 39, ACS_RTEE);
 */
 /* Post the menu */
-    post_menu(my_menu);
-    wrefresh(twin);
+	post_menu(my_menu);
+	wrefresh(twin);
 
 //    attron(COLOR_PAIR(2));
 //    mvprintw(LINES - 2, 0, "Use PageUp and PageDown to scoll down or up a page of items");
 //    mvprintw(LINES - 1, 0, "Arrow Keys to navigate (F1 to Exit)");
 //    mvprintw(LINES - 1, 0,"num = %d ",num);
 //    attroff(COLOR_PAIR(2));
-    refresh();
+	refresh();
 
 //	disp_msg(twin,"demo forms\0",num+5);
 
@@ -193,32 +194,33 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 	{
 		c = wgetch(twin);
 
-	    switch(c)
-	    {
-	        case KEY_DOWN:
-	            menu_driver(my_menu, REQ_DOWN_ITEM);
+		switch(c)
+		{
+			case KEY_DOWN:
+				menu_driver(my_menu, REQ_DOWN_ITEM);
 //				disp_msg(twin,"key down\0",num);
-	            break;
-	        case KEY_UP:
-	            menu_driver(my_menu, REQ_UP_ITEM);
+				break;
+			case KEY_UP:
+				menu_driver(my_menu, REQ_UP_ITEM);
 //				disp_msg(twin,"key up\0",num);
-	            break;
-	        case KEY_NPAGE:
-	            menu_driver(my_menu, REQ_SCR_DPAGE);
+				break;
+			case KEY_NPAGE:
+				menu_driver(my_menu, REQ_SCR_DPAGE);
 //				disp_msg(twin,"page down\0",num);
-	            break;
-	        case KEY_PPAGE:
-	            menu_driver(my_menu, REQ_SCR_UPAGE);
+				break;
+			case KEY_PPAGE:
+				menu_driver(my_menu, REQ_SCR_UPAGE);
 //				disp_msg(twin,"page up\0",num);
-	            break;
-			case 10: /* Enter */
+				break;
+			case 10:							  /* Enter */
 				cur_item = current_item(my_menu);
 				index = item_index(cur_item);
 //				mvprintw(LINES - 1, 2,"%d %s       ",index,my_items[index]->name.str);
 				strcpy(filename,my_items[index]->name.str);
 				chptr = filename;
 				i = 0;
-				do{
+				do
+				{
 					i++;
 					chptr++;
 				}while(*chptr != 0x20 && i < 40);
@@ -244,7 +246,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 				break;
 			default:
 				break;
-	    }
+		}
 
 //	    cur_item = current_item(my_menu);
 //	    index = item_index(cur_item);
@@ -259,8 +261,8 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 //	attron(COLOR_PAIR(2));
 //	attroff(COLOR_PAIR(2));
 //	getch();
-    unpost_menu(my_menu);
-    free_menu(my_menu);
+	unpost_menu(my_menu);
+	free_menu(my_menu);
 	for(i = 0; i < num; ++i)
 		free_item(my_items[i]);
 //    endwin();
@@ -268,8 +270,9 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 	werase(twin);
 	wrefresh(twin);
 	refresh();
-    return index;
+	return index;
 }
+
 
 /*
 void func(IO_DATA *cur)
@@ -285,26 +288,24 @@ void func(IO_DATA *cur)
 */
 static void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string, chtype color)
 {
-    int length, x, y;
-    float temp;
+	int length, x, y;
+	float temp;
 
-    if(win == NULL)
-        win = stdscr;
-    getyx(win, y, x);
-    if(startx != 0)
-        x = startx;
-    if(starty != 0)
-        y = starty;
-    if(width == 0)
-        width = 80;
+	if(win == NULL)
+		win = stdscr;
+	getyx(win, y, x);
+	if(startx != 0)
+		x = startx;
+	if(starty != 0)
+		y = starty;
+	if(width == 0)
+		width = 80;
 
-    length = strlen(string);
-    temp = (width - length)/ 2;
-    x = startx + (int)temp;
-    wattron(win, color);
-    mvwprintw(win, y, x, "%s", string);
-    wattroff(win, color);
-    refresh();
+	length = strlen(string);
+	temp = (width - length)/ 2;
+	x = startx + (int)temp;
+	wattron(win, color);
+	mvwprintw(win, y, x, "%s", string);
+	wattroff(win, color);
+	refresh();
 }
-
-

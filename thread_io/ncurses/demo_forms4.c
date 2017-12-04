@@ -116,7 +116,7 @@ int demo_forms(void *curr, int which, int index)
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
 		set_field_type(f[n-1], TYPE_ALNUM,4);
 		init_edit_field(f[n-1],pid->label,1);
-	//	set_field_buffer(f[n-1],0,pid->label);
+//	set_field_buffer(f[n-1],0,pid->label);
 
 		f[n++] = make_label(STARTY, STARTX, "Port");
 		f[n++] = make_field(STARTY+1, STARTX, 1, 4, 0);
@@ -141,7 +141,7 @@ int demo_forms(void *curr, int which, int index)
 		f[n++] = make_field(STARTY2+1, STARTX, 1, 20, 0);
 		set_field_type(f[n-1], TYPE_ALNUM,4);
 		init_edit_field(f[n-1],pod->label,1);
-	//	set_field_buffer(f[n-1],0,pid->label);
+//	set_field_buffer(f[n-1],0,pid->label);
 
 		f[n++] = make_label(STARTY, STARTX, "Port");
 		f[n++] = make_field(STARTY+1, STARTX, 1, 4, 0);
@@ -244,17 +244,17 @@ int demo_forms(void *curr, int which, int index)
 //			pid->port = atoi(buffer);
 /*
 			buffer = field_buffer(f[2],0);
-		    mvprintw(LINES - 8, 2,"label:   f[2] %s            ",buffer);
+			mvprintw(LINES - 8, 2,"label:   f[2] %s            ",buffer);
 			buffer = field_buffer(f[4],0);
-		    mvprintw(LINES - 7, 2,"port:    f[4] %s            ",buffer);
+			mvprintw(LINES - 7, 2,"port:    f[4] %s            ",buffer);
 			buffer = field_buffer(f[6],0);
-		    mvprintw(LINES - 6, 2,"aff_out: f[6] %s            ",buffer);
-		    refresh();
+			mvprintw(LINES - 6, 2,"aff_out: f[6] %s            ",buffer);
+			refresh();
 */
 			buffer = field_buffer(f[6],0);
 			pid->affected_output = atoi(buffer);
 
-			buffer = field_buffer(f[2],0);	// label
+			buffer = field_buffer(f[2],0);		  // label
 			fp = buffer;
 			for(i = 0;i < ILABELSIZE;i++)
 			{
@@ -278,29 +278,29 @@ int demo_forms(void *curr, int which, int index)
 		{
 /*
 			buffer = field_buffer(f[2],0);
-		    mvprintw(LINES - 8, 2,"label: f[2] %s          ",buffer);
+			mvprintw(LINES - 8, 2,"label: f[2] %s          ",buffer);
 			buffer = field_buffer(f[4],0);
-		    mvprintw(LINES - 7, 2,"port:  f[4] %s          ",buffer);
+			mvprintw(LINES - 7, 2,"port:  f[4] %s          ",buffer);
 			buffer = field_buffer(f[6],0);
-		    mvprintw(LINES - 6, 2,"onoff: f[6] %s          ",buffer);
+			mvprintw(LINES - 6, 2,"onoff: f[6] %s          ",buffer);
 			buffer = field_buffer(f[8],0);
-		    mvprintw(LINES - 5, 2,"type:  f[8] %s          ",buffer);
+			mvprintw(LINES - 5, 2,"type:  f[8] %s          ",buffer);
 			buffer = field_buffer(f[10],0);
-		    mvprintw(LINES - 4, 2,"timed: f[10] %s         ",buffer);
-			buffer = field_buffer(f[12],0);
-		    mvprintw(LINES - 3, 2,"pulse: f[12] %s         ",buffer);
-		    refresh();
+			mvprintw(LINES - 4, 2,"timed: f[10] %s         ",buffer);
+buffer = field_buffer(f[12],0);
+mvprintw(LINES - 3, 2,"pulse: f[12] %s         ",buffer);
+refresh();
 */
 //#if 0
 //			buffer = field_buffer(f[4],0);
 //			pod->port = atoi(buffer);
 
-			buffer = field_buffer(f[6],0);		// onoff
+			buffer = field_buffer(f[6],0);		  // onoff
 			pod->onoff = atoi(buffer);
 			if(pod->onoff > 1)
 				pod->onoff = 1;
 
-			buffer = field_buffer(f[2],0);		// label
+			buffer = field_buffer(f[2],0);		  // label
 			fp = buffer;
 			for(i = 0;i < OLABELSIZE;i++)
 			{
@@ -311,13 +311,12 @@ int demo_forms(void *curr, int which, int index)
 			buffer[OLABELSIZE-1] = 0;
 			strcpy(pod->label,buffer);
 
-			buffer = field_buffer(f[8],0);		// type
+			buffer = field_buffer(f[8],0);		  // type
 			pod->type = atoi(buffer);
-			buffer = field_buffer(f[10],0);		// timed
+			buffer = field_buffer(f[10],0);		  // timed
 			pod->time_delay = atoi(buffer);
-			buffer = field_buffer(f[12],0);		// pulse
+			buffer = field_buffer(f[12],0);		  // pulse
 			pod->pulse_time = atoi(buffer);
-
 
 			curr = (void *)pod;
 /*
@@ -339,6 +338,7 @@ int demo_forms(void *curr, int which, int index)
 
 	return 1;
 }
+
 
 #ifndef NOMAIN
 

@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 		OutPortA(bit,0);
 //		printf("%d %d\n",bit,port);
 #endif
-		
+
 		mydelay(100);
 //		for(i = 0x280;i < 0x292;i++)
 //			printf("%2x %2x\n",card_ports + i, *(card_ports + i));

@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../mytypes.h"
+#include "../serial_io.h"
 #include "illist_threads_rw.h"
 
 /******************************************************************************/
@@ -26,7 +27,7 @@ int illist_init (illist_t *llistp)
 	llistp->first = NULL;
 	if ((rtn = pthread_rdwr_init_np(&(llistp->rwlock), NULL)) !=0)
 		fprintf(stderr, "pthread_rdwr_init_np error %d",rtn), exit(1);
-	printf("sizeof I_DATA: %lu\n",sizeof(I_DATA));
+//	printf("sizeof I_DATA: %lu\n",sizeof(I_DATA));
 	return 0;
 }
 
@@ -217,8 +218,10 @@ int illist_show(illist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
+//			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
 				cur->datap->affected_output, cur->datap->label);
+//			serprintf1("port: \0");
+//			serprintf4(" \0",cur->datap->port, cur->datap->affected_output, cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

@@ -92,7 +92,7 @@ it is necessary to write the following values to the registers specified:
 #define			UCHAR unsigned char
 #define			UINT unsigned int
 #define			VUCHAR volatile unsigned char
-#define			DELAYTIME 30	// delay time in ms
+#define			DELAYTIME 40	// delay time in ms
 
 VUCHAR *card_ports;
 VUCHAR *card_mem;
@@ -287,59 +287,59 @@ void do_scr(int key)
 	{
 		case 'a':
 			printf("all on\n");
-			OutPortD(1,0);
+			OutPortA(1,0);
 			mydelay(100);
-			OutPortD(1,1);
+			OutPortA(1,1);
 			mydelay(100);
-			OutPortD(1,2);
+			OutPortA(1,2);
 			mydelay(100);
-			OutPortD(1,3);
+			OutPortA(1,3);
 			mydelay(100);
-			OutPortD(1,4);
+			OutPortA(1,4);
 			mydelay(100);
-			OutPortD(1,5);
+			OutPortA(1,5);
 		break;
 		case 'b':
 			printf("all off\n");
-			OutPortD(0,0);
+			OutPortA(0,0);
 			mydelay(100);
-			OutPortD(0,1);
+			OutPortA(0,1);
 			mydelay(100);
-			OutPortD(0,2);
+			OutPortA(0,2);
 			mydelay(100);
-			OutPortD(0,3);
+			OutPortA(0,3);
 			mydelay(100);
-			OutPortD(0,4);
+			OutPortA(0,4);
 			mydelay(100);
-			OutPortD(0,5);
+			OutPortA(0,5);
 		break;
 		case 'c':
-			ToggleOutPortD(0);
+			ToggleOutPortA(0);
 		break;
 		case 'd':
-			ToggleOutPortD(1);
+			ToggleOutPortA(1);
 		break;
 		case 'e':
 			printf("toggle near workbench\n");
-			ToggleOutPortD(2);
+			ToggleOutPortA(2);
 		break;
 		case 'f':
 			printf("toggle far workbench\n");
-			ToggleOutPortD(3);
+			ToggleOutPortA(3);
 		break;
 		case 'g':
 			printf("toggle all\n");
-			ToggleOutPortD(0);
+			ToggleOutPortA(0);
 			mydelay(100);
-			ToggleOutPortD(1);
+			ToggleOutPortA(1);
 			mydelay(100);
-			ToggleOutPortD(2);
+			ToggleOutPortA(2);
 			mydelay(100);
-			ToggleOutPortD(3);
+			ToggleOutPortA(3);
 			mydelay(100);
-			ToggleOutPortD(4);
+			ToggleOutPortA(4);
 			mydelay(100);
-			ToggleOutPortD(5);
+			ToggleOutPortA(5);
 			mydelay(100);
 		break;
 		case 'h':
@@ -365,91 +365,43 @@ void do_scr(int key)
 		case 'n':
 			for(i = 0;i < 6;i++)
 			{
-				OutPortD(0,i);
+				ToggleOutPortA(i);
 				mydelay(DELAYTIME);
 			}
-			for(j = 0;j < 3;j++)
+			for(i = 5;i >= 0;i--)
 			{
-				for(i = 0;i < 6;i++)
-				{
-					OutPortD(1,i);
-					mydelay(DELAYTIME);
-				}
-				for(i = 0;i < 6;i++)
-				{
-					OutPortD(0,i);
-					mydelay(DELAYTIME);
-				}
-				for(i = 0;i < 6;i++)
-				{
-					OutPortD(1,i);
-					mydelay(DELAYTIME);
-				}
+				ToggleOutPortA(i);
+				mydelay(DELAYTIME);
 			}
-			mydelay(10);
-			for(j = 0;j < 2;j++)
+			for(i = 5;i >= 0;i--)
 			{
-				for(i = 0;i < 6;i++)
-				{
-					ToggleOutPortD(i);
-					mydelay(DELAYTIME);
-				}
-				for(i = 5;i >= 0;i--)
-				{
-					ToggleOutPortD(i);
-					mydelay(DELAYTIME);
-				}
+				ToggleOutPortA(i);
+				mydelay(DELAYTIME);
+			}
+			for(i = 0;i < 6;i++)
+			{
+				ToggleOutPortA(i);
+				mydelay(DELAYTIME);
 			}
 
 			for(i = 0;i < 6;i++)
 			{
-				OutPortD(0,i);
-				mydelay(10);
-			}
-			mydelay(DELAYTIME);	
-
-			for(j = 0;j < 2;j++)
-			{
-				for(i = 0;i < 6;i++)
-				{
-					ToggleOutPortD(i);
-					mydelay(DELAYTIME);
-				}
-				for(i = 5;i >= 0;i--)
-				{
-					ToggleOutPortD(i);
-					mydelay(DELAYTIME);
-				}
-			}
-			for(i = 0;i < 5;i++)
-			{
-				OutPortD(0,i);
-				mydelay(10);
+				OutPortA(1,i);
+				mydelay(DELAYTIME);
+				OutPortA(0,i);
+				mydelay(5);
 			}
 
-			for(j = 0;j < 2;j++)
-			{
-				for(i = 0;i < 6;i++)
-				{
-					OutPortD(1,i);
-					mydelay(DELAYTIME);
-					OutPortD(0,i);
-					mydelay(5);
-				}
+			OutPortA(0,5);
 
-				OutPortD(0,5);
-				
-				for(i = 4;i > 0;i--)
-				{
-					OutPortD(1,i);
-					mydelay(DELAYTIME);
-					OutPortD(0,i);
-					mydelay(5);
-				}
+			for(i = 4;i > 0;i--)
+			{
+				OutPortA(1,i);
+				mydelay(DELAYTIME);
+				OutPortA(0,i);
+				mydelay(5);
 			}
-			OutPortD(1,0);
-			mydelay(DELAYTIME);
-			OutPortD(0,0);
+
 			printf("\ndone\n");
 		break;
 		case 'o':

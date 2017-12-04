@@ -30,16 +30,16 @@
 #include "lcd_func.h"
 
 extern int threads_ready_count;
-extern pthread_cond_t		threads_ready;
-pthread_mutex_t		tcp_write_lock=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t		tcp_read_lock=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t		io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t		serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t		serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
+extern pthread_cond_t       threads_ready;
+pthread_mutex_t     tcp_write_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     tcp_read_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 extern int   total_count;
 
-UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3, task4, task5, task6};
-//UCHAR (*fptr[NUM_TASKS])(int) = { task1, task2, task3};
+UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, serial_recv_task, tcp_monitor_task};
+
 static int same_msg;
 int threads_ready_count=0;
 pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
@@ -67,10 +67,16 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 static int serial_rec;
 static int change_output(int index, int onoff);
-static void print_inputstatus(int index);
+static int uSleep(time_t sec, long nanosec);
 
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static int mask2int(UCHAR mask);
+static int timer_inc;
+static int timer_inc2;
+
+static double program_start_time;
+static double diff;
+static int starter_on;
 
 #define ON 1
 #define OFF 0
@@ -84,6 +90,81 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
+CMD_STRUCT cmd_array[30] =
+{
+	{   	ENABLE_START,"ENABLE_START\0" },
+	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
+	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
+	{   	ON_FAN,"ON_FAN\0" },
+	{   	OFF_FAN,"OFF_FAN\0" },
+	{   	ON_ACC,"ON_ACC\0" },
+	{   	OFF_ACC,"OFF_ACC\0" },
+	{   	SEND_IDATA,"SEND_IDATA\0" },
+	{   	SEND_ODATA,"SEND_ODATA\0" },
+	{   	EDIT_IDATA,"EDIT_IDATA\0" },
+	{   	EDIT_ODATA,"EDIT_ODATA\0" },
+	{   	EDIT_IDATA2,"EDIT_IDATA2\0" },
+	{   	EDIT_ODATA2,"EDIT_ODATA2\0" },
+	{   	SEND_ALL_IDATA,"SEND_ALL_IDATA\0" },
+	{   	SEND_ALL_ODATA,"SEND_ALL_ODATA\0" },
+	{   	RECV_ALL_IDATA,"RECV_ALL_IDATA\0" },
+	{   	RECV_ALL_ODATA,"RECV_ALL_ODATA\0" },
+	{   	SHOW_DATA,"SHOW_DATA\0" },
+	{   	SEND_SERIAL,"SEND_SERIAL\0" },
+	{   	CLOSE_SOCKET,"CLOSE_SOCKET\0" },
+	{   	CLEAR_SCREEN,"CLEAR_SCREEN\0" },
+	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
+	{   	TOGGLE_OUTPUTS,"TOGGLE_OUTPUTS\0" },
+	{   	SHUTDOWN,"SHUTDOWN\0" },
+	{   	GET_DIR,"GET_DIR\0" },
+	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
+	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
+	{   	ENABLE_LCD,"ENABLE_LCD\0" },
+	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
+	{   	BLANK,"BLANK\0" },
+};
+
+/****************************************************************************************************/
+
+static double curtime(void)
+{
+	struct timeval tv;
+	gettimeofday (&tv, NULL);
+	return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
+
+/*********************************************************************/
+static int uSleep(time_t sec, long nanosec)
+{
+/* Setup timespec */
+	struct timespec req;
+	req.tv_sec = sec;
+	req.tv_nsec = nanosec;
+
+/* Loop until we've slept long enough */
+	do
+	{
+/* Store remainder back on top of the original required time */
+		if( 0 != nanosleep( &req, &req ) )
+		{
+/* If any error other than a signal interrupt occurs, return an error */
+			if(errno != EINTR)
+			{
+				myprintf1("uSleep error\n");
+//             return -1;
+			}
+		}
+		else
+		{
+/* nanosleep succeeded, so exit the loop */
+			break;
+		}
+	} while ( req.tv_sec > 0 || req.tv_nsec > 0 );
+
+	return 0;									  /* Return success */
+}
+
 
 /*********************************************************************/
 static int mask2int(UCHAR mask)
@@ -91,27 +172,15 @@ static int mask2int(UCHAR mask)
 	int i = 0;
 	do
 	{
-		mask >>= 1;		i++;
+		mask >>= 1;
+		i++;
 	}while(mask);
 	return i - 1;
-}
-/*********************************************************************/
-static void mydelay(unsigned long i)
-{
-	unsigned long j;
-	struct timespec sleepTime;
-	struct timespec rettime;
-	sleepTime.tv_sec = 0;
-	sleepTime.tv_nsec = 948540;
-	for(j = 0;j < i;j++)
-	{
-		nanosleep(&sleepTime, &rettime);
-	}
 }
 #endif
 /*********************************************************************/
 // task to get commands from the host
-UCHAR task1(int test)
+UCHAR get_host_cmd_task(int test)
 {
 	I_DATA tempi1;
 	O_DATA tempo1;
@@ -138,13 +207,14 @@ UCHAR task1(int test)
 	char tempx[40];
 	char *chp;
 	int fname_index;
+	UCHAR uch_fname_index;
 	UCHAR mask;
 	char buf[300];
 	static buf_ptr;
 
-	// the check_inputs & change_outputs functions
-	// use the array to adjust from index to bank
-	// since there are only 4 bits in banks 3 & 5
+// the check_inputs & change_outputs functions
+// use the array to adjust from index to bank
+// since there are only 4 bits in banks 3 & 5
 	for(i = 0;i < 20;i++)
 	{
 		real_banks[i].i = i;
@@ -159,9 +229,6 @@ UCHAR task1(int test)
 		real_banks[i].index = i - (real_banks[i].bank*8)+4;
 	}
 
-	for(i = 0;i < 40;i++)
-		printf("%d %d\n",real_banks[i].bank,real_banks[i].index);
-
 	memset(dat_names,0,sizeof(dat_names));
 
 	i = NUM_PORT_BITS;
@@ -173,6 +240,9 @@ UCHAR task1(int test)
 	osize *= i;
 
 	buf_ptr = 0;
+	starter_on = 0;
+
+	program_start_time = curtime();
 
 	illist_init(&ill);
 	if(access(iFileName,F_OK) != -1)
@@ -180,11 +250,10 @@ UCHAR task1(int test)
 		rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
 		if(rc > 0)
 		{
-//			printf("%s\n",errmsg);
 			myprintf1(errmsg);
 //			return 1;
 		}
-	}else		// oh-boy! create a new file!
+	}else										  // oh-boy! create a new file!
 	{
 
 	}
@@ -198,7 +267,7 @@ UCHAR task1(int test)
 		{
 			myprintf1(errmsg);
 		}
-	}else		// oh-boy! create a new file!
+	}else										  // oh-boy! create a new file!
 	{
 
 	}
@@ -207,10 +276,8 @@ UCHAR task1(int test)
 	same_msg = 0;
 	lcd_init();
 
-	myprintf1("task 1: v1.01 \0");
-
-//	printf("sizeof O_DATA: %d\n",sizeof(O_DATA));
-//	printf("sizeof I_DATA: %d\n",sizeof(I_DATA));
+	myprintf1("start....\0");
+	myprintf1("sched v1.02\0");
 
 	test2 = 0x21;
 	for(i = 0;i < 300;i++)
@@ -231,40 +298,44 @@ UCHAR task1(int test)
 		if(test_sock() == 1)
 //		if(1)
 		{
-			rc = recv_tcp(&cmd,1,1);	// blocking
-//			printf("\ncmd: %x\n",cmd);
+			rc = recv_tcp(&cmd,1,1);			  // blocking
+//			printf("%s %d\n",cmd_array[cmd].cmd_str,cmd);
+			myprintf2(cmd_array[cmd].cmd_str,cmd);
 			if(rc > 0)
 			{
 				rc = 0;
 				switch(cmd)
 				{
-					// update a single IDATA record
+// update a single IDATA record
 					case SHOW_DATA:
-						myprintf1("I_DATA: \0");
-//						illist_show(&ill);
-						strcpy(buf,"O_DATA:\0");
+						myprintf1("show I_DATA:\0");
+						illist_show(&ill);
+						strcpy(buf,"show O_DATA:\0");
 						myprintf1(buf);
-//						ollist_show(&oll);
+						ollist_show(&oll);
 //						close_tcp();
 						break;
 
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);	// blocking
-						myprintf3("send idata: " ,rec_no,rc);
+// blocking
+						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
+						myprintf3("send idata:\0" ,rec_no,rc);
 						illist_insert_data(rec_no, &ill, &tempi1);
-//						illist_show(&ill);
+						illist_show(&ill);
 						break;
 
 					case SEND_ODATA:
-					// update a single ODATA record
+// update a single ODATA record
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);	// blocking
-						myprintf1("send odata\0");
-//						printf("port: %d\tonoff: %d\tlabel: %s\n",tempo1.port,tempo1.onoff,tempo1.label);
+// blocking
+						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
+						myprintf3("send odata\0",rec_no,rc);
+//						serprintf1(tempo1.label);
+//						serprintf3("port: \0",tempo1.port, tempo1.onoff);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));
-//						ollist_show(&oll);
+						ollist_show(&oll);
 						break;
 
 					case SEND_ALL_IDATA:
@@ -274,10 +345,11 @@ UCHAR task1(int test)
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
-//							printf("%2d\t%2d\t%s\n",itp->port,itp->affected_output,itp->label);
+//							serprintf1(itp->label);
+//							serprintf3(" \0",itp->port, itp->affected_output);
 							illist_insert_data(i,&ill,itp);
 						}
-//						printf("%d\n",rc);
+//						serprintf2("done\0",rc);
 						myprintf1("done\0");
 //						close_tcp();
 						break;
@@ -289,59 +361,55 @@ UCHAR task1(int test)
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)otp,sizeof(O_DATA),1);
-//							printf("%2d\t%2d\t%s\n",otp->port,otp->onoff,otp->label);
+//							serprintf1(otp->label);
+//							serprintf3(" \0",otp->port,otp->onoff);
 							ollist_insert_data(i,&oll,otp);
 						}
-//						printf("%d\n",rc);
 						myprintf1("done\0");
 //						close_tcp();
 						break;
 
 					case RECV_ALL_IDATA:
-						myprintf1("recv all IDATA: \0");
 						rc = 0;
-//						itp = &tempi1;
-						recv_tcp((UCHAR*)&fname_index,1,1);
-						myprintf2("index: \0",fname_index);
-						if(fname_index > 0)
+						itp = &tempi1;
+						recv_tcp((UCHAR*)&uch_fname_index,1,1);
+//						printf("%d\n",uch_fname_index);
+						myprintf1("recv all IDATA: \0");
+//						myprintf2("index: \0",fname_index);
+						if(uch_fname_index > 0 && uch_fname_index < NUM_DAT_NAMES)
 						{
-							fname_index--;
+							uch_fname_index--;
+							fname_index = (int)uch_fname_index;
 							ilLoadConfig(dat_names[fname_index],&ill,isize,errmsg);
 						}
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							illist_find_data(i,&itp,&ill);
 							rc += send_tcp((UCHAR *)itp,sizeof(I_DATA));
-//							printf("%2d\t%2d\t%s\trc: %2d\n",tempi1.port,tempi1.affected_output,tempi1.label,rc);
-//							printf("%2d\t%2d\t%s\n",itp->port,itp->affected_output,itp->label);
+//							serprintf3(" \0",itp->port,itp->affected_output);
+//							serprintf1(itp->label);
 						}
-//						myprintf1("%d\n",rc);
 						myprintf1("done\0");
-//						close_tcp();
 						break;
 
 					case RECV_ALL_ODATA:
 						myprintf1("recv all ODATA: \0");
 						rc = 0;
-//						otp = &tempo1;
-						recv_tcp((UCHAR*)&fname_index,1,1);
-						myprintf2("index: \0",fname_index);
-						if(fname_index > 0)
+						otp = &tempo1;
+						recv_tcp((UCHAR*)&uch_fname_index,1,1);
+						myprintf2("index: \0",uch_fname_index);
+						if(uch_fname_index > 0)
 						{
-							fname_index--;
+							uch_fname_index--;
+							fname_index = (int)uch_fname_index;
 							olLoadConfig(dat_names[fname_index],&oll,isize,errmsg);
 						}
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_find_data(i,&otp,&oll);
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
-/*
-							printf("%2d\t%2d\t%2d\t%2d\t%2d\t%s\n",
-								otp->port,otp->onoff,otp->type,otp->time_delay,
-									otp->pulse_time,otp->label);
-*/
 						}
-//						printf("%d\n",rc);
+//						serprintf("%d\n",rc);
 						myprintf1("done\0");
 //						close_tcp();
 						break;
@@ -349,21 +417,22 @@ UCHAR task1(int test)
 					case SEND_SERIAL:
 						test2 = 0x21;
 //#if 0
+// how expensive is locking/unlocking the mutex 1000x ?
 						for(i = 0;i < 1000;i++)
 						{
 							pthread_mutex_lock( &serial_write_lock);
 							write_serial(test2);
 							pthread_mutex_unlock(&serial_write_lock);
-							usleep(TIME_DELAY/200);
+							uSleep(1,TIME_DELAY);
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
 //#endif
-//						printf("sent serial\n");
+//						serprintf("sent serial\n");
 						break;
 
 					case GET_DIR:
-//						printf("GET_DIR\n");
+//						serprintf("GET_DIR\n");
 						d = opendir( "." );
 						if( d == NULL )
 						{
@@ -377,9 +446,9 @@ UCHAR task1(int test)
 
 						while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
 						{
-							if(strcmp( dir->d_name, "." ) == 0 ||  \
+							if(strcmp( dir->d_name, "." ) == 0 || \
 								strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-							  continue;
+								continue;
 
 							memset(tempx,0,sizeof(tempx));
 							strcpy(tempx,dir->d_name);
@@ -396,23 +465,23 @@ UCHAR task1(int test)
 //							if(dir->d_type == DT_REG)
 							{
 								strcpy(dat_names[num++],dir->d_name);
-//								printf("%s\n",dir->d_name);
+//								serprintf("%s\n",dir->d_name);
 							}
 						}
 						closedir( d );
-//#if 0
-//						printf("number of dat files: %d\n",num);
+#if 0
+						serprintf2("number of dat files: %\0",num);
 						for(i = 0;i < num;i++)
 						{
-//							printf("%s\n",dat_names[i]);
+							serprintf1(dat_names[i]);
 						}
-//#endif
+#endif
 //						memset(tempx,0x20,sizeof(tempx));
 						send_tcp((UCHAR*)&num,1);
 						for(i = 0;i < num;i++)
 						{
 							cmd = (UCHAR)strlen(dat_names[i]);
-//							printf("%d %s\n",cmd,dat_names[i]);
+//							serprintf("%d %s\n",cmd,dat_names[i]);
 							send_tcp(&cmd,1);
 							send_tcp((UCHAR *)&dat_names[i],cmd);
 						}
@@ -424,9 +493,9 @@ UCHAR task1(int test)
 								test2 = 0xff;
 							else
 								test2 = (UCHAR)j;
-//							printf("%s  ",dat_names[i]);
-//							printf("%s  %x   ",tempx,test2);
-//							printf("\n");
+//							serprintf("%s  ",dat_names[i]);
+//							serprintf("%s  %x   ",tempx,test2);
+//							serprintf("\n");
 							send_tcp((UCHAR*)&tempx,TDATE_STAMP_STR_LEN);
 							send_tcp((UCHAR*)&test2,1);
 						}
@@ -440,21 +509,17 @@ UCHAR task1(int test)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						printf("save to disk\n");
+//						serprintf("save to disk\n");
 						break;
 
-					case TEST_INPUTS:
+					case LCD_SHIFT_LEFT:
 						shift_left();
 						break;
 
-					case TEST_INPUTS2:
-						testx = ollist_toggle_output(20,&oll);
-						change_output(20, testx);
-						printf("%d \n",testx);
+					case LCD_SHIFT_RIGHT:
 						shift_right();
 						break;
-					
-					case TEST_LCD:
+
 /*
 						do
 						{
@@ -463,142 +528,98 @@ UCHAR task1(int test)
 								buf_ptr = 0;
 						}while(buf[buf_ptr] != 0);
 						buf_ptr++;
-						printf("%s\n",buf+buf_ptr);
+						serprintf("%s\n",buf+buf_ptr);
 						myprintf1(buf+buf_ptr);
-*/						
-						testx = ollist_toggle_output(21,&oll);
-						change_output(21, testx);
-						printf("%d \n",testx);
-
-/*
-						for(i = 0;i < 1000;i++)
-						{
-							if(setdioline(0,i&1) == -1)
-								printf("a");
-							if(setdioline(7,i&1) == -1)
-								printf("a");
-							usleep(1000);
-						}
 */
-						break;						
-
-					case TEST_LCD2:
-/*
-						do
-						{
-							buf_ptr++;
-							if(buf_ptr > 100)
-								buf_ptr = 0;
-						}while(buf[buf_ptr] != 0);
-						buf_ptr++;
-						myprintf2("hello\0",buf_ptr);
-*/
-						testx = ollist_toggle_output(22,&oll);
-						change_output(22, testx);
-						printf("%d \n",testx);
-
-						printf("%s\n",buf+buf_ptr);
-						break;						
-
-					case TEST_LCD3:
-/*
-						do
-						{
-							buf_ptr++;
-							if(buf_ptr > 100)
-								buf_ptr = 0;
-						}while(buf[buf_ptr] != 0);
-						buf_ptr++;
-						myprintf3(buf+buf_ptr,buf_ptr,buf_ptr+1);
-						printf("%s\n",buf+buf_ptr);
-*/
-						testx = ollist_toggle_output(23,&oll);
-						change_output(23, testx);
-						printf("%d \n",testx);
-
-						break;						
-
-					case TOGGLE_OUTPUTS:
-						recv_tcp((UCHAR *)&rec_no,1,1);
-						recv_tcp((UCHAR *)&onoff,1,1);
-
+					case ENABLE_START:
+						change_output(STARTER, 1);
+						ollist_change_output(STARTER, &oll, 1);
+						starter_on = 1;
 						break;
 
-					case ALL_OFF:
-//						pod = curr_o_array;
-						myprintf1("all off\0");
+					case ON_ACC:
+						ollist_change_output(ACCON, &oll, 1);
+						change_output(ACCON, 1);
+						break;
+
+					case OFF_ACC:
+						ollist_change_output(ACCON, &oll, 0);
+						change_output(ACCON, 0);
+						break;
+
+					case ON_FUEL_PUMP:
+						ollist_change_output(FUELPUMP, &oll, 1);
+						change_output(FUELPUMP, 1);
+						break;
+
+					case OFF_FUEL_PUMP:
+						ollist_change_output(FUELPUMP, &oll, 0);
+						change_output(FUELPUMP, 0);
+						break;
+
+					case ON_FAN:
+						ollist_change_output(COOLINGFAN, &oll, 1);
+						change_output(COOLINGFAN, 1);
+						break;
+
+					case OFF_FAN:
+						ollist_change_output(COOLINGFAN, &oll, 0);
+						change_output(COOLINGFAN, 0);
+						break;
+
+					case SHUTDOWN:
+						myprintf1("shutdown\0");
 						otp = &tempo1;
-						for(i = 0;i < NUM_PORT_BITS;i++)
+						for(i = STARTER;i < PRELUBE+1;i++)
 						{
 							ollist_change_output(i, &oll, 0);
 							change_output(i, 0);
-							usleep(10000);
-						}
-						break;
-
-					case ALL_ON:
-//						pod = curr_o_array;
-						myprintf1("all on\0");
-						otp = &tempo1;
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_change_output(i, &oll, 1);
-							printf("%d ",i);
-							change_output(i, 1);
-							usleep(10000);
+							uSleep(0,TIME_DELAY/10000);
 						}
 						break;
 
 					case CLEAR_SCREEN:
 //						for(i = 0;i < 150;i++)
-//							printf("\n");
+//							serprintf("\n");
 						lcd_cls();
-
-						testx = ollist_toggle_output(24,&oll);
-						change_output(24, testx);
-						printf("%d \n",testx);
-
-						break;
-
-					case ENABLE_LCD:
-						testx = ollist_toggle_output(25,&oll);
-						change_output(25, testx);
-						printf("%d \n",testx);
 						break;
 
 					case CLOSE_SOCKET:
-						printf("closing socket\n");
+//						serprintf1("closing socket\0");
 						close_tcp();
 						break;
 
 					case EXIT_PROGRAM:
+						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
+							myprintf1(errmsg);
+						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
+							myprintf1(errmsg);
+//						printf("elapsed time: %f\n",curtime() - program_start_time);
 						close_tcp();
-						printf("exiting program\n");
+//						serprintf1("exiting program\0");
 						exit(0);
 						break;
 
 					default:
 						break;
-				}	// end of switch
-			}	// if rc > 0
-		}else	// if test_sock
+				}								  // end of switch
+			}									  // if rc > 0
+		}else									  // if test_sock
 		{
-//			printf("no connection %d\n",j);
-			usleep(TIME_DELAY/1000);
-		}
-		if(test < 2)
-		{
-			printf("exiting task 1\n");
-			return 0;
+//			serprintf("no connection %d\n",j);
+			uSleep(1,1000);
+//			pthread_yield();
 		}
 	}
 	return test + 1;
 }
+
+
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
 // and if an output applies to that input, change the output
 // and record the event in llist
-UCHAR task2(int test)
+UCHAR monitor_input_task(int test)
 {
 	I_DATA *itp;
 	I_DATA **itpp = &itp;
@@ -608,21 +629,20 @@ UCHAR task2(int test)
 
 	int status = -1;
 	int bank, index;
-	UCHAR result,result2, mask;
+	UCHAR result,result2, mask, mask2;
 	int onoff,i;
-
 
 #if 0
 
-typedef struct o_data
-{
-	char label[20];
-	UCHAR port;
-	UCHAR onoff;			// 1 of on; 0 if off
-	UCHAR type;
-	UINT time_delay;
-	UCHAR pulse_time;
-} O_DATA;
+	typedef struct o_data
+	{
+		char label[20];
+		UCHAR port;
+		UCHAR onoff;							  // 1 of on; 0 if off
+		UCHAR type;
+		UINT time_delay;
+		UCHAR pulse_time;
+	} O_DATA;
 
 /*
 type:
@@ -630,286 +650,334 @@ type:
 1) on for time delay seconds and then it goes back off
 2) goes on/off at a pulse_time rate until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
-5) toggle switch realized in momentary push-buton: push & release of a 
+5) toggle switch realized in momentary push-buton: push & release of a
 	momentary push-button turns bit on or off
 */
 	while(1)
 	{
-		usleep(TIME_DELAY);
+		uSleep(0,TIME_DELAY);
 	}
+
+	problem: if more than 1 button is pushed in same bank or diff bank?
+
+			while(TRUE)
+	{
+		pthread_mutex_lock( &io_mem_lock);
+		for(i = 0;i < NUM_PORTS;i++)
+			result[i] = InPortByte(i);
+		pthread_mutex_unlock( &io_mem_lock);
 #endif
 
-	pthread_mutex_lock( &io_mem_lock);
-	inportstatus[0] =  ~InPortByteA();
-	inportstatus[1] =  ~InPortByteB();
-	inportstatus[2] =  ~InPortByteC();
-	inportstatus[3] =  ~InPortByteD();
-	inportstatus[4] =  ~InPortByteE();
-	inportstatus[5] =  ~InPortByteF();
-	pthread_mutex_unlock( &io_mem_lock);
+		pthread_mutex_lock( &io_mem_lock);
+		inportstatus[0] =  ~InPortByteA();
+		inportstatus[1] =  ~InPortByteB();
+		inportstatus[2] =  ~InPortByteC();
+		inportstatus[3] =  ~InPortByteD();
+		inportstatus[4] =  ~InPortByteE();
+		inportstatus[5] =  ~InPortByteF();
+		pthread_mutex_unlock( &io_mem_lock);
 
-	while(TRUE)
-	{
-		for(bank = 0;bank < NUM_PORTS;bank++)
+		while(TRUE)
 		{
-			pthread_mutex_lock( &io_mem_lock);
-			result = InPortByte(bank);
-			pthread_mutex_unlock( &io_mem_lock);
-			result = ~result;
-			
-			if(result != inportstatus[bank])
+			for(bank = 0;bank < NUM_PORTS;bank++)
 			{
-				mask = result ^ inportstatus[bank];
+				pthread_mutex_lock( &io_mem_lock);
+				result = InPortByte(bank);
+				pthread_mutex_unlock( &io_mem_lock);
+				result = ~result;
 
-				index = mask2int(mask);
-				
-				if((mask & result) == mask)
+				if(result != inportstatus[bank])
 				{
-					onoff = ON;
-				}
-				else
-				{
-					onoff = OFF;
-				}
-//				printf("bank: %d index: %d\n",bank,index);
-				for(i = 0;i < 40;i++)
-				{
-					if(real_banks[i].bank == bank && real_banks[i].index == index)
+					mask = result ^ inportstatus[bank];
+					if(mask > 0x80)
 					{
-						index = real_banks[i].i;
+						myprintf1("bad mask\0");
+						continue;
 					}
+					index = mask2int(mask);
+
+					if((mask & result) == mask)
+					{
+						onoff = ON;
+					}
+					else
+					{
+						onoff = OFF;
+					}
+
+					for(i = 0;i < 40;i++)
+					{
+						if(real_banks[i].bank == bank && real_banks[i].index == index)
+						{
+							index = real_banks[i].i;
+						}
+					}
+
+					illist_find_data(index,itpp,&ill);
+//				serprintf3("affected_output: \0",itp->affected_output, itp->port);
+
+					ollist_find_data(itp->affected_output,otpp,&oll);
+//				serprintf3("port: \0",otp->port,otp->onoff);
+
+					otp->onoff = onoff;
+					ollist_insert_data(otp->port,&oll,otp);
+					change_output(otp->port,otp->onoff);
+
 				}
-				
-				illist_find_data(index,itpp,&ill);
-				printf("affected_output: %d\tport: %d\t%s\n",
-						itp->affected_output,itp->port,itp->label);
-
-				ollist_find_data(itp->affected_output,otpp,&oll);
-				printf("port: %d\tonoff: %d\t%s\n",otp->port,otp->onoff,otp->label);
-
-				otp->onoff = onoff;
-				ollist_insert_data(otp->port,&oll,otp);
-				change_output(otp->port,otp->onoff);
+				inportstatus[bank] = result;
 
 			}
-			inportstatus[bank] = result;
+			uSleep(0,TIME_DELAY/200);
+//		pthread_yield();
 
 		}
-		usleep(TIME_DELAY);
-
+		return test + 2;
 	}
-	return test + 2;
-}
-/*********************************************************************/
-static void print_inputstatus(int index)
-{
-	int i;
-	UCHAR temp;
 
-	printf("\ninputstatus: ");
-//	printf("%d ",index);
-	for(i = 0;i < 6;i++)
-	{
-		temp = inportstatus[i];
-		if(i == 2 || i == 5)
-			printf("%2x ",(temp & 0x0f));
-		else
-			printf("%2x ",temp);
-	}
-	printf("\n");
-}
 /*********************************************************************/
 // pass in the index into the total list of outputs
 // since each card only has 20 outputs, the last 4 bits of PORT C & F are ignored
 // index 0->19 = PORTA(0:7)->PORTC(0:4)
 // index 24->39 = PORTD(0:7)->PORTF(0:4)
-static int change_output(int index, int onoff)
-{
-	int bank;
-
-	bank = real_banks[index].bank;
-	index = real_banks[index].index;
-
-	pthread_mutex_lock( &io_mem_lock);
-
-	switch(bank)
+	static int change_output(int index, int onoff)
 	{
-		case 0:
-		OutPortA(onoff, index);		// 0-7
-		break;
-		case 1:
-		OutPortB(onoff, index);		// 0-7
-		break;
-		case 2:
-		OutPortC(onoff, index);		// 0-3
-		break;
-		case 3:
-		OutPortD(onoff, index);		// 0-7
-		break;
-		case 4:
-		OutPortE(onoff, index);		// 0-7
-		break;
-		case 5:
-		OutPortF(onoff, index);		// 0-3
-		break;
-		default:
-		break;
-	}
-	pthread_mutex_unlock(&io_mem_lock);
-//#endif
+		int bank;
 
-//	printf("bank: %d\tindex\t%2x\n\n",bank,index);
-	
-	lcd_cls();
-	myprintf3("bank:\0",bank,index);
-	return index;
-}
-/*********************************************************************/
-// this just sends a series of ascii chars to the tcp out port (is displayed in tcp_win when opened)
-UCHAR task4(int test)
-{
-	UCHAR test2 = 0x21;
-	UCHAR test1;
-	int rc;
-	int i = 0;
-	printf("task 2: %d\n",test);
-	UCHAR mask = 1;
+		bank = real_banks[index].bank;
+		index = real_banks[index].index;
 
-	while(TRUE)
-		usleep(TIME_DELAY);
+		pthread_mutex_lock( &io_mem_lock);
 
-	while(TRUE)
-	{
-		rc = send_tcp(&test2,1);
-		usleep(TIME_DELAY);
-		if(++test2 > 0x7e)
-			test2 = 0x21;
-	}
-//#endif
-	return test + 4;
-}
-/*********************************************************************/
-UCHAR task3(int test)
-{
-	printf("task 3: %d\n",test);
-	UCHAR test2 = 0x20;
-
-	while(TRUE)
-	{
-		usleep(TIME_DELAY);
-/*
-		pthread_mutex_lock( &serial_read_lock);
-	//	printf("rec'd %i bytes: %s %d\n",n,(char *)buf,n);
-	//	printf("%s\n",(char *)buf);
-		if(no_serial_buff > 20)
+		switch(bank)
 		{
-			printf("%2x ",serial_buff[no_serial_buff]);
-			pthread_mutex_unlock(&serial_read_lock);
-			no_serial_buff--;
+			case 0:
+				OutPortA(onoff, index);			  // 0-7
+				break;
+			case 1:
+				OutPortB(onoff, index);			  // 0-7
+				break;
+			case 2:
+				OutPortC(onoff, index);			  // 0-3
+				break;
+			case 3:
+				OutPortD(onoff, index);			  // 0-7
+				break;
+			case 4:
+				OutPortE(onoff, index);			  // 0-7
+				break;
+			case 5:
+				OutPortF(onoff, index);			  // 0-3
+				break;
+			default:
+				break;
 		}
-*/
+		pthread_mutex_unlock(&io_mem_lock);
+//#endif
+
+//	printf("bank: %d\tindex\t%2d\t%2d\n",bank,index,onoff);
+
+//	lcd_cls();
+//		myprintf3("bank:\0",bank,index);
+//		myprintf2(" \0",onoff);
+		return index;
 	}
-	return test + 3;
+
+/*********************************************************************/
+	UCHAR timer_task(int test)
+	{
+		int i;
+		double pdiff;
+		struct tm t;
+		struct tm *pt = &t;
+		time_t tt;
+
+		timer_inc = 0;
+//		printf("%f\n",curtime());
+
+//	while(1)
+//		uSleep(1,1000);
+		diff = curtime();
+
+		while(1)
+		{
+//		pdiff = curtime();
+//		printf("1:%f \n",curtime());
+//		uSleep(0,TIME_DELAY-10000);
+			uSleep(0,TIME_DELAY/2);
+//		printf("2:%f \n",curtime());
+			uSleep(0,TIME_DELAY/2);
+			timer_inc++;
+// this is a kludge until I have time to redesign the whole mess from the ground up
+/// using a much better pthread library
+			if(starter_on > 0)
+			{
+				if(++starter_on > 8)
+				{
+					starter_on = 0;
+					change_output(STARTER, 0);
+					ollist_change_output(STARTER, &oll, 0);
+					myprintf1("STARTER OFF\0");
+				}
+//				printf("starter_on: %d\n",starter_on);
+			}
+//		if(diff < pdiff+TIME_DELAY)
+			if(1)
+			{
+//			printf("%f %f ",diff,pdiff);
+				diff = curtime();
+				tt = time(NULL);
+				pt = localtime(&tt);
+//			printf("%d sec:%d min:%d hour: %d\n",timer_inc,pt->tm_sec,pt->tm_min,pt->tm_hour);
+			}
+		}
+
+	}
+
+/*********************************************************************/
+UCHAR read_button_inputs(int test)
+{
+	int i,j;
+	UCHAR inputs,mask;
+
+	while(TRUE)
+	{
+		uSleep(0,TIME_DELAY/6);
+		inputs = 0;
+		mask = 1;
+		for(i = 0;i < 8;i++)
+		{
+			j = getdioline(i);
+			if(j)
+				inputs |= mask;
+			mask <<= 1;
+		}
+		inputs = ~inputs;
+		inputs &= 0x3f;
+
+		if(inputs != 0)
+		{
+			inputs = mask2int(inputs);
+			inputs++;
+			switch(inputs)
+			{
+				case 1:
+					shift_left();
+				break;
+				case 2:
+					shift_right();
+				break;
+				case 3:
+//					lcd_home();
+				break;
+				case 4:
+//					lcd_cls();
+				break;
+				case 5:
+					scroll_up();
+				break;
+				case 6:
+					scroll_down();
+				break;
+				default:
+				break;
+			}
+		}
+	}
+	return 0;
 }
+
 /*********************************************************************/
 // serial receive task
-UCHAR task5(int test)
+UCHAR serial_recv_task(int test)
 {
 	serial_rec = 0;
 	int i;
 	int j = 0;
 	UCHAR ch;
+
 	memset(serial_buff,0,SERIAL_BUFF_SIZE);
 	no_serial_buff = 0;
-//	printf("%4x\n",&serial_buff[no_serial_buff]);
+//	serprintf("%4x\n",&serial_buff[no_serial_buff]);
 
-//	while(TRUE)
-//		usleep(TIME_DELAY*10);
+	while(TRUE)
+//		pthread_yield();
+		uSleep(2,TIME_DELAY);
 
 	while(TRUE)
 	{
-//		usleep(TIME_DELAY/1000);
-		if(test < 2)
-		{
-			printf("exiting task 5\n");
-			return 0;
-		}
-
 		if(comm_open == -1)
 			return -1;
 
+		pthread_mutex_lock( &serial_read_lock);
 		if(no_serial_buff < SERIAL_BUFF_SIZE)
 		{
-			pthread_mutex_lock( &serial_read_lock);
 			serial_buff[no_serial_buff] = read_serial();
-/*
-			printf("%c",serial_buff[no_serial_buff]);
-			if(++j > 93)
-			{
-				printf("\n");
-				j = 0;
-			}
-*/
-			pthread_mutex_unlock(&serial_read_lock);
+
 			no_serial_buff++;
 		}
-		else{
+		else
+		{
 //#if 0
-			printf("\n");
 			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 			{
-				printf("%c",serial_buff[i]);
+//				serprintf("%c",serial_buff[i]);
 //				if((i % 93) == 0)
-//					printf("\n");
+//					serprintf("\n");
 			}
 //#endif
 			no_serial_buff = 0;
-//			printf("\n\n");
+//			serprintf("\n\n");
 		}
+		pthread_mutex_unlock(&serial_read_lock);
 	}
 }
+
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor
 
-#define PROTOPORT         5193						/* default protocol port number */
-#define QLEN              6							/* size of request queue        */
+#define PROTOPORT         5193				  /* default protocol port number */
+#define QLEN              6					  /* size of request queue        */
 
 pthread_mutex_t  mut;
-static int visits =  0;								  /* counts client connections     */
+static int visits =  0;						  /* counts client connections     */
 
-static struct  sockaddr_in sad;  /* structure to hold server's address  */
-static struct timeval tv;
+static struct  sockaddr_in sad;				  /* structure to hold server's address  */
 static int sock_open;
 static int global_socket;
 /*********************************************************************/
 // task to monitor for a client requesting a connection
-UCHAR task6(int test)
+UCHAR tcp_monitor_task(int test)
 {
 	int ret = -1;
+	struct timeval tv;
 
-	struct	hostent   *ptrh;				/* pointer to a host table entry */
-	struct	protoent  *ptrp;				/* pointer to a protocol table entry */
-	struct	sockaddr_in sad;				/* structure to hold server's address */
-	struct	sockaddr_in cad;				/* structure to hold client's address */
-	int		listen_sd;	 					/* socket descriptors */
-	int		port;							/* protocol port number */
-	int		alen;							/* length of address */
+	struct  hostent   *ptrh;				  /* pointer to a host table entry */
+	struct  protoent  *ptrp;				  /* pointer to a protocol table entry */
+	struct  sockaddr_in sad;				  /* structure to hold server's address */
+	struct  sockaddr_in cad;				  /* structure to hold client's address */
+	int     listen_sd;						  /* socket descriptors */
+	int     port;							  /* protocol port number */
+	int     alen;							  /* length of address */
 	port = PROTOPORT;
 	sock_open = 0;
+	tv.tv_sec = 1;
+	tv.tv_usec = 50000;
 
-	memset((char  *)&sad,0,sizeof(sad));	/* clear sockaddr structure   */
-	sad.sin_family = AF_INET;				/* set family to Internet     */
-	sad.sin_addr.s_addr = INADDR_ANY;		/* set the local IP address */
+	memset((char  *)&sad,0,sizeof(sad));	  /* clear sockaddr structure   */
+	sad.sin_family = AF_INET;				  /* set family to Internet     */
+	sad.sin_addr.s_addr = INADDR_ANY;		  /* set the local IP address */
 
 	sad.sin_port = htons((u_short)port);
+
+	global_socket = -1;
 
 // getprotobyname doesn't work on TS-7200 because there's no /etc/protocols file
 // so just use '6'
 #ifndef MAKE_TARGET
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
-		fprintf(stderr, "cannot map \"tcp\" to protocol number\n");
-		exit (1);
+		myprintf1("cannot map tcp to protocol number\0");
+//			exit (1);
 	}
 	listen_sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
 
@@ -920,63 +988,71 @@ UCHAR task6(int test)
 #endif
 	if (listen_sd < 0)
 	{
-		fprintf(stderr, "socket creation failed\n");
-		exit(1);
+		myprintf1("socket creation failed\0");
+//			exit(1);
 	}
 
 /* Bind a local address to the socket */
 	if (bind(listen_sd, (struct sockaddr *)&sad, sizeof (sad)) < 0)
 	{
-		fprintf(stderr,"bind failed\n");
-		exit(1);
+		myprintf1("bind failed\0");
+//		exit(1);
 	}
 
 /* Specify a size of request queue */
 	if (listen(listen_sd, QLEN) < 0)
 	{
-		fprintf(stderr,"listen failed\n");
-		exit(1);
+		myprintf1("listen failed\0");
+//			exit(1);
 	}
 
 	alen = sizeof(cad);
 
 /* Main server loop - accept and handle requests */
-	fprintf( stderr, "Server up and running.\n");
+//	serprintf1( "Server up and running.\0");
 	while (TRUE)
 	{
 		if(sock_open == 1)
-			usleep(TIME_DELAY*10);
+		{
+			uSleep(5,0);
+//			pthread_yield();
+		}
 		else
 		{
-			printf("SERVER: Waiting for contact ...\n");
+			myprintf1("Server Waiting...\0");
 
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, &alen)) < 0)
 			{
-				fprintf(stderr, "accept failed\n");
-				exit (1);
+				myprintf1("accept failed\0");
+//					exit (1);
 			}
-			sock_open = 1;
-			printf("connected to socket: %d\n",global_socket);
-			if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
-				return -2;
-			if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
-				return -3;
+			if(global_socket > 0)
+				sock_open = 1;
+			myprintf1("connected to socket: \0");
+/*
+		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
+			return -2;
+		if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
+			return -3;
+*/
 		}
 	}
 	close(listen_sd);
-	printf("closing listen_sd\n");
+	myprintf1("closing listen_sd\0");
 	if(test < 2)
 	{
-		printf("exiting task 6\n");
-		return 0;
+//		serprintf1("exiting task 6\0");
+//			return 0;
 	}
-	return test + 6;
+//		return test + 6;
 }
+
 /*********************************************************************/
 int test_sock(void)
 {
 	return sock_open;
 }
+
 /*********************************************************************/
 int send_tcp(UCHAR *str,int len)
 {
@@ -989,18 +1065,19 @@ int send_tcp(UCHAR *str,int len)
 	if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 	{
 		if(same_msg == 0)
-			printf("send_tcp: %s\n",errmsg);
+			myprintf1(errmsg);
 		same_msg = 1;
 	}
 	else same_msg = 0;
 	return ret;
 }
+
 /*********************************************************************/
 int recv_tcp(UCHAR *str, int strlen,int block)
 {
 	int ret = 0;
-	char errmsg[60];
-	memset(errmsg,0,60);
+	char errmsg[20];
+	memset(errmsg,0,20);
 	if(test_sock())
 	{
 		pthread_mutex_lock( &tcp_read_lock);
@@ -1008,7 +1085,8 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 		pthread_mutex_unlock(&tcp_read_lock);
 		if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 		{
-			printf("recv_tcp: %s\n",errmsg);
+			myprintf1(errmsg);
+//			printf("%s\n",errmsg);
 		}
 	}
 	else
@@ -1018,6 +1096,7 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 	}
 	return ret;
 }
+
 /*********************************************************************/
 static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 {
@@ -1026,16 +1105,18 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 	if(test_sock())
 	{
 		if(block)
-			rc = send(global_socket,buf,buflen,MSG_WAITALL);	// block
+// block
+			rc = send(global_socket,buf,buflen,MSG_WAITALL);
 		else
-			rc = send(global_socket,buf,buflen,MSG_DONTWAIT);	// don't block
+// don't block
+			rc = send(global_socket,buf,buflen,MSG_DONTWAIT);
 		if(rc < 0 && errno != 11)
 		{
 			strcpy(errmsg,strerror(errno));
 			sprintf(extra_msg," %d",errno);
 			strcat(errmsg,extra_msg);
 			strcat(errmsg," put_sock");
-			printf("address: %d\n",global_socket);
+			serprintf2("address: \0",global_socket);
 			close_tcp();
 		}else strcpy(errmsg,"Success\0");
 	}
@@ -1045,9 +1126,9 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 		strcpy(errmsg,"sock closed");
 		rc = -1;
 	}
-//	printf("%c",buf[0]);
 	return rc;
 }
+
 /*********************************************************************/
 static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 {
@@ -1066,14 +1147,17 @@ static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 	}else strcpy(errmsg,"Success\0");
 	return rc;
 }
+
 /*********************************************************************/
 void close_tcp(void)
 {
-	printf("\nclosing socket\n");
+	myprintf1("closing socket\0");
 //	send_tcp("close",5);
 	sock_open = 0;
 	close(global_socket);
+	global_socket = -1;
 }
+
 /*********************************************************************/
 void SendByte(unsigned char byte)
 {
@@ -1083,6 +1167,7 @@ void SendByte(unsigned char byte)
 	write_serial(byte);
 	pthread_mutex_unlock(&serial_write_lock);
 }
+
 /*********************************************************************/
 UCHAR ReceiveByte(void)
 {
@@ -1093,6 +1178,7 @@ UCHAR ReceiveByte(void)
 
 	return rec;
 }
+
 /**********************************************************************/
 void *work_routine(void *arg)
 {
@@ -1107,12 +1193,12 @@ void *work_routine(void *arg)
 	threads_ready_count++;
 	if (threads_ready_count == NUM_TASKS)
 	{
-		/* I was the last thread to become ready.  Tell the rest. */
+/* I was the last thread to become ready.  Tell the rest. */
 		pthread_cond_broadcast(&threads_ready);
 	}
 	else
 	{
-		/* At least one thread isn't ready.  Wait. */
+/* At least one thread isn't ready.  Wait. */
 		while (threads_ready_count != NUM_TASKS)
 		{
 			pthread_cond_wait(&threads_ready, &threads_ready_lock);
@@ -1131,18 +1217,18 @@ void *work_routine(void *arg)
 		(*fptr[*my_id])(i);
 		i--;
 		not_done--;
+		printf("not done: %d\n",not_done);
 //		pthread_mutex_lock(&total_count_lock);
 //		if (total_count < TOTAL_END_COUNT)
 //			total_count+=LOOP_COUNT;
 //		else
 //			not_done=0;
-//		printf("\nwork_routine()\tthread %d\tmy count %d, total_count %d\n", *my_id, thread_counts[*my_id], total_count);
+//		serprintf("\nwork_routine()\tthread %d\tmy count %d, total_count %d\n", *my_id, thread_counts[*my_id], total_count);
 
 //		pthread_mutex_unlock(&total_count_lock);
 
 	}
-//	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
+	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
 	return(NULL);
 	close_tcp();
 }
-

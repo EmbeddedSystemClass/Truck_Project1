@@ -11,12 +11,23 @@
 #define PFIFO                   5
 #define INHERIT                 6
 
-UCHAR task1(int test);
-UCHAR task2(int test);
-UCHAR task3(int test);
-UCHAR task4(int test);
-UCHAR task5(int test);
-UCHAR task6(int test);
+enum task_types
+{
+	GET_HOST_CMD,
+	MONITOR_INPUTS,
+	TIMER,
+	UNUSED,
+	SERIAL_RECV,
+	TCP_MONITOR
+} TASK_TYPES;
+
+UCHAR get_host_cmd_task(int test);
+UCHAR monitor_input_task(int test);
+UCHAR timer_task(int test);
+UCHAR read_button_inputs(int test);
+UCHAR serial_recv_task(int test);
+UCHAR tcp_monitor_task(int test);
+
 void *work_routine(void *arg);
 int send_tcp(UCHAR *str,int len);
 int recv_tcp(UCHAR *str, int strlen,int block);

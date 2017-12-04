@@ -608,6 +608,13 @@ type:
 1) on for time delay seconds and then it goes back off
 2) goes on/off at a pulse_time rate until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
+5) toggle switch realized in momentary push-buton: push & release of a 
+	momentary push-button turns bit on or off
+
+1 task scans all the outputs using ollist_find_data and if type != 0 && onoff == 1 then
+read last_time_state_changed (UINT) in current O_DATA and check against current time using localtime
+in this case onoff == 1 means its active 
+
 
 10/16/17
 made separate make files (make_db) to compile init_db & list_db on both host and target side
@@ -617,33 +624,40 @@ made separate make files (make_db) to compile init_db & list_db on both host and
 did away with curr_i_array & curr_o_array and just used the ill & oll linked lists
 menus:
 1) Host
-	- Open 
-	- Save File
-	- Save As
-	- Delete
-	- Edit idata
-	- Edit odata
-	- Send idata
-	- Send odata
-	- Exit
+	("Open"),						  // 0
+	("Save File"),					  // 1
+	("Edit idata"),					  // 2
+	("Edit odata"),					  // 3
+	("Exit"),						  // 4
+	("Shift Left"),					  // 5
+	("Shift Right"),				  // 6
 
 2) Target
-	- Open 
-	- Save File
-	- Save As
-	- Delete
-	- List idata
-	- List odata
-	- Get idata
-	- Get odata
+	("Open"),						  // 0
+	("Save File"),					  // 1
+	("Save As"),					  // 2
+	("Delete"),						  // 3
+	("List idata"),					  // 4
+	("List odata"),					  // 5
+	("Send idata"),					  // 6
+	("Send odata"),					  // 7
+	("Show All"),					  // 8
 
 3) Tool
-	- TCP Address
-	- Connect
-	- Disconnect
-	- Toggle Output
-	- All Off
-	- All On
+	"Connect"),					// 0
+	"Disconnect"),				// 1
+	"Enable Start"),			// 3	close ckt to start relay for time delay x
+										turn on fuel pump
+										turn on fan after time delay y
+	"On Fuel Pump"),			// 4
+	"Off Fuel Pump"),			// 5
+	"On Fan"),					// 6
+	"Off Fan"),					// 7
+	"Shutdown"),				// 8	turn of all
+	"Clear Screen"),			// 9
+
+
+
 
 Need another database which has list of on-off times for each IO port. Have a field in
 the O_DATA database which points to a on-off database (or text file).

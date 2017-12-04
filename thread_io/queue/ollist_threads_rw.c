@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../mytypes.h"
+#include "../serial_io.h"
 #include "ollist_threads_rw.h"
 
 /******************************************************************************/
@@ -26,7 +27,7 @@ int ollist_init (ollist_t *llistp)
 	llistp->first = NULL;
 	if ((rtn = pthread_rdwr_init_np(&(llistp->rwlock), NULL)) !=0)
 		fprintf(stderr, "pthread_rdwr_init_np error %d",rtn), exit(1);
-	printf("sizeof O_DATA: %lu\n",sizeof(O_DATA));
+//	printf("sizeof O_DATA: %lu\n",sizeof(O_DATA));
 	return 0;
 }
 
@@ -166,7 +167,7 @@ int ollist_toggle_output(int index, ollist_t *llistp)
 	int status = -1; /* assume failure */
 	O_DATA o_data;
 	int onoff;
-	
+
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
@@ -199,7 +200,7 @@ int ollist_change_output(int index, ollist_t *llistp, int onoff)
 	ollist_node_t *cur, *prev;
 	int status = -1; /* assume failure */
 	O_DATA o_data;
-	
+
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
@@ -236,7 +237,7 @@ int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 		{
 			cur->datap = datap;
 			prev->nextp = cur->nextp;
-			printf("%d %s ",index,datap->label);
+//			printf("%d %s ",index,datap->label);
 			free(cur);
 			status = 0;
 			break;
@@ -261,7 +262,10 @@ int ollist_show(ollist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
+//			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
+//			serprintf1("port: \0");
+//			serprintf3(" \0",(int)cur->datap->port, (int)cur->datap->onoff);
+//			serprintf1(cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

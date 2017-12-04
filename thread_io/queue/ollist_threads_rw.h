@@ -39,10 +39,10 @@ typedef struct o_data
 /*
 type:
 0) regular - on/off state doesn't change until user tells it to
-1) on for time delay seconds and then it goes back offd
-2) goes on/off at a pulse_time rate until turned off again
+1) on for time delay seconds and then it goes back off
+2) goes on/off at a pulse_time rate (ms) until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
-5) toggle switch realized in momentary push-buton: push & release of a 
+5) toggle switch realized in momentary push-buton: push & release of a
 	momentary push-button turns bit on or off
 */
 

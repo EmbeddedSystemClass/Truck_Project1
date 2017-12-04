@@ -29,12 +29,12 @@ address of 0x11E0_03E8. */
 /**********************************************************************************************************/
 struct timeval tv;
 
-
 static double curtime(void)
 {
 	gettimeofday (&tv, NULL);
 	return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
+
 
 // param i is miliseconds to delay
 /**********************************************************************************************************/
@@ -52,6 +52,7 @@ static void mydelay(unsigned long i)
 
 	}
 }
+
 
 /**********************************************************************************************************/
 
@@ -87,6 +88,7 @@ void init_mem(void)
 #endif
 }
 
+
 /**********************************************************************************************************/
 void OutPortA(int onoff, UCHAR bit)
 {
@@ -107,6 +109,8 @@ void OutPortA(int onoff, UCHAR bit)
 	*(card_ports + ROC_1) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void OutPortB(int onoff, UCHAR bit)
 {
@@ -126,6 +130,8 @@ void OutPortB(int onoff, UCHAR bit)
 	*(card_ports + ROC_2) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void OutPortC(int onoff, UCHAR bit)
 {
@@ -145,6 +151,8 @@ void OutPortC(int onoff, UCHAR bit)
 	*(card_ports + ROC_3) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void OutPortD(int onoff, UCHAR bit)
 {
@@ -164,6 +172,8 @@ void OutPortD(int onoff, UCHAR bit)
 	*(card_ports + ROC_4) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void OutPortE(int onoff, UCHAR bit)
 {
@@ -183,6 +193,8 @@ void OutPortE(int onoff, UCHAR bit)
 	*(card_ports + ROC_5) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void OutPortF(int onoff, UCHAR bit)
 {
@@ -202,6 +214,8 @@ void OutPortF(int onoff, UCHAR bit)
 	*(card_ports + ROC_6) = *pstate;
 //	printf("%2x ",state);
 }
+
+
 /**********************************************************************************************************/
 void TurnOffAllOutputs(void)
 {
@@ -212,6 +226,8 @@ void TurnOffAllOutputs(void)
 	OutPortByteE(0);
 	OutPortByteF(0);
 }
+
+
 /**********************************************************************************************************/
 void ToggleOutPortA(int port)
 {
@@ -234,6 +250,8 @@ void ToggleOutPortA(int port)
 	pstate = &state;
 	*(card_ports + ROC_1) = *pstate;
 }
+
+
 /**********************************************************************************************************/
 void OutPortByteA(UCHAR byte)
 {
@@ -243,6 +261,7 @@ void OutPortByteA(UCHAR byte)
 	printf("port A: %x\n",byte);
 #endif
 }
+
 
 /**********************************************************************************************************/
 void OutPortByteB(UCHAR byte)
@@ -254,6 +273,7 @@ void OutPortByteB(UCHAR byte)
 #endif
 }
 
+
 /**********************************************************************************************************/
 void OutPortByteC(UCHAR byte)
 {
@@ -263,6 +283,8 @@ void OutPortByteC(UCHAR byte)
 	printf("port C: %x\n",byte);
 #endif
 }
+
+
 /**********************************************************************************************************/
 void OutPortByteD(UCHAR byte)
 {
@@ -272,6 +294,7 @@ void OutPortByteD(UCHAR byte)
 	printf("port D: %x\n",byte);
 #endif
 }
+
 
 /**********************************************************************************************************/
 void OutPortByteE(UCHAR byte)
@@ -283,6 +306,7 @@ void OutPortByteE(UCHAR byte)
 #endif
 }
 
+
 /**********************************************************************************************************/
 void OutPortByteF(UCHAR byte)
 {
@@ -292,16 +316,20 @@ void OutPortByteF(UCHAR byte)
 	printf("port F: %x\n",byte);
 #endif
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByte(int bank)
 {
 	UCHAR state;
 	if(bank > 2)
 		state = *(card_ports + DIR_4 + bank-3);
-	else	
+	else
 		state = *(card_ports + DIR_1 + bank);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteA(void)
 {
@@ -309,6 +337,8 @@ UCHAR InPortByteA(void)
 	state = *(card_ports + DIR_1);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteB(void)
 {
@@ -316,6 +346,8 @@ UCHAR InPortByteB(void)
 	state = *(card_ports + DIR_2);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteC(void)
 {
@@ -323,6 +355,8 @@ UCHAR InPortByteC(void)
 	state = *(card_ports + DIR_3);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteD(void)
 {
@@ -330,6 +364,8 @@ UCHAR InPortByteD(void)
 	state = *(card_ports + DIR_4);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteE(void)
 {
@@ -343,6 +379,8 @@ UCHAR InPortByteE(void)
 	state = *(card_ports + DIR_5);
 	return state;
 }
+
+
 /***********************************************************************************************************/
 UCHAR InPortByteF(void)
 {
@@ -351,6 +389,7 @@ UCHAR InPortByteF(void)
 	return state;
 }
 
+
 /**********************************************************************************************************/
 void close_mem(void)
 {
@@ -358,4 +397,3 @@ void close_mem(void)
 		perror("error un-mapping file\n");
 	close(fd);
 }
-
