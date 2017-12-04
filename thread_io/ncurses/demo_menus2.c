@@ -44,6 +44,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <dirent.h>
+#include <time.h>
 #include "test.priv.h"
 #include <menu.h>
 #include "../queue/illist_threads_rw.h"
@@ -989,6 +990,11 @@ call_Tool(int code)
 	O_DATA *pod;
 	char errmsg[60];
 	UCHAR cmd;
+	time_t tt;
+	struct timeval tv;
+	double curtime;
+	struct tm t;
+	struct tm *pt = &t;
 
 	switch (code)
 	{
@@ -1006,8 +1012,8 @@ call_Tool(int code)
 			i = init_client(Host_Sim,errmsg);
 			show_status2("init_client",Host_Sim,i,0,0,2);
 #else
-			i = init_client(HOST1,errmsg);
-			show_status2("init_client",HOST1,i,0,0,2);
+			i = init_client(Host3,errmsg);
+			show_status2("init_client",HOST1,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1017,7 +1023,7 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-			show_status2("Connect","errmsg",i,j,tcp_connected,3);
+			show_status2("Connect","errmsg",i,j,tcp_connected,0);
 			break;
 
 // DISCONNECT
@@ -1036,13 +1042,44 @@ call_Tool(int code)
 		case 2:
 			if(tcp_connected)
 			{
+		        cmd = SET_TIME;
+//				i = gettimeofday(&tv,NULL);
+//		        curtime = tv.tv_sec + tv.tv_usec/1000000.0;
+//				mvprintw(LINES-12,2,"%d %f",i,curtime);
+		        tt = time(NULL);
+//		        pt = localtime(&tt);
+
+//				mvprintw(LINES-11,2,"sec:%d min:%d hour: %d day: %d month %d year: %d", pt->tm_sec,pt->tm_min,pt->tm_hour,pt->tm_mday,pt->tm_mon,pt->tm_year);
+				
+		        put_sock(&cmd,1,1,errmsg);
+				cmd = (UCHAR)tt;
+//				mvprintw(LINES-10,2,"%2x",cmd);
+		        put_sock(&cmd,1,1,errmsg);
+				cmd = (UCHAR)(tt >> 8);
+//				mvprintw(LINES-10,6,"%2x",cmd);
+		        put_sock(&cmd,1,1,errmsg);
+				cmd = (UCHAR)(tt >> 16);
+//				mvprintw(LINES-10,10,"%2x",cmd);
+		        put_sock(&cmd,1,1,errmsg);
+				cmd = (UCHAR)(tt >> 24);
+//				mvprintw(LINES-10,14,"%2x",cmd);
+		        put_sock(&cmd,1,1,errmsg);
+//				mvprintw(LINES-11,2,"%ld",tt);
+//				refresh();
+			}
+//			show_status2("set time  ","",code,0,0,2);
+			break;
+
+		case 3:
+			if(tcp_connected)
+			{
 		        cmd = ENABLE_START;
 		        put_sock(&cmd,1,1,errmsg);
 			}
 			show_status2("starter seq on  ","",code,0,0,2);
 			break;
 
-		case 3:
+		case 4:
 			if(tcp_connected)
 			{
 		        cmd = ON_ACC;
@@ -1051,7 +1088,7 @@ call_Tool(int code)
 			show_status2("ACC ON      ","",code,0,0,2);
 			break;
 
-		case 4:
+		case 5:
 			if(tcp_connected)
 			{
 		        cmd = OFF_ACC;
@@ -1060,7 +1097,7 @@ call_Tool(int code)
 			show_status2("ACC OFF      ","",code,0,0,2);
 			break;
 
-		case 5:
+		case 6:
 			if(tcp_connected)
 			{
 				cmd =  ON_FUEL_PUMP;
@@ -1069,7 +1106,7 @@ call_Tool(int code)
 			show_status2("FUEL PUMP ON      ","",code,0,0,2);
 			break;
 
-		case 6:
+		case 7:
 			if(tcp_connected)
 			{
 				cmd =  OFF_FUEL_PUMP;
@@ -1078,7 +1115,7 @@ call_Tool(int code)
 			show_status2("FUEL PUMP OFF       ","",code,0,0,2);
 			break;
 
-		case 7:
+		case 8:
 			if(tcp_connected)
 			{
 				cmd =  ON_FAN;
@@ -1087,7 +1124,7 @@ call_Tool(int code)
 			show_status2("FAN ON","",code,0,0,2);
 			break;
 
-		case 8:
+		case 9:
 			if(tcp_connected)
 			{
 				cmd = OFF_FAN;
@@ -1096,7 +1133,7 @@ call_Tool(int code)
 			show_status2("FAN OFF","",code,0,0,2);
 			break;
 
-		case 9:
+		case 10:
 			if(tcp_connected)
 			{
 				cmd = SHUTDOWN;
@@ -1105,7 +1142,7 @@ call_Tool(int code)
 			show_status2("SHUTDOWN","",code,0,0,2);
 			break;
 
-		case 10:
+		case 11:
 			if(tcp_connected)
 			{
 				cmd = CLEAR_SCREEN;
@@ -1131,15 +1168,16 @@ build_Tool_menu(MenuNo number)
 	{
 		MY_DATA2("Connect"),					  // 0
 		MY_DATA2("Disconnect"),					  // 1
-		MY_DATA2("Enable Start"),				  // 2
-		MY_DATA2("On Acc"),						  // 3
-		MY_DATA2("Off Acc"),					  // 4
-		MY_DATA2("On Fuel Pump"),				  // 5
-		MY_DATA2("Off Fuel Pump"),				  // 6
-		MY_DATA2("On Fan"),						  // 7
-		MY_DATA2("Off Fan"),					  // 8
-		MY_DATA2("Shutdown"),					  // 9
-		MY_DATA2("Clear Screen"),				  // 10
+		MY_DATA2("Set Time"),					  // 2
+		MY_DATA2("Enable Start"),				  // 3
+		MY_DATA2("On Acc"),						  // 4
+		MY_DATA2("Off Acc"),					  // 5
+		MY_DATA2("On Fuel Pump"),				  // 6
+		MY_DATA2("Off Fuel Pump"),				  // 7
+		MY_DATA2("On Fan"),						  // 8
+		MY_DATA2("Off Fan"),					  // 9
+		MY_DATA2("Shutdown"),					  // 10
+		MY_DATA2("Clear Screen"),				  // 11
 		{(char *) 0, 0, 0}
 	};
 

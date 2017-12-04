@@ -90,7 +90,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[30] =
+CMD_STRUCT cmd_array[31] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -120,6 +120,7 @@ CMD_STRUCT cmd_array[30] =
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
+	{   	SET_TIME,"SET_TIME\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{   	BLANK,"BLANK\0" },
 };
@@ -209,8 +210,8 @@ UCHAR get_host_cmd_task(int test)
 	int fname_index;
 	UCHAR uch_fname_index;
 	UCHAR mask;
-	char buf[300];
-	static buf_ptr;
+	time_t curtime2;
+	
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -239,7 +240,6 @@ UCHAR get_host_cmd_task(int test)
 	osize = sizeof(O_DATA);
 	osize *= i;
 
-	buf_ptr = 0;
 	starter_on = 0;
 
 	program_start_time = curtime();
@@ -279,19 +279,6 @@ UCHAR get_host_cmd_task(int test)
 	myprintf1("start....\0");
 	myprintf1("sched v1.02\0");
 
-	test2 = 0x21;
-	for(i = 0;i < 300;i++)
-	{
-		buf[i] = test2;
-		if(++test2 > 0x7e)
-			test2 = 0x21;
-	}
-	for(i = 0;i < 300;i++)
-	{
-		if((i % 9) == 0)
-			buf[i] = 0;
-	}
-
 	while(TRUE)
 	{
 		cmd = 0;
@@ -307,12 +294,29 @@ UCHAR get_host_cmd_task(int test)
 				switch(cmd)
 				{
 // update a single IDATA record
+					case SET_TIME:
+						curtime2 = 0L;
+						rc += recv_tcp((UCHAR *)&test2,1,1);
+//						printf("\n%2x ",test2);
+						curtime2 = (time_t)test2;
+						rc += recv_tcp((UCHAR *)&test2,1,1);
+//						printf("%2x ",test2);
+						curtime2 |= (time_t)(test2<<8);
+						rc += recv_tcp((UCHAR *)&test2,1,1);
+//						printf("%2x ",test2);
+						curtime2 |= (time_t)(test2<<16);
+						rc += recv_tcp((UCHAR *)&test2,1,1);
+//						printf("%2x ",test2);
+						curtime2 |= (time_t)(test2<<24);
+//						printf("\n%d %ld\n",rc,curtime2);
+						rc = stime(&curtime2);
+//						printf("rc = %d\n",rc);
+						break;
+						
 					case SHOW_DATA:
-						myprintf1("show I_DATA:\0");
-						illist_show(&ill);
-						strcpy(buf,"show O_DATA:\0");
-						myprintf1(buf);
-						ollist_show(&oll);
+						myprintf1("show DATA:\0");
+//						illist_show(&ill);
+//						ollist_show(&oll);
 //						close_tcp();
 						break;
 
@@ -520,17 +524,6 @@ UCHAR get_host_cmd_task(int test)
 						shift_right();
 						break;
 
-/*
-						do
-						{
-							buf_ptr++;
-							if(buf_ptr > 100)
-								buf_ptr = 0;
-						}while(buf[buf_ptr] != 0);
-						buf_ptr++;
-						serprintf("%s\n",buf+buf_ptr);
-						myprintf1(buf+buf_ptr);
-*/
 					case ENABLE_START:
 						change_output(STARTER, 1);
 						ollist_change_output(STARTER, &oll, 1);
@@ -821,6 +814,7 @@ type:
 //				printf("starter_on: %d\n",starter_on);
 			}
 //		if(diff < pdiff+TIME_DELAY)
+#if 0
 			if(1)
 			{
 //			printf("%f %f ",diff,pdiff);
@@ -829,6 +823,7 @@ type:
 				pt = localtime(&tt);
 //			printf("%d sec:%d min:%d hour: %d\n",timer_inc,pt->tm_sec,pt->tm_min,pt->tm_hour);
 			}
+#endif
 		}
 
 	}
