@@ -9,20 +9,26 @@
 #include <ncurses.h>
 #include "client.h"
 
-#define HEIGHT 50
-#define status_line HEIGHT-4
-#define error_line1 HEIGHT-3
-#define error_line2 HEIGHT-2
-#define WIDTH 70
+#define SERIAL_HEIGHT 50
+#define SERIAL_WIDTH 71
 
-//extern int send_tcp(char *send_buf, int len, char *errmsg);
-//extern int recv_tcp(char *recv_buf, int len, char *errmsg);
+#define SHOW_DATA_HEIGHT 47
+#define SHOW_DATA_WIDTH 47
+
+static int status_line;
+static int error_line1;
+static int error_line2;
+
+static int inc_y(WINDOW *win, int y);
+static void clr_scr(WINDOW *win);
+static void disp_msg(WINDOW *win,char *str);
+
 extern int tcp_connected;
 
 //******************************************************************************************//
 //************************************* clear_screen ***************************************//
 //******************************************************************************************//
-void clr_scr(WINDOW *win)
+static void clr_scr(WINDOW *win)
 {
 	int y;
 	for(y = 1;y < status_line - 1;y++)
@@ -32,6 +38,17 @@ void clr_scr(WINDOW *win)
 		box(win,ACS_VLINE,ACS_HLINE);
 		wrefresh(win);
 	}
+}
+
+//******************************************************************************************//
+static int inc_y(WINDOW *win, int y)
+{
+	if(++y > status_line - 2)
+	{
+		clr_scr(win);
+		y = 1;
+	}
+	return y;
 }
 
 //******************************************************************************************//
@@ -48,108 +65,80 @@ static void disp_msg(WINDOW *win,char *str)
 //******************************************************************************************//
 //**************************************** tcp_win *****************************************//
 //******************************************************************************************//
-int tcp_win(void)
+int tcp_win(int cmd)
 {
 	WINDOW *twin;
 	int startx, starty;
 	int ch;
 	int rc;
 	int x,y,i;
-	char chc;
-	char test = 0x21;
+	UCHAR ret_char = 0x21;
 	char buffer[100];
 	char errmsg[50];
 	int noerrors = 0;
-	UCHAR cmd;
-	UCHAR param;
-	UCHAR num_i_recs = 0;
-	UCHAR num_o_recs = 0;
-	int finished;
+	int ascii = 1;
+	int no_non_ascii = 0; 
+	int height, width;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 	nodelay(stdscr,TRUE);
-	starty = (LINES - HEIGHT) / 2;	/* Calculating for a center placement */
-	startx = (COLS - WIDTH) / 2;	/* of the window		*/
+	if(cmd == SHOW_IDATA || cmd == SHOW_ODATA)
+	{
+		height = SHOW_DATA_HEIGHT;
+		width = SHOW_DATA_WIDTH;
+		starty = ((LINES - height)/3);
+	}
+	else if(cmd == TCP_WINDOW_ON)
+	{
+		height = SERIAL_HEIGHT;
+		width = SERIAL_WIDTH;
+		starty = ((LINES - height)/2);	/* Calculating for a center placement */
+	}
+
+	status_line = height-4;
+	error_line1 = height-3;
+	error_line2 = height-2;
+
+	startx = ((COLS - width)/2)+15;	/* of the window		*/
 //	printw("Press F1 to exit");
 	refresh();
-	twin = newwin(HEIGHT, WIDTH, starty, startx);
+	twin = newwin(height, width, starty, startx);
 	keypad(twin,TRUE);
 	nodelay(twin,TRUE);
 	box(twin,ACS_VLINE,ACS_HLINE);
 
-	MvWAddCh(twin,HEIGHT-5,0,ACS_LTEE);
-	MvWAddCh(twin,HEIGHT-5,WIDTH-1,ACS_RTEE);
-	for(i = 1;i < WIDTH-1;i++)
-		MvWAddCh(twin,HEIGHT-5,i,ACS_HLINE);
+	MvWAddCh(twin,height-5,0,ACS_LTEE);
+	MvWAddCh(twin,height-5,width-1,ACS_RTEE);
+	for(i = 1;i < width-1;i++)
+		MvWAddCh(twin,height-5,i,ACS_HLINE);
 
 	mvwprintw(twin,status_line,1,"F2 - quit");
-	mvwprintw(twin,error_line1,1,"%d",num_i_recs);
-	mvwprintw(twin,error_line2,1,"%d",num_o_recs);
 
 //	mvwprintw(twin,2,2,"starting server...");
 	wrefresh(twin);
-/*
-	rc = init_server();
-	if(rc < 0)
-	{
-		mvwprintw(twin,2,2,"server failed - press any key");
-		if(rc == -2)
-			mvwprintw(twin,3,2,"recv failed on opt");
-		if(rc == -3)
-			mvwprintw(twin,4,2,"send failed on opt");
-		wrefresh(twin);
-		getch();
-		delwin(twin);
-		return -1;
-	}else
-	{
-		mvwprintw(twin,2,2,"connected       ");
-		tcp_connected = 1;
-	}
-
-	wrefresh(twin);
-*/
 	x = 1;
 	y = 1;
-	finished = 1;
 	while((ch = wgetch(twin)) != KEY_F(2))
 	{
-#if 0
-		if(ch > 0x21 && ch < 0x7e)
-		{
-			chc = (char)ch;
-			rc = send_tcp(&chc,1,errmsg);
-			if(rc < 0 && errno != 11)
-			{
-				x = y = 1;
-				mvwprintw(twin,y,x,"%s",errmsg);
-				wrefresh(twin);
-				delwin(twin);
-				return 1;
-			}
-			if(errno == 11)
-			{
-				noerrors++;
-				mvwprintw(twin,height-4,1,"%s %d  %d           ",errmsg,errno,noerrors);
-				errno = 0;
-			}
-		}
-#endif
 		switch(ch)
 		{
-			// CONNECT
 			case KEY_F(3):
+				if(ascii == 0)
+					ascii = 1;
+				else
+				{ 
+					ascii = 0;
+					x = width;
+					y++;
+				}
 				break;
 
-			// DISCONNECT
 			case KEY_F(4):
 				break;
 
-			// SEND OPEN_DIR
 			case KEY_F(5):
 				break;
 
-			// SEND GET_DIR
 			case KEY_F(6):
 				break;
 			default:
@@ -157,12 +146,12 @@ int tcp_win(void)
 		}
 		if(tcp_connected == 1)
 		{
-//			rc = recv_tcp(&test,1,errmsg);
-			rc = get_sock(&test,1,1,errmsg);
+			usleep(1000);
+			rc = get_sock(&ret_char,1,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
-				y = HEIGHT - 2;
+				y = height - 2;
 				mvwprintw(twin,y,x,"%s             ",errmsg);
 				wrefresh(twin);
 				delwin(twin);
@@ -171,32 +160,55 @@ int tcp_win(void)
 			if(errno == 11)
 			{
 				noerrors++;
-				mvwprintw(twin,error_line2,1,"%s %d  %d           ",errmsg,errno,noerrors);
-				wrefresh(twin);
+//				mvwprintw(twin,error_line2,1,"%s %d  %d           ",errmsg,errno,noerrors);
+// 				wrefresh(twin);
 				errno = 0;
-			}
-
-			usleep(1000);
-
-			if(errno != 11)
+			}else
 			{
-				if(++x > WIDTH-2)
+				x++;
+				if(ascii)
 				{
-					x = 1;
-					if(++y > status_line - 2)
+					if(ret_char != 0)
 					{
-						clr_scr(twin);
-						y = 1;
+						if(ret_char < 0x20 || ret_char > 0x7e)
+						{
+							if(++no_non_ascii > 50)
+							{
+								ascii = 0;
+								no_non_ascii = 0;
+							}
+							mvwprintw(twin,y,x,"_");
+						}
+						else 
+							mvwprintw(twin,y,x,"%c",ret_char);
+					}
+					else x = width;
+				}else mvwprintw(twin,y,(x+=2),"%2x ",ret_char);
+
+				if(ascii)
+				{
+					if(x > width-3)
+					{
+						y = inc_y(twin,y);
+						x = 1;
+					}
+					mvwprintw(twin,error_line1,1,"%2d %2d   ",x,y);
+					wrefresh(twin);
+				}
+				else
+				{
+					if(x > width-5)
+					{
+						y = inc_y(twin,y);
+						x = 1;
 					}
 				}
-				mvwprintw(twin,y,x,"%c",test);
 				wrefresh(twin);
 			}
 		}
 	}	// while getch() != F2
-
-	delwin(twin);
+	werase(twin);
+	wrefresh(twin);
+	refresh();
 	return 0;
 }
-
-

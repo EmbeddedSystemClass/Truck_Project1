@@ -49,7 +49,7 @@ static struct  sockaddr_in sad;  /* structure to hold server's address  */
 static struct timeval tv;
 
 /*********************************************************************/
-int init_client(char *host, char errmsg)
+int init_client(char *host, char *errmsg)
 {
 	struct  hostent  *ptrh;   /* pointer to a host table entry       */
 	struct  protoent *ptrp;   /* point to a protocol table entry     */
@@ -105,7 +105,7 @@ int init_client(char *host, char errmsg)
 	 if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
 //		fprintf(stderr, "cannot map \"tcp\" to protocol number");
-		sprintf(errmsg, "cannot map \"tcp\" to protocol number\0");
+		strcpy(errmsg, "cannot map tcp to protocol number\0");
 		return -1;
 	}
 	 /* Create a socket */
@@ -117,7 +117,7 @@ int init_client(char *host, char errmsg)
 	 if (global_socket < 0)
 	 {
 //		fprintf(stderr, "socket creation failed\n");
-		sprintf(errmsg, "socket creation failed\0");
+		strcpy(errmsg, "socket creation failed\0");
 		return -1;
 	 }
 

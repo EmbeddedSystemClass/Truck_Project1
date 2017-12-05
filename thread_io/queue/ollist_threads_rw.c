@@ -18,7 +18,9 @@
 #include "../mytypes.h"
 #include "../serial_io.h"
 #include "ollist_threads_rw.h"
-
+#ifdef MAKE_TARGET
+extern int send_tcp(UCHAR *str,int len);
+#endif
 /******************************************************************************/
 int ollist_init (ollist_t *llistp)
 {
@@ -252,8 +254,12 @@ int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 }
 
 /******************************************************************************/
+#ifdef MAKE_TARGET
 int ollist_show(ollist_t *llistp)
 {
+	char list_buf[50];
+	char *ptr;
+	int iptr;
 	ollist_node_t *cur;
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
@@ -263,9 +269,20 @@ int ollist_show(ollist_t *llistp)
 		if(cur->datap->label[0] != 0)
 		{
 //			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
+			memset(list_buf,0,50);
+			sprintf(list_buf,"port: %2d onoff: %2d %s",(int)cur->datap->port,\
+			 (int)cur->datap->onoff,cur->datap->label);
+			 ptr = list_buf;
+			 iptr = 0;
+			 do
+			 {
+			 	iptr++;
+			 }while(*(ptr++) != 0);
+			send_tcp((UCHAR *)list_buf,iptr);
+
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
 	return 0;
 }
-
+#endif

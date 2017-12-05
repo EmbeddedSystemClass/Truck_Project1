@@ -137,21 +137,6 @@ git add AVR_t6963/test_write_data/eeprom.bin
 git add AVR_t6963/todo.txt
 git add AVR_t6963/test_eeprom.cx
 git add AVR_t6963/main.cx
-git add AVR2/run-avrdude
-git add AVR2/psuedo_avrdude
-git add AVR2/avrdude.conf
-git add AVR2/atmega328p.conf
-git add AVR2/pinDefines.h
-git add AVR2/USART.h
-git add AVR2/USART.c
-git add AVR2/spi.h
-git add AVR2/macros.h
-git add AVR2/sfr_helper.h
-git add AVR2/binaryMacro.h
-git add AVR2/Makefile
-git add AVR2/spi.c
-git add AVR2/main.h
-git add AVR2/main.c
 #clear
 git status
 git log --oneline > oneline.txt

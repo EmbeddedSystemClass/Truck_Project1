@@ -60,7 +60,7 @@
 
 extern int menu_scroll2(int num,int which,char *filename);
 extern int menu_scroll3(int num, UCHAR *str, char *filename);
-extern int tcp_win(void);
+extern int tcp_win(int cmd);
 extern int file_win(void);
 extern int file_menu2(int num, int which, char *ret_str);
 
@@ -356,7 +356,7 @@ static void
 call_Host(int code)
 {
 	static int num = 0;
-	static index;
+	static int index;
 	static UCHAR *ptr;
 	int format;
 	int i,j,k;
@@ -893,9 +893,18 @@ call_Target(int code)
 
 // SHOW ALL
 		case 8:
-			cmd = SHOW_DATA;
+			cmd = SHOW_IDATA;
 			put_sock(&cmd,1,1,errmsg);
+			show_status2("show idata tcp win","",code,0,0,1);
+			tcp_win(SHOW_IDATA);
+			break;
 
+		case 9:
+			cmd = SHOW_ODATA;
+			put_sock(&cmd,1,1,errmsg);
+			show_status2("show odata tcp win","",code,0,0,1);
+			tcp_win(SHOW_ODATA);
+			break;
 //			j = ilLoadConfig(iFileName,&ill,isize,errmsg);
 //			mvprintw(LINES-1,2,"%d   %s   %s  ",j,iFileName,errmsg);
 #if 0
@@ -918,7 +927,7 @@ call_Target(int code)
 			}
 			refresh();
 #endif
-			break;
+//			break;
 		default:
 			break;
 	}
@@ -937,11 +946,12 @@ build_Target_menu(MenuNo number)
 		MY_DATA1("Save File"),					  // 1
 		MY_DATA1("Save As"),					  // 2
 		MY_DATA1("Delete"),						  // 3
-		MY_DATA1("List idata"),					  // 4
-		MY_DATA1("List odata"),					  // 5
+		MY_DATA1("Recv idata"),					  // 4
+		MY_DATA1("Recv odata"),					  // 5
 		MY_DATA1("Send idata"),					  // 6
 		MY_DATA1("Send odata"),					  // 7
-		MY_DATA1("Show All"),					  // 8
+		MY_DATA1("Show idata"),					  // 8
+		MY_DATA1("Show odata"),					  // 9
 		{(char *) 0, 0, 0}
 	};
 
@@ -1004,9 +1014,9 @@ call_Tool(int code)
 			{
 				cmd = CLOSE_SOCKET;
 				put_sock(&cmd,1,1,errmsg);
-				usleep(TIME_DELAY*10);
+				usleep(100000);
 				close_sock();
-				usleep(TIME_DELAY*10);
+				usleep(100000);
 			}
 #ifdef MAKE_SIM
 			i = init_client(Host_Sim,errmsg);
@@ -1033,7 +1043,7 @@ call_Tool(int code)
 				show_status2("Disconnect","",code,0,i,2);
 				cmd = CLOSE_SOCKET;
 				put_sock(&cmd,1,1,errmsg);
-				usleep(TIME_DELAY*100);
+				usleep(100000);
 				close_sock();
 				tcp_connected = 0;
 			}
@@ -1166,7 +1176,7 @@ call_Tool(int code)
 				show_status2("start tcp win","",code,0,0,1);
 				cmd = TCP_WINDOW_ON;
 				ret = put_sock(&cmd,1,1,errmsg);
-				tcp_win();
+				tcp_win(cmd);
 				cmd = TCP_WINDOW_OFF;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}else show_status2("tcp not conn","a",code,0,0,2);
@@ -1636,7 +1646,6 @@ main(int argc, char *argv[])
 	{
 
 	}
-//	illist_show(&ill);
 
 	ollist_init(&oll);
 	if(access(oFileName,F_OK) != -1)
@@ -1663,8 +1672,6 @@ main(int argc, char *argv[])
 //	printf("%d %s\n",rc,errmsg);
 	rc = olLoadConfig("odata2.dat",&oll2,isize,errmsg);
 //	printf("%d %s\n",rc,errmsg);
-//	illist_show(&ill2);
-//	ollist_show(&oll2);
 #if 0
 	itp = &i_data;
 	itpp = &itp;

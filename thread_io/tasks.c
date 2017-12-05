@@ -46,6 +46,8 @@ pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
 
+int send_tcp(UCHAR *str,int len);
+
 illist_t ill;
 ollist_t oll;
 
@@ -90,7 +92,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[32] =
+CMD_STRUCT cmd_array[33] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -109,7 +111,8 @@ CMD_STRUCT cmd_array[32] =
 	{   	SEND_ALL_ODATA,"SEND_ALL_ODATA\0" },
 	{   	RECV_ALL_IDATA,"RECV_ALL_IDATA\0" },
 	{   	RECV_ALL_ODATA,"RECV_ALL_ODATA\0" },
-	{   	SHOW_DATA,"SHOW_DATA\0" },
+	{   	SHOW_IDATA,"SHOW_IDATA\0" },
+	{   	SHOW_ODATA,"SHOW_ODATA\0" },
 	{   	SEND_SERIAL,"SEND_SERIAL\0" },
 	{   	CLOSE_SOCKET,"CLOSE_SOCKET\0" },
 	{   	CLEAR_SCREEN,"CLEAR_SCREEN\0" },
@@ -207,7 +210,7 @@ UCHAR get_host_cmd_task(int test)
 	DIR *d;
 	struct dirent *dir;
 	int num;
-	char tempx[40];
+	char tempx[50];
 	char *chp;
 	int fname_index;
 	UCHAR uch_fname_index;
@@ -259,8 +262,6 @@ UCHAR get_host_cmd_task(int test)
 	{
 
 	}
-//	illist_show(&ill);
-
 	ollist_init(&oll);
 	if(access(oFileName,F_OK) != -1)
 	{
@@ -273,7 +274,6 @@ UCHAR get_host_cmd_task(int test)
 	{
 
 	}
-//	ollist_show(&oll);
 
 	same_msg = 0;
 	lcd_init();
@@ -289,7 +289,8 @@ UCHAR get_host_cmd_task(int test)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 //			printf("%s %d\n",cmd_array[cmd].cmd_str,cmd);
-			myprintf2(cmd_array[cmd].cmd_str,cmd);
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT)
+				myprintf2(cmd_array[cmd].cmd_str,cmd);
 			if(rc > 0)
 			{
 				rc = 0;
@@ -324,11 +325,14 @@ UCHAR get_host_cmd_task(int test)
 //						printf("rc = %d\n",rc);
 						break;
 						
-					case SHOW_DATA:
-						myprintf1("show DATA:\0");
-//						illist_show(&ill);
-//						ollist_show(&oll);
-//						close_tcp();
+					case SHOW_IDATA:
+						myprintf1("show I_DATA (tcp_win)\0");
+						illist_show(&ill);
+						break;
+
+					case SHOW_ODATA:
+						myprintf1("show O_DATA (tcp_win)\0");
+						ollist_show(&oll);
 						break;
 
 					case SEND_IDATA:
@@ -337,7 +341,7 @@ UCHAR get_host_cmd_task(int test)
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
 						myprintf3("send idata:\0" ,rec_no,rc);
 						illist_insert_data(rec_no, &ill, &tempi1);
-						illist_show(&ill);
+//						illist_show(&ill);
 						break;
 
 					case SEND_ODATA:
@@ -348,7 +352,7 @@ UCHAR get_host_cmd_task(int test)
 						myprintf3("send odata\0",rec_no,rc);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));
-						ollist_show(&oll);
+//						ollist_show(&oll);
 						break;
 
 					case SEND_ALL_IDATA:
@@ -361,7 +365,6 @@ UCHAR get_host_cmd_task(int test)
 							illist_insert_data(i,&ill,itp);
 						}
 						myprintf1("done\0");
-//						close_tcp();
 						break;
 
 					case SEND_ALL_ODATA:
@@ -374,7 +377,6 @@ UCHAR get_host_cmd_task(int test)
 							ollist_insert_data(i,&oll,otp);
 						}
 						myprintf1("done\0");
-//						close_tcp();
 						break;
 
 					case RECV_ALL_IDATA:
@@ -416,7 +418,6 @@ UCHAR get_host_cmd_task(int test)
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
 						myprintf1("done\0");
-//						close_tcp();
 						break;
 
 					case SEND_SERIAL:
@@ -489,9 +490,6 @@ UCHAR get_host_cmd_task(int test)
 							send_tcp((UCHAR*)&tempx,TDATE_STAMP_STR_LEN);
 							send_tcp((UCHAR*)&test2,1);
 						}
-//						close_tcp();
-//										-- do this when the host is crashing
-//										-- otherwise the target locks up
 						break;
 
 					case SAVE_TO_DISK:
@@ -756,26 +754,10 @@ type:
 	UCHAR timer_task(int test)
 	{
 		int i;
-		double pdiff;
-		struct tm t;
-		struct tm *pt = &t;
-		time_t tt;
 
-		timer_inc = 0;
-//		printf("%f\n",curtime());
-
-//	while(1)
-//		uSleep(1,1000);
-		diff = curtime();
-
-		while(1)
+		while(TRUE)
 		{
-//		pdiff = curtime();
-//		printf("1:%f \n",curtime());
-//		uSleep(0,TIME_DELAY-10000);
-			uSleep(0,TIME_DELAY/2);
-//		printf("2:%f \n",curtime());
-			uSleep(0,TIME_DELAY/2);
+			uSleep(0,TIME_DELAY);
 			timer_inc++;
 // this is a kludge until I have time to redesign the whole mess from the ground up
 /// using a much better pthread library
@@ -788,19 +770,7 @@ type:
 					ollist_change_output(STARTER, &oll, 0);
 					myprintf1("STARTER OFF\0");
 				}
-//				printf("starter_on: %d\n",starter_on);
 			}
-//		if(diff < pdiff+TIME_DELAY)
-#if 0
-			if(1)
-			{
-//			printf("%f %f ",diff,pdiff);
-				diff = curtime();
-				tt = time(NULL);
-				pt = localtime(&tt);
-//			printf("%d sec:%d min:%d hour: %d\n",timer_inc,pt->tm_sec,pt->tm_min,pt->tm_hour);
-			}
-#endif
 			if(shutdown_all)
 				return 0;
 		}
@@ -915,7 +885,7 @@ UCHAR serial_recv_task(int test)
 //				printf("lcd not init'd\n");
 			if(ch != 0x7e)
 			{
-				if(tcp_window_on)
+				if(tcp_window_on == 1)
 					send_tcp((UCHAR *)&ch,1);
 //				printf("%c",ch);
 			}
@@ -981,7 +951,7 @@ UCHAR tcp_monitor_task(int test)
 	int     alen;							  /* length of address */
 	port = PROTOPORT;
 	sock_open = 0;
-	tv.tv_sec = 1;
+	tv.tv_sec = 2;
 	tv.tv_usec = 50000;
 
 	memset((char  *)&sad,0,sizeof(sad));	  /* clear sockaddr structure   */
@@ -1167,9 +1137,12 @@ void close_tcp(void)
 {
 	myprintf1("closing socket\0");
 //	send_tcp("close",5);
-	sock_open = 0;
-	close(global_socket);
-	global_socket = -1;
+	if(sock_open)
+	{
+		sock_open = 0;
+		close(global_socket);
+		global_socket = -1;
+	}else myprintf1("socket already closed\0");
 }
 
 /*********************************************************************/
@@ -1227,7 +1200,7 @@ void *work_routine(void *arg)
 		(*fptr[*my_id])(i);
 		i--;
 		not_done--;
-		printf("not done: %d\n",not_done);
+//		printf("not done: %d\n",not_done);
 //		pthread_mutex_lock(&total_count_lock);
 //		if (total_count < TOTAL_END_COUNT)
 //			total_count+=LOOP_COUNT;
@@ -1237,7 +1210,7 @@ void *work_routine(void *arg)
 //		pthread_mutex_unlock(&total_count_lock);
 
 	}
-	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
+//	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
+	myprintf2("thread done:\0",*my_id);
 	return(NULL);
-//	close_tcp();
 }

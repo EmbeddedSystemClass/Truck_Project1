@@ -249,7 +249,7 @@ num = 9;
 		    index = item_index(cur_item);
 		    memset(ret_str,0,40);
 		    strcpy(ret_str,item_name(cur_item));
-			mvprintw(LINES - 2, 2,"%ret_str: s    index: %d   ",ret_str,index);
+			mvprintw(LINES - 2, 2,"ret_str: %s    index: %d   ",ret_str,index);
 			refresh();
 		}
 	}

@@ -18,7 +18,9 @@
 #include "../mytypes.h"
 #include "../serial_io.h"
 #include "illist_threads_rw.h"
-
+#ifdef MAKE_TARGET
+extern int send_tcp(UCHAR *str,int len);
+#endif
 /******************************************************************************/
 int illist_init (illist_t *llistp)
 {
@@ -208,8 +210,12 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 }
 //#endif
 /******************************************************************************/
+#ifdef MAKE_TARGET
 int illist_show(illist_t *llistp)
 {
+	char list_buf[50];
+	char *ptr;
+	int iptr;
 	illist_node_t *cur;
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
@@ -220,9 +226,19 @@ int illist_show(illist_t *llistp)
 		{
 //			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
 				cur->datap->affected_output, cur->datap->label);
+			memset(list_buf,0,40);	
+			sprintf(list_buf,"port: %2d aff: %2d %s",cur->datap->port, \
+				cur->datap->affected_output, cur->datap->label);
+			 ptr = list_buf;
+			 iptr = 0;
+			 do
+			 {
+			 	iptr++;
+			 }while(*(ptr++) != 0);
+			send_tcp((UCHAR *)list_buf,iptr);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
 	return 0;
 }
-
+#endif

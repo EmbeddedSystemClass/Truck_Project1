@@ -728,7 +728,7 @@ need some way to tell if AVR goes off the rails so it can reset itself (WDT)
 
 any checkbox can apply to a 'group' IO
 
-have a 100 or byte section at beginning of dat files (just after the id tag) reserved
+have a 100 or so byte section at beginning of dat files (just after the id tag) reserved
 for comments that can be edited and viewed.
 
 The new AVR has touch-sence capabilities so a touch screen can be laid over the LCD
@@ -745,9 +745,12 @@ just for redundancy. Use the timers on the AVR to calc the rpm/mph.
 Use LCD port on TS-7200 with HD44780 2x16 line LCD as output from sched (in lieu of printf's)
 and then use 2-4 buttons on TS-7200 box going to DIO port as inputs to use as scroll up,
 down, etc. Print error and status msg's to fifo buffer so user can scroll back up the list.
-Another button shifts to left to see whole msg. This allow the one serial port on the 
+Another button shifts to left to see whole msg. This allows the one serial port on the 
 TS-7200 to be free'd up by the console (JP2) or at least the one or two that only have 1
 serial port. The TS-7800 has 2 (or at least 2 headers)
+
+Make one of the DIO ports and output to be used as a blinker (I'm alive) LED blinked by
+the timer task.
 
 ***************** unrelated ********************
 

@@ -289,7 +289,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 						if(demo_forms(po,which,index) != TRUE)
 						{
 							finished = 1;
-							ollist_insert_data(index,&oll,&po);
+							ollist_insert_data(index,&oll,po);
 						}
 						disp_msg(twin,"EDIT_ODATA\0",num);
 						break;
@@ -301,7 +301,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 						if(demo_forms(pi,which,index) != TRUE)
 						{
 							finished = 1;
-							illist_insert_data(index,&ill,&pi);
+							illist_insert_data(index,&ill,pi);
 						}
 						disp_msg(twin,"EDIT_IDATA\0",num);
 						break;
@@ -313,7 +313,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 						if(demo_forms(po,which,index) != TRUE)
 						{
 							finished = 1;
-							ollist_insert_data(index,&oll2,&po);
+							ollist_insert_data(index,&oll2,po);
 						}
 						disp_msg(twin,"EDIT_ODATA\0",num);
 						break;
@@ -325,7 +325,7 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 						if(demo_forms(pi,which,index) != TRUE)
 						{
 							finished = 1;
-							illist_insert_data(index,&ill2,&pi);
+							illist_insert_data(index,&ill2,pi);
 						}
 						disp_msg(twin,"EDIT_IDATA\0",num);
 						break;
