@@ -25,7 +25,6 @@ static int cur_buf_size;
 /*********************************************************************************************************/
 void lcd_init(void)
 {
-	lcd_enabled = 1;
 	lcdinit();
 	lcd_wait();
 	line = 0;
@@ -33,6 +32,7 @@ void lcd_init(void)
 	memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
 	buf_ptr = buffer[0];
 	cur_buf_line = cur_buf_size = 0;
+	lcd_enabled = 1;
 }
 
 /*********************************************************************************************************/
@@ -66,15 +66,15 @@ static void add_col(void)
 }
 
 /**********************************************************************************************************/
-void myprintf1(char *str)
+int myprintf1(char *str)
 {
 	char *ptr = str;
 	char temp[2];
 
 	if(!lcd_enabled)
 	{
-		printf("%s\n",str);
-		return;
+//		printf("%s\n",str);
+		return 1;
 	}
 
 	cur_buf_line = cur_buf_size;
@@ -83,10 +83,11 @@ void myprintf1(char *str)
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 	sprintf((char*)buffer[cur_buf_line],"%s",str);
 	display_current(0);
+	return 1;
 }
 
 /**********************************************************************************************************/
-void myprintf2(char *str, int x)
+int myprintf2(char *str, int x)
 {
 	char *ptr = str;
 	char temp[35];
@@ -95,8 +96,8 @@ void myprintf2(char *str, int x)
 
 	if(!lcd_enabled)
 	{
-		printf("%s %d\n",str,x);
-		return;
+//		printf("%s %d\n",str,x);
+		return 1;
 	}
 
 	sprintf(temp,"%s",str);
@@ -107,10 +108,11 @@ void myprintf2(char *str, int x)
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
+	return 0;
 }
 
 /**********************************************************************************************************/
-void myprintf3(char *str, int x, int y)
+int myprintf3(char *str, int x, int y)
 {
 	char *ptr = str;
 	char temp[35];
@@ -119,8 +121,8 @@ void myprintf3(char *str, int x, int y)
 
 	if(!lcd_enabled)
 	{
-		printf("%s %d %d\n",str,x,y);
-		return;
+//		printf("%s %d %d\n",str,x,y);
+		return 1;
 	}
 
 	cur_buf_line = cur_buf_size;
@@ -135,6 +137,7 @@ void myprintf3(char *str, int x, int y)
 	strcat(temp,temp2);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
+	return 0;
 }
 
 /**********************************************************************************************************/

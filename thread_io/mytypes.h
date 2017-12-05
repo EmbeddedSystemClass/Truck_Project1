@@ -11,9 +11,10 @@ typedef unsigned int UINT;
 
 #define NUM_DAT_NAMES 45
 #define DAT_NAME_STR_LEN 25
-//#define TDATE_STAMP_STR_LEN 25	// "Tue Oct 17 16:30:37 2017\0"
-#define TDATE_STAMP_STR_LEN 16					  // "Oct 17 16:30:37\0"
+//#define TDATE_STAMP_STR_LEN 25
+#define TDATE_STAMP_STR_LEN 16
 
+// these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
 	ENABLE_START,
@@ -45,6 +46,8 @@ enum cmd_types
 	LCD_SHIFT_LEFT,
 	ENABLE_LCD,
 	SET_TIME,
+	TCP_WINDOW_ON,
+	TCP_WINDOW_OFF,
 	EXIT_PROGRAM,
 	BLANK
 }CMD_TYPES;

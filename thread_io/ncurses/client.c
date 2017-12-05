@@ -139,7 +139,7 @@ int tcp_connect(void)
 	}
 	else
 	{
-		printf("connected\n");
+//		printf("connected\n");
 
 		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -2;

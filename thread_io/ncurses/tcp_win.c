@@ -15,7 +15,6 @@
 #define error_line2 HEIGHT-2
 #define WIDTH 70
 
-extern int init_server(void);
 //extern int send_tcp(char *send_buf, int len, char *errmsg);
 //extern int recv_tcp(char *recv_buf, int len, char *errmsg);
 extern int tcp_connected;
@@ -177,7 +176,7 @@ int tcp_win(void)
 				errno = 0;
 			}
 
-			usleep(TIME_DELAY);
+			usleep(1000);
 
 			if(errno != 11)
 			{

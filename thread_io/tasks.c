@@ -7,7 +7,7 @@
 #include <sys/time.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdio.h> 
 #include <string.h>
 #include <sched.h>
 #include <sys/types.h>
@@ -29,14 +29,14 @@
 #include "ncurses/config_file.h"
 #include "lcd_func.h"
 
-extern int threads_ready_count;
-extern pthread_cond_t       threads_ready;
+pthread_cond_t       threads_ready;
 pthread_mutex_t     tcp_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     tcp_read_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
-extern int   total_count;
+int total_count;
+static int shutdown_all = 0;
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, serial_recv_task, tcp_monitor_task};
 
@@ -45,7 +45,6 @@ int threads_ready_count=0;
 pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
-int comm_open = -1;
 
 illist_t ill;
 ollist_t oll;
@@ -77,6 +76,7 @@ static int timer_inc2;
 static double program_start_time;
 static double diff;
 static int starter_on;
+static int tcp_window_on;
 
 #define ON 1
 #define OFF 0
@@ -90,7 +90,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[31] =
+CMD_STRUCT cmd_array[32] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -121,6 +121,8 @@ CMD_STRUCT cmd_array[31] =
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
+	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
+	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{   	BLANK,"BLANK\0" },
 };
@@ -211,7 +213,7 @@ UCHAR get_host_cmd_task(int test)
 	UCHAR uch_fname_index;
 	UCHAR mask;
 	time_t curtime2;
-	
+	tcp_window_on = 0;	
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -294,6 +296,15 @@ UCHAR get_host_cmd_task(int test)
 				switch(cmd)
 				{
 // update a single IDATA record
+
+					case TCP_WINDOW_ON:
+						tcp_window_on = 1;
+						break;
+
+					case TCP_WINDOW_OFF:
+						tcp_window_on = 0;
+						break;
+
 					case SET_TIME:
 						curtime2 = 0L;
 						rc += recv_tcp((UCHAR *)&test2,1,1);
@@ -335,8 +346,6 @@ UCHAR get_host_cmd_task(int test)
 // blocking
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
 						myprintf3("send odata\0",rec_no,rc);
-//						serprintf1(tempo1.label);
-//						serprintf3("port: \0",tempo1.port, tempo1.onoff);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));
 						ollist_show(&oll);
@@ -349,11 +358,8 @@ UCHAR get_host_cmd_task(int test)
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
-//							serprintf1(itp->label);
-//							serprintf3(" \0",itp->port, itp->affected_output);
 							illist_insert_data(i,&ill,itp);
 						}
-//						serprintf2("done\0",rc);
 						myprintf1("done\0");
 //						close_tcp();
 						break;
@@ -365,8 +371,6 @@ UCHAR get_host_cmd_task(int test)
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							rc += recv_tcp((UCHAR *)otp,sizeof(O_DATA),1);
-//							serprintf1(otp->label);
-//							serprintf3(" \0",otp->port,otp->onoff);
 							ollist_insert_data(i,&oll,otp);
 						}
 						myprintf1("done\0");
@@ -390,8 +394,6 @@ UCHAR get_host_cmd_task(int test)
 						{
 							illist_find_data(i,&itp,&ill);
 							rc += send_tcp((UCHAR *)itp,sizeof(I_DATA));
-//							serprintf3(" \0",itp->port,itp->affected_output);
-//							serprintf1(itp->label);
 						}
 						myprintf1("done\0");
 						break;
@@ -413,7 +415,6 @@ UCHAR get_host_cmd_task(int test)
 							ollist_find_data(i,&otp,&oll);
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
-//						serprintf("%d\n",rc);
 						myprintf1("done\0");
 //						close_tcp();
 						break;
@@ -421,22 +422,19 @@ UCHAR get_host_cmd_task(int test)
 					case SEND_SERIAL:
 						test2 = 0x21;
 //#if 0
-// how expensive is locking/unlocking the mutex 1000x ?
-						for(i = 0;i < 1000;i++)
+						pthread_mutex_lock( &serial_write_lock);
+						for(i = 0;i < 2*93;i++)
 						{
-							pthread_mutex_lock( &serial_write_lock);
 							write_serial(test2);
-							pthread_mutex_unlock(&serial_write_lock);
-							uSleep(1,TIME_DELAY);
+//							uSleep(1,TIME_DELAY);
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
+						pthread_mutex_unlock(&serial_write_lock);
 //#endif
-//						serprintf("sent serial\n");
 						break;
 
 					case GET_DIR:
-//						serprintf("GET_DIR\n");
 						d = opendir( "." );
 						if( d == NULL )
 						{
@@ -469,23 +467,14 @@ UCHAR get_host_cmd_task(int test)
 //							if(dir->d_type == DT_REG)
 							{
 								strcpy(dat_names[num++],dir->d_name);
-//								serprintf("%s\n",dir->d_name);
 							}
 						}
 						closedir( d );
-#if 0
-						serprintf2("number of dat files: %\0",num);
-						for(i = 0;i < num;i++)
-						{
-							serprintf1(dat_names[i]);
-						}
-#endif
 //						memset(tempx,0x20,sizeof(tempx));
 						send_tcp((UCHAR*)&num,1);
 						for(i = 0;i < num;i++)
 						{
 							cmd = (UCHAR)strlen(dat_names[i]);
-//							serprintf("%d %s\n",cmd,dat_names[i]);
 							send_tcp(&cmd,1);
 							send_tcp((UCHAR *)&dat_names[i],cmd);
 						}
@@ -497,9 +486,6 @@ UCHAR get_host_cmd_task(int test)
 								test2 = 0xff;
 							else
 								test2 = (UCHAR)j;
-//							serprintf("%s  ",dat_names[i]);
-//							serprintf("%s  %x   ",tempx,test2);
-//							serprintf("\n");
 							send_tcp((UCHAR*)&tempx,TDATE_STAMP_STR_LEN);
 							send_tcp((UCHAR*)&test2,1);
 						}
@@ -513,7 +499,6 @@ UCHAR get_host_cmd_task(int test)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						serprintf("save to disk\n");
 						break;
 
 					case LCD_SHIFT_LEFT:
@@ -572,13 +557,10 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case CLEAR_SCREEN:
-//						for(i = 0;i < 150;i++)
-//							serprintf("\n");
 						lcd_cls();
 						break;
 
 					case CLOSE_SOCKET:
-//						serprintf1("closing socket\0");
 						close_tcp();
 						break;
 
@@ -587,10 +569,9 @@ UCHAR get_host_cmd_task(int test)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						printf("elapsed time: %f\n",curtime() - program_start_time);
 						close_tcp();
-//						serprintf1("exiting program\0");
-						exit(0);
+						shutdown_all = 1;
+						return 0;
 						break;
 
 					default:
@@ -599,9 +580,7 @@ UCHAR get_host_cmd_task(int test)
 			}									  // if rc > 0
 		}else									  // if test_sock
 		{
-//			serprintf("no connection %d\n",j);
 			uSleep(1,1000);
-//			pthread_yield();
 		}
 	}
 	return test + 1;
@@ -707,10 +686,8 @@ type:
 					}
 
 					illist_find_data(index,itpp,&ill);
-//				serprintf3("affected_output: \0",itp->affected_output, itp->port);
 
 					ollist_find_data(itp->affected_output,otpp,&oll);
-//				serprintf3("port: \0",otp->port,otp->onoff);
 
 					otp->onoff = onoff;
 					ollist_insert_data(otp->port,&oll,otp);
@@ -721,10 +698,10 @@ type:
 
 			}
 			uSleep(0,TIME_DELAY/200);
-//		pthread_yield();
-
+			if(shutdown_all)
+				return 0;
 		}
-		return test + 2;
+		return 1;
 	}
 
 /*********************************************************************/
@@ -824,8 +801,10 @@ type:
 //			printf("%d sec:%d min:%d hour: %d\n",timer_inc,pt->tm_sec,pt->tm_min,pt->tm_hour);
 			}
 #endif
+			if(shutdown_all)
+				return 0;
 		}
-
+		return 1;
 	}
 
 /*********************************************************************/
@@ -877,8 +856,10 @@ UCHAR read_button_inputs(int test)
 				break;
 			}
 		}
+		if(shutdown_all)
+			return 0;
 	}
-	return 0;
+	return 1;
 }
 
 /*********************************************************************/
@@ -889,21 +870,57 @@ UCHAR serial_recv_task(int test)
 	int i;
 	int j = 0;
 	UCHAR ch;
+	int fd;
+	char errmsg[20];
 
 	memset(serial_buff,0,SERIAL_BUFF_SIZE);
 	no_serial_buff = 0;
-//	serprintf("%4x\n",&serial_buff[no_serial_buff]);
+	memset(errmsg,0,20);
 
-	while(TRUE)
-//		pthread_yield();
-		uSleep(2,TIME_DELAY);
+	uSleep(10,0);
 
+	if(fd = init_serial() < 0)
+	{
+		myprintf1("can't open comm port\0");
+		printf("can't open comm port\n");
+		return 0;
+	}
+
+#if 0
 	while(TRUE)
 	{
-		if(comm_open == -1)
-			return -1;
-
+		uSleep(5,TIME_DELAY);
+		if(shutdown_all)
+		{
+			printf("shutting down serial task\n");
+			close_serial();
+			printf("serial port closed\n");
+			return 0;
+		}
+	}
+#endif
+	
+	while(TRUE)
+	{
 		pthread_mutex_lock( &serial_read_lock);
+		ch = read_serial(errmsg);
+		pthread_mutex_unlock(&serial_read_lock);
+		if(errmsg[0] != 0)
+		{
+			printf("%s\n",errmsg);
+			memset(errmsg,0,20);
+			uSleep(5,0);
+		}else
+//			if(myprintf2("read:\0",ch) == 1)
+//				printf("lcd not init'd\n");
+			if(ch != 0x7e)
+			{
+				if(tcp_window_on)
+					send_tcp((UCHAR *)&ch,1);
+//				printf("%c",ch);
+			}
+			uSleep(0,TIME_DELAY/100000);
+#if 0
 		if(no_serial_buff < SERIAL_BUFF_SIZE)
 		{
 			serial_buff[no_serial_buff] = read_serial();
@@ -924,7 +941,16 @@ UCHAR serial_recv_task(int test)
 //			serprintf("\n\n");
 		}
 		pthread_mutex_unlock(&serial_read_lock);
+#endif
+		if(shutdown_all)
+		{
+//			printf("shutting down serial task\n");
+			close_serial();
+//			printf("serial port closed\n");
+			return 0;
+		}
 	}
+	return 1;
 }
 
 // client calls 'connect' to get accept call below to stop
@@ -1004,7 +1030,6 @@ UCHAR tcp_monitor_task(int test)
 	alen = sizeof(cad);
 
 /* Main server loop - accept and handle requests */
-//	serprintf1( "Server up and running.\0");
 	while (TRUE)
 	{
 		if(sock_open == 1)
@@ -1031,15 +1056,10 @@ UCHAR tcp_monitor_task(int test)
 			return -3;
 */
 		}
+		if(shutdown_all)
+			return 0;
 	}
-	close(listen_sd);
-	myprintf1("closing listen_sd\0");
-	if(test < 2)
-	{
-//		serprintf1("exiting task 6\0");
-//			return 0;
-	}
-//		return test + 6;
+	return 1;
 }
 
 /*********************************************************************/
@@ -1111,7 +1131,6 @@ static int put_sock(UCHAR *buf,int buflen, int block, char *errmsg)
 			sprintf(extra_msg," %d",errno);
 			strcat(errmsg,extra_msg);
 			strcat(errmsg," put_sock");
-			serprintf2("address: \0",global_socket);
 			close_tcp();
 		}else strcpy(errmsg,"Success\0");
 	}
@@ -1156,8 +1175,6 @@ void close_tcp(void)
 /*********************************************************************/
 void SendByte(unsigned char byte)
 {
-	if(comm_open == -1)
-		return;
 	pthread_mutex_lock( &serial_write_lock);
 	write_serial(byte);
 	pthread_mutex_unlock(&serial_write_lock);
@@ -1168,9 +1185,6 @@ UCHAR ReceiveByte(void)
 {
 	int n,i;
 	UCHAR rec;
-	if(comm_open == -1)
-		return -1;
-
 	return rec;
 }
 
@@ -1180,8 +1194,9 @@ void *work_routine(void *arg)
 	int *my_id=(int *)arg;
 	int i;
 	UCHAR pattern = 0;
-	int not_done=30;
+	int not_done=1;
 	i = not_done;
+	shutdown_all = 0;
 //	printf("\nwork_routine()\tthread %d\tI'm Alive\n", *my_id);
 
 	pthread_mutex_lock(&threads_ready_lock);
@@ -1218,12 +1233,11 @@ void *work_routine(void *arg)
 //			total_count+=LOOP_COUNT;
 //		else
 //			not_done=0;
-//		serprintf("\nwork_routine()\tthread %d\tmy count %d, total_count %d\n", *my_id, thread_counts[*my_id], total_count);
 
 //		pthread_mutex_unlock(&total_count_lock);
 
 	}
 	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
 	return(NULL);
-	close_tcp();
+//	close_tcp();
 }

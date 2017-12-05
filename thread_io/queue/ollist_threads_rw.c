@@ -263,9 +263,6 @@ int ollist_show(ollist_t *llistp)
 		if(cur->datap->label[0] != 0)
 		{
 //			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
-//			serprintf1("port: \0");
-//			serprintf3(" \0",(int)cur->datap->port, (int)cur->datap->onoff);
-//			serprintf1(cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

@@ -1151,6 +1151,28 @@ call_Tool(int code)
 			show_status2("clear lcd screen","",code,0,0,2);
 			break;
 
+		case 12:
+			if(tcp_connected)
+			{
+				cmd = SEND_SERIAL;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("send serial","",code,0,0,2);
+			break;
+
+		case 13:
+			if(tcp_connected)
+			{
+				show_status2("start tcp win","",code,0,0,1);
+				cmd = TCP_WINDOW_ON;
+				ret = put_sock(&cmd,1,1,errmsg);
+				tcp_win();
+				cmd = TCP_WINDOW_OFF;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}else show_status2("tcp not conn","a",code,0,0,2);
+			show_status2("done tcp win","",code,0,0,3);
+			break;
+
 		default:
 			break;
 	}
@@ -1178,6 +1200,8 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("Off Fan"),					  // 9
 		MY_DATA2("Shutdown"),					  // 10
 		MY_DATA2("Clear Screen"),				  // 11
+		MY_DATA2("Send Serial"),				  // 12
+		MY_DATA2("TCP Window"),					//13
 		{(char *) 0, 0, 0}
 	};
 

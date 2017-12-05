@@ -37,7 +37,6 @@
 
 extern void init_mem(void);
 extern void close_mem(void);
-extern int comm_open;
 /*
  * Thread initialization
  */
@@ -71,7 +70,6 @@ int main(int argc, char **argv)
 	char buf[200];
 	UCHAR test1 = 0x21;
 	UCHAR test2;
-	int fd;
 	int sd;
 	int rc;
 	char errmsg[50];
@@ -79,17 +77,11 @@ int main(int argc, char **argv)
 
 	if(argc < 2)
 	{
-//		serprintf1("usage: [idata filename][odata filename]\0");
-//		serprintf1("loading default filenames: idata.dat & odata.dat\0");
 		strcpy(iFileName,"idata.dat\0");
 		strcpy(oFileName,"odata.dat\0");
 	}
 	else if(argc == 2)
 	{
-//		serprintf1("usage:[odata filename]\0");
-//		serprintf1(argv[0]);
-//		serprintf1(argv[1]);
-//		printf("loading %s & odata.dat\n",argv[1]);
 		strcpy(oFileName,argv[1]);
 		strcpy(oFileName,"odata.dat\0");
 	}
@@ -97,23 +89,9 @@ int main(int argc, char **argv)
 	{
 		strcpy(iFileName,argv[1]);
 		strcpy(oFileName,argv[2]);
-//		printf("loading: %s & %s\n",argv[1],argv[2]);
 	}
 
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));
-
-	comm_open = -1;
-
-	if(fd = init_serial() < 0)
-	{
-		myprintf1("can't open comm port\0");
-	}
-	else
-	{
-//		printString("serial port opened\0");
-		comm_open = 1;
-	}
-//	printf("fd (main) = %d\n",fd);
 
 	init_mem();
 

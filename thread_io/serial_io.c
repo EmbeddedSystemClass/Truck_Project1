@@ -32,9 +32,11 @@
 
 static int set_interface_attribs (int fd, int speed, int parity);
 static void set_blocking (int fd, int should_block);
+static struct termios oldtio;
 
 //volatile int STOP=FALSE;
 
+/************************************************************************************/
 static int set_interface_attribs (int fd, int speed, int parity)
 {
 	struct termios tty;
@@ -77,7 +79,7 @@ static int set_interface_attribs (int fd, int speed, int parity)
 	return 0;
 }
 
-
+/************************************************************************************/
 static void set_blocking (int fd, int should_block)
 {
 	struct termios tty;
@@ -90,15 +92,13 @@ static void set_blocking (int fd, int should_block)
 	}
 
 	tty.c_cc[VMIN]  = should_block ? 1 : 0;
-	tty.c_cc[VTIME] = 5;						  // 0.5 seconds read timeout
+	tty.c_cc[VTIME] = 10;						  // 0.5 seconds read timeout
 
 	if (tcsetattr (fd, TCSANOW, &tty) != 0)
 		myprintf1("term error\0", errno);
 }
 
-
-static struct termios oldtio;
-
+/************************************************************************************/
 int init_serial(void)
 {
 	struct termios newtio;
@@ -122,8 +122,8 @@ int init_serial(void)
 	}
 
 	set_interface_attribs (global_handle, BAUDRATE, 0);
-	set_blocking (global_handle, 1);			  // blocking
-//	set_blocking (global_handle, 0);	// non-blocking
+//	set_blocking (global_handle, 1);	 // blocking
+	set_blocking (global_handle, 0);	// non-blocking
 /*
 	for(i = 0;i < LEN;i++)
 	{
@@ -137,7 +137,7 @@ int init_serial(void)
 	return global_handle;
 }
 
-
+/************************************************************************************/
 int write_serial(UCHAR byte)
 {
 	int res;
@@ -146,7 +146,7 @@ int write_serial(UCHAR byte)
 	return res;
 }
 
-
+/************************************************************************************/
 void printString(const char myString[])
 {
 	UCHAR i = 0;
@@ -157,69 +157,22 @@ void printString(const char myString[])
 	}
 }
 
-void serprintf1(char *str)
-{
-#ifdef CONSOLE_DISABLED
-	printString(str);
-#else
-	printf("%s \n",str);
-#endif
-}
-void serprintf2(char *str, int x)
-{
-#ifdef CONSOLE_DISABLED
-	char temp[6];
-	printString(str);
-	sprintf(temp,"%2d ",x);
-	printString(temp);
-#else
-	printf("%s %d\n",str,x);
-#endif
-}
-void serprintf3(char *str, int x, int y)
-{
-#ifdef CONSOLE_DISABLED
-	char temp[6];
-	printString(str);
-	sprintf(temp,"%2d ",x);
-	printString(temp);
-	sprintf(temp,"%2d ",y);
-	printString(temp);
-#else
-	printf("%s %d %d\n",str,x,y);
-#endif
-}
-void serprintf4(char *str, int x, int y, int z)
-{
-#ifdef CONSOLE_DISABLED
-	char temp[6];
-	printString(str);
-	sprintf(temp,"%2d ",x);
-	printString(temp);
-	sprintf(temp,"%2d ",y);
-	printString(temp);
-	sprintf(temp,"%2d ",z);
-	printString(temp);
-#else
-	printf("%s %d %d %d\n",str,x,y,z);
-#endif
-}
-
-UCHAR read_serial(void)
+/************************************************************************************/
+UCHAR read_serial(char *errmsg)
 {
 	int res;
 	UCHAR byte;
 	res = read(global_handle,&byte,1);
 	if(res < 0)
-	{
-		printf("\nread error: %s\n",strerror(errno));
-	}else return byte;
+//		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
+	return byte;
 }
 
-
+/************************************************************************************/
 void close_serial(void)
 {
-	printf("closing serial port\n");
+//	printf("closing serial port\n");
 	tcsetattr(global_handle,TCSANOW,&oldtio);
 	close(global_handle);
 }

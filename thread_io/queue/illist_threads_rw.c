@@ -220,8 +220,6 @@ int illist_show(illist_t *llistp)
 		{
 //			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
 				cur->datap->affected_output, cur->datap->label);
-//			serprintf1("port: \0");
-//			serprintf4(" \0",cur->datap->port, cur->datap->affected_output, cur->datap->label);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
