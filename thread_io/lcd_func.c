@@ -310,6 +310,8 @@ volatile UINT *portfd;
 
 	for(i = 0;i < 6;i++)							// set the 1st 6 bits of DIO to inputs
 		setdioddr(i,0);
+
+	setdioddr(7,1);									// set last one to output
 }
 
 

@@ -588,6 +588,22 @@ call_Host(int code)
 			}
 			break;
 
+		case 7:
+			cmd = SCROLL_UP;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;
+
+		case 8:
+			cmd = SCROLL_DOWN;
+			if(tcp_connected)
+			{
+				put_sock(&cmd,1,1,errmsg);
+			}
+			break;
+
 		default:
 			break;
 	}
@@ -609,6 +625,8 @@ build_Host_menu(MenuNo number)
 		MY_DATA0("Exit"),						  // 4
 		MY_DATA0("Shift Left"),					  // 5
 		MY_DATA0("Shift Right"),				  // 6
+		MY_DATA0("Scroll Up"),					  // 7
+		MY_DATA0("Scroll Down"),				  // 8
 		{(char *) 0, 0, 0}
 	};
 

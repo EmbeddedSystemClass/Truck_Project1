@@ -92,7 +92,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[33] =
+CMD_STRUCT cmd_array[36] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -122,6 +122,8 @@ CMD_STRUCT cmd_array[33] =
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
+	{   	SCROLL_UP,"SCROLL_UP\0" },
+	{   	SCROLL_DOWN,"SCROLL_DOWN\0" },
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
 	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
@@ -289,7 +291,7 @@ UCHAR get_host_cmd_task(int test)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 //			printf("%s %d\n",cmd_array[cmd].cmd_str,cmd);
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 			if(rc > 0)
 			{
@@ -507,6 +509,14 @@ UCHAR get_host_cmd_task(int test)
 						shift_right();
 						break;
 
+					case SCROLL_UP:
+						scroll_up();
+						break;
+
+					case SCROLL_DOWN:
+						scroll_down();
+						break;
+
 					case ENABLE_START:
 						change_output(STARTER, 1);
 						ollist_change_output(STARTER, &oll, 1);
@@ -569,6 +579,18 @@ UCHAR get_host_cmd_task(int test)
 							myprintf1(errmsg);
 						close_tcp();
 						shutdown_all = 1;
+
+						for(i = 0;i < 20;i++)
+						{
+						setdioline(7,0);
+						uSleep(0,TIME_DELAY/16);
+						setdioline(7,1);
+						uSleep(0,TIME_DELAY/16);
+						}
+						setdioline(7,0);
+						uSleep(5,0);
+						setdioline(7,1);
+
 						return 0;
 						break;
 
@@ -755,10 +777,18 @@ type:
 	{
 		int i;
 
+		uSleep(0,TIME_DELAY);
+
 		while(TRUE)
 		{
-			uSleep(0,TIME_DELAY);
 			timer_inc++;
+			uSleep(0,TIME_DELAY/2);
+			uSleep(0,TIME_DELAY/8);
+			uSleep(0,TIME_DELAY/4);
+			uSleep(0,TIME_DELAY/16);
+			setdioline(7,0);
+			uSleep(0,TIME_DELAY/16);
+			setdioline(7,1);
 // this is a kludge until I have time to redesign the whole mess from the ground up
 /// using a much better pthread library
 			if(starter_on > 0)
@@ -788,7 +818,7 @@ UCHAR read_button_inputs(int test)
 		uSleep(0,TIME_DELAY/6);
 		inputs = 0;
 		mask = 1;
-		for(i = 0;i < 8;i++)
+		for(i = 0;i < 7;i++)
 		{
 			j = getdioline(i);
 			if(j)

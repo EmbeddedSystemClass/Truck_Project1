@@ -86,6 +86,7 @@ git add thread_io/ncurses/forms.sh
 git add thread_io/ncurses/test.priv.h
 git add thread_io/ncurses/text_entry.c
 git add thread_io/ncurses/text_entry.h
+git add thread_io/ncurses/ncurses_cfg.h
 git add thread_io/thread_io_notes.txt
 git add thread_io/dmake4
 git add thread_io/mingetty/*

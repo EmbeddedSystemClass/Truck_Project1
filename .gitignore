@@ -122,7 +122,6 @@ thread_io/ncurses/list_db
 thread_io/ncurses/lt
 thread_io/ncurses/menu/
 thread_io/ncurses/ncurses.txt
-thread_io/ncurses/ncurses_cfg.h
 thread_io/ncurses/odata.dat
 thread_io/ncurses/tcp.h
 thread_io/odata.dat
