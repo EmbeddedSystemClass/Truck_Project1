@@ -113,6 +113,7 @@ int main(int argc, char **argv)
 	_threads[TIMER].sched = PTIME_SLICE;
 	_threads[UNUSED].sched = TIME_SLICE;
 	_threads[SERIAL_RECV].sched = TIME_SLICE;
+	_threads[SERIAL_RECV2].sched = TIME_SLICE;
 	_threads[TCP_MONITOR].sched = TIME_SLICE;
 
 	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
@@ -120,6 +121,7 @@ int main(int argc, char **argv)
 	strcpy(_threads[TIMER].label,"TIMER\0");
 	strcpy(_threads[UNUSED].label,"UNUSED\0");
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
+	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
 	strcpy(_threads[TCP_MONITOR].label,"TCP_MONITOR\0");
 
 /* spawn the threads */

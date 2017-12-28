@@ -35,10 +35,12 @@ pthread_mutex_t     tcp_read_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     serial_write_lock2=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 static int shutdown_all = 0;
 
-UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, serial_recv_task, tcp_monitor_task};
+UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, serial_recv_task, serial_recv_task2, tcp_monitor_task};
 
 static int same_msg;
 int threads_ready_count=0;
@@ -446,13 +448,23 @@ UCHAR get_host_cmd_task(int test)
 						test2 = 0x21;
 //#if 0
 						pthread_mutex_lock( &serial_write_lock);
-						for(i = 0;i < 2*93;i++)
+						for(i = 0;i < 4*93;i++)
 						{
 							write_serial(test2);
 //							uSleep(1,TIME_DELAY);
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
+#if CONSOLE_DISABLED
+						test2 = 0x7e;
+						for(i = 0;i < 4*93;i++)
+						{
+							write_serial2(test2);
+//							uSleep(1,TIME_DELAY);
+							if(--test2 < 0x21)
+								test2 = 0x7e;
+						}
+#endif
 						pthread_mutex_unlock(&serial_write_lock);
 //#endif
 						break;
@@ -988,7 +1000,8 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		if(errmsg[0] != 0)
 		{
-			printf("%s\n",errmsg);
+//			printf("%s\n",errmsg);
+			myprintf1(errmsg);
 			memset(errmsg,0,20);
 			uSleep(5,0);
 		}else
@@ -1033,6 +1046,65 @@ UCHAR serial_recv_task(int test)
 	}
 	return 1;
 }
+
+/*********************************************************************/
+// serial receive task
+UCHAR serial_recv_task2(int test)
+{
+	serial_rec = 0;
+	int i;
+	int j = 0;
+	UCHAR ch;
+	int fd;
+	char errmsg[20];
+
+	memset(serial_buff,0,SERIAL_BUFF_SIZE);
+	no_serial_buff = 0;
+	memset(errmsg,0,20);
+
+	uSleep(10,0);
+
+	if(fd = init_serial2() < 0)
+	{
+		myprintf1("can't open comm port\0");
+		printf("can't open comm port\n");
+		return 0;
+	}
+
+	while(TRUE)
+	{
+		pthread_mutex_lock( &serial_read_lock2);
+		ch = read_serial2(errmsg);
+//		ch = read_serial2(errmsg);
+		pthread_mutex_unlock(&serial_read_lock2);
+		if(errmsg[0] != 0)
+		{
+			myprintf1(errmsg);
+//			printf("%s\n",errmsg);
+			memset(errmsg,0,20);
+			uSleep(5,0);
+		}else
+//			if(myprintf2("read:\0",ch) == 1)
+//				printf("lcd not init'd\n");
+			if(ch != 0x7e)
+			{
+				if(tcp_window_on == 1)
+					send_tcp((UCHAR *)&ch,1);
+//				printf("%c",ch);
+			}
+			uSleep(0,TIME_DELAY/100000);
+
+		if(shutdown_all)
+		{
+//			printf("shutting down serial task\n");
+			close_serial2();
+//			printf("serial port closed\n");
+			return 0;
+		}
+	}
+	return 1;
+}
+
 
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor

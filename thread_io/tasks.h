@@ -1,7 +1,7 @@
 #ifndef __TASKS_H
 #define  __TASKS_H
 
-#define NUM_TASKS           6
+#define NUM_TASKS           7
 
 #define DEFAULT                 0
 #define TIME_SLICE              1
@@ -18,6 +18,7 @@ enum task_types
 	TIMER,
 	UNUSED,
 	SERIAL_RECV,
+	SERIAL_RECV2,
 	TCP_MONITOR
 } TASK_TYPES;
 
@@ -26,6 +27,7 @@ UCHAR monitor_input_task(int test);
 UCHAR timer_task(int test);
 UCHAR read_button_inputs(int test);
 UCHAR serial_recv_task(int test);
+UCHAR serial_recv_task2(int test);
 UCHAR tcp_monitor_task(int test);
 
 void *work_routine(void *arg);

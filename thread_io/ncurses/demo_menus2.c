@@ -561,6 +561,7 @@ call_Host(int code)
 
 // EXIT but don't reboot
 		case 4:
+#ifndef CONSOLE_DISABLED
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
@@ -569,6 +570,7 @@ call_Host(int code)
 				put_sock(&reboot,1,1,errmsg);
 				close_sock();
 			}
+#endif
 			break;
 
 // EXIT and reboot
@@ -1239,20 +1241,7 @@ call_Tool(int code)
 			if(tcp_connected)
 			{
 				show_status2("upload new sched","",code,0,0,1);
-				cmd = UPLOAD_NEW;
-				ret = put_sock(&cmd,1,1,errmsg);
-				
-				strcpy(filename,"sched\0");
-#if 0
-				filename[0] = 1;
-				filename[1] = 2;
-				filename[2] = 3;
-				filename[3] = 4;
-				put_sock(filename,8,1,errmsg);
-			}else show_status2("no tcp connection","",code,0,0,1);
-			break;
-#endif
-//#if 0				
+
 				if(access(filename,F_OK) != -1)
 				{
 					fp = open((const char *)filename, O_RDWR);
@@ -1262,6 +1251,9 @@ call_Tool(int code)
 						show_status2("can't open file for writing","",0,0,0,2);
 					}else
 					{
+						cmd = UPLOAD_NEW;
+						ret = put_sock(&cmd,1,1,errmsg);
+						strcpy(filename,"sched\0");
 						ret = 0;
 						fsize = lseek(fp,0,SEEK_END);
 //						printf("filesize: %ld\n",fsize);
@@ -1309,21 +1301,10 @@ call_Tool(int code)
 						close_sock();
 						close(fp);
 					}
-				}else show_status2("can't find file:",filename,code,0,0,2);
+				}else show_status2("can't find sched"," to upload",code,0,0,2);
 			}else  show_status2("no tcp connection","",code,0,0,2);
-/*
-			filename[0] = 4;
-			filename[1] = 2;
-			filename[2] = 2;
-			filename[3] = 1;
-			put_sock((UCHAR *)&filename[3],1,1,errmsg);
-			put_sock((UCHAR *)&filename[2],1,1,errmsg);
-			put_sock((UCHAR *)&filename[1],1,1,errmsg);
-			put_sock((UCHAR *)&filename[0],1,1,errmsg);
-*/
 			break;
-				
-//#endif				
+
 		default:
 			break;
 	}

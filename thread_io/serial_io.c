@@ -20,6 +20,7 @@
 #else
 #ifdef CONSOLE_DISABLED
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
+#define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM0 if console disabled
 #else
 #define MODEMDEVICE "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
 #endif
@@ -105,6 +106,7 @@ int init_serial(void)
 	char buf[LEN];
 	UCHAR test = 0x21;
 	memset(&newtio, 0, sizeof newtio);
+	global_handle = -1;
 
 	global_handle = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
 	if (global_handle <0)
@@ -176,3 +178,72 @@ void close_serial(void)
 	tcsetattr(global_handle,TCSANOW,&oldtio);
 	close(global_handle);
 }
+
+#if CONSOLE_DISABLED
+/************************************************************************************/
+int init_serial2(void)
+{
+	struct termios newtio;
+	char buf[LEN];
+	UCHAR test = 0x21;
+	memset(&newtio, 0, sizeof newtio);
+	global_handle2 = -1;
+
+	global_handle2 = open (MODEMDEVICE2, O_RDWR | O_NOCTTY | O_SYNC);
+	if (global_handle2 <0)
+	{
+		perror(MODEMDEVICE2);
+		exit(-1);
+	}
+	if(tcgetattr(global_handle2,&oldtio) != 0)	  /* save current port settings */
+	{
+		myprintf1("tcgetattr (2) error\0", errno);
+		close(global_handle2);
+		exit(1);
+	}
+
+	set_interface_attribs (global_handle2, BAUDRATE, 0);
+//	set_blocking (global_handle2, 1);	 // blocking
+	set_blocking (global_handle2, 0);	// non-blocking
+
+	return global_handle2;
+}
+/************************************************************************************/
+int write_serial2(UCHAR byte)
+{
+	int res;
+	res = write(global_handle2,&byte,1);
+	return res;
+}
+
+/************************************************************************************/
+void printString2(const char myString[])
+{
+	UCHAR i = 0;
+	while(myString[i])
+	{
+		write_serial2(myString[i]);
+		i++;
+	}
+}
+
+/************************************************************************************/
+UCHAR read_serial2(char *errmsg)
+{
+	int res;
+	UCHAR byte;
+	res = read(global_handle2,&byte,1);
+	if(res < 0)
+//		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
+	return byte;
+}
+
+/************************************************************************************/
+void close_serial2(void)
+{
+//	printf("closing serial port\n");
+	tcsetattr(global_handle2,TCSANOW,&oldtio);
+	close(global_handle2);
+}
+#endif
