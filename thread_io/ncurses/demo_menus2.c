@@ -569,10 +569,6 @@ call_Host(int code)
 				put_sock(&reboot,1,1,errmsg);
 				close_sock();
 			}
-			destroy_menus();
-			endwin();
-			ExitProgram(EXIT_SUCCESS);
-			printf("\nDONE!\n");
 			break;
 
 // EXIT and reboot
@@ -585,10 +581,6 @@ call_Host(int code)
 				put_sock(&reboot,1,1,errmsg);
 				close_sock();
 			}
-			destroy_menus();
-			endwin();
-			ExitProgram(EXIT_SUCCESS);
-			printf("\nDONE!\n");
 			break;
 
 		case 6:
@@ -623,6 +615,13 @@ call_Host(int code)
 			}
 			break;
 
+		case 10:
+			cmd = CLOSE_SOCKET;
+			put_sock(&cmd,1,1,errmsg);
+			close_sock();
+			destroy_menus();
+			endwin();
+			ExitProgram(EXIT_SUCCESS);
 		default:
 			break;
 	}
@@ -641,12 +640,13 @@ build_Host_menu(MenuNo number)
 		MY_DATA0("Save File"),					  // 1
 		MY_DATA0("Edit idata"),					  // 2
 		MY_DATA0("Edit odata"),					  // 3
-		MY_DATA0("Exit to sh"),					  // 4
-		MY_DATA0("Exit & Reboot"),				  // 5
+		MY_DATA0("goto to sh"),					  // 4
+		MY_DATA0("Reboot"),						  // 5
 		MY_DATA0("Shift Left"),					  // 6
 		MY_DATA0("Shift Right"),				  // 7
 		MY_DATA0("Scroll Up"),					  // 8
 		MY_DATA0("Scroll Down"),				  // 9
+		MY_DATA0("Exit"),						  // 10
 		{(char *) 0, 0, 0}
 	};
 
@@ -1237,8 +1237,18 @@ call_Tool(int code)
 				show_status2("upload new sched","",code,0,0,1);
 				cmd = UPLOAD_NEW;
 				ret = put_sock(&cmd,1,1,errmsg);
-				strcpy(filename,"sched\0");
 				
+				strcpy(filename,"sched\0");
+#if 0
+				filename[0] = 1;
+				filename[1] = 2;
+				filename[2] = 3;
+				filename[3] = 4;
+				put_sock(filename,8,1,errmsg);
+			}else show_status2("no tcp connection","",code,0,0,1);
+			break;
+#endif
+//#if 0				
 				if(access(filename,F_OK) != -1)
 				{
 					fp = open((const char *)filename, O_RDWR);
@@ -1257,7 +1267,6 @@ call_Tool(int code)
 						// if server is 32-bit machine the sizeof(off_t) is 4
 						// but if client is 64-bit then sizeof(off_t) is 8
 						//			ret = put_sock((UCHAR *)&fsize,4,1,errmsg);
-						break;							
 						if(ret < 0)
 						{
 //							printf("%s\n",errmsg);
@@ -1270,7 +1279,7 @@ call_Tool(int code)
 						buf_bytes = (int)fsize;
 //						printf("starting buf_bytes: %d\n",buf_bytes);
 						show_status2("starting buf bytes: ","",buf_bytes,0,0,1);
-						usleep(1000000);
+//						usleep(1000000);
 						do
 						{
 							buf_bytes2 = (buf_bytes > UPLOAD_BUFF_SIZE?UPLOAD_BUFF_SIZE:buf_bytes);
@@ -1298,9 +1307,19 @@ call_Tool(int code)
 					}
 				}else show_status2("can't find file:",filename,code,0,0,2);
 			}else  show_status2("no tcp connection","",code,0,0,2);
+/*
+			filename[0] = 4;
+			filename[1] = 2;
+			filename[2] = 2;
+			filename[3] = 1;
+			put_sock((UCHAR *)&filename[3],1,1,errmsg);
+			put_sock((UCHAR *)&filename[2],1,1,errmsg);
+			put_sock((UCHAR *)&filename[1],1,1,errmsg);
+			put_sock((UCHAR *)&filename[0],1,1,errmsg);
+*/
 			break;
 				
-				
+//#endif				
 		default:
 			break;
 	}

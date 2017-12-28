@@ -200,6 +200,7 @@ UCHAR get_host_cmd_task(int test)
 	I_DATA *itp;
 	O_DATA *otp;
 	int rc = 0;
+	int rc1 = 0;
 	UCHAR cmd = 0x21;
 	UCHAR onoff;
 	char errmsg[50];
@@ -585,57 +586,62 @@ UCHAR get_host_cmd_task(int test)
 
 					case UPLOAD_NEW:
 						recv_tcp((UCHAR*)&fsize,8,1);
-						printf("fsize: %ld\n",fsize);
+//						printf("fsize: %ld\n",fsize);
 //						upload_buf = (UCHAR *)malloc(UPLOAD_BUFF_SIZE);
 						cur_fsize = (int)fsize;
-						printf("cur_fsize: %d\n",cur_fsize);
-						break;
-/*
-						if(upload_buf < 0)
-						{
-							printf("could not malloc %ld\n",fsize);
-//							exit(1);
-//							goto exit_program
-							break;
-						}
-*/
-//						memset(upload_buf,0x20,fsize);
+//						printf("cur_fsize: %d\n",cur_fsize);
+//						printf("sizeof upload_buf: %ld\n",sizeof(upload_buf));
+//#if 0
 						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
 						strcpy(filename,"sched2");
-						printf("filename: %s\n",filename);
-						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 600);
+//						printf("filename: %s\n",filename);
+						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 700);
 						if(fp < 0)
 						{
 							printf("could not create file: %s\n",filename);
-//							goto exit_program;
+							goto exit_program;
 							break;
 						}
 						do {
 							rc = 0;
-							rc = recv_tcp((UCHAR *)&upload_buf[0],UPLOAD_BUFF_SIZE,1);
-							printf("%ld ",rc);
-							rc = write(fp, upload_buf, rc);
+							rc1 = 0;
+							rc += recv_tcp((UCHAR *)&upload_buf[0],UPLOAD_BUFF_SIZE,1);
+//							printf("%ld ",rc);
+							rc1 += write(fp, upload_buf, rc);
 							cur_fsize -= rc;
-							printf(": %d ",cur_fsize);
+//							printf(": %d ",cur_fsize);
 
 						}while(cur_fsize > UPLOAD_BUFF_SIZE);
 
-						rc = recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
-						printf("\n%d ",rc);
-						rc = write(fp,upload_buf,cur_fsize);
-						printf("%d\n",rc);
-
-						if(rc < 0)
-							printf("%s\n",errmsg);
+						rc += recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
+//						printf("\n%d ",rc);
+						rc1 += write(fp,upload_buf,cur_fsize);
+//						printf("%d %d\n",rc, rc1);
 
 						close(fp);
 //						free(upload_buf);
-						printf("done\n");					
-						break;
 
+//						recv_tcp((UCHAR*)&tempx[0],16,1);
+//						printf("%2x %2x %2x %2x\n",tempx[0],tempx[1],tempx[2],tempx[3]);
+
+//						printf("done\n");					
+//						break;
+//#endif
 					case EXIT_PROGRAM:
-//exit_program:
-						recv_tcp((UCHAR*)&reboot_on_exit,1,1);
+exit_program:
+						if(cmd == UPLOAD_NEW)
+						{
+							reboot_on_exit = 1;
+							myprintf1("rebooting...");
+//							printf("rebooting...");
+						}
+						else
+						{
+							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
+							if(reboot_on_exit == 0)
+								myprintf1("exit to shell");
+							else myprintf1("rebooting...");	
+						}
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
@@ -645,10 +651,10 @@ UCHAR get_host_cmd_task(int test)
 
 						for(i = 0;i < 20;i++)
 						{
-						setdioline(7,0);
-						uSleep(0,TIME_DELAY/16);
-						setdioline(7,1);
-						uSleep(0,TIME_DELAY/16);
+							setdioline(7,0);
+							uSleep(0,TIME_DELAY/30);
+							setdioline(7,1);
+							uSleep(0,TIME_DELAY/30);
 						}
 						setdioline(7,0);
 						uSleep(2,0);
@@ -1306,6 +1312,6 @@ void *work_routine(void *arg)
 
 	}
 //	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
-	myprintf2("thread done:\0",*my_id);
+//	myprintf2("thread done:\0",*my_id);
 	return(NULL);
 }
