@@ -301,6 +301,8 @@ int main(int argc, char *argv[])
 
 	memset(buf,0,BUF_SIZE);
 
+	printf("sizeof off_t: %ld\n",sizeof(off_t));
+
 	rc = init_client(argv[1]);
 //	rc = init_client("192.168.42.146");
 //	rc = init_client("192.168.42.115");

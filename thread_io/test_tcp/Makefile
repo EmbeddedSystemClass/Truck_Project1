@@ -24,7 +24,8 @@ GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 #####################################################
 CC = ${GNUCC}
 
-all : client server client2 server2
+#all : client server client2 server2
+all : client2
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
@@ -51,5 +52,6 @@ server2: server2.o
 	${CC} server.o -o server2
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2 test_write test_read
+#	rm -f *.o *~ *# core client server client2 server2 test_write test_read
+	rm -f *.o *~ *# client2
 

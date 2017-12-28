@@ -13,6 +13,7 @@ typedef unsigned int UINT;
 #define DAT_NAME_STR_LEN 25
 //#define TDATE_STAMP_STR_LEN 25
 #define TDATE_STAMP_STR_LEN 16
+#define UPLOAD_BUFF_SIZE 5000
 
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
@@ -51,6 +52,7 @@ enum cmd_types
 	SET_TIME,
 	TCP_WINDOW_ON,
 	TCP_WINDOW_OFF,
+	UPLOAD_NEW,
 	EXIT_PROGRAM,
 	BLANK
 }CMD_TYPES;

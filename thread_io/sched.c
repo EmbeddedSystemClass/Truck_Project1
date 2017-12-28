@@ -48,6 +48,8 @@ extern void *work_routine(void *arg);
 char oFileName[20];
 char iFileName[20];
 
+UCHAR reboot_on_exit;
+
 typedef struct
 {
 	pthread_t pthread;
@@ -74,7 +76,8 @@ int main(int argc, char **argv)
 	int rc;
 	char errmsg[50];
 	I_DATA temp;
-
+	reboot_on_exit = 0;
+	
 	if(argc < 2)
 	{
 		strcpy(iFileName,"idata.dat\0");
@@ -213,6 +216,16 @@ int main(int argc, char **argv)
 //	closesocket(sd);
 //	printf("socket closed\n");
 //	llist_show(&ll);
-
-	return 0;
+	if(reboot_on_exit)
+	{
+//		printf("returning 1\n");
+//		usleep(1000000);
+		return 1;
+	}
+	else
+	{	
+//		printf("returning 0\n");
+//		usleep(1000000);
+		return 0;
+	}
 }

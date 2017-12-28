@@ -54,6 +54,9 @@ ollist_t oll;
 extern char oFileName[20];
 extern char iFileName[20];
 
+extern UCHAR reboot_on_exit;
+UCHAR upload_buf[UPLOAD_BUFF_SIZE];
+
 extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
@@ -78,6 +81,7 @@ static int timer_inc2;
 static double program_start_time;
 static double diff;
 static int starter_on;
+static int fan_on;
 static int tcp_window_on;
 
 #define ON 1
@@ -92,7 +96,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[36] =
+CMD_STRUCT cmd_array[37] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -128,6 +132,7 @@ CMD_STRUCT cmd_array[36] =
 	{   	SET_TIME,"SET_TIME\0" },
 	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
+	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{   	BLANK,"BLANK\0" },
 };
@@ -219,6 +224,9 @@ UCHAR get_host_cmd_task(int test)
 	UCHAR mask;
 	time_t curtime2;
 	tcp_window_on = 0;	
+	int fp;
+	off_t fsize;
+	int cur_fsize;
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -248,6 +256,7 @@ UCHAR get_host_cmd_task(int test)
 	osize *= i;
 
 	starter_on = 0;
+	fan_on = 0;
 
 	program_start_time = curtime();
 
@@ -546,11 +555,13 @@ UCHAR get_host_cmd_task(int test)
 					case ON_FAN:
 						ollist_change_output(COOLINGFAN, &oll, 1);
 						change_output(COOLINGFAN, 1);
+						fan_on = 1;
 						break;
 
 					case OFF_FAN:
 						ollist_change_output(COOLINGFAN, &oll, 0);
 						change_output(COOLINGFAN, 0);
+						fan_on = 0;
 						break;
 
 					case SHUTDOWN:
@@ -572,7 +583,59 @@ UCHAR get_host_cmd_task(int test)
 						close_tcp();
 						break;
 
+					case UPLOAD_NEW:
+						recv_tcp((UCHAR*)&fsize,8,1);
+						printf("fsize: %ld\n",fsize);
+//						upload_buf = (UCHAR *)malloc(UPLOAD_BUFF_SIZE);
+						cur_fsize = (int)fsize;
+						printf("cur_fsize: %d\n",cur_fsize);
+						break;
+/*
+						if(upload_buf < 0)
+						{
+							printf("could not malloc %ld\n",fsize);
+//							exit(1);
+//							goto exit_program
+							break;
+						}
+*/
+//						memset(upload_buf,0x20,fsize);
+						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
+						strcpy(filename,"sched2");
+						printf("filename: %s\n",filename);
+						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 600);
+						if(fp < 0)
+						{
+							printf("could not create file: %s\n",filename);
+//							goto exit_program;
+							break;
+						}
+						do {
+							rc = 0;
+							rc = recv_tcp((UCHAR *)&upload_buf[0],UPLOAD_BUFF_SIZE,1);
+							printf("%ld ",rc);
+							rc = write(fp, upload_buf, rc);
+							cur_fsize -= rc;
+							printf(": %d ",cur_fsize);
+
+						}while(cur_fsize > UPLOAD_BUFF_SIZE);
+
+						rc = recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
+						printf("\n%d ",rc);
+						rc = write(fp,upload_buf,cur_fsize);
+						printf("%d\n",rc);
+
+						if(rc < 0)
+							printf("%s\n",errmsg);
+
+						close(fp);
+//						free(upload_buf);
+						printf("done\n");					
+						break;
+
 					case EXIT_PROGRAM:
+//exit_program:
+						recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
@@ -588,7 +651,7 @@ UCHAR get_host_cmd_task(int test)
 						uSleep(0,TIME_DELAY/16);
 						}
 						setdioline(7,0);
-						uSleep(5,0);
+						uSleep(2,0);
 						setdioline(7,1);
 
 						return 0;
@@ -835,10 +898,12 @@ UCHAR read_button_inputs(int test)
 			switch(inputs)
 			{
 				case 1:
-					shift_left();
+//					shift_left();
+					scroll_up();
 				break;
 				case 2:
-					shift_right();
+//					shift_right();
+					scroll_down();
 				break;
 				case 3:
 //					lcd_home();
@@ -847,10 +912,10 @@ UCHAR read_button_inputs(int test)
 //					lcd_cls();
 				break;
 				case 5:
-					scroll_up();
+//					scroll_up();
 				break;
 				case 6:
-					scroll_down();
+//					scroll_down();
 				break;
 				default:
 				break;

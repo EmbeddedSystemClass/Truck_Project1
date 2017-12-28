@@ -372,6 +372,7 @@ call_Host(int code)
 	struct dirent *dir;
 	int mem_size;
 	int error;
+	UCHAR reboot;
 
 	switch (code)
 	{
@@ -558,12 +559,14 @@ call_Host(int code)
 			index = menu_scroll2(39,EDIT_ODATA,oFileName);
 			break;
 
-// EXIT
+// EXIT but don't reboot
 		case 4:
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
+				reboot = 0;
 				put_sock(&cmd,1,1,errmsg);
+				put_sock(&reboot,1,1,errmsg);
 				close_sock();
 			}
 			destroy_menus();
@@ -572,7 +575,23 @@ call_Host(int code)
 			printf("\nDONE!\n");
 			break;
 
+// EXIT and reboot
 		case 5:
+			cmd =  EXIT_PROGRAM;
+			if(tcp_connected)
+			{
+				reboot = 1;
+				put_sock(&cmd,1,1,errmsg);
+				put_sock(&reboot,1,1,errmsg);
+				close_sock();
+			}
+			destroy_menus();
+			endwin();
+			ExitProgram(EXIT_SUCCESS);
+			printf("\nDONE!\n");
+			break;
+
+		case 6:
 			cmd = LCD_SHIFT_LEFT;
 			if(tcp_connected)
 			{
@@ -580,7 +599,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 6:
+		case 7:
 			cmd = LCD_SHIFT_RIGHT;
 			if(tcp_connected)
 			{
@@ -588,7 +607,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 7:
+		case 8:
 			cmd = SCROLL_UP;
 			if(tcp_connected)
 			{
@@ -596,7 +615,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 8:
+		case 9:
 			cmd = SCROLL_DOWN;
 			if(tcp_connected)
 			{
@@ -622,11 +641,12 @@ build_Host_menu(MenuNo number)
 		MY_DATA0("Save File"),					  // 1
 		MY_DATA0("Edit idata"),					  // 2
 		MY_DATA0("Edit odata"),					  // 3
-		MY_DATA0("Exit"),						  // 4
-		MY_DATA0("Shift Left"),					  // 5
-		MY_DATA0("Shift Right"),				  // 6
-		MY_DATA0("Scroll Up"),					  // 7
-		MY_DATA0("Scroll Down"),				  // 8
+		MY_DATA0("Exit to sh"),					  // 4
+		MY_DATA0("Exit & Reboot"),				  // 5
+		MY_DATA0("Shift Left"),					  // 6
+		MY_DATA0("Shift Right"),				  // 7
+		MY_DATA0("Scroll Up"),					  // 8
+		MY_DATA0("Scroll Down"),				  // 9
 		{(char *) 0, 0, 0}
 	};
 
@@ -1006,6 +1026,9 @@ build_Target_menu(MenuNo number)
 
 
 /*****************************************************************************/
+
+UCHAR buf[UPLOAD_BUFF_SIZE];
+
 static void
 call_Tool(int code)
 {
@@ -1023,6 +1046,11 @@ call_Tool(int code)
 	double curtime;
 	struct tm t;
 	struct tm *pt = &t;
+	char filename[20];
+	int fp;
+	off_t fsize;
+	int buf_bytes;
+	int buf_bytes2;
 
 	switch (code)
 	{
@@ -1032,16 +1060,16 @@ call_Tool(int code)
 			{
 				cmd = CLOSE_SOCKET;
 				put_sock(&cmd,1,1,errmsg);
-				usleep(100000);
+				usleep(1000);
 				close_sock();
-				usleep(100000);
+				usleep(1000);
 			}
 #ifdef MAKE_SIM
 			i = init_client(Host_Sim,errmsg);
 			show_status2("init_client",Host_Sim,i,0,0,2);
 #else
 			i = init_client(Host3,errmsg);
-			show_status2("init_client",HOST1,i,0,0,1);
+			show_status2("init_client",Host3,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1061,7 +1089,7 @@ call_Tool(int code)
 				show_status2("Disconnect","",code,0,i,2);
 				cmd = CLOSE_SOCKET;
 				put_sock(&cmd,1,1,errmsg);
-				usleep(100000);
+				usleep(1000);
 				close_sock();
 				tcp_connected = 0;
 			}
@@ -1188,6 +1216,7 @@ call_Tool(int code)
 			show_status2("send serial","",code,0,0,2);
 			break;
 
+		// TCP_WINDOW
 		case 13:
 			if(tcp_connected)
 			{
@@ -1201,6 +1230,77 @@ call_Tool(int code)
 			show_status2("done tcp win","",code,0,0,3);
 			break;
 
+		// UPLOAD_NEW
+		case 14:
+			if(tcp_connected)
+			{
+				show_status2("upload new sched","",code,0,0,1);
+				cmd = UPLOAD_NEW;
+				ret = put_sock(&cmd,1,1,errmsg);
+				strcpy(filename,"sched\0");
+				
+				if(access(filename,F_OK) != -1)
+				{
+					fp = open((const char *)filename, O_RDWR);
+					if(fp < 0)
+					{
+//						printf("can't open file for writing");
+						show_status2("can't open file for writing","",0,0,0,2);
+					}else
+					{
+						ret = 0;
+						fsize = lseek(fp,0,SEEK_END);
+//						printf("filesize: %ld\n",fsize);
+						show_status2("filesize: ","",fsize,0,0,2);
+
+						ret = put_sock((UCHAR *)&fsize,sizeof(off_t),1,errmsg);
+						// if server is 32-bit machine the sizeof(off_t) is 4
+						// but if client is 64-bit then sizeof(off_t) is 8
+						//			ret = put_sock((UCHAR *)&fsize,4,1,errmsg);
+						break;							
+						if(ret < 0)
+						{
+//							printf("%s\n",errmsg);
+							show_status2("put_sock error: ",errmsg,0,0,0,0);
+//							exit(1);
+						}
+//						printf("ret: %d\n",ret);
+						lseek(fp,0,SEEK_SET);
+
+						buf_bytes = (int)fsize;
+//						printf("starting buf_bytes: %d\n",buf_bytes);
+						show_status2("starting buf bytes: ","",buf_bytes,0,0,1);
+						usleep(1000000);
+						do
+						{
+							buf_bytes2 = (buf_bytes > UPLOAD_BUFF_SIZE?UPLOAD_BUFF_SIZE:buf_bytes);
+							buf_bytes -= UPLOAD_BUFF_SIZE;
+
+			//				printf("buf_bytes: %d %d ",buf_bytes2,buf_bytes);
+							ret = read(fp,&buf[0],buf_bytes2);
+
+							ret = put_sock((UCHAR *)&buf[0],buf_bytes2,1,errmsg);
+							usleep(10000);
+							if(ret < 0)
+							{
+//								printf("%s\n",errmsg);
+								show_status2("put_sock error:",errmsg,code,0,0,2);
+								exit(1);
+							}
+							show_status2("bytes","",ret,0,0,2);
+			//				else printf("ret: %d\n",ret);
+			//				printf("%s\n",errmsg);
+
+						}while(buf_bytes > 0);
+//						printf("\ndone\n");
+						close_sock();
+						close(fp);
+					}
+				}else show_status2("can't find file:",filename,code,0,0,2);
+			}else  show_status2("no tcp connection","",code,0,0,2);
+			break;
+				
+				
 		default:
 			break;
 	}
@@ -1230,6 +1330,7 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("Clear Screen"),				  // 11
 		MY_DATA2("Send Serial"),				  // 12
 		MY_DATA2("TCP Window"),					//13
+		MY_DATA2("Upload New"),					//14
 		{(char *) 0, 0, 0}
 	};
 

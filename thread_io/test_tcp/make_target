@@ -103,7 +103,8 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 BULD_TARGET = $(PROJECT)
 
 #all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4
-all :  test_inports test_ioports2 test_ioports4
+#all :  test_inports test_ioports2 test_ioports4
+all : server2
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
@@ -161,6 +162,7 @@ test_ioports4: test_ioports4.o
 
 clean :
 #	rm -f *.o *~ *# core client server client2 server2 test_write test_read test_inports test_ioports2
-	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
+#	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
+	rm -f *.o *~ *# core server2
 	
 

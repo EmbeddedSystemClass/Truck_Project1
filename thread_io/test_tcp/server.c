@@ -248,6 +248,7 @@ UCHAR *buf;
 int main(void)
 {
 	char test1;
+	UCHAR test2;
 	int rc;
 	int i,j;
 	char errmsg[20];
@@ -270,10 +271,11 @@ int main(void)
 	printf("%s\n",temp);
 #endif
 
-	rc = recv_tcp((UCHAR*)&fsize,sizeof(off_t),errmsg);
-	printf("sizeof(off_t): %d\n",sizeof(off_t));
+//	rc = recv_tcp((UCHAR*)&fsize,sizeof(off_t),errmsg);
+	rc = recv_tcp((UCHAR*)&fsize,8,errmsg);
+//	printf("sizeof(off_t): %d\n",sizeof(off_t));
 //	rc = recv_tcp((UCHAR*)&fsize,4,errmsg);
-
+	
 	if(rc < 0)
 	{
 		printf("%s\n",errmsg);
@@ -281,6 +283,13 @@ int main(void)
 	}
 
 	printf("fsize: %ld \n",fsize);
+	if(fsize <= 0)
+	{
+		printf("problem with fsize\n");
+		close(sd2);
+		close(fp);
+		return 1;
+	}	
 
 	buf = (UCHAR *)malloc(fsize);
 	if(buf < 0)
