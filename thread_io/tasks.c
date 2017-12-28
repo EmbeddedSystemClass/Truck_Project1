@@ -96,7 +96,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[37] =
+CMD_STRUCT cmd_array[38] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
@@ -130,6 +130,7 @@ CMD_STRUCT cmd_array[37] =
 	{   	SCROLL_DOWN,"SCROLL_DOWN\0" },
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
+	{   	GET_TIME,"GET_TIME\0" },
 	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
@@ -228,6 +229,7 @@ UCHAR get_host_cmd_task(int test)
 	int fp;
 	off_t fsize;
 	int cur_fsize;
+	struct timeval mtv;
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -291,7 +293,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 	myprintf1("start....\0");
-	myprintf1("sched v1.02\0");
+//	myprintf1("sched v1.02\0");
 
 	while(TRUE)
 	{
@@ -336,14 +338,22 @@ UCHAR get_host_cmd_task(int test)
 						rc = stime(&curtime2);
 //						printf("rc = %d\n",rc);
 						break;
+
+					case GET_TIME:
+						gettimeofday(&mtv, NULL);
+						curtime2 = mtv.tv_sec;
+						strftime(tempx,30,"%m-%d-%Y %T.",localtime(&curtime2));
+//						printf("%s\n",tempx);
+						myprintf1(tempx);
+						break;
 						
 					case SHOW_IDATA:
-						myprintf1("show I_DATA (tcp_win)\0");
+//						myprintf1("show I_DATA (tcp_win)\0");
 						illist_show(&ill);
 						break;
 
 					case SHOW_ODATA:
-						myprintf1("show O_DATA (tcp_win)\0");
+//						myprintf1("show O_DATA (tcp_win)\0");
 						ollist_show(&oll);
 						break;
 
@@ -351,7 +361,7 @@ UCHAR get_host_cmd_task(int test)
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 // blocking
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
-						myprintf3("send idata:\0" ,rec_no,rc);
+//						myprintf3("send idata:\0" ,rec_no,rc);
 						illist_insert_data(rec_no, &ill, &tempi1);
 //						illist_show(&ill);
 						break;
@@ -361,14 +371,14 @@ UCHAR get_host_cmd_task(int test)
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 // blocking
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
-						myprintf3("send odata\0",rec_no,rc);
+//						myprintf3("send odata\0",rec_no,rc);
 						ollist_insert_data(rec_no, &oll, &tempo1);
 //						memcpy(pod,&tempo1,sizeof(O_DATA));
 //						ollist_show(&oll);
 						break;
 
 					case SEND_ALL_IDATA:
-						myprintf1("send all IDATA:\0");
+//						myprintf1("send all IDATA:\0");
 						rc = 0;
 						itp = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -376,11 +386,11 @@ UCHAR get_host_cmd_task(int test)
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
 							illist_insert_data(i,&ill,itp);
 						}
-						myprintf1("done\0");
+//						myprintf1("done\0");
 						break;
 
 					case SEND_ALL_ODATA:
-						myprintf1("send all ODATA: \0");
+//						myprintf1("send all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -388,7 +398,7 @@ UCHAR get_host_cmd_task(int test)
 							rc += recv_tcp((UCHAR *)otp,sizeof(O_DATA),1);
 							ollist_insert_data(i,&oll,otp);
 						}
-						myprintf1("done\0");
+//						myprintf1("done\0");
 						break;
 
 					case RECV_ALL_IDATA:
@@ -396,7 +406,7 @@ UCHAR get_host_cmd_task(int test)
 						itp = &tempi1;
 						recv_tcp((UCHAR*)&uch_fname_index,1,1);
 //						printf("%d\n",uch_fname_index);
-						myprintf1("recv all IDATA: \0");
+//						myprintf1("recv all IDATA: \0");
 //						myprintf2("index: \0",fname_index);
 						if(uch_fname_index > 0 && uch_fname_index < NUM_DAT_NAMES)
 						{
@@ -409,15 +419,15 @@ UCHAR get_host_cmd_task(int test)
 							illist_find_data(i,&itp,&ill);
 							rc += send_tcp((UCHAR *)itp,sizeof(I_DATA));
 						}
-						myprintf1("done\0");
+//						myprintf1("done\0");
 						break;
 
 					case RECV_ALL_ODATA:
-						myprintf1("recv all ODATA: \0");
+//						myprintf1("recv all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						recv_tcp((UCHAR*)&uch_fname_index,1,1);
-						myprintf2("index: \0",uch_fname_index);
+//						myprintf2("index: \0",uch_fname_index);
 						if(uch_fname_index > 0)
 						{
 							uch_fname_index--;
@@ -429,7 +439,7 @@ UCHAR get_host_cmd_task(int test)
 							ollist_find_data(i,&otp,&oll);
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
-						myprintf1("done\0");
+//						myprintf1("done\0");
 						break;
 
 					case SEND_SERIAL:
@@ -566,7 +576,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SHUTDOWN:
-						myprintf1("shutdown\0");
+//						myprintf1("shutdown\0");
 						otp = &tempo1;
 						for(i = STARTER;i < PRELUBE+1;i++)
 						{

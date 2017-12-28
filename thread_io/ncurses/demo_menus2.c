@@ -745,7 +745,7 @@ call_Target(int code)
 					error = get_sock((UCHAR *)&dat_type[i],1,1,errmsg);
 					if(error < 0)
 						mvprintw(LINES-2,2,"%s",errmsg);
-					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
+//					mvprintw(LINES-2-i,1,"%2x  ",dat_type[i]);
 				}
 			}
 			refresh();
@@ -904,11 +904,11 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				illist_find_data(i, itpp, &ill2);
-				mvprintw(LINES-2-i,2,"%d %d %s ",itp->port,itp->affected_output,itp->label);
+//				mvprintw(LINES-2-i,2,"%d %d %s ",itp->port,itp->affected_output,itp->label);
 //				put_sock((UCHAR*)&i_data,sizeof(I_DATA),1,errmsg);
 				put_sock((UCHAR*)itp,sizeof(I_DATA),1,errmsg);
 			}
-			refresh();
+//			refresh();
 			break;
 
 // SEND ODATA
@@ -922,25 +922,25 @@ call_Target(int code)
 			for(i = 0;i < NUM_PORT_BITS;i++)
 			{
 				ollist_find_data(i,otpp,&oll2);
-				mvprintw(LINES-2-i,2,"%2d %2d %s           ",otp->port,otp->onoff,otp->label);
+//				mvprintw(LINES-2-i,2,"%2d %2d %s           ",otp->port,otp->onoff,otp->label);
 //				put_sock((UCHAR*)&o_data,sizeof(O_DATA),1,errmsg);
 				put_sock((UCHAR*)otp,sizeof(O_DATA),1,errmsg);
 			}
-			refresh();
+//			refresh();
 			break;
 
 // SHOW ALL
 		case 8:
 			cmd = SHOW_IDATA;
 			put_sock(&cmd,1,1,errmsg);
-			show_status2("show idata tcp win","",code,0,0,1);
+//			show_status2("show idata tcp win","",code,0,0,1);
 			tcp_win(SHOW_IDATA);
 			break;
 
 		case 9:
 			cmd = SHOW_ODATA;
 			put_sock(&cmd,1,1,errmsg);
-			show_status2("show odata tcp win","",code,0,0,1);
+//			show_status2("show odata tcp win","",code,0,0,1);
 			tcp_win(SHOW_ODATA);
 			break;
 //			j = ilLoadConfig(iFileName,&ill,isize,errmsg);
@@ -1080,6 +1080,8 @@ call_Tool(int code)
 					tcp_connected = 0;
 			}
 			show_status2("Connect","errmsg",i,j,tcp_connected,0);
+			cmd = GET_TIME;
+			put_sock(&cmd,1,1,errmsg);
 			break;
 
 // DISCONNECT
@@ -1124,6 +1126,8 @@ call_Tool(int code)
 //				refresh();
 			}
 //			show_status2("set time  ","",code,0,0,2);
+			cmd = GET_TIME;
+			put_sock(&cmd,1,1,errmsg);
 			break;
 
 		case 3:
