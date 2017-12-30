@@ -144,7 +144,7 @@ rdwr.o: queue/rdwr.c queue/rdwr.h
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
 
-lcd_func.o: lcd_func.h
+lcd_func.o: lcd_func.c lcd_func.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
 
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o

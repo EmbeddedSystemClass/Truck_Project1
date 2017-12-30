@@ -978,6 +978,7 @@ UCHAR serial_recv_task(int test)
 		printf("can't open comm port\n");
 		return 0;
 	}
+	printString2("serial_recv_task started");
 
 #if 0
 	while(TRUE)
@@ -1038,7 +1039,7 @@ UCHAR serial_recv_task(int test)
 #endif
 		if(shutdown_all)
 		{
-//			printf("shutting down serial task\n");
+			printString2("shutting down serial task");
 			close_serial();
 //			printf("serial port closed\n");
 			return 0;
@@ -1070,6 +1071,7 @@ UCHAR serial_recv_task2(int test)
 		printf("can't open comm port\n");
 		return 0;
 	}
+	printString2("serial_recv_task2 started");
 
 	while(TRUE)
 	{
@@ -1096,7 +1098,7 @@ UCHAR serial_recv_task2(int test)
 
 		if(shutdown_all)
 		{
-//			printf("shutting down serial task\n");
+			printString2("shutting down serial task");
 			close_serial2();
 //			printf("serial port closed\n");
 			return 0;

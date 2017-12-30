@@ -217,7 +217,7 @@ int write_serial2(UCHAR byte)
 }
 
 /************************************************************************************/
-void printString2(const char myString[])
+void printString2(char *myString)
 {
 	UCHAR i = 0;
 	while(myString[i])
@@ -225,6 +225,7 @@ void printString2(const char myString[])
 		write_serial2(myString[i]);
 		i++;
 	}
+	write_serial2(0xfe);
 }
 
 /************************************************************************************/

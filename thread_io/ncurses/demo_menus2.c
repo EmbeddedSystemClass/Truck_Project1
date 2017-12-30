@@ -1241,7 +1241,7 @@ call_Tool(int code)
 			if(tcp_connected)
 			{
 				show_status2("upload new sched","",code,0,0,1);
-
+				strcpy(filename,"sched\0");
 				if(access(filename,F_OK) != -1)
 				{
 					fp = open((const char *)filename, O_RDWR);

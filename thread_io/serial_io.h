@@ -3,7 +3,7 @@
 
 int init_serial2(void);
 int write_serial2(UCHAR byte);
-void printString2(const char myString[]);
+void printString2(char *myString);
 UCHAR read_serial2(char *errmsg);
 void close_serial2(void);
 int global_handle2;

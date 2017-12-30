@@ -10,16 +10,16 @@
 #include <string.h>
 #include "mytypes.h"
 #include "lcd_func.h"
+#include "serial_io.h"
 
 #ifndef TS_7800
 
-#define LCD_BUF_LINES 20
+#define LCD_BUF_LINES 30
 #define LCD_BUF_COLS 32
-static int line;
-static int col;
 static UCHAR buffer[LCD_BUF_LINES][LCD_BUF_COLS];
 static UCHAR *buf_ptr;
 static int cur_buf_line;
+static int cur_disp_line;
 static int cur_buf_size;
 
 /*********************************************************************************************************/
@@ -27,11 +27,9 @@ void lcd_init(void)
 {
 	lcdinit();
 	lcd_wait();
-	line = 0;
-	col = 0;
 	memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
 	buf_ptr = buffer[0];
-	cur_buf_line = cur_buf_size = 0;
+	cur_disp_line = cur_buf_line = cur_buf_size = 0;
 	lcd_enabled = 1;
 }
 
@@ -50,21 +48,10 @@ void lcd_cls(void)
 		return;
 	lcd_cmd(CLEAR);
 	lcd_cmd(HOME);
-	col = line = 0;
+	memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
+	buf_ptr = buffer[0];
+	cur_disp_line = cur_buf_line = cur_buf_size = 0;
 }
-
-/*********************************************************************************************************/
-static void add_col(void)
-{
-	if(col > 103)
-		col = 0;
-
-	if(col > 39 && col < 64)
-	{
-		col = 64;
-	}
-}
-
 /**********************************************************************************************************/
 int myprintf1(char *str)
 {
@@ -81,8 +68,10 @@ int myprintf1(char *str)
 //	printf("%d\n",cur_buf_line);
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
-	sprintf((char*)buffer[cur_buf_line],"%s",str);
+	sprintf((char*)buffer[cur_buf_line],"%d: %s",cur_disp_line,str);
 	display_current(0);
+	
+	printString2(str);
 	return 1;
 }
 
@@ -100,7 +89,7 @@ int myprintf2(char *str, int x)
 		return 1;
 	}
 
-	sprintf(temp,"%s",str);
+	sprintf(temp,"%d: %s",cur_disp_line, str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	cur_buf_line = cur_buf_size;
@@ -108,6 +97,7 @@ int myprintf2(char *str, int x)
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
+	printString2(temp);
 	return 0;
 }
 
@@ -130,13 +120,14 @@ int myprintf3(char *str, int x, int y)
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 
-	sprintf(temp,"%s",str);
+	sprintf(temp,"%d: %s",cur_disp_line,str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	sprintf(temp2,"% d",y);
 	strcat(temp,temp2);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
+	printString2(temp);
 	return 0;
 }
 
@@ -154,7 +145,12 @@ static void inc_bufptrs(void)
 	cur_buf_size = (cur_buf_size>=LCD_BUF_LINES-1?LCD_BUF_LINES-1:++cur_buf_size);
 
 	if(++cur_buf_line >= LCD_BUF_LINES-1)
+	{
 		cur_buf_line = LCD_BUF_LINES-1;
+	}
+	
+	if(++cur_disp_line > LCD_BUF_LINES)
+		cur_disp_line = 0;
 
 //	printf("cur_buf_size: %d cur_buf_line %d (inc)\n",cur_buf_size,cur_buf_line);
 }
@@ -166,7 +162,6 @@ static void display_current(int special_case)
 
 	lcd_cmd(CLEAR);
 	lcd_cmd(HOME);
-	col = line = 0;
 
 //	printf("cur_buf_size: %d cur_buf_line %d\n",cur_buf_size,cur_buf_line);
 
