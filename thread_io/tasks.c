@@ -295,7 +295,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 	myprintf1("start....\0");
-//	myprintf1("sched v1.02\0");
+	myprintf1("sched v1.03\0");
 
 	while(TRUE)
 	{
@@ -344,43 +344,40 @@ UCHAR get_host_cmd_task(int test)
 					case GET_TIME:
 						gettimeofday(&mtv, NULL);
 						curtime2 = mtv.tv_sec;
-						strftime(tempx,30,"%m-%d-%Y %T.",localtime(&curtime2));
+						strftime(tempx,30,"%m-%d-%Y %T.\0",localtime(&curtime2));
 //						printf("%s\n",tempx);
 						myprintf1(tempx);
 						break;
 						
 					case SHOW_IDATA:
 //						myprintf1("show I_DATA (tcp_win)\0");
+						printString2("show I_DATA\0");	
 						illist_show(&ill);
 						break;
 
 					case SHOW_ODATA:
 //						myprintf1("show O_DATA (tcp_win)\0");
+						printString2("show O_DATA\0");
 						ollist_show(&oll);
 						break;
 
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-// blocking
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
-//						myprintf3("send idata:\0" ,rec_no,rc);
 						illist_insert_data(rec_no, &ill, &tempi1);
-//						illist_show(&ill);
+						illist_show(&ill);
 						break;
 
 					case SEND_ODATA:
 // update a single ODATA record
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-// blocking
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
-//						myprintf3("send odata\0",rec_no,rc);
 						ollist_insert_data(rec_no, &oll, &tempo1);
-//						memcpy(pod,&tempo1,sizeof(O_DATA));
-//						ollist_show(&oll);
+						ollist_show(&oll);
 						break;
 
 					case SEND_ALL_IDATA:
-//						myprintf1("send all IDATA:\0");
+						printString2("send all IDATA:\0");
 						rc = 0;
 						itp = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -388,11 +385,11 @@ UCHAR get_host_cmd_task(int test)
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
 							illist_insert_data(i,&ill,itp);
 						}
-//						myprintf1("done\0");
+						printString2("done\0");
 						break;
 
 					case SEND_ALL_ODATA:
-//						myprintf1("send all ODATA: \0");
+						printString2("send all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -425,7 +422,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case RECV_ALL_ODATA:
-//						myprintf1("recv all ODATA: \0");
+						printString2("recv all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						recv_tcp((UCHAR*)&uch_fname_index,1,1);
@@ -441,12 +438,12 @@ UCHAR get_host_cmd_task(int test)
 							ollist_find_data(i,&otp,&oll);
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
-//						myprintf1("done\0");
+						printString2("done\0");
 						break;
 
 					case SEND_SERIAL:
 						test2 = 0x21;
-//#if 0
+#ifdef CONSOLE_DISABLED
 						pthread_mutex_lock( &serial_write_lock);
 						for(i = 0;i < 4*93;i++)
 						{
@@ -455,7 +452,7 @@ UCHAR get_host_cmd_task(int test)
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
-#if CONSOLE_DISABLED
+#endif
 						test2 = 0x7e;
 						for(i = 0;i < 4*93;i++)
 						{
@@ -464,7 +461,6 @@ UCHAR get_host_cmd_task(int test)
 							if(--test2 < 0x21)
 								test2 = 0x7e;
 						}
-#endif
 						pthread_mutex_unlock(&serial_write_lock);
 //#endif
 						break;
@@ -654,15 +650,22 @@ exit_program:
 						if(cmd == UPLOAD_NEW)
 						{
 							reboot_on_exit = 1;
-							myprintf1("rebooting...");
-//							printf("rebooting...");
+							myprintf1("rebooting...\0");
+							printString2("rebooting...\0");
 						}
 						else
 						{
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 							if(reboot_on_exit == 0)
-								myprintf1("exit to shell");
-							else myprintf1("rebooting...");	
+							{
+								myprintf1("exit to shell\0");
+								printString2("exit to shell\0");
+							}	
+							else
+							{
+								myprintf1("rebooting...\0");
+								printString2("rebooting...\0");
+							}
 						}
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
@@ -890,6 +893,7 @@ type:
 					change_output(STARTER, 0);
 					ollist_change_output(STARTER, &oll, 0);
 					myprintf1("STARTER OFF\0");
+					printString2("STARTER OFF\0");
 				}
 			}
 			if(shutdown_all)
@@ -966,6 +970,13 @@ UCHAR serial_recv_task(int test)
 	int fd;
 	char errmsg[20];
 
+// if console is enabled then we don't use 1st serial port because
+// console is using it
+#ifndef CONSOLE_DISABLED
+	printf("console enabled\n");
+	return 0;
+#endif
+
 	memset(serial_buff,0,SERIAL_BUFF_SIZE);
 	no_serial_buff = 0;
 	memset(errmsg,0,20);
@@ -974,8 +985,8 @@ UCHAR serial_recv_task(int test)
 
 	if(fd = init_serial() < 0)
 	{
-		myprintf1("can't open comm port\0");
-		printf("can't open comm port\n");
+		myprintf1("can't open comm port 1\0");
+		printf("can't open comm port 1\n");
 		return 0;
 	}
 	printString2("serial_recv_task started");
@@ -1067,8 +1078,8 @@ UCHAR serial_recv_task2(int test)
 
 	if(fd = init_serial2() < 0)
 	{
-		myprintf1("can't open comm port\0");
-		printf("can't open comm port\n");
+		myprintf1("can't open comm port 2\0");
+		printf("can't open comm port 2\n");
 		return 0;
 	}
 	printString2("serial_recv_task2 started");

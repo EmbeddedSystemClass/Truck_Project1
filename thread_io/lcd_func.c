@@ -57,6 +57,7 @@ int myprintf1(char *str)
 {
 	char *ptr = str;
 	char temp[2];
+	char temp2[35];
 
 	if(!lcd_enabled)
 	{
@@ -71,7 +72,8 @@ int myprintf1(char *str)
 	sprintf((char*)buffer[cur_buf_line],"%d: %s",cur_disp_line,str);
 	display_current(0);
 	
-	printString2(str);
+	sprintf(temp2,"%d: %s",cur_disp_line,str);
+	printString2(temp2);
 	return 1;
 }
 

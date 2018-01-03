@@ -66,3 +66,4 @@ int ollist_toggle_output(int index, ollist_t *llistp);
 int ollist_change_output(int index, ollist_t *llistp, int onoff);
 int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp);
 int ollist_show(ollist_t *llistp);
+

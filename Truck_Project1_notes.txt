@@ -30,7 +30,7 @@ UART3 - RS232 to TS-7200
 
 UART1 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
 UART2 goes straight to serial port on AVR (may need pull-ups)
-UART3 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
+UART3 uses 3v3 -> 5v -> RS-232 -> TS-7XXX
 
 There is an SPI bus from the PIC24 to the FPGA: FPGA is master while PIC24 is slave.
 SPI from FPGA (master) to AVR (slave)
@@ -683,19 +683,11 @@ TS-7800 has (2) SATA connectors for SSD drives.
 One of the TS-7200's have the PC104 pins going thru the bottom - we could put the bat3
 on top of it and the other IO boards underneath which might be safer.
 
-Look into the copy_tcp utility and add some error checking (not working right).
-
 Find out how to get TS-7200 to use the pthreadlib in its lib dir so we don't have to
 send it over as a static.
 
-Look into auto-start for Linux on TS-7xxx.
-
 Instead of ncurses program running on laptop, just gen up a PHP web interface and use
 the brower. (see dev2/TS-7260/www/)
-
-Have 1 or more TS-7xxx cards in the box but just on diff. ethernet addresses and use the
-D-link box. They would have to have scripts to start them up everytime. (use ssh to 
-shutdown)
 
 make an extra field in the O_DATA and I_DATA structs called group for acting on a group
 
@@ -742,16 +734,6 @@ on the display or have the input from the rpm/mph going to both the FPGA and the
 just for redundancy. Use the timers on the AVR to calc the rpm/mph. 
 (or use the 3rd serial line from the PIC24 which was supposed to go to the monitor)
 
-Use LCD port on TS-7200 with HD44780 2x16 line LCD as output from sched (in lieu of printf's)
-and then use 2-4 buttons on TS-7200 box going to DIO port as inputs to use as scroll up,
-down, etc. Print error and status msg's to fifo buffer so user can scroll back up the list.
-Another button shifts to left to see whole msg. This allows the one serial port on the 
-TS-7200 to be free'd up by the console (JP2) or at least the one or two that only have 1
-serial port. The TS-7800 has 2 (or at least 2 headers)
-
-Make one of the DIO ports and output to be used as a blinker (I'm alive) LED blinked by
-the timer task.
-
 ***************** unrelated ********************
 
 Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
@@ -776,7 +758,7 @@ Use old computer case as box for home automation - use TS-7200 with (2) IO cards
 relay boards.
 
 IO card at 0x280	->		(2) 8-relay & (2) 2-relay boards
-IO card at 0x3000	->		(2) 8-relay & (2) 2-relay boards
+IO card at 0x300	->		(2) 8-relay & (2) 2-relay boards
 TS-7200
 
 A cigar box near door has 6 push-button switches that can either connect directly to the main box
@@ -785,8 +767,4 @@ we could have a small LCD screen on the cigar box driven by the AVR.
 
 Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
 a Pro-Mini. 
-
-
-
-
 

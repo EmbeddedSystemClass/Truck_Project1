@@ -92,7 +92,7 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes	doesn't compile "// ..comments.."
 # gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
 # gcc3/4 doesn't work with -mapcs-32
-#use this for TS-7200
+#use this for TS-7200 with console enabled
 #CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7200 with console disabled
 CC_FLAGS = -DCONSOLE_DISABLED -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t

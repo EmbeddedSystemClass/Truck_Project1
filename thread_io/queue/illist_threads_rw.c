@@ -236,9 +236,11 @@ int illist_show(illist_t *llistp)
 			 	iptr++;
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
+			printString2(list_buf);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
 	return 0;
 }
+
 #endif
