@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,19 +89,20 @@ void set_blocking (int fd, int should_block)
                 printf ("error %d setting term attributes", errno);
 }
 
-
-int main(void)
+int main(int argc, char *argv[])
 {
-	int fd,c, res, res2;
+	int fd, c, res, res2;
 	int i,j;
 	unsigned char ch;
-	struct termios oldtio,newtio;
+	struct termios oldtio;
 	unsigned char buf[LEN];
-	memset(&newtio, 0, sizeof newtio);
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd <0) {perror(MODEMDEVICE);
-		exit(-1); }
+	if (fd2 <0) 
+	{
+		perror(MODEMDEVICE);
+		exit(-1);
+	}
 
 #ifdef MAKE_TARGET
 	printf("\nopened ttyAM1\n");

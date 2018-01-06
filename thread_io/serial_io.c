@@ -108,10 +108,8 @@ int init_serial(void)
 	printf("console enabled\n");
 	return -1;
 #else
-	struct termios newtio;
 	char buf[LEN];
 	UCHAR test = 0x21;
-	memset(&newtio, 0, sizeof newtio);
 	global_handle = -1;
 
 	global_handle = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
@@ -121,7 +119,7 @@ int init_serial(void)
 		exit(-1);
 	}
 #endif
-//	printf("global_handle = %d\n",global_handle);
+//	printf("global_handle = %d\nse",global_handle);
 
 	if(tcgetattr(global_handle,&oldtio) != 0)	  /* save current port settings */
 	{
@@ -189,10 +187,8 @@ void close_serial(void)
 /************************************************************************************/
 int init_serial2(void)
 {
-	struct termios newtio;
 	char buf[LEN];
 	UCHAR test = 0x21;
-	memset(&newtio, 0, sizeof newtio);
 	global_handle2 = -1;
 
 // undef this section if console disabled just so it can compile with the console enabled

@@ -1,0 +1,156 @@
+AtMega328p pinout (Pro Mini Board)
+11/24/16
+
+bottom view of chip:
+(connections for buspirate on left)
+(pins for RX/TX on right)
+
+RD	*	*	*	WR	CE	RST	CD	*	*	GND	+5V
+
+A5		A7
+A4		A6
+------------
+VCC		MISO
+MOSI	CLK
+GND		RST
+
+DATA7--------------------DATA0	*	*	*	*
+
+
+2	data 0
+3	data 1
+4	data 2
+5	data 3
+6	data 4
+7	data 5
+8	data 6
+9	data 7
+10	LCD_RD	SS	-- these are used by the programmer but if programmer is not plugged in
+11	MOSI		-- they can be used by the application
+12	MISO		--
+13	SCK			--
+A0	LCD_WR
+A1	LCD_CE
+A2	LCD_RST
+A3	LCD_CD
+A4	
+A5
+A6
+A7
+DTR
+TXD
+RXD
+MIS		-		goes to MISO on buspirate*	(same as pin 11)
+MOS		-		goes to MOSI on buspirate*	(same as pin 12)
+SCK		-		goes to CLK  "		"		(same as pin 13)
+VCC		-		goes to VCC	 "		"
+GND		-		goes to GND	 "		"
+RESET	-		goes to CS   "      "
+RAW		-		+5v input
+
+* most documentation shows MISO<-->MOSI and MOSI<-->MISO wtf?
+
+pinout for actual chip
+1	PD3		(PCINT19/OC2B/INT1)
+2	PD4		(PCINT20/XCK/TO)
+3	GND
+4	VCC
+5	GND
+6	VCC
+7	PB6		(PCINT6/XTAL1/TOSC1)
+8	PB7		(PCINT7/XTAL2/TOSC2)
+9	PD5		(PCINT21/OC0B/TI)
+10	PD6		(PCINT22/OC0A/AIN0)
+11	PD7		(PCINT23/AIN1)
+12	PB0		(PCINT0/CLK0/ICP1)
+13	PB1		(PCINT1/OC1A)
+14	PB2		(PCINT2/SS/OC1B)
+15	PB3		(PCINT3/OC2A/MOSI)
+16	PB4		(PCINT4/MISO)
+17	PB5		(SCK/PCINT5)
+18	AVCC
+19	ADC6
+20	AREF
+21	GND
+22	ADC7
+23	PC0		(ADC0/PCINT8)
+24	PC1		(ADC1/PCINT9)
+25	PC2		(ADC2/PCINT10)
+26	PC3		(ADC3/PCINT11)
+27	PC4		(ADC4/SDA/PCINT12)
+28	PC5		(ADC5/SCL/PCINT13)
+29	PC6		(RESET/PCINT14)
+30	PD0		(RXD/PCINT16)
+31	PD1		(TXD/PCINT17)
+32	PD2		(INT0/PCINT18)
+
+port B
+12	PB0		(PCINT0/CLK0/ICP1)
+13	PB1		(PCINT1/OC1A)
+14	PB2		(PCINT2/SS/OC1B)
+15	PB3		(PCINT3/OC2A/MOSI)
+16	PB4		(PCINT4/MISO)
+17	PB5		(SCK/PCINT5)
+7	PB6		(PCINT6/XTAL1/TOSC1)
+8	PB7		(PCINT7/XTAL2/TOSC2)
+
+port C
+23	PC0		(ADC0/PCINT8)
+24	PC1		(ADC1/PCINT9)
+25	PC2		(ADC2/PCINT10)
+26	PC3		(ADC3/PCINT11)
+27	PC4		(ADC4/SDA/PCINT12)
+28	PC5		(ADC5/SCL/PCINT13)
+29	PC6		(RESET/PCINT14)
+
+port D
+30	PD0		(RXD/PCINT16)
+31	PD1		(TXD/PCINT17)
+32	PD2		(INT0/PCINT18)
+1	PD3		(PCINT19/OC2B/INT1)
+2	PD4		(PCINT20/XCK/TO)
+9	PD5		(PCINT21/OC0B/TI)
+10	PD6		(PCINT22/OC0A/AIN0)
+11	PD7		(PCINT23/AIN1)
+
+BusPirate pinout
+(ribbon cable colors - starting from right when looking at top of board with ICD connection towards you)
+light brown		GND		(black mini clip)
+red				3v3
+orange			+5v**
+yellow			ADC0
+green			VPU
+blue			AUX
+purple			CLK		(other green clip)
+grey			MOSI	(yellow clip)
+white			CS		(white clip)
+black			MISO	(black regular clip)
+
+** don't hook this up from buspirate, but put VCC from AVR to separate 5v power supply (RAW)
+
+other chip (Mini Pro) has connections on side for FTDI:
+
+FTDI USB-to-TTL: TX (yellow) -> Arduino Mini Pro RX
+FTDI USB-to-TTL: RX (green) -> Arduino Mini Pro TX
+FTDI USB-to-TTL: GND (brown) -> Arduino Mini Pro GND
+FTDI USB-to-TTL: +5Vcc (red) -> Arduino Mini Pro VCC
+FTDI USB-to-TTL: DTR (orange) -> Arduino Mini Pro Reset
+FTDI USB-to-TTL: CTS (non connected)
+
+(new Pro-Mini)
+note: be sure and change the clock speed in the Makefile (slow for older one)
+pin labels on bottom left with reset button on left
+13 - SCK
+12 - MISO
+11 - MOSI
+10 - SS
+reset - CS (when programming otherwise when using as SPI this goes to SS?)
+
+1 2 3 4 5 6
+1) MOSI			- 11 MOSI yellow clip
+2) MISO			- 12 MISO black regular clip
+3) CLK			- 13 SCLK other green clip
+4) RST			- white clip
+5) GND
+6) not connected
+

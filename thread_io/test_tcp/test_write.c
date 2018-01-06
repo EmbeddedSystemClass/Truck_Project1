@@ -96,9 +96,8 @@ int main(void)
 	int fd,c, res, res2;
 	int i,j;
 	unsigned char ch;
-	struct termios oldtio,newtio;
+	struct termios oldtio;
 	unsigned char buf[LEN];
-	memset(&newtio, 0, sizeof newtio);
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd <0) {perror(MODEMDEVICE);
