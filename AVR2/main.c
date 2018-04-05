@@ -2,18 +2,20 @@
 //******************************************************************************************//
 //*************************************** main.c  ******************************************//
 //******************************************************************************************//
-// for programming AVR:
-//first pin: 	10 SS		(not connected to buspirate)
-//				11 MOSI		yellow clip
-//				12 MISO		black regular clip
-//				13 SCLK		other green clip
-//				RST			whilte clip
+//LM34 -	Vout = 3v @ 300F
+//			Vout = 750mV @ 75F
+//			Vout = -500mV @ -50F
+//			0.01V/degree F
+//			0F = 0.5V
+//			100F = 1.5V
+//			250F = 2.5V
 
-// for running AVR:
-//	GRN		first pin
-//	YEL
-//	BLK
-//	RED
+//LM35 -	-55 -> 150c
+//			0.01v/degree C
+//			0C	= 0.55V
+//			150C = 1.5V
+//			25C	= 0.25V
+//			-55C = -550mV
 
 #include <avr/io.h>
 #include "/home/dan/dev/Atmel_other/avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
@@ -28,8 +30,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define LED_PORT PORTB
+#define LED_DDR DDRB
 #define LEN 100
-int channels[8][LEN];
+//int channels[8][LEN];
+char test_string[] = "what the fuck?\0";
 
 //char eepromString[EEPROM_SIZE] EEMEM;
 
@@ -48,18 +53,18 @@ int main(void)
 	UCHAR xbyte;
 	UINT read_byte;
 	uint8_t channel;
-
+	
+	LED_DDR = 0xff;
 /*
 	for(j = 0;j < 8;j++)
 		for(i = 0;i < LEN;i++)
 			channels[j][i] = j+i;
 */
 	// Set up ADC
-	ADMUX |= (1 << REFS0);                  /* reference voltage on AVCC */
-	ADCSRA |= (1 << ADPS1) | (1 << ADPS0);     /* ADC clock prescaler /8 */
-	ADCSRA |= (1 << ADEN);                                 /* enable ADC */
-
-	_delay_ms(20);
+//	ADMUX |= (1 << REFS0) | (1 << REFS1);       /* reference voltage on AVCC  (1.1V) */
+//	ADMUX |= (1 << REFS0);
+//	ADCSRA |= (1 << ADPS1) | (1 << ADPS0);     /* ADC clock prescaler /8 */
+//	ADCSRA |= (1 << ADEN);                                 /* enable ADC */
 	initUSART();
 //******************************************************************************************//
 //*********************************** start of main loop ***********************************//
@@ -69,18 +74,25 @@ int main(void)
 	xbyte = 0x21;
 	read_byte = 0;	
 	channel = 0;
-//	printString("\r\nstarting...\r\n");
 
+	for(i = 0;i < sizeof(test_string);i++)
+		transmitByte(test_string[i]);
+	printString("\n\rWhat the fuck?\r\r\n\r");
 	while (1)
 	{
-//		if(++xbyte > 0x7e)
-//			xbyte = 0x21;
-		read_byte = readADC(channel);
-		if(++channel > 7)
-			channel = 0;
 
-		if(++i > LEN)
-			i = 0;			
+		if(++xbyte > 0x7e)
+			xbyte = 0x21;
+		LED_PORT = 1;
+		_delay_ms(1);
+		transmitByte(xbyte);	
+		LED_PORT = 0;
+		_delay_ms(1);
+/*
+		read_byte = readADC(channel);
+
+//		if(++channel > 7)
+//			channel = 0;
 
 		transmitByte(0x55);
 		_delay_ms(1);
@@ -88,16 +100,14 @@ int main(void)
 		_delay_ms(1);
 		transmitByte(channel);
 		_delay_ms(1);
-//		read_byte = channels[channel][i];
+
 		transmitByte((UCHAR)(read_byte >> 8));
 		_delay_ms(1);
 		transmitByte((UCHAR)read_byte);
+
 		if(channel == 7)
-			_delay_ms(700);
-//		xbyte = SPI_read();
-//		_delay_ms(500);
-//		SPI_write(xbyte);
-//		transmitByte(xbyte);
+			_delay_ms(1000);
+*/
 	}
 	return (0);									  // this should never happen
 }

@@ -5,6 +5,7 @@ bottom view of chip:
 (connections for buspirate on left)
 (pins for RX/TX on right)
 
+(these signals are used by LCD)
 RD	*	*	*	WR	CE	RST	CD	*	*	GND	+5V
 
 A5		A7
@@ -15,7 +16,6 @@ MOSI	CLK
 GND		RST
 
 DATA7--------------------DATA0	*	*	*	*
-
 
 2	data 0
 3	data 1
@@ -126,6 +126,10 @@ grey			MOSI	(yellow clip)
 white			CS		(white clip)
 black			MISO	(black regular clip)
 
+AVR		 BP
+MOSI <-> MOSI
+MISO <-> MISO
+
 ** don't hook this up from buspirate, but put VCC from AVR to separate 5v power supply (RAW)
 
 other chip (Mini Pro) has connections on side for FTDI:
@@ -138,6 +142,35 @@ FTDI USB-to-TTL: DTR (orange) -> Arduino Mini Pro Reset
 FTDI USB-to-TTL: CTS (non connected)
 
 (new Pro-Mini)
+(looking at top with reset button on bottom)
+labels:
+TX0		RAW
+RXI		GND
+RST		RST
+GND		VCC
+2		A3
+3		A2
+4		A1
+5		A0
+6		13
+7		12
+8		11
+9		10
+
+PORTS:
+PD1		RAW
+PD0		GND
+PC6		PC6
+GND		VCC
+PD2		PC3
+PD3		PC2
+PD4		PC1
+PD5		PC0
+PD6		PB5
+PD7		PB4
+PB0		PB3
+PB1		PCB2
+
 note: be sure and change the clock speed in the Makefile (slow for older one)
 pin labels on bottom left with reset button on left
 13 - SCK

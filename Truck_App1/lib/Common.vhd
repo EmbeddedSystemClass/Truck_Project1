@@ -37,26 +37,28 @@ package CommonPckg is
 	constant HIZ  : std_logic := 'Z';
 
 	constant TIME_DELAY0: integer:= 40000;
--- 16 bits = FFFF (65,535)	1210us
--- 17 bits = 1FFFF (131,071)  2521us
--- 18 bits = 3FFFF (262,143)  5.14ms
--- 19 bits = 7FFFF (524,287)  10.38ms
--- 20 bits = FFFFF (1,048,575)  ~21ms
--- 21 bits = 1FFFFF (2,097,151)  ~42ms
--- 22 bits = 3FFFFF (4,191,303)  ~84ms
--- 23 bits = 7FFFFF (8,388,607)  ~168ms
--- 24 bits = FFFFFF (16,777,215) ~335ms
--- 25 bits = 1FFFFFF (33,554,431) ~670ms
+-- 16 bits = FFFF (65,535)		~1.5ms
+-- 17 bits = 1FFFF (131,071)  5.2ms
+-- 18 bits = 3FFFF (262,143)  10.4ms
+-- 19 bits = 7FFFF (524,287)  20.8ms
+-- 20 bits = FFFFF (1,048,575)  41.6ms
+-- 21 bits = 1FFFFF (2,097,151)  83.2ms
+-- 22 bits = 3FFFFF (4,191,303)  166.2ms
+-- 23 bits = 7FFFFF (8,388,607)  332.8ms
+-- 24 bits = FFFFFF (16,777,215) 665.6ms
+-- 25 bits = 1FFFFFF (33,554,431) 1331.1ms (1.3sec)
 	constant TIME_DELAY4: integer:= 318181;	-- this in a time delay should provide about 25ms
 --	constant TIME_DELAY1:  integer:= 262000;
 --	constant TIME_DELAY1:  integer:= 131000;
 	constant TIME_DELAY1:  integer:= 100000;
-	constant TIME_DELAY3:  integer:= 33554000;
-	constant TIME_DELAY5:  integer:= 16000000;
-	constant TIME_DELAY6:  integer:= 4191300;
-	constant TIME_DELAY7:  integer:= 100000;
-	constant TIME_DELAY8:  integer:= 50000;
-	constant TIME_DELAY9:  integer:= 10000;	-- shortest time delay possible for 115200 baud
+	constant TIME_DELAY3:  integer:= 33554430;	-- 1.342 seconds
+	constant TIME_DELAY5:  integer:= 16000000;	-- 640ms
+	constant TIME_DELAY6:  integer:= 4191300;	-- 167ms
+	constant TIME_DELAY7:  integer:= 1000000;	-- 40ms
+	constant TIME_DELAY8:  integer:= 500000;	-- 20ms
+	constant TIME_DELAY8a:  integer:= 300000;	-- 12ms
+	constant TIME_DELAY8b:  integer:= 140000;	-- 12ms
+	constant TIME_DELAY9:  integer:=  40000;
 	
 -- baud rates for 7-seg displays	
 	constant DVSR_MU_9600: integer:= 320;	-- 9600 baud
@@ -67,6 +69,28 @@ package CommonPckg is
 	constant MPH_DVND: integer:= 128514;
 	constant RPM_CLOCK_COUNT: integer:= 500;
 	constant RPM_DVND: integer:= 6000000;
+	constant DVND_SIZE: integer:= 30;
+	constant RESULT_SIZE: integer:= 18;
+	constant PRD_SIZE: integer:= 17;
+	constant DVSR_SIZE: integer:= 23;
+	constant MPH_P_REG_SIZE: integer:= 16;
+	constant OFF_CMD: std_logic_vector(2 downto 0):= "000";
+	constant SEND_CHAR_CMD: std_logic_vector(2 downto 0):= "001";
+	constant SET_BRIGHTNESS_CMD: std_logic_vector(2 downto 0):= "010";
+	constant SET_CDECIMAL_CMD: std_logic_vector(2 downto 0):= "011";
+	constant SET_UPDATE_RATE_CMD: std_logic_vector(2 downto 0):= "100";
+	constant SET_FACTOR_CMD: std_logic_vector(2 downto 0):= "101";
+	constant SET_TEST_CMD3: std_logic_vector(2 downto 0):= "110";
+	constant SET_TEST_CMD4: std_logic_vector(2 downto 0):= "111";
+
+	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
+	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
+	constant SET_BRIGHT_CTL: std_logic_vector(7 downto 0):= X"7A";
+	constant SET_DECIMAL_CTL: std_logic_vector(7 downto 0):= X"77";
+	constant SET_SEG1_CTL: std_logic_vector(7 downto 0):= X"7B";
+	constant SET_SEG2_CTL: std_logic_vector(7 downto 0):= X"7C";
+	constant SET_SEG3_CTL: std_logic_vector(7 downto 0):= X"7D";
+	constant SET_SEG4_CTL: std_logic_vector(7 downto 0):= X"7E";
 
 	constant NUM_DATA_ARRAY : integer:= 16;
 	constant RT_RPM		: std_logic_vector := X"70";
@@ -96,15 +120,16 @@ package CommonPckg is
 	type my_array1 is array(0 to NUM_DATA_ARRAY-1) of std_logic_vector(7 downto 0);
 	type my_array2 is array(0 to 7)  of std_logic_vector(3 downto 0);
 	type my_array3 is array(0 to 15) of std_logic_vector(16 downto 0);
+	type cmd_array_type is array(0 to 15) of std_logic_vector(2 downto 0);
 --	signal code_array: my_array1;	-- always sent with RT_type
 --	signal data_type: my_array1;	-- this is either RT_HIGHX or RT_LOW
 	signal data_array1: my_array1;	-- if UCHAR then this is the data, if UINT this is the low byte
 	signal data_array2: my_array2;
 
+	impure function push_cmd(a : cmd_array_type; ptr : std_logic_vector) return std_logic;
+	impure function pop_cmd(cmd_array : cmd_array_type; ptr : std_logic_vector) return std_logic_vector;
 	impure function average(a : in my_array3; b : in std_logic_vector) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;
-	function average4(a : in my_array3; b : in std_logic_vector) return integer;
-	function average3(a : in my_array3; b : in std_logic_vector) return integer;
 
 end package;
 
@@ -116,6 +141,36 @@ package body CommonPckg is
 
 -- 8192(0x2000) * 16 = 131056(0x20000)
 -- to divide by 16 rol by 4 bits
+
+impure function push_cmd(a : cmd_array_type; ptr : std_logic_vector) return std_logic is
+	variable temp: cmd_array_type;
+	variable cmd_ptr: std_logic_vector(3 downto 0);
+	variable iptr: integer range 0 to 15:= 0;
+	begin
+		temp := a;
+		cmd_ptr := ptr;
+		iptr:= conv_integer(ptr);
+		if iptr > 15 then
+			return '1';
+		else
+			iptr:= iptr + 1;
+			cmd_ptr := conv_std_logic_vector(iptr,3);
+			return '0';
+		end if;
+	end function;
+
+impure function pop_cmd(cmd_array : cmd_array_type; ptr : std_logic_vector) return std_logic_vector is
+	variable cmd_a : cmd_array_type;
+	variable iptr: std_logic_vector(2 downto 0);
+	variable temp: std_logic_vector(2 downto 0);
+	variable ip: integer range 0 to 15:= 0;
+	begin
+		cmd_a := cmd_array;
+		iptr := ptr;
+		ip := conv_integer(iptr);
+		temp := cmd_array(ip);
+		return temp;
+	end function;
 
 impure function average(a : in my_array3; b : in std_logic_vector) return std_logic_vector is
 	variable temp: integer range 0 to 131056:= 0;
@@ -134,38 +189,7 @@ impure function average(a : in my_array3; b : in std_logic_vector) return std_lo
 		temp2:= conv_std_logic_vector(temp,17);
 	return temp2;
 	end function;
-	
-function average3(a : in my_array3; b : in std_logic_vector) return integer is
-	variable temp: integer range 0 to 131056:= 0;
-	variable temp3: my_array3;
-	variable temp4: unsigned(16 downto 0);
-	
-	begin
-		temp3:= a;
-		for i in 0 to 15 loop
-			temp:= temp + conv_integer(temp3(i));
-		end loop;
-		temp4:= to_unsigned(temp,17);
-		temp:= to_integer(temp4);
-		return temp;
-	end function;
 
-function average4(a : in my_array3; b : in std_logic_vector) return integer is
-	variable temp: integer range 0 to 131056:= 0;
-	variable temp3: my_array3;
-	variable temp4: unsigned(16 downto 0);
-	
-	begin
-		temp3:= a;
-		for i in 0 to 15 loop
-			temp:= temp + conv_integer(temp3(i));
-		end loop;
-		temp4:= to_unsigned(temp,17);
-		temp4:= temp4 srl 4;
-		temp:= to_integer(temp4);
-		return temp;
-	end function;
-	
 impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3 is
 	variable temp3: my_array3;
 	

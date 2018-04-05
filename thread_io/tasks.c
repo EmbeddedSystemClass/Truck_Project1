@@ -661,10 +661,15 @@ exit_program:
 								myprintf1("exit to shell\0");
 								printString2("exit to shell\0");
 							}	
-							else
+							else if(reboot_on_exit == 1)
 							{
 								myprintf1("rebooting...\0");
 								printString2("rebooting...\0");
+							}
+							else if(reboot_on_exit == 2)
+							{
+								myprintf1("shutting down...\0");
+								printString2("shutting down...\0");
 							}
 						}
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)

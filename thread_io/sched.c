@@ -218,16 +218,10 @@ int main(int argc, char **argv)
 //	closesocket(sd);
 //	printf("socket closed\n");
 //	llist_show(&ll);
-	if(reboot_on_exit)
-	{
-//		printf("returning 1\n");
-//		usleep(1000000);
-		return 1;
-	}
-	else
-	{	
-//		printf("returning 0\n");
-//		usleep(1000000);
+	if(reboot_on_exit == 0)
 		return 0;
-	}
+	else if(reboot_on_exit == 1)
+		return 1;
+	else if(reboot_on_exit == 2)
+		return 2;
 }

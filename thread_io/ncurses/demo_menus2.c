@@ -585,7 +585,19 @@ call_Host(int code)
 			}
 			break;
 
+// EXIT and reboot
 		case 6:
+			cmd =  EXIT_PROGRAM;
+			if(tcp_connected)
+			{
+				reboot = 2;
+				put_sock(&cmd,1,1,errmsg);
+				put_sock(&reboot,1,1,errmsg);
+				close_sock();
+			}
+			break;
+
+		case 7:
 			cmd = LCD_SHIFT_LEFT;
 			if(tcp_connected)
 			{
@@ -593,7 +605,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 7:
+		case 8:
 			cmd = LCD_SHIFT_RIGHT;
 			if(tcp_connected)
 			{
@@ -601,7 +613,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 8:
+		case 9:
 			cmd = SCROLL_UP;
 			if(tcp_connected)
 			{
@@ -609,7 +621,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 9:
+		case 10:
 			cmd = SCROLL_DOWN;
 			if(tcp_connected)
 			{
@@ -617,7 +629,7 @@ call_Host(int code)
 			}
 			break;
 
-		case 10:
+		case 11:
 			cmd = CLOSE_SOCKET;
 			put_sock(&cmd,1,1,errmsg);
 			close_sock();
@@ -644,11 +656,12 @@ build_Host_menu(MenuNo number)
 		MY_DATA0("Edit odata"),					  // 3
 		MY_DATA0("goto to sh"),					  // 4
 		MY_DATA0("Reboot"),						  // 5
-		MY_DATA0("Shift Left"),					  // 6
-		MY_DATA0("Shift Right"),				  // 7
-		MY_DATA0("Scroll Up"),					  // 8
-		MY_DATA0("Scroll Down"),				  // 9
-		MY_DATA0("Exit"),						  // 10
+		MY_DATA0("Shutdonw"),					  // 6
+		MY_DATA0("Shift Left"),					  // 7
+		MY_DATA0("Shift Right"),				  // 8
+		MY_DATA0("Scroll Up"),					  // 9
+		MY_DATA0("Scroll Down"),				  // 10
+		MY_DATA0("Exit"),						  // 11
 		{(char *) 0, 0, 0}
 	};
 

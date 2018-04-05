@@ -6,11 +6,19 @@ then
 else
  echo "file not found" > found.txt
 fi
-if ./sched
+./sched
+OUT=$?
+if [ $OUT -eq 0 ]
  then
  echo "exiting" > status.txt
- exit
-else 
+ else if [ $OUT -eq 1 ]
+ then
  echo "rebooting" > status.txt
  /sbin/reboot
-fi  
+ else if [ $OUT -eq 2 ]
+ then
+ echo "shutdown" > status.txt
+ /sbin/shutdown -h now
+ fi
+fi
+fi
