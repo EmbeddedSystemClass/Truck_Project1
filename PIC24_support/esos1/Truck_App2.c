@@ -1,3 +1,4 @@
+#if 1
 //    All rights reserved.
 //
 //    Permission to use, copy, modify, and distribute this software and its
@@ -129,14 +130,15 @@ ESOS_USER_TASK(get_sync)
 	}
     ESOS_TASK_END();
 }
+#endif
 //******************************************************************************************//
 //*************************************** get_comm2  ***************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(get_comm2)
 {
     static  uint8_t data1;
-	static int i;
 
+	
     ESOS_TASK_BEGIN();
 //    FLUSH_ESOS_COMM_IN_DATA2();
 //    ESOS_TASK_SLEEP();
@@ -182,9 +184,9 @@ ESOS_USER_TASK(get_comm2)
 ESOS_USER_TASK(send_comm2)
 {
     static  uint8_t data1;
-	static UCHAR buf[10];
-	static int i;
 
+	
+	
     ESOS_TASK_BEGIN();
 
     while (1)
@@ -210,18 +212,15 @@ ESOS_USER_TASK(send_comm2)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//*************************************** comm2_task ***************************************//
+//*************************************** menu_task ***************************************//
 //******************************************************************************************//
-ESOS_USER_TASK(comm2_task)
+ESOS_USER_TASK(menu_task)
 {
     static ESOS_TASK_HANDLE comm2_handle;
     static ESOS_TASK_HANDLE sleeping_handle;
 
 	static uint8_t ret_char, wkey;
-    static int i,j,k, m;
-	static uint8_t low_byte, high_byte;
-	static char tlabel[MAX_LABEL_LEN];
-	static uint8_t t1, t2, t3, t4;
+    static int i,j,k;
 
     ESOS_TASK_BEGIN();
     comm2_handle = esos_GetTaskHandle(send_comm2);
@@ -233,7 +232,7 @@ ESOS_USER_TASK(comm2_task)
     ESOS_TASK_WAIT_ON_SEND_STRING("****************************************************");
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("******************** comm2_task ********************");
+    ESOS_TASK_WAIT_ON_SEND_STRING("******************** menu_task ********************");
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
     ESOS_TASK_WAIT_ON_SEND_STRING("****************************************************");
@@ -275,6 +274,83 @@ ESOS_USER_TASK(comm2_task)
 // 3b
 	i = update_menu_structs(i, _do_numentry, 	forward, back, eclear, entr, esc, blank, MENU3B);
 
+	memset(cblabels,0,CBLABEL_SIZE);
+	total_offset = 0;
+	i = 0;
+	i =  update_cblabels(i, "test 1\0");
+	i =  update_cblabels(i, "test 2\0");
+	i =  update_cblabels(i, "test 3\0");
+	i =  update_cblabels(i, "test 4\0");
+	i =  update_cblabels(i, "test 5\0");
+	i =  update_cblabels(i, "test 6\0");
+	i =  update_cblabels(i, "test 7\0");
+	i =  update_cblabels(i, "test 8\0");
+	i =  update_cblabels(i, "test 9\0");
+	i =  update_cblabels(i, "test 10\0");
+
+	i =  update_cblabels(i, "asdf 1\0");
+	i =  update_cblabels(i, "asdf 2\0");
+	i =  update_cblabels(i, "asdf 3\0");
+	i =  update_cblabels(i, "asdf 3\0");
+	i =  update_cblabels(i, "asdf 4\0");
+	i =  update_cblabels(i, "asdf 6\0");
+	i =  update_cblabels(i, "asdf 7\0");
+	i =  update_cblabels(i, "asdf 8\0");
+	i =  update_cblabels(i, "asdf 9\0");
+	i =  update_cblabels(i, "asdf 10\0");
+
+	i =  update_cblabels(i, "hello 1\0");
+	i =  update_cblabels(i, "hello 2\0");
+	i =  update_cblabels(i, "hello 3\0");
+	i =  update_cblabels(i, "hello 4\0");
+	i =  update_cblabels(i, "hello 5\0");
+	i =  update_cblabels(i, "hello 6\0");
+	i =  update_cblabels(i, "hello 7\0");
+	i =  update_cblabels(i, "hello 8\0");
+	i =  update_cblabels(i, "hello 9\0");
+	i =  update_cblabels(i, "hello 10\0");
+
+	i =  update_cblabels(i, "funny 1\0");
+	i =  update_cblabels(i, "funny 2\0");
+	i =  update_cblabels(i, "funny 3\0");
+	i =  update_cblabels(i, "funny 4\0");
+	i =  update_cblabels(i, "funny 5\0");
+	i =  update_cblabels(i, "funny 6\0");
+	i =  update_cblabels(i, "funny 7\0");
+	i =  update_cblabels(i, "funny 8\0");
+	i =  update_cblabels(i, "funny 9\0");
+	i =  update_cblabels(i, "funny 10\0");
+
+	i =  update_cblabels(i, "quick 1\0");
+	i =  update_cblabels(i, "quick 2\0");
+	i =  update_cblabels(i, "quick 3\0");
+	i =  update_cblabels(i, "quick 4\0");
+	i =  update_cblabels(i, "quick 5\0");
+	i =  update_cblabels(i, "quick 6\0");
+	i =  update_cblabels(i, "quick 7\0");
+	i =  update_cblabels(i, "quick 8\0");
+	i =  update_cblabels(i, "quick 9\0");
+	i =  update_cblabels(i, "quick 10\0");
+/*
+	i =  update_cblabels(i, "fox and  1\0");
+	i =  update_cblabels(i, "fox and  2\0");
+	i =  update_cblabels(i, "fox and  3\0");
+	i =  update_cblabels(i, "fox and  4\0");
+	i =  update_cblabels(i, "fox and  5\0");
+	i =  update_cblabels(i, "fox and  6\0");
+	i =  update_cblabels(i, "fox and  7\0");
+	i =  update_cblabels(i, "fox and  8\0");
+	i =  update_cblabels(i, "fox and  9\0");
+	i =  update_cblabels(i, "fox and  10\0");
+*/
+
+/*
+	i =  update_cblabels(i, "ending 1\0");
+	i =  update_cblabels(i, "ending 2\0");
+	i =  update_cblabels(i, "ending 3\0");
+	i =  update_cblabels(i, "ending 4\0");
+	i =  update_cblabels(i, "ending 5\0");
+*/
 
 	memset((void*)aux_string,0xFF,AUX_STRING_LEN);
 
@@ -305,6 +381,7 @@ ESOS_USER_TASK(comm2_task)
 /*
 	do
 	{
+		
 		ESOS_TASK_WAIT_TICKS(200);
 
 	}while(ESOS_IS_TASK_SLEEPING(sleeping_handle));
@@ -328,8 +405,9 @@ ESOS_USER_TASK(comm2_task)
 			if(wkey >= KP_POUND && wkey <= KP_D)
 			{
 				ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(wkey);
+				display_menus();
 /* start */
-
+#if 0
 //#if 0
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -425,7 +503,7 @@ ESOS_USER_TASK(comm2_task)
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-
+#endif
 //				ESOS_TASK_SIGNAL_SEMAPHORE(comm2_sem);
 			}	// end of mail
 		}		// end of while
@@ -433,46 +511,60 @@ ESOS_USER_TASK(comm2_task)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
+//************************************** send_comm1  ***************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(send_comm1)
+{
+	UCHAR test;
+	
+    ESOS_TASK_BEGIN();
+	while(TRUE)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+        while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			test = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);			
+		}
+    } // endof while()
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
 //***************************************** test1  *****************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(test1)
 {
-//comm1 is 115
-//comm2 is 110
-
-    static  uint8_t data1, data2, test1x;
+    static  uint8_t data1, data2;
 
     ESOS_TASK_BEGIN();
 
 	data1 = 0x21;
 	data2 = 0x7e;
+//	CONFIG_R0_DIG_OUTPUT();
 	while(1)
 	{
-/*
+
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
 	    ESOS_TASK_WAIT_ON_GET_UINT8(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-*/
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-	    ESOS_TASK_WAIT_ON_GET_UINT8(test1x);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_TICKS(1);
 
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
-	    ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+	    ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 		ESOS_TASK_WAIT_TICKS(1);
-
 /*
 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	    ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_TICKS(1);
-*/
+		R0 = 1;
+		ESOS_TASK_WAIT_TICKS(1);
+		R0 = 0;
+
 		if(++data1 > 0x7e)
 			data1 = 0x21;
 		if(--data2 < 0x21)
 			data2 = 0x7e;
+*/
 	}
 
 #if 0
@@ -500,21 +592,19 @@ void user_init(void)
 //	CONFIG_SPI_MASTER()
 //	CONFIG_SPI_SLAVE();
 //	esos_RegisterTask(echo_spi_task);
-/*
+
 	ESOS_INIT_SEMAPHORE(key_sem,0);
 	ESOS_INIT_SEMAPHORE(comm2_sem,0);
 	esos_RegisterTask(keypad);
 	esos_RegisterTask(poll_keypad);
-*/
-#if 0
 	esos_RegisterTask(poll_comm1);
-	esos_RegisterTask(comm2_task);
+	esos_RegisterTask(menu_task);
 	esos_RegisterTask(send_comm2);
 	esos_RegisterTask(get_comm2);
-#endif
+	esos_RegisterTask(send_comm1);
 //	esos_RegisterTask(get_sync);
 
-	esos_RegisterTask(test1);
+//	esos_RegisterTask(test1);
 //	esos_RegisterTask(convADC);
 } // end user_init()
 

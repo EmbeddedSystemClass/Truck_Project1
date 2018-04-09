@@ -11,8 +11,8 @@ entity sensor is
 	generic(CLK_COUNT: integer:=50000; DVND_FACTOR: integer:= 5000);
 	port(
 		clk, reset: in std_logic;
-		sensor: in std_logic;
-		result: out std_logic_vector(12 downto 0);
+		sensor1: in std_logic;
+		result: out std_logic_vector(16 downto 0);
 		factor: in std_logic_vector(22 downto 0);
 		LED0m: out std_logic_vector(3 downto 0);
 		LED1m: out std_logic_vector(3 downto 0);
@@ -22,7 +22,7 @@ entity sensor is
 end sensor;
 
 architecture arch of sensor is
-	type state_type is (idle, count, frq, calc1, calc2, b2b);
+	type state_type is (idle, count, frq, calc1, calc2, calc3, b2b);
 	signal fstate_reg, fstate_next: state_type;
 
 --	type calc_type is (idle1, calc2, done);
@@ -43,6 +43,14 @@ architecture arch of sensor is
 --	signal calc_count: std_logic_vector(4 downto 0);
 	signal data_array4: my_array3:= (others=>(others=>'0'));
 	signal result2: std_logic_vector(16 downto 0);
+	signal data_array5: my_array3;
+-- INIT_PRD is used to preset the data_array4 for testing in simulator
+	constant INIT_PRD : std_logic_vector :=  "0" & X"1388";	-- 5000rpm
+--	constant INIT_PRD : std_logic_vector :=  "0" & X"000f";	-- 15mph
+--	constant INIT_PRD : std_logic_vector :=  "0" & X"004b";	-- 75mph
+	signal first_flag: std_logic:= '1';
+	signal mrmd: std_logic_vector(22 downto 0);
+	
 begin
 --===============================================
 -- component instantiation
@@ -53,7 +61,7 @@ begin
 		generic map(CLK_COUNT=>CLK_COUNT,P_REG_SIZE=>16,T_REG_SIZE=>PRD_SIZE)
 		port map(clk=>clk, reset=>reset,
 		start=>prd_start, 
-		si=>sensor,
+		si=>sensor1,
 --		ready=>open, 
 		done_tick=>prd_done_tick, 
 		prd=>prd);
@@ -66,7 +74,8 @@ begin
 		dvsr=>dvsr,
 		dvnd=>dvnd,
 		quo=>quo,
-		rmd=>open,
+--		rmd=>open,
+		rmd=>mrmd,
 --		ready=>open,
 		done_tick=>div_done_tick);
 
@@ -102,8 +111,28 @@ begin
 		div_start <='0';
 		b2b_start <='0';
 		result <= (others=>'0');
+		result2 <= (others=>'0');
 		sensor_done <= '0';
---		data_array3 <= (others=>(others=>'0'));
+		data_array5 <= (others=>(others=>'0'));
+		-- use these for testing in ISim so that
+		-- the average starts out the same
+		data_array4(0) <= INIT_PRD-7;
+		data_array4(1) <= INIT_PRD-6;
+		data_array4(2) <= INIT_PRD-5;
+		data_array4(3) <= INIT_PRD-4;
+		data_array4(4) <= INIT_PRD-3;
+		data_array4(5) <= INIT_PRD-2;
+		data_array4(6) <= INIT_PRD-1;
+		data_array4(7) <= INIT_PRD;
+		data_array4(8) <= INIT_PRD+1;
+		data_array4(9) <= INIT_PRD+2;
+		data_array4(10) <= INIT_PRD+3;
+		data_array4(11) <= INIT_PRD+4;
+		data_array4(12) <= INIT_PRD+5;
+		data_array4(13) <= INIT_PRD+6;
+		data_array4(14) <= INIT_PRD+7;
+		data_array4(15) <= INIT_PRD+8;
+--		data_array4 <= (others=>(others=>'0'));
 	elsif clk'event and clk = '1' then	
 		case fstate_reg is
 			when idle =>
@@ -119,18 +148,33 @@ begin
 			when frq =>
 				div_start <= '0';
 				if (div_done_tick='1') then
+					if first_flag = '1' then
+						fstate_next <= calc1;
+					else 
+						first_flag <= '1';
+						fstate_next <= idle;
+						result2 <= quo(16 downto 0);
+					end if;
+
 					fstate_next <= calc1;
 				end if;
 			when calc1 =>
-				b2b_start <='1';
 				result2 <= quo(16 downto 0);
-				data_array4 <= shift_avg(data_array4,result2);
+				data_array5 <= data_array4;
 				fstate_next <= calc2;
 			when calc2 =>
-				result2 <= average(data_array4,result2);
+				data_array4 <= shift_avg(data_array5,result2);
+				fstate_next <= calc3;
+			when calc3 =>
+				result2 <= average(data_array4);
+				result <= result2;
+--				result(15 downto 8) <= block_ff(result(15 downto 8));
+--				result(7 downto 0) <= block_ff(result(7 downto 0));
 --				quo <= "000000" & result2;
-				result <= result2(12 downto 0);
+--				result <= result2(12 downto 0);
+--				result2 <= quo(12 downto 0);
 				fstate_next <= b2b;
+				b2b_start <='1';
 			when b2b =>
 				b2b_start <= '0';
 				if (b2b_done_tick='1') then

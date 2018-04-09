@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C:/Users/Daniel/dev/multi-byte/testmain_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="commonpckg" />
+            <top_module name="numeric_std" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="testmain" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="27" />
+   <wvobject fp_name="/testmain/uut/main_reg1" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">main_reg1</obj_property>
+      <obj_property name="ObjectShortName">main_reg1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/cmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cmd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ffff00</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/param" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">param[7:0]</obj_property>
+      <obj_property name="ObjectShortName">param[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ffff00</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/set_char_out" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="ObjectShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff0000</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/tx_rpm" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">tx_rpm</obj_property>
+      <obj_property name="ObjectShortName">tx_rpm</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/set_char_out" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="ObjectShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#0000ff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/send_state_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">send_state_reg</obj_property>
+      <obj_property name="ObjectShortName">send_state_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/send_state_next" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">send_state_next</obj_property>
+      <obj_property name="ObjectShortName">send_state_next</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/wrapper_state_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">wrapper_state_reg</obj_property>
+      <obj_property name="ObjectShortName">wrapper_state_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sub_cmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">sub_cmd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">sub_cmd[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/cmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cmd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ffff00</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/start_sendchar" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_sendchar</obj_property>
+      <obj_property name="ObjectShortName">start_sendchar</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ffffff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/start_rpm_wrapper" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_rpm_wrapper</obj_property>
+      <obj_property name="ObjectShortName">start_rpm_wrapper</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/start_mph_wrapper" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_mph_wrapper</obj_property>
+      <obj_property name="ObjectShortName">start_mph_wrapper</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/stlv_temp2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">stlv_temp2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">stlv_temp2[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mcmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">mcmd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">mcmd[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mparam" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">mparam[6:0]</obj_property>
+      <obj_property name="ObjectShortName">mparam[6:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/cmd_rpm" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cmd_rpm[4:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd_rpm[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/param_rpm" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">param_rpm[7:0]</obj_property>
+      <obj_property name="ObjectShortName">param_rpm[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ffff00</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_or_not" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mph_or_not</obj_property>
+      <obj_property name="ObjectShortName">mph_or_not</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/factor" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">factor[5:0]</obj_property>
+      <obj_property name="ObjectShortName">factor[5:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/display_update_rate" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">display_update_rate[25:0]</obj_property>
+      <obj_property name="ObjectShortName">display_update_rate[25:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/real_factor" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">real_factor[22:0]</obj_property>
+      <obj_property name="ObjectShortName">real_factor[22:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/last_factor" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">last_factor[5:0]</obj_property>
+      <obj_property name="ObjectShortName">last_factor[5:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/display_done1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">display_done1</obj_property>
+      <obj_property name="ObjectShortName">display_done1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_done" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rpm_done</obj_property>
+      <obj_property name="ObjectShortName">rpm_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_done" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mph_done</obj_property>
+      <obj_property name="ObjectShortName">mph_done</obj_property>
+   </wvobject>
+</wave_config>

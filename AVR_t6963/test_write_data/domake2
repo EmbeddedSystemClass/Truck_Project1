@@ -1,9 +1,0 @@
-make -f make_avr  clean
-make -f make_avr  &> warnings2.txt
-find2 warning warnings2.txt
-if grep -q error warnings2.txt
- find2 error warnings2.txt
- then exit 1
-fi 
-./copy2.sh
-

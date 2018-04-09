@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C:/Users/Daniel/dev/test_LED2/testmain_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="commonpckg" />
+            <top_module name="math_real" />
+            <top_module name="numeric_std" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="testmain" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="21" />
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/set_char_out" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="ObjectShortName">set_char_out[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff0000</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/cstate_reg2" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">cstate_reg2</obj_property>
+      <obj_property name="ObjectShortName">cstate_reg2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/cstate_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">cstate_reg</obj_property>
+      <obj_property name="ObjectShortName">cstate_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/state_reg_ch" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">state_reg_ch</obj_property>
+      <obj_property name="ObjectShortName">state_reg_ch</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/state_next_ch" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">state_next_ch</obj_property>
+      <obj_property name="ObjectShortName">state_next_ch</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/start" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/param" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">param[7:0]</obj_property>
+      <obj_property name="ObjectShortName">param[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/uart_done" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">uart_done</obj_property>
+      <obj_property name="ObjectShortName">uart_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/start_proc1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_proc1</obj_property>
+      <obj_property name="ObjectShortName">start_proc1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/u_state_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">u_state_reg</obj_property>
+      <obj_property name="ObjectShortName">u_state_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/u_state_next" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">u_state_next</obj_property>
+      <obj_property name="ObjectShortName">u_state_next</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/start_sendchar" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_sendchar</obj_property>
+      <obj_property name="ObjectShortName">start_sendchar</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/other_cmd_sent" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">other_cmd_sent</obj_property>
+      <obj_property name="ObjectShortName">other_cmd_sent</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/break_out_of_loop" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">break_out_of_loop</obj_property>
+      <obj_property name="ObjectShortName">break_out_of_loop</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/mph_wrapper_unit/sendcharLED_unit/display_done" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">display_done</obj_property>
+      <obj_property name="ObjectShortName">display_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/cmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cmd[2:0]</obj_property>
+      <obj_property name="ObjectShortName">cmd[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/param" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">param[7:0]</obj_property>
+      <obj_property name="ObjectShortName">param[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sub_cmd" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">sub_cmd[2:0]</obj_property>
+      <obj_property name="ObjectShortName">sub_cmd[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/tx" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">tx</obj_property>
+      <obj_property name="ObjectShortName">tx</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/tx" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">tx</obj_property>
+      <obj_property name="ObjectShortName">tx</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/rpm_wrapper_unit/sendcharLED_unit/start_proc1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_proc1</obj_property>
+      <obj_property name="ObjectShortName">start_proc1</obj_property>
+   </wvobject>
+</wave_config>

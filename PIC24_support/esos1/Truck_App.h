@@ -28,11 +28,14 @@
 #include "../esos/include/pic24/esos_pic24.h"
 #include "../esos/include/pic24/esos_pic24_rs232.h"
 #include "../esos/include/pic24/esos_pic24_spi.h"
+#include "../lib/include/pic24_all.h"
 #include "../lib/include/pic24_timer.h"
 #include "../lib/include/pic24_util.h"
 #include "../lib/include/pic24_adc.h"
 #include "../lib/include/pic24_ports_config.h"
 #include "../lib/include/pic24_ports_mapping.h"
+#include "pic_t6963.h"
+//#include "main.h"
 //#include "../../AVR_t6963/key_defs.h"
 #include <stdio.h>
 #include <string.h>
@@ -68,18 +71,28 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define TEMP_EEPROM_OFFSET 400
 #define NUM_CBLABELS 50
 #define CBLABEL_SIZE 600
+#define TIME_DELAY1 1
+#define NUM_FPTS 6
+#define NUM_LABELS 40
+#define NUM_MENU_CHOICES 6
+#define NUM_RT_PARAMS 11
+#define NUM_RT_LABELS NUM_RT_PARAMS
+
+#define DISP_OFFSET 1
+#define LAST_ROW DISP_OFFSET + 58
+#define NUM_EXECCHOICES 10
+#define SCALE_DISP_ALL 0
+#define SCALE_DISP_SOME 1
+#define SCALE_DISP_NONE 2
+#define RT_OFFSET 0x70
+#define SIM_EEPROM_SIZE 0x800
+#define CBLABEL_SIZE 600
+
 char cblabels[CBLABEL_SIZE];
 
 #endif
 
-typedef struct checkboxes
-{
-	UCHAR index;
-	UCHAR checked;
-} CHECKBOXES;
-
-volatile CHECKBOXES prev_check_boxes[NUM_CBLABELS];
-volatile CHECKBOXES check_boxes[NUM_CBLABELS];
+#if 1
 volatile int avr_ptr;
 volatile UCHAR random_data;
 volatile int checkbox_offsets[NUM_CBLABELS];
@@ -116,16 +129,18 @@ volatile int start_addr;
 volatile UCHAR cur_col;
 volatile UCHAR cur_row;
 volatile int sync;
-
+UCHAR curr_menus[6];
 UCHAR enter(UCHAR ch);
 void init_numentry(int menu_index);
 void cursor_forward_stuff(char x);
 void stuff_num(char num);
 void cursor_forward(char ch);
-UCHAR init_checkboxes(int index);
-
+static void init_checkboxes(int index);
+static void blank_choices(void);
+static void blank_display(void);
+static void blank_menu(void);
 #define LIST_SIZE 50
-
+static int curr_chkbox_index;
 volatile int menu_list[LIST_SIZE];	// works like a stack for the how deep into the menus we go
 UCHAR set_list(int fptr);
 UCHAR get_fptr(void);
@@ -135,11 +150,83 @@ int get_curr_menu(void);
 UCHAR backspace(UCHAR ch);
 void _eclear(void);
 void cursor_backward(void);
-int scrollup_checkboxes(int index);
-int scrolldown_checkboxes(int index);
-int scrollup_execchoice(int index);
-int scrolldown_execchoice(int index);
-int toggle_checkboxes(int index);
+static int scrollup_checkboxes(int index);
+static int scrolldown_checkboxes(int index);
+static int scrollup_execchoice(int index);
+static int scrolldown_execchoice(int index);
+static int toggle_checkboxes(int index);
+static void clean_disp_num(void);
+static void display_edit_value(void);
+static void display_menus(void);
+void adv_menu_label(int index, UCHAR *row, UCHAR *col);
+static void init_execchoices(int menu_index);
+static UCHAR checkboxes_reset(int index);
+#define NUM_ENTRY_SIZE 7
+//#define NUM_ENTRY_BEGIN_COL (COLUMN - COLUMN/2)
+#define NUM_ENTRY_BEGIN_COL 3
+#define NUM_ENTRY_END_COL NUM_ENTRY_BEGIN_COL + NUM_ENTRY_SIZE
+// '!' - '9' (33 - 58) + 'A' - 'Z' (26) + 'a' - 'z' (26) = 77
+//#define NUM_ALNUM 77
+//#define NUM_ALNUM 52		// without the '!' - '9'
+#define NUM_ALNUM 85		// include all special chars
+#define ALNUM_SCROLL_LIST_LEN 13
+#define MENU_START_ROW 14
+#define MENU_START_COL 3
+#define MENU_BLANK "          "
+#define _dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
+#define _dispStringAt(_row,_col,_char) GDispStringAt((UINT)_row,(UINT)_col,(char *)_char)
+#define _dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
+#define _dispSetMode(_mode) GDispSetMode(_mode)
+void dispRC(int row, int col);
+void CheckRC(int *row, int *col, UCHAR *k);
+void display_labels(void);
+#ifdef TEST_WRITE_DATA
+void set_win(WINDOW *win);
+#endif
+int curr_fptr_changed(void);
+int get_curr_menu(void);
+int get_str_len(void);
+int update_mlabels(int i, char *str);
+int update_cblabels(int i, char *str);
+void get_cblabel(int index, char *str);
+UCHAR get_row(int index);
+UCHAR get_col(int index);
+int get_mlabel_offsets(void);
+int get_cblabel_offsets(void);
+void get_mlabel(int index, char *str);
+void init_list(void);
+int mlabel_offsets[NUM_LABELS+NUM_RT_LABELS];
+int cblabel_offsets[NUM_CBLABELS];
+
+#define NO_MENU_LABELS_EEPROM_LOCATION 0x03e0
+#define NO_RT_LABELS_EEPROM_LOCATION 0x03e4
+#define NO_RTPARAMS_EEPROM_LOCATION 0x03e8
+#define NO_MENUS_EEPROM_LOCATION 0x3ea
+#define RT_PARAMS_OFFSET_EEPROM_LOCATION 0x0350
+#if 0
+#define RTPARAMS_OFFSET_EEPROM_LOCATION_LSB 0x03e8	// points to just after all the labels (prompt_info)
+#define RTPARAMS_OFFSET_EEPROM_LOCATION_MSB 0x03ea
+#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_LSB 0x03ec	// points to just after all the labels (prompt_info)
+#define MENUSTRUCT_OFFSET_EEPROM_LOCATION_MSB 0x03ee
+#endif
+
+int rt_params_offset;
+int no_cblabels;
+int global_fd;
+void set_state_defaults(void);
+int curr_execchoice;
+int last_execchoice;
+int scale_type;
+int prev_scale_type;
+
+typedef struct checkboxes
+{
+	UCHAR index;
+	UCHAR checked;
+} CHECKBOXES;
+
+CHECKBOXES check_boxes[NUM_CBLABELS];
+CHECKBOXES prev_check_boxes[NUM_CBLABELS];
 
 enum data_types
 {
@@ -153,7 +240,8 @@ enum data_types
 // warning: these are also defined in the AVR directory
 // got mult defined errors if enums have the same names
 // but got undefined errors if left out ???
-typedef struct rt_params
+
+typedef struct rt_param
 {
 	UCHAR row;			// row, col tells where the param will appear on screen
 	UCHAR col;
@@ -315,19 +403,12 @@ MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
 
 static UCHAR (*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_chkbox, do_exec, non_func, do_numentry, do_init };
 
-volatile uint8_t row;
+/* volatile uint8_t row;
 volatile uint8_t cmd;
 volatile uint8_t data;
-volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
-#define KEYPAD_DELAY    100
-#define KEYPAD_DEBOUNCE_DELAY 2
+ */volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 
-#define MAX_LABEL_LEN 10
-#define NUM_LABELS 40
-#define NUM_RT_PARAMS 10
 volatile uint8_t col;
-volatile uint8_t last_code;
-volatile uint8_t user_flag;
 
 #define NUM_RT_LABELS NUM_RT_PARAMS
 
@@ -511,7 +592,64 @@ UCHAR get_keypress(UCHAR key1)
 	return wkey;
 }
 
+#endif 
 //#if 0
+//******************************************************************************************//
+//************************************ adv_menu_label **************************************//
+//******************************************************************************************//
+void adv_menu_label(int index, UCHAR *row, UCHAR *col)
+{
+//	int menu_index = index * 6;
+	char temp[MAX_LABEL_LEN];
+	char temp2[4];
+
+	switch (index % 6)
+	{
+		case 0: strncpy(temp2," A:\0",4);break;
+		case 1: strncpy(temp2," B:\0",4);break;
+		case 2: strncpy(temp2," C:\0",4);break;
+		case 3: strncpy(temp2," D:\0",4);break;
+		case 4: strncpy(temp2," #:\0",4);break;
+		case 5: strncpy(temp2," 0:\0",4);break;
+		default:strncpy(temp2,"\0",4);break;
+	}
+
+	get_mlabel(curr_menus[index],temp);
+
+	if(temp[0] != 0)
+	{
+		_dispStringAt(*row,*col,temp2);
+		_dispStringAt(*row,*col+3,temp);
+	}
+
+	// if MAX_LABEL_LEN > 10 then menus will be too wide
+	if(*col > MAX_LABEL_LEN*2-1)
+	{
+		*col = 0;
+		(*row)++;
+	}
+	else
+		*col += MAX_LABEL_LEN;
+}
+//******************************************************************************************//
+//************************************* display_menus **************************************//
+//******************************************************************************************//
+static void display_menus(void)
+{
+	UCHAR row,col;
+	row = MENU_START_ROW;
+	col = MENU_START_COL;
+	col = 0;
+
+	blank_menu();
+	adv_menu_label(0,&row,&col);
+	adv_menu_label(1,&row,&col);
+	adv_menu_label(2,&row,&col);
+	adv_menu_label(3,&row,&col);
+	adv_menu_label(4,&row,&col);
+	adv_menu_label(5,&row,&col);
+}
+
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -566,8 +704,8 @@ UCHAR do_init(UCHAR ch)
 //******************************************************************************************//
 void init_list(void)
 {
-	int i = 0;
-	UCHAR k;
+//	int i = 0;
+//	UCHAR k;
 #if 0
 	alnum_array[i++] = 33;		// first one is a '!'
 	for(k = 34;k < 48;k++)		// '"' - '/'	14
@@ -590,7 +728,7 @@ void init_list(void)
 	list_size = LIST_SIZE;
 	current_fptr = first_menu;
 	prev_fptr = first_menu;
-	memset(menu_list,0,sizeof(menu_list));
+	memset((void *)menu_list,0,sizeof(menu_list));
 	menu_list[0] = current_fptr;
 	dirty_flag = 0;
 	curr_checkbox = 0;
@@ -600,6 +738,7 @@ void init_list(void)
 //	prev_scale_type = 1;
 	cur_row = NUM_ENTRY_ROW;
 	cur_col = NUM_ENTRY_BEGIN_COL;
+	display_menus();
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -624,7 +763,7 @@ int prev_list(void)
 //******************************************************************************************//
 UCHAR set_list(int fptr)
 {
-	int i,k;
+	int k;
 	UCHAR ret_char = 0;
 //	char tlabel[MAX_LABEL_LEN];
 
@@ -668,8 +807,8 @@ UCHAR set_list(int fptr)
 UCHAR do_numentry(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	char temp;
 
+	
 //	strcpy((char *)state,"do_numentry     \0");
 
 	switch(ch)
@@ -729,12 +868,25 @@ UCHAR do_numentry(UCHAR ch)
 	return ret_char;
 }
 //******************************************************************************************//
+//************************************ clean_disp_num **************************************//
+//******************************************************************************************//
+static void clean_disp_num(void)
+{
+	int i;
+	for(i = 0;i < NUM_ENTRY_SIZE+1;i++)
+	{
+		_dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL,0x20);
+//		dispCharAt(NUM_ENTRY_ROW,i+NUM_ENTRY_BEGIN_COL+1,0x20);
+	}
+}
+//******************************************************************************************//
 //******************************************* escape ***************************************//
 //******************************************************************************************//
 UCHAR escape(UCHAR ch)
 {
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	cur_col = NUM_ENTRY_BEGIN_COL;
+	clean_disp_num();
 	return ch;
 }
 //******************************************************************************************//
@@ -759,6 +911,17 @@ UCHAR enter(UCHAR ch)
 	memset((void*)new_global_number,0,NUM_ENTRY_SIZE);
 	memset((void*)cur_global_number,0,NUM_ENTRY_SIZE);
 	return ch;
+}
+//******************************************************************************************//
+//********************************* display_edit_value *************************************//
+//******************************************************************************************//
+static void display_edit_value(void)
+{
+	_dispStringAt(NUM_ENTRY_ROW,NUM_ENTRY_BEGIN_COL,(char *)cur_global_number);
+	cur_col = strlen((const char *)cur_global_number)+NUM_ENTRY_BEGIN_COL;
+//	dispCharAt(NUM_ENTRY_ROW,cur_col,'x');
+    _dispSetCursor(TEXT_ON | CURSOR_BLINK_ON,NUM_ENTRY_ROW,cur_col,LINE_8_CURSOR);
+	_dispCharAt(NUM_ENTRY_ROW+1,cur_col,95);
 }
 //******************************************************************************************//
 //*************************************** init_numentry ************************************//
@@ -843,18 +1006,17 @@ void cursor_backward(void)
 UCHAR do_exec(UCHAR ch)
 {
 	UCHAR ret_char = ch;
-	int i,j,k;
-	int menu_index = 0;
+	int j,k;
 
 	k = get_curr_menu_index() * NUM_CHECKBOXES;
 
 	switch(ch)
 	{
 		case KP_A:
-			j = scrollup_checkboxes(k);
+			j = scrollup_execchoice(k);
 		break;
 		case KP_B:
-			j = scrolldown_checkboxes(k);
+			j = scrolldown_execchoice(k);
 		break;
 		case KP_C:
 		break;
@@ -867,6 +1029,7 @@ UCHAR do_exec(UCHAR ch)
 		break;
 		case KP_AST:
 			prev_list();
+			blank_choices();
 		break;
 		default:
 		break;
@@ -920,100 +1083,242 @@ UCHAR do_chkbox(UCHAR ch)
 //******************************************************************************************//
 //************************************* init_checkboxes ************************************//
 //******************************************************************************************//
-UCHAR init_checkboxes(int index )
+static void init_checkboxes(int index )
 {
+	int i,j;
+	UCHAR row, col;
+	char tlabel[MAX_LABEL_LEN];
+//	scale_disp(SCALE_DISP_SOME);
+	row = 0;
+	col = 3;
 	curr_checkbox = 0;
-	curr_execchoice = 0;
-	return index;
+
+	blank_display();
+
+	j = curr_chkbox_index * NUM_CHECKBOXES;
+
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		get_cblabel(j+i,tlabel);
+		_dispStringAt(row,col,tlabel);
+
+		if(check_boxes[j+i].checked > 0)
+		{
+			_dispCharAt(row,0,0x78);
+			check_boxes[j+i].checked = 1;
+		}
+		else
+		{
+			_dispCharAt(row,0,0x5F);	// underscore
+			check_boxes[j+i].checked = 0;
+		}
+		row++;
+	}
 }
 //******************************************************************************************//
-//********************************** scrollup_checkboxes ***********************************//
+//*********************************** init_execchoices *************************************//
 //******************************************************************************************//
-int checkboxes_reset(int index)
+static void init_execchoices(int menu_index)
+{
+	int i,j;
+	UCHAR row, col;
+	char tlabel[MAX_LABEL_LEN];
+//	scale_disp(SCALE_DISP_SOME);
+	row = 0;
+	col = 3;
+	curr_checkbox = 0;
+
+	blank_display();
+
+	j = curr_chkbox_index * NUM_CHECKBOXES;
+
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		get_cblabel(j+i,tlabel);
+		_dispStringAt(row,col,tlabel);
+		row++;
+	}
+}
+//******************************************************************************************//
+//*********************************** checkboxes_reset *************************************//
+//******************************************************************************************//
+static UCHAR checkboxes_reset(int index)
 {
 //	int k = index+curr_checkbox;
 	int i,k;
 	curr_checkbox = 0;
-	k = (get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES;
+	k = curr_chkbox_index * NUM_CHECKBOXES;
 
 	for(i = 0;i < NUM_CHECKBOXES;i++)
 	{
-		check_boxes[k].checked = 0;
+		check_boxes[k+i].checked = 0;
 		curr_checkbox++;
 		k++;
+		_dispCharAt(1+curr_checkbox,20,0x5F);
 	}
-
 	curr_checkbox = 0;
 	return k;
 }
 //******************************************************************************************//
 //********************************** scrollup_checkboxes ***********************************//
 //******************************************************************************************//
-int scrollup_checkboxes(int index)
+static int scrollup_checkboxes(int index)
 {
-	int k,i;
-	
+	int k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(curr_checkbox,20,0x5F);
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,3,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+
 	if(--curr_checkbox < 0)
 		curr_checkbox = 9;
+	// move cursor to 3 + check_boxes[curr_checkbox]
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
 
-//	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,4,tlabel);
+	_dispSetMode(ATTR_REVERSE);
 
+//	dispCharAt(1+check_boxes[k].index,20,0x21);
 	return k;
 }
 //******************************************************************************************//
 //********************************* scrolldown_checkboxes **********************************//
 //******************************************************************************************//
-int scrolldown_checkboxes(int index)
+static int scrolldown_checkboxes(int index)
 {
 	int k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(1+curr_checkbox,20,0x20);
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,3,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+
 	if(++curr_checkbox > 9)
 		curr_checkbox = 0;
 
-//	k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,4,tlabel);
+	_dispSetMode(ATTR_REVERSE);
 
 	return k;
 }
 //******************************************************************************************//
+//********************************** toggle_checkboxes *************************************//
 //******************************************************************************************//
-//******************************************************************************************//
-UCHAR do_exec_choice(void)
+static int toggle_checkboxes(int index)
 {
-	return 0;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-int toggle_checkboxes(int index)
-{
-	int k = ((get_curr_menu_index()-MENU1C) * NUM_CHECKBOXES)+curr_checkbox;
+	int k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	_dispCharAt(1+curr_checkbox,20,0x20);
 
-	if(check_boxes[curr_checkbox].checked == 1)
+	if(check_boxes[k].checked == 1)
 	{
-		check_boxes[curr_checkbox].checked = 0;
+		check_boxes[k].checked = 0;
+		_dispCharAt(curr_checkbox,0,0x5f);	// display '_'
 	}
 	else
 	{
-		check_boxes[curr_checkbox].checked = 1;
+		check_boxes[k].checked = 1;
+		_dispCharAt(curr_checkbox,0,120);	// display 'x'
 	}
+#ifdef TEST_WRITE_DATA
+	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d  k: %d   ",
+						curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
+	wrefresh(win);
+#endif
 	return k;
 }
 //******************************************************************************************//
 //********************************** scrollup_execchoice ***********************************//
 //******************************************************************************************//
-int scrollup_execchoice(int index)
+static int scrollup_execchoice(int ch)
 {
+	int k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(curr_checkbox,20,0x5F);
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,3,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+
+	if(--curr_checkbox < 0)
+		curr_checkbox = 9;
+	// move cursor to 3 + check_boxes[curr_checkbox]
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+
+	get_cblabel(k,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,4,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+
+//	dispCharAt(1+check_boxes[k].index,20,0x21);
+	return k;
+
+/*
+	UCHAR temp = curr_execchoice;
 	if(--curr_execchoice < 0)
-		curr_execchoice = 9;
-	return index;
+		curr_execchoice = last_execchoice;
+
+//	mvwprintw(win, DISP_OFFSET+22,2,"%d %d   ",temp,curr_execchoice);
+//	wrefresh(win);
+
+	dispCharAt(1+check_boxes[temp].index,0,0x20);
+	dispCharAt(1+check_boxes[curr_execchoice].index,0,120);
+	return ch;
+*/
 }
 //******************************************************************************************//
 //********************************* scrolldown_execchoice **********************************//
 //******************************************************************************************//
-int scrolldown_execchoice(int index)
+static int scrolldown_execchoice(int ch)
 {
-	if(++curr_execchoice > 9)
-		curr_execchoice = 0;
-	return index;
+	int k;
+	char tlabel[MAX_LABEL_LEN];
+	char blank[] = "             ";
+
+//	dispCharAt(1+curr_checkbox,20,0x20);
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,3,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+
+	if(++curr_checkbox > 9)
+		curr_checkbox = 0;
+
+	k = (curr_chkbox_index * NUM_CHECKBOXES)+curr_checkbox;
+	get_cblabel(k,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+	_dispStringAt(curr_checkbox,3,blank);
+	_dispStringAt(curr_checkbox,4,tlabel);
+//	_dispSetMode(ATTR_REVERSE);
+
+	return k;
 }
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1052,27 +1357,6 @@ UCHAR non_func(UCHAR ch)
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-#ifdef TEST_WRITE_DATA
-void display_menus(int index)
-{
-	int i;
-	char tlabel[MAX_LABEL_LEN];
-
-	mvwprintw(win, DISP_OFFSET+10,2,"%d  ",index);
-	for(i = 0;i < 6;i++)
-	{
-		get_label(menu_structs[get_curr_menu()].menus[i],tlabel);
-		if(strcmp(tlabel,"blank") != 0)
-			mvwprintw(win, DISP_OFFSET+11+i, 2,"%s              ",tlabel);
-		else
-			mvwprintw(win, DISP_OFFSET+11+i, 2,"                ");
-	}
-}
-#endif
-//#endif
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
 UCHAR get_fptr(void)
 {
 	return menu_structs[get_curr_menu()].fptr;
@@ -1082,7 +1366,7 @@ UCHAR get_fptr(void)
 //******************************************************************************************//
 void get_fptr_label(char *str)
 {
-	char tlabel[MAX_LABEL_LEN];
+//	char tlabel[MAX_LABEL_LEN];
 //	return menu_labels[menu_structs[get_curr_menu()].fptr+total_no_menu_labels];
 //	get_label(menu_structs[get_curr_menu()].fptr+total_no_menu_labels,tlabel);
 }
@@ -1107,21 +1391,53 @@ int curr_fptr_changed(void)
 {
 	return 0;
 }
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static void blank_choices(void)
+{
+	int row,col,i;
+	row = 0;
+	col = 0;
+	char blank[] = "                        ";
+	for(i = 0;i < NUM_CHECKBOXES;i++)
+	{
+		_dispStringAt(row,col,blank);
+		row++;
+	}
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static void blank_display(void)
+{
+	int row,col;
+	for(row = 0;row < 13;row++)
+		for(col = 0;col < COLUMN;col++)
+			_dispCharAt(row,col,0x20);
+}
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static void blank_menu(void)
+{
+	int row,col;
+	for(row = MENU_START_ROW;row < MENU_START_ROW+2;row++)
+		for(col = 1;col < COLUMN;col++)
+			_dispCharAt(row,col,0x20);
+}
 
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-
+#if 1
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
 ESOS_SEMAPHORE(comm2_sem);
-ESOS_USER_TASK(comm2_task);
-//ESOS_USER_TASK(send_cmd_param);
-//ESOS_SEMAPHORE(send_sem);
-//ESOS_USER_TASK(convADC);
-//ESOS_USER_TASK(echo_spi_task);
-ESOS_USER_TASK(test1);
+ESOS_USER_TASK(menu_task);
+ESOS_USER_TASK(send_comm1);
+//ESOS_USER_TASK(test1);
 ESOS_USER_TASK(send_comm2);
 ESOS_USER_TASK(get_comm2);
 ESOS_USER_TASK(poll_comm1);
@@ -1369,10 +1685,10 @@ ESOS_USER_TASK(keypad)
 ESOS_USER_TASK(poll_keypad)
 {
     static ESOS_TASK_HANDLE cmd_param_task;
-    static uint8_t send_key;
 
+	
     ESOS_TASK_BEGIN();
-    cmd_param_task = esos_GetTaskHandle(comm2_task);
+    cmd_param_task = esos_GetTaskHandle(menu_task);
 
 	configKeypad();
 /*
@@ -1401,24 +1717,25 @@ ESOS_USER_TASK(poll_keypad)
 	}
     ESOS_TASK_END();
 }
+#endif
 //******************************************************************************************//
 //************************************** poll_comm1  ***************************************//
 //******************************************************************************************//
 
 ESOS_USER_TASK(poll_comm1)
 {
-    static ESOS_TASK_HANDLE comm2_handle;
+    static ESOS_TASK_HANDLE menu_task_handle;
     static ESOS_TASK_HANDLE send_comm_handle;
 //    static ESOS_TASK_HANDLE get_sync_handle;
     static ESOS_TASK_HANDLE get_comm_handle;
     static uint8_t key;
     static uint8_t wkey;
-    static uint16_t wkey16;
     static int i,j,k;
     static uint8_t low_byte, high_byte;
 
+	
     ESOS_TASK_BEGIN();
-    comm2_handle = esos_GetTaskHandle(comm2_task);
+    menu_task_handle = esos_GetTaskHandle(menu_task);
     send_comm_handle = esos_GetTaskHandle(send_comm2);
     get_comm_handle = esos_GetTaskHandle(get_comm2);
 //	get_sync_handle = esos_GetTaskHandle(get_sync);
@@ -1428,7 +1745,7 @@ ESOS_USER_TASK(poll_comm1)
 //	memset(aux_string,0,AUX_STRING_LEN);
 	for(i = 0;i < NUM_LABELS;i++)
 	{
-		j = strlen(labels[i]);
+		j = strlen((const char *)labels[i]);
 		memcpy((void *)aux_string+k, (void *)&labels[i],j);
 		k++;
 		*(aux_string+j+k) = 0;
@@ -1457,12 +1774,12 @@ ESOS_USER_TASK(poll_comm1)
 		if(wkey == TEST1)
 		{
 			low_byte = TEST1;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 		}
 		else if(wkey == TEST2)
 		{
 			low_byte = TEST2;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -1487,7 +1804,7 @@ ESOS_USER_TASK(poll_comm1)
 		else if(wkey == TEST3)
 		{
 			low_byte = TEST3;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -1511,32 +1828,32 @@ ESOS_USER_TASK(poll_comm1)
 		else if(wkey == TEST4)
 		{
 			low_byte = TEST4;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 		}
 		else if(wkey == TEST5)
 		{
 			low_byte = TEST5;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 
 			for(i = 0;i < AUX_STRING_LEN;i++)
 				aux_string[i] = ~i - random_data;
 			random_data++;
 
-			for(i = 0;i < AUX_STRING_LEN;i++)
+/* 			for(i = 0;i < AUX_STRING_LEN;i++)
 			{
 				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,aux_string[i]);
 			}
-		}
+ */		}
 		else if(wkey == TEST6)
 		{
 			low_byte = TEST6;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 		}
 
 		else if(wkey == TEST7)
 		{
 			low_byte = TEST7;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 		}
 		else if(wkey == TEST8)
 		{
@@ -1552,31 +1869,31 @@ ESOS_USER_TASK(poll_comm1)
 		}
 		else if(wkey == TEST11)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST12)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST13)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST14)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST15)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST16)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 		else if(wkey == TEST17)
 		{
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
 		}
 
 		else if(wkey == LOAD_RAM)
@@ -1617,6 +1934,7 @@ ESOS_USER_TASK(poll_comm1)
 			}
 
 			low_byte = BURN_PART;
+
 			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 
 			unpack(_size,&low_byte,&high_byte);
@@ -1687,16 +2005,16 @@ ESOS_USER_TASK(poll_comm1)
 			start_addr = 0;
 			ESOS_RESTART_TASK(send_comm_handle);
 			ESOS_RESTART_TASK(get_comm_handle);
-			ESOS_RESTART_TASK(comm2_handle);
+			ESOS_RESTART_TASK(menu_task_handle);
 			ESOS_TASK_RESTART();
 		}
 		else if(wkey == SPACE)
 		{
 			low_byte = SPACE;
-			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 		}
 		else
-			__esos_CB_WriteUINT8(comm2_handle->pst_Mailbox->pst_CBuffer,wkey);
+			__esos_CB_WriteUINT8(menu_task_handle->pst_Mailbox->pst_CBuffer,wkey);
 
 	}
     ESOS_TASK_END();
@@ -2024,6 +2342,190 @@ int get_label(int index, char *str)
 //	eeprom_read_block((void *)str,eepromString+label_offsets[index],MAX_LABEL_LEN);
 	return i;
 }
+//******************************************************************************************//
+//*********************************** get_mlabel_offsets ***********************************//
+//******************************************************************************************//
+// warning this needs to be written for the AVR main
+int get_mlabel_offsets(void)
+{
+#if 0
+	int i, j,k;
+	UCHAR *ch;
+	UCHAR *pch;
+	UCHAR temp_label[MAX_LABEL_LEN];
+	int done = 0;
+	size_t size;
+	UCHAR tch;
+
+	goffset = 0;
 
 
+//	ch = pch = eeprom_sim;
 
+	size = AUX_STRING_LEN;
+	eeprom_read_block((void*)&aux_string[0],(const void *)eepromString,(size_t)size);
+	ch = pch = aux_string;
+	j = k = 0;
+	for(i = 0;i < AUX_STRING_LEN;i++)
+	{
+		tch = aux_string[i];
+		if(tch == 0)
+			_dispCharAt(j,k,'_');
+		else
+			_dispCharAt(j,k,tch);
+		if(k++ > COLUMN-1)
+		{
+			k = 0;
+			j++;
+		}
+	}
+
+	no_menu_labels = 0;
+	no_rt_labels = 0;
+	rt_params_offset = 0;
+	i = 0;
+
+
+	pch--;
+// the eeprom image must have an extra '0' at the end of
+// the menu labels and another extra '0' at the end
+// of the rt labels
+	do
+	{
+		if(*ch == 0)
+			no_menu_labels++;
+		i++;
+		ch++;
+		pch++;
+	}while(*ch != 0 || *pch != 0);
+
+	no_menu_labels++;
+
+	if(i > EEPROM_SIZE-10)
+		return -1;
+
+	i = 0;
+	do
+	{
+		if(*ch == 0)
+			no_rt_labels++;
+		i++;
+		ch++;
+		pch++;
+	}while(*ch != 0 || *pch != 0);
+
+	if(i > EEPROM_SIZE-10)
+		return -1;
+
+	for(i = 0;i < no_menu_labels+no_rt_labels;i++)
+	{
+		mlabel_offsets[i] = goffset;
+		j = 0;
+
+		memcpy(temp_label,eeprom_sim+goffset,MAX_LABEL_LEN);
+#if 0
+		eeprom_read_block(temp_label, eepromString+goffset, MAX_LABEL_LEN);
+#endif
+		ch = &temp_label[0];
+		while(*ch != 0 && j < MAX_LABEL_LEN)
+		{
+			ch++;
+			j++;
+		}
+		j++;			// adjust for zero at end
+		goffset += j;
+	}
+	rt_params_offset = goffset;
+	return no_menu_labels;
+#endif
+	return 0;
+}
+//******************************************************************************************//
+//*************************************** get_label ****************************************//
+//******************************************************************************************//
+void get_mlabel(int index, char *str)
+{
+
+		// void *dest, const void *src, size_t n
+
+//	memcpy(str,eeprom_sim+mlabel_offsets[index],MAX_LABEL_LEN);
+#if 0
+	eeprom_read_block((void *)str,eepromString+mlabel_offsets[index],MAX_LABEL_LEN);
+#endif
+}
+//******************************************************************************************//
+//********************************** get_cblabel_offsets ***********************************//
+//******************************************************************************************//
+int get_cblabel_offsets(void)
+{
+	int i, j;
+	char *ch;
+	char temp_label[MAX_LABEL_LEN];
+
+	goffset = 0;
+
+	no_cblabels = 0;
+	for(i = 0;i < CBLABEL_SIZE;i++)
+	{
+		if(cblabels[i] == 0 && cblabels[i-1] != 0)
+			no_cblabels++;
+	}
+
+	for(i = 0;i < no_cblabels;i++)
+	{
+		cblabel_offsets[i] = goffset;
+		j = 0;
+		memcpy(temp_label,cblabels+goffset,MAX_LABEL_LEN);
+		ch = temp_label;
+		while(*ch != 0 && j < MAX_LABEL_LEN)
+		{
+			ch++;
+			j++;
+		}
+		j++;			// adjust for zero at end
+		goffset += j;
+	}
+	return no_cblabels;
+}
+//******************************************************************************************//
+//************************************* get_cblabel ****************************************//
+//******************************************************************************************//
+void get_cblabel(int index, char *str)
+{
+		// void *dest, const void *src, size_t n
+	memcpy(str,cblabels+cblabel_offsets[index],MAX_LABEL_LEN);
+}
+//******************************************************************************************//
+//************************************* update_cbabels *************************************//
+//******************************************************************************************//
+int update_cblabels(int index, char *str)
+{
+	int len;
+	len = strlen(str);
+	len = (len > MAX_LABEL_LEN?MAX_LABEL_LEN:len);
+	len++;
+	memcpy(cblabels+total_offset,str, len);
+//	strncpy(menu_labels[index],ramstr,len);
+	total_offset += len;
+	index++;
+	return index;
+}
+
+#ifdef DEBUG
+void PIC_DispCharAt(UCHAR row, UCHAR col, char *c)
+{
+    static ESOS_TASK_HANDLE comm1_handle;
+	static UCHAR low_byte = 0xaa;
+    comm1_handle = esos_GetTaskHandle(send_comm1);
+	
+	__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,low_byte);
+}
+
+void PIC_DispStringAt(UCHAR row, UCHAR col, char *c)
+{
+}
+
+void PIC_SetCursor(UCHAR mode, UINT row, UINT col, UCHAR type)
+{
+}
+#endif

@@ -2,6 +2,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+
+library XESS;
+use XESS.CommonPckg.all;
+
 entity div is
     generic(
        W: integer:=8;

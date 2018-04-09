@@ -9,9 +9,9 @@ git add todo.txt
 git add gitadd.sh
 git add .gitignore
 
-git add Truck_App1/Truck_App1.xise
-git add Truck_App1/Truck_App.ucf
-git add Truck_App1/Truck_App1.vhd
+git add Truck_App1/Multi-Byte.vhd
+git add Truck_App1/multi-byte.ucf
+git add Truck_App1/multi-byte.xise
 git add Truck_App1/Frequency.vhd
 git add Truck_App1/period.vhd
 git add Truck_App1/mod_m.vhd
@@ -42,8 +42,12 @@ git add PIC24_support/lib/*
 git add PIC24_support/esos/*
 git add PIC24_support/esos1/Truck_App2.c
 git add PIC24_support/esos1/Truck_App.h
+git add PIC24_support/esos1/pic_t6963.c
+git add PIC24_support/esos1/pic_t6963.h
+git add PIC24_support/esos1/process3.jpg
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
+git add PIC24_support/esos1/esos1_notes.txt
 
 git add thread_io/ioports.c
 git add thread_io/Makefile
@@ -97,68 +101,8 @@ git add thread_io/test_tcp/make_target
 git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2
 
-git add AVR_t6963/atmega328p.conf
-git add AVR_t6963/avrdude.conf
-git add AVR_t6963/Makefile
-git add AVR_t6963/run-avrdude
-git add AVR_t6963/ProMiniPinout.txt
-git add AVR_t6963/sfr_helper.h
-git add AVR_t6963/USART.c
-git add AVR_t6963/USART.h
-git add AVR_t6963/portpins.h
-git add AVR_t6963/pinDefines.h
-git add AVR_t6963/macros.h
-git add AVR_t6963/binaryMacro.h
-git add AVR_t6963/t6963.h
-git add AVR_t6963/t6963.c
-git add AVR_t6963/AVR_menu.c
-git add AVR_t6963/PIC_menu.c
-git add AVR_t6963/main.c
-git add AVR_t6963/pic_main.h
-git add AVR_t6963/avr_main.h
-git add AVR_t6963/main.h
-git add AVR_t6963/spi.c
-git add AVR_t6963/spi.h
-git add AVR_t6963/supp.c
-git add AVR_t6963/test_write_data/sim_read.c
-git add AVR_t6963/test_write_data/sim_write.c
-git add AVR_t6963/test_write_data/make_avr
-git add AVR_t6963/test_write_data/make_pic
-git add AVR_t6963/test_write_data/copy1.sh
-git add AVR_t6963/test_write_data/copy2.sh
-git add AVR_t6963/test_write_data/domake1
-git add AVR_t6963/test_write_data/domake2
-git add AVR_t6963/test_write_data/read_eeprom_sim.c
-git add AVR_t6963/test_write_data/read_eeprom_sim2.c
-git add AVR_t6963/test_write_data/make_show_eeprom
-git add AVR_t6963/test_write_data/sim_read_extract.sh
-git add AVR_t6963/test_write_data/sim_write_extract.sh
-git add AVR_t6963/test_write_data/hotkeys.txt
-git add AVR_t6963/test_write_data/eeprom.bin
-git add AVR_t6963/todo.txt
-git add AVR_t6963/test_eeprom.cx
-git add AVR_t6963/main.cx
-
-git add AVR2/atmega328p.conf
-git add AVR2/macros.h
-git add AVR2/Makefile
-git add AVR2/spi.c
-git add AVR2/USART.h
-git add AVR2/avrdude.conf
-git add AVR2/main.c
-git add AVR2/pinDefines.h
-git add AVR2/run-avrdude
-git add AVR2/spi.h
-git add AVR2/binaryMacro.h
-git add AVR2/main.h
-git add AVR2/ProMiniPinout.txt
-git add AVR2/sfr_helper.h
-git add AVR2/USART.c
-
-#clear
 git status
 git log --oneline > oneline.txt
-#git log | grep Date
 
 
 
