@@ -69,3 +69,5 @@
 
 typedef unsigned char UCHAR;
 typedef UCHAR* PUCHAR;
+typedef unsigned int UINT;
+typedef unsigned long ULONG;

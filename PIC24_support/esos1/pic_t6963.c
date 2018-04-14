@@ -253,13 +253,9 @@ void GDispChar (UCHAR c)
  */
 void GDispCharAt (UINT row, UINT col, UCHAR c)
 {
-#ifdef DEBUG
-	PIC_DispCharAt(row+2,col+5,c);
-#else
 	GDispGoto (row, col);
 	GDispDataWr (c - 0x20);
 	GDispCmdSend (DATA_WR);
-#endif
 }
 /*********************************************************************************************************/
 void GDispByteAt(UINT row, UINT col, UCHAR byte)
@@ -316,9 +312,7 @@ void GDispStringAt(UINT row, UINT col, char *c)
 	int i;
 	str = c;
 	i = 0;
-#ifdef DEBUG
-	PIC_DispStringAt(row+2,5+(col+i),"%s",str);
-#else
+
 	while(*(str+i) != 0)
 	{
 		GDispCharAt(row,col+i,*(str+i));
@@ -326,7 +320,6 @@ void GDispStringAt(UINT row, UINT col, char *c)
 		if(i > 100)
 			return;
 	}
-#endif
 }
 /*
 *********************************************************************************************************
@@ -347,9 +340,6 @@ void GDispStringAt(UINT row, UINT col, char *c)
  */
 void GDispSetCursor (UCHAR mode, UINT row, UINT col, UCHAR type)
 {
-#if DEBUG
-	PIC_SetCursor(mode, row, col, type);
-#else
 	UINT addr;
 	addr = row << 8;
 	addr = addr | (col & 0x00FF);
@@ -357,7 +347,6 @@ void GDispSetCursor (UCHAR mode, UINT row, UINT col, UCHAR type)
 	GDispCmdSend (CURSOR_PTR_SET); //Set cursor position
 	GDispCmdSend (mode);
 	GDispCmdSend (type); //cursor mode
-#endif	
 }
 /*
 *********************************************************************************************************

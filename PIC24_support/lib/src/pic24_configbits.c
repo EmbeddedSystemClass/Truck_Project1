@@ -473,8 +473,7 @@ _FICD (JTAGEN_OFF & ICS_PGD1);
 #endif
 
 _CONFIG1 (JTAGEN_OFF & GCP_OFF & GWRP_OFF & BKBUG_OFF & COE_OFF & ICS_PGx2 & FWDTEN_OFF & WINDIS_OFF & FWPSA_PR128 & WDTPS_PS512);
-_CONFIG2 (IESO_OFF & FNOSC_FRC & FCKSM_CSECMD & IOL1WAY_OFF & OSCPIN_CONFIG & PLLDIV_DIV10);
-
+_CONFIG2 (IESO_OFF & FNOSC_FRC & FCKSM_CSECMD & IOL1WAY_OFF & OSCPIN_CONFIG & PLLDIV_DIV2);
 
 #warning "Using default config bit settings for the PIC24F family."
 #warning "Edit this file to define bits for your processor!"

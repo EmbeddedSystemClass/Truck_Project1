@@ -48,6 +48,10 @@ git add PIC24_support/esos1/process3.jpg
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
 git add PIC24_support/esos1/esos1_notes.txt
+git add PIC24_support/esos1/copy.sh
+git add PIC24_support/esos1/extract.sh
+git add PIC24_support/esos1/make_avr
+git add PIC24_support/esos1/sim_read2.c
 
 git add thread_io/ioports.c
 git add thread_io/Makefile

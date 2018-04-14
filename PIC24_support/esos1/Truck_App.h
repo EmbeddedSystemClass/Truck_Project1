@@ -23,7 +23,7 @@
 //
 // "I am not so much concerned with the return on capital as I am with the return of capital." - Will Rogers
 //
-
+#define DEBUG
 #include "../esos/include/esos.h"
 #include "../esos/include/pic24/esos_pic24.h"
 #include "../esos/include/pic24/esos_pic24_rs232.h"
@@ -43,6 +43,15 @@
 // DEFINEs go here
 //#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
 uint8_t     LED1 = TRUE;      // LED1 is initially "on"
+#ifdef DEBUG
+#define DEBUG_CHAR_AT 1
+#define DEBUG_STRING_AT 2
+#define DEBUG_SET_CURSOR 3
+#define DEBUG_CLRSCR1 4
+#define DEBUG_CLRSCR2 5
+#define DEBUG_CLRSCR3 6
+#define DEBUG_MSG1 7
+#endif
 #define MY_ESOS1
 #define TIME_DELAY		20
 #define TEMP_DELAY3		2
@@ -125,6 +134,8 @@ volatile char cur_global_number[NUM_ENTRY_SIZE];
 volatile char new_global_number[NUM_ENTRY_SIZE];
 volatile int sample_numbers[5];
 volatile int _size;
+volatile int debug_stringat_len;
+volatile int debug_message_len;
 volatile int start_addr;
 volatile UCHAR cur_col;
 volatile UCHAR cur_row;
@@ -173,16 +184,26 @@ static UCHAR checkboxes_reset(int index);
 #define MENU_START_ROW 14
 #define MENU_START_COL 3
 #define MENU_BLANK "          "
+#ifdef DEBUG
+#define _dispCharAt(_row,_col,_char) PIC_DispCharAt((UINT)_row+15,(UINT)_col+15,(UCHAR)_char)
+#define _dispStringAt(_row,_col,_char) PIC_DispStringAt((UINT)_row+15,(UINT)_col+15,(char *)_char)
+#define _dispSetCursor(_mode,_row,_col,_type) PIC_SetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
+#define _dispSetMode(_mode) PIC_GDispSetMode(_mode)
+#define _dispClrTxt1() PIC_DispClrTxt1()
+#define _dispClrTxt2() PIC_DispClrTxt2()
+#define _dispClrTxt3() PIC_DispClrTxt3()
+#define _dispDebugMessage(_row,_col,_char) PIC_DispDebugMessage((UINT)_row,(UINT)_col,(char *)_char)
+#else
 #define _dispCharAt(_row,_col,_char) GDispCharAt((UINT)_row,(UINT)_col,(UCHAR)_char)
 #define _dispStringAt(_row,_col,_char) GDispStringAt((UINT)_row,(UINT)_col,(char *)_char)
 #define _dispSetCursor(_mode,_row,_col,_type) GDispSetCursor ((UCHAR)_mode, (UINT)_row, (UINT)_col, (UCHAR)_type)
 #define _dispSetMode(_mode) GDispSetMode(_mode)
+#endif
+//#else
+//#endif
 void dispRC(int row, int col);
 void CheckRC(int *row, int *col, UCHAR *k);
 void display_labels(void);
-#ifdef TEST_WRITE_DATA
-void set_win(WINDOW *win);
-#endif
 int curr_fptr_changed(void);
 int get_curr_menu(void);
 int get_str_len(void);
@@ -445,6 +466,26 @@ RT_PARAM rt_params[NUM_RT_PARAMS] = {
  {4, 15, SHOWN_SENT, 0, RT_OILT},
  {5, 15, SHOWN_SENT, 0, RT_O2} };
 
+ESOS_USER_TASK(keypad);
+ESOS_USER_TASK(poll_keypad);
+ESOS_SEMAPHORE(key_sem);
+ESOS_SEMAPHORE(comm1_sem);
+ESOS_SEMAPHORE(comm2_sem);
+ESOS_USER_TASK(menu_task);
+ESOS_USER_TASK(delay_comm1);
+ESOS_USER_TASK(send_comm1);
+ESOS_USER_TASK(send_charat);
+ESOS_USER_TASK(send_stringat);
+ESOS_USER_TASK(send_setcursor);
+ESOS_USER_TASK(send_clrtxt1);
+ESOS_USER_TASK(send_clrtxt2);
+ESOS_USER_TASK(send_clrtxt3);
+ESOS_USER_TASK(send_debugmsg);
+ESOS_USER_TASK(test1);
+ESOS_USER_TASK(send_comm2);
+ESOS_USER_TASK(get_comm2);
+ESOS_USER_TASK(poll_comm1);
+ESOS_USER_TASK(get_sync);
 
 UCHAR get_keypress(UCHAR key1)
 {
@@ -594,6 +635,7 @@ UCHAR get_keypress(UCHAR key1)
 
 #endif 
 //#if 0
+#if 1
 //******************************************************************************************//
 //************************************ adv_menu_label **************************************//
 //******************************************************************************************//
@@ -615,6 +657,7 @@ void adv_menu_label(int index, UCHAR *row, UCHAR *col)
 	}
 
 	get_mlabel(curr_menus[index],temp);
+//	strcpy(temp,"asdf\0");
 
 	if(temp[0] != 0)
 	{
@@ -640,7 +683,6 @@ static void display_menus(void)
 	row = MENU_START_ROW;
 	col = MENU_START_COL;
 	col = 0;
-
 	blank_menu();
 	adv_menu_label(0,&row,&col);
 	adv_menu_label(1,&row,&col);
@@ -1239,11 +1281,6 @@ static int toggle_checkboxes(int index)
 		check_boxes[k].checked = 1;
 		_dispCharAt(curr_checkbox,0,120);	// display 'x'
 	}
-#ifdef TEST_WRITE_DATA
-	mvwprintw(win, DISP_OFFSET+20,2,"toggle: ind %d curr %d ckbox %d  k: %d   ",
-						curr_chkbox_index, curr_checkbox,check_boxes[k].index,k);
-	wrefresh(win);
-#endif
 	return k;
 }
 //******************************************************************************************//
@@ -1411,37 +1448,29 @@ static void blank_choices(void)
 //******************************************************************************************//
 static void blank_display(void)
 {
-	int row,col;
+	static UINT row;
+	
 	for(row = 0;row < 13;row++)
-		for(col = 0;col < COLUMN;col++)
-			_dispCharAt(row,col,0x20);
+		_dispStringAt(row,0,"                         ");
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 static void blank_menu(void)
 {
-	int row,col;
-	for(row = MENU_START_ROW;row < MENU_START_ROW+2;row++)
-		for(col = 1;col < COLUMN;col++)
-			_dispCharAt(row,col,0x20);
+	static UINT test1a, test1b;
+	static UCHAR data1 = 0x21;
+	
+	data1 = 0x21;
+	test1b = MENU_START_ROW;
+	_dispStringAt(MENU_START_ROW,1,"           \0");
+//	_dispStringAt(MENU_START_ROW+1,1,"           \0");
+//	_dispStringAt(MENU_START_ROW+2,1,"           \0");
 }
-
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
 #if 1
-ESOS_USER_TASK(keypad);
-ESOS_USER_TASK(poll_keypad);
-ESOS_SEMAPHORE(key_sem);
-ESOS_SEMAPHORE(comm2_sem);
-ESOS_USER_TASK(menu_task);
-ESOS_USER_TASK(send_comm1);
-//ESOS_USER_TASK(test1);
-ESOS_USER_TASK(send_comm2);
-ESOS_USER_TASK(get_comm2);
-ESOS_USER_TASK(poll_comm1);
-ESOS_USER_TASK(get_sync);
 //ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
@@ -1760,26 +1789,36 @@ ESOS_USER_TASK(poll_comm1)
 		ESOS_TASK_WAIT_ON_GET_UINT8(key);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
 
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+  		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_ON_SEND_UINT8(key);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 		wkey = get_keypress(key);
 
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(wkey);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-
 		if(wkey == TEST1)
 		{
-			low_byte = TEST1;
-//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+//			low_byte = TEST1;
+/* 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+ 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+		    ESOS_TASK_WAIT_ON_SEND_STRING("test one... ");
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+ 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+ */			_dispCharAt(0x46, 0x47, 0x48);
 		}
 		else if(wkey == TEST2)
 		{
 			low_byte = TEST2;
-//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+/* 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+		    ESOS_TASK_WAIT_ON_SEND_STRING("test two... ");
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+ */			_dispStringAt(0x30, 0x31,"test string\0");
+
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -1804,7 +1843,15 @@ ESOS_USER_TASK(poll_comm1)
 		else if(wkey == TEST3)
 		{
 			low_byte = TEST3;
-//			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
+/* 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+		    ESOS_TASK_WAIT_ON_SEND_STRING("test three... ");
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+			ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+ */
+
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
@@ -1863,10 +1910,10 @@ ESOS_USER_TASK(poll_comm1)
 		}
 		else if(wkey == TEST10)
 		{
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+/* 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		    ESOS_TASK_WAIT_ON_SEND_STRING("read aux_string from target");
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		}
+ */		}
 		else if(wkey == TEST11)
 		{
 //			__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,wkey);
@@ -1898,6 +1945,7 @@ ESOS_USER_TASK(poll_comm1)
 
 		else if(wkey == LOAD_RAM)
 		{
+#if 0
 			for(i = 0;i < CBLABEL_SIZE;i++)
 			{
 				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,cblabels[i]);
@@ -1923,6 +1971,7 @@ ESOS_USER_TASK(poll_comm1)
 				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,low_byte);
 				__esos_CB_WriteUINT8(send_comm_handle->pst_Mailbox->pst_CBuffer,high_byte);
 			}
+#endif
 		}
 		if(wkey == BURN_PART)
 		{
@@ -2510,22 +2559,181 @@ int update_cblabels(int index, char *str)
 	index++;
 	return index;
 }
-
+// 			_dispCharAt(0x46, 0x47, 0x48);
+#endif
 #ifdef DEBUG
-void PIC_DispCharAt(UCHAR row, UCHAR col, char *c)
+//******************************************************************************************//
+//************************************* PIC_DispCharAt *************************************//
+//******************************************************************************************//
+void PIC_DispCharAt(UINT row, UINT col, UCHAR c)
 {
-    static ESOS_TASK_HANDLE comm1_handle;
-	static UCHAR low_byte = 0xaa;
-    comm1_handle = esos_GetTaskHandle(send_comm1);
+    static ESOS_TASK_HANDLE handle;
+	static ULONG send1;
+	static ULONG send2;
+	static UCHAR temp;
 	
-	__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,low_byte);
+	handle = esos_GetTaskHandle(send_comm1);
+	temp = DEBUG_CHAR_AT;
+	send1 = (UINT)temp;
+	send2 = (UINT)row;
+	send2 <<= 8;
+	send1 |= send2;
+	send2 = (UINT)col;
+	send2 <<= 16;
+	send1 |= send2;
+	send2 = (UINT)c;
+	send2 <<= 24;
+	send1 |= send2;
+/* 	memcpy(buff+1,&row,sizeof(UINT));
+	memcpy(buff+3,&col,sizeof(UINT));
+	memcpy(buff+5,&c,sizeof(UCHAR));
+	buff[6] = 0xff;
+	size_buff = 7;
+ */
+	__esos_CB_WriteUINT32(handle->pst_Mailbox->pst_CBuffer,send1);
 }
-
-void PIC_DispStringAt(UCHAR row, UCHAR col, char *c)
+// 			_dispStringAt(0x30, 0x31,"test string\0");
+//******************************************************************************************//
+//*********************************** PIC_DispStringAt *************************************//
+//******************************************************************************************//
+void PIC_DispStringAt(UINT row, UINT col, char *c)
 {
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[100];
+	static UINT size_buff;
+	static int string_len;
+	static int i;
+	
+	string_len = strlen(c);
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_stringat);
+	buff[0] = DEBUG_STRING_AT;
+	memcpy(buff+1,&row,sizeof(UINT));
+	memcpy(buff+3,&col,sizeof(UINT));
+	memcpy(buff+5,&string_len,sizeof(UINT));
+	memcpy(buff+7,c,strlen(c));
+//	size_buff = (UINT)string_len + 5;
+	buff[8+string_len] = 0xff;
+	size_buff = 9+string_len;
+	debug_stringat_len = size_buff;
+	
+	__esos_CB_WriteUINT8Buffer(handle->pst_Mailbox->pst_CBuffer,buff,size_buff);
 }
-
+//******************************************************************************************//
+//************************************** PIC_SetCursor *************************************//
+//******************************************************************************************//
 void PIC_SetCursor(UCHAR mode, UINT row, UINT col, UCHAR type)
 {
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[10];
+	static UINT size_buff;
+	static int i;
+	
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_comm1);
+	buff[0] = DEBUG_SET_CURSOR;
+	memcpy(buff+1,&mode,sizeof(UCHAR));
+	memcpy(buff+2,&row,sizeof(UINT));
+	memcpy(buff+4,&col,sizeof(UINT));
+	memcpy(buff+6,&type,sizeof(UCHAR));
+	size_buff = 8;
+	buff[7] = 0xff;
+
+	__esos_CB_WriteUINT8Buffer(handle->pst_Mailbox->pst_CBuffer,buff,size_buff);
+}
+//******************************************************************************************//
+//************************************ PIC_DispClrTxt1 *************************************//
+//******************************************************************************************//
+void PIC_DispClrTxt1(void)
+{
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[5];
+	static UINT size_buff;
+	static int i;
+	static UCHAR test;
+	
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_clrtxt1);
+	buff[0] = DEBUG_CLRSCR1;
+	size_buff = 2;
+	buff[1] = 0xff;
+
+	__esos_CB_WriteUINT8(handle->pst_Mailbox->pst_CBuffer,test);
+}
+//******************************************************************************************//
+//************************************ PIC_DispClrTxt2 *************************************//
+//******************************************************************************************//
+void PIC_DispClrTxt2(void)
+{
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[5];
+	static UINT size_buff;
+	static int i;
+	static UCHAR test;
+	
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_clrtxt2);
+	buff[0] = DEBUG_CLRSCR2;
+	size_buff = 2;
+	buff[1] = 0xff;
+
+	__esos_CB_WriteUINT8(handle->pst_Mailbox->pst_CBuffer,test);
+}
+//******************************************************************************************//
+//************************************ PIC_DispClrTxt3 *************************************//
+//******************************************************************************************//
+void PIC_DispClrTxt3(void)
+{
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[5];
+	static UINT size_buff;
+	static int i;
+	static UCHAR test;
+	
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_clrtxt3);
+	buff[0] = DEBUG_CLRSCR3;
+	size_buff = 2;
+	buff[1] = 0xff;
+
+	__esos_CB_WriteUINT8(handle->pst_Mailbox->pst_CBuffer,test);
+}
+//******************************************************************************************//
+//*********************************** PIC_GDispSetMode *************************************//
+//******************************************************************************************//
+void PIC_GDispSetMode(_mode)
+{}
+//******************************************************************************************//
+//********************************** PIC_DispDebugMessage **********************************//
+//******************************************************************************************//
+// a.k.a. _dispDebugMessage
+void PIC_DispDebugMessage(UINT row, UINT col, char *c)
+{
+    static ESOS_TASK_HANDLE handle;
+	static UCHAR buff[100];
+	static UINT size_buff;
+	static int string_len;
+	static int i;
+	
+	string_len = strlen(c);
+//	memset((void *)buff,0,sizeof(buff));
+	
+	handle = esos_GetTaskHandle(send_debugmsg);
+	buff[0] = DEBUG_MSG1;
+	memcpy(buff+1,&row,sizeof(UINT));
+	memcpy(buff+3,&col,sizeof(UINT));
+	memcpy(buff+5,&string_len,sizeof(UINT));
+	memcpy(buff+7,c,strlen(c));
+//	size_buff = (UINT)string_len + 5;
+	buff[8+string_len] = 0xff;
+	size_buff = 9+string_len;
+	debug_message_len = size_buff;
+	
+	__esos_CB_WriteUINT8Buffer(handle->pst_Mailbox->pst_CBuffer,buff,size_buff);
 }
 #endif

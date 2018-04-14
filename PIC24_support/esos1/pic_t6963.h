@@ -50,12 +50,6 @@
 //Control pin setting
 #include "../lib/include/pic24_all.h"
 
-#ifdef DEBUG
-void PIC_DispCharAt(UCHAR row, UCHAR col, char *c);
-void PIC_DispStringAt(UCHAR row, UCHAR col, char *c);
-void PIC_SetCursor(UCHAR mode, UINT row, UINT col, UCHAR type);
-#endif
-
 #define SET_RST(){}
 #define SET_CD(){}
 #define SET_CE(){}

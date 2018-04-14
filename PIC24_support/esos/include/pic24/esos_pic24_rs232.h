@@ -109,12 +109,23 @@ void    __esos_hw_signal_stop_tx(void);
  *
  *  \param baudRate Desired baud rate.
  */
-static inline void CONFIG_BAUDRATE_UART1(uint32_t baudRate) {
+/* static inline void CONFIG_BAUDRATE_UART1(uint32_t baudRate) {
   uint32_t brg = (FCY/baudRate/16) - 1;
   ASSERT(brg <= 0xFFFF);
   U1MODEbits.BRGH = 0;
   U1BRG = brg;
 }
+ */
+static inline uint32_t CONFIG_BAUDRATE_UART1(uint32_t baudRate) {
+  uint32_t brg = (FCY/baudRate/16) - 1;
+//  uint32_t brg = (FCY/baudRate/4) - 1;
+  ASSERT(brg <= 0xFFFF);
+  U1MODEbits.BRGH = 0;
+//  U1MODEbits.BRGH = 1;	// if div by 4 then set BRGH to 1
+  U1BRG = brg;
+  return brg;
+}
+
 static inline void CONFIG_BAUDRATE_UART2(uint32_t baudRate) {
   uint32_t brg = (FCY/baudRate/16) - 1;
   ASSERT(brg <= 0xFFFF);

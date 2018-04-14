@@ -66,7 +66,7 @@
  *    pic24_clockfreq.c and a prototype for
  *    that function in this file.
  */
-
+#if 1
 #pragma once
 
 #include <stdint.h>
@@ -115,7 +115,7 @@
 #endif
 /// \endcond
 
-
+#endif
 ///@{ \name #defines for CLOCK_CONFIG
 /** Create a table of vales for \ref CLOCK_CONFIG.
  *  When adding a new entry, you must also write

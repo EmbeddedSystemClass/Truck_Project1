@@ -192,14 +192,18 @@ void _ISRFAST _U3RXInterrupt (void) {
 void __esos_configUART1(uint32_t u32_baudRate) {
   /*************************  UART config ********************/
   //Pin mapping macros in pic24_ports.h
-
+   uint32_t test = 0;
+   uint32_t test2 = 1;
+   long _fcy = 0L;
   CONFIG_RD8_AS_DIG_INPUT (); // RX pin must be digital input
   CONFIG_U1RX_TO_RP (RD8_RP); // U1RX <- RD8 pin 68
   CONFIG_RD0_AS_DIG_OUTPUT (); // TX pin must be digital output
   CONFIG_U1TX_TO_RP (RD0_RP); // U1TX -> RD0 pin 72
 
   //UART macros defined in "pic24_uart.h"
-  CONFIG_BAUDRATE_UART1(u32_baudRate);   //baud rate
+  test = CONFIG_BAUDRATE_UART1(u32_baudRate);   //baud rate
+  _fcy = FCY;
+  test2 = test;
   CONFIG_PDSEL_UART1(UXMODE_PDSEL_8DATA_NOPARITY);        // 8-bit data, no parity
 //  CONFIG_BAUDRATE_UART2(u32_baudRate);   //baud rate
 //  CONFIG_PDSEL_UART2(UXMODE_PDSEL_8DATA_NOPARITY);        // 8-bit data, no   CONFIG_STOPBITS_UART1(1);            // 1 Stop bit
@@ -308,9 +312,9 @@ void __esos_hw_InitCommSystem(void) {
 void __esos_hw_InitCommSystem2(void) {
   // use the MSSTATE PIC24 routines to init the RS232 comm subsystem
   // 8N1 @ 56k7 baud (DEFAULT_BAUDRATE) for now
-//  __esos_configUART2(DEFAULT_BAUDRATE) ;
+  __esos_configUART2(DEFAULT_BAUDRATE) ;
 //  __esos_configUART2(FAST_BAUDRATE) ;
-  __esos_configUART2(SLOW_BAUDRATE) ;
+//  __esos_configUART2(SLOW_BAUDRATE) ;
 
 }  // end __esos_hw_InitCommSystem2()
 
