@@ -1,10 +1,6 @@
 git add README.md
 git add Truck_Project1_notes.txt
-git add super_truck_notes.txt
 git add monster_box.txt
-git add HDM128GS24L.png
-git add IPC_layout.png
-git add MT-DB-X4_pinout.png
 git add todo.txt
 git add gitadd.sh
 git add .gitignore
