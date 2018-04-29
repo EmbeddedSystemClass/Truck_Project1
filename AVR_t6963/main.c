@@ -43,7 +43,9 @@ int main(void)
 	UCHAR str_len;
 
 //#if 0
-	GDispInit();
+	_delay_ms(10);
+	GDispInitPort();
+	_delay_ms(10);
     initUSART();
  //   initSPImaster();
 //	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
@@ -67,27 +69,47 @@ int main(void)
 #endif
 //	xbyte = 0x7e;
 	xbyte = 0x21;
-
+	SET_DATA_DIR_OUT();
 	while(1)
 	{
-		_delay_us(10);
+		_delay_ms(2);
 		SET_TEST1();
+		_delay_us(20);
+		SET_WR();
+		_delay_us(20);
+		SET_RST();
+		_delay_us(20);
+		SET_CE();
+		_delay_us(20);
+		SET_CD();
+		_delay_us(20);
+		Data_Out(0xFF);
 //		xbyte = receiveByte();
-//		receiveByte();
-/*
+		receiveByte();
+
 		xbyte--;
 		if(xbyte < 0x21)
 			xbyte = 0x7e;
-*/
+/*
 		xbyte++;
 		if(xbyte > 0x7e)
 			xbyte = 0x21;
-
-		_delay_us(10);
+*/
+		_delay_ms(2);
 		CLR_TEST1();
-		transmitByte(xbyte);
+		_delay_us(20);
+		CLR_WR();
+		_delay_us(20);
+		CLR_RST();
+		_delay_us(20);
+		CLR_CE();
+		_delay_us(20);
+		CLR_CD();
+		_delay_us(20);
+		Data_Out(0);
+		CLR_RD();
+//		transmitByte(xbyte);
 	}
-
 
 	i = 0;
 	k = 0;

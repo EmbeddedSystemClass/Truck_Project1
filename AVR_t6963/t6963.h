@@ -53,6 +53,7 @@
 					// to use the SPI port - C4 is 'snuck in there' behind PC2 & 3
 					// on the middle right with the reset button on the bottom
 #ifdef NEW_PIN
+#warning "NEW_PIN defined"
 #define TEST_PIN1	PORTB2
 #define LCD_RD		PORTC4       // LCD Read control line  pin number (D10)
 #else

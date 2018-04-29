@@ -366,13 +366,14 @@ void GDispInitPort (void)
 {
 	DDRC |= 0x0F;	// set all used bits as outputs
 	DDRC |= 0x30;	// set the TEST_PINs as output
-	DDRB |= 0x03;
+	DDRB |= 0x07;
 	DDRD |= 0xFC;
 	CLR_RST();
 	SET_CD();
 	SET_CE();
 	SET_RD();
 	SET_WR();
+	CLR_TEST1();
 
 	_CB(PORTD,DATA0);
 	_CB(PORTD,DATA1);
