@@ -67,6 +67,7 @@ git add PIC24_support/esos1/copy.sh
 git add PIC24_support/esos1/extract.sh
 git add PIC24_support/esos1/make_avr
 git add PIC24_support/esos1/sim_read2.c
+git add PIC24_support/esos1/ESOS1.X/nbproject/*
 
 git add thread_io/ioports.c
 git add thread_io/Makefile
