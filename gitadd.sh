@@ -68,6 +68,7 @@ git add PIC24_support/esos1/extract.sh
 git add PIC24_support/esos1/make_avr
 git add PIC24_support/esos1/sim_read2.c
 git add PIC24_support/esos1/ESOS1.X/nbproject/*
+git add PIC24_support/esos1/esos_examples.c
 
 git add thread_io/ioports.c
 git add thread_io/Makefile
@@ -120,6 +121,7 @@ git add thread_io/test_tcp/iostate.bin
 git add thread_io/test_tcp/make_target
 git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2
+git add thread_io/ir104_man.pdf
 
 git status
 git log --oneline > oneline.txt

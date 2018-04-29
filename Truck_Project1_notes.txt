@@ -1,13 +1,16 @@
 Truck_Project1_notes.txt
 
 Truck_Project1 is an automotive SCADA system which uses a Xilinx Spartan-3E to 
-monitor real-time data, a PIC24FJ128GB110 to handle a keypad and LCD screen,
-and a TS-7200/7800 to do I/O (turning on and off lights and reading switches).
+monitor real-time data, a PIC24FJ128GB110 to handle a keypad and route message
+traffic, a ATMEGA328P to drive a t6963 LCD screen, and a TS-7200/7800 to do
+I/O (turning on and off lights and reading switches).
 
-											|-------|
-----|										| LCD 	|
-	|										|-------|
-	|											  ^							  Laptop
+
+											   | AVR |=> LCD
+												  ^
+----|											  |
+	|											  |
+	|											  |							  Laptop
 F	|											  |								^
 P	|											  v								|TCP/IP
 G	|---------------> RS-232  ----------------->| P	|							|
@@ -19,11 +22,11 @@ A	|											| I	|							v
 							|-----------|									|-----------|
 
 			
-Basically, the  PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
+he PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
 TS-7200 and the LCD screen.
 
 The menuing of the LCD screen and can display optional real time info like engine speed,
-engine temp,oil pressure etc coming directly from the FPGA.
+engine temp, oil pressure etc coming directly from the FPGA.
 
 There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
 The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
@@ -36,11 +39,79 @@ The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is
 file that can be downloaded later.
 
 directories:
-PIC24_support - source and libs for PIC24FJ128GB110
-thread_io - source for the TS-7200/7800
+PIC24_support - source and libs for PIC24FJ128GB110 (uses MPLAB X)
+AVR_t6963 - ATMEGA328p source and support files (uses avrdude)
+thread_io - source for the TS-7200/7800 cards (from Technologic Systems)
 thread_io/ncurses - source for the ncurses program that runs on the laptop and communicates
 						with the TS-7200/7800.
 Truck_App1 - source for the FPGA (Xilinx Spartan-3E) in VHDL
+
+The PIC24 uses a really nice RTOS called ESOS which is from people at Mississippi State.
+(see https://sites.google.com/site/pic24micro//Home/Course)
+within the PIC24_support directory there is /lib and /esos. lib is the src & include
+for using a PIC24 (or most other 16-bit controllers from Microchip*) while the esos
+directory is the RTOS which uses some of the /lib directory files. There is a file in
+the PIC24_support directory called esos_examples.c that explains how to use the ESOS system.
+
+*Microchip was bought out by AVR so you have to go to the AVR site to find the documentation.
+
+The thread_io directory has files used to compile an embedded linux program that uses
+the POSIX pthread library to handle serial io and tcp/ip traffic and drive a io card that
+plugs into the TS-7XXX PC-104 bus. I bought the cards used on ebay. They are orginally from
+Tri-M Engineering. Each card has 20 inputs and 20 outputs. The outputs are small 5A relays
+onboard the card. The cards can be set to accessed and different memory/io addresses so up
+to 4 can be stacked on each other. I've tried just about every free RTOS out there and
+no-one seems to have the ports to work on the TS-7200 which use the ARM920T processor with
+the EP9301 chipset. I like the uCOS-II Jean J. Labrosse of Micrium, Weston, FL and he has
+the port files for the ARM processor but I wasn't inclined to take a year-long self-course
+on ARM assembly language, linux internals and the ARM architecture, although I did 'hack'
+through it for a while. So using the POSIX pthreads are a pretty good alternative and you
+can learn more about pthreads from 'Pthreads Programming' by Dick Buttlar from O'Reilly.
+
+The Truck_App1 directory has all the files for compiling (if you want to call it that)
+a Spartan-3E FPGA from Xilinx. The files ending in .vhd are the VHDL programming language
+and I used a free copy of ISE from Xilinx. Actually, I tried to download it from the 
+Xilinx website recently and its not exactly free since now you have to have a verifiable
+company and phone no. so I'm using a free copy I downloaded a couple years ago. The
+particular board running this is called an XC3S500E which only has the Spartan-3E chip,
+the clock and the pinout connectors for no less that 200 io pins. These can be purchased
+on ebay for about $35USD. All the other development boards have all the buttons, LEDs,
+DB connectors and USB ports which I didn't need. The only problem with the io connectors
+with these is that they are not the standard 1mm pitch that fits nicely into most
+perfboards which is what I'm using since I'm not into making my own printed circuit
+boards. If you can find a copy of ISE from Xilinx, it also comes with a simulator called
+ISim which lets you see how your VHDL program works and is really useful for testing
+and debugging the FPGA. The other alternative to Xilinx would be Altera which is probably
+geared more towards the hobbiest, I would think, but I'm too far down the rabbit hole
+now. If you want a copy of ISE, email me at hwswhacker1256@gmail.com and I'll see if
+I can get the file to you via ftp or something.
+
+You can learn more about VHDL and FPGA by doing a google search but here's the executive
+summary: 
+
+With most modern micropressors and microcontrollers you write a program in C/C++ or
+whatever, compile it to a binary file, load it to the processor memory and the hardware
+on the chip executes each instruction from the binary file step by step. With the FPGA
+(Field Programmable Gate Array) the VHDL code lets you build the hardware or the
+processor core. In other words, the ISE development system actually routes the 
+connections on the chip so you can have parallel processes running completely
+independent of each other in real time. This is really powerful when doing high speed
+data aquisition but its a steep learning curve. The ISim is really helpful and I took
+most of my code from the examples from the book 'FPGA Prototyping by VHDL example' by
+Pong. P. Chu. 
+
+The thread_io/ncurses directory has all the source and support files for compiling a
+linux program that runs on any linux desktop and uses ncurses to communicate over a
+tcp/ip connection to the TS-7200/7800 box. The program running on the TS-7XXX box
+opens a couple binary files ending in .dat which are a data base where each record is
+a configuration for each of the 20 io ports. The dat files starting with an 'o' are
+for the the 20 output ports and the dat files starting with an 'i' are for the 20
+input ports. Basically, when there is a change on one of the inputs, it can effect
+any one of the 20 outputs. So that way you can assign different outputs to inputs.
+The ncurses program lets you change the configuration or load different dat files.
+This can be kind of dicey for things like the starter motor so the ioport assigned
+to the start switch only activates a relay that enables a button on the dash to close
+the circuit the the actual starter solinoid. 
 
 when compiling for TS-7200:
 edit thread_io/Makefile so it compiles for TS-7200:
@@ -133,6 +204,7 @@ for another client to log into the TS-7200).
 The dashboard will have programming connectors for:
 1) the PIC24 - 6 pin din
 2) 14 pin ICD connector to program the FPGA
+3) the programmer for the AVR - 4 pins
 
 The TS-7200 has a reset button on board and can be re-wired to bring it out to the
 dashboard.
@@ -187,9 +259,12 @@ thread_io can be changed to compile for either one. (search for "-DTS-7800")
 also need to change the init_client(HOSTn) in demo_menus2.c and client.c in ncurses
 according to the defines in client.h: 
 
-#define HOST1 "192.168.42.145"	// TS-7800 with 2 IO cards used for Truck_Project
-#define HOST2 "192.168.42.146"	// TS-7800 with just one IO card (for now)
-#define Host3 "192.168.42.148"	// TS-7200 with 2 IO cards
+(4/29/18)
+did away with all the menuing stuff in AVR which was a gigantic menuing system which was
+supposed to be configurable. Long story short, the esos RTOS can't send mail messages
+from regular functions, even when called from and esos task, nor can you call any
+ESOS_TASK macros so now the menu choices and screen display will just have to be
+hard-coded in for whatever is needed.
 
 Don't use the functon pointer array in the thread_io, just have dedicated threads
 and have the serial port one with the highest priority.
