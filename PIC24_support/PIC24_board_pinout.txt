@@ -1,4 +1,4 @@
-notes for PIC24 project 6/25/17
+notes for PIC24 project
 
 power pins 3v3/gnd - any one or all of these can be connected
 Vdd (3.3V) 16, 37, 46, 62, 2
@@ -150,7 +150,6 @@ PMBE uses pin 78 (RD3)
 PMWR uses pin 81 (RD4)
 PMRD uses pin 82 (RD5)	
 
-(not used)
 T6963 LCD screen
 RA 0->7 LCD Data Bus
 RA0 p17
@@ -248,4 +247,14 @@ CKP bit:
 	1: idle state for clock is high, active - low
 	0: idle state for clock is low, active - high	
 
+using t6963:
+data:
+RG0->3 data0->3
+RA4->7 data4->7
+signals:
+RE5 RST
+RE6 C/D
+RE7 CE
+RE8 RD
+RE9 WR
 

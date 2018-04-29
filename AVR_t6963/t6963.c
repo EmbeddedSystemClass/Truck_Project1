@@ -37,7 +37,13 @@
  *
  ***********************************************************************************************
  */
-#include "pic_t6963.h"
+
+#include <avr/io.h>
+//#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "../../Atmel_other/avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
+#include "sfr_helper.h"
+#include "t6963.h"
+//#include "font5x7.h"        //custom-defined 5x7 font, for GDispPixFontAt(...)
 #include <string.h>
 
 #define bit_test(x,n)(x & (0x01<<n))
@@ -47,7 +53,6 @@
  *                                       LOCAL CONSTANTS
  ***********************************************************************************************
  */
-#if 1 
 #define CURSOR_PTR_SET      0x21    //Cursor Pointer Set
 #define OFFSET_REG_SET      0x22    //Set Offset Command
 #define ADDR_PTR_SET        0x24    //Set Address Pointer Command
@@ -69,7 +74,6 @@
 #define DATA_RD_DEC         0xC3    // Data read and decrement  addrespointer
 #define DATA_WR             0xC4    // Data write - no addr change
 #define DATA_RD             0xC5    // Data read  - no addr change
-#endif
 /*
 *********************************************************************************************************
  *                                   LOCAL FUNCTION PROTOTYPES
@@ -99,6 +103,19 @@ static void GDispCmdAddrSend (UINT Addr, UCHAR cmd)
 	GDispDataWr (c); //Send MSB of 'Addr' afterwards
 	GDispCmdSend (cmd);
 }
+UCHAR GDispScreenPeek(UINT row, UINT col)
+{
+	UCHAR c;
+	UINT addr;
+	
+	addr = row * COLUMN + col + TEXT_HOME_ADDR;
+	GDispCmdAddrSend (addr, ADDR_PTR_SET); //Set address pointer
+	GDispCmdSend (SCREEN_PEEK);
+	GDispPeekChk ();
+	GDispCmdSend(DATA_RD);
+	c = Data_In();
+	return c;
+}
 /*
 *********************************************************************************************************
  *                                       DISPLAY DRIVER INITIALIZATION
@@ -111,7 +128,7 @@ static void GDispCmdAddrSend (UINT Addr, UCHAR cmd)
  */
 void GDispInit (void)
 {
-//Reset the LCD module and perform a hardware port init
+	//Reset the LCD module and perform a hardware port init
 	GDispInitPort ();
 	//Set Text Home address to TEXT_HOME_ADDR
 	GDispCmdAddrSend (TEXT_HOME_ADDR, TEXT_HOME_SET);
@@ -213,6 +230,7 @@ void GDispClrGrh (void)
 void GDispGoto (UINT row, UINT col)
 {
 	UINT addr;
+
 	addr = row * COLUMN + col + TEXT_HOME_ADDR;
 	GDispCmdAddrSend (addr, ADDR_PTR_SET); //Set address pointer
 }
@@ -257,55 +275,7 @@ void GDispCharAt (UINT row, UINT col, UCHAR c)
 	GDispDataWr (c - 0x20);
 	GDispCmdSend (DATA_WR);
 }
-/*********************************************************************************************************/
-void GDispByteAt(UINT row, UINT col, UCHAR byte)
-{
-	UCHAR temp;
-	GDispGoto(row,col);
-	temp = ('0' + (byte / 100));                        /* Hundreds */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
 
-	GDispGoto(row,col+1);
-	temp = ('0' + ((byte / 10) % 10));                      /* Tens */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-
-	GDispGoto(row,col+2);
-	temp = ('0' + (byte % 10));                             /* Ones */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-}
-/*********************************************************************************************************/
-void GDispWordAt(UINT row, UINT col, UINT word)
-{
-	UINT temp;
-	GDispGoto(row,col);
-	temp = ('0' + (word / 10000));                 /* Ten-thousands */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-
-	GDispGoto(row,col+1);
-	temp = ('0' + ((word / 1000) % 10));               /* Thousands */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-
-	GDispGoto(row,col+2);
-	temp = ('0' + ((word / 100) % 10));                 /* Hundreds */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-
-	GDispGoto(row,col+3);
-	temp = ('0' + ((word / 10) % 10));                      /* Tens */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-
-	GDispGoto(row,col+4);
-	temp = ('0' + (word % 10));                             /* Ones */
-	GDispDataWr(temp - 0x20);
-	GDispCmdSend (DATA_WR);
-}
-/*********************************************************************************************************/
 void GDispStringAt(UINT row, UINT col, char *c)
 {
 	char *str;
@@ -394,18 +364,26 @@ void GDispSetPixel (UINT X, UINT Y, UCHAR color)
  */
 void GDispInitPort (void)
 {
-/* 	PORTB_DIRSET = 0x0F;
-	PORTC_DIRSET = 1;
-	PORTA_DIRSET = 0xFF;
- */	CLR_RST();
+	DDRC |= 0x0F;	// set all used bits as outputs
+	DDRC |= 0x30;	// set the TEST_PINs as output
+	DDRB |= 0x03;
+	DDRD |= 0xFC;
+	CLR_RST();
 	SET_CD();
 	SET_CE();
 	SET_RD();
 	SET_WR();
-/* 	PORTA_OUTCLR = 0;
-	PORTE_DIRSET = 1;	// set FS to 1 (6:8)
-	PORTE_OUTSET = 1;
- */	SET_RST();
+
+	_CB(PORTD,DATA0);
+	_CB(PORTD,DATA1);
+	_CB(PORTD,DATA2);
+	_CB(PORTD,DATA3);
+	_CB(PORTD,DATA4);
+	_CB(PORTD,DATA5);
+	_CB(PORTB,DATA6);
+	_CB(PORTB,DATA7);
+
+	SET_RST();
 }
 /*
 *********************************************************************************************************
@@ -423,11 +401,11 @@ void GDispBusyChk (void)
   GDispCmdRd ();
   GDispChipEn;
   for (i = 0; i < 2; i++)
-//	_delay_us(TIME_DELAY);
-/* 	while(!(PORTA.IN & PIN0_bm))
+	_delay_us(TIME_DELAY);
+	while(!_BV(DATA0))
 	;
-	while(!(PORTA.IN & PIN1_bm))
- */	;
+	while(!_BV(DATA1))
+	;
 	GDispChipDi; //Chip disable to finish
 }
 
@@ -446,12 +424,22 @@ void GDispAutoWrChk (void)
 	int i;
 	GDispCmdRd ();
 	GDispChipEn;
-/* 	for (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 	_delay_us(TIME_DELAY);
-	while(!(PORTA.IN & PIN3_bm));
- */	GDispChipDi;
+	while(!_BV(DATA3));
+	GDispChipDi;
 }
 
+void GDispPeekChk (void)
+{
+	int i;
+	GDispCmdRd ();
+	GDispChipEn;
+	for (i = 0; i < 2; i++)
+	_delay_us(TIME_DELAY);
+	while(!_BV(DATA6));
+	GDispChipDi;
+}
 /*
 *********************************************************************************************************
  *                                           WRITE DATA TO LCD MODULE
@@ -467,13 +455,13 @@ void GDispDataWr (UCHAR data)
 	  int i;
 	  GDispBusyChk (); // Wait for LCD to be ready
 	  Data_Out (data);
-/* 	  for (i = 0; i < 2; i++)
+	  for (i = 0; i < 2; i++)
 		_delay_us(TIME_DELAY);
- */	  GDispDatWr ();
+	  GDispDatWr ();
 	  GDispChipEn;
-/* 	  for (i = 0; i < 2; i++)
+	  for (i = 0; i < 2; i++)
 		_delay_us(TIME_DELAY);
- */	  GDispChipDi;
+	  GDispChipDi;
 }
 
 /*
@@ -491,14 +479,14 @@ void GDispAutoDataWr (UCHAR data)
 	int i;
 	GDispAutoWrChk (); // Auto write mode check
 	Data_Out (data);
-/* 	for (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		_delay_us (TIME_DELAY);
- */
+
 	GDispDatWr ();
 	GDispChipEn;
-/* 	for (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		_delay_us (TIME_DELAY);
- */
+
 	GDispChipDi;
 }
 
@@ -519,9 +507,9 @@ void GDispCmdSend (UCHAR cmd)
 	Data_Out (cmd);
 	GDispCmdWr ();
 	GDispChipEn;
-/* 	for (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		_delay_us(TIME_DELAY);
- */
+
 	GDispChipDi;
 }
 
@@ -530,11 +518,48 @@ void GDispCmdSend (UCHAR cmd)
  *
  * Description : This function sends a single byte as data to the display device
  * Arguments   : 'data' is the COMMAND BYTE to send to the display device
- * Returns     : void
- * Notes       : 
+ * Returns     :
+ * Notes       : since we can't use PORTD 0 & 1 (those are used by the serial port)
+ *             : we have to shift the data over to the left 2 bits and put on PORTD
+ *             : then get the 2 high bits of data and put them on the 2 low bits of PORTB
+ *  DATA0		PORTD2		// D2
+ *  DATA1		PORTD3		// D3
+ *  DATA2		PORTD4		// D4
+ *  DATA3		PORTD5		// D5
+ *  DATA4		PORTD6		// D6
+ *  DATA5		PORTD7		// D7
+ *  DATA6		PORTB0		// D8
+ *  DATA7		PORTB1		// D9
  *********************************************************************************************************
  */
 void Data_Out (UCHAR data)
 {
-//	PORTA_OUTSET = data;
+	PORTD = 0xFC & (data << 2);
+	PORTB = 0x03 & (data >> 6);
 }
+
+UCHAR Data_In (void)
+{
+	UCHAR ret = 0;
+	UCHAR ret2 = 0;
+
+	DDRB &= 0xFC;
+	DDRD &= 0x03;
+	_delay_us(1);
+
+	ret = PORTD;
+	_delay_us(1);
+	ret &= 0xFC;
+	ret <<= 2;
+
+	ret2 = PORTB;
+	_delay_us(1);
+	ret2 &= 0xC0;
+	ret2 >>= 6;
+	ret |= ret2;
+
+	DDRB |= 0x03;
+	DDRD |= 0xFC;
+	return ret;
+}
+

@@ -656,7 +656,7 @@ build_Host_menu(MenuNo number)
 		MY_DATA0("Edit odata"),					  // 3
 		MY_DATA0("goto to sh"),					  // 4
 		MY_DATA0("Reboot"),						  // 5
-		MY_DATA0("Shutdonw"),					  // 6
+		MY_DATA0("Shutdown"),					  // 6
 		MY_DATA0("Shift Left"),					  // 7
 		MY_DATA0("Shift Right"),				  // 8
 		MY_DATA0("Scroll Up"),					  // 9

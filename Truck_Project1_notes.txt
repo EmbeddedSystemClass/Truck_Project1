@@ -1,5 +1,47 @@
 Truck_Project1_notes.txt
 
+Truck_Project1 is an automotive SCADA system which uses a Xilinx Spartan-3E to 
+monitor real-time data, a PIC24FJ128GB110 to handle a keypad and LCD screen,
+and a TS-7200/7800 to do I/O (turning on and off lights and reading switches).
+
+											|-------|
+----|										| LCD 	|
+	|										|-------|
+	|											  ^							  Laptop
+F	|											  |								^
+P	|											  v								|TCP/IP
+G	|---------------> RS-232  ----------------->| P	|							|
+A	|											| I	|							v
+*	|						|-----------|		| C |						|-----------|
+----|						|			|		| 2	|						|			|	
+							|  keypad	|------>| 4 |<------ RS-232 ------->| TS-7800	|
+							|			|									|			|
+							|-----------|									|-----------|
+
+			
+Basically, the  PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
+TS-7200 and the LCD screen.
+
+The menuing of the LCD screen and can display optional real time info like engine speed,
+engine temp,oil pressure etc coming directly from the FPGA.
+
+There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
+The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
+shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
+the PIC via the SPI (as master).
+
+Other telemetry data can be added later like distributor timing to use for spark advance.
+The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
+'black box' FDR that records the last so many hours or minutes of the telemetry data to a
+file that can be downloaded later.
+
+directories:
+PIC24_support - source and libs for PIC24FJ128GB110
+thread_io - source for the TS-7200/7800
+thread_io/ncurses - source for the ncurses program that runs on the laptop and communicates
+						with the TS-7200/7800.
+Truck_App1 - source for the FPGA (Xilinx Spartan-3E) in VHDL
+
 when compiling for TS-7200:
 edit thread_io/Makefile so it compiles for TS-7200:
 
@@ -22,117 +64,8 @@ if using the make file for the simulator: thread_io/linux_make,
 make sure Host_Sim define in client.h is set to the ip address 
 of the right linux box that the sched simulator is running on
 
-PIC24 UARTS:
-
-UART1 - monitor
-UART2 - AVR
-UART3 - RS232 to TS-7200
-
-UART1 uses 3v3 -> 5v -> RS-232 -> serial port to monitor
-UART2 goes straight to serial port on AVR (may need pull-ups)
-UART3 uses 3v3 -> 5v -> RS-232 -> TS-7XXX
-
-There is an SPI bus from the PIC24 to the FPGA: FPGA is master while PIC24 is slave.
-SPI from FPGA (master) to AVR (slave)
-(or) just one bus using (2) SS signals
-
-SPI signals from FPGA to PIC24 just need a 4k7 pull-up resistor
-
-
-											|-------|
-----|			*				|---------->| LCD 	|
-	|---------> RS-232 -------->|A			|-------|
-	|----------> SPI ---------->|V											  Laptop
-F	|							|R <------------------->|						^
-P	|													|						|TCP/IP
-G	|---------------> RS-232* ----------------->| P	|	|RS-232					|
-A	|-------|									| I	|	|						v
-	|		|				|-----------|		| C |<--|					|-----------|
-----|		|				|			|		| 2	|						|			|	
-			|				|  keypad	|------>| 4 |<------ RS-232 --------->| TS-7800	|
-			|				|			|		 ^							|			|
-			|				|-----------|		 |							|-----------|
-			|									 |
-			|------------------> SPI** ----------| 
-
-* can use either SPI or RS-232
-**FPGA -> PIC24 can be either RS-232 or SPI (if SPI doesn't work then use serial to PIC24)
-
-//******************************************************************************************//
-//************************************* PIC24_support **************************************//
-//******************************************************************************************//
-
-Truck_App2.c is the main module that runs on the PIC24FJ128GB110 chip.
-It uses the ESOS library. Each ESOS_USER_TASK will run independently.
-Each task must be registered in user_init.
-
-Basically, the  PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
-TS-7200 and the LCD screen. The AVR chip is the driver for the LCD screen and just gets 
-commands from the PIC24 over the serial port. The path to the FPGA is the SPI and the 
-path to the AVR and the TS-7200 are serial ports. The keypad input (PIC) manages
-the menuing of the LCD screen and can display optional real time info like engine speed,
-engine temp,oil pressure etc.
-
-There will also be a task to read the ADC's which measure temp sensors and the oil pressure.
-The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
-shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
-the PIC via the SPI (as master).
-
-Other telemetry data can be added later like distributor timing to use for spark advance.
-The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
-'black box' FDR that records the last so many hours or minutes of the telemetry data to a
-file that can be downloaded later.
-	
-//******************************************************************************************//
-//*************************************** AVR_t6963 ****************************************//
-//******************************************************************************************//
-
-The AVR is just a driver for the LCD display. The serial port of the AVR communicates with a 
-PIC24. The PIC24 sends a stream of data specified by an array of structs rt_params.
-
-10/27/17 - the new AVR ATXMEGA128R4U has all kinds of cool features:
-- 30 IO pins:
-
-	PORTA (8)
-	PORTB (4)
-	PORTC (8)
-	PORTD (6)
-	PORTE (4)
-
-(2) SPI ports
-(5) UARTS
-Event Routing Network (to streamline interrupted peripherals SPI & UART?)
-Examples for interrupt driven UART RX
-
-LCD is driven by the AVR:
-
-PORTA -> data (0->7)
-PORTB.0 -> WR
-PORTB.1 -> CE
-PORTB.2 -> RST
-PORTB.3 -> CD
-PORTC.0 -> RD
-
-AVR has (2) comm ports:
-PORTC.2 -> TX1
-PORTC.3 -> RX1
-
-PORTD.2 -> TX2
-PORTD.3 -> RX2
-
-
-(main.h)
-typedef struct rt_params
-{
-	UCHAR row;			// row, col tells where the param will appear on screen
-	UCHAR col;
-	UCHAR shown;		// if its shown or not
-	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
-	UCHAR type;			// rt_types
-} RT_PARAM;
-
 A 4x4 keypad is attached to the PIC24 so when a key is pressed, one of the 
-following bytes is sent to the AVR
+following bytes is decoded:
 
 0xE0 - '#'
 0xE1 - '*'
@@ -154,303 +87,8 @@ following bytes is sent to the AVR
 (Alternatively, the PIC can get the keypresses from one of the comm ports and double
 as the keypad)
 
-The section of code at the beginning of main.c reads from the eeprom 3 different arrays:
-1) labels
-2) rt_params
-3) menu_structs
-It also reads how many labels, rt_params and menu structs and their offsets into the eeprom.
-
-// the pic gets the key, exec's the fptr from the current menu_structs, and sends the data
-// the avr gets the data,
-// exec's the fptr based on the key sent,
-// the AVR should call the init before the fptr
-
-key --> PIC
-		fptr(key)
-		(send menu_index and all the menus[]
-		in the current menu_struct) -------------->		AVR
-														(receive same menu_index...)
-														fptr(key)
-
-the fptr's will exec all the func's in the fptr[] array of function pointers:
-
-(*fptr[NUM_FPTS])(UCHAR) = { menu_change, do_exec, do_chkbox, non_func, do_numentry, do_init };
-
-which are the same func names on both sides but they each do diff. stuff...
-so based on the keypress, both should exec the same func.
-sending the data in between each fptr being exec'd, will just set the menu_index and
-the rest of the menus[] in the current menu_struct. The AVR gets the curr_menu_index
-so when display_menus is called it does a get_mlabel for each of the curr_menus[] sent
-as the current menu_struct so it can display the current menu. The get_mlabel just
-looks up the menu strings from eeprom. The strings for the chkbox labels are stored in
-ram and must be sent beforehand by the LOAD_RAM cmd.
-
-so before the fptr in the AVR is called when a memu with a diff fptr
-(menu_change, do_chkbox, do_exec or do_numentry) it must redraw the
-display and if do_chkbox or do_exec, put up the current check box strings
-so we need to know when the AVR's fptr is called, call the init_ func for
-each do_ckbox, do_exec & do_numentry.
-
-PIC:
-<get keypress and call generic...>
-
-
-static UCHAR generic_menu_function(UCHAR ch)
-{
-	ret_char = (*fptr[menu_structs[get_curr_menu()].fptr])(ch);
-
-	// do all the sending including the keypress
-
-	return ch:
-}
-
-AVR:
-static UCHAR generic_menu_function(UCHAR ch)
-{
-
-	// do all the receiving except the keypress (passed in as ch)
-
-		ret_char = (*fptr[tfptr])(ch);		// execute the function pointer from the PIC
-		display_menus();
-		if(prev_menu_index != curr_menu_index && ret_char != KP_AST)
-		{
-			switch (prev_menu_index)
-			{
-				case MAIN:
-				case MENU1A:
-				case MENU1B:
-				mvwprintw(win, LAST_ROW-8,1,"case 1");
-				break;
-				case MENU1C:
-				case MENU1D:
-				case MENU1E:
-				do_chkbox(ret_char);
-//				do_exec(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 2");
-				break;
-				case MENU2A:
-				case MENU2B:
-				do_exec(ret_char);
-//				do_chkbox(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 3");
-				break;
-				case MENU2C:
-				case MENU2D:
-				case MENU2E:
-				case MENU3A:
-				case MENU3B:
-				do_numentry(ret_char);
-				mvwprintw(win, LAST_ROW-8,1,"case 4");
-				break;
-				default:
-				break;
-			}
-		}
-		prev_menu_index = curr_menu_index;
-		prev_ret_char = ret_char;
-	}
-	return ret_char;
-}
-
-the user task poll_keypad calls get_key in PIC_menu.c with only the raw keypress and the
-get_key in PIC_menu.c sets an array of UCHARs to pass back out to the esos task that sends them
-to the AVR (9/16/17) no that's not what I ended up doing.
-
-the main.c in the AVR calls get_key in AVR_menu.c
-
-The generic_menu_func in PIC gets the keypress, passes it to the func ptr. If the menu_change fptr
-is called then it sets the new set of menus. Then in generic we send the fptr, ch, array of menus
-and aux_string then it exits and waits for another keypress.
-
-In AVR the generic reads the fptr, ch, menu array and aux_string, then exec's the function ptr,
-displays the new menus and returns to wait for another read. 
-
-To change/add menus, add the menu type to main.h in the menu_types enum, then make sure the
-update_menu_labels calls in burn_eeprom() in sim_write.c match. Also make sure that
-NUM_MENUS in pic_main.h matches the number of calls of update_menu_structs() in sim_write.c
-Then add the new menu type in the case statement in set_list - this is essentially the
-initialization for the menu on the sim_write side (PIC). 
-Then on the sim_read side (AVR), add the menu type in the case statement in generic_menu_function
-in AVR_menu.c where there is an if(prev_menu_index != menu_index).
-This is where the initialization occurs on the AVR when a new menu is started. 
-However, the menu_index is the last param in the call to update_menu_structs (or the index elem
-in MENU_FUNC_STRUCT.
-
-If the ret_key returned from get_key() call in Truck_App.h is one of the NF_x codes from the non_func
-then we can do something like not send as many bytes in the loop in comm2_task or send some extra
-stuff to the AVR with a special cmd that's filtered by the get_key function int PIC_menu.c like
-read some extra data or do a reset or some init function. Very cool stuff!
-
-9/18/17 - tested the PIC24 sending data to gcc compiled test_read/write & rw2 and had
-all kinds of strange problems. The PIC24 reads and writes data ok using just test_read/write
-but test_rw1/2 do strange things. Put the sim_read on 110 and got it to work upto the 
-point of entering numbers. Need to init the labels and rt_params in 'eeprom_sim' using
-the BURN_PART commands of the PIC24. Since we don't need the labels in the AVR we don't
-need to send over the menu_structs. Use the avr_send_data in PIC24 to init the rest of the
-eeprom_sim.
-
-The prompt strings for the checkboxes and execs will have to be pumped over whether
-using the sim or the AVR. This happens when doing an init_checkboxes or init_execchoices
-(The new AVR has 2k eeprom and could store more labels & prompts)
-
-The checkboxes are not mutually exclusive, the exec_choices are, so we need labels
-for all, but the check_boxes need only cover the number of check_boxes for do/init_checkboxes
-The execs only cause an event on either/both the PIC & AVR. (could have an array of fptr's
-for just the exec_choices)
-
-new idea for display checkbox/exec prompts:
-send over the size of each array of prompts just after the menu_indexes (menus[])
-if the choice is starting a new checkbox/exec - this will eliminate all the checkbox labels
-being stored in ram and doing a lookup everytime for the label.
-
-first send the high/low_byte of the total data to send,
-
-then send the number of prompts to display (byte)
-then send an array of indexes into the prompt string (array of bytes)
-
-then send the prompt string (array of chars)
-
-(receive using minicom on 192.168.42.115 won't receive but ~/dev/test_read.c does ???)
-no! 192.168.42.110 won't transmit in minicom until you exit.
-
-decided not to do this for now:
-{
-	When the Truck_App starts one of the tasks is get_sync.
-	It will send to comm2 a sequence of: "0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA"
-	assuming the AVR (or sim_read) has the syncup byte set to 0, it will
-	read the sequence and set the syncup byte to 1 and the done to 1.
-	Then it will send a sequence of "0x51, 0x52, 0xA1, 0xA2" back to the 
-	PIC24. Then the get_sync task will wait for the correct sequence to be
-	sent back and wake up the comm2_task which is waiting for the
-	get_comm2 task to wake up which put itself to sleep when it started up.
-	Then get_sync will put itself to sleep. 
-
-	the read() call in the loop in main of sim_read.c for the
-	simulator is the same as the receiveByte() call in the 
-	loop of main.c for the AVR. So when the read() gets a char
-	it can call a function that checks to see if 
-}
-
-test_write_data:
-
-The subdirectory called test_write_data has 2 separate makefiles to compile the sim_read and
-sim_write:
-
-make -f make_avr - compiles the sim_read
-make -f make_pic - compiles the sim_write
-
-4 possible setups:
-
-1) sim_write->AVR			- testing the simulator with actual AVR
-2) PIC->sim_read			- testing the simulator with actual PIC
-3) PIC->AVR					- actual PIC->AVR
-4) sim_write->sim_read		- using null-modem cable with 2 simulators (linux terminals)
-
-'LOAD_RAM' cmd sends over:
-1) cblabels[] - array of labels for checkboxes and exec prompts
-2) checkboxes settings
-3) rt_params[]
-2) the eeprom image (if using the simulator)
-
-in all cases update_ram() which calls update_menu_structs must be run in either 
-the PIC or sim_write to setup the menu_structs array
-
-update_rtparams currently is sent over in LOAD_RAM but since its now burned into eeprom
-we can do a lookup in the AVR using read_eeprom
-
-(when testing sim_write -> AVR set the DISABLE_LCD define in make_avr and the TESTING_AVR
-	define in make_pic)
-
-if compiling the AVR then MAIN_C is defined	
-
-AVR_menu.c	- runs in AVR
-PIC_menu.c	- in PIC24
-
-domake1 script runs the make_pic makefile and if there are no errors, calls copy1.sh which
-tars up all the necessaray files to compile sim_write and scp copies them to the linux box
-used to run the sim_write (currently 192.168.42.110)
-
-domake2 script runs the make_avr makefile and if there are no errors, calls the copy2.sh which
-tars up all the files and copies them to the linux box to run the sim_read (currently 192.168.42.115)
-
-each linux box has a script called extract.sh which un-tars the tar file sent over and compiles
-everything and starts up the sim_read/write. The sim_read must be started first since it waits
-on a read() to start reading the eeprom image which is sent over as soon as the sim_write starts.
-
-when using the simulator, just after the eeprom image is sent over, hit the 'r' key on the
-sim_write which does a LOAD_RAM command which sends over all the checkbox prompts (cblabels array),
-current state of the checkboxes (checked or not), the indexes for the checkboxes, the
-rt_params array of structs, and the sample_numbers array for the edit boxes.
-
 keypad layout - since the six reassignable keys are on the outside (bottom and left) it makes
 sense to use these as special function keys.
-
-1 2 3 A
-4 5 6 B
-7 8 9 C
-* 0 # D
-
-The MENU_FUNC_STRUCT's is an array of the following struct type:
-
-typedef struct menu_func
-{
-	UCHAR fptr;								// which function to call (menu_types)
-	int menus[6];							// which menu to goto if _menu_change is the fptr
-	UCHAR index;
-} MENU_FUNC_STRUCT;
-
-MENU_FUNC_STRUCT menu_structs[NUM_MENUS];
-
-Here's a partial list of what the array of structs are loaded with:
-
-	fptr		menus[0]--->    							  menus[5] index
-
-_menu_change, 	MENU2C, MENU2D, MENU2E,   MENU3A, MENU3B, MENU1C, MAIN		(main)
-_menu_change,	MENU2B, MENU2C, MENU2D,   MENU2E, MENU3A, MENU3B, MENU1A	(MENU1A)
-_menu_change,	MAIN,   MENU2D, MENU1B,   MENU1D, MENU2A, MENU2B, MENU1B	(MENU1B)
-_do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1C	(MENU1C)
-_do_chkbox,		ckup,   ckdown, cktoggle, ckenter, ckesc, cclear, MENU1D	(MENU1D)
-...
-
-When the system starts, the first menu_struct will be loaded as the current menu.
-the menus[] is an array of 6 ints which are indexes (defined by enum menu_types 
-in main.h) into the list of labels in the eeprom. When the PIC gets a key to change
-menus it will send it over along with the menu index and also the list of menus.
-
-redefined keys for each menu choice) into an array. The 6 redefinable keys are
-'A'
-'B'
-'C'
-'D'
-'#'
-'0'
-
- If the fptr is 0, then 
-look up the menu specified by the menu element and just go to that menu. The function assigned 
-to '*' in generic_menu_function() will always go back to the previous menu. 
-
-This way, we have 3 possible choices:
-1) Use the 'factory default' set of menus in eeprom.
-2) Dynamically load another set of menus using a special command from the PIC24.
-3) #2 plus burn the new menu set into eeprom.
-
-
-	
-The array of structs will just be enough to display on the screen (or there could be more if
-the scrolling function can move the choices in and out)
-
-menu choices for checkboxes:
-A - up
-B - down
-C - set/clear
-D - enter
-
-when using the simulation (test_write_data) the data is sent in aux_data AUX_DATA_SIZE
-bytes at a time because of the fact that the serial port is set to non-blocking, there's
-a problem sending a variable number of bytes at a time so when it comes time to use it
-on the actual hardware, some things may have to be changed...
-
-keypad layout:
 
 1 2 3 A
 4 5 6 B
@@ -475,13 +113,6 @@ dec		hex		char
 67		43		C
 68		44		D
 
-test_write_data (read) - simulates the AVR
-test_write_data (write) - simulates the PIC24
-
-
-FPGA UART2 <->  PIC24 comm2
-				PIC24 comm3 <-> AVR
-				PIC24 comm1 <-> TS-7200 comm2
 				
 The TS-7200 uses comm1 as a monitor but can be disabled and used as an extra serial port
 as long as the sched program can start automatically. Since I really don't need an extra
@@ -501,12 +132,10 @@ for another client to log into the TS-7200).
 
 The dashboard will have programming connectors for:
 1) the PIC24 - 6 pin din
-2) the new AVR can just use a USB connection.
-3) 14 pin ICD connector to program the FPGA
+2) 14 pin ICD connector to program the FPGA
 
 The TS-7200 has a reset button on board and can be re-wired to bring it out to the
-dashboard. The PIC24 and the AVR can have separate switches to turn each board on
-and off. (but not the TS-7800?)
+dashboard.
 
 So the 2 DB9 connectors, the 3 programming jacks, the RJ-45 jack, the reset buttons
 and the on/off switches can be in a panel with a cover so it can be opened only for
@@ -537,7 +166,6 @@ The ehternet is for a monitor (use cross-over cable to laptop)
 
 PIC24:
 1 UART goes to TS-7XXX (5-3v3 conv to RS-232 conv)
-another UART goes to AVR (5-3v3 conv)
 SPI goes to FPGA (4k7 pull-up resistors)
 
 FPGA:
@@ -552,17 +180,6 @@ Has 3 UARTS, faster CPU & better OS. Memory access is diff for DIO/LCD & PC104.
 No built-in SPI like the TS-7200 but very little docs on the Marvell processor. 
 (would be nice to have interrupt routine that handles the SPI which the pins could be
 on the DIO. Since the TS-7800 is in a remote box we have to use serial anyway).
-
-The new AVR has (2) SPI ports and can be interrupt driven. So if I could implement the 
-2nd SPI port that's on the PIC24 (there are interrupts avail) I could have one port as
-the slave coming from the FPGA and another as the master going to the AVR. The ESOS
-code for the SPI can be duplicated to work with the 2nd SPI port on the PIC24. 
-
-The FPGA has (2) SPI's which act as masters so have one go the the AVR so it can display
-the realtime data on screen. The other SPI from the FPGA goes to the PIC24. (could have
-just the one SPI from the PIC24 act as master to the AVR for now and skip the one from
-the FPGA) or just use the serial port on the FPGA to send rt data to PIC24. That would
-free up one of the UART's on the PIC24 because it's SPI is going to the AVR. 
 
 (10/25/17)
 added 2 branches: TS-7200 & TS-7800 but made changes in master so the Makefile in
@@ -580,8 +197,6 @@ and have the serial port one with the highest priority.
 Order another 2GB SD card for the TS-7800 to back up OS on.
 
 Get all the ssh's to use keygen instead of passwords
-
-Get new AVR to work with old AVR_menu and check out SPI ports.
 
 Add extra behavoir info to the I_DATA struct:
 
@@ -657,7 +272,19 @@ menus:
 	"Clear Screen"),			// 9
 
 
-
+got the following strange error:
+	A clock IOB / clock component pair have been found that are not placed at an optimal clock IOB /
+   clock site pair. The clock component <reset_IBUF_BUFG> is placed at site <BUFGMUX_X2Y0>. 
+   The IO component <reset> is placed at site <IPAD119>.  This will not allow the use of the
+   fast path between the IO and the Clock buffer. This is normally an ERROR but the 
+   CLOCK_DEDICATED_ROUTE constraint was applied on COMP.PIN <reset.PAD> allowing your design
+   to continue. This constraint disables all clock placer rules related to the specified COMP.PIN. 
+   The use of this override is highly discouraged as it may lead to very poor timing results. 
+   It is recommended that this error condition be corrected in the design.
+then added the line:
+NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
+in the ucf file to turn it to a warning after trying for 3 days to fix it. Some kind of 
+timing problem   
 
 Need another database which has list of on-off times for each IO port. Have a field in
 the O_DATA database which points to a on-off database (or text file).
@@ -674,8 +301,6 @@ or use solar panels (or switch between both)
 FPGA reads from missing tooth wheel for the crank position and calculates the amount
 of necessary spark advance to control the distributor
 
-SPI is built into the processor and has specific pins allocated on the DIO (interrupt?)
-
 Use the ts-bat3 battery backup on the stack.
 
 TS-7800 has (2) SATA connectors for SSD drives. 
@@ -691,9 +316,6 @@ the brower. (see dev2/TS-7260/www/)
 
 make an extra field in the O_DATA and I_DATA structs called group for acting on a group
 
-timer in AVR goes back to main screen or locks out w/password prompt if so much time
-elapses without keypress
-
 need a way to enter password (alnum stuff)
 
 GPS and accel modules on FPGA (serial?)
@@ -703,10 +325,6 @@ dim display to rpm/mph LED's and LCD screen automatically.
 
 PWM signal from PIC24 controls SCR power to the LCD (to dim display)
 
-get mlabels function to work from eeprom when running on AVR
-
-need a timer in AVR that sends msg if it needs ram reloaded
-
 LOAD_RAM needs the transmit/receiveByte calls
 
 get alnum to work - just do it like the edit boxes only A->D is printed and
@@ -714,57 +332,10 @@ get alnum to work - just do it like the edit boxes only A->D is printed and
 
 do/init_exec has prompts but not part of check_boxes[]
 
-do_exec's have list of ptr's to exec if on AVR
-
-need some way to tell if AVR goes off the rails so it can reset itself (WDT)
-
 any checkbox can apply to a 'group' IO
 
 have a 100 or so byte section at beginning of dat files (just after the id tag) reserved
 for comments that can be edited and viewed.
 
-The new AVR has touch-sence capabilities so a touch screen can be laid over the LCD
-which would eliminate the need for a key-pad
-
 Use ESP8266 for remote wireless (bluetooth) control from Android phone (remote start
 - alarm disable - door poppers)
-
-If the SPI from FPGA to AVR doesn't work then there will just have to be no rpm/mph
-on the display or have the input from the rpm/mph going to both the FPGA and the AVR
-just for redundancy. Use the timers on the AVR to calc the rpm/mph. 
-(or use the 3rd serial line from the PIC24 which was supposed to go to the monitor)
-
-***************** unrelated ********************
-
-Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
-a Pro-Mini. 
-
-Use one of the extra TS-7200 boards with an IO card to control lights in shop.
-Use an ESP8266 on the TS-7200 to get comamnds from the cell phone over Bluetooth.
-
-Use old computer case as box for home automation - use TS-7200 with (2) IO cards and 1 or more
-8 relay boards lights & furnace for shop.
-
-1) 4-bulb overhead light
-2) 2-bulb overhead light
-3) near workbench light
-4) far workbench light
-5) 2-bulb overhead light near door
-6) furnace
-7)
-8)
-
-(2) 8-relay boards and (2) 2-relay boards (10A each) would use up 1 IO card. So order some more
-relay boards.
-
-IO card at 0x280	->		(2) 8-relay & (2) 2-relay boards
-IO card at 0x300	->		(2) 8-relay & (2) 2-relay boards
-TS-7200
-
-A cigar box near door has 6 push-button switches that can either connect directly to the main box
-or have an AVR processor which sends commands via seial port to main box. In the later case,
-we could have a small LCD screen on the cigar box driven by the AVR.
-
-Use small HD44780 with a couple small push-buttons to make a liquor dispenser using
-a Pro-Mini. 
-

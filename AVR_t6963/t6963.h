@@ -47,23 +47,67 @@
 //I/O port for data definition
 #ifndef T6963_H
 #define T6963_H
+#if 1
 //Control pin setting
-#include "../lib/include/pic24_all.h"
+#define NEW_PIN		// swap B2 with C4 because B2 doubles as SS and I wanted
+					// to use the SPI port - C4 is 'snuck in there' behind PC2 & 3
+					// on the middle right with the reset button on the bottom
+#ifdef NEW_PIN
+#define TEST_PIN1	PORTB2
+#define LCD_RD		PORTC4       // LCD Read control line  pin number (D10)
+#else
+#define TEST_PIN1	PORTC4
+#define LCD_RD		PORTB2       // LCD Read control line  pin number (D10)
+#endif
 
-#define SET_RST(){}
-#define SET_CD(){}
-#define SET_CE(){}
-#define SET_RD(){}
-#define SET_WR(){}
+#define TEST_PIN2	PORTC5
+#define LCD_WR		PORTC0        // LCD Write control line pin number (A0)
+#define LCD_CE		PORTC1       // LCD Enable control line pin number (A1)
+#define LCD_RST		PORTC2        // LCD RST_ line (A2)
+//#define LCD_FS		PORTC,3        // LCD font select (this one just tied low)
+#define LCD_CD		PORTC3       // LCD Control/data Select line (A3)
 
-#define CLR_RST(){}
-#define CLR_CD(){}
-#define CLR_CE(){}
-#define CLR_RD(){}
-#define CLR_WR(){}
+#define DATA0		PORTD2		// D2
+#define DATA1		PORTD3		// D3
+#define DATA2		PORTD4		// D4
+#define DATA3		PORTD5		// D5
+#define DATA4		PORTD6		// D6
+#define DATA5		PORTD7		// D7
+#define DATA6		PORTB0		// D8
+#define DATA7		PORTB1		// D9
 
-#define SET_DATA_DIR_OUT(){}
-#define SET_DATA_DIR_IN(){}
+#ifdef NEW_PIN
+#define SET_RD()	_SB(PORTC,LCD_RD)
+#define CLR_RD()	_CB(PORTC,LCD_RD)
+#define SET_TEST1()	_SB(PORTB,TEST_PIN1)
+#define CLR_TEST1()	_CB(PORTB,TEST_PIN1)
+#else
+#define SET_RD()	_SB(PORTB,LCD_RD)
+#define CLR_RD()	_CB(PORTB,LCD_RD)
+#define SET_TEST1()	_SB(PORTC,TEST_PIN1)
+#define CLR_TEST1()	_CB(PORTC,TEST_PIN1)
+#endif
+
+#define SET_TEST2()	_SB(PORTC,TEST_PIN2)
+#define CLR_TEST2()	_CB(PORTC,TEST_PIN2)
+
+#define SET_WR()	_SB(PORTC,LCD_WR)
+#define SET_CE()	_SB(PORTC,LCD_CE)
+#define SET_RST()	_SB(PORTC,LCD_RST)
+#define SET_CD()	_SB(PORTC,LCD_CD)
+
+#define CLR_WR()	_CB(PORTC,LCD_WR)
+#define CLR_CE()	_CB(PORTC,LCD_CE)
+#define CLR_RST()	_CB(PORTC,LCD_RST)
+#define CLR_CD()	_CB(PORTC,LCD_CD)
+
+#define SET_DATA_DIR_OUT()	DDRB |= 0x03;	\
+							DDRD |= 0xFC;
+
+#define SET_DATA_DIR_IN()	DDRB &= 0xFC;	\
+							DDRD &= 0x03;
+
+#endif
 
 /*
 ***********************************************************************************************
@@ -89,10 +133,12 @@
 #define TEXT_HOME_ADDR      0x0000
 #define GRH_HOME_ADDR       0x0200
 #define CG_HOME_ADDR        0x1400
-#define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
+#define COLUMN              40      //Set column number to be e.g. 40 for 6x8 fonts, 2 pages
 #define ROWS                16
 #define MAX_ROW_PIXEL       128      //MAX_ROW_PIXEL the physical matrix length (y direction)
 #define MAX_COL_PIXEL       128     //MAX_COL_PIXEL the physical matrix width (x direction)
+#define ENABLE              1
+#define DISABLE             0
 #define BLACK               1
 #define WHITE               0
 #endif
@@ -171,10 +217,10 @@
 ***********************************************************************************************
 */
 #if 1
-//extern UCHAR    DisplayMode;    /* Keeps state of the display mode (DISPLAY MODE)   */
-//extern UCHAR    Mode;           /* Keeps state of the MODE                          */
+extern UCHAR    DisplayMode;    /* Keeps state of the display mode (DISPLAY MODE)   */
+extern UCHAR    Mode;           /* Keeps state of the MODE                          */
 //extern UCHAR    FontSize;       /* 6 font or 8 font                                 */
-//extern UCHAR    CGBuffer[8];    /* Buffer for custom pattern                        */
+extern UCHAR    CGBuffer[8];    /* Buffer for custom pattern                        */
 #endif
 /*
 ***********************************************************************************************
@@ -187,8 +233,9 @@
 *                                    HARDWARE SPECIFIC
 ***********************************************************************************************
 */
-#define GDispChipEn     SET_CE()
-#define GDispChipDi     CLR_CE()
+#if 1
+#define GDispChipEn     _CB(PORTC,LCD_CE)           /* Low level Chip Enable macro          */
+#define GDispChipDi     _SB(PORTC,LCD_CE)           /* Low level Chip Disable macro         */
 
 #define GDispCmdWr()	SET_DATA_DIR_OUT();		\
 						SET_RD(); 	\
@@ -209,9 +256,6 @@
 						CLR_CD();	\
 						SET_WR();	\
 						CLR_RD();
-
-#ifdef DEBUG
-
 #endif
 void GDispInit(void);
 void GDispSetMode(UCHAR mode);
@@ -219,9 +263,6 @@ void GDispClrTxt(void);
 void GDispGoto(UINT row, UINT col);
 void GDispChar(UCHAR c);
 void GDispCharAt(UINT row, UINT col, UCHAR c);
-void GDispByteAt(UINT row, UINT col, UCHAR byte);
-void GDispWordAt(UINT row, UINT col, UINT word);
-
 void GDispSetCursor(UCHAR mode, UINT row, UINT col, UCHAR type);
 void GDispSetAttrb(UINT row, UINT col, UCHAR mode);
 void GDispCGCharAt(UINT row, UINT col, UCHAR id);
@@ -236,5 +277,8 @@ void GDispDataWr(UCHAR data);
 void GDispDataWr(UCHAR data);
 void GDispAutoDataWr(UCHAR data);
 void GDispCmdSend(UCHAR cmd);
+void GDispPeekChk (void);
+UCHAR GDispScreenPeek(UINT row, UINT col);
 void Data_Out(UCHAR data);
+UCHAR Data_In(void);
 #endif

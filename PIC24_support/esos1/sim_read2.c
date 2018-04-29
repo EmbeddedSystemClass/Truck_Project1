@@ -22,13 +22,13 @@ typedef unsigned int UINT;
 #define FALSE 0
 #define TRUE 1
 #define LEN 200
-#define DEBUG_CHAR_AT 1
-#define DEBUG_STRING_AT 2
-#define DEBUG_SET_CURSOR 3
-#define DEBUG_CLRSCR1 4
-#define DEBUG_CLRSCR2 5
-#define DEBUG_CLRSCR3 6
-#define DEBUG_MSG1 7
+#define DEBUG_CHAR_AT 0
+#define DEBUG_STRING_AT 1
+#define DEBUG_SET_CURSOR 2
+#define DEBUG_CLRSCR1 3
+#define DEBUG_CLRSCR2 4
+#define DEBUG_CLRSCR3 5
+#define DEBUG_MSG1 6
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
 // really cranking
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	int res;
 	int display_offset = 1;
 	UCHAR buff[LEN];
-	UINT row, col, mode, type;
+	UCHAR row, col, mode, type;
 	char str[30];
 	UCHAR str_len;
 	UINT debug_msg_ptr;
@@ -99,6 +99,9 @@ int main(int argc, char *argv[])
 	mvwaddch(win, 1, 45, ACS_URCORNER);
 	mvwaddch(win, 18, 45, ACS_LRCORNER);
 
+	mvwprintw(win,57,1,"                                ");
+	mvwprintw(win,58,1,"                                ");
+
 	wrefresh(win);
 #endif
 	j = 0;
@@ -108,48 +111,47 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		read(fd,&key,1);
+//		mvwprintw(win,20,2,"                           ");
+//		wrefresh(win);
+		mvwprintw(win,20,2+(i*3),"%2x ",key);
+		wrefresh(win);
 		buff[i] = key;
 		i++;
-		if(key == 0xff)
+		if(key == 0xfe)
 		{
 			switch(buff[0])
 			{
 				case DEBUG_CHAR_AT:
-					ch = buff[1];
+					row = buff[1];
 					col = buff[2];
-					row = buff[3];
-					mvwaddch(win,row-13,col-10,ch);
+					ch = buff[3];
+					mvwprintw(win,20,2,"%d %d %d       ",row,col,ch);
+					mvwaddch(win,row+2,col+5,ch);
+//					mvwaddch(win,row,col,ch);
 					wrefresh(win);
 				break;
 				case DEBUG_STRING_AT:
-					row = buff[2];
-					row <<= 8;
-					row |= buff[1];
-					col = buff[4];
-					col <<= 8;
-					col |= buff[3];
-					str_len = buff[5];
+					row = buff[1];
+					col = buff[2];
+					str_len = buff[3];
+
 					memset(str,0x20,sizeof(str));	
-					memcpy(str,&buff[7],str_len);
+					memcpy(str,&buff[4],str_len);
 					str[str_len] = 0;
-					mvwprintw(win,row-13, col-10,"%s",str);
-/*
+					mvwprintw(win,row+2, col+5,"%s",str);
+
 					for(i = 1;i < 19;i++)
 						mvwprintw(win,57,1+(i*3),"%x ",buff[i]);
-					for(i = 1;i < 19;i++)
-						mvwprintw(win,58,1+(i*3),"%x ",buff[i+19]);
-*/
+//					for(i = 1;i < 19;i++)
+//						mvwprintw(win,58,1+(i*3),"%x ",buff[i+19]);
+
 					wrefresh(win);
 				break;
 				case DEBUG_SET_CURSOR:
 					mode = buff[1];
-					row = buff[3];
-					row <<= 8;
-					row |= buff[2];
-					col = buff[5];
-					col <<= 8;
-					col |= buff[4];
-					type = buff[6];
+					row = buff[2];
+					col = buff[3];
+					type = buff[4];
 					mvwprintw(win,50,1,"set cursor: mode %x row %x col %x type %x   ",
 							mode, row,col,type);
 //					for(i = 1;i < 19;i++)
@@ -159,7 +161,7 @@ int main(int argc, char *argv[])
 				break;
 				case DEBUG_CLRSCR1:
 					debug_msg_ptr = 20;
-				
+
 					for(i = 0;i < 30;i++)
 						mvwprintw(win,1+i,1,
 							"                                                                   ");
@@ -190,7 +192,6 @@ int main(int argc, char *argv[])
 					str[str_len] = 0;
 					mvwprintw(win,debug_msg_ptr+1,1,
 						"                                                               ");
-					
 					mvwprintw(win,debug_msg_ptr-1, 2," ");
 					mvwprintw(win,debug_msg_ptr, 2,"- %d %d %s          ",row,col,str);
 					if(++debug_msg_ptr > 60)

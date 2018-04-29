@@ -9,6 +9,24 @@ git add todo.txt
 git add gitadd.sh
 git add .gitignore
 
+git add AVR_t6963/atmega328p.conf
+git add AVR_t6963/do1.sh
+git add AVR_t6963/Makefile
+git add AVR_t6963/ProMiniPinout.txt
+git add AVR_t6963/spi.c
+git add AVR_t6963/t6963.h
+git add AVR_t6963/avrdude.conf
+git add AVR_t6963/macros.h
+git add AVR_t6963/pinDefines.h
+git add AVR_t6963/run-avrdude
+git add AVR_t6963/spi.h
+git add AVR_t6963/USART.c
+git add AVR_t6963/main.c
+git add AVR_t6963/portpins.h
+git add AVR_t6963/sfr_helper.h
+git add AVR_t6963/t6963.c
+git add AVR_t6963/USART.h
+
 git add Truck_App1/Multi-Byte.vhd
 git add Truck_App1/multi-byte.ucf
 git add Truck_App1/multi-byte.xise
@@ -42,9 +60,6 @@ git add PIC24_support/lib/*
 git add PIC24_support/esos/*
 git add PIC24_support/esos1/Truck_App2.c
 git add PIC24_support/esos1/Truck_App.h
-git add PIC24_support/esos1/pic_t6963.c
-git add PIC24_support/esos1/pic_t6963.h
-git add PIC24_support/esos1/process3.jpg
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
 git add PIC24_support/esos1/esos1_notes.txt
@@ -107,6 +122,4 @@ git add thread_io/test_tcp/Makefile2
 
 git status
 git log --oneline > oneline.txt
-
-
 
