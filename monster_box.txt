@@ -48,20 +48,25 @@ bottom view with 64 pin dip socket on bottom:
 63	61	59 ... 5	3	1
 64	62	60 ... 6	4	2
 
+
+
+
+
+  
 1)  Vcc
 2)  gnd
-3)  11 on AVR (MOSI)	| used by AVR programmer
-4)  12 on AVR (MISO)	|
-5)  13 on AVR (SCLK)	|
-6)  RST on AVR 			|
+3)	nc
+4)	nc
+5)	gnd
+6)	
 7)
 8)
 9)
 10)
-11)
-12)
-13)
-14)
+11)  13 on AVR (SCLK)	|
+12)  11 on AVR (MOSI)	| used by AVR programmer
+13)  RST on AVR 		|
+14)  12 on AVR (MISO)	|
 15)
 16)
 17)
@@ -128,7 +133,14 @@ UART2: AVR
 UART3: TS-7200
 
 bottom view of conv chips:
-(upper conv chip)
+
+(upper conv chip) - not used
+
+HV		HV gnd 5v  HV		HV
+LV		LV gnd 3v3 LV		LV
+1		2			3		4
+
+(middle conv chip)
 
 HV		HV gnd 5v  HV		HV
 LV		LV gnd 3v3 LV		LV
@@ -152,7 +164,7 @@ LV		LV gnd 3v3 LV		LV
 
 
 ADC:
-RB0 (ADC0) - p25 - 1st from bottom outside right
+RB0 (ADC0) - p25 - 1st from bottom outside rightcx 
 RB1 (ADC1) - p24 - 2nd from bottom inside right
 RB2 (ADC2) - p23 - 2nd from bottom outside right
 RB3 (ADC3) - p22 - 3rd from bottom inside right

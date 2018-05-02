@@ -57,7 +57,8 @@ package CommonPckg is
 	constant TIME_DELAY7:  integer:= 1000000;	-- 40ms
 	constant TIME_DELAY8:  integer:= 500000;	-- 20ms
 	constant TIME_DELAY8a:  integer:= 300000;	-- 12ms
-	constant TIME_DELAY8b:  integer:= 140000;	-- 12ms
+	constant TIME_DELAY8b:  integer:= 150000;	-- 12ms
+	constant TIME_DELAY8c:  integer:= 100000;
 	constant TIME_DELAY9:  integer:=  40000;
 	
 -- baud rates for 7-seg displays	
@@ -67,21 +68,27 @@ package CommonPckg is
 -- mph is currently for (2) magnets on driveshaft
 	constant MPH_CLOCK_COUNT: integer:= 12500;
 	constant MPH_DVND: integer:= 128514;
-	constant RPM_CLOCK_COUNT: integer:= 500;
+												-- 26ms should be 2254
+	constant RPM_CLOCK_COUNT: integer:= 500;	-- 26ms = 2409
+--	constant RPM_CLOCK_COUNT: integer:= 510;	-- 2362
+--	constant RPM_CLOCK_COUNT: integer:= 520;	-- 2316
+--	constant RPM_CLOCK_COUNT: integer:= 525;	-- 2294
+--	constant RPM_CLOCK_COUNT: integer:= 527;	-- 2281
+--	constant RPM_CLOCK_COUNT: integer:= 530;	-- 2272
 	constant RPM_DVND: integer:= 6000000;
 	constant DVND_SIZE: integer:= 30;
 	constant RESULT_SIZE: integer:= 18;
 	constant PRD_SIZE: integer:= 17;
 	constant DVSR_SIZE: integer:= 23;
 	constant MPH_P_REG_SIZE: integer:= 16;
-	constant OFF_CMD: std_logic_vector(2 downto 0):= "000";
-	constant SEND_CHAR_CMD: std_logic_vector(2 downto 0):= "001";
-	constant SET_BRIGHTNESS_CMD: std_logic_vector(2 downto 0):= "010";
-	constant SET_CDECIMAL_CMD: std_logic_vector(2 downto 0):= "011";
-	constant SET_UPDATE_RATE_CMD: std_logic_vector(2 downto 0):= "100";
-	constant SET_FACTOR_CMD: std_logic_vector(2 downto 0):= "101";
-	constant SET_TEST_CMD3: std_logic_vector(2 downto 0):= "110";
-	constant SET_TEST_CMD4: std_logic_vector(2 downto 0):= "111";
+	constant OFF_CMD: std_logic_vector(4 downto 0):= "00000";
+	constant SEND_CHAR_CMD: std_logic_vector(4 downto 0):= "00001";
+	constant SET_BRIGHTNESS_CMD: std_logic_vector(4 downto 0):= "00010";
+	constant SET_CDECIMAL_CMD: std_logic_vector(4 downto 0):= "00011";
+	constant SET_UPDATE_RATE_CMD: std_logic_vector(4 downto 0):= "00100";
+	constant SET_FACTOR_CMD: std_logic_vector(4 downto 0):= "00101";
+	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(4 downto 0):= "00110";
+	constant SET_TEST_CMD4: std_logic_vector(4 downto 0):= "00111";
 
 	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
 	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
@@ -117,19 +124,11 @@ package CommonPckg is
 	-- XESS FPGA boards.
 	type XessBoard_t is (XULA_E, XULA2_E);
 
-	type my_array1 is array(0 to NUM_DATA_ARRAY-1) of std_logic_vector(7 downto 0);
-	type my_array2 is array(0 to 7)  of std_logic_vector(3 downto 0);
 	type my_array3 is array(0 to 15) of std_logic_vector(16 downto 0);
-	type cmd_array_type is array(0 to 15) of std_logic_vector(2 downto 0);
---	signal code_array: my_array1;	-- always sent with RT_type
---	signal data_type: my_array1;	-- this is either RT_HIGHX or RT_LOW
-	signal data_array1: my_array1;	-- if UCHAR then this is the data, if UINT this is the low byte
-	signal data_array2: my_array2;
 
-	impure function push_cmd(a : cmd_array_type; ptr : std_logic_vector) return std_logic;
-	impure function pop_cmd(cmd_array : cmd_array_type; ptr : std_logic_vector) return std_logic_vector;
-	impure function average(a : in my_array3; b : in std_logic_vector) return std_logic_vector;
+	impure function average(a : in my_array3) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;
+	impure function block_ff(a : in std_logic_vector) return std_logic_vector;
 
 end package;
 
@@ -142,49 +141,19 @@ package body CommonPckg is
 -- 8192(0x2000) * 16 = 131056(0x20000)
 -- to divide by 16 rol by 4 bits
 
-impure function push_cmd(a : cmd_array_type; ptr : std_logic_vector) return std_logic is
-	variable temp: cmd_array_type;
-	variable cmd_ptr: std_logic_vector(3 downto 0);
-	variable iptr: integer range 0 to 15:= 0;
-	begin
-		temp := a;
-		cmd_ptr := ptr;
-		iptr:= conv_integer(ptr);
-		if iptr > 15 then
-			return '1';
-		else
-			iptr:= iptr + 1;
-			cmd_ptr := conv_std_logic_vector(iptr,3);
-			return '0';
-		end if;
-	end function;
-
-impure function pop_cmd(cmd_array : cmd_array_type; ptr : std_logic_vector) return std_logic_vector is
-	variable cmd_a : cmd_array_type;
-	variable iptr: std_logic_vector(2 downto 0);
-	variable temp: std_logic_vector(2 downto 0);
-	variable ip: integer range 0 to 15:= 0;
-	begin
-		cmd_a := cmd_array;
-		iptr := ptr;
-		ip := conv_integer(iptr);
-		temp := cmd_array(ip);
-		return temp;
-	end function;
-
-impure function average(a : in my_array3; b : in std_logic_vector) return std_logic_vector is
-	variable temp: integer range 0 to 131056:= 0;
+impure function average(a : in my_array3) return std_logic_vector is
+	variable temp: integer range 0 to 1966065:= 0;
 	variable temp2: std_logic_vector(16 downto 0);
 	variable temp3: my_array3;
-	variable temp4: unsigned(16 downto 0);
+	variable temp4: unsigned(20 downto 0);
 	
 	begin
 		temp3:= a;
 		for i in 0 to 15 loop
 			temp:= temp + conv_integer(temp3(i));
 		end loop;
-		temp4:= to_unsigned(temp,17);
-		temp4:= temp4 srl 4;
+		temp4:= to_unsigned(temp,21);
+		temp4:= temp4 srl 4;	-- divide by 16
 		temp:= to_integer(temp4);
 		temp2:= conv_std_logic_vector(temp,17);
 	return temp2;
@@ -204,6 +173,19 @@ impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_a
 		
 	end function;
 
+impure function block_ff(a : in std_logic_vector) return std_logic_vector is
+		variable temp: integer range 0 to 255:= 0;
+		variable temp2: std_logic_vector(7 downto 0);
+		
+		begin
+			temp2:= a;
+			temp:= conv_integer(temp2);
+			if temp = 255 then
+				temp:= 254;
+			end if;
+			return conv_std_logic_vector(temp,8);
+		end function;	
+	
 end package body;
 
 --signal quotient: integer := 0;

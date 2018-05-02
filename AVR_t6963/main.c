@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "USART.h"
 #include "t6963.h"
-//#include "spi.h"
+#include "spi.h"
 #include "macros.h"
 #include <string.h>
 //#include "main.h"
@@ -41,13 +41,15 @@ int main(void)
 	UCHAR row, col, mode, type;
 	char str[30];
 	UCHAR str_len;
+	UCHAR spi_ret;
 
 //#if 0
 	_delay_ms(10);
 	GDispInitPort();
 	_delay_ms(10);
     initUSART();
- //   initSPImaster();
+//	initSPImaster();
+	initSPIslave();
 //	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
 	_delay_us(10);
 #if 0
@@ -72,43 +74,21 @@ int main(void)
 	SET_DATA_DIR_OUT();
 	while(1)
 	{
-		_delay_ms(2);
-		SET_TEST1();
-		_delay_us(20);
-		SET_WR();
-		_delay_us(20);
-		SET_RST();
-		_delay_us(20);
-		SET_CE();
-		_delay_us(20);
-		SET_CD();
-		_delay_us(20);
-		Data_Out(0xFF);
+//		SET_TEST1();
 //		xbyte = receiveByte();
-		receiveByte();
-
-		xbyte--;
-		if(xbyte < 0x21)
-			xbyte = 0x7e;
+//		Data_Out(xbyte);
+//		CLR_TEST1();
 /*
-		xbyte++;
-		if(xbyte > 0x7e)
+		_delay_us(200);
+
+		if(++xbyte > 0x7e)
 			xbyte = 0x21;
 */
-		_delay_ms(2);
-		CLR_TEST1();
-		_delay_us(20);
-		CLR_WR();
-		_delay_us(20);
-		CLR_RST();
-		_delay_us(20);
-		CLR_CE();
-		_delay_us(20);
-		CLR_CD();
-		_delay_us(20);
-		Data_Out(0);
-		CLR_RD();
-//		transmitByte(xbyte);
+		xbyte = SPI_read();
+//		_delay_us(2);
+		transmitByte(xbyte);
+//		_delay_us(200);
+//		transmitByte(spi_ret);
 	}
 
 	i = 0;
@@ -194,5 +174,12 @@ int main(void)
 	}
     return (0);		// this should never happen
 }
-
+/*
+ISR(SPI_STC_vect)
+{
+//	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
+	spi_ret = SPDR;
+	transmitByte(spi_ret);
+}
+*/
 

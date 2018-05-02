@@ -21,6 +21,10 @@ entity multi_byte is
 		tx_mph: out std_logic;
 		rpm_signal : in std_logic;
 		mph_signal : in std_logic;
+		MOSI_o : out std_logic;
+		MISO_i : in std_logic;
+		SCLK_o : out std_logic;
+		SS_o : out std_logic_vector(1 downto 0);
 		test : out std_logic_vector(3 downto 0);
 		led1: out std_logic_vector(3 downto 0)
 		);
@@ -52,6 +56,9 @@ architecture truck_arch of multi_byte is
 	type calc_type2 is (idle1a, spin, pre_mcmd, exec_mcmd, exec_other_mcmds, wait_mcmd, wait_mcmd2);
 	signal main_reg1, main_next1: calc_type2;
 
+	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
+	signal state_dout_reg, state_dout_next: state_dout;
+	
 	signal time_delay_reg, time_delay_next: unsigned(23 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(23 downto 0);	-- calc_proc
 	signal time_delay_reg3, time_delay_next3: unsigned(23 downto 0);	-- calc_proc2
@@ -105,6 +112,7 @@ architecture truck_arch of multi_byte is
 
 --	signal spi_din, spi_dout : std_logic_vector(7 downto 0);
 --	signal s_cnt : unsigned(7 downto 0);
+	signal stlv_temp1 : std_logic_vector(7 downto 0);
 	signal stlv_temp1a : std_logic_vector(7 downto 0);
 	signal stlv_temp2 : std_logic_vector(7 downto 0);
 	signal stlv_temp2a : std_logic_vector(7 downto 0);
@@ -123,6 +131,10 @@ architecture truck_arch of multi_byte is
 	signal mparam: std_logic_vector(6 downto 0);
 	signal mph_or_not: std_logic;
 	signal low_byte, high_byte: std_logic_vector(7 downto 0);
+	signal mspi_ready : std_logic;
+	signal mspi_din_vld, mspi_dout_vld : std_logic;
+	signal mosi, miso, sclk, ss: std_logic;
+	signal mspi_din, mspi_dout : std_logic_vector(7 downto 0);
 begin
 
 --rx_temp <= tx_temp;
@@ -193,12 +205,124 @@ db0_unit: entity work.db_fsm
 		sw=>rpm_signal,
 --		sw=>rpm_signal_test,	-- this is from calc_proc and used to simulate a signal
 		db=>rpm_db);
-		
+
 db1_unit: entity work.db_fsm
 	port map(clk=>clk,reset=>reset,
 		sw=>mph_signal,
 --		sw=>mph_signal_test,
 		db=>mph_db);
+
+spi_master_unit: entity work.SPI_MASTER(RTL)
+	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>100000,SLAVE_COUNT=>2)
+	port map(CLK=>clk, RST=>reset,
+	SCLK=>SCLK_o,
+	CS_N=>SS_o,
+	MOSI=>MOSI_o,
+	MISO=>MISO_i,
+	ADDR=>addr,
+	READY=>mspi_ready,
+	DIN=>mspi_din,
+	DIN_VLD=>mspi_din_vld,
+	DOUT=>mspi_dout,
+	DOUT_VLD=>mspi_dout_vld);
+
+-- ********************************************************************************
+--	type state_dout is (idle_dout, start_dout, end_dout, done_dout, delay_dout);
+
+echo_dout_unit1: process(clk, reset, state_dout_reg)
+variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
+variable temp1: integer range 0 to 255:= 0;
+variable temp2: integer range 0 to 255:= 255;
+variable temp3: integer range 0 to 7:= 1;
+begin
+	if reset = '0' then
+		state_dout_reg <= idle_dout;
+		stlv_temp1 <= (others=>'0');
+		stlv_temp1a <= (others=>'0');
+		led1 <= (others=>'1');
+		addr <= (others=>'1');
+		mspi_din_vld <= '0';
+		mspi_din <= (others=>'0');
+		skip3 <= '0';
+		test <= (others=>'1');
+		time_delay_reg7 <= (others=>'0');
+		time_delay_next7 <= (others=>'0');
+	else if clk'event and clk = '1' then
+		case state_dout_reg is
+			when idle_dout =>
+				test <= "1110";
+				led1 <= "1110";
+				if mspi_ready = '1' then
+					led1 <= "0111";
+					test <= "0111";
+
+					mspi_din <= stlv_temp1;		-- write
+					mspi_din_vld <= '1';
+					state_dout_next <= start_dout;
+				end if;
+			when start_dout =>
+					state_dout_next <= done_dout;
+			when done_dout =>
+				mspi_din_vld <= '0';			
+--				if SS_o(0) = '0' then
+				if mspi_dout_vld = '1' then
+					led1 <= "1011";
+-- mspi_dout is what gets received by MISO
+--					if addr(0) = '1' then
+						stlv_temp1 <= mspi_dout;
+--					elsif addr(1) = '1' then	
+--						stlv_temp1a <= mspi_dout;
+--					end if;	
+--					cmd <= stlv_temp1(7 downto 4);
+--					param <= stlv_temp1(3 downto 0);
+--					temp_uart := conv_integer(param);
+--					if cmd(3) = '0' then
+--						if temp_uart > NUM_DATA_ARRAY-1 then
+--							temp_uart := 0;
+--						end if;	
+--						stlv_temp1 <= data_array1(temp_uart);
+--					else
+--						if temp_uart > 7 then
+--							temp_uart := 0;
+--						end if;	
+--						stlv_temp1 <= "0000" & data_array2(temp_uart);
+--					end if;	
+					skip3 <= not skip3;
+					if skip3 = '1' then
+						if temp1 > 125 then
+							temp1:= 36;
+						else temp1:= temp1 + 1;
+						end if;	
+						stlv_temp1 <= conv_std_logic_vector(temp1,8);
+--						stlv_temp1 <= X"AA";
+						led1 <= "1011";
+						test <= "1011";
+						addr <= "01";					
+					else	
+						if temp2 < 33 then
+							temp2:= 125;
+						else temp2:= temp2 - 1;	
+						end if;	
+						stlv_temp1 <= conv_std_logic_vector(temp2,8);
+--						stlv_temp1 <= X"55";
+						addr <= "10";
+					end if;
+					state_dout_next <= wait_dout;
+				end if;
+			when wait_dout =>
+				if time_delay_reg7 > TIME_DELAY9/8 then
+					time_delay_next7 <= (others=>'0');
+					state_dout_next <= idle_dout;
+				else
+					time_delay_next7 <= time_delay_reg7 + 1;
+				end if;
+--				end if;
+		end case;
+		time_delay_reg7 <= time_delay_next7;
+		state_dout_reg <= state_dout_next;
+		end if;
+	end if;
+end process;	
 
 -- ********************************************************************************
 send_uart1: process(clk,reset)
@@ -289,7 +413,7 @@ begin
 		data_tx2 <= (others=>'0');
 		start_tx2 <= '0'; 
 		skip2 <= '0';
-		led1 <= X"F";
+--		led1 <= X"F";
 		time_delay_reg5 <= (others=>'0');
 		time_delay_next5 <= (others=>'0');
 	else if clk'event and clk = '1' then
@@ -310,7 +434,7 @@ begin
 					temp_uart:= conv_integer(stlv_temp2);
 					temp_uart:= temp_uart + 48;
 					data_tx2 <= conv_std_logic_vector(temp_uart,8);
-					led1 <= bcdb(7 downto 4);
+--					led1 <= bcdb(7 downto 4);
 					state_tx2_next <= start3;
 					start_tx2 <= '1';
 				end if;
@@ -341,7 +465,7 @@ begin
 		time_delay_reg4 <= (others=>'0');
 		time_delay_next4 <= (others=>'0');
 		stlv_temp2 <= (others=>'1');
-		test <= (others=>'1');
+--		test <= (others=>'1');
 	else if clk'event and clk = '1' then
 		case state_uart_reg2 is
 			when idle2 =>

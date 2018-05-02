@@ -152,10 +152,10 @@ GND		VCC
 3		A2
 4		A1
 5		A0
-6		13
-7		12
-8		11
-9		10
+6		13 SCLK
+7		12 MISO
+8		11 MOSI
+9		10 SS
 
 PORTS:
 PD1		RAW
@@ -180,10 +180,10 @@ pin labels on bottom left with reset button on left
 reset - CS (when programming otherwise when using as SPI this goes to SS?)
 
 1 2 3 4 5 6
-1) MOSI			- 11 MOSI yellow clip
-2) MISO			- 12 MISO black regular clip
-3) CLK			- 13 SCLK other green clip
-4) RST			- white clip
+1) MOSI			- 11 MOSI grey wire
+2) MISO			- 12 MISO black wire
+3) CLK			- 13 SCLK purple wire
+4) RST			- white wire
 5) GND
 6) not connected
 
