@@ -574,7 +574,7 @@ ESOS_USER_TASK(keypad)
 ESOS_USER_TASK(poll_keypad)
 {
     static ESOS_TASK_HANDLE cmd_param_task;
-
+    static UCHAR data1, data2;
 	
     ESOS_TASK_BEGIN();
 //    cmd_param_task = esos_GetTaskHandle(menu_task);
@@ -593,15 +593,22 @@ ESOS_USER_TASK(poll_keypad)
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
-		if (u8_newKey)
+		if(u8_newKey)
 		{
-//			__esos_CB_WriteUINT8(cmd_param_task->pst_Mailbox->pst_CBuffer,u8_newKey);
-//#if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		    ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(u8_newKey-0xE2);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-//#endif
+			data2 = u8_newKey;
 			u8_newKey = 0;
+			if(data2 == KP_POUND)
+				data1 = 0x23;
+			else if(data2 == KP_AST)
+				data1 = 0x2a;
+			else if(data2 >= KP_A && data2 <= KP_D)
+				data1 = data2 - 0xEC + 0x41;
+			else
+				data1 = data2 - 0xE2 + 0x30;
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
 	}
     ESOS_TASK_END();

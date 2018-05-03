@@ -52,7 +52,7 @@ int main(void)
 	initSPIslave();
 //	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
 	_delay_us(10);
-#if 0
+//#if 0
 	GDispSetMode(XOR_MODE);
 //	GDispSetMode(EXT_CG_MODE);
 	_delay_us(10);
@@ -68,10 +68,10 @@ int main(void)
 //******************************************************************************************//
 	_delay_ms(1000);
 	GDispStringAt(7,15,"          ");
-#endif
+
 //	xbyte = 0x7e;
 	xbyte = 0x21;
-	SET_DATA_DIR_OUT();
+#if 0
 	while(1)
 	{
 //		SET_TEST1();
@@ -90,7 +90,7 @@ int main(void)
 //		_delay_us(200);
 //		transmitByte(spi_ret);
 	}
-
+#endif
 	i = 0;
 	k = 0;
 	col = row = 0;
@@ -174,12 +174,12 @@ int main(void)
 	}
     return (0);		// this should never happen
 }
-/*
+#if 0
 ISR(SPI_STC_vect)
 {
 //	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
-	spi_ret = SPDR;
-	transmitByte(spi_ret);
-}
-*/
+//	spi_ret = SPDR;
+//	transmitByte(spi_ret);
+//}
+#endif
 

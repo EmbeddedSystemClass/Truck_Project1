@@ -47,11 +47,6 @@ board pin out
 bottom view with 64 pin dip socket on bottom:
 63	61	59 ... 5	3	1
 64	62	60 ... 6	4	2
-
-
-
-
-
   
 1)  Vcc
 2)  gnd
@@ -85,15 +80,14 @@ bottom view with 64 pin dip socket on bottom:
 
 keypad
 
+29) row_1	4th from right outside top
 30) row_0	5th from right inside top
-31) row_1	4th from right outside top
+31) row_3	2nd from right inside top
 32) row_2	2nd from right outside top
-33) row_3	2nd from right inside top
-
+33) col_1	7th from left - outside bottom
 34) col_0	5th up - outside right
-35) col_1	7th from right - outside bottom
+35) col_3	5th up from bottom - outside left 
 36) col_2	4th up from bottom - inside left
-37) col_3	5th up from bottom - outside left
 
 38)
 39) Vcc
@@ -162,7 +156,6 @@ LV		LV gnd 3v3 LV		LV
 3)rx UART3
 4)tx UART3
 
-
 ADC:
 RB0 (ADC0) - p25 - 1st from bottom outside rightcx 
 RB1 (ADC1) - p24 - 2nd from bottom inside right
@@ -213,17 +206,20 @@ use 1 connector for those and another for
 10 ADC's and add 3rd one later for the 
 other 6 if needed
 
-using t6963:
-data:
-RG0->3 data0->3
-RA4->7 data4->7
-signals:
-RE5 RST
-RE6 C/D
-RE7 CE
-RE8 RD
-RE9 WR
-
+AVR to t6963:
+WR		C0
+CE		C1
+RST		C2
+CD		C3
+RD		C4
+DATA0	D2
+DATA1	D3
+DATA2	D4
+DATA3	D5
+DATA4	D6
+DATA5	D7
+DATA6	B0
+DATA7	B1
 
 avail pins on PIC24:
 RC1->3,12,15
