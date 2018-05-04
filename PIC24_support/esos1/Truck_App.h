@@ -57,11 +57,13 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #endif
 #define CHAR_AT_CMD			0
 #define STRING_AT_CMD		1
-#define SET_CURSOR_CMD		2
-#define SET_MODE_CMD 		3
-#define DEBUG_CLRSCR2 4
-#define DEBUG_CLRSCR3 5
-#define DEBUG_MSG1 6
+#define CHAR_CMD			2
+#define GOTO_CMD			3
+#define SET_MODE_CMD 		4
+#define DEBUG_CLRSCR1		5
+#define DEBUG_CLRSCR2		6
+#define DEBUG_CLRSCR3		7
+#define DEBUG_MSG1			8
 
 void GDispCharAt(UCHAR row, UCHAR col, char c);
 void GDispStringAt(UCHAR row, UCHAR col, char *str);
@@ -192,8 +194,10 @@ ESOS_SEMAPHORE(comm1_sem);
 ESOS_SEMAPHORE(comm2_sem);
 ESOS_USER_TASK(delay_comm1);
 ESOS_USER_TASK(send_char);
+ESOS_USER_TASK(send_charat);
 ESOS_USER_TASK(send_string);
 ESOS_USER_TASK(set_cursor);
+ESOS_USER_TASK(goto1);
 ESOS_USER_TASK(test1);
 ESOS_USER_TASK(get_comm1);
 ESOS_USER_TASK(get_comm2);

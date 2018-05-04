@@ -19,13 +19,16 @@
 #include <stdlib.h>
 
 #define LEN 200
-#define DEBUG_CHAR_AT 0
-#define DEBUG_STRING_AT 1
-#define DEBUG_SET_CURSOR 2
-#define DEBUG_CLRSCR1 3
-#define DEBUG_CLRSCR2 4
-#define DEBUG_CLRSCR3 5
-#define DEBUG_MSG1 6
+#define DEBUG_CHAR_AT		0
+#define DEBUG_STRING_AT		1
+#define DEBUG_CHAR			2
+#define DEBUG_GOTO			3
+#define DEBUG_SET_MODE		4
+#define DEBUG_CLRSCR1		5
+#define DEBUG_CLRSCR2		6
+#define DEBUG_CLRSCR3		7
+#define DEBUG_MSG1			8
+
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
 // really cranking
@@ -63,48 +66,32 @@ int main(void)
 //******************************************************************************************//
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
-	_delay_ms(1000);
+	_delay_ms(100);
 	GDispStringAt(7,15,"          ");
 
 	xbyte = 0x21;
-	i = 0;
-	k = 0;
-	col = row = 0;
 
     initUSART();
 	
+	_delay_ms(200);
+	for(row = 0;row < ROWS-1;row++)
+	{
+		for(col = 0;col < COLUMN-1;col++)
+		{
+			GDispCharAt(row,col,xbyte);
+			if(++xbyte > 0x7e)
+				xbyte = 0x21;
+			_delay_ms(2);
+		}
+	}
+	_delay_ms(200);
+
+	GDispClrTxt();
+
+	i = 0;
     while (1)
     {
-		xbyte = receiveByte();
-		_delay_ms(2);
-		GDispCharAt(row,col,xbyte);
-//		transmitByte(xbyte2);
-//		SPI_write(xbyte);
-//		if(++xbyte > 0x7e)
-
-/*
-		if(++i > 40)
-		{
-			xbyte = 0x21;
-			i = 0;
-		}else xbyte++;
-
-		if(++xbyte2 > 0x7e)
-			xbyte2 = 0x21;
-*/
-		if(++col > COLUMN-1)
-		{
-			col = 0;
-			if(++row > ROWS-1)
-			{
-				row = 0;
-				_delay_ms(1000);
-				GDispClrTxt();
-			}
-		}
-//		transmitByte(key);
-//    	_delay_ms(10);
-/*
+		key = receiveByte();
 		buff[i] = key;
 		i++;
 		if(key == 0xfe)
@@ -112,27 +99,29 @@ int main(void)
 			switch(buff[0])
 			{
 				case DEBUG_CHAR_AT:
-					row = buff[1];
-					col = buff[2];
+					row = (UINT)buff[1];
+					col = (UINT)buff[2];
 					ch = buff[3];
-					GDispCharAt((UINT)row,(UINT)col,ch);
+					GDispCharAt(row,col,ch);
 				break;
 				case DEBUG_STRING_AT:
-					row = buff[1];
-					col = buff[2];
+					row = (UINT)buff[1];
+					col = (UINT)buff[2];
 					str_len = buff[3];
 
 					memset(str,0x20,sizeof(str));	
 					memcpy(str,&buff[4],str_len);
 					str[str_len] = 0;
-					GDispStringAt((UINT)row,(UINT)col,str);
+					GDispStringAt(row,col,str);
 				break;
-				case DEBUG_SET_CURSOR:
-					mode = buff[1];
-					row = buff[2];
-					col = buff[3];
-					type = buff[4];
-					GDispSetCursor(mode,(UINT)row,(UINT)col,type);
+				case DEBUG_CHAR:
+					ch = buff[1];
+					GDispChar(ch);
+				break;
+				case DEBUG_GOTO:
+					row = (UINT)buff[1];
+					col = (UINT)buff[2];
+					GDispGoto(row,col);
 				break;
 				case DEBUG_CLRSCR3:
 					GDispClrTxt();
@@ -154,7 +143,6 @@ int main(void)
 			}
 			i = 0;
 		}
-*/
 	}
     return (0);		// this should never happen
 }
