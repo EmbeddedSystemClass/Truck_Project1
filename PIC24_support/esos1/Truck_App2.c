@@ -316,23 +316,26 @@ ESOS_USER_TASK(send_comm1)
 //#if 0
 ESOS_USER_TASK(test1)
 {
-	static UCHAR data1 = 0x21;
-	static UCHAR data2;
+	static UCHAR data1;
+	static UCHAR data2 = 0x21;
 	static char test_str[10];
+	static UCHAR dim;
 //    static ESOS_TASK_HANDLE handle1;
 //    static ESOS_TASK_HANDLE handle2;
 
 //	handle1 = esos_GetTaskHandle(send_char);
 //	handle2 = esos_GetTaskHandle(send_string);
-
     ESOS_TASK_BEGIN();
 //	CONFIG_R0_DIG_OUTPUT();
 	// RA0 - p17 - 5th up - outside right				//	col 0
 
+	CONFIG_RE5_AS_DIG_OUTPUT();
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
     ESOS_TASK_WAIT_ON_SEND_STRING("starting...");
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
+	data1 = 0;
 	while(1)
 	{
 /*
@@ -345,46 +348,41 @@ ESOS_USER_TASK(test1)
 		ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 */
-//		ESOS_TASK_WAIT_TICKS(1);
-/*
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
-*/
 
-// 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//		ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-//		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+ 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
-		
-		if(u8_newKey)
+//		dim = (UCHAR)dimmer;
+		if(data1 % 2)
+			_LATE5 = 0;
+		else _LATE5 = 1;	
+		data1++;
+
+//	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(dim);
+//			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+/*
+		if(data2 > 0x2F && data2 < 0x7B)
 		{
-			data2 = u8_newKey;
-			u8_newKey = 0;
-			if(data2 == KP_POUND)
-				data1 = 0x23;
-			else if(data2 == KP_AST)
-				data1 = 0x2a;
-			else if(data2 >= KP_A && data2 <= KP_D)
-				data1 = data2 - 0xEC + 0x41;
-			else
-				data1 = data2 - 0xE2 + 0x30;
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+		}else
+		{
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
-//		data1 = data2;
-/*
-		data1++;
-		if(data1 > 0x7e)
-			data1 = 0x21;
+
+		data2++;
+		if(data2 > 0x7e)
+			data2 = 0x21;
+
+		ESOS_TASK_WAIT_TICKS(10);
 */
 	}
 	

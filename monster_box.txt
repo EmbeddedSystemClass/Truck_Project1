@@ -24,6 +24,21 @@ pinout for LCD:
 2) VSS		signal gnd
 1) FG		frame ground (can go to pin 2)
 
+AVR to t6963:
+WR		C0
+CE		C1
+RST		C2
+CD		C3
+RD		C4
+DATA0	D2
+DATA1	D3
+DATA2	D4
+DATA3	D5
+DATA4	D6
+DATA5	D7
+DATA6	B0
+DATA7	B1
+
 UART1 - monitor/FPGA*
 UART2 - AVR
 UART3 - RS232 to TS-7200
@@ -50,33 +65,32 @@ bottom view with 64 pin dip socket on bottom:
   
 1)  Vcc
 2)  gnd
-3)	nc
-4)	nc
-5)	gnd
+3)	nc	| pins removed so ICD plug can fit in 5->14
+4)	nc	|
+5)	gnd - used by programmer and SPI link to FPGA
 6)	
 7)
 8)
-9)
+9)	SS not used by programmer but used by SPI link to FPGA
 10)
-11)  13 on AVR (SCLK)	|
-12)  11 on AVR (MOSI)	| used by AVR programmer
+11)  13 on AVR (SCLK)	| used by AVR programmer 	|
+12)  11 on AVR (MOSI)	| 							| used by SPI link to FPGA
 13)  RST on AVR 		|
-14)  12 on AVR (MISO)	|
-15)
-16)
+14)  12 on AVR (MISO)	|							|
+15)	nc	| pins removed so ICD plug can fit in 5->14
+16) nc	|
 17)
 18)
 19) Vcc
 20) gnd
-21)
+21) - broken pin
 22)
 23) - broken pin
 24)
 25) - broken pin
 26) - broken pin
-27) - broken pin
-28)
-29) - broken pin
+27) | pins removed so ICD plug can fit in 29->36
+28)	|
 
 keypad
 
@@ -88,10 +102,10 @@ keypad
 34) col_0	5th up - outside right
 35) col_3	5th up from bottom - outside left 
 36) col_2	4th up from bottom - inside left
-
-38)
-39) Vcc
-40) gnd
+37) nc (but part of ICD plug)
+38) nc (but part of ICD plug)
+39)	| pins removed so ICD plug can fit in 29->36
+40)	|
 41)
 42)
 43)
@@ -157,7 +171,7 @@ LV		LV gnd 3v3 LV		LV
 4)tx UART3
 
 ADC:
-RB0 (ADC0) - p25 - 1st from bottom outside rightcx 
+RB0 (ADC0) - p25 - 1st from bottom outside right 
 RB1 (ADC1) - p24 - 2nd from bottom inside right
 RB2 (ADC2) - p23 - 2nd from bottom outside right
 RB3 (ADC3) - p22 - 3rd from bottom inside right

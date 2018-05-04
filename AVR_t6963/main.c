@@ -34,33 +34,30 @@
 int main(void)
 {
 	int i,j,k;
-	UCHAR xbyte;
+	UCHAR xbyte, xbyte2;
 	UCHAR ch;
 	UCHAR key;
 	UCHAR buff[LEN];
-	UCHAR row, col, mode, type;
+	UCHAR mode, type;
+	UINT row, col;
 	char str[30];
 	UCHAR str_len;
 	UCHAR spi_ret;
 
-//#if 0
+
 	_delay_ms(10);
-	GDispInitPort();
+	GDispInit();
 	_delay_ms(10);
-    initUSART();
 //	initSPImaster();
-	initSPIslave();
-//	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
+//	initSPIslave();
 	_delay_us(10);
-//#if 0
+
 	GDispSetMode(XOR_MODE);
-//	GDispSetMode(EXT_CG_MODE);
 	_delay_us(10);
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
 	GDispClrTxt();
 	GDispStringAt(7,15,"LCD is on!");
-//#endif
 
 //	initSPImaster();
 //******************************************************************************************//
@@ -69,52 +66,39 @@ int main(void)
 	_delay_ms(1000);
 	GDispStringAt(7,15,"          ");
 
-//	xbyte = 0x7e;
 	xbyte = 0x21;
-#if 0
-	while(1)
-	{
-//		SET_TEST1();
-//		xbyte = receiveByte();
-//		Data_Out(xbyte);
-//		CLR_TEST1();
-/*
-		_delay_us(200);
-
-		if(++xbyte > 0x7e)
-			xbyte = 0x21;
-*/
-		xbyte = SPI_read();
-//		_delay_us(2);
-		transmitByte(xbyte);
-//		_delay_us(200);
-//		transmitByte(spi_ret);
-	}
-#endif
 	i = 0;
 	k = 0;
 	col = row = 0;
+
+    initUSART();
+	
     while (1)
     {
-//		xbyte = receiveByte();
-		_delay_ms(5);
+		xbyte = receiveByte();
+		_delay_ms(2);
 		GDispCharAt(row,col,xbyte);
-		transmitByte(xbyte);
-		SPI_write(xbyte);
+//		transmitByte(xbyte2);
+//		SPI_write(xbyte);
 //		if(++xbyte > 0x7e)
+
+/*
 		if(++i > 40)
 		{
 			xbyte = 0x21;
 			i = 0;
 		}else xbyte++;
 
+		if(++xbyte2 > 0x7e)
+			xbyte2 = 0x21;
+*/
 		if(++col > COLUMN-1)
 		{
 			col = 0;
 			if(++row > ROWS-1)
 			{
 				row = 0;
-//				_delay_ms(600);
+				_delay_ms(1000);
 				GDispClrTxt();
 			}
 		}

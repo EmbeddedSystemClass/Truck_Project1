@@ -52,6 +52,9 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define RT_OFFSET 0x70
 //#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
 
+#ifdef OC1CON1
+#warning OC1CON1 defined"
+#endif
 #define CHAR_AT_CMD			0
 #define STRING_AT_CMD		1
 #define SET_CURSOR_CMD		2
@@ -580,7 +583,7 @@ ESOS_USER_TASK(poll_keypad)
 //    cmd_param_task = esos_GetTaskHandle(menu_task);
 
 	configKeypad();
-/*
+
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -588,7 +591,7 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+
 
 	while (TRUE)
 	{
@@ -605,6 +608,10 @@ ESOS_USER_TASK(poll_keypad)
 				data1 = data2 - 0xEC + 0x41;
 			else
 				data1 = data2 - 0xE2 + 0x30;
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
@@ -788,6 +795,7 @@ ESOS_USER_TASK(echo_spi_task)
 #define NUM_CHANNELS 2
 volatile uint16_t au16_buffer[NUM_CHANNELS];
 volatile uint8_t  u8_waiting;
+//volatile UINT dimmer;
 
 //******************************************************************************************//
 //**************************************** convADC  ****************************************//
@@ -801,12 +809,12 @@ ESOS_USER_TASK(convADC)
 	static uint16_t  u16_pot;
 
     ESOS_TASK_BEGIN();
-
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_STRING("starting ADC task\r\n");
 	ESOS_TASK_WAIT_ON_SEND_STRING("                                 \r");
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 	CONFIG_RB0_AS_ANALOG();
 	CONFIG_RB1_AS_ANALOG();
 
@@ -823,16 +831,17 @@ ESOS_USER_TASK(convADC)
 		{
 			u16_pot = au16_buffer[u8_i];
 
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			if(u8_i == 0)
 			{
 //				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-			ESOS_TASK_WAIT_TICKS(50);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+//			dimmer = (UCHAR)u16_pot;
+			ESOS_TASK_WAIT_TICKS(100);
+//			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
 	}
 	ESOS_TASK_END();
@@ -852,7 +861,62 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+#if 0
+#ifndef PWM_PERIOD
+#define PWM_PERIOD 20000  // desired period, in us
+#define OC_PWM_CENTER_ALIGN 0x03
+#define OC_SYNCSEL_TIMER2 0x0080
+#endif
 
+void  configTimer2(void) 
+{
+	T2CON = T2_OFF | T2_IDLE_CON | T2_GATE_OFF
+		| T2_32BIT_MODE_OFF
+		| T2_SOURCE_INT
+		| T2_PS_1_64;
+	PR2 = usToU16Ticks(PWM_PERIOD, getTimerPrescale(T2CONbits)) - 1;
+	TMR2  = 0;       //clear timer2 value
+	_T2IF = 0;
+	_T2IP = 1;
+	_T2IE = 1;    //enable the Timer2 interrupt
+}
+
+
+void configOutputCompare1(void) 
+{
+	T2CONbits.TON = 0;          //disable Timer when configuring Output compare
+	CONFIG_OC1_TO_RP(RB0_RP);   //map OC1 to RB
+	OC1RS = 0;  //clear both registers
+	OC1R = 0;
+#ifdef OC1CON1
+//turn on the compare toggle mode using Timer2
+	OC1CON1 = OC_TIMER2_SRC |     //Timer2 source
+		OC_PWM_CENTER_ALIGN;  //PWM
+	OC1CON2 = OC_SYNCSEL_TIMER2;   //synchronize to timer2
+#else
+//older families, this PWM mode is compatible with center-aligned, OC1R=0
+//as writes to OC1RS sets the pulse widith.
+	OC1CON = OC_TIMER2_SRC |     //Timer2 source
+		OC_PWM_FAULT_PIN_DISABLE;  //PWM, no fault detection
+#endif
+}
+
+void _ISR _T2Interrupt(void) 
+{
+	uint32_t u32_temp;
+	_T2IF = 0;    //clear the timer interrupt bit
+	//update the PWM duty cycle from the ADC value
+	u32_temp = ADC1BUF0;  //use 32-bit value for range
+	//compute new pulse width that is 0 to 99% of PR2
+	// pulse width (PR2) * ADC/1024
+	u32_temp = (u32_temp * (PR2))>> 10 ;  // >>10 is same as divide/1024
+	OC1RS = u32_temp;  //update pulse width value
+	SET_SAMP_BIT_ADC1();      //start sampling and conversion
+}
+#endif
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//

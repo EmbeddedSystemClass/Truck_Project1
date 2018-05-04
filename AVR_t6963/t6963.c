@@ -103,6 +103,7 @@ static void GDispCmdAddrSend (UINT Addr, UCHAR cmd)
 	GDispDataWr (c); //Send MSB of 'Addr' afterwards
 	GDispCmdSend (cmd);
 }
+
 UCHAR GDispScreenPeek(UINT row, UINT col)
 {
 	UCHAR c;
@@ -373,7 +374,6 @@ void GDispInitPort (void)
 	SET_CE();
 	SET_RD();
 	SET_WR();
-	CLR_TEST1();
 
 	_CB(PORTD,DATA0);
 	_CB(PORTD,DATA1);
