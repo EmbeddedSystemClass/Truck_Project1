@@ -162,11 +162,13 @@ void configADC1_AutoScanIrqCH0(uint16_t   u16_ch0ScanMask,
   /** Configure the internal ADC **/
   AD1CON1 = ADC_CLK_AUTO | ADC_AUTO_SAMPLING_ON;
 #ifdef _AD12B
+#warning "AD12B used"
   if (u8_use12bit)
     AD1CON1bits.AD12B = 1;
   else
     AD1CON1bits.AD12B = 0;
 #else
+#warning "AD12B not used"
   // Some PICs only offer 10-bit mode.
   ASSERT(u8_use12bit == 0);
 #endif

@@ -38,10 +38,8 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>..</Elem>
-    <Elem>../../esos/src</Elem>
-    <Elem>../../lib/src</Elem>
     <Elem>/home/dan/dev/Truck_Project1/AVR_t6963</Elem>
+    <Elem>/home/dan/dev/Truck_Project1/PIC24_support</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>

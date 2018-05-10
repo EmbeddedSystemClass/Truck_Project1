@@ -2,7 +2,7 @@ monster box pinout info
 
 pinout for LCD:
 
-21) LEDK	| gnd for LCD backlight
+21) LEDK	| gnd for LCD backlight (not on pinout - wired separately)
 20) LEDA	| +5v for  "     "
 19) VEE		goes to gnd threw 20K pot with center tap to VO
 18) FS		font select
@@ -39,11 +39,9 @@ DATA5	D7
 DATA6	B0
 DATA7	B1
 
-UART1 - monitor/FPGA*
+UART1 - monitor/FPGA (optional)
 UART2 - AVR
 UART3 - RS232 to TS-7200
-
-*if SPI to AVR doesn't work then use UART1 to talk to FPGA
 
 UART1:
 RX - p68 - 5th from top inside left
@@ -106,30 +104,66 @@ keypad
 38) nc (but part of ICD plug)
 39)	| pins removed so ICD plug can fit in 29->36
 40)	|
-41)
-42)
-43)
-44)
-45)
-46)
-47)
-48)
-49)
-50)
-51)
-52)
-53)
-54)
-55)
-56)
-57)
-58)
-59)
-60)
-61)
-62)
-63)
-64)
+41)	| pins removed so ICD plug can fit in 43->62
+42)	|
+43) RB1
+44) RB0
+45) RB3
+46) RB2
+47) RB5
+48) RB4
+49) RB7
+50) RB6
+51) RB9
+52) RB8
+53) RB11
+54) RB10
+55) RB15
+56) RB12
+57) RB13
+58) RB14
+59) nc
+60) nc
+61) AVSS
+62) AVDD
+63)	| pins removed for 40-pin ICD plug
+64)	|
+
+pin 0 RB0
+pin 1 RB1
+pin 2 RB2
+pin 3 RB3
+pin 4 RB4
+pin 5 RB5
+pin 6 RB7
+pin 7 RB7
+pin 8 RB8
+pin 9 RB9
+pin 10 RB10
+pin 11 RB11
+pin 12 RB12
+pin 13 RB15
+pin 14 RB14
+pin 15 RB13
+
+extra 18-pin socket
+
+1) to 3v3 via 4k7 pullup	| jumper these 2 together
+2) to pin 13 (MCLR)			| after programming the chip
+3)
+4)
+5) gnd (ref for VEE & VO)
+6) VDD white wire PicKit3 programmer
+7) LEDA (+5v for LCD backlight)
+8) VPP black wire
+9) VEE (LCD)
+10) GND brown wire
+11) VO (LCD)
+12) PGD red wire
+13) RX UART1
+14) PGC orange wire
+15) TX UART1
+16) nc yellow wire
 
 3 pins to left of lower conv chip:
 gnd gnd 3v3
@@ -177,50 +211,45 @@ RB2 (ADC2) - p23 - 2nd from bottom outside right
 RB3 (ADC3) - p22 - 3rd from bottom inside right
 RB4 (ADC4) - p21 - 3rd from bottom outside right
 RB5 (ADC5) - p20 - 4th from bottom inside right
+
+RB6 & 7 are used by the programmer so can't be hooked up 
+as ADC's and must use jumpers to run
+
 RB6 (ADC6) - p26 - 1st from right inside bottom
 RB7 (ADC7) - p27 - 1st from right outside bottom
+
 RB8 (ADC8) - p32 - 4th from right outside bottom
 RB9 (ADC9) - p33 - 4th from right inside bottom
 RB10 (ADC10) - p34 - 5th from right outside bottom
 RB11 (ADC11) - p35 - 5th from right inside bottom
+
 RB12 (ADC12) - p41 - 6th from left inside bottom
-RB13 (ADC13) - p42 - 4th from left outside bottom
+RB13 (ADC13) - p42 - 5th from left outside bottom
 RB14 (ADC14) - p43 - 5th from left inside bottom
 RB15 (ADC15) - p44 - 4th from left outside bottom
+
 RA9 (VREF-) - p28 - 2nd from right outside bottom
 RA10 (VREF+) - p29 - 2nd from right inside bottom
-(RB0 & RB1 are used as ADC inputs by Truck_App1/test_rpm_mph.c)
+AVDD - p30 - 3rd from right outside bottom
+AVSS - p31 - 3rd from right inside bottom
 
-FPGA needs only serial port connetion to the monster box
-so it can be in a separate box of its own.
-
-connections to FPGA: (11/18/17 - use AVR instead)
+connections to FPGA:
 
 rpm	(input)
 mph	(input)
-fuel pump shutoff (output to relay)
+fuel pump shutoff (output to no conn on relay)
 tone generator (output to speaker)
-later on we can have Pro-Mini AVRs that read
-the O2, temp and MAP sensors to do spark advance
-calculations.
+rev limiter
 
 connections to outside:
 
 monitor for PIC24*
 15 ADC's from PIC24**
-rpm to AVR
-mph to AVR
-fp shutoff from AVR
 alarm from PIC24 (12v on/off)
 serial port to TS-7XXX
 
-* can rewire to monitor other serial ports
-** all except ADC's total up to 9 so just
-use 1 connector for those and another for
-10 ADC's and add 3rd one later for the 
-other 6 if needed
-
 AVR to t6963:
+
 WR		C0
 CE		C1
 RST		C2
@@ -234,12 +263,6 @@ DATA4	D6
 DATA5	D7
 DATA6	B0
 DATA7	B1
-
-avail pins on PIC24:
-RC1->3,12,15
-RF0,1,12,13
-RA14,15
-RD1->3,12,13
 
 SEN-12756 Sparkfun 3-Axis Accelerometer MMA8452
 SEN-11931 Sparkfun Dig. Temp Sensor TMP102

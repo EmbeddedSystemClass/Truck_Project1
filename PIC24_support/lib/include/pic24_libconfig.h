@@ -131,6 +131,8 @@
 #define USE_HEARTBEAT 0
 #define _NOASSERT
 #define _NOFLOAT
+//# define _NOFLOAT
+//#warning "NOFLOAT defined"
 #endif
 
 /** @{

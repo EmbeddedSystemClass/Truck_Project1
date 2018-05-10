@@ -74,24 +74,37 @@ int main(void)
     initUSART();
 	
 	_delay_ms(200);
-	for(row = 0;row < ROWS-1;row++)
+#if 0
+	while(1)
 	{
-		for(col = 0;col < COLUMN-1;col++)
+		for(row = 0;row < ROWS;row++)
 		{
-			GDispCharAt(row,col,xbyte);
-			if(++xbyte > 0x7e)
-				xbyte = 0x21;
-			_delay_ms(2);
+			for(col = 0;col < COLUMN-1;col++)
+			{
+				xbyte = receiveByte();
+				if(xbyte == 0xFE)
+				{
+					GDispClrTxt();
+					row = col = 0;
+					xbyte = 0x21;
+				}
+				GDispCharAt(row,col,xbyte);
+				if(++xbyte > 0x7e)
+					xbyte = 0x21;
+	//			transmitByte(xbyte);	
+	//			_delay_ms(10);
+			}
 		}
 	}
 	_delay_ms(200);
-
+#endif
 	GDispClrTxt();
 
 	i = 0;
     while (1)
     {
 		key = receiveByte();
+//		GDispCharAt(0,0,key);
 		buff[i] = key;
 		i++;
 		if(key == 0xfe)

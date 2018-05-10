@@ -42,6 +42,7 @@
 
 
 #ifndef _NOFLOAT
+#warning "NOFLOAT not defined"
 /** Converts milliseconds to 16-bit timer ticks.
  *  \param u16_ms Time, in milliseconds, to convert to ticks
  *  \param u16_pre Prescale set for this timer. Note that

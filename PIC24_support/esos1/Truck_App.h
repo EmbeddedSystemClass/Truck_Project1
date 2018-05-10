@@ -24,6 +24,9 @@
 //
 //#define DEBUG
 #include "../esos/include/esos.h"
+#include "../lib/include/pic24_ports_config.h"
+#include "../lib/include/pic24_ports_mapping.h"
+#include "../lib/include/pic24_libconfig.h"
 #include "../esos/include/pic24/esos_pic24.h"
 #include "../esos/include/pic24/esos_pic24_rs232.h"
 #include "../esos/include/pic24/esos_pic24_spi.h"
@@ -31,8 +34,6 @@
 #include "../lib/include/pic24_timer.h"
 #include "../lib/include/pic24_util.h"
 #include "../lib/include/pic24_adc.h"
-#include "../lib/include/pic24_ports_config.h"
-#include "../lib/include/pic24_ports_mapping.h"
 //#include "main.h"
 //#include "../../AVR_t6963/key_defs.h"
 #include <stdio.h>
@@ -53,7 +54,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 //#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
 
 #ifdef OC1CON1
-#warning OC1CON1 defined"
+#warning "OC1CON1 defined"
 #endif
 #define CHAR_AT_CMD			0
 #define STRING_AT_CMD		1
@@ -202,6 +203,7 @@ ESOS_USER_TASK(test1);
 ESOS_USER_TASK(get_comm1);
 ESOS_USER_TASK(get_comm2);
 ESOS_USER_TASK(send_comm1);
+ESOS_USER_TASK(dimmer_task);
 
 UCHAR get_keypress(UCHAR key1)
 {
@@ -796,10 +798,41 @@ ESOS_USER_TASK(echo_spi_task)
     ESOS_TASK_END();
 }
 
-#define NUM_CHANNELS 2
+#ifdef BUILT_ON_ESOS
+#warning "BUILT_ON_ESOS defined"
+#else
+#warning "BUILT_ON_ESOS not defined"
+#endif
+
+#if 0
+uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre);
+uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre) {
+  // Because of the wide range of the numbers, use a float for precision.
+  float f_ticks;
+  uint32_t u32_timeUs;
+
+  f_ticks = u32_ticks;   //convert to float
+  f_ticks = ((f_ticks*u16_tmrPre)/FCY)*1E6;
+  u32_timeUs = roundFloatToUint32(f_ticks);  //back to int32_t
+  return u32_timeUs;
+}
+uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre);
+uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
+  // Use a float internally for precision purposes to accomodate wide range of FCY, u16_pre
+  float f_ticks = FCY;
+  uint16_t u16_ticks;
+  f_ticks = (f_ticks*u16_us)/u16_pre/1E6;
+  ASSERT(f_ticks < 65535.5);
+  u16_ticks = roundFloatToUint16(f_ticks);  //back to integer
+  return u16_ticks;
+}
+#endif
+
+#define NUM_CHANNELS 1
 volatile uint16_t au16_buffer[NUM_CHANNELS];
 volatile uint8_t  u8_waiting;
-//volatile UINT dimmer;
+volatile UINT dimmer;
+volatile int lat5;
 
 //******************************************************************************************//
 //**************************************** convADC  ****************************************//
@@ -813,40 +846,92 @@ ESOS_USER_TASK(convADC)
 	static uint16_t  u16_pot;
 
     ESOS_TASK_BEGIN();
-/*
+
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_STRING("starting ADC task\r\n");
 	ESOS_TASK_WAIT_ON_SEND_STRING("                                 \r");
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-	CONFIG_RB0_AS_ANALOG();
-	CONFIG_RB1_AS_ANALOG();
 
-	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1, 31, 0);
+	CONFIG_RB0_AS_ANALOG();
+/*
+	CONFIG_RB1_AS_ANALOG();
+	CONFIG_RB2_AS_ANALOG();
+	CONFIG_RB3_AS_ANALOG();
+	CONFIG_RB4_AS_ANALOG();
+	CONFIG_RB5_AS_ANALOG();
+	CONFIG_RB6_AS_ANALOG();
+	CONFIG_RB7_AS_ANALOG();
+	CONFIG_RB8_AS_ANALOG();
+	CONFIG_RB9_AS_ANALOG();
+	CONFIG_RB10_AS_ANALOG();
+	CONFIG_RB11_AS_ANALOG();
+	CONFIG_RB12_AS_ANALOG();
+	CONFIG_RB13_AS_ANALOG();
+	CONFIG_RB14_AS_ANALOG();
+	CONFIG_RB15_AS_ANALOG();
+*/
+//	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN2 |
+//			 ADC_SCAN_AN3 | ADC_SCAN_AN4 | ADC_SCAN_AN5, 31, 0);
+
+	configADC1_AutoScanIrqCH0( 0x0001, 31, 0);
+//	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
 	while ( !AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
-
+#if 0
+	u16_pot = AD1CON1;	// 0x80E7
+	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+	u16_pot = AD1CON2;	// 0x8404
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+	u16_pot = AD1CON3;	// 0x9F00
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+	u16_pot = AD1CSSL;	// 0x0003
+//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+	ESOS_TASK_WAIT_TICKS(5000);
+#endif
 	while (TRUE)
 	{
 		while (u8_waiting)	// wait for valid data in ISR
 			ESOS_TASK_WAIT_TICKS(1);
+			
 		u8_waiting = 0;
 		for ( u8_i=0; u8_i<NUM_CHANNELS; u8_i++)
 		{
 			u16_pot = au16_buffer[u8_i];
+			u16_pot <<= 6;
+			u16_pot |= 0x003F;
 
-//			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			if(u8_i == 0)
+			{
+				dimmer = u16_pot;
+			}
+#if 0
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			if(u8_i == 0)
 			{
 //				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			}
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-//			dimmer = (UCHAR)u16_pot;
-			ESOS_TASK_WAIT_TICKS(100);
-//			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(dimmer>>8));
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)dimmer);
+
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+#endif
 		}
+		ESOS_TASK_WAIT_TICKS(10);
 	}
 	ESOS_TASK_END();
 }
@@ -866,13 +951,65 @@ void _ISR _ADC1Interrupt (void)
 	_AD1IF = 0;   //clear the interrupt flag
 }
 //******************************************************************************************//
+//************************************** dimmer_task  **************************************//
+//******************************************************************************************//
+// RE5 is connected to the CMOS gate for the LCD backlight
+// dimmer is from RA0 ADC
+ESOS_USER_TASK(dimmer_task)
+{
+	static UCHAR data1;
+	static UCHAR data2;
+	static UINT dim;
+	static int i,j;
+	
+	ESOS_TASK_BEGIN()
+	CONFIG_RE5_AS_DIG_OUTPUT();
+
+	while(TRUE)
+	{
+		dim = dimmer;
+		dim >>= 8;
+		data1 = (UCHAR)dim;
+		data2 = ~data1;
+		data1 >>= 2;
+		data2 >>= 2;
+
+		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(dim>>8));
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)dim);
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data1);
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+		if(i++ % 2 == 0)
+		{
+			_LATE5 = 0;
+			for(j = 0;j < data1;j++)
+				ESOS_TASK_WAIT_TICKS(1);
+		}else{
+			 _LATE5 = 1;
+			for(j = 0;j < data2;j++)
+				ESOS_TASK_WAIT_TICKS(1);
+		}
+//		ESOS_TASK_WAIT_TICKS(200);
+	}
+	ESOS_TASK_END();
+}
 //******************************************************************************************//
 //******************************************************************************************//
-#if 0
+//******************************************************************************************//
+//#if 0
 #ifndef PWM_PERIOD
-#define PWM_PERIOD 20000  // desired period, in us
-#define OC_PWM_CENTER_ALIGN 0x03
+#define PWM_PERIOD 2000  // desired period, in us
+#define OC_PWM_CENTER_ALIGN 0x07
 #define OC_SYNCSEL_TIMER2 0x0080
+#endif
+
+#ifdef _NOFLOAT
+#warning "NOFLOAT defined"
+#else
+#warning "NOFLOAT not defined"
 #endif
 
 void  configTimer2(void) 
@@ -880,8 +1017,12 @@ void  configTimer2(void)
 	T2CON = T2_OFF | T2_IDLE_CON | T2_GATE_OFF
 		| T2_32BIT_MODE_OFF
 		| T2_SOURCE_INT
-		| T2_PS_1_64;
+		| T2_PS_1_256;
+//		| T2_PS_1_64;
+//		| T2_PS_1_8;
+//		| T2_PS_1_1;
 	PR2 = usToU16Ticks(PWM_PERIOD, getTimerPrescale(T2CONbits)) - 1;
+//	PR2 = usToU16Ticks(PWM_PERIOD, T2CONbits.TCKPS) - 1;
 	TMR2  = 0;       //clear timer2 value
 	_T2IF = 0;
 	_T2IP = 1;
@@ -892,21 +1033,16 @@ void  configTimer2(void)
 void configOutputCompare1(void) 
 {
 	T2CONbits.TON = 0;          //disable Timer when configuring Output compare
-	CONFIG_OC1_TO_RP(RB0_RP);   //map OC1 to RB
+	CONFIG_OC1_TO_RP(RF13_RP);   //map OC1 to RB0
 	OC1RS = 0;  //clear both registers
 	OC1R = 0;
-#ifdef OC1CON1
+
 //turn on the compare toggle mode using Timer2
-	OC1CON1 = OC_TIMER2_SRC |     //Timer2 source
-		OC_PWM_CENTER_ALIGN;  //PWM
-	OC1CON2 = OC_SYNCSEL_TIMER2;   //synchronize to timer2
-#else
-//older families, this PWM mode is compatible with center-aligned, OC1R=0
-//as writes to OC1RS sets the pulse widith.
-	OC1CON = OC_TIMER2_SRC |     //Timer2 source
-		OC_PWM_FAULT_PIN_DISABLE;  //PWM, no fault detection
-#endif
+	OC1CON1 = OC_TIMER2_SRC |		//Timer2 source
+		OC_PWM_CENTER_ALIGN;		//PWM
+	OC1CON2 = OC_SYNCSEL_TIMER2;	//synchronize to timer2
 }
+
 
 void _ISR _T2Interrupt(void) 
 {
@@ -914,13 +1050,19 @@ void _ISR _T2Interrupt(void)
 	_T2IF = 0;    //clear the timer interrupt bit
 	//update the PWM duty cycle from the ADC value
 	u32_temp = ADC1BUF0;  //use 32-bit value for range
+//	u32_temp = dimmer;
 	//compute new pulse width that is 0 to 99% of PR2
 	// pulse width (PR2) * ADC/1024
 	u32_temp = (u32_temp * (PR2))>> 10 ;  // >>10 is same as divide/1024
 	OC1RS = u32_temp;  //update pulse width value
+	dimmer = u32_temp;
 	SET_SAMP_BIT_ADC1();      //start sampling and conversion
+	lat5++;
+	if(lat5 % 2 == 0)
+		_LATE5 = 0;
+	else _LATE5 = 1;
 }
-#endif
+//#endif
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1056,3 +1198,4 @@ void GDispSetMode(UCHAR mode)
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 */
 }
+

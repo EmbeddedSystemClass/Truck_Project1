@@ -1,6 +1,8 @@
 git add README.md
 git add Truck_Project1_notes.txt
 git add monster_box.txt
+git add pinout2a.jpg
+git add keypad1.jpg
 git add todo.txt
 git add gitadd.sh
 git add .gitignore

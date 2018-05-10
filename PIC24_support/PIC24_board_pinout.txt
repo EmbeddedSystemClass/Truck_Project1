@@ -5,8 +5,9 @@ Vdd (3.3V) 16, 37, 46, 62, 2
 Vss 15, 36, 45, 65, 75
 using	Vdd 16 - sixth from bottom inside right
 		Vss 36 - sixth from right bottom row
-apply 3.3v (4.7k pullup) to pin 13 without the Pickit3 and after programming the chip using "make and program the chip" (2 icons to right of 2 hammers)
-so the chip will run without the Pickit3.
+apply 3.3v (4.7k pullup) to pin 13 (MCLR) without the Pickit3 and after 
+programming the chip using "make and program the chip" (2 icons to right
+of 2 hammers) so the chip will run without the Pickit3.
 Pikit3 programmer 5-pin connector goes on top with white wire to inside
 
 PIC24FJ128GB110 module (underside view):

@@ -135,3 +135,6 @@ Truck_App1/wrapper_mph2.vhd
 Truck_App1/wrapper_mph2.wcfg
 Truck_App1/wrapper_rpm.vhd
 Truck_App1/wrapper_rpm.wcfg
+/PIC24_support/esos1/ledpwm/build/default/
+/PIC24_support/esos1/ledpwm/dist/default/
+/PIC24_support/esos1/ledpwm/nbproject/private/
