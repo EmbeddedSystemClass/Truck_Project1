@@ -36,6 +36,110 @@ package CommonPckg is
 	constant ZERO : std_logic := '0';
 	constant HIZ  : std_logic := 'Z';
 
+	constant C2:  integer:=  347491;	-- C octave 2
+	constant CS2:  integer:=  327984;	-- C# octave 2
+	constant D2:  integer:=  309578;	-- D
+	constant DS2:  integer:=  292201;	-- D#
+	constant E2:  integer:=  275802;	-- E
+	constant F2:  integer:=  260323;	-- F
+	constant FS2:  integer:=  245711;
+	constant G2:  integer:=  231921;
+	constant GS2:  integer:=  218905;
+	constant A2:  integer:=  206618;
+	constant AS2:  integer:=  195021;
+	constant B2:  integer:=  184076;
+
+	constant C3:  integer:=  173744;
+	constant CS3:  integer:=  163993;
+	constant D3:  integer:=  154789;
+	constant DS3:  integer:=  146102;
+	constant E3:  integer:=  137901;
+	constant F3:  integer:=  130161;
+	constant FS3:  integer:=  122856;
+	constant G3:  integer:=  115960;
+	constant GS3:  integer:=  109452;
+	constant A3:  integer:=  103309;
+	constant AS3:  integer:=  97511;
+	constant B3:  integer:=  92038;
+
+	constant C4:  integer:=  86872;		-- middle C
+	constant CS4:  integer:=  81996;
+	constant D4:  integer:=  77394;
+	constant DS4:  integer:=  73051;
+	constant E4:  integer:=  68950;
+	constant F4:  integer:=  65081;
+	constant FS4:  integer:=  61428;
+	constant G4:  integer:=  57980;
+	constant GS4:  integer:=  54726;
+	constant A4:  integer:=  51655;
+	constant AS4:  integer:=  48755;
+	constant B4:  integer:=  46019;
+
+	constant C5:  integer:=  43436;
+	constant CS5:  integer:=  40998;
+	constant D5:  integer:=  38697;
+	constant DS5:  integer:=  36525;
+	constant E5:  integer:=  34475;
+	constant F5:  integer:=  32540;
+	constant FS5:  integer:=  30714;
+	constant G5:  integer:=  28990;
+	constant GS5:  integer:=  27363;
+	constant A5:  integer:=  25827;
+	constant AS5:  integer:=  24378;
+	constant B5:  integer:=  23009;
+
+	constant C6:  integer:=  21718;
+	constant CS6:  integer:=  20499;
+	constant D6:  integer:=  19349;
+	constant DS6:  integer:=  18263;
+	constant E6:  integer:=  17238;
+	constant F6:  integer:=  16270;
+	constant FS6:  integer:=  15357;
+	constant G6:  integer:=  14495;
+	constant GS6:  integer:=  13682;
+	constant A6:  integer:=  12914;
+	constant AS6:  integer:=  12189;
+	constant B6:  integer:=  11505;
+
+	constant C7:  integer:=  10859;
+	constant CS7:  integer:=  10250;
+	constant D7:  integer:=  9674;
+	constant DS7:  integer:=  9131;
+	constant E7:  integer:=  8619;
+	constant F7:  integer:=  8135;
+	constant FS7:  integer:=  7678;
+	constant G7:  integer:=  7248;
+	constant GS7:  integer:=  6841;
+	constant A7:  integer:=  6457;
+	constant AS7:  integer:=  6094;
+	constant B7:  integer:=  5752;
+
+	constant C8:  integer:=  5430;
+	constant CS8:  integer:=  5125;
+	constant D8:  integer:=  4837;
+	constant DS8:  integer:=  4566;
+	constant E8:  integer:=  4309;
+	constant F8:  integer:=  4068;
+	constant FS8:  integer:=  3839;
+	constant G8:  integer:=  3624;
+	constant GS8:  integer:=  3420;
+	constant A8:  integer:=  3228;
+	constant AS8:  integer:=  3047;
+	constant B8:  integer:=  2876;
+
+	constant C9:  integer:=  2715;
+	constant CS9:  integer:=  2562;
+	constant D9:  integer:=  2419;
+	constant DS9:  integer:=  2283;
+	constant E9:  integer:=  2155;
+	constant F9:  integer:=  2034;
+	constant FS9:  integer:=  1920;
+	constant G9:  integer:=  1812;
+	constant GS9:  integer:=  1710;
+	constant A9:  integer:=  1614;
+	constant AS9:  integer:=  1524;
+	constant B9:  integer:=  1438;
+	
 	constant TIME_DELAY0: integer:= 40000;
 -- 16 bits = FFFF (65,535)		~1.5ms
 -- 17 bits = 1FFFF (131,071)  5.2ms
@@ -53,7 +157,10 @@ package CommonPckg is
 	constant TIME_DELAY1:  integer:= 100000;
 	constant TIME_DELAY3:  integer:= 33554430;	-- 1.342 seconds
 	constant TIME_DELAY5:  integer:= 16000000;	-- 640ms
-	constant TIME_DELAY6:  integer:= 4191300;	-- 167ms
+	constant TIME_DELAY5a:  integer:= 8000000;	-- 320ms
+	constant TIME_DELAY6:  integer:=  4191300;	-- 167ms
+	constant TIME_DELAY6a:  integer:= 3000000;
+	constant TIME_DELAY6b:  integer:= 2000000;
 	constant TIME_DELAY7:  integer:= 1000000;	-- 40ms
 	constant TIME_DELAY8:  integer:= 500000;	-- 20ms
 	constant TIME_DELAY8a:  integer:= 300000;	-- 12ms
@@ -125,10 +232,14 @@ package CommonPckg is
 	type XessBoard_t is (XULA_E, XULA2_E);
 
 	type my_array3 is array(0 to 15) of std_logic_vector(16 downto 0);
+	type notes_array is array(0 to 95) of std_logic_vector(19 downto 0);
+	type tune_array is array(0 to 7) of std_logic_vector(7 downto 0);
+	type tunes is array(0 to 5) of tune_array;
 
 	impure function average(a : in my_array3) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;
 	impure function block_ff(a : in std_logic_vector) return std_logic_vector;
+	impure function div_int(a : integer; b : integer) return integer;
 
 end package;
 
@@ -140,6 +251,19 @@ package body CommonPckg is
 
 -- 8192(0x2000) * 16 = 131056(0x20000)
 -- to divide by 16 rol by 4 bits
+
+impure function div_int(a : integer; b : integer) return integer is
+variable temp1: integer range 0 to 528290:= 0;
+variable temp2: integer range 0 to 528290:= 0;
+variable temp4: unsigned(20 downto 0);
+
+	begin
+		temp1 := a;
+		temp2 := b;
+--		temp2 := a/b;
+		return temp2;
+	end function;
+
 
 impure function average(a : in my_array3) return std_logic_vector is
 	variable temp: integer range 0 to 1966065:= 0;
@@ -161,16 +285,13 @@ impure function average(a : in my_array3) return std_logic_vector is
 
 impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3 is
 	variable temp3: my_array3;
-	
 	begin
 		temp3:= a;
 		for i in 0 to 14 loop
 			temp3(i) := temp3(i+1);
 		end loop;
 		temp3(15) := b;
-
 		return temp3;
-		
 	end function;
 
 impure function block_ff(a : in std_logic_vector) return std_logic_vector is

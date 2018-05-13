@@ -66,14 +66,6 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define DEBUG_CLRSCR3		7
 #define DEBUG_MSG1			8
 
-void GDispCharAt(UCHAR row, UCHAR col, char c);
-void GDispStringAt(UCHAR row, UCHAR col, char *str);
-void GDispSetCursor(UCHAR mode, UCHAR row, UCHAR col, UCHAR type);
-void GDispSetMode(UCHAR mode);
-void dispRC(int row, int col);
-void CheckRC(int *row, int *col, UCHAR *k);
-void process_comm2(UCHAR key);
-
 #define ROWS 16
 #define COLUMN 40
 #define DISPLAY_OFF         0x90    //0b10010000, display off
@@ -336,11 +328,6 @@ UCHAR get_keypress(UCHAR key1)
 	}
 	return wkey;
 }
-
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-//ESOS_USER_TASK(fast_echo_spi_task);
 
 /*
 RE0 - p93 - 5th from right inside top			//	row 0
@@ -853,10 +840,10 @@ ESOS_USER_TASK(convADC)
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 	CONFIG_RB0_AS_ANALOG();
-/*
 	CONFIG_RB1_AS_ANALOG();
 	CONFIG_RB2_AS_ANALOG();
 	CONFIG_RB3_AS_ANALOG();
+/*
 	CONFIG_RB4_AS_ANALOG();
 	CONFIG_RB5_AS_ANALOG();
 	CONFIG_RB6_AS_ANALOG();
@@ -873,33 +860,11 @@ ESOS_USER_TASK(convADC)
 //	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN2 |
 //			 ADC_SCAN_AN3 | ADC_SCAN_AN4 | ADC_SCAN_AN5, 31, 0);
 
-	configADC1_AutoScanIrqCH0( 0x0001, 31, 0);
+	configADC1_AutoScanIrqCH0( 0x000F, 31, 0);
 //	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
 	while ( !AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
-#if 0
-	u16_pot = AD1CON1;	// 0x80E7
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-	u16_pot = AD1CON2;	// 0x8404
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-	u16_pot = AD1CON3;	// 0x9F00
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-	u16_pot = AD1CSSL;	// 0x0003
-//	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-	ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-	ESOS_TASK_WAIT_TICKS(5000);
-#endif
+
 	while (TRUE)
 	{
 		while (u8_waiting)	// wait for valid data in ISR
@@ -931,7 +896,7 @@ ESOS_USER_TASK(convADC)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 		}
-		ESOS_TASK_WAIT_TICKS(10);
+		ESOS_TASK_WAIT_TICKS(1);
 	}
 	ESOS_TASK_END();
 }
@@ -964,16 +929,22 @@ ESOS_USER_TASK(dimmer_task)
 	
 	ESOS_TASK_BEGIN()
 	CONFIG_RE5_AS_DIG_OUTPUT();
+//	CONFIG_RE5_AS_OUTPUT();
+//	ENABLE_RE5_PULLUP();
+
+	_LATE5 = 1;
 
 	while(TRUE)
 	{
+	}
+#if 0
 		dim = dimmer;
 		dim >>= 8;
 		data1 = (UCHAR)dim;
-		data2 = ~data1;
-		data1 >>= 2;
-		data2 >>= 2;
-
+//		data2 = ~data1;
+		data1 >>= 5;
+//		data2 >>= 2;
+/*
 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(dim>>8));
@@ -981,25 +952,26 @@ ESOS_USER_TASK(dimmer_task)
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data1);
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 		if(i++ % 2 == 0)
 		{
 			_LATE5 = 0;
-			for(j = 0;j < data1;j++)
+//			for(j = 0;j < data1;j++)
 				ESOS_TASK_WAIT_TICKS(1);
 		}else{
-			 _LATE5 = 1;
-			for(j = 0;j < data2;j++)
+			_LATE5 = 1;
+			for(j = 0;j < data1;j++)
 				ESOS_TASK_WAIT_TICKS(1);
 		}
 //		ESOS_TASK_WAIT_TICKS(200);
 	}
+#endif
 	ESOS_TASK_END();
 }
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
-//#if 0
+#if 0
 #ifndef PWM_PERIOD
 #define PWM_PERIOD 2000  // desired period, in us
 #define OC_PWM_CENTER_ALIGN 0x07
@@ -1062,7 +1034,7 @@ void _ISR _T2Interrupt(void)
 		_LATE5 = 0;
 	else _LATE5 = 1;
 }
-//#endif
+#endif
 //******************************************************************************************//
 //******************************************************************************************//
 //******************************************************************************************//
@@ -1087,115 +1059,3 @@ void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
 	*high_byte = (UCHAR)myint;
 	*low_byte = ~(*low_byte);
 }
-void process_comm2(UCHAR key)
-{
-}
-//******************************************************************************************//
-//************************************* PIC_DispCharAt *************************************//
-//******************************************************************************************//
-void PIC_DispCharAt(UINT row, UINT col, UCHAR c)
-{
-    static ESOS_TASK_HANDLE handle;
-	static ULONG send1;
-	static ULONG send2;
-	static UCHAR temp;
-	
-	handle = esos_GetTaskHandle(send_comm1);
-//	temp = DEBUG_CHAR_AT;
-	send1 = (UINT)temp;
-	send2 = (UINT)row;
-	send2 <<= 8;
-	send1 |= send2;
-	send2 = (UINT)col;
-	send2 <<= 16;
-	send1 |= send2;
-	send2 = (UINT)c;
-	send2 <<= 24;
-	send1 |= send2;
-/* 	memcpy(buff+1,&row,sizeof(UINT));
-	memcpy(buff+3,&col,sizeof(UINT));
-	memcpy(buff+5,&c,sizeof(UCHAR));
-	buff[6] = 0xff;
-	size_buff = 7;
- */
-	__esos_CB_WriteUINT32(handle->pst_Mailbox->pst_CBuffer,send1);
-}
-// 			_dispStringAt(0x30, 0x31,"test string\0");
-
-void GDispCharAt(UCHAR row, UCHAR col, char c)
-{
-    static ESOS_TASK_HANDLE handle;
-    static UCHAR data1;
-    
-	if(col == 0)
-	{
-		handle = esos_GetTaskHandle(send_comm1);
-		return;
-	}
-		
-	data1 = row;
-
-	if(data1 == KP_POUND)
-		__esos_CB_WriteUINT8(handle->pst_Mailbox->pst_CBuffer,0x79);
-
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-	ESOS_TASK_WAIT_ON_SEND_UINT82(CHAR_AT_CMD);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(row);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(col);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(c);
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-*/
-}
-void GDispStringAt(UCHAR row, UCHAR col, char *str)
-{
-	int str_len = strlen(str);
-	int i;
-    static ESOS_TASK_HANDLE handle;
-    static UCHAR data1;
-    
-	if(col == 0)
-	{
-		handle = esos_GetTaskHandle(send_comm1);
-		return;
-	}
-		
-	data1 = row;
-
-	__esos_CB_WriteUINT8(handle->pst_Mailbox->pst_CBuffer,data1);
-
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-	ESOS_TASK_WAIT_ON_SEND_UINT82(STRING_AT_CMD);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(row);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(col);
-	ESOS_TASK_WAIT_ON_SEND_UINT82((UCHAR)str_len);
-	ESOS_TASK_WAIT_ON_SEND_UINT82((UCHAR)(str_len >> 8));
-	for(i = 0;i < str_len;i++)
-		ESOS_TASK_WAIT_ON_SEND_UINT82(*(str + i);
-		
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-*/
-}
-void GDispSetCursor(UCHAR mode, UCHAR row, UCHAR col, UCHAR type)
-{
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-	ESOS_TASK_WAIT_ON_SEND_UINT82(SET_CURSOR_CMD);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(mode);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(row);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(col);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(type);
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-*/
-}
-void GDispSetMode(UCHAR mode)
-{
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-	ESOS_TASK_WAIT_ON_SEND_UINT82(SET_MODE_CMD);
-	ESOS_TASK_WAIT_ON_SEND_UINT82(mode);
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-*/
-}
-

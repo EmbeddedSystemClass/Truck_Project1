@@ -3,19 +3,22 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="C:/Users/Daniel/dev/multi-byte/testmain_isim_beh.wdb" id="1" type="auto">
+      <db_ref path="C:/Users/Daniel/dev/Truck_Project1/Truck_App1/testmain_isim_beh.wdb" id="1" type="auto">
          <top_modules>
             <top_module name="commonpckg" />
+            <top_module name="math_real" />
             <top_module name="numeric_std" />
+            <top_module name="pulsepckg" />
             <top_module name="std_logic_1164" />
             <top_module name="std_logic_arith" />
             <top_module name="std_logic_signed" />
             <top_module name="std_logic_unsigned" />
             <top_module name="testmain" />
+            <top_module name="vcomponents" />
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="27" />
+   <WVObjectSize size="28" />
    <wvobject fp_name="/testmain/uut/main_reg1" type="other" db_ref_id="1">
       <obj_property name="ElementShortName">main_reg1</obj_property>
       <obj_property name="ObjectShortName">main_reg1</obj_property>
@@ -152,5 +155,9 @@
    <wvobject fp_name="/testmain/uut/mph_done" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">mph_done</obj_property>
       <obj_property name="ObjectShortName">mph_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/pwm_signal" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">pwm_signal</obj_property>
+      <obj_property name="ObjectShortName">pwm_signal</obj_property>
    </wvobject>
 </wave_config>

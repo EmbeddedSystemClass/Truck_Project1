@@ -397,11 +397,11 @@ ESOS_USER_TASK(test1)
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
 		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-
+*/
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
 		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
-*/
+
  		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
@@ -419,10 +419,11 @@ ESOS_USER_TASK(test1)
 			data2 = 0x20;
 			i = 0;
 		}
-*/
-		ESOS_TASK_WAIT_TICKS(2);	
+
+		ESOS_TASK_WAIT_TICKS(20);
 		if(++data2 > 0x7e)
 			data2 = 0x21;
+*/
 	}
 //#endif
 	while(1)
@@ -600,10 +601,9 @@ void user_init(void)
 //	esos_RegisterTask(send_comm1);
 //	esos_RegisterTask(delay_comm1);
 
-//	esos_RegisterTask(test1);
-//	CONFIG_RE5_AS_DIG_OUTPUT();
+	esos_RegisterTask(test1);
 	esos_RegisterTask(convADC);
-	esos_RegisterTask(dimmer_task);
+//	esos_RegisterTask(dimmer_task);
 	
 } // end user_init()
 

@@ -1,4 +1,4 @@
--- test_uart.vhd - copied from multi-byte1.vhd with just the uart stuff
+--  Multi-Byte.vhd
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
@@ -7,6 +7,7 @@ use ieee.std_logic_signed.all;
 
 library XESS;
 use XESS.CommonPckg.all;
+--use XESS.PulsePckg.all;
 --use XESS.DelayPckg.all;
 --use XESS.PulsePckg.all;
 
@@ -19,6 +20,7 @@ entity multi_byte is
 		rx_uart2: in std_logic;
 		tx_rpm: out std_logic;
 		tx_mph: out std_logic;
+		pwm_signal: out std_logic;
 		rpm_signal : in std_logic;
 		mph_signal : in std_logic;
 		MOSI_o : out std_logic;
@@ -58,6 +60,10 @@ architecture truck_arch of multi_byte is
 
 	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
 	signal state_dout_reg, state_dout_next: state_dout;
+
+	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, 
+			pwm_next4, pwm_next5, pwm_next6, pwm_next7, pwm_next8, pwm_done);
+	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
 	signal time_delay_reg, time_delay_next: unsigned(23 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(23 downto 0);	-- calc_proc
@@ -66,6 +72,7 @@ architecture truck_arch of multi_byte is
 	signal time_delay_reg5, time_delay_next5: unsigned(23 downto 0);
 	signal time_delay_reg6, time_delay_next6: unsigned(23 downto 0);
 	signal time_delay_reg7, time_delay_next7: unsigned(23 downto 0);
+	signal time_delay_reg8, time_delay_next8: unsigned(24 downto 0);
 
 	--	signal tempx: std_logic_vector(7 downto 0);
 --	signal temp3_int: std_logic_vector(7 downto 0);
@@ -135,6 +142,9 @@ architecture truck_arch of multi_byte is
 	signal mspi_din_vld, mspi_dout_vld : std_logic;
 	signal mosi, miso, sclk, ss: std_logic;
 	signal mspi_din, mspi_dout : std_logic_vector(7 downto 0);
+	signal start_pwm: std_logic;
+	signal mytune: std_logic_vector(7 downto 0);
+	signal itunes: tune_array;
 begin
 
 --rx_temp <= tx_temp;
@@ -226,6 +236,111 @@ spi_master_unit: entity work.SPI_MASTER(RTL)
 	DOUT=>mspi_dout,
 	DOUT_VLD=>mspi_dout_vld);
 
+pwm_unit: entity work.pwm1
+	port map(clk=>clk, reset=>reset,
+		pwm_signal=>pwm_signal,
+		start=>start_pwm,
+		tune=>mytune);
+
+test_pwm: process(clk, reset, drive_pwm_reg, start_pwm)
+variable index: integer range 0 to 10:= 0;
+begin
+	if reset = '0' then
+		drive_pwm_reg <= pwm_idle;
+		drive_pwm_next <= pwm_idle;
+		start_pwm <= '0';
+		time_delay_reg8 <= (others=>'0');
+		time_delay_next8 <= (others=>'0');
+--		mytune <= "000";
+		itunes(0) <= X"00";
+		itunes(1) <= X"01";
+		itunes(2) <= X"02";
+		itunes(3) <= X"03";
+		itunes(4) <= X"04";
+		itunes(5) <= X"05";
+		itunes(6) <= X"06";
+		itunes(7) <= X"07";
+
+		mytune <= itunes(0);
+
+	else if clk'event and clk = '1' then
+		case drive_pwm_reg is
+			when pwm_idle =>
+				start_pwm <= '1';
+				drive_pwm_next <= pwm_start;
+			when pwm_start =>
+				start_pwm <= '0';
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					start_pwm <= '1';
+					drive_pwm_next <= pwm_next1;
+					mytune <= itunes(1);
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+			when pwm_next1 =>
+				start_pwm <= '0';
+				drive_pwm_next <= pwm_next2;
+			when pwm_next2 =>	
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					drive_pwm_next <= pwm_next3;
+					start_pwm <= '1';
+					mytune <= itunes(2);
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+			when pwm_next3 =>
+				start_pwm <= '0';
+				drive_pwm_next <= pwm_next4;
+			when pwm_next4 =>
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					drive_pwm_next <= pwm_next5;
+					start_pwm <= '1';
+					mytune <= itunes(3);
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+			when pwm_next5 =>
+				start_pwm <= '0';
+				drive_pwm_next <= pwm_next6;
+			when pwm_next6 =>
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					drive_pwm_next <= pwm_next7;
+					start_pwm <= '1';
+					mytune <= itunes(4);
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+			when pwm_next7 =>
+				start_pwm <= '0';
+				drive_pwm_next <= pwm_next8;
+			when pwm_next8 =>
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					drive_pwm_next <= pwm_done;
+					start_pwm <= '1';
+					mytune <= itunes(5);
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+			when pwm_done =>
+				start_pwm <= '0';
+				if time_delay_reg8 > TIME_DELAY3 then
+					time_delay_next8 <= (others=>'0');
+					drive_pwm_next <= pwm_idle;
+				else
+					time_delay_next8 <= time_delay_reg8 + 1;
+				end if;
+		end case;
+		time_delay_reg8 <= time_delay_next8;
+		drive_pwm_reg <= drive_pwm_next;
+		end if;
+	end if;
+end process;
+	
 -- ********************************************************************************
 --	type state_dout is (idle_dout, start_dout, end_dout, done_dout, delay_dout);
 
@@ -251,9 +366,9 @@ begin
 		case state_dout_reg is
 			when idle_dout =>
 				test <= "1110";
-				led1 <= "1110";
+--				led1 <= "1110";
 				if mspi_ready = '1' then
-					led1 <= "0111";
+--					led1 <= "0111";
 					test <= "0111";
 
 					mspi_din <= stlv_temp1;		-- write
@@ -266,7 +381,7 @@ begin
 				mspi_din_vld <= '0';			
 --				if SS_o(0) = '0' then
 				if mspi_dout_vld = '1' then
-					led1 <= "1011";
+--					led1 <= "1011";
 -- mspi_dout is what gets received by MISO
 --					if addr(0) = '1' then
 						stlv_temp1 <= mspi_dout;
@@ -295,7 +410,7 @@ begin
 						end if;	
 						stlv_temp1 <= conv_std_logic_vector(temp1,8);
 --						stlv_temp1 <= X"AA";
-						led1 <= "1011";
+--						led1 <= "1011";
 						test <= "1011";
 						addr <= "01";					
 					else	
@@ -714,6 +829,7 @@ begin
 		time_delay_reg3 <= time_delay_next3;
 	end if;
 end process;		
+
 
 -- ********************************************************************************
 -- used to simulate an input signal - disabled by not setting start_calc_proc

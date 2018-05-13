@@ -3,7 +3,7 @@ monster box pinout info
 pinout for LCD:
 
 21) LEDK	| gnd for LCD backlight (not on pinout - wired separately)
-20) LEDA	| +5v for  "     "
+20) LEDA	| +5v for  "     "			"				"
 19) VEE		goes to gnd threw 20K pot with center tap to VO
 18) FS		font select
 17) DATA 7	data lines
@@ -154,7 +154,7 @@ extra 18-pin socket
 4)
 5) gnd (ref for VEE & VO)
 6) VDD white wire PicKit3 programmer
-7) LEDA (+5v for LCD backlight)
+7) dim - 5v PWM pulse to MOSFET for screen dim
 8) VPP black wire
 9) VEE (LCD)
 10) GND brown wire

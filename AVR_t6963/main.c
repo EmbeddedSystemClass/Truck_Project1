@@ -4,6 +4,7 @@
 // main program that drives the t6963 LCD (32 col x 15 row) display - text only
 // see t6963_notes.txt for more details
 #include <avr/io.h>
+#include<avr/interrupt.h>
 //#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include "../../Atmel_other/avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
 #include "sfr_helper.h"
@@ -33,6 +34,30 @@
 #define ROWS                16
 // really cranking
 #define TIME_DELAY 2
+volatile int timer_c;
+volatile UCHAR timer_x;
+volatile int dc;
+
+ISR(TIMER1_OVF_vect) 
+{ 
+	if(dc)
+	{
+		if(timer_c % timer_x == 0)
+			SET_PWM();
+		else
+			CLR_PWM();
+	}else
+	{
+		if(timer_c % timer_x == 0)
+			CLR_PWM();
+		else
+			SET_PWM();
+	}
+	timer_c++;
+
+	TCNT1 = 0xFF00;
+	return 0;	
+}
 
 int main(void)
 {
@@ -47,7 +72,8 @@ int main(void)
 	UCHAR str_len;
 	UCHAR spi_ret;
 
-
+	GDispInitPort();
+#if 0
 	_delay_ms(10);
 	GDispInit();
 	_delay_ms(10);
@@ -68,19 +94,51 @@ int main(void)
 //******************************************************************************************//
 	_delay_ms(100);
 	GDispStringAt(7,15,"          ");
-
+#endif
 	xbyte = 0x21;
 
     initUSART();
+	SET_PWM();
+
+	TCNT1 = 0x3FFF;
+
+	TCCR1A = 0x00;
+//	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
+	TCCR1B = (1<<CS10);
+	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
+	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
+
+	_delay_ms(100);
+//#if 0
+	timer_x = 2;
+	dc = 1;
 	
-	_delay_ms(200);
-#if 0
+	while(1)
+	{
+		if(++xbyte > 0x7e)
+			xbyte = 0x21;
+		transmitByte(xbyte);
+		_delay_ms(250);
+		if(++timer_x > 20)
+		{
+			timer_x = 2;
+		}
+		if(timer_c > 20000)
+		{
+			if(dc)
+				dc = 0;
+			else dc = 1;
+			timer_c = 0;
+		}
+	}
+
 	while(1)
 	{
 		for(row = 0;row < ROWS;row++)
 		{
 			for(col = 0;col < COLUMN-1;col++)
 			{
+/*
 				xbyte = receiveByte();
 				if(xbyte == 0xFE)
 				{
@@ -88,16 +146,21 @@ int main(void)
 					row = col = 0;
 					xbyte = 0x21;
 				}
+*/
 				GDispCharAt(row,col,xbyte);
 				if(++xbyte > 0x7e)
 					xbyte = 0x21;
-	//			transmitByte(xbyte);	
-	//			_delay_ms(10);
+				transmitByte(xbyte);	
+				_delay_ms(10);
 			}
+			if ( OCR2B < 63 )
+				OCR2B += 5;
+			else
+				OCR2B = 0;
 		}
 	}
 	_delay_ms(200);
-#endif
+//#endif
 	GDispClrTxt();
 
 	i = 0;
@@ -159,6 +222,7 @@ int main(void)
 	}
     return (0);		// this should never happen
 }
+
 #if 0
 ISR(SPI_STC_vect)
 {

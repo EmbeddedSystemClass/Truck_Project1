@@ -97,6 +97,7 @@ void    __esos_hw_InitSystemTick(void) {
    ********************************************************/
   T1CON = T1_IDLE_CON + T1_PS_1_64 + T1_SOURCE_INT;
   PR1 = MS_TO_TICKS(1, 64);        // 1 ms interrupt interval
+//  PR1 = MS_TO_TICKS(1, 128);        // 500 us interrupt interval
 #else
   /**********************************************
    * USE 32.768kHz watch xtal (SOSC) to drive T1

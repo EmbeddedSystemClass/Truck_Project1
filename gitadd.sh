@@ -1,7 +1,6 @@
 git add README.md
 git add Truck_Project1_notes.txt
 git add monster_box.txt
-git add pinout2a.jpg
 git add keypad1.jpg
 git add todo.txt
 git add gitadd.sh
@@ -32,6 +31,7 @@ git add Truck_App1/Frequency.vhd
 git add Truck_App1/period.vhd
 git add Truck_App1/mod_m.vhd
 git add Truck_App1/div.vhd
+git add Truck_App1/pwm1.vhd
 git add Truck_App1/bcd.vhd
 git add Truck_App1/debounce.vhd
 git add Truck_App1/3S500E_layout_bottom.txt
@@ -67,6 +67,7 @@ git add PIC24_support/esos1/make_avr
 git add PIC24_support/esos1/sim_read2.c
 git add PIC24_support/esos1/ESOS1.X/nbproject/*
 git add PIC24_support/esos1/esos_examples.c
+git add PIC24_support/pinout2a.jpg
 
 git add thread_io/ioports.c
 git add thread_io/Makefile

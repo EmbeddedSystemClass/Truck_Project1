@@ -20,6 +20,7 @@ NET		"mph_signal"	LOC = "P60";
 # 7-seg LED outputs
 NET		"tx_rpm"	LOC = "P50";
 NET		"tx_mph"	LOC = "P48";
+NET		"pwm_signal" LOC = "P42";
 
 #SPI slave signals
 #NET	"MOSI_i"	LOC = "P82";
