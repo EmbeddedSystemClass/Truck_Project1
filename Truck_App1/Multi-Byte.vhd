@@ -61,8 +61,7 @@ architecture truck_arch of multi_byte is
 	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
 	signal state_dout_reg, state_dout_next: state_dout;
 
-	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, 
-			pwm_next4, pwm_next5, pwm_next6, pwm_next7, pwm_next8, pwm_done);
+	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
 	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
 	signal time_delay_reg, time_delay_next: unsigned(23 downto 0);		-- send_uart1
@@ -90,6 +89,7 @@ architecture truck_arch of multi_byte is
 	signal skip: std_logic;
 	signal skip2: std_logic;
 	signal skip3: std_logic;
+	signal skip4: std_logic;
 --	signal rpm_temp, mph_temp: std_logic;
 	signal rpm_result: std_logic_vector(16 downto 0);
 	signal mph_result: std_logic_vector(16 downto 0);
@@ -99,8 +99,10 @@ architecture truck_arch of multi_byte is
 --	signal trip_result, engt_result, oilp_result, oilt_result: std_logic_vector(7 downto 0);
 --	signal coolant_result, baro_result: std_logic_vector(7 downto 0);
 --	signal other3_result, other4_result, other5_result: std_logic_vector(7 downto 0);
-	signal time_delay_mph: std_logic_vector(25 downto 0):= "00" & X"00FFFF";
-	signal time_delay_rpm: std_logic_vector(25 downto 0):= "00" & X"00FFFF";
+--	signal time_delay_mph: std_logic_vector(25 downto 0):= "00" & X"00FFFF";
+--	signal time_delay_rpm: std_logic_vector(25 downto 0):= "00" & X"00FFFF";
+	signal time_delay_mph: std_logic_vector(25 downto 0);
+	signal time_delay_rpm: std_logic_vector(25 downto 0);
 	signal stdlv_transmit_update_rate: std_logic_vector(23 downto 0):= X"FFFFFF";
 --	signal transmit_update_rate: unsigned(24 downto 0):= '0' & X"0FFFFF"; 
 	signal bcda, bcdb, bcdc: std_logic_vector(15 downto 0);
@@ -123,10 +125,6 @@ architecture truck_arch of multi_byte is
 	signal stlv_temp1a : std_logic_vector(7 downto 0);
 	signal stlv_temp2 : std_logic_vector(7 downto 0);
 	signal stlv_temp2a : std_logic_vector(7 downto 0);
-	signal stlv_temp3a : std_logic_vector(7 downto 0):= (others=>'0');
-	signal stlv_temp3b : std_logic_vector(7 downto 0):= (others=>'0');
-	signal stlv_temp3c : std_logic_vector(7 downto 0):= (others=>'0');
-	signal stlv_temp3d : std_logic_vector(7 downto 0):= (others=>'0');
 --	signal trigger_send_spi : std_logic;
 	signal addr: std_logic_vector(1 downto 0);
 	signal mph_signal_test: std_logic;
@@ -143,8 +141,13 @@ architecture truck_arch of multi_byte is
 	signal mosi, miso, sclk, ss: std_logic;
 	signal mspi_din, mspi_dout : std_logic_vector(7 downto 0);
 	signal start_pwm: std_logic;
-	signal mytune: std_logic_vector(7 downto 0);
-	signal itunes: tune_array;
+	signal pwm_done1: std_logic;
+	signal key_index: signed(7 downto 0);
+	signal key_len: signed(7 downto 0);
+	signal mykey: std_logic_vector(7 downto 0);
+	signal ikeys: key_array;
+	signal stlv_duty_cycle: std_logic_vector(2 downto 0);
+	
 begin
 
 --rx_temp <= tx_temp;
@@ -236,14 +239,16 @@ spi_master_unit: entity work.SPI_MASTER(RTL)
 	DOUT=>mspi_dout,
 	DOUT_VLD=>mspi_dout_vld);
 
-pwm_unit: entity work.pwm1
+pwm_unit: entity work.pwm2
 	port map(clk=>clk, reset=>reset,
 		pwm_signal=>pwm_signal,
 		start=>start_pwm,
-		tune=>mytune);
+		done=>pwm_done1,
+		len=>key_len,
+		duty_cycle=>stlv_duty_cycle,
+		key=>mykey);
 
 test_pwm: process(clk, reset, drive_pwm_reg, start_pwm)
-variable index: integer range 0 to 10:= 0;
 begin
 	if reset = '0' then
 		drive_pwm_reg <= pwm_idle;
@@ -251,86 +256,83 @@ begin
 		start_pwm <= '0';
 		time_delay_reg8 <= (others=>'0');
 		time_delay_next8 <= (others=>'0');
---		mytune <= "000";
-		itunes(0) <= X"00";
-		itunes(1) <= X"01";
-		itunes(2) <= X"02";
-		itunes(3) <= X"03";
-		itunes(4) <= X"04";
-		itunes(5) <= X"05";
-		itunes(6) <= X"06";
-		itunes(7) <= X"07";
+--		mykey <= "000";
+		ikeys(0) <= X"00";
+		ikeys(1) <= X"01";
+		ikeys(2) <= X"02";
+		ikeys(3) <= X"03";
+		ikeys(4) <= X"04";
+		ikeys(5) <= X"05";
+		ikeys(6) <= X"06";
+		ikeys(7) <= X"07";
+		ikeys(8) <= X"08";
+		ikeys(9) <= X"09";
+		ikeys(10) <= X"0A";
+		ikeys(11) <= X"0B";
+		key_len <= X"0C";
 
-		mytune <= itunes(0);
-
+		key_index <= (others=>'0');
+		
+		mykey <= ikeys(0);
+		skip4 <= '0';
+		stlv_duty_cycle <= "000";
+		
 	else if clk'event and clk = '1' then
 		case drive_pwm_reg is
 			when pwm_idle =>
-				start_pwm <= '1';
-				drive_pwm_next <= pwm_start;
-			when pwm_start =>
-				start_pwm <= '0';
-				if time_delay_reg8 > TIME_DELAY3 then
+				if time_delay_reg8 > TIME_DELAY8c then
 					time_delay_next8 <= (others=>'0');
-					start_pwm <= '1';
-					drive_pwm_next <= pwm_next1;
-					mytune <= itunes(1);
+					drive_pwm_next <= pwm_start;
 				else
 					time_delay_next8 <= time_delay_reg8 + 1;
 				end if;
+			when pwm_start =>
+				mykey <= ikeys(conv_integer(key_index));
+				
+				skip4 <= not skip4;
+				if skip4 = '1' then
+					if key_index > 10 then
+						key_index <= (others=>'0');
+						case stlv_duty_cycle is
+							when "000" => stlv_duty_cycle <= "001";
+							when "001" => stlv_duty_cycle <= "010";
+							when "010" => stlv_duty_cycle <= "011";
+							when "011" => stlv_duty_cycle <= "100";
+							when "100" => stlv_duty_cycle <= "101";
+							when "101" => stlv_duty_cycle <= "000";
+							when others => stlv_duty_cycle <= "000";
+						end case;
+					else 
+						key_index <= key_index + 1;
+					end if;
+				end if;
+				start_pwm <= '1';
+				drive_pwm_next <= pwm_next1;
 			when pwm_next1 =>
 				start_pwm <= '0';
 				drive_pwm_next <= pwm_next2;
-			when pwm_next2 =>	
-				if time_delay_reg8 > TIME_DELAY3 then
-					time_delay_next8 <= (others=>'0');
-					drive_pwm_next <= pwm_next3;
-					start_pwm <= '1';
-					mytune <= itunes(2);
-				else
-					time_delay_next8 <= time_delay_reg8 + 1;
+			when pwm_next2 =>
+				if pwm_done1 = '1' then
+					drive_pwm_next <= pwm_idle;
 				end if;
+				-- if time_delay_reg8 > TIME_DELAY3 then
+					-- time_delay_next8 <= (others=>'0');
+					-- drive_pwm_next <= pwm_idle;
+				-- else
+					-- time_delay_next8 <= time_delay_reg8 + 1;
+				-- end if;
 			when pwm_next3 =>
-				start_pwm <= '0';
-				drive_pwm_next <= pwm_next4;
-			when pwm_next4 =>
 				if time_delay_reg8 > TIME_DELAY3 then
 					time_delay_next8 <= (others=>'0');
-					drive_pwm_next <= pwm_next5;
-					start_pwm <= '1';
-					mytune <= itunes(3);
-				else
-					time_delay_next8 <= time_delay_reg8 + 1;
-				end if;
-			when pwm_next5 =>
-				start_pwm <= '0';
-				drive_pwm_next <= pwm_next6;
-			when pwm_next6 =>
-				if time_delay_reg8 > TIME_DELAY3 then
-					time_delay_next8 <= (others=>'0');
-					drive_pwm_next <= pwm_next7;
-					start_pwm <= '1';
-					mytune <= itunes(4);
-				else
-					time_delay_next8 <= time_delay_reg8 + 1;
-				end if;
-			when pwm_next7 =>
-				start_pwm <= '0';
-				drive_pwm_next <= pwm_next8;
-			when pwm_next8 =>
-				if time_delay_reg8 > TIME_DELAY3 then
-					time_delay_next8 <= (others=>'0');
-					drive_pwm_next <= pwm_done;
-					start_pwm <= '1';
-					mytune <= itunes(5);
+					drive_pwm_next <= pwm_idle;
 				else
 					time_delay_next8 <= time_delay_reg8 + 1;
 				end if;
 			when pwm_done =>
-				start_pwm <= '0';
 				if time_delay_reg8 > TIME_DELAY3 then
 					time_delay_next8 <= (others=>'0');
-					drive_pwm_next <= pwm_idle;
+					drive_pwm_next <= pwm_start;
+--					drive_pwm_next <= pwm_done;
 				else
 					time_delay_next8 <= time_delay_reg8 + 1;
 				end if;
@@ -801,6 +803,8 @@ begin
 							stdlv_transmit_update_rate <= mparam & "1" & X"FFFF";
 						else stdlv_transmit_update_rate <= mparam & "1" & X"FFFF";
 						end if;
+					when TONE1 =>
+					when TONE2 =>
 					when others =>	
 					end case;
 				main_next1 <= wait_mcmd;	

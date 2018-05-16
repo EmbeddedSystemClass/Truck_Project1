@@ -195,7 +195,8 @@ package CommonPckg is
 	constant SET_UPDATE_RATE_CMD: std_logic_vector(4 downto 0):= "00100";
 	constant SET_FACTOR_CMD: std_logic_vector(4 downto 0):= "00101";
 	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(4 downto 0):= "00110";
-	constant SET_TEST_CMD4: std_logic_vector(4 downto 0):= "00111";
+	constant TONE1: std_logic_vector(4 downto 0):= "00111";
+	constant TONE2: std_logic_vector(4 downto 0):= "01000";
 
 	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
 	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
@@ -233,8 +234,10 @@ package CommonPckg is
 
 	type my_array3 is array(0 to 15) of std_logic_vector(16 downto 0);
 	type notes_array is array(0 to 95) of std_logic_vector(19 downto 0);
-	type tune_array is array(0 to 7) of std_logic_vector(7 downto 0);
-	type tunes is array(0 to 5) of tune_array;
+	type tune_array is array(0 to 11) of std_logic_vector(7 downto 0);
+	type tunes is array(0 to 7) of tune_array;
+	type key_array is array(0 to 41) of std_logic_vector(7 downto 0);
+	type keys is array(0 to 11) of key_array;
 
 	impure function average(a : in my_array3) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;

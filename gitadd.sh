@@ -32,6 +32,7 @@ git add Truck_App1/period.vhd
 git add Truck_App1/mod_m.vhd
 git add Truck_App1/div.vhd
 git add Truck_App1/pwm1.vhd
+git add Truck_App1/pwm2.vhd
 git add Truck_App1/bcd.vhd
 git add Truck_App1/debounce.vhd
 git add Truck_App1/3S500E_layout_bottom.txt
@@ -121,6 +122,8 @@ git add thread_io/test_tcp/make_target
 git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2
 git add thread_io/ir104_man.pdf
+git add thread_io/how2formatSDCardExt.png
+git add thread_io/mountcf.sh
 
 git status
 git log --oneline > oneline.txt

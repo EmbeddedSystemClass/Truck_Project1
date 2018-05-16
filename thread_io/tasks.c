@@ -295,7 +295,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 	myprintf1("start....\0");
-	myprintf1("sched v1.03\0");
+	myprintf1("sched v1.04\0");
 
 	while(TRUE)
 	{
