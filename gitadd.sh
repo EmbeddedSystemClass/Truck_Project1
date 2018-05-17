@@ -123,8 +123,10 @@ git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2
 git add thread_io/ir104_man.pdf
 git add thread_io/how2formatSDCardExt.png
-git add thread_io/mountcf.sh
+git add Truck_App1/manage_boot_bios.txt
+git add thread_io/shell2linux.txt
 
 git status
 git log --oneline > oneline.txt
+
 

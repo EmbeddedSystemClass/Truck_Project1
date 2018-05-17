@@ -93,9 +93,9 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 # gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
 # gcc3/4 doesn't work with -mapcs-32
 #use this for TS-7200 with console enabled
-CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+#CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7200 with console disabled
-#CC_FLAGS = -DCONSOLE_DISABLED -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+CC_FLAGS = -DCONSOLE_DISABLED -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
 #CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork

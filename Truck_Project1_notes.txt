@@ -13,16 +13,16 @@ I/O (turning on and off lights and reading switches).
 	|											  |							  Laptop
 F	|											  |								^
 P	|											  v								|TCP/IP
-G	|---------------> RS-232  ----------------->| P	|							|
+G	|---------------> RS-232* ----------------->| P	|							|
 A	|											| I	|							v
-*	|						|-----------|		| C |						|-----------|
+	|						|-----------|		| C |						|-----------|
 ----|						|			|		| 2	|						|			|	
 							|  keypad	|------>| 4 |<------ RS-232 ------->| TS-7800	|
 							|			|									|			|
 							|-----------|									|-----------|
 
-			
-he PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
+* there is also a SPI connection between the FPGA and the PIC24			
+the PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
 TS-7200 and the LCD screen.
 
 The menuing of the LCD screen and can display optional real time info like engine speed,
@@ -123,9 +123,9 @@ CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 
 make sure target ip address is according to thread_io/client.h:
 
-#define HOST1 "192.168.42.145"	// TS-7800 with 2 IO cards used for Truck_Project
-#define HOST2 "192.168.42.146"	// TS-7800 with just one IO card (for now)
-#define Host3 "192.168.42.148"	// TS-7200 with 2 IO cards
+#define HOST145 "192.168.42.145"
+#define HOST146 "192.168.42.146"
+#define HOST148 "192.168.42.148"
 #define Host_Sim "192.168.42.110"	// simulated host on linux box
 
 and edit thread_io/ncurses/demo_menus2.c so init_client(HOSTx)
@@ -359,7 +359,7 @@ got the following strange error:
 then added the line:
 NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
 in the ucf file to turn it to a warning after trying for 3 days to fix it. Some kind of 
-timing problem   
+timing problem...
 
 Need another database which has list of on-off times for each IO port. Have a field in
 the O_DATA database which points to a on-off database (or text file).
@@ -370,6 +370,11 @@ be turned on or off.
 Use 12vdc->5vdc converter from separate motorcycle battery to power whole system.
 Then have a way to keep the battery charged - either charge it from the car battery
 or use solar panels (or switch between both)
+
+to mount sd card for TS-7200 see thread_io/how2formatSDCardExt.png and mountcf.sh
+(also see: https://www.tldp.org/HOWTO/Flash-Memory-HOWTO/ext2.html)
+
+to manage TS-7200 bios see thread_io/manage_boot_bios.txt
 
 **************** nice to have's: ****************
 

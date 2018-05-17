@@ -5,8 +5,8 @@
 # ln -s ../../init.d/my_startup.sh S92my_startup.sh
 # then copy mingetty (compiled for ARM) to /sbin
 # then modify the end of /etc/inittab:
-#ge0:2345:wait:/sbin/mingetty --autologin root ttyS0 linux
-#ge1:2345:respawn:/sbin/mingetty ttyS0 linux
+#ge0:2345:wait:/sbin/mingetty --autologin root ttyAM0 linux
+#ge1:2345:respawn:/sbin/mingetty ttyAM0 linux
 #for TS-7800:
 #while in the fastboot prompt:
 #delete linuxrc
@@ -22,7 +22,7 @@
      ## this should be started with
      # nohup /usr/local/bin/yourdaemon &
      cd /home/dan/dev/sched
-     ./sched
+     ./try_sched.sh
      ;;
    stop)
 #     /usr/local/bin/ts7800ctl --redledoff

@@ -1,7 +1,11 @@
 #ifndef __TASKS_H
 #define  __TASKS_H
 
-#define NUM_TASKS           7
+#if CONSOLE_DISABLED
+#define NUM_TASKS           6
+#else
+#define NUM_TASKS           5
+#endif
 
 #define DEFAULT                 0
 #define TIME_SLICE              1
@@ -17,8 +21,10 @@ enum task_types
 	MONITOR_INPUTS,
 	TIMER,
 	UNUSED,
+#if CONSOLE_DISABLED
 	SERIAL_RECV,
-	SERIAL_RECV2,
+#endif
+//	SERIAL_RECV2,
 	TCP_MONITOR
 } TASK_TYPES;
 

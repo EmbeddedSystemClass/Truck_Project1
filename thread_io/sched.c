@@ -112,16 +112,20 @@ int main(int argc, char **argv)
 	_threads[MONITOR_INPUTS].sched = PFIFO;
 	_threads[TIMER].sched = PTIME_SLICE;
 	_threads[UNUSED].sched = TIME_SLICE;
+#if CONSOLE_DISABLED
 	_threads[SERIAL_RECV].sched = TIME_SLICE;
-	_threads[SERIAL_RECV2].sched = TIME_SLICE;
+#endif
+//	_threads[SERIAL_RECV2].sched = TIME_SLICE;
 	_threads[TCP_MONITOR].sched = TIME_SLICE;
 
 	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
 	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
 	strcpy(_threads[TIMER].label,"TIMER\0");
 	strcpy(_threads[UNUSED].label,"UNUSED\0");
+#if CONSOLE_DISABLED
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
-	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
+#endif
+//	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
 	strcpy(_threads[TCP_MONITOR].label,"TCP_MONITOR\0");
 
 /* spawn the threads */
@@ -208,20 +212,31 @@ int main(int argc, char **argv)
 	{
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
+//		printf("closing task : %s\n",_threads[i].label);
 	}
 /*	close_mem(); */
 
 //	RS232_CloseComport(1);
 	strcpy(str2,"close");
 //	send(sd,str2,5,0);
-	usleep(100000);
+	printf("reboot_on_exit: %d\n",reboot_on_exit);
+//	usleep(100000);
 //	closesocket(sd);
-//	printf("socket closed\n");
+	printf("socket closed\n");
 //	llist_show(&ll);
 	if(reboot_on_exit == 0)
+	{
+		printf("exit to shell\n");
 		return 0;
+	}
 	else if(reboot_on_exit == 1)
+	{
+		printf("reboot\n");
 		return 1;
+	}
 	else if(reboot_on_exit == 2)
+	{
+		printf("shutdown\n");
 		return 2;
+	}
 }

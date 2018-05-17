@@ -1081,10 +1081,10 @@ call_Tool(int code)
 			}
 #ifdef MAKE_SIM
 			i = init_client(Host_Sim,errmsg);
-			show_status2("init_client",Host_Sim,i,0,0,2);
+			show_status2("init_client (sim)",Host_Sim,i,0,0,2);
 #else
-			i = init_client(Host3,errmsg);
-			show_status2("init_client",Host3,i,0,0,1);
+			i = init_client(HOST146,errmsg);
+			show_status2("init_client",HOST146,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1095,6 +1095,13 @@ call_Tool(int code)
 					tcp_connected = 0;
 			}
 			show_status2("Connect","errmsg",i,j,tcp_connected,0);
+			if(j < 0)
+			{
+//				close_sock();
+				destroy_menus();
+				endwin();
+				ExitProgram(EXIT_SUCCESS);
+			}
 			cmd = GET_TIME;
 			put_sock(&cmd,1,1,errmsg);
 			break;

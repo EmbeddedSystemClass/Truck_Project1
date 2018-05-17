@@ -40,7 +40,13 @@ pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 static int shutdown_all = 0;
 
-UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, serial_recv_task, serial_recv_task2, tcp_monitor_task};
+//read_button_inputs,  task, serial_recv_task2, tcp_monitor_task};
+
+#if CONSOLE_DISABLED
+UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs,  serial_recv_task, tcp_monitor_task};
+#else
+UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, timer_task, read_button_inputs, tcp_monitor_task};
+#endif
 
 static int same_msg;
 int threads_ready_count=0;
@@ -295,7 +301,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 	myprintf1("start....\0");
-	myprintf1("sched v1.04\0");
+	myprintf1("sched v1.08\0");
 
 	while(TRUE)
 	{
@@ -304,7 +310,6 @@ UCHAR get_host_cmd_task(int test)
 //		if(1)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
-//			printf("%s %d\n",cmd_array[cmd].cmd_str,cmd);
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 			if(rc > 0)
@@ -325,32 +330,24 @@ UCHAR get_host_cmd_task(int test)
 					case SET_TIME:
 						curtime2 = 0L;
 						rc += recv_tcp((UCHAR *)&test2,1,1);
-//						printf("\n%2x ",test2);
 						curtime2 = (time_t)test2;
 						rc += recv_tcp((UCHAR *)&test2,1,1);
-//						printf("%2x ",test2);
 						curtime2 |= (time_t)(test2<<8);
 						rc += recv_tcp((UCHAR *)&test2,1,1);
-//						printf("%2x ",test2);
 						curtime2 |= (time_t)(test2<<16);
 						rc += recv_tcp((UCHAR *)&test2,1,1);
-//						printf("%2x ",test2);
 						curtime2 |= (time_t)(test2<<24);
-//						printf("\n%d %ld\n",rc,curtime2);
 						rc = stime(&curtime2);
-//						printf("rc = %d\n",rc);
 						break;
 
 					case GET_TIME:
 						gettimeofday(&mtv, NULL);
 						curtime2 = mtv.tv_sec;
 						strftime(tempx,30,"%m-%d-%Y %T.\0",localtime(&curtime2));
-//						printf("%s\n",tempx);
 						myprintf1(tempx);
 						break;
 						
 					case SHOW_IDATA:
-//						myprintf1("show I_DATA (tcp_win)\0");
 						printString2("show I_DATA\0");	
 						illist_show(&ill);
 						break;
@@ -404,9 +401,6 @@ UCHAR get_host_cmd_task(int test)
 						rc = 0;
 						itp = &tempi1;
 						recv_tcp((UCHAR*)&uch_fname_index,1,1);
-//						printf("%d\n",uch_fname_index);
-//						myprintf1("recv all IDATA: \0");
-//						myprintf2("index: \0",fname_index);
 						if(uch_fname_index > 0 && uch_fname_index < NUM_DAT_NAMES)
 						{
 							uch_fname_index--;
@@ -604,15 +598,9 @@ UCHAR get_host_cmd_task(int test)
 
 					case UPLOAD_NEW:
 						recv_tcp((UCHAR*)&fsize,8,1);
-//						printf("fsize: %ld\n",fsize);
-//						upload_buf = (UCHAR *)malloc(UPLOAD_BUFF_SIZE);
 						cur_fsize = (int)fsize;
-//						printf("cur_fsize: %d\n",cur_fsize);
-//						printf("sizeof upload_buf: %ld\n",sizeof(upload_buf));
-//#if 0
 						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
 						strcpy(filename,"sched2");
-//						printf("filename: %s\n",filename);
 						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 700);
 						if(fp < 0)
 						{
@@ -624,27 +612,16 @@ UCHAR get_host_cmd_task(int test)
 							rc = 0;
 							rc1 = 0;
 							rc += recv_tcp((UCHAR *)&upload_buf[0],UPLOAD_BUFF_SIZE,1);
-//							printf("%ld ",rc);
 							rc1 += write(fp, upload_buf, rc);
 							cur_fsize -= rc;
-//							printf(": %d ",cur_fsize);
 
 						}while(cur_fsize > UPLOAD_BUFF_SIZE);
 
 						rc += recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
-//						printf("\n%d ",rc);
 						rc1 += write(fp,upload_buf,cur_fsize);
-//						printf("%d %d\n",rc, rc1);
 
 						close(fp);
-//						free(upload_buf);
 
-//						recv_tcp((UCHAR*)&tempx[0],16,1);
-//						printf("%2x %2x %2x %2x\n",tempx[0],tempx[1],tempx[2],tempx[3]);
-
-//						printf("done\n");					
-//						break;
-//#endif
 					case EXIT_PROGRAM:
 exit_program:
 						if(cmd == UPLOAD_NEW)
@@ -672,6 +649,7 @@ exit_program:
 								printString2("shutting down...\0");
 							}
 						}
+
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
@@ -818,7 +796,9 @@ type:
 			}
 			uSleep(0,TIME_DELAY/200);
 			if(shutdown_all)
+			{
 				return 0;
+			}
 		}
 		return 1;
 	}
@@ -902,7 +882,9 @@ type:
 				}
 			}
 			if(shutdown_all)
+			{
 				return 0;
+			}
 		}
 		return 1;
 	}
@@ -959,7 +941,9 @@ UCHAR read_button_inputs(int test)
 			}
 		}
 		if(shutdown_all)
+		{
 			return 0;
+		}
 	}
 	return 1;
 }
@@ -972,13 +956,14 @@ UCHAR serial_recv_task(int test)
 	int i;
 	int j = 0;
 	UCHAR ch;
+	UCHAR ch2;
 	int fd;
 	char errmsg[20];
 
 // if console is enabled then we don't use 1st serial port because
 // console is using it
 #ifndef CONSOLE_DISABLED
-	printf("console enabled\n");
+//	printf("console enabled\n");
 	return 0;
 #endif
 
@@ -991,7 +976,6 @@ UCHAR serial_recv_task(int test)
 	if(fd = init_serial() < 0)
 	{
 		myprintf1("can't open comm port 1\0");
-		printf("can't open comm port 1\n");
 		return 0;
 	}
 	printString2("serial_recv_task started");
@@ -1017,7 +1001,6 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		if(errmsg[0] != 0)
 		{
-//			printf("%s\n",errmsg);
 			myprintf1(errmsg);
 			memset(errmsg,0,20);
 			uSleep(5,0);
@@ -1029,6 +1012,28 @@ UCHAR serial_recv_task(int test)
 				if(tcp_window_on == 1)
 					send_tcp((UCHAR *)&ch,1);
 //				printf("%c",ch);
+			}
+			else
+			{
+				pthread_mutex_lock( &serial_read_lock);
+				ch = read_serial(errmsg);
+				ch2 = read_serial(errmsg);
+				pthread_mutex_unlock(&serial_read_lock);
+				switch(ch)
+				{
+					case TEST1:
+					myprintf2("cmd 1\0",ch2);
+					break;
+					case TEST2:
+					myprintf2("cmd 2\0",ch2);
+					break;
+					case TEST3:
+					myprintf2("cmd 3\0",ch2);
+					break;
+					default:
+//					myprintf1("unknown cmd\0");
+					break;
+				}					
 			}
 			uSleep(0,TIME_DELAY/100000);
 #if 0
@@ -1057,7 +1062,6 @@ UCHAR serial_recv_task(int test)
 		{
 			printString2("shutting down serial task");
 			close_serial();
-//			printf("serial port closed\n");
 			return 0;
 		}
 	}
@@ -1084,7 +1088,7 @@ UCHAR serial_recv_task2(int test)
 	if(fd = init_serial2() < 0)
 	{
 		myprintf1("can't open comm port 2\0");
-		printf("can't open comm port 2\n");
+//		printf("can't open comm port 2\n");
 		return 0;
 	}
 	printString2("serial_recv_task2 started");
@@ -1115,6 +1119,7 @@ UCHAR serial_recv_task2(int test)
 		if(shutdown_all)
 		{
 			printString2("shutting down serial task");
+//			printf("shutting down serial task\0");
 			close_serial2();
 //			printf("serial port closed\n");
 			return 0;
@@ -1228,7 +1233,9 @@ UCHAR tcp_monitor_task(int test)
 */
 		}
 		if(shutdown_all)
+		{
 			return 0;
+		}
 	}
 	return 1;
 }
@@ -1272,7 +1279,6 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 		if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 		{
 			myprintf1(errmsg);
-//			printf("%s\n",errmsg);
 		}
 	}
 	else
@@ -1343,7 +1349,10 @@ void close_tcp(void)
 		sock_open = 0;
 		close(global_socket);
 		global_socket = -1;
-	}else myprintf1("socket already closed\0");
+	}else
+	{
+		myprintf1("socket already closed\0");
+	}
 }
 
 /*********************************************************************/
@@ -1371,7 +1380,6 @@ void *work_routine(void *arg)
 	int not_done=1;
 	i = not_done;
 	shutdown_all = 0;
-//	printf("\nwork_routine()\tthread %d\tI'm Alive\n", *my_id);
 
 	pthread_mutex_lock(&threads_ready_lock);
 	threads_ready_count++;
@@ -1389,7 +1397,6 @@ void *work_routine(void *arg)
 		}
 	}
 	pthread_mutex_unlock(&threads_ready_lock);
-//	printf("\nwork_routine()\tthread %d\tI'm Proceeding\n", *my_id);
 
 	while(not_done)
 	{

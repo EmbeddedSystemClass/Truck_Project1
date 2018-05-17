@@ -1,0 +1,12 @@
+
+I could do an ftp but I don't think its at the point in the init.d scripts where it starts the network. – SpaceCowboy Nov 23 '17 at 0:51  
+Also Jp1 lets you boot from the comport instead of flash. – SpaceCowboy Nov 23 '17 at 0:54  
+The contents of said inittab would be helpful. Clearly the gel and ca entries are problematic. – Jeff Schaller Nov 23 '17 at 1:10
+Do you have an idea why this duplicate ID field "ca" message is displayed when there is only one line with ID ca: in the file? And what Debian system are you using (Wheezy aready supported systemd, since Jessie it's the default IIRC, so why do you have an iniittab at all?)? – Philippos Nov 23 '17 at 8:23
+I think what I may have done was to do an echo "ca::ctrlaltdel:/sbin/shutdown -r now" >> inittab thinking it wasn't in there. I just got careless. – SpaceCowboy Nov 23 '17 at 8:26  
+It's a fairly old card and there's a procedure to update the OS which I haven't had any success at. – SpaceCowboy Nov 23 '17 at 8:28  
+this wiki says the board has a monitor you can enter by typing Ctrl-C within 1 second of power on. You can then edit the boot parameters to add the Linux option S which should boot you to single user mode. – meuh Nov 23 '17 at 16:38
+that wiki doesn't say anything about a linux option S. When you hit Ctrl-C you go into Redboot which allows you to edit the boot parameters which are fis load vmlinux and then exec -c "console=ttyAM0,115200 root=/dev/mtdblock1" I tried exec -S and get an error – SpaceCowboy Nov 25 '17 at 0:32  
+the help menu says for 'exec' there's an option -c "kernel command line" – SpaceCowboy Nov 25 '17 at 0:33  
+You can try exec -c "S console=ttyAM0,115200 root=/dev/mtdblock1" as it seems this string is what is passed to the kernel. – meuh Nov 25 '17 at 14:44
+Thanks meuh - that seems to work. Now I just have to fix the inittab file. – SpaceCowboy Nov 26 '17 at 13:36   

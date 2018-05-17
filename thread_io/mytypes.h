@@ -16,6 +16,14 @@ typedef unsigned int UINT;
 #define UPLOAD_BUFF_SIZE 10000
 
 // these have to exactly match what's in cmd_array[] in tasks.c
+enum serial_cmd_types
+{
+	TEST1 = 0x7f,
+	TEST2,
+	TEST3,
+	TEST4
+}SERIAL_CMD_TYPES;
+
 enum cmd_types
 {
 	ENABLE_START,

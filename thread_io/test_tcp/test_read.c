@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	unsigned char buf[LEN];
 
 	fd = open (MODEMDEVICE, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd2 <0) 
+	if (fd <0) 
 	{
 		perror(MODEMDEVICE);
 		exit(-1);

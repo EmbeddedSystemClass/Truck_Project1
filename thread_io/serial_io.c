@@ -21,7 +21,10 @@
 #else
 
 #ifdef CONSOLE_DISABLED
+#warning "CONSOLE_DISLABLED"
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
+#else
+#warning "CONSOLE_ENABLED"
 #endif
 #define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
 
@@ -222,6 +225,9 @@ int write_serial2(UCHAR byte)
 void printString2(char *myString)
 {
 	UCHAR i = 0;
+//	printf("%s",myString);
+//	printf("\n");
+	return;
 	while(myString[i])
 	{
 		write_serial2(myString[i]);

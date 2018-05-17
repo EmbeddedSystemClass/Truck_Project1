@@ -71,7 +71,7 @@ int myprintf1(char *str)
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 	sprintf((char*)buffer[cur_buf_line],"%d: %s",cur_disp_line,str);
 	display_current(0);
-	
+
 	sprintf(temp2,"%d: %s",cur_disp_line,str);
 	printString2(temp2);
 	return 1;
@@ -150,7 +150,7 @@ static void inc_bufptrs(void)
 	{
 		cur_buf_line = LCD_BUF_LINES-1;
 	}
-	
+
 	if(++cur_disp_line > LCD_BUF_LINES)
 		cur_disp_line = 0;
 
@@ -190,7 +190,7 @@ static void display_current(int special_case)
 			lcd_write(buffer[cur_buf_size]);
 			lcd_wait();
 		}
-	
+
 	}
 //	printf("%s\n",buffer[cur_buf_line]);
 }
@@ -217,7 +217,7 @@ void scroll_down(void)
 	if(cur_buf_size < 3)
 		return;
 //	printf("line: %d size: %d\n",cur_buf_line,cur_buf_size);
-	
+
 	if(++cur_buf_line > cur_buf_size-1)
 	{
 		display_current(1);

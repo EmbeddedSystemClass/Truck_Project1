@@ -161,7 +161,7 @@ test_ioports4: test_ioports4.o
 	${CC} test_ioports4.o -o test_ioports4
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2 test_write test_read test_inports test_ioports2
+	rm -f *.o *~ *# core client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core server2
 	

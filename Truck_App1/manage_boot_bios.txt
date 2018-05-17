@@ -1,0 +1,11 @@
+managing TS-7200 boot bios:
+
+1) after boot-up press Ctl-C to drop down to redboot shell
+2) type fis list to see the memory map (one should say vmlinux, otherwise your screwed)
+3) type fconfig to manage boot-up script
+	a) the 2nd choice is the command: exec -c "console=ttyAM0,115200 root=/dev/mtdblock1"
+	b) if there is an auto-start script so that boot-up won't go to linux shell
+		then use: exec -c "S console=ttyAM0,115200 root=/dev/mtdblock1"
+4) after finishing boot-up script either type "reset" or 
+5) 1st type "fis load vmlinux" then exec -c "console=..."
+
