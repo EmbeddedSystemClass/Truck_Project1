@@ -18,7 +18,8 @@ typedef unsigned int UINT;
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum serial_cmd_types
 {
-	TEST1 = 0x7f,
+	GET_CURRENT_OUTPUT = 0x7F,
+	TEST1,
 	TEST2,
 	TEST3,
 	TEST4

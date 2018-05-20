@@ -215,7 +215,7 @@ int main(int argc, char *argv[] )
 #ifdef MAKE_SIM
 	rc = init_client(Host_Sim,errmsg);
 #else
-	rc = init_client(HOST145,errmsg);
+	rc = init_client(HOST149,errmsg);
 #endif
 
 	if(test_sock() == 0)

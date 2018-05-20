@@ -121,19 +121,78 @@ CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
 #CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 
-make sure target ip address is according to thread_io/client.h:
+the client program (in ncurses directory) takes the ip address as the 1st param
+the 2nd & 3rd params are optional idata & odata files.
 
-#define HOST145 "192.168.42.145"
-#define HOST146 "192.168.42.146"
-#define HOST148 "192.168.42.148"
-#define Host_Sim "192.168.42.110"	// simulated host on linux box
-
-and edit thread_io/ncurses/demo_menus2.c so init_client(HOSTx)
-calls the right HOSTx
+currently the cards are configured for:
+ "192.168.42.146"	TS-7200
+ "192.168.42.148"		"
+ "192.168.42.149"		"
+ "192.168.42.145"	TS-7250
+ "192.168.42.124"	TS-7250
 
 if using the make file for the simulator: thread_io/linux_make, 
-make sure Host_Sim define in client.h is set to the ip address 
-of the right linux box that the sched simulator is running on
+use the ip address for the linux box as 1st param for client
+of the linux box that the sched simulator is running on
+
+config jumpers for io card:
+base address		JP1		JP2
+0x240				0		0
+0x260				0		1
+0x280				1		0
+0x300				1		1
+
+JP1 	JP2 (see note 1)
+123		123
+on for JP1 is jumper from 1->2
+on for JP2 is jumper from 2->3
+
+card on top is configured starting at 0x280
+bottom card is 0x300 
+
+PortA outputs 0x280	(8 bits)
+PortB outputs 0x281	(8 bits)
+PortC outputs 0x282	(4 bits)
+
+PortD outputs 0x300	(8 bits)
+PortE outputs 0x301	(8 bits)
+PortF outputs 0x302	(4 bits)
+
+PortA inputs 0x284	(8 bits)
+PortB inputs 0x285	(8 bits)
+PortC inputs 0x286	(4 bits)
+
+PortD inputs 0x304	(8 bits)
+PortE inputs 0x305	(8 bits)
+PortF inputs 0x306	(4 bits)
+(see ioports.h)
+
+relays start at upper left and go down then lower right and go up (see note 1)
+
+		left side		right side
+
+		1				20
+		2				19
+		3				18
+		4				17
+		5				16
+		6				15
+		7				14
+		8				13
+		9				12
+		10				11
+
+inputs start from left (see note 1)
+note 1) looking at card from component side w/PC-104 on bottom:
+
+perf board for flashing light and 2 buttons:
+
+pins at bottom:
+1) +5v
+2) gnd
+3) LED light (to DIO1 7)
+4) green button (to DIO1_0)
+5) read button (to DIO1_1)
 
 A 4x4 keypad is attached to the PIC24 so when a key is pressed, one of the 
 following bytes is decoded:

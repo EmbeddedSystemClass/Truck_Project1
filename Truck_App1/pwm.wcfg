@@ -17,9 +17,6 @@
       </db_ref>
    </db_ref_list>
    <WVObjectSize size="13" />
-   <wave_markers>
-      <marker time="253000000" label="" />
-   </wave_markers>
    <wvobject fp_name="/test_pwm/uut/pwm_signal" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">pwm_signal</obj_property>
       <obj_property name="ObjectShortName">pwm_signal</obj_property>
@@ -30,29 +27,9 @@
       <obj_property name="ElementShortName">reg1</obj_property>
       <obj_property name="ObjectShortName">reg1</obj_property>
    </wvobject>
-   <wvobject fp_name="/test_pwm/uut/pwm_unit/vary_reg" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">vary_reg</obj_property>
-      <obj_property name="ObjectShortName">vary_reg</obj_property>
-   </wvobject>
-   <wvobject fp_name="/test_pwm/uut/pwm_unit/duty_reg" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">duty_reg</obj_property>
-      <obj_property name="ObjectShortName">duty_reg</obj_property>
-   </wvobject>
-   <wvobject fp_name="/test_pwm/uut/pwm_unit/stlv_note_index" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">stlv_note_index[7:0]</obj_property>
-      <obj_property name="ObjectShortName">stlv_note_index[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#00ffff</obj_property>
-   </wvobject>
    <wvobject fp_name="/test_pwm/uut/pwm_unit/next_note" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">next_note</obj_property>
       <obj_property name="ObjectShortName">next_note</obj_property>
-   </wvobject>
-   <wvobject fp_name="/test_pwm/uut/pwm_unit/temp_tune" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">temp_tune[0:7]</obj_property>
-      <obj_property name="ObjectShortName">temp_tune[0:7]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/test_pwm/uut/pwm_unit/state_pwm_reg" type="other" db_ref_id="1">
       <obj_property name="ElementShortName">state_pwm_reg</obj_property>
@@ -68,16 +45,35 @@
       <obj_property name="ElementShortName">start</obj_property>
       <obj_property name="ObjectShortName">start</obj_property>
    </wvobject>
-   <wvobject fp_name="/test_pwm/uut/pwm_unit/tune" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">tune[7:0]</obj_property>
-      <obj_property name="ObjectShortName">tune[7:0]</obj_property>
+   <wvobject fp_name="/test_pwm/uut/mykey" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">mykey[7:0]</obj_property>
+      <obj_property name="ObjectShortName">mykey[7:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject fp_name="/test_pwm/uut/mytune" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">mytune[7:0]</obj_property>
-      <obj_property name="ObjectShortName">mytune[7:0]</obj_property>
+   <wvobject fp_name="/test_pwm/uut/ikeys" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ikeys[0:11]</obj_property>
+      <obj_property name="ObjectShortName">ikeys[0:11]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject fp_name="/test_pwm/uut/itunes" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">itunes[0:7]</obj_property>
-      <obj_property name="ObjectShortName">itunes[0:7]</obj_property>
+   <wvobject fp_name="/test_pwm/uut/pwm_unit/mykeys" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">mykeys[0:11]</obj_property>
+      <obj_property name="ObjectShortName">mykeys[0:11]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_pwm/uut/pwm_unit/key" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">key[7:0]</obj_property>
+      <obj_property name="ObjectShortName">key[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_pwm/uut/pwm_unit/temp_key" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">temp_key[0:41]</obj_property>
+      <obj_property name="ObjectShortName">temp_key[0:41]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_pwm/uut/pwm_unit/which_pattern" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">which_pattern[1:0]</obj_property>
+      <obj_property name="ObjectShortName">which_pattern[1:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_pwm/uut/pwm_unit/temp_key2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">temp_key2[0:41]</obj_property>
+      <obj_property name="ObjectShortName">temp_key2[0:41]</obj_property>
    </wvobject>
 </wave_config>

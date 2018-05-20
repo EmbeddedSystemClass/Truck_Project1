@@ -39,15 +39,15 @@ r6:6:wait:/etc/rc.d/rcS 6
 # Start console logins on both COM Ports
 #
 lgn0:12345:respawn:/sbin/getty -L 115200 ttyAM0 
-lgn1:12345:respawn:/sbin/getty -L 115200 ttyAM1 
+#lgn1:12345:respawn:/sbin/getty -L 115200 ttyAM1 
 ge0:2345:wait:/sbin/mingetty --autologin root ttyAM0 linux
-ge1:2345:respawn:/sbin/mingety ttyAM0 linux
-
+ge1:2345:respawn:/sbin/mingetty ttyAM0 linux
 #
 # Start Virtual Terminal Logins
 #
-vty1:5:respawn:/sbin/getty 38400 vc/0
+#vty1:5:respawn:/sbin/getty 38400 vc/0
 ###vty2::respawn:/sbin/mingetty vc/2
 
 # Trap CTRL-ALT-DELETE
 ca::ctrlaltdel:/sbin/shutdown -r now
+

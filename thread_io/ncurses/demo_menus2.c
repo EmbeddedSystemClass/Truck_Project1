@@ -87,6 +87,8 @@ typedef enum
 	,eMAX
 } MenuNo;
 
+char hostid[20];
+
 #define okMenuNo(n) (((n) > eBanner) && ((n) < eMAX))
 
 #define MENU_Y  1
@@ -1083,8 +1085,8 @@ call_Tool(int code)
 			i = init_client(Host_Sim,errmsg);
 			show_status2("init_client (sim)",Host_Sim,i,0,0,2);
 #else
-			i = init_client(HOST146,errmsg);
-			show_status2("init_client",HOST146,i,0,0,1);
+			i = init_client(HOST149,errmsg);
+			show_status2("init_client",HOST149,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1744,30 +1746,49 @@ main(int argc, char *argv[])
 
 	char errmsg[40];
 
+/*
+145 "192.168.42.145"
+146 "192.168.42.146"
+148 "192.168.42.148"
+149 "192.168.42.149"
+124 "192.168.42.124"
+*/
+
 	memset(iFileName,0,sizeof(iFileName));
 	memset(oFileName,0,sizeof(oFileName));
 
-	if(argc < 2)
+	printf("argc = %d\n",argc);
+	
+	if(argc == 1)
 	{
-//		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
-//		printf("loading default filenames: idata.dat & odata.dat\n");
+		printf("usage: %s [ip address] [idata filename] [odata filename] \n",argv[0]);
+		printf("where ipaddress is: 192.168.42.<ipaddress>\n");
+		printf("enter either: 145, 146, 148, 149 or 124\n");
+		printf("using 145 as default and idata.dat/odata.dat as default data files\n");
+		strcpy(hostid,"192.168.42.145\0");
 		strcpy(iFileName,"idata.dat\0");
 		strcpy(oFileName,"odata.dat\0");
 	}
 	else if(argc == 2)
 	{
-//		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
-//		printf("loading %s & odata.dat\n",argv[1]);
-		strcpy(oFileName,argv[1]);
+		strcpy(hostid,argv[1]);
+		strcpy(iFileName,"idata.dat\0");
 		strcpy(oFileName,"odata.dat\0");
 	}
-	else
+	else if(argc == 3)
 	{
-		strcpy(iFileName,argv[1]);
-		strcpy(oFileName,argv[2]);
-//		printf("loading: %s & %s\n",argv[1],argv[2]);
+		strcpy(hostid,argv[1]);
+		strcpy(iFileName,argv[2]);
+		strcpy(oFileName,"odata.dat\0");
 	}
-
+	else if(argc == 4)
+	{
+		strcpy(hostid,argv[1]);
+		strcpy(iFileName,argv[2]);
+		strcpy(oFileName,argv[3]);
+	}
+	printf("idat file: %s odat file: %s host ipaddress: %s\n",iFileName,oFileName,hostid);
+	
 	i = NUM_PORT_BITS;
 	isize = sizeof(I_DATA);
 	isize *= i;

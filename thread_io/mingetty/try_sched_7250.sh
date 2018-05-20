@@ -1,17 +1,4 @@
 echo "running try_sched.sh (v1.08)" >> status.txt
-../mountcf.sh
-if [ -e /mnt/cf/bootup/sched ]
-then
- echo "new sched found on cf" >> status.txt
- mv /mnt/cf/bootup/sched .
- chmod +x sched
-fi
-if [ -e /mnt/cf/bootup/try_sched.sh ]
-then
- echo "new try_sched.sh found on cf" >> status.txt
- mv /mnt/cf/bootup/try_sched.sh .
- chmod +x try_sched.sh
-fi
 
 if [ -e sched2 ]
 then

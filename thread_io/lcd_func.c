@@ -56,7 +56,7 @@ void lcd_cls(void)
 int myprintf1(char *str)
 {
 	char *ptr = str;
-	char temp[2];
+	char temp[10];
 	char temp2[35];
 
 	if(!lcd_enabled)
@@ -82,7 +82,7 @@ int myprintf2(char *str, int x)
 {
 	char *ptr = str;
 	char temp[35];
-	char temp2[4];
+	char temp2[10];
 	int i;
 
 	if(!lcd_enabled)
@@ -108,7 +108,7 @@ int myprintf3(char *str, int x, int y)
 {
 	char *ptr = str;
 	char temp[35];
-	char temp2[4];
+	char temp2[10];
 	int i;
 
 	if(!lcd_enabled)

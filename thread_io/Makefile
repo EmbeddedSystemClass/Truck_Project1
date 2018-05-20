@@ -116,7 +116,8 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : sched 
+all : sched
+#all : test_dio1
 #test_ioports test_inports # test_ports test_spi 
 #llist_test_threads llist_test_threads_rw
 
@@ -146,6 +147,11 @@ config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_thre
 
 lcd_func.o: lcd_func.c lcd_func.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
+
+test_dio1.o: test_dio1.c lcd_func.c lcd_func.h serial_io.c serial_io.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_dio1.c
+
+test_dio1: test_dio1.o lcd_func.o serial_io.o
 
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory

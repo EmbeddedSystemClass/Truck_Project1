@@ -27,7 +27,7 @@ entity multi_byte is
 		MISO_i : in std_logic;
 		SCLK_o : out std_logic;
 		SS_o : out std_logic_vector(1 downto 0);
-		test : out std_logic_vector(3 downto 0);
+--		test : out std_logic_vector(3 downto 0);
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
@@ -145,8 +145,9 @@ architecture truck_arch of multi_byte is
 	signal key_index: signed(7 downto 0);
 	signal key_len: signed(7 downto 0);
 	signal mykey: std_logic_vector(7 downto 0);
-	signal ikeys: key_array;
+	signal ikeys: i_keys;
 	signal stlv_duty_cycle: std_logic_vector(2 downto 0);
+	signal note_len_index: std_logic_vector(2 downto 0);
 	
 begin
 
@@ -246,6 +247,7 @@ pwm_unit: entity work.pwm2
 		done=>pwm_done1,
 		len=>key_len,
 		duty_cycle=>stlv_duty_cycle,
+		note_len_index=>note_len_index,
 		key=>mykey);
 
 test_pwm: process(clk, reset, drive_pwm_reg, start_pwm)
@@ -258,29 +260,35 @@ begin
 		time_delay_next8 <= (others=>'0');
 --		mykey <= "000";
 		ikeys(0) <= X"00";
-		ikeys(1) <= X"01";
-		ikeys(2) <= X"02";
+		ikeys(1) <= X"05";
+		ikeys(2) <= X"08";
+
 		ikeys(3) <= X"03";
-		ikeys(4) <= X"04";
-		ikeys(5) <= X"05";
-		ikeys(6) <= X"06";
-		ikeys(7) <= X"07";
-		ikeys(8) <= X"08";
-		ikeys(9) <= X"09";
-		ikeys(10) <= X"0A";
-		ikeys(11) <= X"0B";
-		key_len <= X"0C";
+		ikeys(4) <= X"07";
+		ikeys(5) <= X"0a";
+
+		ikeys(6) <= X"01";
+		ikeys(7) <= X"06";
+		ikeys(8) <= X"09";
+
+		ikeys(9) <= X"04";
+		ikeys(10) <= X"08";
+		ikeys(11) <= X"0b";
+
+		key_len <= X"29";
+		led1 <= "1111";
 
 		key_index <= (others=>'0');
 		
 		mykey <= ikeys(0);
 		skip4 <= '0';
 		stlv_duty_cycle <= "000";
+		note_len_index <= "001";
 		
 	else if clk'event and clk = '1' then
 		case drive_pwm_reg is
 			when pwm_idle =>
-				if time_delay_reg8 > TIME_DELAY8c then
+				if time_delay_reg8 > TIME_DELAY8 then
 					time_delay_next8 <= (others=>'0');
 					drive_pwm_next <= pwm_start;
 				else
@@ -293,6 +301,21 @@ begin
 				if skip4 = '1' then
 					if key_index > 10 then
 						key_index <= (others=>'0');
+						case note_len_index is
+							when "000" => note_len_index <= "001";
+							when "001" => note_len_index <= "010";
+							when "010" => note_len_index <= "011";
+							when "011" => note_len_index <= "100";
+							when "100" => note_len_index <= "101";
+							when "101" => note_len_index <= "000";
+							when others => note_len_index <= "000";
+						end case;
+						-- if key_len > 40 then
+							-- key_len <= X"20";
+						-- else
+							-- key_len <= key_len + 1;
+						-- end if;
+					else 
 						case stlv_duty_cycle is
 							when "000" => stlv_duty_cycle <= "001";
 							when "001" => stlv_duty_cycle <= "010";
@@ -302,7 +325,6 @@ begin
 							when "101" => stlv_duty_cycle <= "000";
 							when others => stlv_duty_cycle <= "000";
 						end case;
-					else 
 						key_index <= key_index + 1;
 					end if;
 				end if;
@@ -361,17 +383,17 @@ begin
 		mspi_din_vld <= '0';
 		mspi_din <= (others=>'0');
 		skip3 <= '0';
-		test <= (others=>'1');
+--		test <= (others=>'1');
 		time_delay_reg7 <= (others=>'0');
 		time_delay_next7 <= (others=>'0');
 	else if clk'event and clk = '1' then
 		case state_dout_reg is
 			when idle_dout =>
-				test <= "1110";
+--				test <= "1110";
 --				led1 <= "1110";
 				if mspi_ready = '1' then
 --					led1 <= "0111";
-					test <= "0111";
+--					test <= "0111";
 
 					mspi_din <= stlv_temp1;		-- write
 					mspi_din_vld <= '1';
@@ -413,7 +435,7 @@ begin
 						stlv_temp1 <= conv_std_logic_vector(temp1,8);
 --						stlv_temp1 <= X"AA";
 --						led1 <= "1011";
-						test <= "1011";
+--						test <= "1011";
 						addr <= "01";					
 					else	
 						if temp2 < 33 then

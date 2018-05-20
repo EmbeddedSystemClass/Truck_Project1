@@ -310,7 +310,9 @@ UCHAR get_host_cmd_task(int test)
 //		if(1)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
+					SCROLL_DOWN && 	cmd != SCROLL_UP)
+
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 			if(rc > 0)
 			{
@@ -447,6 +449,7 @@ UCHAR get_host_cmd_task(int test)
 								test2 = 0x21;
 						}
 #endif
+/*
 						test2 = 0x7e;
 						for(i = 0;i < 4*93;i++)
 						{
@@ -455,6 +458,7 @@ UCHAR get_host_cmd_task(int test)
 							if(--test2 < 0x21)
 								test2 = 0x7e;
 						}
+*/
 						pthread_mutex_unlock(&serial_write_lock);
 //#endif
 						break;
@@ -844,6 +848,12 @@ type:
 //#endif
 
 //	printf("bank: %d\tindex\t%2d\t%2d\n",bank,index,onoff);
+		pthread_mutex_lock( &serial_write_lock);
+		write_serial(GET_CURRENT_OUTPUT);
+		write_serial(bank);
+		write_serial(index);
+		write_serial(onoff);
+		pthread_mutex_unlock(&serial_write_lock);
 
 //	lcd_cls();
 //		myprintf3("bank:\0",bank,index);
