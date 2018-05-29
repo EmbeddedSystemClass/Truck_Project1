@@ -1,6 +1,7 @@
 git add README.md
 git add Truck_Project1_notes.txt
 git add monster_box.txt
+git add monster_box1.jpg
 git add keypad1.jpg
 git add todo.txt
 git add gitadd.sh
@@ -23,6 +24,7 @@ git add AVR_t6963/portpins.h
 git add AVR_t6963/sfr_helper.h
 git add AVR_t6963/t6963.c
 git add AVR_t6963/USART.h
+git add AVR_t6963/test_gdisp.c
 
 git add Truck_App1/Multi-Byte.vhd
 git add Truck_App1/multi-byte.ucf
@@ -123,6 +125,7 @@ git add thread_io/test_tcp/Makefile
 git add thread_io/test_tcp/Makefile2
 git add thread_io/ir104_man.pdf
 git add thread_io/how2formatSDCardExt.png
+git add thread_io/TS-7200_connections.jpg
 git add Truck_App1/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 

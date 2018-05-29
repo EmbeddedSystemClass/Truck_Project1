@@ -56,8 +56,6 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #ifdef OC1CON1
 #warning "OC1CON1 defined"
 #endif
-#define CHAR_AT_CMD			0
-#define STRING_AT_CMD		1
 #define CHAR_CMD			2
 #define GOTO_CMD			3
 #define SET_MODE_CMD 		4
@@ -65,6 +63,7 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define DEBUG_CLRSCR2		6
 #define DEBUG_CLRSCR3		7
 #define DEBUG_MSG1			8
+#define DEBUG_SETPWM		9
 
 #define ROWS 16
 #define COLUMN 40
@@ -183,18 +182,11 @@ volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
-ESOS_SEMAPHORE(comm1_sem);
-ESOS_SEMAPHORE(comm2_sem);
 ESOS_USER_TASK(delay_comm1);
 ESOS_USER_TASK(send_char);
-ESOS_USER_TASK(send_charat);
-ESOS_USER_TASK(send_string);
 ESOS_USER_TASK(set_cursor);
 ESOS_USER_TASK(goto1);
 ESOS_USER_TASK(test1);
-ESOS_USER_TASK(get_comm1);
-ESOS_USER_TASK(get_comm2);
-ESOS_USER_TASK(send_comm1);
 ESOS_USER_TASK(dimmer_task);
 
 UCHAR get_keypress(UCHAR key1)

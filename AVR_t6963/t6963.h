@@ -61,7 +61,7 @@
 #define LCD_RD		PORTB2       // LCD Read control line  pin number (D10)
 #endif
 
-#define PWM_PIN	PORTC5
+#define PWM_PIN		PORTC5			// used for dimming display
 #define LCD_WR		PORTC0        // LCD Write control line pin number (A0)
 #define LCD_CE		PORTC1       // LCD Enable control line pin number (A1)
 #define LCD_RST		PORTC2        // LCD RST_ line (A2)

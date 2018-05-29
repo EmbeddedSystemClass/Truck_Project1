@@ -6,18 +6,18 @@ traffic, a ATMEGA328P to drive a t6963 LCD screen, and a TS-7200/7800 to do
 I/O (turning on and off lights and reading switches).
 
 
-											   | AVR |=> LCD
-												  ^
-----|											  |
-	|											  |
-	|											  |							  Laptop
-F	|											  |								^
+  ------------------- SPI ------------------->| AVR |===> t6963 LCD screen
+  |												  ^
+  v												  |
+----|											  |							Laptop (optinal)
+	|											  |							    ^
+F	|											  |								|
 P	|											  v								|TCP/IP
 G	|---------------> RS-232* ----------------->| P	|							|
 A	|											| I	|							v
 	|						|-----------|		| C |						|-----------|
 ----|						|			|		| 2	|						|			|	
-							|  keypad	|------>| 4 |<------ RS-232 ------->| TS-7800	|
+							|  keypad	|======>| 4 |<------ RS-232 ------->| TS-7800	|
 							|			|									|			|
 							|-----------|									|-----------|
 
@@ -34,9 +34,6 @@ shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm &
 the PIC via the SPI (as master).
 
 Other telemetry data can be added later like distributor timing to use for spark advance.
-The TS-7200 has a removable (not hot-swapable) compact flash disk so the idea is to have a 
-'black box' FDR that records the last so many hours or minutes of the telemetry data to a
-file that can be downloaded later.
 
 directories:
 PIC24_support - source and libs for PIC24FJ128GB110 (uses MPLAB X)
@@ -194,6 +191,17 @@ pins at bottom:
 4) green button (to DIO1_0)
 5) read button (to DIO1_1)
 
+pinout for RJ-45 jack break-out
+
+green /w	3	5	blue /w
+green		6	4	blue
+brown /w	1	7	brown /w
+orange		2	8	brown
+
+small switch on upper right front panel is console switch:
+console = comm1 (left)
+console off (right)
+
 A 4x4 keypad is attached to the PIC24 so when a key is pressed, one of the 
 following bytes is decoded:
 
@@ -215,7 +223,7 @@ following bytes is decoded:
 0xEF - 'D'
 
 (Alternatively, the PIC can get the keypresses from one of the comm ports and double
-as the keypad)
+as the keypad for testing)
 
 keypad layout - since the six reassignable keys are on the outside (bottom and left) it makes
 sense to use these as special function keys.
@@ -434,6 +442,9 @@ to mount sd card for TS-7200 see thread_io/how2formatSDCardExt.png and mountcf.s
 (also see: https://www.tldp.org/HOWTO/Flash-Memory-HOWTO/ext2.html)
 
 to manage TS-7200 bios see thread_io/manage_boot_bios.txt
+
+sched needs a config file so it knows which dat files were used last instead
+of just idata & odata which are loaded by default
 
 **************** nice to have's: ****************
 

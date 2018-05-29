@@ -7,6 +7,7 @@
 GCC_BASE = $(CROSS_COMPILE)
 # use this one when compiling on 103
 #GCC_BASE = /home/dan/dev/arm/crosstool/gcc3/arm-linux/
+# need to use /usr/local/sbin/setARMpath2.sh
 GCC_BIN  = $(GCC_BASE)bin/
 GCC_LIB  = $(GCC_BASE)arm-linux/lib/
 GCC_INC  = $(GCC_BASE)arm-linux/include/

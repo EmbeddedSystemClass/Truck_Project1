@@ -43,42 +43,6 @@ UART3 - monitor
 //comm2 is 115
 //comm1 is 11o
 //******************************************************************************************//
-//*************************************** get_comm1  ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(get_comm1)	// simulate the keypad
-{
-    static  uint8_t data1;
-//    static ESOS_TASK_HANDLE handle1;
-    static ESOS_TASK_HANDLE handle2;
-
-//	handle1 = esos_GetTaskHandle(send_comm1);
-
-//	handle2 = esos_GetTaskHandle(send_comm2);
-
-    ESOS_TASK_BEGIN();
-	data1 = 0x21;
-    while (1)
-    {
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_TICKS(1);
-//		__esos_CB_WriteUINT8(handle1->pst_Mailbox->pst_CBuffer,data1);
-		ESOS_TASK_WAIT_TICKS(1);
-//		__esos_CB_WriteUINT8(handle2->pst_Mailbox->pst_CBuffer,data1);
-		ESOS_TASK_WAIT_TICKS(1);
-		if(++data1 > 0x7e)
-			data1 = 0x21;
-    } // endof while()
-    ESOS_TASK_END();
-}
-/*
-#define CHAR_AT_CMD			0
-#define STRING_AT_CMD		1
-#define SET_CURSOR_CMD		2
-#define SET_MODE_CMD 		3
-*/
-//******************************************************************************************//
 //***************************************** goto ******************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(goto1)
@@ -142,103 +106,6 @@ ESOS_USER_TASK(set_cursor)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//************************************ send_string  ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(send_string)
-{
-    static  UCHAR row, col, str_len, data2;
-    static char test_str[5][20];
-	static int str_ptr;
-	int i;
-	
-	strcpy(test_str[0],"test 123\0");
-	strcpy(test_str[1],"hello xyz\0");
-	strcpy(test_str[2],"what's up\0");
-	strcpy(test_str[3],"going south\0");
-	strcpy(test_str[4],"good bye!\0");
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    i = 0;
-	str_len = 0;
-	str_ptr = 0;
-	    
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-						
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(STRING_AT_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(row);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(col);
-			str_len = (UCHAR)strlen(test_str[str_ptr]);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(str_len);
-			for(i = 0;i < str_len;i++)
-				ESOS_TASK_WAIT_ON_SEND_UINT82(test_str[str_ptr][i]);
-
-			if(++str_ptr > 4)
-				str_ptr = 0;
-			
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-			if((col += COLUMN/3) > COLUMN-5)
-			{
-				col = 0;
-				if(++row > ROWS-1)
-				{
-					row = 0;
-					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-					ESOS_TASK_WAIT_ON_SEND_UINT82(DEBUG_CLRSCR3);
-					ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-				}
-			}
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************** send_charat  **************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(send_charat)
-{
-    static  UCHAR row, col, data2;
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(CHAR_AT_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(row);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(col);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-			if(++col > COLUMN-1)
-			{
-				col = 0;
-				if(++row > ROWS-1)
-				{
-					row = 0;
-				}
-			}
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
 //************************************** send_char  ****************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(send_char)
@@ -260,106 +127,6 @@ ESOS_USER_TASK(send_char)
 			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//*************************************** get_comm2  ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(get_comm2)
-{
-    static  uint8_t data1;
-
-	
-    ESOS_TASK_BEGIN();
-//    FLUSH_ESOS_COMM_IN_DATA2();
-//    ESOS_TASK_SLEEP();
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("get_comm2");
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-    while (1)
-    {
-//		ESOS_TASK_WAIT_SEMAPHORE(comm2_sem,1);
-
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
-		ESOS_TASK_WAIT_ON_GET_UINT82(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
-
-#if 0
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//		ESOS_TASK_WAIT_ON_SEND_UINT8(':');
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
-
-
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-	    ESOS_TASK_WAIT_ON_SEND_STRING("reset");
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************** delay_comm1 ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(delay_comm1)
-{
-	static UCHAR test;
-	ESOS_TASK_BEGIN();
-	test = 0;
-	while(TRUE)
-	{
-		ESOS_TASK_WAIT_TICKS(6);
-		ESOS_SIGNAL_SEMAPHORE(comm1_sem,1);
-		test++;
-	}
-	ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************** send_comm1  ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(send_comm1)
-{
-	static ULONG send1;
-	static ULONG send2;
-	static UCHAR temp1, temp2, temp3, temp4;
-	
-    ESOS_TASK_BEGIN();
-	while(TRUE)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-        while(ESOS_TASK_IVE_GOT_MAIL())
-		{
-//			ESOS_TASK_WAIT_SEMAPHORE(comm1_sem,1);
-			
-			temp1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-/*
-			send2 = send1;
-			temp1 = (UCHAR)send1;
-			send2 >>= 24;
-			temp2 = (UCHAR)send2;
-			send2 = send1;
-			send2 >>= 16;
-			temp3 = (UCHAR)send2;
-			send2 = send1;
-			send2 >>= 8;
-			temp4 = (UCHAR)send2;
-*/			
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8(temp1);
-/*
-			ESOS_TASK_WAIT_ON_SEND_UINT8(temp2);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(temp3);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(temp4);
-			temp4 = 0xff;
-			ESOS_TASK_WAIT_ON_SEND_UINT8(temp4);
-*/
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -394,6 +161,16 @@ ESOS_USER_TASK(test1)
 	while(1)
 	{
 /*
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
+		ESOS_TASK_WAIT_ON_GET_UINT83(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
+		data2++;
+
+ 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
+		ESOS_TASK_WAIT_ON_SEND_UINT83(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
+
+
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
 		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
@@ -420,7 +197,7 @@ ESOS_USER_TASK(test1)
 			i = 0;
 		}
 
-		ESOS_TASK_WAIT_TICKS(20);
+		ESOS_TASK_WAIT_TICKS(1);
 		if(++data2 > 0x7e)
 			data2 = 0x21;
 */
@@ -591,18 +368,12 @@ void user_init(void)
 //	esos_RegisterTask(poll_keypad);
 /*
 	esos_RegisterTask(send_char);
-	esos_RegisterTask(send_charat);
-	esos_RegisterTask(send_string);
 	esos_RegisterTask(set_cursor);
 	esos_RegisterTask(goto1);
 */
 
-//	esos_RegisterTask(get_comm1);
-//	esos_RegisterTask(send_comm1);
-//	esos_RegisterTask(delay_comm1);
-
 	esos_RegisterTask(test1);
-	esos_RegisterTask(convADC);
+//	esos_RegisterTask(convADC);
 //	esos_RegisterTask(dimmer_task);
 	
 } // end user_init()

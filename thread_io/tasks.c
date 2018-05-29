@@ -848,13 +848,14 @@ type:
 //#endif
 
 //	printf("bank: %d\tindex\t%2d\t%2d\n",bank,index,onoff);
+/*
 		pthread_mutex_lock( &serial_write_lock);
 		write_serial(GET_CURRENT_OUTPUT);
 		write_serial(bank);
 		write_serial(index);
 		write_serial(onoff);
 		pthread_mutex_unlock(&serial_write_lock);
-
+*/
 //	lcd_cls();
 //		myprintf3("bank:\0",bank,index);
 //		myprintf2(" \0",onoff);
@@ -1032,13 +1033,13 @@ UCHAR serial_recv_task(int test)
 				switch(ch)
 				{
 					case TEST1:
-					myprintf2("cmd 1\0",ch2);
+//					myprintf2("cmd 1\0",ch2);
 					break;
 					case TEST2:
-					myprintf2("cmd 2\0",ch2);
+//					myprintf2("cmd 2\0",ch2);
 					break;
 					case TEST3:
-					myprintf2("cmd 3\0",ch2);
+//					myprintf2("cmd 3\0",ch2);
 					break;
 					default:
 //					myprintf1("unknown cmd\0");
