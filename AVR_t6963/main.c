@@ -99,7 +99,7 @@ int main(void)
 //******************************************************************************************//
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
-	_delay_ms(2000);
+	_delay_ms(1000);
 //#endif
 
 	xbyte = 0x21;
@@ -114,8 +114,6 @@ int main(void)
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
 	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
 
-	GDispClrTxt();
-
 	i = 0;
 	dc2 = 0;
 
@@ -124,7 +122,7 @@ int main(void)
 		for(col = 0;col < COLUMN-1;col++)
 		{
 			GDispCharAt(row,col,xbyte);
-			_delay_ms(2);
+			_delay_ms(1);
 			if(++xbyte > 0x7e)
 			{
 				xbyte = 0x21;
@@ -133,6 +131,8 @@ int main(void)
 	}
 
 	_delay_ms(1000);
+
+	GDispClrTxt();
 
 	row = col = 0;
 	
@@ -155,12 +155,15 @@ int main(void)
 			{
 				case DEBUG_CHAR:
 					ch = buff[1];
-					GDispCharAt(row,col,ch);
-					if(++col > COLUMN)
+					if(ch > 0x1F && ch < 0x7f)
 					{
-						col = 0;
-						if(++row > ROWS)
-							row = 0;
+						GDispCharAt(row,col,ch);
+						if(++col > COLUMN-1)
+						{
+							col = 0;
+							if(++row > ROWS-1)
+								row = 0;
+						}
 					}
 				break;
 				case DEBUG_GOTO:

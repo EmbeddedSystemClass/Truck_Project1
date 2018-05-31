@@ -187,6 +187,7 @@ ESOS_USER_TASK(send_char);
 ESOS_USER_TASK(set_cursor);
 ESOS_USER_TASK(goto1);
 ESOS_USER_TASK(test1);
+ESOS_USER_TASK(clr_screen);
 ESOS_USER_TASK(dimmer_task);
 
 UCHAR get_keypress(UCHAR key1)
@@ -577,7 +578,6 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
@@ -593,10 +593,6 @@ ESOS_USER_TASK(poll_keypad)
 				data1 = data2 - 0xEC + 0x41;
 			else
 				data1 = data2 - 0xE2 + 0x30;
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(data1);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
