@@ -329,10 +329,9 @@ ESOS_USER_TASK(test1)
 //******************************************************************************************//
 void user_init(void)
 {
-//    __esos_unsafe_PutString( HELLO_MSG );
-//	CONFIG_SPI_MASTER()
+// can't use SPI for now
 //	CONFIG_SPI_SLAVE();
-//	esos_RegisterTask(echo_spi_task);
+//	esos_RegisterTask(spi_task);
 
 	ESOS_INIT_SEMAPHORE(key_sem,0);
 	esos_RegisterTask(keypad);

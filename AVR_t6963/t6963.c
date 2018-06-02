@@ -367,7 +367,9 @@ void GDispInitPort (void)
 {
 	DDRC |= 0x0F;	// set all used bits as outputs
 	DDRC |= 0x30;	// set the TEST_PIN1 & PWM_PIN as output
-	DDRB |= 0x07;
+	DDRB |= 0x03;
+	DDRB &= 0xFB;	// pin 2 is input SS for SPI
+
 	DDRD |= 0xFC;
 	CLR_RST();
 	SET_CD();

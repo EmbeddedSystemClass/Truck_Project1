@@ -50,6 +50,9 @@ git add Truck_App1/sensor.vhd
 git add Truck_App1/wrapperLED.vhd
 git add Truck_App1/spi_slave.vhd
 git add Truck_App1/spi_master.vhd
+git add Truck_App1/dtmf.vhd
+git add Truck_App1/dtmf.wcfg
+git add Truck_App1/lcd_pwm.vhd
 git add Truck_App1/test_uart/test_uart.vhd
 git add Truck_App1/test_uart/test_uart.xise
 git add Truck_App1/test_uart/test_uart.ucf

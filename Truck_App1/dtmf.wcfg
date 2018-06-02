@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C:/Users/Daniel/dev/Truck_Project1/Truck_App1/test_dtmf_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="commonpckg" />
+            <top_module name="math_real" />
+            <top_module name="numeric_std" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="test_dtmf" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="14" />
+   <wvobject fp_name="/test_dtmf/pwm_spk1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">pwm_spk1</obj_property>
+      <obj_property name="ObjectShortName">pwm_spk1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/pwm_spk2" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">pwm_spk2</obj_property>
+      <obj_property name="ObjectShortName">pwm_spk2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/start" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/soff_time1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">soff_time1[19:0]</obj_property>
+      <obj_property name="ObjectShortName">soff_time1[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/soff_time2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">soff_time2[19:0]</obj_property>
+      <obj_property name="ObjectShortName">soff_time2[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/son_time1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">son_time1[19:0]</obj_property>
+      <obj_property name="ObjectShortName">son_time1[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/son_time2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">son_time2[19:0]</obj_property>
+      <obj_property name="ObjectShortName">son_time2[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/drive_pwm_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">drive_pwm_reg</obj_property>
+      <obj_property name="ObjectShortName">drive_pwm_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/state_dtmf_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">state_dtmf_reg</obj_property>
+      <obj_property name="ObjectShortName">state_dtmf_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/done" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">done</obj_property>
+      <obj_property name="ObjectShortName">done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_done1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf_done1</obj_property>
+      <obj_property name="ObjectShortName">dtmf_done1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/key_index" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">key_index[7:0]</obj_property>
+      <obj_property name="ObjectShortName">key_index[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/dtmf" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf[0:1]</obj_property>
+      <obj_property name="ObjectShortName">dtmf[0:1]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_dtmf/uut/dtmf_unit/dtmf_index" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf_index[4:0]</obj_property>
+      <obj_property name="ObjectShortName">dtmf_index[4:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>

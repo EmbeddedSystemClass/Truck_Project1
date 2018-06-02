@@ -151,30 +151,6 @@ PMBE uses pin 78 (RD3)
 PMWR uses pin 81 (RD4)
 PMRD uses pin 82 (RD5)	
 
-T6963 LCD screen
-RA 0->7 LCD Data Bus
-RA0 p17
-RA1 p38
-RA2 p58
-RA3 p59
-RA4 p60
-RA5 p61
-RA6 p91
-RA7 p92
-RA14 C/D p66
-RA15 RD p67
-RC1 WR p6
-RC2 CE p7
-RC3 RST p8
-RC4 FS p9
-
-was using port g but I think RG2 & 3 conflicts with D-/+ ?
-CONFIG_RG0_AS_DIG_OUTPUT(); // col 0 - p90
-CONFIG_RG1_AS_DIG_OUTPUT(); // col 1 - p89
-CONFIG_RG2_AS_DIG_OUTPUT(); // col 2 - p57
-CONFIG_RG3_AS_DIG_OUTPUT(); // col 3 - p56
-
-
 Peripheral Pins for SPI
 
 Input Name				Function Name		Register	Function Mapping Bits
@@ -215,11 +191,16 @@ CONFIG_SDO1_TO_RP(sdo_pin)
 CONFIG_SCK1OUT_TO_RP(sclk_pin)
 CONFIG_SS1OUT_TO_RP(ss_pin)
 
-as master:
-pin 47	RD14	RPI42	MISO	(input)
-pin 48	RD15	RP5		MOSI	(output)
-pin 49	RF4		RP10	SCLK	(output)
-pin 50	RF5		RP17	SS		(output)
+								as master	as slave
+pin 47	RD14	RPI42	MISO	(input)		(output)
+pin 48	RD15	RP5		MOSI	(output)	(input)
+pin 49	RF4		RP10	SCLK	(output)	(input)
+pin 50	RF5		RP17	SS		(output)	(input)
+
+p47 - 3rd from left bottom inside
+p48 - 2nd from left bottom outside
+p49 - 2nd from left bottom inside
+p50 - 1st from left bottom outside
 
 so in the config function:
 CONFIG_SDI1_TO_RP(RD14_RP);

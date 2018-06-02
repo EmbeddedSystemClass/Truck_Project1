@@ -8,40 +8,37 @@ NET		"reset"	LOC = "P101" ;
 NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
 
 # serial port
-NET		"tx_uart"	LOC = "P77";
-NET		"rx_uart"	LOC = "P75";
-NET		"tx_uart2"	LOC = "P69";
-NET		"rx_uart2"	LOC = "P64";
+NET		"tx_uart"	LOC = "P34";
+NET		"rx_uart"	LOC = "P36";
 
 # inputs from sensors
-NET		"rpm_signal"	LOC = "P62";
-NET		"mph_signal"	LOC = "P60";
+NET		"rpm_signal"	LOC = "P77";
+NET		"mph_signal"	LOC = "P75";
 
 # 7-seg LED outputs
-NET		"tx_rpm"	LOC = "P50";
-NET		"tx_mph"	LOC = "P48";
-NET		"pwm_signal" LOC = "P42";
+NET		"tx_rpm"	LOC = "P69";
+NET		"tx_mph"	LOC = "P64";
 
-#SPI slave signals
-#NET	"MOSI_i"	LOC = "P82";
-#NET	"MISO_o"	LOC = "P76";
-#NET	"SCLK_i"	LOC = "P74";
-#NET	"SS_i"		LOC = "P65";
+# speaker outputs
+NET		"pwm_spk1"	LOC = "P62";
+NET		"pwm_spk2"	LOC = "P60";
+
+# pwm for dimmer for LCD screen
+NET		"pwm_lcd"	LOC = "P50";
 
 #SPI master signals
-NET		"MOSI_o"	LOC = "P82";
-NET		"MISO_i"	LOC = "P76";
-NET		"SCLK_o"	LOC = "P74";
-#NET	"SS_o"		LOC = "P65";
+NET		"MOSI_o"	LOC = "P48";
+NET		"MISO_i"	LOC = "P45";
+NET		"SCLK_o"	LOC = "P41";
 
 # if using slave select for 2 different SPI slaves
-NET	"SS_o[0]"   LOC = "P65";
-NET	"SS_o[1]"   LOC = "P63";
+NET	"SS_o[0]"   LOC = "P39";
+NET	"SS_o[1]"   LOC = "P35";
 
-NET	"test[0]"	LOC = "P61";
-NET	"test[1]"	LOC = "p55";
-NET	"test[2]"	LOC = "p49";
-NET	"test[3]"	LOC = "p47";
+#NET	"test[0]"	LOC = "P61";
+#NET	"test[1]"	LOC = "p55";
+#NET	"test[2]"	LOC = "p49";
+#NET	"test[3]"	LOC = "p47";
 
 # led1 is the build-in LED's on the board
 NET		"led1[0]"	LOC = "p68";

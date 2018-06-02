@@ -65,26 +65,27 @@ bottom view with 64 pin dip socket on bottom:
 2)  gnd
 3)	nc	| pins removed so ICD plug can fit in 5->14
 4)	nc	|
-5)	gnd - used by programmer and SPI link to FPGA
-6)	
-7)
-8)
+5)  12 on AVR (MISO)	|							|
+6)  RST on AVR	 		|							|
+7)  11 on AVR (MOSI)	| 							| used by SPI link to FPGA
+8)  13 on AVR (SCLK)	| used by AVR programmer 	|
 9)	SS not used by programmer but used by SPI link to FPGA
 10)
-11)  13 on AVR (SCLK)	| used by AVR programmer 	|
-12)  11 on AVR (MOSI)	| 							| used by SPI link to FPGA
-13)  RST on AVR 		|
-14)  12 on AVR (MISO)	|							|
+11)
+12)
+13)
+14)	gnd - used by programmer and SPI link to FPGA
+
 15)	nc	| pins removed so ICD plug can fit in 5->14
 16) nc	|
-17)
-18)
+17) 3v3 UART3 rx
+18) 3v3 UART3 tx
 19) Vcc
 20) gnd
 21) - broken pin
-22)
+22) 5v UART3 tx
 23) - broken pin
-24)
+24) 5v UART3 rx
 25) - broken pin
 26) - broken pin
 27) | pins removed so ICD plug can fit in 29->36
@@ -238,15 +239,146 @@ connections to FPGA:
 rpm	(input)
 mph	(input)
 fuel pump shutoff (output to no conn on relay)
-tone generator (output to speaker)
+tone generator (output to speaker(s))
+pwm signal to LCD
 rev limiter
+rpm/mph serial outputs to LED box
 
+so far need (2) 3v3/5v converter for 8 signals
+10 pin ICD cable for SPI connection to PIC/AVR (use SS signal to select AVR/PIC)
+
+# lower right pins looking at bottom of board
+#	.		.
+#	.		.
+#	.		.
+#	36		35
+#	5v		gnd
+#	40		39
+#	42		41
+#	47		45
+#	49		48
+#	55		50
+#	61		60
+#	63		62
+#	65		64
+#	74		69
+#	76		75
+#	82		77
+
+starting from left outside going up
+77) tx	|	UART1
+75) rx	|
+
+69) tx	|	UART2
+64) rx	|
+
+62) rpm_signal input
+60) mph_signal input
+
+50) tx_rpm (output to LED)
+48) tx_mph (output to LED)
+45) pwm signal to LCD
+
+starting from left inside going up
+82) MOSI
+76) MISO
+74) SCLK
+65) SS 1
+63) SS 2
+
+61 - 47) 4 test signals
+42) pwm signal to speaker 1
+40)  "     "    "   "     2
+
+42) pwm signal for speaker
+
+
+42) pwm output to LCD
+
+
+82)
 connections to outside:
 
 monitor for PIC24*
 15 ADC's from PIC24**
 alarm from PIC24 (12v on/off)
 serial port to TS-7XXX
+
+FPGA card looking at top with
+FPGA on right:
+
+conv chips:
+
+6 5 4
+1 2 3
+
+chip 1 has 1st 4 (77 -> 64)
+and goes to left
+chip 2 has next 4 (62 -> 48)
+and goes to left
+chip 3 has next 3 (45 -> 39) 
+and skips over gnd and
+then the one after gnd (35)
+chip 4 1st on on right has
+next one on outside (33)
+and then starts with 1st on
+bottom of inside
+
+3v3 tx is 36
+3v3 rx is 34
+
+34	rx				33		| chip 4 (1st one)
+36	tx				35	|	chip 3
+5v					gnd
+40	|				39	|	chip 3
+42	|	chip 6		41	|
+47	|				45	|
+49	|				48		|
+55		|			50		|	chip 2
+61		|	chip 5	60		|
+63		|			62		|
+65		|			64	|
+74	|				69	|	chip 1
+76	| chip 4		75	|
+82	|				77	|
+
+MOSI 48
+MISO 45
+SCLK 41
+SS   39
+
+
+5-pin ICD conn. to SPI on main board
+(from underside of FPGA card w/ chips on bottom)
+gnd		x		x		SCLK	x
+x		x		SS		MOSI	MISO
+
+20-pin ICD cable
+(from underside of FPGA card w/ chips on bottom)
+
+1   2   3 ...  10
+11  12  13 ... 20
+
+1) 77 rpm_signal (input)
+2) 75 mph_signal (input)
+3) 69 tx_rpm     (output)
+4) 64 tx_mph     (output)
+5) 62 pwm_spk1     (output)
+6) 60 pwm_spk2     (output)
+7) 50 pwm_lcd     (output)
+8) 35 fuel pump shutoff     (output)
+9) 33 rev limiter     (output)
+10) 82 (the rest are unassigned)
+11) 76
+12) 74
+13) 65
+14) 63
+15) 61
+16) 55
+17) 49
+18) 47
+19) 42
+20) 40
 
 AVR to t6963:
 

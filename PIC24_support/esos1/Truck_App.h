@@ -178,7 +178,7 @@ enum rt_types
 
 volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
 
-
+ESOS_USER_TASK(spi_task);
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
@@ -569,7 +569,7 @@ ESOS_USER_TASK(poll_keypad)
 //    cmd_param_task = esos_GetTaskHandle(menu_task);
 
 	configKeypad();
-
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -577,7 +577,7 @@ ESOS_USER_TASK(poll_keypad)
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
@@ -629,7 +629,7 @@ volatile uint8_t  cmd_array[24] = {0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x8
 //******************************************************************************************//
 //**************************************** echo_spi ****************************************//
 //******************************************************************************************//
-ESOS_USER_TASK(echo_spi_task)
+ESOS_USER_TASK(spi_task)
 {
 	static uint8_t data1;
 //	static uint8_t data2;
@@ -652,13 +652,12 @@ ESOS_USER_TASK(echo_spi_task)
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("echo_spi_task on comm1");
+    ESOS_TASK_WAIT_ON_SEND_STRING("spi_task on comm1");
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 	ESOS_TASK_SIGNAL_AVAILABLE_SPI();
 //#endif
-
 
 	data1 = 0x21;
     while(TRUE)

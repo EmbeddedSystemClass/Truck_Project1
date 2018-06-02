@@ -13,7 +13,8 @@ use XESS.CommonPckg.all;
 entity pwm2 is
 	port(
 		clk, reset: in std_logic;
-		pwm_signal: out std_logic;
+		pwm_signal_1: out std_logic;
+		pwm_signal_2: out std_logic;
 		start: in std_logic;
 		done: out std_logic;
 		len: in signed(7 downto 0);
@@ -324,7 +325,8 @@ begin
 	if reset = '0' then
 		reg1 <= idle_pwm;
 		next1 <= idle_pwm;
-		pwm_signal <= '0';
+		pwm_signal_1 <= '0';
+		pwm_signal_2 <= '0';
 		time_delay_next1 <= (others=>'0');
 		time_delay_reg1 <= (others=>'0');
 	elsif clk'event and clk = '1' then
@@ -334,13 +336,15 @@ begin
 					next1 <= start_pwm1;
 				end if;
 			when start_pwm1 =>
-				pwm_signal <= '1';
+				pwm_signal_1 <= '1';
+				pwm_signal_2 <= '1';
 				next1 <= on_pwm;
 			when on_pwm =>
 				if time_delay_reg1 > sOn_Time then
 					time_delay_next1 <= (others=>'0');
 					next1 <= off_pwm;
-					pwm_signal <= '0';
+					pwm_signal_1 <= '0';
+					pwm_signal_2 <= '0';
 				else
 					time_delay_next1 <= time_delay_reg1 + 1;
 				end if;

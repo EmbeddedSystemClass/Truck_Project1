@@ -171,6 +171,8 @@ PD7		PB4
 PB0		PB3
 PB1		PCB2
 
+PC4 & 5 are the 2 behind PB4 & 5
+
 note: be sure and change the clock speed in the Makefile (slow for older one)
 pin labels on bottom left with reset button on left
 13 - SCK
@@ -201,6 +203,7 @@ bottom view w/ reset button on right
 TX		RX		RESET*		gnd		PD2		PD3		PD4		PD5		PD6		PD7		PB0		PB1
 
 RAW		gnd		RESET*		VCC		PC3		PC2		PC1		PC0		PB5		PB4		PB3		PB2
-																	SCLK	MISO	MOSI
+																	SCLK	MISO	MOSI	SS
 *either one goes to CS signal on programmer
+
 

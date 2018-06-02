@@ -132,6 +132,10 @@
     </file>
     <file xil_pn:name="pwm1.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="14"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
+    </file>
+    <file xil_pn:name="dtmf.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="53"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="14"/>
     </file>
   </files>
