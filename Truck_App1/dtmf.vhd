@@ -14,13 +14,11 @@ entity dtmf is
 	port(
 		clk, reset: in std_logic;
 		dtmf_index: in std_logic_vector(4 downto 0);
+		special_cmd: in std_logic;
 		dtmf_signal_1: out std_logic;
 		dtmf_signal_2: out std_logic;
 		start: in std_logic;
-		len: in std_logic_vector(3 downto 0);
-		done: out std_logic;
-		duty_cycle: in std_logic_vector(2 downto 0)
-		);
+		done: out std_logic);
 end dtmf;
 
 architecture dtmf_arch of dtmf is
@@ -37,7 +35,7 @@ architecture dtmf_arch of dtmf is
 	type state_dtmf1 is (dtmf_idle, dtmf_next, dtmf_next2, dtmf_done);
 	signal state_dtmf_reg, state_dtmf_next: state_dtmf1;
 
-	type state_vary is (idle_vary, start_vary, next_vary1, next_vary2, next_vary3, done_vary);
+	type state_vary is (idle_vary, start_vary, next_vary1, next_vary2, next_vary3, modify_tone, done_vary);
 	signal vary_reg, vary_next : state_vary;
 
 	signal time_delay_reg1, time_delay_next1: signed(23 downto 0);
@@ -52,8 +50,6 @@ architecture dtmf_arch of dtmf is
 	signal sOff_Time2: signed(19 downto 0);
 	signal skip: std_logic;
 	signal tune_done: std_logic;
-	signal sDutyCycle: std_logic_vector(2 downto 0);
-	signal note_len: unsigned(24 downto 0);
 	signal whole_period1: std_logic_vector(19 downto 0);
 	signal half_period1: std_logic_vector(19 downto 0);
 	signal whole_period2: std_logic_vector(19 downto 0);
@@ -63,6 +59,7 @@ architecture dtmf_arch of dtmf is
 	signal iwhole_period2: signed(19 downto 0);
 	signal ihalf_period2: signed(19 downto 0);
 	signal dtmf: dtmf_array;
+	signal reverse: std_logic;
 begin
 
 play_note: process(clk, reset, vary_reg)
@@ -84,23 +81,27 @@ begin
 		iwhole_period2 <= (others=>'0');
 		whole_period2 <= (others=>'0');
 		half_period2 <= (others=>'0');
-		sDutyCycle <= "000";
 --		dtmf <= load_dtmf(conv_integer("0000"));
 		dtmf <= (others=>(others=>'0'));
+		reverse <= '0';
 		
 	elsif clk'event and clk = '1' then
 		case vary_reg is
 			when idle_vary =>
 				if next_note = '1' then
-					sDutyCycle <= duty_cycle;
 					vary_next <= start_vary;
 				end if;	
 			when start_vary =>
-				dtmf <= load_dtmf(conv_integer(dtmf_index));
-				itemp1 := conv_integer(dtmf(0));
-				whole_period1 <= conv_std_logic_vector(itemp1,20);
-				itemp2 := conv_integer(dtmf(1));
-				whole_period2 <= conv_std_logic_vector(itemp2,20);
+				if special_cmd = '0' then
+					dtmf <= load_dtmf(conv_integer(dtmf_index));
+					itemp1 := conv_integer(dtmf(0));
+					whole_period1 <= conv_std_logic_vector(itemp1,20);
+					itemp2 := conv_integer(dtmf(1));
+					whole_period2 <= conv_std_logic_vector(itemp2,20);
+				else
+					whole_period1 <= conv_std_logic_vector(G4,20);
+					whole_period2 <= conv_std_logic_vector(GS4,20);
+				end if;	
 				vary_next <= next_vary1;
 			when next_vary1 =>
 				half_period1 <= '0' & whole_period1(19 downto 1);
@@ -113,46 +114,30 @@ begin
 			when next_vary3 =>
 				iwhole_period2 <= conv_signed(conv_integer(whole_period2),20);
 				ihalf_period2 <= conv_signed(conv_integer(half_period2),20);
-				vary_next <= done_vary;
-			when done_vary =>
-				-- case sDutyCycle is
-					-- when "000" =>
-						-- -- 12% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period - iquarter_period - isixteen_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period + iquarter_period + isixteen_period;
-					-- when "001" =>
-						-- -- 25% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period - iquarter_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period + iquarter_period;
-					-- when "010" =>
-						-- -- 30% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period - iquarter_period + isixteen_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period + iquarter_period - isixteen_period;
-					-- when "011" =>
-						-- -- square wave
-						-- sOn_Time1 <= iwhole_period - ihalf_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period;
-					-- when "100" =>
-						-- -- 60% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period + iquarter_period - isixteen_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period - iquarter_period + isixteen_period;
-					-- when "101" =>
-						-- -- 75% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period + iquarter_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period - iquarter_period;
-					-- when "110" =>
-						-- -- 80% duty_cycle
-						-- sOn_Time1 <= iwhole_period - ihalf_period + iquarter_period + isixteen_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period - iquarter_period - isixteen_period;
-					-- when others =>	
-						-- sOn_Time1 <= iwhole_period - ihalf_period;
-						-- sOff_Time1 <= iwhole_period - ihalf_period;
-				-- end case;
+				vary_next <= modify_tone;
+			when modify_tone =>	
 				sOn_Time1 <= iwhole_period1 - ihalf_period1;
 				sOff_Time1 <= iwhole_period1 - ihalf_period1;
 				sOn_Time2 <= iwhole_period2 - ihalf_period2;
 				sOff_Time2 <= iwhole_period2 - ihalf_period2;
-				vary_next <= idle_vary;
+				if special_cmd = '0' then
+					vary_next <= idle_vary;
+				else vary_next <= done_vary;
+				end if;
+			when done_vary =>
+				if time_delay_reg3 > TIME_DELAY9/8 then
+					time_delay_next3 <= (others=>'0');
+					sOn_Time1 <= sOn_Time1 - 2;
+					sOn_Time2 <= sOn_Time2 - 2;
+					sOff_Time1 <= sOff_Time1 - 1;
+					sOff_Time2 <= sOff_Time2 - 1;
+				else
+					time_delay_next3 <= time_delay_reg3 + 1;
+					if start = '0' then
+						time_delay_next3 <= (others=>'0');
+						vary_next <= idle_vary;
+					end if;	
+				end if;
 		end case;
 		vary_reg <= vary_next;
 		time_delay_reg3 <= time_delay_next3;
@@ -171,21 +156,11 @@ begin
 		next_note <= '0';
 		tune_done <= '0';
 		done <= '0';
-		note_len <= '0' & X"00ffff";
 
 	else if clk'event and clk = '1' then
 		case state_dtmf_reg is
 			when dtmf_idle =>
 				if start = '1' then		-- wait for calling program to start the whole process
-					case len is
-						when "0000" => note_len <= '0' & X"00FFFF";
-						when "0001" => note_len <= '0' & X"01FFFF";
-						when "0010" => note_len <= '0' & X"03FFFF";
-						when "0011" => note_len <= '0' & X"07FFFF";
-						when "0100" => note_len <= '0' & X"0FFFFF";
-						when "0101" => note_len <= '0' & X"1FFFFF";
-						when others => note_len <= '0' & X"3FFFFF";
-					end case;
 					done <= '0';
 					state_dtmf_next <= dtmf_next;
 				end if;	
@@ -195,15 +170,17 @@ begin
 				next_note <= '1';		-- trigger the play_note process which sets the on/off times
 				start_dtmf <= '1';
 				state_dtmf_next <= dtmf_next2;
-
 			when dtmf_next2 =>
 				next_note <= '0';
---				if time_delay_reg2 > TIME_DELAY5a then
-				if time_delay_reg2 > note_len then
+				if time_delay_reg2 > TIME_DELAY5a then
 					time_delay_next2 <= (others=>'0');
 					state_dtmf_next <= dtmf_done;
 				else
 					time_delay_next2 <= time_delay_reg2 + 1;
+					if start = '0' then
+						time_delay_next2 <= (others=>'0');
+						state_dtmf_next <= dtmf_done;
+					end if;	
 				end if;
 			when dtmf_done =>
 				state_dtmf_next <= dtmf_idle;

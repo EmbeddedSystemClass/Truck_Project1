@@ -62,10 +62,10 @@ package FifoPckg is
       LENGTH_G : natural := 16          -- Number of words in the FIFO.
       );
     port (
-      rst_i   : in  std_logic                            := NO;  -- Active-high reset.
+      rst_i   : in  std_logic                            := '0';  -- Active-low reset.
       clk_i   : in  std_logic;          -- Master clock.
-      add_i   : in  std_logic                            := NO;  -- Remove data from the front of the FIFO.
-      rmv_i   : in  std_logic                            := NO;  -- Add data to the back of the FIFO.
+      add_i   : in  std_logic                            := YES;  -- Remove data from the front of the FIFO.
+      rmv_i   : in  std_logic                            := YES;  -- Add data to the back of the FIFO.
       data_i  : in  std_logic_vector(WIDTH_G-1 downto 0) := (others => ZERO);  -- Input data to FIFO.
       data_o  : out std_logic_vector(WIDTH_G-1 downto 0);  -- Output data from FIFO.
       empty_o : out std_logic;          -- True when the FIFO is empty.
@@ -90,7 +90,7 @@ use XESS.CommonPckg.all;
 entity Fifo255x16cc is
   port (
     clk_i   : in  std_logic;            -- master clock
-    rst_i   : in  std_logic                     := NO;  -- reset
+    rst_i   : in  std_logic                     := '0';  -- reset
     rd_i    : in  std_logic                     := NO;  -- read fifo control
     wr_i    : in  std_logic                     := NO;  -- write fifo control
     data_i  : in  std_logic_vector(15 downto 0) := (others => ZERO);  -- input data bus
@@ -131,7 +131,7 @@ begin
 
   process (clk_i, rst_i)
   begin
-    if rst_i = '1' then
+    if rst_i = '0' then
       rdAddr_r <= 0;
       wrAddr_r <= 0;
       level_s  <= 0;
@@ -210,7 +210,7 @@ begin
 
   process (rdClk_i, rst_i)
   begin
-    if rst_i = YES then
+    if rst_i = '0' then
       rdAddr_r           <= (others => '0');
       prevGrayRdAddr_r   <= binaryTogray("11111111");
       grayRdAddr_r       <= binaryTogray("00000000");
@@ -227,7 +227,7 @@ begin
 
   process (wrClk_i, rst_i)
   begin
-    if rst_i = YES then
+    if rst_i = '0' then
       wrAddr_r               <= (others => '0');
       grayWrAddr_r           <= BinaryToGray("00000000");
       prevGrayRdAddrWrSide_r <= BinaryToGray("11111111");
@@ -304,7 +304,7 @@ begin
 
   process (rst_i, clk_i)
   begin
-    if rst_i = '1' then
+    if rst_i = '0' then
       rmvAddr_r      <= 0;
       addAddr_r      <= 0;
       level_r        <= 0;

@@ -35,11 +35,6 @@ NET		"SCLK_o"	LOC = "P41";
 NET	"SS_o[0]"   LOC = "P39";
 NET	"SS_o[1]"   LOC = "P35";
 
-#NET	"test[0]"	LOC = "P61";
-#NET	"test[1]"	LOC = "p55";
-#NET	"test[2]"	LOC = "p49";
-#NET	"test[3]"	LOC = "p47";
-
 # led1 is the build-in LED's on the board
 NET		"led1[0]"	LOC = "p68";
 NET		"led1[1]"	LOC = "p78";

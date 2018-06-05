@@ -1,39 +1,36 @@
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
--- library XESS;
--- use XESS.CommonPckg.all;
--- use XESS.PulsePckg.all;
-
+ 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
-
+ 
 ENTITY testmain IS
 END testmain;
-
-ARCHITECTURE behavior OF testmain IS
-
+ 
+ARCHITECTURE behavior OF testmain IS 
+ 
     -- Component Declaration for the Unit Under Test (UUT)
-
+ 
     COMPONENT multi_byte
     PORT(
          clk : IN  std_logic;
          reset : IN  std_logic;
          tx_uart : OUT  std_logic;
          rx_uart : IN  std_logic;
-         tx_uart2 : OUT  std_logic;
-         rx_uart2 : IN  std_logic;
          tx_rpm : OUT  std_logic;
          tx_mph : OUT  std_logic;
          pwm_signal : OUT  std_logic;
          rpm_signal : IN  std_logic;
          mph_signal : IN  std_logic;
+         pwm_spk1 : OUT  std_logic;
+         pwm_spk2 : OUT  std_logic;
+         pwm_lcd : OUT  std_logic;
          MOSI_o : OUT  std_logic;
          MISO_i : IN  std_logic;
          SCLK_o : OUT  std_logic;
          SS_o : OUT  std_logic_vector(1 downto 0);
-         test : OUT  std_logic_vector(3 downto 0);
          led1 : OUT  std_logic_vector(3 downto 0)
         );
     END COMPONENT;
@@ -43,46 +40,46 @@ ARCHITECTURE behavior OF testmain IS
    signal clk : std_logic := '0';
    signal reset : std_logic := '0';
    signal rx_uart : std_logic := '0';
-   signal rx_uart2 : std_logic := '0';
    signal rpm_signal : std_logic := '0';
    signal mph_signal : std_logic := '0';
    signal MISO_i : std_logic := '0';
 
  	--Outputs
    signal tx_uart : std_logic;
-   signal tx_uart2 : std_logic;
    signal tx_rpm : std_logic;
    signal tx_mph : std_logic;
    signal pwm_signal : std_logic;
+   signal pwm_spk1 : std_logic;
+   signal pwm_spk2 : std_logic;
+   signal pwm_lcd : std_logic;
    signal MOSI_o : std_logic;
    signal SCLK_o : std_logic;
    signal SS_o : std_logic_vector(1 downto 0);
-   signal test : std_logic_vector(3 downto 0);
    signal led1 : std_logic_vector(3 downto 0);
 
    -- Clock period definitions
    constant clk_period : time := 22 ns;
-
+ 
 BEGIN
-
+ 
 	-- Instantiate the Unit Under Test (UUT)
    uut: multi_byte PORT MAP (
           clk => clk,
           reset => reset,
           tx_uart => tx_uart,
           rx_uart => rx_uart,
-          tx_uart2 => tx_uart2,
-          rx_uart2 => rx_uart2,
           tx_rpm => tx_rpm,
           tx_mph => tx_mph,
           pwm_signal => pwm_signal,
           rpm_signal => rpm_signal,
           mph_signal => mph_signal,
+          pwm_spk1 => pwm_spk1,
+          pwm_spk2 => pwm_spk2,
+          pwm_lcd => pwm_lcd,
           MOSI_o => MOSI_o,
           MISO_i => MISO_i,
           SCLK_o => SCLK_o,
           SS_o => SS_o,
-          test => test,
           led1 => led1
         );
 
@@ -96,232 +93,24 @@ BEGIN
    end process;
 
 	reset_proc: process
-	begin
+		begin
 		reset <= '0';
 		wait for 100 ns;
 		reset <= '1';
-		wait for 100 ns;
 		wait;
-	end process;
+		end process;
 
    -- Stimulus process
    stim_proc: process
-   begin
-		-- hold reset state for 100 ns.
---		rx_uart <= '1';
-		wait for 110 ns;
+   begin		
+      -- hold reset state for 100 ns.
+      wait for 100 ns;	
 
+      wait for clk_period*10;
 
-		-- wait for 15 ms;	-- this comes out as 0x5F - SET_BRIGHTNESS_CMD with highest brightness (0xFF)
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
+      -- insert stimulus here 
 
-		-- wait for 15 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-
-		-- rx_uart <= '0';	-- this produces a 0x61 or SET_CDECIMAL w/ param = 1
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-
-		-- wait for 8 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD = update_rate = 0x3FFFFFF (highest poss. update_rate)
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-
-		-- wait for 3 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD = update_rate = 0x3FFFFFF (highest poss. update_rate)
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-		-- wait for 14 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD = update_rate = 0x1FFFFFF (1.565 seconds)
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-
-		-- wait for 14 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD = update_rate = 0xFFFFFF (760 ms)
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-
-		-- wait for 14 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD = update_rate = 0x7FFFFF (391 ms) divide 0x7FFFFF by 21,454
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-
-		-- wait for 14 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD  update_rate 0x3ffff = 184ms
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-
-		-- wait for 14 ms;
-		-- -- send a 0x3f - (low bit first) 11111100 then stop bit is high
-		-- rx_uart <= '0';		-- start bit
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		
-		-- wait for 52.1 us;	-- makes a 0x9f - SET_UPDATE_RATE_CMD  update_rate 0x1ffff = 92ms
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '0';
-		-- wait for 52.1 us;
-		-- rx_uart <= '1';		-- stop bit (high)
-		
-
-		wait;
-	end process;
+      wait;
+   end process;
 
 END;

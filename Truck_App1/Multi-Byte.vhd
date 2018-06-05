@@ -18,7 +18,6 @@ entity multi_byte is
 		rx_uart: in std_logic;
 		tx_rpm: out std_logic;
 		tx_mph: out std_logic;
-		pwm_signal: out std_logic;
 		rpm_signal : in std_logic;
 		mph_signal : in std_logic;
 		pwm_spk1 : out std_logic;
@@ -38,24 +37,14 @@ architecture truck_arch of multi_byte is
 	type state_uart1 is (idle10, idle1, start, start_a, start_b, start_c, start_d, delay);
 	signal state_tx1_reg, state_tx1_next: state_uart1;
 
-	-- send_uart2
-	-- type state_uart3 is (idle3, start3, delay3);
-	-- signal state_tx2_reg, state_tx2_next: state_uart3;
-	
-	-- recv_uart1
-	type state_uart2 is (idle2, start2, delay2);
---	type state_uart2 is (idle2, idle2b, idle2c, start2, delay2, delay3);
+--	type state_uart2 is (idle2, start1, start2, uart2_test1, uart2_test2, uart2_test3,  done);
+	type state_uart2 is (idle2, start1, done);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
-
-	-- recv_uart2
-	-- type state_uart4 is (idle4, start4, delay4);
--- --	type state_uart2 is (idle2, idle2b, idle2c, start2, delay2, delay3);
-	-- signal state_rx2_reg, state_rx2_next: state_uart4;
 
 	type calc_type is (idle0, idle1_a, calc3, calc4, done, donex);
 	signal cstate_reg, cstate_next: calc_type;
 
-	type calc_type2 is (idle1a, spin, pre_mcmd, exec_mcmd, exec_other_mcmds, wait_mcmd, wait_mcmd2);
+	type calc_type2 is (idle1a, spin1, spin2, exec_mcmd, exec_other_mcmds, wait_mcmd, wait_mcmd2);
 	signal main_reg1, main_next1: calc_type2;
 
 	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
@@ -65,7 +54,7 @@ architecture truck_arch of multi_byte is
 	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
 	signal time_delay_reg, time_delay_next: unsigned(23 downto 0);		-- send_uart1
---	signal time_delay_reg2, time_delay_next2: unsigned(23 downto 0);	-- calc_proc
+	signal time_delay_reg2, time_delay_next2: unsigned(23 downto 0);	-- calc_proc
 	signal time_delay_reg3, time_delay_next3: unsigned(23 downto 0);	-- calc_proc2
 --	signal time_delay_reg4, time_delay_next4: unsigned(23 downto 0);
 --	signal time_delay_reg5, time_delay_next5: unsigned(23 downto 0);
@@ -124,6 +113,7 @@ architecture truck_arch of multi_byte is
 	signal stlv_temp1 : std_logic_vector(7 downto 0);
 	signal stlv_temp1a : std_logic_vector(7 downto 0);
 	signal stlv_temp2 : std_logic_vector(7 downto 0);
+	signal stlv_temp2a : std_logic_vector(7 downto 0);
 --	signal stlv_temp2a : std_logic_vector(7 downto 0);
 --	signal trigger_send_spi : std_logic;
 	signal addr: std_logic_vector(1 downto 0);
@@ -147,8 +137,18 @@ architecture truck_arch of multi_byte is
 	signal mykey: std_logic_vector(7 downto 0);
 	signal ikeys: i_keys;
 	signal stlv_duty_cycle: std_logic_vector(2 downto 0);
-	signal note_len: std_logic_vector(3 downto 0);
 	signal dtmf_index: std_logic_vector(4 downto 0);
+
+	signal FifoWrite: std_logic;
+	signal FifoDataIn: std_logic_vector(7 downto 0);
+	signal FifoRead: std_logic;
+	signal FifoDataOut: std_logic_vector(7 downto 0);
+	signal FifoEmpty: std_logic;
+	signal FifoFull: std_logic;
+	signal special: std_logic;
+	signal pwm_state: std_logic_vector(1 downto 0);
+	signal start_pwm: std_logic;
+	signal done_pwm: std_logic;
 	
 begin
 
@@ -223,124 +223,31 @@ spi_master_unit: entity work.SPI_MASTER(RTL)
 	DOUT=>mspi_dout,
 	DOUT_VLD=>mspi_dout_vld);
 
---lcd_pwm_unit: entity work.lcd_pwm
---	port map(clk=>clk, reset=>reset,
+fifo_unit: entity work.STD_FIFO
+	port map(CLK=>clk,RST=>reset,
+		WriteEn=>FifoWrite,
+		DataIn=>FifoDataIn,
+		ReadEn=>FifoRead,
+		DataOut=>FifoDataOut,
+		Empty=>FifoEmpty,
+		Full=>FifoFull);
+
+pwm_unit: entity work.lcd_pwm
+	port map(clk=>clk,reset=>reset,
+		pwm_signal=>pwm_lcd,
+		state=>pwm_state,
+		duty_cycle=>stlv_duty_cycle,
+		done=>done_pwm);
 	
 dtmf_unit: entity work.dtmf
 	port map(clk=>clk,reset=>reset,
 		dtmf_index=>dtmf_index,
+		special_cmd=>special,
 		dtmf_signal_1=>pwm_spk1,
 		dtmf_signal_2=>pwm_spk2,
 		start=>start_dtmf,
-		len=>note_len,
-		done=>dtmf_done1,
-		duty_cycle=>stlv_duty_cycle);
+		done=>dtmf_done1);
 	
--- test_dtmf: process(clk, reset, drive_pwm_reg)
--- begin
-	-- if reset = '0' then
-		-- drive_pwm_reg <= pwm_idle;
-		-- drive_pwm_next <= pwm_idle;
-		-- start_dtmf <= '0';
-		-- time_delay_reg8 <= (others=>'0');
-		-- time_delay_next8 <= (others=>'0');
-		-- pwm_lcd <= '0';
--- --		mykey <= "000";
-		-- key_len <= X"29";
-		-- dtmf_index <= (others=>'0');
-		-- key_index <= (others=>'0');
-		-- skip4 <= '0';
-		-- stlv_duty_cycle <= "000";
--- --		note_len <= X"7";
-		
-	-- else if clk'event and clk = '1' then
-		-- case drive_pwm_reg is
-			-- when pwm_idle =>
-				-- if time_delay_reg8 > TIME_DELAY5a then
-					-- time_delay_next8 <= (others=>'0');
--- --					drive_pwm_next <= pwm_start;
-					-- drive_pwm_next <= pwm_idle;
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-			-- when pwm_start =>
-				
-				-- skip4 <= not skip4;
-				-- if skip4 = '1' then
-					-- if key_index > 10 then
-						-- key_index <= (others=>'0');
-					-- else 
-						-- case dtmf_index is
-							-- when "00000" => dtmf_index <= "00001";
-							-- when "00001" => dtmf_index <= "00010";
-							-- when "00010" => dtmf_index <= "00011";
-							-- when "00011" => dtmf_index <= "00100";
-							-- when "00100" => dtmf_index <= "00101";
-							-- when "00101" => dtmf_index <= "00110";
-							-- when "00110" => dtmf_index <= "00111";
-							-- when "00111" => dtmf_index <= "01000";
-							-- when "01000" => dtmf_index <= "01001";
-							
-							-- -- when "01001" => dtmf_index <= "01010";
-							-- -- when "01010" => dtmf_index <= "01011";
-							-- -- when "01011" => dtmf_index <= "01100";
-							-- -- when "01100" => dtmf_index <= "01101";
-							-- -- when "01101" => dtmf_index <= "01110";
-							-- -- when "01110" => dtmf_index <= "01111";
-							-- when others => dtmf_index <= "00000";
-						-- end case;
-						-- case stlv_duty_cycle is
-							-- when "000" => stlv_duty_cycle <= "001";
-							-- when "001" => stlv_duty_cycle <= "010";
-							-- when "010" => stlv_duty_cycle <= "011";
-							-- when "011" => stlv_duty_cycle <= "100";
-							-- when "100" => stlv_duty_cycle <= "101";
-							-- when "101" => stlv_duty_cycle <= "000";
-							-- when others => stlv_duty_cycle <= "000";
-						-- end case;
-						-- key_index <= key_index + 1;
-					-- end if;
-				-- end if;
-				-- start_dtmf <= '1';
-				-- drive_pwm_next <= pwm_next1;
-			-- when pwm_next1 =>
-				-- start_dtmf <= '0';
-				-- drive_pwm_next <= pwm_next2;
-			-- when pwm_next2 =>
-				-- if dtmf_done1 = '1' then
-					-- drive_pwm_next <= pwm_idle;
-				-- end if;
-				-- -- if time_delay_reg8 > TIME_DELAY3 then
-					-- -- time_delay_next8 <= (others=>'0');
-					-- -- drive_pwm_next <= pwm_idle;
-				-- -- else
-					-- -- time_delay_next8 <= time_delay_reg8 + 1;
-				-- -- end if;
-			-- when pwm_next3 =>
-				-- if time_delay_reg8 > TIME_DELAY3 then
-					-- time_delay_next8 <= (others=>'0');
-					-- drive_pwm_next <= pwm_idle;
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-			-- when pwm_done =>
-				-- if time_delay_reg8 > TIME_DELAY3 then
-					-- time_delay_next8 <= (others=>'0');
-					-- drive_pwm_next <= pwm_start;
--- --					drive_pwm_next <= pwm_done;
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-		-- end case;
-		-- time_delay_reg8 <= time_delay_next8;
-		-- drive_pwm_reg <= drive_pwm_next;
-		-- end if;
-	-- end if;
--- end process;
-	
--- ********************************************************************************
---	type state_dout is (idle_dout, start_dout, end_dout, done_dout, delay_dout);
-
 echo_dout_unit1: process(clk, reset, state_dout_reg)
 variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
 variable temp1: integer range 0 to 255:= 0;
@@ -351,7 +258,6 @@ begin
 		state_dout_reg <= idle_dout;
 		stlv_temp1 <= (others=>'0');
 		stlv_temp1a <= (others=>'0');
---		led1 <= (others=>'1');
 		addr <= (others=>'1');
 		mspi_din_vld <= '0';
 		mspi_din <= (others=>'0');
@@ -361,10 +267,7 @@ begin
 	else if clk'event and clk = '1' then
 		case state_dout_reg is
 			when idle_dout =>
---				led1 <= "1110";
 				if mspi_ready = '1' then
---					led1 <= "0111";
-
 					mspi_din <= stlv_temp1;		-- write
 					mspi_din_vld <= '1';
 					state_dout_next <= start_dout;
@@ -375,7 +278,6 @@ begin
 				mspi_din_vld <= '0';			
 --				if SS_o(0) = '0' then
 				if mspi_dout_vld = '1' then
---					led1 <= "1011";
 -- mspi_dout is what gets received by MISO
 --					if addr(0) = '1' then
 						stlv_temp1 <= mspi_dout;
@@ -404,7 +306,6 @@ begin
 						end if;	
 						stlv_temp1 <= conv_std_logic_vector(temp1,8);
 --						stlv_temp1 <= X"AA";
---						led1 <= "1011";
 						addr <= "01";					
 					else	
 						if temp2 < 33 then
@@ -451,7 +352,7 @@ begin
 		case state_tx1_reg is
 			when idle10 =>
 				start_tx <= '0';
- 				if time_delay_reg > TIME_DELAY8c then	-- this should be a settable param (update_rate)
+ 				if time_delay_reg > TIME_DELAY7 then
 					time_delay_next <= (others=>'0');
 					state_tx1_next <= idle1;
 				else
@@ -461,13 +362,13 @@ begin
 				data_tx <= conv_std_logic_vector(temp_uart,8);
 				skip2 <= not skip2;
 				if skip2 = '1' then
-					if temp_uart < 33 then
-						temp_uart:= 125;
+					if temp_uart > 125 then
+						temp_uart:= 33;
 					else
-						temp_uart:= temp_uart - 1;
+						temp_uart:= temp_uart + 1;
 					end if;	
 				end if;
-				data_tx <= bcdb(7 downto 0);
+--				data_tx <= bcdb(7 downto 0);
 				state_tx1_next <= idle10;
 				start_tx <= '1';
 				-- low_byte <= rpm_result(7 downto 0);
@@ -526,130 +427,41 @@ begin
 	end if;
 end process;
 
--- ********************************************************************************
-recv_uart1: process(clk,reset,state_uart_reg2)
+recv_uart: process(clk, reset, state_uart_reg2)
+variable test: integer range 0 to 1:= 0;
 begin
 	if reset = '0' then
 		state_uart_reg2 <= idle2;
+		state_uart_next2 <= idle2;
 		start_rx <= '1';
---		time_delay_reg4 <= (others=>'0');
---		time_delay_next4 <= (others=>'0');
-		stlv_temp2 <= (others=>'1');
---		led1 <= "1111";
+		stlv_data_ptr <= (others=>'0');
+		FifoDataIn <= (others=>'0');
+		FifoWrite <= '0';
+
 	else if clk'event and clk = '1' then
 		case state_uart_reg2 is
 			when idle2 =>
 				if done_rx = '1' then
 					start_rx <= '0';
-					stlv_temp2 <= data_rx;
-					state_uart_next2 <= start2;
+					FifoDataIn <= data_rx;
+					FifoWrite <= '1';
+					state_uart_next2 <= start1;
 				end if;
-			when start2 =>
+			when start1 =>	
+				FifoWrite <= '0';
 				start_rx <= '1';
---				led1 <= stlv_temp2(3 downto 0);
-				state_uart_next2 <= delay2;
-			when delay2 =>
-				stlv_temp2 <= X"FF";
+				state_uart_next2 <= done;
+			when done =>
 				state_uart_next2 <= idle2;
-
-			-- when idle2 =>
-				-- if time_delay_reg4 > TIME_DELAY8 then
--- --				if time_delay_reg4 > TIME_DELAY3 then
-					-- time_delay_next4 <= (others=>'0');
-					-- stlv_temp2 <= X"01";	-- simulate sending the param
--- --					stlv_temp2 <= X"ff";	-- simulate sending the param
-					-- state_uart_next2 <= idle2b;
--- --					state_uart_next2 <= idle2;
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
-			-- when idle2b =>
-				-- if time_delay_reg4 > TIME_DELAY9 then
-					-- time_delay_next4 <= (others=>'0');
-					-- stlv_temp2 <= X"ff";	-- simulate turning off the recv uart
-					-- state_uart_next2 <= idle2c;
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
-			-- when idle2c =>
-				-- if time_delay_reg4 > TIME_DELAY8b then
-					-- time_delay_next4 <= (others=>'0');
-					-- state_uart_next2 <= start2;
-					-- stlv_temp2 <= X"83";
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
-			-- when start2 =>
-				-- if time_delay_reg4 > TIME_DELAY9 then
-					-- time_delay_next4 <= (others=>'0');
--- --					state_uart_next2 <= delay2;
-					-- state_uart_next2 <= delay2;
-					-- stlv_temp2 <= X"ff";
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
-			-- when delay2 =>
-				-- if time_delay_reg4 > TIME_DELAY8 + TIME_DELAY9 then
--- --				if time_delay_reg4 > TIME_DELAY8 then
-					-- time_delay_next4 <= (others=>'0');
-					-- state_uart_next2 <= delay3;
-					-- stlv_temp2 <= X"82";
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
-			-- when delay3 =>
-				-- if time_delay_reg4 > TIME_DELAY9 then
-					-- time_delay_next4 <= (others=>'0');
--- --					state_uart_next2 <= idle2;
-					-- state_uart_next2 <= delay3;
-					-- stlv_temp2 <= X"ff";
-				-- else
-					-- time_delay_next4 <= time_delay_reg4 + 1;
-				-- end if;	
 		end case;
---		time_delay_reg4 <= time_delay_next4;
 		state_uart_reg2 <= state_uart_next2;
 		end if;
 	end if;
 end process;
 
 -- ********************************************************************************
--- recv_uart2: process(clk,reset)
--- begin
-	-- if reset = '0' then
-		-- state_rx2_reg <= idle4;
-		-- start_rx2 <= '1';
-		-- time_delay_reg6 <= (others=>'0');
-		-- time_delay_next6 <= (others=>'0');
-		-- stlv_temp2a <= (others=>'1');
-	-- else if clk'event and clk = '1' then
-		-- case state_rx2_reg is
-			-- when idle4 =>
-				-- if done_rx = '1' then
-					-- start_rx2 <= '0';
-					-- stlv_temp2a <= data_rx;
-					-- state_rx2_next <= start4;
-				-- end if;
-			-- when start4 =>
-				-- state_rx2_next <= delay4;
-			-- when delay4 =>
-				-- start_rx2 <= '1';
-				-- if time_delay_reg6 > TIME_DELAY9 then
-					-- time_delay_next6 <= (others=>'0');
-					-- state_rx2_next <= idle4;
-					-- stlv_temp2a <= X"FF";
-				-- else
-					-- time_delay_next6 <= time_delay_reg6 + 1;
-				-- end if;	
-		-- end case;
-		-- time_delay_reg6 <= time_delay_next6;
-		-- state_rx2_reg <= state_rx2_next;
-		-- end if;
-	-- end if;
--- end process;
-
--- ********************************************************************************
 calc_proc2: process(clk,reset,main_reg1)
+variable test: integer range 0 to 1:= 0;
 begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
@@ -669,53 +481,56 @@ begin
 --		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
 --		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
 --		time_delay_rpm <= "00" & X"03FFFF";		-- 11ms
-		led1 <= "1111";
 		start_rpm_wrapper <= '0';
 		start_mph_wrapper <= '0';
 		mph_signal_test <= '0';
 		mparam <= (others=>'1');
 		mcmd <= (others=>'1');
 		mph_or_not <= '0';
-		note_len <= X"7";
 		start_dtmf <= '0';
 		stlv_duty_cycle <= (others=>'0');
-		pwm_lcd <= '0';
---		stlv_temp2 <= (others=>'1');	
+		led1 <= "1111";
+		FifoRead <= '0';
+		special <= '0';
+		pwm_state <= (others=>'0');
+		start_pwm <= '0';
+
+--		FifoDataOut <= (others=>'0');
+--		pwm_lcd <= '0';
+		stlv_temp2 <= (others=>'1');	
 	elsif clk'event and clk = '1' then
 		case main_reg1 is
 			when idle1a =>
-				if time_delay_reg3 > TIME_DELAY9/2 then
-					time_delay_next3 <= (others=>'0');
---					main_next1 <= idle1a;
-					start_rpm_wrapper <= '1';
-					cmd_rpm <= SEND_CHAR_CMD;
-					main_next1 <= spin;
-				else
-					time_delay_next3 <= time_delay_reg3 + 1;
-				end if;					
-			when spin =>
-				if stlv_temp2 /= X"FF" then
-					if stlv_temp2(7) = '1' then		-- if high bit set, its a command
-						mph_or_not <= stlv_temp2(6);
-						mcmd <= stlv_temp2(4 downto 0);
-						if mcmd = SET_BRIGHTNESS_CMD
-								or mcmd = SET_CDECIMAL_CMD or
-										mcmd = SEND_CHAR_CMD then
-							if mph_or_not = '0' then
-								start_rpm_wrapper <= '0';
-							else
-								start_mph_wrapper <= '0';
-							end if;
-						end if;	
-						main_next1 <= pre_mcmd;
-					else 
-						mparam <= stlv_temp2(6 downto 0);		-- else it's a param
-					end if;
+				if FifoEmpty = '0' then
+					FifoRead <= '1';
+					main_next1 <= spin1;
 				end if;
-			when pre_mcmd =>
---				if rpm_done = '1' then
-					main_next1 <= exec_mcmd;
---				end if;
+			when spin1 =>
+				FifoRead <= '0';
+				stlv_temp2 <= FifoDataOut;
+--				led1 <= stlv_temp2(3 downto 0);
+				main_next1 <= spin2;
+			when spin2 =>
+				if stlv_temp2(7) = '1' then		-- if high bit set, its a command
+--						mph_or_not <= stlv_temp2(6);
+					mcmd <= stlv_temp2(4 downto 0);
+--					led1 <= stlv_temp2(3 downto 0);
+					-- if mcmd = SET_BRIGHTNESS_CMD
+							-- or mcmd = SET_CDECIMAL_CMD or
+									-- mcmd = SEND_CHAR_CMD then
+						-- if mph_or_not = '0' then
+							-- start_rpm_wrapper <= '0';
+						-- else
+							-- start_mph_wrapper <= '0';
+						-- end if;
+					-- end if;	
+--						main_next1 <= exec_mcmd;
+					main_next1 <= exec_other_mcmds;
+				else 
+					mparam <= stlv_temp2(6 downto 0);		-- else it's a param
+					main_next1 <= idle1a;					-- since the param is sent 1st
+															-- go back and wait for cmd
+				end if;
 			when exec_mcmd =>
 				if (rpm_done = '1' and mph_or_not = '0') or (mph_done = '1' and mph_or_not = '1') then
 					case mcmd is
@@ -762,18 +577,26 @@ begin
 						else stdlv_transmit_update_rate <= mparam & "1" & X"FFFF";
 						end if;
 					when DTMF_TONE_ON =>
-							dtmf_index <= '0' & mparam(3 downto 0);
-							note_len <= '0' & mparam(6 downto 4);
-							start_dtmf <= '1';
-							led1 <= dtmf_index(3 downto 0);
---							led1 <= mparam(6 downto 3);
+						dtmf_index <= '0' & mparam(3 downto 0);
+						special <= '0';
+						start_dtmf <= '1';
+--						led1 <= dtmf_index(3 downto 0);
+--						led1 <= mparam(6 downto 3);
 					when DTMF_TONE_OFF =>
-							start_dtmf <= '0';
---							led1 <= "0011";
-							led1 <= mparam(3 downto 0);
+						start_dtmf <= '0';
+						led1 <= "1111";
+						special <= '0';
+					when SPECIAL_TONE_ON =>
+						special <= '1';
+						start_dtmf <= '1';
+					when LCD_PWM =>
+						pwm_state <= mparam(1 downto 0);
+						stlv_duty_cycle <= mparam(4 downto 2);
+						led1 <= mparam(3 downto 0);
 					when others =>	
 					end case;
-				main_next1 <= wait_mcmd;	
+--				main_next1 <= wait_mcmd;
+				main_next1 <= idle1a;
 			when wait_mcmd =>
 				if time_delay_reg3 > TIME_DELAY9/2 then
 					time_delay_next3 <= (others=>'0');
@@ -790,7 +613,7 @@ begin
 					time_delay_next3 <= (others=>'0');
 					cmd_mph <= SEND_CHAR_CMD;
 					cmd_rpm <= SEND_CHAR_CMD;
-					main_next1 <= spin;
+					main_next1 <= idle1a;
 				else
 					time_delay_next3 <= time_delay_reg3 + 1;
 				end if;
@@ -799,5 +622,61 @@ begin
 		time_delay_reg3 <= time_delay_next3;
 	end if;
 end process;		
+
+-- ********************************************************************************
+
+-- recv_uart: process(clk, reset, state_uart_reg2)
+-- variable test: integer range 0 to 1:= 0;
+-- begin
+	-- if reset = '0' then
+		-- state_uart_reg2 <= idle2;
+		-- state_uart_next2 <= idle2;
+		-- time_delay_reg2 <= (others=>'0');
+		-- time_delay_next2 <= (others=>'0');
+		-- FifoDataIn <= (others=>'0');
+		-- FifoWrite <= '0';
+-- --		stlv_temp2a <= (others=>'0');
+-- --		stlv_temp2a <=  X"1A"; -- duty_cycle = 80%
+-- --		stlv_temp2a <=  X"16"; -- duty_cycle = 75%
+-- --		stlv_temp2a <=  X"12"; -- duty_cycle = 60%
+-- --		stlv_temp2a <=  X"0E"; -- duty_cycle = square wave
+-- --		stlv_temp2a <=  X"0A"; -- duty_cycle = 30%
+-- --		stlv_temp2a <=  X"06"; -- duty_cycle = 25%
+-- --		stlv_temp2a <=  X"02"; -- duty_cycle = 12%
+		-- stlv_temp2a <=  X"01";
+-- --idle2, start1, start2, uart2_test1, uart2_test2, uart2_test3,  done
+	-- else if clk'event and clk = '1' then
+		-- case state_uart_reg2 is
+			-- when idle2 =>
+				-- -- test := conv_integer(stlv_temp2a);
+				-- -- test := test + 1;
+				-- -- stlv_temp2a <= conv_std_logic_vector(test,8);
+				-- FifoDataIn <= stlv_temp2a;
+				-- FifoWrite <= '1';
+				-- state_uart_next2 <= start1;
+			-- when start1 =>
+				-- FifoWrite <= '0';
+				-- state_uart_next2 <= start2;
+			-- when start2 =>
+				-- if time_delay_reg2 > TIME_DELAY9 then
+					-- time_delay_next2 <= (others=>'0');
+					-- state_uart_next2 <= uart2_test1;
+				-- else
+					-- time_delay_next2 <= time_delay_reg2 + 1;
+				-- end if;
+			-- when uart2_test1 =>
+				-- state_uart_next2 <= uart2_test1;
+			-- when uart2_test2 =>
+				-- state_uart_next2 <= uart2_test1;
+			-- when uart2_test3 =>
+				-- state_uart_next2 <= done;
+			-- when done =>
+				-- state_uart_next2 <= idle2;
+		-- end case;
+		-- state_uart_reg2 <= state_uart_next2;
+		-- time_delay_reg2 <= time_delay_next2;
+		-- end if;
+	-- end if;
+-- end process;
 
 end truck_arch;
