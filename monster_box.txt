@@ -359,26 +359,30 @@ x		x		SS		MOSI	MISO
 1   2   3 ...  10
 11  12  13 ... 20
 
-1) 77 rpm_signal (input)
-2) 75 mph_signal (input)
-3) 69 tx_rpm     (output)
-4) 64 tx_mph     (output)
-5) 62 pwm_spk1     (output)
-6) 60 pwm_spk2     (output)
-7) 50 pwm_lcd     (output)
-8) 35 fuel pump shutoff     (output)
-9) 33 rev limiter     (output)
-10) 82 (the rest are unassigned)
-11) 76
-12) 74
-13) 65
-14) 63
-15) 61
-16) 55
-17) 49
-18) 47
-19) 42
-20) 40
+20-pin conn. looking at top of card w/FPGA on right
+1	2	3	4	5	6	7	8	9	10
+11	12	13	14	15	16	17	18	19	20
+
+1)	77 rpm_signal (input)
+2)	75 mph_signal (input)
+3)	69 tx_rpm     (output)
+4)	64 tx_mph     (output)
+5)	62 pwm_spk1     (output)
+6)	61 pwm_spk2     (output)
+7)	60 not working - probably bad conv chip
+8)	50 pwm_lcd     (output)
+9)	35 fuel pump shutoff     (output)
+10)	33 rev limiter     (output)
+11)	82 unassigned
+12)	76 unassigned
+13)	74 unassigned
+14)	65 unassigned
+15)	63 unassigned
+16)	55 unassigned
+17)	49 unassigned
+18)	47 unassigned
+19)	42 unassigned
+20)	40 unassigned
 
 AVR to t6963:
 

@@ -8,23 +8,25 @@ NET		"reset"	LOC = "P101" ;
 NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
 
 # serial port
-NET		"tx_uart"	LOC = "P34";
-NET		"rx_uart"	LOC = "P36";
+NET		"tx_uart"		LOC = "P34";
+NET		"rx_uart"		LOC = "P36";
 
 # inputs from sensors
 NET		"rpm_signal"	LOC = "P77";
 NET		"mph_signal"	LOC = "P75";
 
 # 7-seg LED outputs
-NET		"tx_rpm"	LOC = "P69";
-NET		"tx_mph"	LOC = "P64";
+NET		"tx_rpm"		LOC = "P69";
+NET		"tx_mph"		LOC = "P64";
 
 # speaker outputs
-NET		"pwm_spk1"	LOC = "P62";
-NET		"pwm_spk2"	LOC = "P60";
+NET		"pwm_spk1"		LOC = "P62";
+NET		"pwm_spk2"		LOC = "P61";
 
 # pwm for dimmer for LCD screen
-NET		"pwm_lcd"	LOC = "P50";
+NET		"pwm_lcd"		LOC = "P50";
+NET		"fp_shutoff"	LOC = "P82";
+NET		"rev_limit"		LOC = "P33";
 
 #SPI master signals
 NET		"MOSI_o"	LOC = "P48";

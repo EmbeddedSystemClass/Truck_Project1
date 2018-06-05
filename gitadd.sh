@@ -3,7 +3,6 @@ git add Truck_Project1_notes.txt
 git add monster_box.txt
 git add monster_box1.jpg
 git add keypad1.jpg
-git add todo.txt
 git add gitadd.sh
 git add .gitignore
 
@@ -59,6 +58,7 @@ git add Truck_App1/test_uart/test_uart.ucf
 git add Truck_App1/test_rpm_mph.c
 git add Truck_App1/test_write.c
 git add Truck_App1/fifo.vhd
+git add Truck_App1/test_outputs.zip
 git add Truck_App1/lib/*
 
 git add PIC24_support/lib/*

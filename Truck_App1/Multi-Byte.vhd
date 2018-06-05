@@ -23,6 +23,8 @@ entity multi_byte is
 		pwm_spk1 : out std_logic;
 		pwm_spk2 : out std_logic;
 		pwm_lcd : out std_logic;
+		fp_shutoff : out std_logic;
+		rev_limit: out std_logic;
 		MOSI_o : out std_logic;
 		MISO_i : in std_logic;
 		SCLK_o : out std_logic;
@@ -40,6 +42,12 @@ architecture truck_arch of multi_byte is
 --	type state_uart2 is (idle2, start1, start2, uart2_test1, uart2_test2, uart2_test3,  done);
 	type state_uart2 is (idle2, start1, done);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
+
+	type state_fp is (idle_fp, start_fp, done_fp);
+	signal state_reg_fp, state_next_fp: state_fp;
+
+	type state_rev is (idle_rev, start_rev, done_rev);
+	signal state_reg_rev, state_next_rev: state_rev;
 
 	type calc_type is (idle0, idle1_a, calc3, calc4, done, donex);
 	signal cstate_reg, cstate_next: calc_type;
@@ -81,6 +89,7 @@ architecture truck_arch of multi_byte is
 	signal skip4: std_logic;
 --	signal rpm_temp, mph_temp: std_logic;
 	signal rpm_result: std_logic_vector(16 downto 0);
+	signal urpm_result: unsigned(16 downto 0);
 	signal mph_result: std_logic_vector(16 downto 0);
 	signal mph_factor: std_logic_vector(5 downto 0):= (others=>'0');
 	signal rpm_factor: std_logic_vector(5 downto 0):= (others=>'0');
@@ -149,6 +158,13 @@ architecture truck_arch of multi_byte is
 	signal pwm_state: std_logic_vector(1 downto 0);
 	signal start_pwm: std_logic;
 	signal done_pwm: std_logic;
+	signal fp_override: std_logic;
+	signal rev_limit_max: std_logic_vector(6 downto 0);
+	signal rev_limit_min: std_logic_vector(6 downto 0);
+	signal urev_limit_max: unsigned(6 downto 0);
+	signal urev_limit_min: unsigned(6 downto 0);
+	signal reset_rev_limits: std_logic;
+	signal test_rpm_rev_limits: std_logic;
 	
 begin
 
@@ -247,7 +263,84 @@ dtmf_unit: entity work.dtmf
 		dtmf_signal_2=>pwm_spk2,
 		start=>start_dtmf,
 		done=>dtmf_done1);
-	
+
+mon_fp: process(clk, reset, state_reg_fp)
+begin
+	if reset = '0' then
+		state_reg_fp <= idle_fp;
+		state_next_fp <= idle_fp;
+		urpm_result <= (others=>'0');
+		fp_shutoff <= '1';	-- start out with relay closed (fp can be on if other relay closed)
+
+	else if clk'event and clk = '1' then
+		case state_reg_fp is
+			when idle_fp =>
+				if test_rpm_rev_limits = '1' then
+					urpm_result <= unsigned(rpm_result);
+				else
+					urpm_result <= unsigned(rpm_result);
+				end if;
+				state_next_fp <= start_fp;
+			when start_fp =>
+				if fp_override = '1' then
+					fp_shutoff <= '1';		-- close relay to fuel pump
+					state_next_fp <= idle_fp;
+				else
+					state_next_fp <= done_fp;
+				end if;	
+			when done_fp =>
+				if urpm_result < FP_RPM_MINIMUM then
+					fp_shutoff <= '0';
+				else fp_shutoff <= '1';
+				end if;
+				state_next_fp <= idle_fp;
+		end case;
+		state_reg_fp <= state_next_fp;
+		end if;
+	end if;
+end process;
+
+-- 1) check if rpm > MAX -> turn off
+-- 2) wait for rpm to be < MIN -> turn on
+
+mon_rev: process(clk, reset, state_reg_rev)
+begin
+	if reset = '0' then
+		state_reg_rev <= idle_rev;
+		state_next_rev <= idle_rev;
+		rev_limit <= '1';		-- start out with relay closed so ignition can be on if other relay closed
+
+	else if clk'event and clk = '1' then
+		case state_reg_rev is
+			when idle_rev =>
+				urev_limit_max <= unsigned(rev_limit_max);
+				urev_limit_min <= unsigned(rev_limit_min);
+				state_next_rev <= start_rev;
+			when start_rev =>
+				if reset_rev_limits = '1' then
+					state_next_rev <= idle_rev;
+				else
+					if urpm_result > urev_limit_max then
+						rev_limit <= '0';
+						state_next_rev <= done_rev;
+					end if;
+				end if;
+			when done_rev =>
+				if reset_rev_limits = '1' then
+					state_next_rev <= idle_rev;
+				else
+					if urpm_result < urev_limit_min then
+						rev_limit <= '1';
+						state_next_rev <= start_rev;
+					end if;
+				end if;
+		end case;
+		state_reg_rev <= state_next_rev;
+		end if;
+	end if;
+end process;
+
+		
 echo_dout_unit1: process(clk, reset, state_dout_reg)
 variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
 variable temp1: integer range 0 to 255:= 0;
@@ -494,13 +587,17 @@ begin
 		special <= '0';
 		pwm_state <= (others=>'0');
 		start_pwm <= '0';
+		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
+		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
+		rev_limit_min <= conv_std_logic_vector(RPM_MINIMUM,7);
+		reset_rev_limits <= '0';
+		stlv_temp2 <= (others=>'1');
+		test_rpm_rev_limits <= '0';
 
---		FifoDataOut <= (others=>'0');
---		pwm_lcd <= '0';
-		stlv_temp2 <= (others=>'1');	
 	elsif clk'event and clk = '1' then
 		case main_reg1 is
 			when idle1a =>
+				reset_rev_limits <= '0';
 				if FifoEmpty = '0' then
 					FifoRead <= '1';
 					main_next1 <= spin1;
@@ -593,6 +690,16 @@ begin
 						pwm_state <= mparam(1 downto 0);
 						stlv_duty_cycle <= mparam(4 downto 2);
 						led1 <= mparam(3 downto 0);
+					when FP_SHUTOFF_OVERRIDE =>
+						fp_override <= mparam(0);
+					when SET_MAX_REV_LIMITER =>
+						rev_limit_max <= mparam;
+						reset_rev_limits <= '1';
+					when SET_MIN_REV_LIMITER =>
+						rev_limit_max <= mparam;
+						reset_rev_limits <= '1';
+					when TEST_RPM_LIMIT =>
+						test_rpm_rev_limits <= mparam(0);
 					when others =>	
 					end case;
 --				main_next1 <= wait_mcmd;

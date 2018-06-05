@@ -236,6 +236,10 @@ package CommonPckg is
 	constant PRD_SIZE: integer:= 17;
 	constant DVSR_SIZE: integer:= 23;
 	constant MPH_P_REG_SIZE: integer:= 16;
+	constant FP_RPM_MINIMUM: integer:= 10000;
+	constant RPM_MAXIMUM: integer:= 50000;
+	constant RPM_MINIMUM: integer:= 20000;
+
 	constant OFF_CMD: std_logic_vector(4 downto 0):= "00000";
 	constant SEND_CHAR_CMD: std_logic_vector(4 downto 0):= "00001";
 	constant SET_BRIGHTNESS_CMD: std_logic_vector(4 downto 0):= "00010";
@@ -247,6 +251,20 @@ package CommonPckg is
 	constant DTMF_TONE_OFF: std_logic_vector(4 downto 0):= "01000";
 	constant SPECIAL_TONE_ON: std_logic_vector(4 downto 0):= "01001";
 	constant LCD_PWM: std_logic_vector(4 downto 0):= "01010";
+	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(4 downto 0):= "01011";
+	constant SET_MAX_REV_LIMITER: std_logic_vector(4 downto 0):= "01100";
+	constant SET_MIN_REV_LIMITER: std_logic_vector(4 downto 0):= "01101";
+	constant TEST_RPM_LIMIT: std_logic_vector(4 downto 0):= "01110";
+
+	constant UNUSED_CMD3: std_logic_vector(4 downto 0):= "01111";
+	constant UNUSED_CMD5: std_logic_vector(4 downto 0):= "10000";
+	constant UNUSED_CMD6: std_logic_vector(4 downto 0):= "10001";
+	constant UNUSED_CMD7: std_logic_vector(4 downto 0):= "10010";
+	constant UNUSED_CMD8: std_logic_vector(4 downto 0):= "10011";
+	constant UNUSED_CMD9: std_logic_vector(4 downto 0):= "10100";
+	constant UNUSED_CMD10: std_logic_vector(4 downto 0):= "10101";
+	constant UNUSED_CMD11: std_logic_vector(4 downto 0):= "10110";
+	constant UNUSED_CMD12: std_logic_vector(4 downto 0):= "10111";
 
 	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
 	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
