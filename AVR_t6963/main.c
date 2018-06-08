@@ -27,40 +27,27 @@
 #define DEBUG_CLRSCR2		6
 #define DEBUG_CLRSCR3		7
 #define DEBUG_MSG1			8
-#define DEBUG_SETPWM		9
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
 
-volatile UCHAR pwm_on;
-volatile UCHAR pwm_off;
-volatile UCHAR opwm_on;
-volatile UCHAR opwm_off;
 volatile UCHAR xbyte;
 volatile UCHAR high_delay;
 
 volatile int onoff;
 volatile int dc2;
+volatile UCHAR spi_ret;
 
 ISR(TIMER1_OVF_vect) 
 { 
-	if(onoff == 1)
+
+	if(+dc2 % 100 == 0)
 	{
-		if(--pwm_on < 2)
-		{
-			pwm_on = opwm_on;
-			CLR_PWM();
-			onoff = 0;
-		}
-	}else if(onoff == 0)
-	{	
-		if(--pwm_off < 2)
-		{
-			pwm_off = opwm_off;
-			SET_PWM();
-			onoff = 1;
-		}
-	}else SET_PWM();
+		spi_ret = SPDR;
+		if(bit_is_set(SPSR, SPIF))
+//		if(spi_ret != 0)
+			transmitByte(spi_ret);
+	}
 	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
 //	TCNT1 = 0xF800;
 }
@@ -75,7 +62,6 @@ int main(void)
 	UINT row, col;
 	char str[30];
 	UCHAR str_len;
-	UCHAR spi_ret;
 	UCHAR temp;
 
 	GDispInit();
@@ -84,7 +70,7 @@ int main(void)
     initUSART();
 	_delay_ms(20);
 //	initSPImaster();
-//	initSPIslave();
+	initSPIslave();
 
 //#if 0
 	GDispSetMode(XOR_MODE);
@@ -92,7 +78,6 @@ int main(void)
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
 	GDispClrTxt();
-	SET_PWM();
 	GDispStringAt(7,15,"LCD is on!");
 
 //	initSPImaster();
@@ -103,16 +88,12 @@ int main(void)
 //#endif
 
 	xbyte = 0x21;
-	opwm_on = pwm_on = 1;
-	opwm_off = pwm_off = 6;
-	onoff = 2;
-	high_delay = 0xF8;
 	TCNT1 = 0xFF00;
 	TCCR1A = 0x00;
 //	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
 	TCCR1B = (1<<CS11);
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
-	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
+//	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
 
 	i = 0;
 	dc2 = 0;
@@ -186,15 +167,6 @@ int main(void)
 					memcpy(str,&buff[7],str_len);
 					str[str_len] = 0;
 				break;
-				case DEBUG_SETPWM:
-					opwm_on = pwm_on = buff[1];
-					opwm_off = pwm_off = buff[2];
-					high_delay = buff[3];
-					if(pwm_off == 0)
-						onoff = 2;
-					else	
-						onoff = 1;
-				break;
 				default:
 				break;
 			}
@@ -208,9 +180,9 @@ int main(void)
 #if 0
 ISR(SPI_STC_vect)
 {
-//	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
-//	spi_ret = SPDR;
-//	transmitByte(spi_ret);
-//}
+	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
+	spi_ret = SPDR;
+	transmitByte(spi_ret);
+}
 #endif
 

@@ -5,6 +5,7 @@ git add monster_box1.jpg
 git add keypad1.jpg
 git add gitadd.sh
 git add .gitignore
+git add monster_box4a.jpg
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh

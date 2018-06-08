@@ -13,7 +13,7 @@ I/O (turning on and off lights and reading switches).
 	|											  |							    ^
 F	|											  |								|
 P	|											  v								|TCP/IP
-G	|---------------> RS-232* ----------------->| P	|							|
+G	|---------------> RS-232 ------------------>| P	|							|
 A	|											| I	|							v
 	|						|-----------|		| C |						|-----------|
 ----|						|			|		| 2	|						|			|	
@@ -21,7 +21,6 @@ A	|											| I	|							v
 							|			|									|			|
 							|-----------|									|-----------|
 
-* there is also a SPI connection between the FPGA and the PIC24			
 the PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
 TS-7200 and the LCD screen.
 
@@ -436,8 +435,15 @@ timing problem...
 
 **************** todo ****************
 
-use SS pin on 5-pin ICD between FPGA & PIC/AVR board to separate SPI signals from AVR/PIC
-SPI signals on AVR are 5v so the FPGA SPI signals need to be converted from 3v3 to 5v
+added fuel pump shutoff output for FPGA which shuts off fuel pump when rpms go to zero
+this must be overridden to start (relay in series with relay controlled by io card)
+
+also added rev limit feature which opens relay in series with io controlled relay for
+ignition but might just want to have it set off an alarm - too much gas to carb to shut
+off ignition possibly could wash out cylinders ?
+
+use SS pin on 5-pin ICD between FPGA & PIC/AVR board to separate SPI signals from AVR/PIC.
+The SPI signals on AVR are 5v so the FPGA SPI signals need to be converted from 3v3 to 5v
 but the SPI signals on the PIC are 3v3 so we need a separate cable. It would be nice
 to just use the ICD cable but even if we did converted the SPI signals from the ICD
 to 3v3 for the PIC, there would be bus contention when programming the AVR because the
@@ -461,6 +467,8 @@ of just idata & odata which are loaded by default
 
 **************** nice to have's: ****************
 
+use 2 extra pins from FPGA to 25 watt stereo amp using pwm2.vhd to play tunes
+
 FPGA reads from missing tooth wheel for the crank position and calculates the amount
 of necessary spark advance to control the distributor
 
@@ -475,7 +483,7 @@ Find out how to get TS-7200 to use the pthreadlib in its lib dir so we don't hav
 send it over as a static.
 
 Instead of ncurses program running on laptop, just gen up a PHP web interface and use
-the brower. (see dev2/TS-7260/www/)
+the brower. (see dev2/TS-7260/www/) Yeah, right.
 
 make an extra field in the O_DATA and I_DATA structs called group for acting on a group
 
@@ -486,19 +494,15 @@ GPS and accel modules on FPGA (serial?)
 cadmium sulfide photodetector under windshield for measuing light level to 
 dim display to rpm/mph LED's and LCD screen automatically.
 
-PWM signal from PIC24 controls SCR power to the LCD (to dim display)
-
-LOAD_RAM needs the transmit/receiveByte calls
-
 get alnum to work - just do it like the edit boxes only A->D is printed and
 '*' is escape and '#' is 'enter'
-
-do/init_exec has prompts but not part of check_boxes[]
-
-any checkbox can apply to a 'group' IO
 
 have a 100 or so byte section at beginning of dat files (just after the id tag) reserved
 for comments that can be edited and viewed.
 
 Use ESP8266 for remote wireless (bluetooth) control from Android phone (remote start
 - alarm disable - door poppers)
+
+SEN-12756 Sparkfun 3-Axis Accelerometer MMA8452
+SEN-11931 Sparkfun Dig. Temp Sensor TMP102
+

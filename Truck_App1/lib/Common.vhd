@@ -319,9 +319,7 @@ package CommonPckg is
 --	impure function add_queue(a : std_logic_vector) return integer;
 --	impure function add_queue(a : std_logic_vector) return integer;
 	impure function manage_queue(a : std_logic_vector; dq : data_queue; stlv_ptr : std_logic_vector; add : integer) return std_logic_vector;
-	
 	impure function load_dtmf(a : integer) return dtmf_array;
-	
 
 end package;
 

@@ -16,118 +16,79 @@
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="22" />
+   <WVObjectSize size="15" />
    <wave_markers>
       <marker time="1760517000000" label="" />
       <marker time="1760649000000" label="" />
       <marker time="1810737000000" label="" />
    </wave_markers>
-   <wvobject fp_name="/testmain/uut/fifowrite" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">fifowrite</obj_property>
-      <obj_property name="ObjectShortName">fifowrite</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/dtmf_signal_1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf_signal_1</obj_property>
+      <obj_property name="ObjectShortName">dtmf_signal_1</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/fifodatain" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">fifodatain[7:0]</obj_property>
-      <obj_property name="ObjectShortName">fifodatain[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/dtmf_signal_2" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf_signal_2</obj_property>
+      <obj_property name="ObjectShortName">dtmf_signal_2</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/fiforead" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">fiforead</obj_property>
-      <obj_property name="ObjectShortName">fiforead</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/start" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/fifodataout" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">fifodataout[7:0]</obj_property>
-      <obj_property name="ObjectShortName">fifodataout[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/state_dtmf_reg" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">state_dtmf_reg</obj_property>
+      <obj_property name="ObjectShortName">state_dtmf_reg</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/mparam" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">mparam[6:0]</obj_property>
-      <obj_property name="ObjectShortName">mparam[6:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/start_dtmf" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">start_dtmf</obj_property>
+      <obj_property name="ObjectShortName">start_dtmf</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/fifoempty" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">fifoempty</obj_property>
-      <obj_property name="ObjectShortName">fifoempty</obj_property>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/dtmf" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf[0:1]</obj_property>
+      <obj_property name="ObjectShortName">dtmf[0:1]</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/fifofull" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">fifofull</obj_property>
-      <obj_property name="ObjectShortName">fifofull</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/state_uart_reg2" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">state_uart_reg2</obj_property>
-      <obj_property name="ObjectShortName">state_uart_reg2</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/main_next1" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">main_next1</obj_property>
-      <obj_property name="ObjectShortName">main_next1</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/stlv_temp2" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">stlv_temp2[7:0]</obj_property>
-      <obj_property name="ObjectShortName">stlv_temp2[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/stlv_temp2a" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">stlv_temp2a[7:0]</obj_property>
-      <obj_property name="ObjectShortName">stlv_temp2a[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/vary_reg" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">vary_reg</obj_property>
-      <obj_property name="ObjectShortName">vary_reg</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/state_pwm_reg" type="other" db_ref_id="1">
-      <obj_property name="ElementShortName">state_pwm_reg</obj_property>
-      <obj_property name="ObjectShortName">state_pwm_reg</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/onoff" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">onoff</obj_property>
-      <obj_property name="ObjectShortName">onoff</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/pwm_signal" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">pwm_signal</obj_property>
-      <obj_property name="ObjectShortName">pwm_signal</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/duty_cycle" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">duty_cycle[2:0]</obj_property>
-      <obj_property name="ObjectShortName">duty_cycle[2:0]</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/state" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">state[1:0]</obj_property>
-      <obj_property name="ObjectShortName">state[1:0]</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/current_state" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">current_state[1:0]</obj_property>
-      <obj_property name="ObjectShortName">current_state[1:0]</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/start_pwm" type="logic" db_ref_id="1">
-      <obj_property name="ElementShortName">start_pwm</obj_property>
-      <obj_property name="ObjectShortName">start_pwm</obj_property>
-   </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_unit/next_note" type="logic" db_ref_id="1">
+   <wvobject fp_name="/testmain/uut/dtmf_unit/next_note" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">next_note</obj_property>
       <obj_property name="ObjectShortName">next_note</obj_property>
    </wvobject>
-   <wvobject fp_name="/testmain/uut/pwm_state" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">pwm_state[1:0]</obj_property>
-      <obj_property name="ObjectShortName">pwm_state[1:0]</obj_property>
+   <wvobject fp_name="/testmain/uut/drive_pwm_next" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">drive_pwm_next</obj_property>
+      <obj_property name="ObjectShortName">drive_pwm_next</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/dtmf_index" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">dtmf_index[4:0]</obj_property>
+      <obj_property name="ObjectShortName">dtmf_index[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/special_cmd" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">special_cmd</obj_property>
+      <obj_property name="ObjectShortName">special_cmd</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/son_time1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">son_time1[19:0]</obj_property>
+      <obj_property name="ObjectShortName">son_time1[19:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/soff_time1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">soff_time1[19:0]</obj_property>
+      <obj_property name="ObjectShortName">soff_time1[19:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/son_time2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">son_time2[19:0]</obj_property>
+      <obj_property name="ObjectShortName">son_time2[19:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testmain/uut/dtmf_unit/soff_time2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">soff_time2[19:0]</obj_property>
+      <obj_property name="ObjectShortName">soff_time2[19:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#ff00ff</obj_property>
    </wvobject>
    <wvobject fp_name="/testmain/uut/stlv_duty_cycle" type="array" db_ref_id="1">
       <obj_property name="ElementShortName">stlv_duty_cycle[2:0]</obj_property>

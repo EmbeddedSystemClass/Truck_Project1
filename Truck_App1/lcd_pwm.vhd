@@ -16,6 +16,7 @@ entity lcd_pwm is
 		pwm_signal: out std_logic;
 		state: in std_logic_vector(1 downto 0);
 		duty_cycle: in std_logic_vector(2 downto 0);
+		done_start: out std_logic;
 		done: out std_logic
 		);
 end lcd_pwm;
@@ -90,7 +91,7 @@ begin
 			when start_vary =>
 				-- itemp := conv_integer(notes(conv_integer(note_index)));
 				-- whole_period <= conv_std_logic_vector(itemp,20);
-				whole_period <= conv_std_logic_vector(B9,20);
+				whole_period <= conv_std_logic_vector(C8,20);
 				vary_next <= next_vary1;
 			when next_vary1 =>
 				half_period <= '0' & whole_period(19 downto 1);
@@ -160,7 +161,8 @@ begin
 		current_state <= (others=>'0');
 		onoff <= '0';
 		start_pwm <= '0';
-		sDutyCycle <= "000";
+		sDutyCycle <= "110";
+		done_start <= '0';
 		
 	else if clk'event and clk = '1' then
 		case state_pwm_reg is
@@ -199,6 +201,7 @@ begin
 				next_note <= '0';
 				state_pwm_next <= pwm_done;
 			when pwm_done =>
+				done_start <= start_pwm;
 				state_pwm_next <= pwm_idle;
 				done <= '1';
  		end case;

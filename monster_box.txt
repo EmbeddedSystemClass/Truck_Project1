@@ -39,9 +39,9 @@ DATA5	D7
 DATA6	B0
 DATA7	B1
 
-UART1 - monitor/FPGA (optional)
-UART2 - AVR
-UART3 - RS232 to TS-7200
+UART1 - RS232 to TS-7200 (or to monitor)
+UART2 - AVR	- wired internal on main board
+UART3 - FPGA - wired within monster box from main board to fpga board
 
 UART1:
 RX - p68 - 5th from top inside left
@@ -58,8 +58,9 @@ TX - p82 - 4th from left outside top
 board pin out
 
 bottom view with 64 pin dip socket on bottom:
-63	61	59 ... 5	3	1
-64	62	60 ... 6	4	2
+(see PIC24_support/pinout2a.jpg)
+(extra 18-pin on left)	63	61	59 ... 5	3	1
+(extra 18-pin on left)	64	62	60 ... 6	4	2
   
 1)  Vcc
 2)  gnd
@@ -236,17 +237,6 @@ AVSS - p31 - 3rd from right inside bottom
 
 connections to FPGA:
 
-rpm	(input)
-mph	(input)
-fuel pump shutoff (output to no conn on relay)
-tone generator (output to speaker(s))
-pwm signal to LCD
-rev limiter
-rpm/mph serial outputs to LED box
-
-so far need (2) 3v3/5v converter for 8 signals
-10 pin ICD cable for SPI connection to PIC/AVR (use SS signal to select AVR/PIC)
-
 # lower right pins looking at bottom of board
 #	.		.
 #	.		.
@@ -353,13 +343,13 @@ SS   39
 gnd		x		x		SCLK	x
 x		x		SS		MOSI	MISO
 
-20-pin ICD cable
-(from underside of FPGA card w/ chips on bottom)
+48 - MOSI
+45 - MISO
+41 - SCLK
+39 - SS(0)
+35 - SS(1)
 
-1   2   3 ...  10
-11  12  13 ... 20
-
-20-pin conn. looking at top of card w/FPGA on right
+20-pin ICD conn. looking at top of card w/FPGA on right
 1	2	3	4	5	6	7	8	9	10
 11	12	13	14	15	16	17	18	19	20
 
@@ -369,11 +359,14 @@ x		x		SS		MOSI	MISO
 4)	64 tx_mph     (output)
 5)	62 pwm_spk1     (output)
 6)	61 pwm_spk2     (output)
-7)	60 not working - probably bad conv chip
-8)	50 pwm_lcd     (output)
-9)	35 fuel pump shutoff     (output)
-10)	33 rev limiter     (output)
-11)	82 unassigned
+7)	was 60 but 5v output not working - 
+	probably bad conv chip
+	so use 3v3 directly to gate of MOSFET
+	and call it pwm_lcd signal (don't use pin 7)
+8)	50 unassigned
+9)	35 reserved for SS(1) 
+10)	33 rev limiter       (output)
+11)	82 fuel pump shutoff (output)
 12)	76 unassigned
 13)	74 unassigned
 14)	65 unassigned
@@ -383,23 +376,4 @@ x		x		SS		MOSI	MISO
 18)	47 unassigned
 19)	42 unassigned
 20)	40 unassigned
-
-AVR to t6963:
-
-WR		C0
-CE		C1
-RST		C2
-CD		C3
-RD		C4
-DATA0	D2
-DATA1	D3
-DATA2	D4
-DATA3	D5
-DATA4	D6
-DATA5	D7
-DATA6	B0
-DATA7	B1
-
-SEN-12756 Sparkfun 3-Axis Accelerometer MMA8452
-SEN-11931 Sparkfun Dig. Temp Sensor TMP102
 

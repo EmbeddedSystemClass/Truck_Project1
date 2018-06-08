@@ -34,14 +34,11 @@
 #include "../lib/include/pic24_timer.h"
 #include "../lib/include/pic24_util.h"
 #include "../lib/include/pic24_adc.h"
-//#include "main.h"
-//#include "../../AVR_t6963/key_defs.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 // DEFINEs go here
-//#define   CONFIG_LED1()   printf("called CONFIG_LED1()\n");
-uint8_t     LED1 = TRUE;      // LED1 is initially "on"
+
 #define MY_ESOS1
 #define TIME_DELAY		20
 #define TEMP_DELAY3		2
@@ -63,7 +60,6 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define DEBUG_CLRSCR2		6
 #define DEBUG_CLRSCR3		7
 #define DEBUG_MSG1			8
-#define DEBUG_SETPWM		9
 
 #define ROWS 16
 #define COLUMN 40
@@ -71,10 +67,11 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define CURSOR_ON_BLINK_OFF 0x92    //0b1001xx10, cursor on without blinking
 #define CURSOR_BLINK_ON     0x93    //0b1001xx11, cursor on with blinking
 #define TEXT_ON             0x94    //0b100101xx, text on, graphics off
-#define GRAPHIC_ON          0x98    //0b100110xx, text off, graphics on
+#define GRAPHIC_ON           0x98    //0b100110xx, text off, graphics on
 #define TEXT_GRH_ON         0x9C    //0b100111xx, text on, graphics on
 #define ATTR_NORMAL         0x00    //Normal Display
-#define ATTR_REVERSE        0x05    //Reverse Di../t6963.h:189:33: error: expected ';', ',' or ')' before 'mode'splay
+#define ATTR_REVERSE        0x05    
+//Reverse Di../t6963.h:189:33: error: expected ';', ',' or ')' before 'mode'splay
 #define ATTR_INHIBIT        0x03    //Inhibit Display
 #define ATTR_BLINK          0x08    //Blinking of Normal Display
 #define ATTR_BLINK_REVERSE  0x0D    //Blinking of Reverse Display
@@ -88,6 +85,29 @@ uint8_t     LED1 = TRUE;      // LED1 is initially "on"
 #define LINE_2_CURSOR       0xA1    //2-Line cursor mode
 #define LINE_1_CURSOR       0xA0    //1-Line cursor mode
 
+#define FPGA_OFF_CMD					0x00
+#define FPGA_SEND_CHAR_CMD				0x81
+#define FPGA_SET_BRIGHTNESS_CMD			0x82 // set brightness for LED display
+#define FPGA_SET_CDECIMAL_CMD			0x83 // set decimal point   "    "
+#define FPGA_SET_UPDATE_RATE_CMD		0x84 // serial port transmit rate
+#define FPGA_SET_FACTOR_CMD				0x85 // set the div. factor for rpm/mph calc
+#define FPGA_SET_DISPLAY_UPDATE_RATE 	0x86 // display update rate for LED display
+#define FPGA_DTMF_TONE_ON				0x87 // DTMF tones on dual speakers (on)
+#define FPGA_DTMF_TONE_OFF				0x88 // DTMF tones on dual speakers (off)
+#define FPGA_SPECIAL_TONE_ON			0x89 // siren for dual speakers
+#define FPGA_LCD_PWM					0x8A // command for LCD display (brightness)
+#define PWM_OFF_PARAM					0x00 // off
+#define PWM_ON_PARAM					0x01 // on
+#define PWM_80DC_PARAM					0x1A // duty_cycle = 80%
+#define PWM_75DC_PARAM					0x16 // duty_cycle = 75%
+#define PWM_60DC_PARAM					0x12 // duty_cycle = 60%
+#define PWM_50DC_PARAM					0x0E // duty_cycle = square wave
+#define PWM_30DC_PARAM					0x0A // duty_cycle = 30%
+#define PWM_25DC_PARAM					0x06 // duty_cycle = 25%
+#define PWM_12DC_PARAM					0x02 // duty_cycle = 12%
+	
+#define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
+#define REV_LIMITER 					0x8C // set the rev limit min & max
 
 enum data_types
 {
@@ -144,22 +164,22 @@ enum key_types
 	READ_EEPROM1,	//	- DE
 	READ_EEPROM2,	//	- DF
 
-	KP_POUND,	// '#'	- E0
-	KP_AST, // '*'		- E1
-	KP_0, // '0'		- E2
-	KP_1, // '1'		- E3
-	KP_2, // '2'		- E4
-	KP_3, // '3'		- E5
-	KP_4, // '4'		- E6
-	KP_5, // '5'		- E7
-	KP_6, // '6'		- E8
-	KP_7, // '7'		- E9
-	KP_8, // '8'		- EA
-	KP_9, // '9'		- EB
-	KP_A, // 'A'		- EC
-	KP_B, // 'B'		- ED
-	KP_C, // 'C'		- EE
-	KP_D, // 'D'		- EF
+	KP_1, // '1'		- E0
+	KP_2, // '2'		- E1
+	KP_3, // '3'		- E2
+	KP_4, // '4'		- E3
+	KP_5, // '5'		- E4
+	KP_6, // '6'		- E5
+	KP_7, // '7'		- E6
+	KP_8, // '8'		- E7
+	KP_9, // '9'		- E8
+	KP_A, // 'A'		- E9
+	KP_B, // 'B'		- EA
+	KP_C, // 'C'		- EB
+	KP_D, // 'D'		- EC
+	KP_POUND,	// '#'	- ED
+	KP_AST, // '*'		- EE
+	KP_0 	// '0'		- EF
 } KEY_TYPES;
 
 enum rt_types
@@ -187,8 +207,11 @@ ESOS_USER_TASK(send_char);
 ESOS_USER_TASK(set_cursor);
 ESOS_USER_TASK(goto1);
 ESOS_USER_TASK(test1);
+ESOS_USER_TASK(test2);
+ESOS_USER_TASK(test3);
 ESOS_USER_TASK(clr_screen);
-ESOS_USER_TASK(dimmer_task);
+ESOS_USER_TASK(send_fpga);
+ESOS_USER_TASK(recv_fpga);
 
 UCHAR get_keypress(UCHAR key1)
 {
@@ -480,41 +503,24 @@ uint8_t doKeyScan(void)
 //******************************************************************************************//
 //*************************************** keypad *******************************************//
 //******************************************************************************************//
+// DTMF tones are: 1->9, A->D, #, *, 0 (0->15)
 ESOS_USER_TASK(keypad)
 {
+    static ESOS_TASK_HANDLE fpga_handle;
+    static UINT data1;
+
+	fpga_handle = esos_GetTaskHandle(send_fpga);
 
     ESOS_TASK_BEGIN();
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("keypad task");
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(1);
-#if 0
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(e_isrState);
-		ESOS_TASK_WAIT_ON_SEND_UINT8(e_isrState);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
 		switch (e_isrState)
 		{
 			case STATE_WAIT_FOR_PRESS:
 				if (KEY_PRESSED() && (u8_newKey == 0))
 				{
 	//ensure that key is sampled low for two consecutive interrupt periods
-#if 0
-					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-					ESOS_TASK_WAIT_ON_SEND_STRING("wait for press");
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
 					e_isrState = STATE_WAIT_FOR_PRESS2;
 				}
 				break;
@@ -522,15 +528,15 @@ ESOS_USER_TASK(keypad)
 				if (KEY_PRESSED())
 				{
 	// a key is ready
-#if 0
-					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-					ESOS_TASK_WAIT_ON_SEND_STRING("key pressed");
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
 					u8_newKey = doKeyScan();
 					e_isrState = STATE_WAIT_FOR_RELEASE;
+// send the message to FPGA to turn on DTMF tone
+					data1 = u8_newKey - 0xE0;
+					data1 <<= 8;
+
+					data1 |= FPGA_DTMF_TONE_ON;
+
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
 				} else e_isrState = STATE_WAIT_FOR_PRESS;
 				break;
 
@@ -539,14 +545,10 @@ ESOS_USER_TASK(keypad)
 				if (KEY_RELEASED())
 				{
 					ESOS_SIGNAL_SEMAPHORE(key_sem,1);
-#if 0
-					ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-					ESOS_TASK_WAIT_ON_SEND_STRING("key released");
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-					ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
 					e_isrState = STATE_WAIT_FOR_PRESS;
+// send the message to FPGA to turn on DTMF tone
+					data1 = FPGA_DTMF_TONE_OFF;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
 				}
 				break;
 			default:
@@ -562,11 +564,22 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
-    static ESOS_TASK_HANDLE cmd_param_task;
+    static ESOS_TASK_HANDLE fpga_handle;
+    static ESOS_TASK_HANDLE send_handle;
     static UCHAR data1, data2;
+    static UINT data3;
 	
     ESOS_TASK_BEGIN();
-//    cmd_param_task = esos_GetTaskHandle(menu_task);
+
+	fpga_handle = esos_GetTaskHandle(send_fpga);
+	send_handle = esos_GetTaskHandle(send_char);
+
+	data3 = PWM_ON_PARAM;	// turn the screen on
+	data3 <<= 8;
+
+	data3 |= FPGA_LCD_PWM;
+
+	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
 
 	configKeypad();
 /*
@@ -583,20 +596,9 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if(u8_newKey)
 		{
-			data2 = u8_newKey;
-			u8_newKey = 0;
-			if(data2 == KP_POUND)
-				data1 = 0x23;
-			else if(data2 == KP_AST)
-				data1 = 0x2a;
-			else if(data2 >= KP_A && data2 <= KP_D)
-				data1 = data2 - 0xEC + 0x41;
-			else
-				data1 = data2 - 0xE2 + 0x30;
+			data1 = u8_newKey;
+			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
 
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
 	}
     ESOS_TASK_END();
@@ -805,7 +807,6 @@ uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
 #define NUM_CHANNELS 1
 volatile uint16_t au16_buffer[NUM_CHANNELS];
 volatile uint8_t  u8_waiting;
-volatile UINT dimmer;
 volatile int lat5;
 
 //******************************************************************************************//
@@ -813,9 +814,9 @@ volatile int lat5;
 //******************************************************************************************//
 ESOS_USER_TASK(convADC)
 {
-    static  uint8_t data1, u8_wdtState;
-	static uint16_t u16_adcVal1, u16_adcVal2;
-	static float f_adcVal;
+//    static  uint8_t data1, u8_wdtState;
+//	static uint16_t u16_adcVal1, u16_adcVal2;
+//	static float f_adcVal;
 	static uint8_t   u8_i;
 	static uint16_t  u16_pot;
 
@@ -864,10 +865,6 @@ ESOS_USER_TASK(convADC)
 			u16_pot <<= 6;
 			u16_pot |= 0x003F;
 
-			if(u8_i == 0)
-			{
-				dimmer = u16_pot;
-			}
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			if(u8_i == 0)
@@ -875,9 +872,6 @@ ESOS_USER_TASK(convADC)
 //				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
 				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 			}
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(dimmer>>8));
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)dimmer);
-
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
@@ -901,59 +895,6 @@ void _ISR _ADC1Interrupt (void)
 	} //end for()
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
-}
-//******************************************************************************************//
-//************************************** dimmer_task  **************************************//
-//******************************************************************************************//
-// RE5 is connected to the CMOS gate for the LCD backlight
-// dimmer is from RA0 ADC
-ESOS_USER_TASK(dimmer_task)
-{
-	static UCHAR data1;
-	static UCHAR data2;
-	static UINT dim;
-	static int i,j;
-	
-	ESOS_TASK_BEGIN()
-	CONFIG_RE5_AS_DIG_OUTPUT();
-//	CONFIG_RE5_AS_OUTPUT();
-//	ENABLE_RE5_PULLUP();
-
-	_LATE5 = 1;
-
-	while(TRUE)
-	{
-	}
-#if 0
-		dim = dimmer;
-		dim >>= 8;
-		data1 = (UCHAR)dim;
-//		data2 = ~data1;
-		data1 >>= 5;
-//		data2 >>= 2;
-/*
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(dim>>8));
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)dim);
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data1);
-		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)data2);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-		if(i++ % 2 == 0)
-		{
-			_LATE5 = 0;
-//			for(j = 0;j < data1;j++)
-				ESOS_TASK_WAIT_TICKS(1);
-		}else{
-			_LATE5 = 1;
-			for(j = 0;j < data1;j++)
-				ESOS_TASK_WAIT_TICKS(1);
-		}
-//		ESOS_TASK_WAIT_TICKS(200);
-	}
-#endif
-	ESOS_TASK_END();
 }
 //******************************************************************************************//
 //******************************************************************************************//

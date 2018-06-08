@@ -21,12 +21,14 @@ ARCHITECTURE behavior OF testmain IS
          rx_uart : IN  std_logic;
          tx_rpm : OUT  std_logic;
          tx_mph : OUT  std_logic;
-         pwm_signal : OUT  std_logic;
          rpm_signal : IN  std_logic;
          mph_signal : IN  std_logic;
          pwm_spk1 : OUT  std_logic;
          pwm_spk2 : OUT  std_logic;
          pwm_lcd : OUT  std_logic;
+         d_start : OUT  std_logic;
+         fp_shutoff : OUT  std_logic;
+         rev_limit : OUT  std_logic;
          MOSI_o : OUT  std_logic;
          MISO_i : IN  std_logic;
          SCLK_o : OUT  std_logic;
@@ -48,10 +50,12 @@ ARCHITECTURE behavior OF testmain IS
    signal tx_uart : std_logic;
    signal tx_rpm : std_logic;
    signal tx_mph : std_logic;
-   signal pwm_signal : std_logic;
    signal pwm_spk1 : std_logic;
    signal pwm_spk2 : std_logic;
    signal pwm_lcd : std_logic;
+   signal d_start : std_logic;
+   signal fp_shutoff : std_logic;
+   signal rev_limit : std_logic;
    signal MOSI_o : std_logic;
    signal SCLK_o : std_logic;
    signal SS_o : std_logic_vector(1 downto 0);
@@ -70,12 +74,14 @@ BEGIN
           rx_uart => rx_uart,
           tx_rpm => tx_rpm,
           tx_mph => tx_mph,
-          pwm_signal => pwm_signal,
           rpm_signal => rpm_signal,
           mph_signal => mph_signal,
           pwm_spk1 => pwm_spk1,
           pwm_spk2 => pwm_spk2,
           pwm_lcd => pwm_lcd,
+          d_start => d_start,
+          fp_shutoff => fp_shutoff,
+          rev_limit => rev_limit,
           MOSI_o => MOSI_o,
           MISO_i => MISO_i,
           SCLK_o => SCLK_o,
@@ -93,12 +99,12 @@ BEGIN
    end process;
 
 	reset_proc: process
-		begin
+	begin
 		reset <= '0';
 		wait for 100 ns;
 		reset <= '1';
 		wait;
-		end process;
+	end process;
 
    -- Stimulus process
    stim_proc: process
