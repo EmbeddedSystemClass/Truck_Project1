@@ -146,7 +146,7 @@ architecture truck_arch of multi_byte is
 	signal key_len: signed(7 downto 0);
 	signal mykey: std_logic_vector(7 downto 0);
 	signal ikeys: i_keys;
-	signal stlv_duty_cycle: std_logic_vector(2 downto 0);
+	signal stlv_duty_cycle: std_logic_vector(4 downto 0);
 	signal dtmf_index: std_logic_vector(4 downto 0);
 
 	signal FifoWrite: std_logic;
@@ -165,7 +165,6 @@ architecture truck_arch of multi_byte is
 	signal urev_limit_min: unsigned(6 downto 0);
 	signal reset_rev_limits: std_logic;
 	signal test_rpm_rev_limits: std_logic;
-	signal done_start: std_logic;
 	
 begin
 
@@ -250,11 +249,10 @@ fifo_unit: entity work.STD_FIFO
 		Full=>FifoFull);
 
 pwm_unit: entity work.lcd_pwm
+	generic map(W2=>W2_SIZE)
 	port map(clk=>clk,reset=>reset,
 		pwm_signal=>pwm_lcd,
-		state=>pwm_state,
 		duty_cycle=>stlv_duty_cycle,
-		done_start=>done_start,
 		done=>done_pwm);
 	
 dtmf_unit: entity work.dtmf
@@ -265,109 +263,6 @@ dtmf_unit: entity work.dtmf
 		dtmf_signal_2=>pwm_spk2,
 		start=>start_dtmf,
 		done=>dtmf_done1);
-
--- test_dtmf: process(clk, reset, drive_pwm_reg)
--- begin
-	-- if reset = '0' then
-		-- drive_pwm_reg <= pwm_idle;
-		-- drive_pwm_next <= pwm_idle;
-		-- start_dtmf <= '0';
-		-- time_delay_reg8 <= (others=>'0');
-		-- time_delay_next8 <= (others=>'0');
--- --		pwm_lcd <= '0';
--- --		mykey <= "000";
-		-- key_len <= X"29";
-		-- dtmf_index <= (others=>'0');
-		-- key_index <= (others=>'0');
-		-- skip4 <= '0';
--- --		stlv_duty_cycle <= "000";
--- --		note_len <= X"7";
-		
-	-- else if clk'event and clk = '1' then
-		-- case drive_pwm_reg is
-			-- when pwm_idle =>
-				-- if time_delay_reg8 > TIME_DELAY9 then
-					-- time_delay_next8 <= (others=>'0');
-					-- drive_pwm_next <= pwm_start;
--- --					drive_pwm_next <= pwm_idle;
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-			-- when pwm_start =>
-				-- skip4 <= not skip4;
-				-- if skip4 = '1' then
-					-- if key_index > 10 then
-						-- key_index <= (others=>'0');
-					-- else 
-						-- case dtmf_index is
-							-- when "00000" => dtmf_index <= "00001";
-							-- when "00001" => dtmf_index <= "00010";
-							-- when "00010" => dtmf_index <= "00011";
-							-- when "00011" => dtmf_index <= "00100";
-							-- when "00100" => dtmf_index <= "00101";
-							-- when "00101" => dtmf_index <= "00110";
-							-- when "00110" => dtmf_index <= "00111";
-							-- when "00111" => dtmf_index <= "01000";
-							-- when "01000" => dtmf_index <= "01001";
-							
-							-- -- when "01001" => dtmf_index <= "01010";
-							-- -- when "01010" => dtmf_index <= "01011";
-							-- -- when "01011" => dtmf_index <= "01100";
-							-- -- when "01100" => dtmf_index <= "01101";
-							-- -- when "01101" => dtmf_index <= "01110";
-							-- -- when "01110" => dtmf_index <= "01111";
-							-- when others => dtmf_index <= "00000";
-						-- end case;
-						-- -- case stlv_duty_cycle is
-							-- -- when "000" => stlv_duty_cycle <= "001";
-							-- -- when "001" => stlv_duty_cycle <= "010";
-							-- -- when "010" => stlv_duty_cycle <= "011";
-							-- -- when "011" => stlv_duty_cycle <= "100";
-							-- -- when "100" => stlv_duty_cycle <= "101";
-							-- -- when "101" => stlv_duty_cycle <= "000";
-							-- -- when others => stlv_duty_cycle <= "000";
-						-- -- end case;
-						-- key_index <= key_index + 1;
-					-- end if;
-				-- end if;
-				-- start_dtmf <= '1';
-				-- drive_pwm_next <= pwm_next1;
-			-- when pwm_next1 =>
--- --				start_dtmf <= '0';
-				-- drive_pwm_next <= pwm_next3;
-			-- when pwm_next2 =>
-				-- if dtmf_done1 = '1' then
-					-- drive_pwm_next <= pwm_next3;
-				-- end if;
-				-- -- if time_delay_reg8 > TIME_DELAY3 then
-					-- -- time_delay_next8 <= (others=>'0');
-					-- -- drive_pwm_next <= pwm_idle;
-				-- -- else
-					-- -- time_delay_next8 <= time_delay_reg8 + 1;
-				-- -- end if;
-			-- when pwm_next3 =>
-				-- if time_delay_reg8 > TIME_DELAY8c then
-					-- time_delay_next8 <= (others=>'0');
-					-- drive_pwm_next <= pwm_start;
-					-- start_dtmf <= '0';
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-			-- when pwm_done =>
-				-- if time_delay_reg8 > TIME_DELAY3 then
-					-- time_delay_next8 <= (others=>'0');
-					-- drive_pwm_next <= pwm_start;
--- --					drive_pwm_next <= pwm_done;
-				-- else
-					-- time_delay_next8 <= time_delay_reg8 + 1;
-				-- end if;
-		-- end case;
-		-- time_delay_reg8 <= time_delay_next8;
-		-- drive_pwm_reg <= drive_pwm_next;
-		-- end if;
-	-- end if;
--- end process;
-
 		
 mon_fp: process(clk, reset, state_reg_fp)
 begin
@@ -687,8 +582,7 @@ begin
 		mcmd <= (others=>'1');
 		mph_or_not <= '0';
 --		start_dtmf <= '0';
---		stlv_duty_cycle <= (others=>'0');
-		stlv_duty_cycle <= "110";
+		stlv_duty_cycle <= (others=>'0');
 		led1 <= "1111";
 		FifoRead <= '0';
 		special <= '0';
@@ -725,7 +619,6 @@ begin
 				if stlv_temp2(7) = '1' then		-- if high bit set, its a command
 --						mph_or_not <= stlv_temp2(6);
 					mcmd <= stlv_temp2(4 downto 0);
-					led1 <= stlv_temp2(3 downto 0);
 
 					-- if mcmd = SET_BRIGHTNESS_CMD
 							-- or mcmd = SET_CDECIMAL_CMD or
@@ -739,7 +632,6 @@ begin
 --						main_next1 <= exec_mcmd;
 					main_next1 <= exec_other_mcmds;
 				else 
---					led1 <= "1111";
 					mparam <= stlv_temp2(6 downto 0);		-- else it's a param
 					main_next1 <= idle1a;					-- since the param is sent 1st
 															-- go back and wait for cmd
@@ -797,8 +689,9 @@ begin
 						special <= '1';
 						start_dtmf <= '1';
 					when LCD_PWM =>
-						pwm_state <= mparam(1 downto 0);
-						stlv_duty_cycle <= mparam(4 downto 2);
+--						pwm_state <= mparam(1 downto 0);
+						stlv_duty_cycle <= mparam(4 downto 0);
+						led1 <= mparam(3 downto 0);
 					when FP_SHUTOFF_OVERRIDE =>
 						fp_override <= mparam(0);
 					when SET_MAX_REV_LIMITER =>

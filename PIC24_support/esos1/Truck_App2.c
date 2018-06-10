@@ -68,20 +68,6 @@ ESOS_USER_TASK(send_fpga)
 			ESOS_TASK_WAIT_TICKS(2);
 			ESOS_TASK_WAIT_ON_SEND_UINT83(cmd);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
-/*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(param);
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(cmd);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(end_char);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-//	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
- //			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(cmd);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(param);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-//			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -102,7 +88,7 @@ ESOS_USER_TASK(recv_fpga)
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
 		ESOS_TASK_WAIT_ON_GET_UINT83(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-
+/*
  		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
 //		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
@@ -112,7 +98,7 @@ ESOS_USER_TASK(recv_fpga)
 			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
 		}
 		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
     } // endof while()
     ESOS_TASK_END();
 }
@@ -330,7 +316,7 @@ ESOS_USER_TASK(clr_screen)
 //#if 0
 ESOS_USER_TASK(test1)
 {
-	static UCHAR data2 = 0x21;
+	static UCHAR data2 = 0x55;
 	static UCHAR cmd, param;
 	static UINT data3;
     static ESOS_TASK_HANDLE send_handle;
@@ -338,70 +324,40 @@ ESOS_USER_TASK(test1)
     static ESOS_TASK_HANDLE clrscr_handle;
     static ESOS_TASK_HANDLE fpga_handle;
     static int i,j,k;
-    static UCHAR param_array[11];
-//    static UCHAR buff[5];
     static UCHAR row, col;
 
 	send_handle = esos_GetTaskHandle(send_char);
 	goto_handle = esos_GetTaskHandle(goto1);
 	clrscr_handle = esos_GetTaskHandle(clr_screen);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
-//	handle1 = esos_GetTaskHandle(send_string);
     ESOS_TASK_BEGIN();
 
 	row = col = 0;
-	param_array[0] = PWM_80DC_PARAM;
-	param_array[1] = PWM_75DC_PARAM;
-	param_array[2] = PWM_60DC_PARAM;
-	param_array[3] = PWM_50DC_PARAM;
-	param_array[4] = PWM_50DC_PARAM;
-	param_array[5] = PWM_30DC_PARAM;
-	param_array[6] = PWM_25DC_PARAM;
-	param_array[7] = PWM_12DC_PARAM;
-//	param_array[8] = PWM_ON_PARAM;
-	param_array[8] = PWM_OFF_PARAM;
-	param_array[9] = PWM_ON_PARAM;
-	param_array[10] = PWM_ON_PARAM;
 	i = 0;
 	j = 0;
-	k = 0;
-/*
-	for(data2 = 0x21;data2 < 0x7e;data2++)
-	{
-		ESOS_TASK_WAIT_TICKS(200);
-		__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data2);
-	}
+	k = 0x1f;
 
-	ESOS_TASK_WAIT_TICKS(1000);
-	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,data2);
-*/
 	ESOS_TASK_WAIT_TICKS(1000);
 	data3 = FPGA_LCD_PWM;
 	data3 <<= 8;
 	data3 &= 0xFF00;
-	data3 |= PWM_OFF_PARAM;
+	data3 |= PWM_ON_PARAM;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
+
+	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,data2);
+	data3 = (UINT)row;
+	data3 <<= 8;
+	data3 |= (UINT)col;
+	__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
 
 	while(1)
 	{
-/*
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
-		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
-*/
-// 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
-//		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(param);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8(0x20);
-//		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
 		data2++;
 
 		if(data2 > 0x7e)
-			data2 = 0x21;
+			data2 = 0x55;
 
-		ESOS_TASK_WAIT_TICKS(10);
+		ESOS_TASK_WAIT_TICKS(5);
 
 //		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
 //		ESOS_TASK_WAIT_ON_GET_UINT8(data2);
@@ -410,21 +366,20 @@ ESOS_USER_TASK(test1)
 //		__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data2);
 		__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data2);
 
+/*
 		if(++j > 1200)
 		{
 			j = 0;
 			data3 = FPGA_LCD_PWM;
 			data3 <<= 8;
-			data3 &= 0xFF00;
-			data3 |= param_array[k];
-			if(++k > 10)
-				k = 0;
+			data3 |= 0x1f;
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 		}
-
+*/
 		if(++i > 639)
 		{
 			i = 0;
+
 			__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,data2);
 			data3 = (UINT)row;
 			data3 <<= 8;
@@ -462,66 +417,9 @@ void user_init(void)
 	esos_RegisterTask(recv_fpga);
 
 	esos_RegisterTask(test1);
-	esos_RegisterTask(test2);
-	esos_RegisterTask(test3);
+//	esos_RegisterTask(test2);
+//	esos_RegisterTask(test3);
 //	esos_RegisterTask(convADC);
 	
 } // end user_init()
-
-
-/*
-		ESOS_TASK_WAIT_TICKS(100);
-		__esos_CB_WriteUINT8(handle2->pst_Mailbox->pst_CBuffer,data1+1);
-*/
-//#endif
-#if 0
-ESOS_USER_TASK(test1)
-{
-	static UCHAR mode, row, col, type;
-	static char test_str[10];
-	static UCHAR buff[5];
-	static UINT size_buff;
-//    static ESOS_TASK_HANDLE handle1;
-    static ESOS_TASK_HANDLE handle2;
-
-//	handle1 = esos_GetTaskHandle(send_comm1);
-	handle2 = esos_GetTaskHandle(set_cursor);
-
-    ESOS_TASK_BEGIN();
-//	CONFIG_R0_DIG_OUTPUT();
-	// RA0 - p17 - 5th up - outside right				//	col 0
-
-	mode = 1;
-	col = row = 0;
-	type = 2;
-	size_buff = 4;
-	
-	while(1)
-	{
-		memcpy(buff+0,&mode,sizeof(UCHAR));
-		memcpy(buff+1,&row,sizeof(UCHAR));
-		memcpy(buff+2,&col,sizeof(UCHAR));
-		memcpy(buff+3,&type,sizeof(UCHAR));
-
-		__esos_CB_WriteUINT8Buffer(handle2->pst_Mailbox->pst_CBuffer,buff,size_buff);
-
-		if(++col > COLUMN-1)
-		{
-			col = 0;
-			if(++row > ROWS-1)
-			{
-				row = 0;
-			}
-		}
-
-		if(++mode > 4)
-			mode = 0;
-		if(++type > 5)
-			type = 0;
-		ESOS_TASK_WAIT_TICKS(100);
-	}
-	
-    ESOS_TASK_END();
-}
-#endif
 

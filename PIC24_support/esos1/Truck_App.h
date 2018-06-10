@@ -97,7 +97,7 @@
 #define FPGA_SPECIAL_TONE_ON			0x89 // siren for dual speakers
 #define FPGA_LCD_PWM					0x8A // command for LCD display (brightness)
 #define PWM_OFF_PARAM					0x00 // off
-#define PWM_ON_PARAM					0x01 // on
+#define PWM_ON_PARAM					0x1F // on
 #define PWM_80DC_PARAM					0x1A // duty_cycle = 80%
 #define PWM_75DC_PARAM					0x16 // duty_cycle = 75%
 #define PWM_60DC_PARAM					0x12 // duty_cycle = 60%
@@ -506,15 +506,18 @@ uint8_t doKeyScan(void)
 // DTMF tones are: 1->9, A->D, #, *, 0 (0->15)
 ESOS_USER_TASK(keypad)
 {
-    static ESOS_TASK_HANDLE fpga_handle;
-    static UINT data1;
+	static ESOS_TASK_HANDLE fpga_handle;
+	static UINT data1;
+	static UCHAR data2;
 
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 
     ESOS_TASK_BEGIN();
+    data2 = 0;
+    data1 = 0;
 	while(TRUE)
 	{
-		ESOS_TASK_WAIT_TICKS(1);
+		ESOS_TASK_WAIT_TICKS(2);
 		switch (e_isrState)
 		{
 			case STATE_WAIT_FOR_PRESS:
@@ -531,12 +534,15 @@ ESOS_USER_TASK(keypad)
 					u8_newKey = doKeyScan();
 					e_isrState = STATE_WAIT_FOR_RELEASE;
 // send the message to FPGA to turn on DTMF tone
-					data1 = u8_newKey - 0xE0;
-					data1 <<= 8;
 
-					data1 |= FPGA_DTMF_TONE_ON;
+					data1 = FPGA_DTMF_TONE_ON;
+					data1 <<= 8;
+					data1 &= 0xFF00;
+
+					data1 |= u8_newKey - 0xE0;
 
 					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
+
 				} else e_isrState = STATE_WAIT_FOR_PRESS;
 				break;
 
@@ -547,7 +553,11 @@ ESOS_USER_TASK(keypad)
 					ESOS_SIGNAL_SEMAPHORE(key_sem,1);
 					e_isrState = STATE_WAIT_FOR_PRESS;
 // send the message to FPGA to turn on DTMF tone
+
 					data1 = FPGA_DTMF_TONE_OFF;
+					data1 <<= 8;
+					data1 &= 0xFF00;
+
 					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
 				}
 				break;
@@ -564,41 +574,40 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
-    static ESOS_TASK_HANDLE fpga_handle;
     static ESOS_TASK_HANDLE send_handle;
-    static UCHAR data1, data2;
-    static UINT data3;
+    static ESOS_TASK_HANDLE fpga_handle;
+	static UCHAR data1;
+	static UINT data3;
 	
     ESOS_TASK_BEGIN();
 
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 	send_handle = esos_GetTaskHandle(send_char);
 
-	data3 = PWM_ON_PARAM;	// turn the screen on
-	data3 <<= 8;
-
-	data3 |= FPGA_LCD_PWM;
-
-	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
-
 	configKeypad();
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("poll keypad task");
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-	ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+	data1 = 0;
 	while (TRUE)
 	{
+
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if(u8_newKey)
 		{
-			data1 = u8_newKey;
-			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
+			data3 = FPGA_LCD_PWM;
+			data3 <<= 8;
+			data3 &= 0xFF00;
+			data1 = (u8_newKey - 0xE0);
+			
+			data3 |= data1;
+			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+
+//			data1 = u8_newKey - 0xE0 + 0x31;
+			u8_newKey = 0;	// very important to reset this to 0
+//			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
 		}
 	}
     ESOS_TASK_END();

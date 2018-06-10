@@ -1,0 +1,379 @@
+monster box pinout info
+
+pinout for LCD:
+
+21) LEDK	| gnd for LCD backlight (not on pinout - wired separately)
+20) LEDA	| +5v for  "     "			"				"
+19) VEE		goes to gnd threw 20K pot with center tap to VO
+18) FS		font select
+17) DATA 7	data lines
+16) DATA 6
+15) DATA 5
+14) DATA 4
+13) DATA 3
+12) DATA 2
+11) DATA 1
+10) DATA 0
+9) RST		reset signal
+8) C/D		command/data
+7) CE		chip enable
+6) RD		read
+5) WR		write
+4) VO		goes to center tap of 20k pot
+3) VDD		signal +5v
+2) VSS		signal gnd
+1) FG		frame ground (can go to pin 2)
+
+AVR to t6963:
+WR		C0
+CE		C1
+RST		C2
+CD		C3
+RD		C4
+DATA0	D2
+DATA1	D3
+DATA2	D4
+DATA3	D5
+DATA4	D6
+DATA5	D7
+DATA6	B0
+DATA7	B1
+
+UART1 - RS232 to TS-7200 (or to monitor)
+UART2 - AVR	- wired internal on main board
+UART3 - FPGA - wired within monster box from main board to fpga board
+
+UART1:
+RX - p68 - 5th from top inside left
+TX - p72 - 3rd from top inside left
+
+UART2:
+RX - p69 - 4th from top outside left
+TX - p71 - 3rd from top outside left
+
+UART3:
+RX - p81 - 3rd from left inside top
+TX - p82 - 4th from left outside top
+
+board pin out
+
+bottom view with 64 pin dip socket on bottom:
+(see PIC24_support/pinout2a.jpg)
+(extra 18-pin on left)	63	61	59 ... 5	3	1
+(extra 18-pin on left)	64	62	60 ... 6	4	2
+  
+1)  Vcc
+2)  gnd
+3)	nc	| pins removed so ICD plug can fit in 5->14
+4)	nc	|
+5)  12 on AVR (MISO)	|							|
+6)  RST on AVR	 		|							|
+7)  11 on AVR (MOSI)	| 							| used by SPI link to FPGA
+8)  13 on AVR (SCLK)	| used by AVR programmer 	|
+9)	SS not used by programmer but used by SPI link to FPGA
+10)
+11)
+12)
+13)
+14)	gnd - used by programmer and SPI link to FPGA
+
+15)	nc	| pins removed so ICD plug can fit in 5->14
+16) nc	|
+17) 3v3 UART3 rx
+18) 3v3 UART3 tx
+19) Vcc
+20) gnd
+21) - broken pin
+22) 5v UART3 tx
+23) - broken pin
+24) 5v UART3 rx
+25) - broken pin
+26) - broken pin
+27) | pins removed so ICD plug can fit in 29->36
+28)	|
+
+keypad
+
+29) row_1	4th from right outside top
+30) row_0	5th from right inside top
+31) row_3	2nd from right inside top
+32) row_2	2nd from right outside top
+33) col_1	7th from left - outside bottom
+34) col_0	5th up - outside right
+35) col_3	5th up from bottom - outside left 
+36) col_2	4th up from bottom - inside left
+37) nc (but part of ICD plug)
+38) nc (but part of ICD plug)
+39)	| pins removed so ICD plug can fit in 29->36
+40)	|
+41)	| pins removed so ICD plug can fit in 43->62
+42)	|
+43) RB1
+44) RB0
+45) RB3
+46) RB2
+47) RB5
+48) RB4
+49) RB7
+50) RB6
+51) RB9
+52) RB8
+53) RB11
+54) RB10
+55) RB15
+56) RB12
+57) RB13
+58) RB14
+59) nc
+60) nc
+61) AVSS
+62) AVDD
+63)	| pins removed for 40-pin ICD plug
+64)	|
+
+pin 0 RB0
+pin 1 RB1
+pin 2 RB2
+pin 3 RB3
+pin 4 RB4
+pin 5 RB5
+pin 6 RB7
+pin 7 RB7
+pin 8 RB8
+pin 9 RB9
+pin 10 RB10
+pin 11 RB11
+pin 12 RB12
+pin 13 RB15
+pin 14 RB14
+pin 15 RB13
+
+extra 18-pin socket
+
+1) to 3v3 via 4k7 pullup	| jumper these 2 together
+2) to pin 13 (MCLR)			| after programming the chip
+3)
+4)
+5) gnd (ref for VEE & VO)
+6) VDD white wire PicKit3 programmer
+7) dim - 5v PWM pulse to MOSFET for screen dim
+8) VPP black wire
+9) VEE (LCD)
+10) GND brown wire
+11) VO (LCD)
+12) PGD red wire
+13) RX UART1
+14) PGC orange wire
+15) TX UART1
+16) nc yellow wire
+
+3 pins to left of lower conv chip:
+gnd gnd 3v3
+
+conv chip:
+
+UART1: monitor
+UART2: AVR
+UART3: TS-7200
+
+bottom view of conv chips:
+
+(upper conv chip) - not used
+
+HV		HV gnd 5v  HV		HV
+LV		LV gnd 3v3 LV		LV
+1		2			3		4
+
+(middle conv chip)
+
+HV		HV gnd 5v  HV		HV
+LV		LV gnd 3v3 LV		LV
+1		2			3		4
+
+1)tx UART2
+2)rx UART2
+3)
+4)
+
+(lower conv chip)
+
+HV		HV gnd 5v  HV		HV
+LV		LV gnd 3v3 LV		LV
+1		2			3		4
+
+1)tx UART1
+2)rx UART1
+3)rx UART3
+4)tx UART3
+
+ADC:
+RB0 (ADC0) - p25 - 1st from bottom outside right 
+RB1 (ADC1) - p24 - 2nd from bottom inside right
+RB2 (ADC2) - p23 - 2nd from bottom outside right
+RB3 (ADC3) - p22 - 3rd from bottom inside right
+RB4 (ADC4) - p21 - 3rd from bottom outside right
+RB5 (ADC5) - p20 - 4th from bottom inside right
+
+RB6 & 7 are used by the programmer so can't be hooked up 
+as ADC's and must use jumpers to run
+
+RB6 (ADC6) - p26 - 1st from right inside bottom
+RB7 (ADC7) - p27 - 1st from right outside bottom
+
+RB8 (ADC8) - p32 - 4th from right outside bottom
+RB9 (ADC9) - p33 - 4th from right inside bottom
+RB10 (ADC10) - p34 - 5th from right outside bottom
+RB11 (ADC11) - p35 - 5th from right inside bottom
+
+RB12 (ADC12) - p41 - 6th from left inside bottom
+RB13 (ADC13) - p42 - 5th from left outside bottom
+RB14 (ADC14) - p43 - 5th from left inside bottom
+RB15 (ADC15) - p44 - 4th from left outside bottom
+
+RA9 (VREF-) - p28 - 2nd from right outside bottom
+RA10 (VREF+) - p29 - 2nd from right inside bottom
+AVDD - p30 - 3rd from right outside bottom
+AVSS - p31 - 3rd from right inside bottom
+
+connections to FPGA:
+
+# lower right pins looking at bottom of board
+#	.		.
+#	.		.
+#	.		.
+#	36		35
+#	5v		gnd
+#	40		39
+#	42		41
+#	47		45
+#	49		48
+#	55		50
+#	61		60
+#	63		62
+#	65		64
+#	74		69
+#	76		75
+#	82		77
+
+starting from left outside going up
+77) tx	|	UART1
+75) rx	|
+
+69) tx	|	UART2
+64) rx	|
+
+62) rpm_signal input
+60) mph_signal input
+
+50) tx_rpm (output to LED)
+48) tx_mph (output to LED)
+45) pwm signal to LCD
+
+starting from left inside going up
+82) MOSI
+76) MISO
+74) SCLK
+65) SS 1
+63) SS 2
+
+61 - 47) 4 test signals
+42) pwm signal to speaker 1
+40)  "     "    "   "     2
+
+42) pwm signal for speaker
+
+
+42) pwm output to LCD
+
+
+82)
+connections to outside:
+
+monitor for PIC24*
+15 ADC's from PIC24**
+alarm from PIC24 (12v on/off)
+serial port to TS-7XXX
+
+FPGA card looking at top with
+FPGA on right:
+
+conv chips:
+
+6 5 4
+1 2 3
+
+chip 1 has 1st 4 (77 -> 64)
+and goes to left
+chip 2 has next 4 (62 -> 48)
+and goes to left
+chip 3 has next 3 (45 -> 39) 
+and skips over gnd and
+then the one after gnd (35)
+chip 4 1st on on right has
+next one on outside (33)
+and then starts with 1st on
+bottom of inside
+
+3v3 tx is 36
+3v3 rx is 34
+
+34	rx				33		| chip 4 (1st one)
+36	tx				35	|	chip 3
+5v					gnd
+40	|				39	|	chip 3
+42	|	chip 6		41	|
+47	|				45	|
+49	|				48		|
+55		|			50		|	chip 2
+61		|	chip 5	60		|
+63		|			62		|
+65		|			64	|
+74	|				69	|	chip 1
+76	| chip 4		75	|
+82	|				77	|
+
+MOSI 48
+MISO 45
+SCLK 41
+SS   39
+
+
+5-pin ICD conn. to SPI on main board
+(from underside of FPGA card w/ chips on bottom)
+gnd		x		x		SCLK	x
+x		x		SS		MOSI	MISO
+
+48 - MOSI
+45 - MISO
+41 - SCLK
+39 - SS(0)
+35 - SS(1)
+
+20-pin ICD conn. looking at top of card w/FPGA on right
+1	2	3	4	5	6	7	8	9	10
+11	12	13	14	15	16	17	18	19	20
+
+1)	77 rpm_signal (input)
+2)	75 mph_signal (input)
+3)	69 tx_rpm     (output)
+4)	64 tx_mph     (output)
+5)	62 pwm_spk1     (output)
+6)	61 pwm_spk2     (output)
+7)	was 60 but 5v output not working - 
+	probably bad conv chip
+	so use 3v3 directly to gate of MOSFET
+	and call it pwm_lcd signal (don't use pin 7)
+8)	50 unassigned
+9)	35 reserved for SS(1) 
+10)	33 rev limiter       (output)
+11)	82 fuel pump shutoff (output)
+12)	76 unassigned
+13)	74 unassigned
+14)	65 unassigned
+15)	63 unassigned
+16)	55 unassigned
+17)	49 unassigned
+18)	47 unassigned
+19)	42 unassigned
+20)	40 unassigned
+

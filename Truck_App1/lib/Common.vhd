@@ -235,6 +235,7 @@ package CommonPckg is
 	constant RESULT_SIZE: integer:= 18;
 	constant PRD_SIZE: integer:= 17;
 	constant DVSR_SIZE: integer:= 23;
+	constant W2_SIZE: integer:= 19;
 	constant MPH_P_REG_SIZE: integer:= 16;
 	constant FP_RPM_MINIMUM: integer:= 10000;
 	constant RPM_MAXIMUM: integer:= 50000;
