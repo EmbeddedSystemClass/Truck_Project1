@@ -30,10 +30,9 @@ architecture arch of sensor is
 
 	constant RESULT_SIZE: integer:= 18;
 	constant PRD_SIZE: integer:= 14;
-	constant DVSR_SIZE: integer:= 23;
 	constant MPH_P_REG_SIZE: integer:= 16;
 	signal prd: std_logic_vector(PRD_SIZE-1 downto 0);
-	signal dvsr, dvnd, quo: std_logic_vector(DVSR_SIZE-1 downto 0);
+	signal dvsr, dvnd, quo: std_logic_vector(DVSR_SIZE2-1 downto 0);
 	signal prd_start, div_start, b2b_start: std_logic;
 	signal prd_done_tick, div_done_tick,b2b_done_tick, bcd_ready: std_logic;
 --	signal calc_done: std_logic;
@@ -68,7 +67,7 @@ begin
 
 	-- instantiate division circuit for mph
 	div_unit: entity work.div
-		generic map(W=>DVSR_SIZE, CBIT=>5)
+		generic map(W=>DVSR_SIZE2, CBIT=>5)
 		port map(clk=>clk, reset=>reset, 
 		start=>div_start,
 		dvsr=>dvsr,
@@ -93,7 +92,7 @@ begin
 		bcd1=>LED2m,
 		bcd0=>LED3m);
 
---	dvnd <= std_logic_vector(to_unsigned(DVND_FACTOR, DVSR_SIZE));
+--	dvnd <= std_logic_vector(to_unsigned(DVND_FACTOR, DVSR_SIZE2));
 	dvnd <= factor;
 	dvsr <= "000000000" & prd;
 

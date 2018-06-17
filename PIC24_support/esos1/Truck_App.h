@@ -211,7 +211,7 @@ ESOS_USER_TASK(test2);
 ESOS_USER_TASK(test3);
 ESOS_USER_TASK(clr_screen);
 ESOS_USER_TASK(send_fpga);
-ESOS_USER_TASK(recv_fpga);
+ESOS_USER_TASK(recv_lcd);
 
 UCHAR get_keypress(UCHAR key1)
 {
@@ -599,12 +599,12 @@ ESOS_USER_TASK(poll_keypad)
 			
 			data3 |= data1;
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
-
+/*
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
 			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 //			data1 = u8_newKey - 0xE0 + 0x31;
 			u8_newKey = 0;	// very important to reset this to 0
 //			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
@@ -659,7 +659,7 @@ ESOS_USER_TASK(spi_task)
 
     ESOS_TASK_BEGIN();
 
-//#if 0
+#if 0
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
     ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
@@ -668,7 +668,7 @@ ESOS_USER_TASK(spi_task)
     ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 	ESOS_TASK_SIGNAL_AVAILABLE_SPI();
-//#endif
+#endif
 
 	data1 = 0x21;
     while(TRUE)

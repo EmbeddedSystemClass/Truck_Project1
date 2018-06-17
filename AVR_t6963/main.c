@@ -38,15 +38,14 @@ volatile int onoff;
 volatile int dc2;
 volatile UCHAR spi_ret;
 
-ISR(TIMER1_OVF_vect) 
-{ 
+ISR(TIMER1_OVF_vect)
+{
 
 	if(+dc2 % 100 == 0)
 	{
-		spi_ret = SPDR;
-		if(bit_is_set(SPSR, SPIF))
-//		if(spi_ret != 0)
-			transmitByte(spi_ret);
+//		loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
+//		spi_ret = SPDR;
+		SPI_write(xbyte);
 	}
 	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
 //	TCNT1 = 0xF800;
@@ -69,8 +68,8 @@ int main(void)
 	_delay_ms(10);
     initUSART();
 	_delay_ms(20);
-//	initSPImaster();
-	initSPIslave();
+	initSPImaster();
+//	initSPIslave();
 
 //#if 0
 	GDispSetMode(XOR_MODE);
@@ -84,10 +83,11 @@ int main(void)
 //******************************************************************************************//
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
-	_delay_ms(1000);
+	_delay_ms(500);
 //#endif
 
 	xbyte = 0x21;
+
 	TCNT1 = 0xFF00;
 	TCCR1A = 0x00;
 //	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
@@ -111,12 +111,12 @@ int main(void)
 		}
 	}
 
-	_delay_ms(1000);
+	_delay_ms(500);
 
 	GDispClrTxt();
 
 	row = col = 0;
-	
+
     while (1)
     {
 		key = receiveByte();
@@ -163,7 +163,7 @@ int main(void)
 					col <<= 8;
 					col |= buff[3];
 					str_len = buff[5];
-					memset(str,0x20,sizeof(str));	
+					memset(str,0x20,sizeof(str));
 					memcpy(str,&buff[7],str_len);
 					str[str_len] = 0;
 				break;
@@ -185,4 +185,3 @@ ISR(SPI_STC_vect)
 	transmitByte(spi_ret);
 }
 #endif
-

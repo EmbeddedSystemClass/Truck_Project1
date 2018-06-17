@@ -37,16 +37,10 @@ architecture lcd_pwm_arch of lcd_pwm is
 	signal sOn_Time: signed(DVSR_SIZE-1 downto 0);
 	signal stlv_ontime: std_logic_vector(W2-1 downto 0);
 	signal sOff_Time: signed(DVSR_SIZE-1 downto 0);
-	signal Total_Time: signed(DVSR_SIZE-1 downto 0);
 	signal tTotal_Time: signed(DVSR_SIZE-1 downto 0);
 	signal skip: std_logic;
 	signal stlv_DutyCycle: std_logic_vector(4 downto 0);
 	signal sDutyCycle: signed(4 downto 0);
---	constant MAX_TIME:  integer:=  131071;
-	constant MAX_TIME:  integer:=  262142;
-	constant DVSR_SIZE: integer:= 23;
-	constant SIZE_32: integer:= 32;
-	constant div_const: integer:= 8192;
 	signal count: signed(4 downto 0);
 	signal count2: signed(4 downto 0);
 
@@ -70,9 +64,7 @@ begin
 		sOn_Time <= (others=>'0');
 		sOff_Time <= (others=>'0');
 		stlv_ontime <= (others=>'0');
---		tTotal_Time <= conv_signed(conv_integer(MAX_TIME),DVSR_SIZE);
 		tTotal_Time <= conv_signed(div_const,DVSR_SIZE);
-		Total_Time <= conv_signed(conv_integer(MAX_TIME),DVSR_SIZE);
 		count <= (others=>'0');
 		count2 <= (others=>'0');
 		
@@ -91,8 +83,8 @@ begin
 					elsif duty_cycle = "11111" then	-- signal stays on
 						start_pwm <= '1';
 						onoff <= '1';
-						sOn_Time <=  "0000001" & X"FFFF";
-						sOff_Time <= "000" & X"00001";
+						sOn_Time <=  "000001" & X"FFFF";
+						sOff_Time <= "00" & X"00001";
 					else
 						count <= conv_signed(conv_integer(stlv_DutyCycle),5);
 						count2 <= (others=>'0');

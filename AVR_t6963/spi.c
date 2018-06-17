@@ -33,6 +33,19 @@ void initSPImaster(void)
 	SPCR |= (1 << SPE);							  /* enable */
 }
 
+void initSPIslave(void)
+{
+	SPI_SS_DDR |= (0 << SPI_SS);				  /* set SS input */
+	SPI_SS_PORT |= (1 << SPI_SS);				  /* start off not selected (high) */
+
+	SPI_MISO_DDR |= (1 << SPI_MISO);			  /* output on MOSI */
+	SPI_MOSI_DDR |= (0 << SPI_MOSI);			  /* input on MOSI */
+	SPI_MOSI_PORT |= (1 << SPI_MOSI);			  /* pullup on MISO */
+	SPI_SCK_DDR |= (0 << SPI_SCK);				  /* input on SCK */
+//	SPCR (1 << CPOL);
+//	SPCR (1 << CPHA);
+	SPCR |= (1 << SPE);							  /* enable */
+}
 
 void SPI_write(uint8_t byte)
 {
@@ -50,18 +63,5 @@ uint8_t SPI_read(void)
 	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
 	return SPDR;
 /* SPDR now contains the received byte */
-}
-
-void initSPIslave(void)
-{
-	SPI_SS_DDR |= (0 << SPI_SS);				  /* set SS intput */
-	SPI_SS_PORT |= (1 << SPI_SS);				  /* start off not selected (high) */
-
-	SPI_MISO_DDR |= (1 << SPI_MISO);			  /* output on MOSI */
-	SPI_MOSI_DDR |= (0 << SPI_MOSI);			  /* input on MOSI */
-	SPI_MOSI_PORT |= (1 << SPI_MOSI);			  /* pullup on MISO */
-	SPI_SCK_DDR |= (0 << SPI_SCK);				  /* input on SCK */
-
-	SPCR |= (1 << SPE);							  /* enable */
 }
 

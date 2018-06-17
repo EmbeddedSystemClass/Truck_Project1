@@ -33,10 +33,11 @@ NET		"rev_limit"	LOC = "P82";
 NET		"MOSI_o"	LOC = "P48";
 NET		"MISO_i"	LOC = "P45";
 NET		"SCLK_o"	LOC = "P41";
+NET		"SS_o"		LOC = "P39";
 
 # if using slave select for 2 different SPI slaves
-NET	"SS_o[0]"   LOC = "P39";
-NET	"SS_o[1]"   LOC = "P35";
+#NET	"SS_o[0]"   LOC = "P39";
+#NET	"SS_o[1]"   LOC = "P35";
 
 # led1 is the build-in LED's on the board
 NET		"led1[0]"	LOC = "p68";

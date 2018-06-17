@@ -104,6 +104,35 @@ ESOS_USER_TASK(recv_fpga)
 }
 
 //******************************************************************************************//
+//*************************************** recv_lcd *****************************************//
+//******************************************************************************************//
+// recv data from FPGA
+ESOS_USER_TASK(recv_lcd)
+{
+    static UCHAR data2;
+    static int i;
+	
+    ESOS_TASK_BEGIN();
+    i = 0;
+    while (1)
+    {
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM2();
+		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
+
+ 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
+//		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+		if(++i > 20)
+		{
+			i = 0;
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+		}
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+    } // endof while()
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
 //***************************************** goto ******************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(goto1)
@@ -415,7 +444,7 @@ void user_init(void)
 	esos_RegisterTask(clr_screen);
 	esos_RegisterTask(send_fpga);
 	esos_RegisterTask(recv_fpga);
-
+	esos_RegisterTask(recv_lcd);
 	esos_RegisterTask(test1);
 //	esos_RegisterTask(test2);
 //	esos_RegisterTask(test3);

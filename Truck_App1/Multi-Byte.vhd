@@ -26,10 +26,14 @@ entity multi_byte is
 		d_start : out std_logic;
 		fp_shutoff : out std_logic;
 		rev_limit: out std_logic;
-		MOSI_o : out std_logic;
-		MISO_i : in std_logic;
-		SCLK_o : out std_logic;
-		SS_o : out std_logic_vector(1 downto 0);
+		-- MOSI_o : out std_logic;
+		-- MISO_i : in std_logic;
+		-- SCLK_o : out std_logic;
+		-- SS_o : out std_logic_vector(1 downto 0);
+		MOSI_o : in std_logic;
+		MISO_i : out std_logic;
+		SCLK_o : in std_logic;
+		SS_o : in std_logic;
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
@@ -225,20 +229,32 @@ db1_unit: entity work.db_fsm
 --		sw=>mph_signal_test,
 		db=>mph_db);
 
-spi_master_unit: entity work.SPI_MASTER(RTL)
-	generic map(CLK_FREQ=>50000000,SCLK_FREQ=>5000,SLAVE_COUNT=>2)
+-- spi_master_unit: entity work.SPI_MASTER(RTL)
+	-- generic map(CLK_FREQ=>50000000,SCLK_FREQ=>5000,SLAVE_COUNT=>2)
+	-- port map(CLK=>clk, RST=>reset,
+	-- SCLK=>SCLK_o,
+	-- CS_N=>SS_o,
+	-- MOSI=>MOSI_o,
+	-- MISO=>MISO_i,
+	-- ADDR=>addr,
+	-- READY=>mspi_ready,
+	-- DIN=>mspi_din,
+	-- DIN_VLD=>mspi_din_vld,
+	-- DOUT=>mspi_dout,
+	-- DOUT_VLD=>mspi_dout_vld);
+
+spi_slave_unit: entity work. SPI_SLAVE(RTL)
 	port map(CLK=>clk, RST=>reset,
 	SCLK=>SCLK_o,
 	CS_N=>SS_o,
 	MOSI=>MOSI_o,
 	MISO=>MISO_i,
-	ADDR=>addr,
 	READY=>mspi_ready,
 	DIN=>mspi_din,
 	DIN_VLD=>mspi_din_vld,
 	DOUT=>mspi_dout,
 	DOUT_VLD=>mspi_dout_vld);
-
+	
 fifo_unit: entity work.STD_FIFO
 	port map(CLK=>clk,RST=>reset,
 		WriteEn=>FifoWrite,
@@ -340,6 +356,95 @@ begin
 	end if;
 end process;
 
+-- echo_dout_unit1: process(clk, reset, state_dout_reg)
+-- variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
+-- variable temp1: integer range 0 to 255:= 0;
+-- variable temp2: integer range 0 to 255:= 255;
+-- variable temp3: integer range 0 to 7:= 1;
+-- begin
+	-- if reset = '0' then
+		-- state_dout_reg <= idle_dout;
+		-- stlv_temp1 <= (others=>'0');
+		-- stlv_temp1a <= (others=>'0');
+		-- addr <= (others=>'1');
+		-- mspi_din_vld <= '0';
+		-- mspi_din <= (others=>'0');
+		-- skip3 <= '0';
+		-- time_delay_reg7 <= (others=>'0');
+		-- time_delay_next7 <= (others=>'0');
+		-- led1 <= "1111";
+
+	-- else if clk'event and clk = '1' then
+		-- case state_dout_reg is
+			-- when idle_dout =>
+				-- if mspi_ready = '1' then
+					-- mspi_din <= stlv_temp1a;		-- write
+					-- mspi_din_vld <= '1';
+					-- state_dout_next <= start_dout;
+				-- end if;
+			-- when start_dout =>
+					-- state_dout_next <= done_dout;
+			-- when done_dout =>
+				-- mspi_din_vld <= '0';			
+-- --				if SS_o(0) = '0' then
+				-- if mspi_dout_vld = '1' then
+-- -- mspi_dout is what gets received by MISO
+-- --					if addr(0) = '1' then
+						-- stlv_temp1 <= mspi_dout;
+-- --					elsif addr(1) = '1' then	
+-- --						stlv_temp1a <= mspi_dout;
+-- --					end if;	
+-- --					cmd <= stlv_temp1(7 downto 4);
+-- --					param <= stlv_temp1(3 downto 0);
+-- --					temp_uart := conv_integer(param);
+-- --					if cmd(3) = '0' then
+-- --						if temp_uart > NUM_DATA_ARRAY-1 then
+-- --							temp_uart := 0;
+-- --						end if;	
+-- --						stlv_temp1 <= data_array1(temp_uart);
+-- --					else
+-- --						if temp_uart > 7 then
+-- --							temp_uart := 0;
+-- --						end if;	
+-- --						stlv_temp1 <= "0000" & data_array2(temp_uart);
+-- --					end if;	
+					-- skip3 <= not skip3;
+					-- if skip3 = '1' then
+						-- if temp1 > 125 then
+							-- temp1:= 36;
+						-- else temp1:= temp1 + 1;
+						-- end if;	
+						-- stlv_temp1a <= conv_std_logic_vector(temp1,8);
+						-- led1 <= stlv_temp1a(3 downto 0);
+-- --						stlv_temp1 <= X"AA";
+						-- addr <= "10";
+					-- else	
+						-- if temp2 < 33 then
+							-- temp2:= 125;
+						-- else temp2:= temp2 - 1;	
+						-- end if;	
+						-- stlv_temp1 <= conv_std_logic_vector(temp2,8);
+						-- led1 <= stlv_temp1(3 downto 0);
+-- --						stlv_temp1 <= X"55";
+						-- addr <= "01";
+					-- end if;
+					-- state_dout_next <= wait_dout;
+				-- end if;
+			-- when wait_dout =>
+				-- if time_delay_reg7 > TIME_DELAY7 then
+					-- time_delay_next7 <= (others=>'0');
+					-- state_dout_next <= idle_dout;
+				-- else
+					-- time_delay_next7 <= time_delay_reg7 + 1;
+				-- end if;
+-- --				end if;
+		-- end case;
+		-- time_delay_reg7 <= time_delay_next7;
+		-- state_dout_reg <= state_dout_next;
+		-- end if;
+	-- end if;
+-- end process;	
+
 echo_dout_unit1: process(clk, reset, state_dout_reg)
 variable temp_uart: integer range 0 to NUM_DATA_ARRAY-1:= 0;
 variable temp1: integer range 0 to 255:= 0;
@@ -356,11 +461,13 @@ begin
 		skip3 <= '0';
 		time_delay_reg7 <= (others=>'0');
 		time_delay_next7 <= (others=>'0');
+		led1 <= "1111";
+
 	else if clk'event and clk = '1' then
 		case state_dout_reg is
 			when idle_dout =>
 				if mspi_ready = '1' then
-					mspi_din <= stlv_temp1;		-- write
+					mspi_din <= stlv_temp1a;		-- write
 					mspi_din_vld <= '1';
 					state_dout_next <= start_dout;
 				end if;
@@ -396,22 +503,24 @@ begin
 							temp1:= 36;
 						else temp1:= temp1 + 1;
 						end if;	
-						stlv_temp1 <= conv_std_logic_vector(temp1,8);
+						stlv_temp1a <= conv_std_logic_vector(temp1,8);
+						led1 <= stlv_temp1a(3 downto 0);
 --						stlv_temp1 <= X"AA";
-						addr <= "01";					
+						addr <= "10";
 					else	
 						if temp2 < 33 then
 							temp2:= 125;
 						else temp2:= temp2 - 1;	
 						end if;	
 						stlv_temp1 <= conv_std_logic_vector(temp2,8);
+						led1 <= stlv_temp1(3 downto 0);
 --						stlv_temp1 <= X"55";
-						addr <= "10";
+						addr <= "01";
 					end if;
 					state_dout_next <= wait_dout;
 				end if;
 			when wait_dout =>
-				if time_delay_reg7 > TIME_DELAY9/8 then
+				if time_delay_reg7 > TIME_DELAY7 then
 					time_delay_next7 <= (others=>'0');
 					state_dout_next <= idle_dout;
 				else
@@ -583,7 +692,7 @@ begin
 		mph_or_not <= '0';
 --		start_dtmf <= '0';
 		stlv_duty_cycle <= (others=>'0');
-		led1 <= "1111";
+--		led1 <= "1111";
 		FifoRead <= '0';
 		special <= '0';
 --		pwm_state <= (others=>'0');
@@ -691,7 +800,7 @@ begin
 					when LCD_PWM =>
 --						pwm_state <= mparam(1 downto 0);
 						stlv_duty_cycle <= mparam(4 downto 0);
-						led1 <= mparam(3 downto 0);
+--						led1 <= mparam(3 downto 0);
 					when FP_SHUTOFF_OVERRIDE =>
 						fp_override <= mparam(0);
 					when SET_MAX_REV_LIMITER =>

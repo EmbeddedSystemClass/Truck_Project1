@@ -234,12 +234,16 @@ package CommonPckg is
 	constant DVND_SIZE: integer:= 30;
 	constant RESULT_SIZE: integer:= 18;
 	constant PRD_SIZE: integer:= 17;
-	constant DVSR_SIZE: integer:= 23;
+	constant DVSR_SIZE: integer:= 22;
+	constant DVSR_SIZE2: integer:= 23;
 	constant W2_SIZE: integer:= 19;
 	constant MPH_P_REG_SIZE: integer:= 16;
 	constant FP_RPM_MINIMUM: integer:= 10000;
 	constant RPM_MAXIMUM: integer:= 50000;
 	constant RPM_MINIMUM: integer:= 20000;
+	constant MAX_TIME:  integer:=  131071;
+	constant SIZE_32: integer:= 32;
+	constant div_const: integer:= 8192;
 
 	constant OFF_CMD: std_logic_vector(4 downto 0):= "00000";
 	constant SEND_CHAR_CMD: std_logic_vector(4 downto 0):= "00001";

@@ -208,8 +208,6 @@ begin
 			when idle_dtmf =>
 				if start_dtmf = '1' then
 					next1 <= start_dtmf1;
-				else
-					dtmf_signal_1 <= '0';
 				end if;
 			when start_dtmf1 =>
 				dtmf_signal_1 <= '1';
@@ -248,8 +246,6 @@ begin
 			when idle_dtmf2 =>
 				if start_dtmf = '1' then
 					next2 <= start_dtmf12;
-				else
-					dtmf_signal_2 <= '0';
 				end if;
 			when start_dtmf12 =>
 				dtmf_signal_2 <= '1';

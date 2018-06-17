@@ -1160,7 +1160,7 @@ call_Tool(int code)
 		        cmd = ENABLE_START;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("starter seq on  ","",code,0,0,2);
+			show_status2("starter seq on  ","",code,0,0,0);
 			break;
 
 		case 4:
@@ -1169,7 +1169,7 @@ call_Tool(int code)
 		        cmd = ON_ACC;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("ACC ON      ","",code,0,0,2);
+			show_status2("ACC ON","",code,0,0,1);
 			break;
 
 		case 5:
@@ -1178,7 +1178,7 @@ call_Tool(int code)
 		        cmd = OFF_ACC;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("ACC OFF      ","",code,0,0,2);
+			show_status2("ACC OFF","",code,0,0,1);
 			break;
 
 		case 6:
@@ -1187,7 +1187,7 @@ call_Tool(int code)
 				cmd =  ON_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FUEL PUMP ON      ","",code,0,0,2);
+			show_status2("FUEL PUMP ON","",code,0,0,2);
 			break;
 
 		case 7:
@@ -1196,7 +1196,7 @@ call_Tool(int code)
 				cmd =  OFF_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FUEL PUMP OFF       ","",code,0,0,2);
+			show_status2("FUEL PUMP OFF","",code,0,0,2);
 			break;
 
 		case 8:
@@ -1205,7 +1205,7 @@ call_Tool(int code)
 				cmd =  ON_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FAN ON","",code,0,0,2);
+			show_status2("FAN ON","",code,0,0,3);
 			break;
 
 		case 9:
@@ -1214,7 +1214,7 @@ call_Tool(int code)
 				cmd = OFF_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FAN OFF","",code,0,0,2);
+			show_status2("FAN OFF","",code,0,0,3);
 			break;
 
 		case 10:
@@ -1223,7 +1223,7 @@ call_Tool(int code)
 				cmd = SHUTDOWN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("SHUTDOWN","",code,0,0,2);
+			show_status2("SHUTDOWN","",code,0,0,0);
 			break;
 
 		case 11:
@@ -1232,7 +1232,7 @@ call_Tool(int code)
 				cmd = CLEAR_SCREEN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("clear lcd screen","",code,0,0,2);
+			show_status2("clear lcd screen","",code,0,0,0);
 			break;
 
 		case 12:
@@ -1241,7 +1241,7 @@ call_Tool(int code)
 				cmd = SEND_SERIAL;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("send serial","",code,0,0,2);
+			show_status2("send serial","",code,0,0,6);
 			break;
 
 		// TCP_WINDOW

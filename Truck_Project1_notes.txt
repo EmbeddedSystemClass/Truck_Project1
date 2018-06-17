@@ -181,6 +181,11 @@ relays start at upper left and go down then lower right and go up (see note 1)
 inputs start from left (see note 1)
 note 1) looking at card from component side w/PC-104 on bottom:
 
+start - brown
+acc - yellow
+fan - purple
+fuel pump - orange
+
 perf board for flashing light and 2 buttons:
 
 pins at bottom:
