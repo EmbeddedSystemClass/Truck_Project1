@@ -61,6 +61,7 @@
 extern int menu_scroll2(int num,int which,char *filename);
 extern int menu_scroll3(int num, UCHAR *str, char *filename);
 extern int tcp_win(int cmd);
+extern int tcp_win2(int cmd);
 extern int file_win(void);
 extern int file_menu2(int num, int which, char *ret_str);
 
@@ -1258,8 +1259,23 @@ call_Tool(int code)
 			show_status2("done tcp win","",code,0,0,3);
 			break;
 
-		// UPLOAD_NEW
+		// LIVE_WINDOW
 		case 14:
+//			if(tcp_connected)
+			if(1)
+			{
+				show_status2("start live window","",code,0,0,1);
+				cmd = LIVE_WINDOW_ON;
+				ret = put_sock(&cmd,1,1,errmsg);
+				tcp_win2(cmd);
+				cmd = LIVE_WINDOW_OFF;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}else show_status2("tcp not conn","a",code,0,0,2);
+			show_status2("done tcp win","",code,0,0,3);
+			break;
+
+		// UPLOAD_NEW
+		case 15:
 			if(tcp_connected)
 			{
 				show_status2("upload new sched","",code,0,0,1);
@@ -1356,7 +1372,8 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("Clear Screen"),				  // 11
 		MY_DATA2("Send Serial"),				  // 12
 		MY_DATA2("TCP Window"),					//13
-		MY_DATA2("Upload New"),					//14
+		MY_DATA2("Live Window"),				//14
+		MY_DATA2("Upload New"),					//15
 		{(char *) 0, 0, 0}
 	};
 

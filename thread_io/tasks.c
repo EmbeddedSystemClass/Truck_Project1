@@ -89,8 +89,11 @@ static int timer_inc2;
 static double program_start_time;
 static double diff;
 static int starter_on;
-static int fan_on;
 static int tcp_window_on;
+static int live_window_on;
+static int engine_running;
+static int fan_delay;
+static UCHAR running_hours, running_minutes, running_seconds;
 
 #define ON 1
 #define OFF 0
@@ -107,12 +110,14 @@ static REAL_BANKS real_banks[40];
 CMD_STRUCT cmd_array[38] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
+	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
 	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
 	{   	ON_FAN,"ON_FAN\0" },
 	{   	OFF_FAN,"OFF_FAN\0" },
 	{   	ON_ACC,"ON_ACC\0" },
 	{   	OFF_ACC,"OFF_ACC\0" },
+	{   	START_SEQ,"START_SEQ\0" },
 	{   	SEND_IDATA,"SEND_IDATA\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
 	{   	EDIT_IDATA,"EDIT_IDATA\0" },
@@ -141,6 +146,8 @@ CMD_STRUCT cmd_array[38] =
 	{   	GET_TIME,"GET_TIME\0" },
 	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
+	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
+	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{   	BLANK,"BLANK\0" },
@@ -155,6 +162,20 @@ static double curtime(void)
 	return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
+/****************************************************************************************************/
+
+static void send_live_code(UCHAR cmd)
+{
+	if(live_window_on == 0)
+		return;
+
+	UCHAR status_line[4];
+	status_line[0] = cmd;
+	status_line[1] = running_seconds;
+	status_line[2] = running_minutes;
+	status_line[3] = running_hours;
+	send_tcp((UCHAR*)status_line,4);
+}
 
 /*********************************************************************/
 static int uSleep(time_t sec, long nanosec)
@@ -267,8 +288,10 @@ UCHAR get_host_cmd_task(int test)
 	osize *= i;
 
 	starter_on = 0;
-	fan_on = 0;
-
+	engine_running = 0;
+	fan_delay = 0;
+	running_hours = running_minutes = running_seconds = 0;
+	
 	program_start_time = curtime();
 
 	illist_init(&ill);
@@ -301,7 +324,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 	myprintf1("start....\0");
-	myprintf1("sched v1.08\0");
+	myprintf1("sched v1.10\0");
 
 	while(TRUE)
 	{
@@ -327,6 +350,14 @@ UCHAR get_host_cmd_task(int test)
 
 					case TCP_WINDOW_OFF:
 						tcp_window_on = 0;
+						break;
+
+					case LIVE_WINDOW_ON:
+						live_window_on = 1;
+						break;
+
+					case LIVE_WINDOW_OFF:
+						live_window_on = 0;
 						break;
 
 					case SET_TIME:
@@ -544,41 +575,82 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case ENABLE_START:
-						change_output(STARTER, 1);
-						ollist_change_output(STARTER, &oll, 1);
-						starter_on = 1;
+//						if(engine_running == 0)
+						if(1)
+						{
+							change_output(STARTER, 1);
+							ollist_change_output(STARTER, &oll, 1);
+							starter_on = 1;
+							engine_running = 1;
+							send_live_code(cmd);
+						}
+						break;
+
+					case STARTER_OFF:
+						change_output(STARTER, 0);
+						ollist_change_output(STARTER, &oll, 0);
+						starter_on = 0;
 						break;
 
 					case ON_ACC:
 						ollist_change_output(ACCON, &oll, 1);
 						change_output(ACCON, 1);
+						send_live_code(cmd);
 						break;
 
 					case OFF_ACC:
 						ollist_change_output(ACCON, &oll, 0);
 						change_output(ACCON, 0);
+						send_live_code(cmd);
 						break;
 
 					case ON_FUEL_PUMP:
 						ollist_change_output(FUELPUMP, &oll, 1);
 						change_output(FUELPUMP, 1);
+						send_live_code(cmd);
 						break;
 
 					case OFF_FUEL_PUMP:
 						ollist_change_output(FUELPUMP, &oll, 0);
 						change_output(FUELPUMP, 0);
+						send_live_code(cmd);
 						break;
 
 					case ON_FAN:
 						ollist_change_output(COOLINGFAN, &oll, 1);
 						change_output(COOLINGFAN, 1);
-						fan_on = 1;
+						send_live_code(cmd);
+						fan_delay = 0;
 						break;
 
 					case OFF_FAN:
 						ollist_change_output(COOLINGFAN, &oll, 0);
 						change_output(COOLINGFAN, 0);
-						fan_on = 0;
+						send_live_code(cmd);
+						fan_delay = 0;
+						break;
+
+					case START_SEQ:
+//						if(engine_running == 0)
+						if(1)
+						{
+							engine_running = 1;
+							change_output(STARTER, 1);
+							ollist_change_output(STARTER, &oll, 1);
+							starter_on = 1;
+							send_live_code(ENABLE_START);
+
+							usleep(500000);
+							ollist_change_output(ACCON, &oll, 1);
+							change_output(ACCON, 1);
+							send_live_code(ON_ACC);
+
+							usleep(500000);
+							ollist_change_output(FUELPUMP, &oll, 1);
+							change_output(FUELPUMP, 1);
+							send_live_code(ON_FUEL_PUMP);
+							fan_delay = 1;
+						}
 						break;
 
 					case SHUTDOWN:
@@ -590,6 +662,14 @@ UCHAR get_host_cmd_task(int test)
 							change_output(i, 0);
 							uSleep(0,TIME_DELAY/10000);
 						}
+						fan_delay = 0;
+ 						engine_running = 0;
+						starter_on = 0;
+						send_live_code(STARTER_OFF);
+						send_live_code(OFF_FUEL_PUMP);
+						send_live_code(OFF_FAN);
+						send_live_code(OFF_ACC);
+						running_seconds = running_minutes = running_hours = 0;
 						break;
 
 					case CLEAR_SCREEN:
@@ -815,6 +895,7 @@ type:
 	static int change_output(int index, int onoff)
 	{
 		int bank;
+//		UCHAR status_line[10];
 
 		bank = real_banks[index].bank;
 		index = real_banks[index].index;
@@ -845,20 +926,6 @@ type:
 				break;
 		}
 		pthread_mutex_unlock(&io_mem_lock);
-//#endif
-
-//	printf("bank: %d\tindex\t%2d\t%2d\n",bank,index,onoff);
-/*
-		pthread_mutex_lock( &serial_write_lock);
-		write_serial(GET_CURRENT_OUTPUT);
-		write_serial(bank);
-		write_serial(index);
-		write_serial(onoff);
-		pthread_mutex_unlock(&serial_write_lock);
-*/
-//	lcd_cls();
-//		myprintf3("bank:\0",bank,index);
-//		myprintf2(" \0",onoff);
 		return index;
 	}
 
@@ -866,7 +933,6 @@ type:
 	UCHAR timer_task(int test)
 	{
 		int i;
-
 		uSleep(0,TIME_DELAY);
 
 		while(TRUE)
@@ -890,8 +956,33 @@ type:
 					ollist_change_output(STARTER, &oll, 0);
 					myprintf1("STARTER OFF\0");
 					printString2("STARTER OFF\0");
+					send_live_code(STARTER_OFF);
 				}
 			}
+			if(engine_running > 0)
+			{
+				if(++running_seconds > 59)
+				{
+					running_seconds = 0;
+					if(++running_minutes > 59)
+					{
+						running_minutes = 0;
+						if(++running_hours > 24)
+							running_hours = 0;
+					}
+				}
+				if(fan_delay > 0)
+				{
+					if(++fan_delay > 30)
+					{
+						ollist_change_output(COOLINGFAN, &oll, 1);
+						change_output(COOLINGFAN, 1);
+						send_live_code(ON_FAN);
+						fan_delay = 0;
+					}
+				}
+			}
+
 			if(shutdown_all)
 			{
 				return 0;

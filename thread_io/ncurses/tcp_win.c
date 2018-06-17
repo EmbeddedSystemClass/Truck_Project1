@@ -134,6 +134,8 @@ int tcp_win(int cmd)
 				break;
 
 			case KEY_F(4):
+				clr_scr(twin);
+				x = y = 1;
 				break;
 
 			case KEY_F(5):
@@ -146,7 +148,7 @@ int tcp_win(int cmd)
 		}
 		if(tcp_connected == 1)
 		{
-			usleep(1000);
+			usleep(100);
 			rc = get_sock(&ret_char,1,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{

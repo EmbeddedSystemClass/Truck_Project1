@@ -23,13 +23,13 @@
 #ifdef CONSOLE_DISABLED
 #warning "CONSOLE_DISLABLED"
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
+#define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
 #else
 #warning "CONSOLE_ENABLED"
-#endif
-#define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
-
-#endif
-#endif
+#define MODEMDEVICE "/dev/ttyAM1"				  // 7200 uses ttyAM0 if console disabled
+#endif // end of ifdef CONSOLE_DISABLED
+#endif	// end of ifdef TS_7800
+#endif	// end of ifdef MAKE_SIM
 #define _POSIX_SOURCE 1							  /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
