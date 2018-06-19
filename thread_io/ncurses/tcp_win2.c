@@ -14,6 +14,10 @@
 
 #define SHOW_DATA_HEIGHT 47
 #define SHOW_DATA_WIDTH 47
+#define STARTER_STATUS 10
+#define ACC_STATUS 28
+#define FUEL_PUMP_STATUS 46
+#define FAN_STATUS 62
 
 static int status_line;
 static int error_line1;
@@ -99,7 +103,7 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case STARTER_OFF:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  STARTER_OFF",hours,minutes,seconds);
-			mvwprintw(win,status_line,9,"OFF");
+			mvwprintw(win,status_line,STARTER_STATUS,"OFF");
 		break;
 		case ON_FUEL_PUMP:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  ON_FUEL_PUMP",hours,minutes,seconds);
@@ -109,7 +113,7 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case ON_FAN:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  ON_FAN",hours,minutes,seconds);
-			mvwprintw(twin,status_line,41,"ON ");
+			mvwprintw(win,status_line,FAN_STATUS,"ON ");
 		break;
 		case OFF_FAN:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_FAN",hours,minutes,seconds);
@@ -119,6 +123,9 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case OFF_ACC:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ACC",hours,minutes,seconds);
+		break;
+		case TOTAL_UP_TIME:
+			mvwprintw(win,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
 		break;
 		default:
 		break;
@@ -173,13 +180,18 @@ int tcp_win2(int cmd)
 	keypad(twin,TRUE);
 	nodelay(twin,TRUE);
 	box(twin,ACS_VLINE,ACS_HLINE);
+	curs_set(0);
 
 	MvWAddCh(twin,height-5,0,ACS_LTEE);
 	MvWAddCh(twin,height-5,width-1,ACS_RTEE);
 	for(i = 1;i < width-1;i++)
 		MvWAddCh(twin,height-5,i,ACS_HLINE);
 
-	mvwprintw(twin,status_line,1,"STARTER:     ACC:     FUEL PUMP:    FAN:             ");
+//	mvwprintw(twin,status_line,1,"STARTER:     ACC:     FUEL PUMP:    FAN:             ");
+	mvwprintw(twin,status_line,STARTER_STATUS-9,"STARTER:");	
+	mvwprintw(twin,status_line,ACC_STATUS-5,"ACC:");
+	mvwprintw(twin,status_line,FUEL_PUMP_STATUS-11,"FUEL PUMP:");
+	mvwprintw(twin,status_line,FAN_STATUS-5,"FAN:");
 	mvwprintw(twin,error_line1,1,"F2 - quit; F3 - start; F4 - acc; F5 - fuel; F6 - fan; F7 - all off");
 	mvwprintw(twin,error_line2,1,"F8 - clear screen; F9 - start seq");
 
@@ -198,7 +210,7 @@ int tcp_win2(int cmd)
 			case KEY_F(3):
 		        cmd2 = ENABLE_START;
 		        put_sock(&cmd2,1,1,errmsg);
-				mvwprintw(twin,status_line,9,"ON ");
+				mvwprintw(twin,status_line,STARTER_STATUS,"ON ");
 				break;
 
 			case KEY_F(4):
@@ -206,13 +218,13 @@ int tcp_win2(int cmd)
 				{
 			        cmd2 = OFF_ACC;
 			        acc_on = 0;
-					mvwprintw(twin,status_line,18,"OFF");
+					mvwprintw(twin,status_line,ACC_STATUS,"OFF");
 				}
 				else
 				{
 					cmd2 = ON_ACC;
 					acc_on = 1;
-					mvwprintw(twin,status_line,18,"ON ");
+					mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 				}
 		        put_sock(&cmd2,1,1,errmsg);
 				break;
@@ -222,13 +234,13 @@ int tcp_win2(int cmd)
 				{
 					fp_on = 0;
 			        cmd2 = OFF_FUEL_PUMP;
-					mvwprintw(twin,status_line,33,"OFF");
+					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"OFF");
 			    }
 				else
 				{
 					cmd2 = ON_FUEL_PUMP;
 					fp_on = 1;
-					mvwprintw(twin,status_line,33,"ON ");
+					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 				}
 		        put_sock(&cmd2,1,1,errmsg);
 				break;
@@ -238,13 +250,13 @@ int tcp_win2(int cmd)
 				{
 					fan_on = 0;
 			        cmd2 = OFF_FAN;
-					mvwprintw(twin,status_line,41,"OFF");
+					mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 			    }
 				else
 				{
 					cmd2 = ON_FAN;
 					fan_on = 1;
-					mvwprintw(twin,status_line,41,"ON ");
+					mvwprintw(twin,status_line,FAN_STATUS,"ON ");
 				}
 			    put_sock(&cmd2,1,1,errmsg);
 				break;
@@ -268,10 +280,10 @@ int tcp_win2(int cmd)
 		        fp_on = 0;
 		        acc_on = 0;
 		        starter_on = 0;
-				mvwprintw(twin,status_line,9,"OFF");
-				mvwprintw(twin,status_line,18,"OFF");
-				mvwprintw(twin,status_line,33,"OFF");
-				mvwprintw(twin,status_line,41,"OFF");
+				mvwprintw(twin,status_line,STARTER_STATUS,"OFF");
+				mvwprintw(twin,status_line,ACC_STATUS,"OFF");
+				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"OFF");
+				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
 			case KEY_F(8):
 				clr_scr(twin);
@@ -283,6 +295,12 @@ int tcp_win2(int cmd)
 		        put_sock(&cmd2,1,1,errmsg);
 		        acc_on = 1;
 		        fp_on = 1;
+				mvwprintw(twin,status_line,STARTER_STATUS,"ON ");
+				mvwprintw(twin,status_line,ACC_STATUS,"ON ");
+				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
+		        break;
+			case KEY_F(10):	// test pattern
+				break;
 			default:
 				break;
 		}
@@ -313,15 +331,18 @@ int tcp_win2(int cmd)
 				hours = buffer[3];
 								
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
-				y = inc_y(twin,y++);
-				if(y == 1)
+				if(cmd2 != TOTAL_UP_TIME)
 				{
-					if(x == 1)
-						x = 30;
-					else
+					y = inc_y(twin,y++);
+					if(y == 1)
 					{
-						x = 1;
-						clr_scr(twin);
+						if(x == 1)
+							x = 30;
+						else
+						{
+							x = 1;
+							clr_scr(twin);
+						}
 					}
 				}
 					

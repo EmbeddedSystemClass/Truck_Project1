@@ -94,6 +94,7 @@ static int live_window_on;
 static int engine_running;
 static int fan_delay;
 static UCHAR running_hours, running_minutes, running_seconds;
+static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
 
 #define ON 1
 #define OFF 0
@@ -291,6 +292,7 @@ UCHAR get_host_cmd_task(int test)
 	engine_running = 0;
 	fan_delay = 0;
 	running_hours = running_minutes = running_seconds = 0;
+	trunning_hours = trunning_minutes = trunning_seconds = 0;
 	
 	program_start_time = curtime();
 
@@ -934,6 +936,7 @@ type:
 	{
 		int i;
 		uSleep(0,TIME_DELAY);
+		UCHAR buffer[5];
 
 		while(TRUE)
 		{
@@ -983,6 +986,25 @@ type:
 				}
 			}
 
+			if(++trunning_seconds > 59)
+			{
+				trunning_seconds = 0;
+				if(++trunning_minutes > 59)
+				{
+					trunning_minutes = 0;
+					if(++trunning_hours > 24)
+						trunning_hours = 0;
+				}
+			}
+			if(live_window_on)
+			{
+				buffer[0] = TOTAL_UP_TIME;
+				buffer[1] = trunning_seconds;
+				buffer[2] = trunning_minutes;
+				buffer[3] = trunning_hours;
+				send_tcp((UCHAR *)buffer,4);
+			}
+			
 			if(shutdown_all)
 			{
 				return 0;
