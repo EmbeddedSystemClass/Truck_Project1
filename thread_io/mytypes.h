@@ -72,6 +72,8 @@ enum cmd_types
 	BLANK
 }CMD_TYPES;
 
+#define COMM_CMD 0x7E
+
 typedef struct
 {
 	int cmd;

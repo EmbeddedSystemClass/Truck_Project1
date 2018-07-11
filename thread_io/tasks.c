@@ -95,6 +95,7 @@ static int engine_running;
 static int fan_delay;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
+static UCHAR rt_data[50];
 
 #define ON 1
 #define OFF 0
@@ -260,6 +261,8 @@ UCHAR get_host_cmd_task(int test)
 	off_t fsize;
 	int cur_fsize;
 	struct timeval mtv;
+
+	memset(rt_data,0,sizeof(rt_data));
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -642,12 +645,12 @@ UCHAR get_host_cmd_task(int test)
 							starter_on = 1;
 							send_live_code(ENABLE_START);
 
-							usleep(500000);
+							usleep(50000);
 							ollist_change_output(ACCON, &oll, 1);
 							change_output(ACCON, 1);
 							send_live_code(ON_ACC);
 
-							usleep(500000);
+							usleep(50000);
 							ollist_change_output(FUELPUMP, &oll, 1);
 							change_output(FUELPUMP, 1);
 							send_live_code(ON_FUEL_PUMP);
@@ -936,7 +939,7 @@ type:
 	{
 		int i;
 		uSleep(0,TIME_DELAY);
-		UCHAR buffer[5];
+		UCHAR buffer[50];
 
 		while(TRUE)
 		{
@@ -998,11 +1001,24 @@ type:
 			}
 			if(live_window_on)
 			{
+				pthread_mutex_lock( &serial_read_lock);
+
 				buffer[0] = TOTAL_UP_TIME;
 				buffer[1] = trunning_seconds;
 				buffer[2] = trunning_minutes;
 				buffer[3] = trunning_hours;
-				send_tcp((UCHAR *)buffer,4);
+				buffer[4] = rt_data[0];
+				buffer[5] = rt_data[1];
+				buffer[6] = rt_data[2];
+				buffer[7] = rt_data[3];
+				buffer[8] = rt_data[4];
+				buffer[9] = rt_data[5];
+				buffer[10] = rt_data[6];
+				buffer[11] = rt_data[7];
+
+				pthread_mutex_unlock(&serial_read_lock);
+
+				send_tcp((UCHAR *)buffer,12);
 			}
 			
 			if(shutdown_all)
@@ -1080,7 +1096,6 @@ UCHAR serial_recv_task(int test)
 	int i;
 	int j = 0;
 	UCHAR ch;
-	UCHAR ch2;
 	int fd;
 	char errmsg[20];
 
@@ -1131,7 +1146,7 @@ UCHAR serial_recv_task(int test)
 		}else
 //			if(myprintf2("read:\0",ch) == 1)
 //				printf("lcd not init'd\n");
-			if(ch != 0x7e)
+			if(ch != COMM_CMD)
 			{
 				if(tcp_window_on == 1)
 					send_tcp((UCHAR *)&ch,1);
@@ -1140,24 +1155,10 @@ UCHAR serial_recv_task(int test)
 			else
 			{
 				pthread_mutex_lock( &serial_read_lock);
-				ch = read_serial(errmsg);
-				ch2 = read_serial(errmsg);
+				// read NUM_CHANNELS * 2 or number of ADC channels enabled in esos1/Truck_App.h
+				for(i = 0;i < 8;i++)
+					rt_data[i] = read_serial(errmsg);
 				pthread_mutex_unlock(&serial_read_lock);
-				switch(ch)
-				{
-					case TEST1:
-//					myprintf2("cmd 1\0",ch2);
-					break;
-					case TEST2:
-//					myprintf2("cmd 2\0",ch2);
-					break;
-					case TEST3:
-//					myprintf2("cmd 3\0",ch2);
-					break;
-					default:
-//					myprintf1("unknown cmd\0");
-					break;
-				}					
 			}
 			uSleep(0,TIME_DELAY/100000);
 #if 0

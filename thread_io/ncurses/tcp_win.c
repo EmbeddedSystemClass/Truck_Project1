@@ -112,7 +112,7 @@ int tcp_win(int cmd)
 	for(i = 1;i < width-1;i++)
 		MvWAddCh(twin,height-5,i,ACS_HLINE);
 
-	mvwprintw(twin,status_line,1,"F2 - quit");
+	mvwprintw(twin,status_line,1,"F2 - quit; F3 - toggle ascii");
 
 //	mvwprintw(twin,2,2,"starting server...");
 	wrefresh(twin);
@@ -124,12 +124,16 @@ int tcp_win(int cmd)
 		{
 			case KEY_F(3):
 				if(ascii == 0)
+				{
 					ascii = 1;
+					mvwprintw(twin,status_line,30,"ascii on  ");
+				}
 				else
 				{ 
 					ascii = 0;
 					x = width;
 					y++;
+					mvwprintw(twin,status_line,30,"ascii off  ");
 				}
 				break;
 
@@ -194,7 +198,7 @@ int tcp_win(int cmd)
 						y = inc_y(twin,y);
 						x = 1;
 					}
-					mvwprintw(twin,error_line1,1,"%2d %2d   ",x,y);
+//					mvwprintw(twin,error_line1,1,"%2d %2d   ",x,y);
 					wrefresh(twin);
 				}
 				else

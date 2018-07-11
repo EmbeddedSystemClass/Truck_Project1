@@ -4,7 +4,7 @@ pinout for LCD:
 
 21) LEDK	| gnd for LCD backlight (not on pinout - wired separately)
 20) LEDA	| +5v for  "     "			"				"
-19) VEE		goes to gnd threw 20K pot with center tap to VO
+19) VEE		goes to gnd threw 20K pot with center tap to VO	
 18) FS		font select
 17) DATA 7	data lines
 16) DATA 6

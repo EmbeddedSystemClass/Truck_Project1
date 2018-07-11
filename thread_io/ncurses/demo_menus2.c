@@ -1086,8 +1086,8 @@ call_Tool(int code)
 			i = init_client(Host_Sim,errmsg);
 			show_status2("init_client (sim)",Host_Sim,i,0,0,2);
 #else
-			i = init_client(HOST149,errmsg);
-			show_status2("init_client",HOST149,i,0,0,1);
+			i = init_client(hostid,errmsg);
+			show_status2("init_client",hostid,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1097,7 +1097,11 @@ call_Tool(int code)
 				else
 					tcp_connected = 0;
 			}
-			show_status2("Connect","errmsg",i,j,tcp_connected,0);
+			if(tcp_connected == 1)
+				show_status2("Connected","errmsg",i,j,tcp_connected,0);
+			else
+				show_status2("Not Connected","errmsg",i,j,tcp_connected,0);
+			
 			if(j < 0)
 			{
 //				close_sock();

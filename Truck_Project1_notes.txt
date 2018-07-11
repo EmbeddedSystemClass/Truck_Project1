@@ -6,7 +6,7 @@ traffic, a ATMEGA328P to drive a t6963 LCD screen, and a TS-7200/7800 to do
 I/O (turning on and off lights and reading switches).
 
 
-  ------------------- SPI ------------------->| AVR |===> t6963 LCD screen
+   ------------------- SPI ------------------->| AVR |===> t6963 LCD screen
   |												  ^
   v												  |
 ----|											  |							Laptop (optional)

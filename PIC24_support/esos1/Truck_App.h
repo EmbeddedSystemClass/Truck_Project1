@@ -1,28 +1,9 @@
-//    All rights reserved.
-//
-//    Permission to use, copy, modify, and distribute this software and its
-//    documentation for any purpose, without fee, and without written agreement is
-//    hereby granted, provided that the above copyright notice, the following
-//    two paragraphs and the authors appear in all copies of this software.
-//
-//    IN NO EVENT SHALL THE "AUTHORS" BE LIABLE TO ANY PARTY FOR
-//    DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
-//    OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE "AUTHORS"
-//    HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//    THE "AUTHORS" SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-//    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-//    AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
-//    ON AN "AS IS" BASIS, AND THE "AUTHORS" HAS NO OBLIGATION TO
-//    PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
-//
-//    Please maintain this header in its entirety when copying/modifying
-//    these files.
-//
-//
-// "I am not so much concerned with the return on capital as I am with the return of capital." - Will Rogers
-//
-//#define DEBUG
+#ifdef BUILT_ON_ESOS
+#warning "BUILT_ON_ESOS defined"
+#else
+#warning "BUILT_ON_ESOS not defined"
+#endif
+
 #include "../esos/include/esos.h"
 #include "../lib/include/pic24_ports_config.h"
 #include "../lib/include/pic24_ports_mapping.h"
@@ -37,7 +18,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-// DEFINEs go here
+
+ESOS_USER_TASK(menu_task);
+ESOS_USER_TASK(keypad);
+ESOS_USER_TASK(poll_keypad);
+ESOS_SEMAPHORE(key_sem);
+ESOS_USER_TASK(spi_task);
+ESOS_USER_TASK(send_char);
+ESOS_USER_TASK(set_cursor);
+ESOS_USER_TASK(goto1);
+ESOS_USER_TASK(test1);
+ESOS_USER_TASK(clr_screen);
+ESOS_USER_TASK(send_fpga);
+ESOS_USER_TASK(recv_lcd);
+ESOS_USER_TASK(send_comm1);
 
 #define MY_ESOS1
 #define TIME_DELAY		20
@@ -50,16 +44,17 @@
 #define RT_OFFSET 0x70
 //#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
 
-#ifdef OC1CON1
-#warning "OC1CON1 defined"
-#endif
 #define CHAR_CMD			2
 #define GOTO_CMD			3
 #define SET_MODE_CMD 		4
-#define DEBUG_CLRSCR1		5
-#define DEBUG_CLRSCR2		6
-#define DEBUG_CLRSCR3		7
-#define DEBUG_MSG1			8
+#define LCD_CLRSCR1			5
+#define LCD_CLRSCR2			6
+#define LCD_CLRSCR3			7
+#define LCD_MSG1			8
+#define MENU_SETMODE		9
+#define MENU_SETCONTEXT		10
+
+#define COMM_CMD 0x7E
 
 #define ROWS 16
 #define COLUMN 40
@@ -109,62 +104,9 @@
 #define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
 #define REV_LIMITER 					0x8C // set the rev limit min & max
 
-enum data_types
-{
-	RT_LOW,				// uint8_t without high bit set
-	RT_HIGH0,			// uint8_t with bit 7 set
-	RT_HIGH1,			// UINT with neither 7 or 15 set
-	RT_HIGH2,			// bit 7 of UINT set
-	RT_HIGH3			// bit 15 of UINT set
-} DATA_TYPES;
-
-// warning: these are also defined in the AVR directory
-// got mult defined errors if enums have the same names
-// but got undefined errors if left out ???
-
-typedef struct rt_param
-{
-	UCHAR row;			// row, col tells where the param will appear on screen
-	UCHAR col;
-	UCHAR shown;		// SHOWN_SENT = shown & sent; NOSHOWN_SENT = sent but not shown; NOSHOWN_NOSENT
-	UCHAR dtype;		// 0 = UCHAR; 1 = UINT; 2 = dword?
-	UCHAR type;			// rt_types
-} RT_PARAM;
-
-enum shown_types
-{
-	SHOWN_SENT,
-	NOSHOWN_SENT,
-	NOSHOWN_NOSENT
-} SHOWN_TYPES;
-
 enum key_types
 {
-	TEST1 = 0xC9,
-	TEST2,			//  - CA
-	TEST3,			//  - CB
-	TEST4,			//  - CC
-	TEST5,			//	- CD
-	TEST6,			//	- CE
-	TEST7,			//	- CF
-	TEST8,			//	- D0
-	TEST9,			//	- D1
-	TEST10,			//	- D2
-	TEST11,			//	- D3
-	TEST12,			//	- D4
-	TEST13,			//	- D5
-	TEST14,			//	- D6
-	TEST15,			//	- D7
-	TEST16,			//	- D8
-	TEST17,			//  - D9
-	LOAD_RAM,		//  - DA
-	INIT, 			//	- DB
-	SPACE,			//	- DC
-	BURN_PART,		//  - DD
-	READ_EEPROM1,	//	- DE
-	READ_EEPROM2,	//	- DF
-
-	KP_1, // '1'		- E0
+	KP_1 = 0xE0, // '1'		- E0
 	KP_2, // '2'		- E1
 	KP_3, // '3'		- E2
 	KP_4, // '4'		- E3
@@ -182,37 +124,7 @@ enum key_types
 	KP_0 	// '0'		- EF
 } KEY_TYPES;
 
-enum rt_types
-{
-	RT_RPM = RT_OFFSET,
-	RT_ENGT,
-	RT_TRIP,
-	RT_TIME,
-	RT_AIRT,
-	RT_MPH,
-	RT_OILP,
-	RT_MAP,
-	RT_OILT,
-	RT_O2,
-} RT_TYPES;
-
-volatile UINT32 U32_lastCapture; // UINT32 declared in all_generic.h
-
-ESOS_USER_TASK(spi_task);
-ESOS_USER_TASK(keypad);
-ESOS_USER_TASK(poll_keypad);
-ESOS_SEMAPHORE(key_sem);
-ESOS_USER_TASK(delay_comm1);
-ESOS_USER_TASK(send_char);
-ESOS_USER_TASK(set_cursor);
-ESOS_USER_TASK(goto1);
-ESOS_USER_TASK(test1);
-ESOS_USER_TASK(test2);
-ESOS_USER_TASK(test3);
-ESOS_USER_TASK(clr_screen);
-ESOS_USER_TASK(send_fpga);
-ESOS_USER_TASK(recv_lcd);
-
+#if 0
 UCHAR get_keypress(UCHAR key1)
 {
 	UCHAR wkey;
@@ -280,71 +192,13 @@ UCHAR get_keypress(UCHAR key1)
 		case 'z':
 			wkey = KP_AST;
 			break;
-
-		case 'g':
-			wkey = TEST1;		// set size = 300, start_addr = 0
-			break;
-		case 'h':
-			wkey = TEST2;		// set size = 300, start_addr = 300
-			break;
-		case 'j':
-			wkey = TEST3;		// set size = 300, start_addr = 600
-			break;
-		case 'k':
-			wkey = TEST4;		// set size = 129, start_addr = 900
-			break;
-		case 'l':
-			wkey = TEST5;		// fill aux_string with random data
-			break;
-		case 'm':
-			wkey = TEST6;		// draw border
-			break;
-		case 'n':
-			wkey = TEST7;		// print cblabels
-			break;
-		case 'o':
-			wkey = TEST8;		// restore eeprom.bin
-			break;
-		case 'p':
-			wkey = TEST9;		// copy eeprom2.bin to eeprom.bin in sim_write
-			break;
-		case 'x':
-			wkey = TEST10;		// read aux_string
-			break;
-		case 's':
-			wkey = TEST11;		// tell AVR to print pattern
-			break;
-		case 'r':
-			wkey = LOAD_RAM;	// load all stuff in ram
-			break;
-		case 'i':
-			wkey = INIT;
-			break;
-		case ' ':
-			wkey = SPACE;
-			break;
-		case 'v':
-			wkey = BURN_PART;
-			break;
-		case 'e':
-			wkey = READ_EEPROM1;
-			break;
-		case 'f':
-			wkey = READ_EEPROM2;
-			break;
-		case 'E':
-			wkey = TEST16;
-			break;
-		case 'F':
-			wkey = TEST17;
-			break;
 		default:
 			wkey = 0xff;
 			break;
 	}
 	return wkey;
 }
-
+#endif
 /*
 RE0 - p93 - 5th from right inside top			//	row 0
 RE1 - p94 - 4th from right outside top			//	row 1
@@ -574,15 +428,13 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
-    static ESOS_TASK_HANDLE send_handle;
-    static ESOS_TASK_HANDLE fpga_handle;
+    static ESOS_TASK_HANDLE menu_handle;
 	static UCHAR data1;
 	static UINT data3;
 	
     ESOS_TASK_BEGIN();
 
-	fpga_handle = esos_GetTaskHandle(send_fpga);
-	send_handle = esos_GetTaskHandle(send_char);
+	menu_handle = esos_GetTaskHandle(menu_task);
 
 	configKeypad();
 	data1 = 0;
@@ -592,27 +444,18 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if(u8_newKey)
 		{
-			data3 = FPGA_LCD_PWM;
-			data3 <<= 8;
-			data3 &= 0xFF00;
-			data1 = (u8_newKey - 0xE0);
-			
-			data3 |= data1;
-			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 /*
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
+			ESOS_TASK_WAIT_ON_SEND_UINT8(u8_newKey-0xE0+0x30);
 			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 */
-//			data1 = u8_newKey - 0xE0 + 0x31;
+//			__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
 			u8_newKey = 0;	// very important to reset this to 0
-//			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
 		}
 	}
     ESOS_TASK_END();
 }
-//#if 0
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
@@ -658,17 +501,6 @@ ESOS_USER_TASK(spi_task)
 	static uint8_t  res_array[24];
 
     ESOS_TASK_BEGIN();
-
-#if 0
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-    ESOS_TASK_WAIT_ON_SEND_STRING("spi_task on comm1");
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-    ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-	ESOS_TASK_SIGNAL_AVAILABLE_SPI();
-#endif
 
 	data1 = 0x21;
     while(TRUE)
@@ -783,12 +615,6 @@ ESOS_USER_TASK(spi_task)
     ESOS_TASK_END();
 }
 
-#ifdef BUILT_ON_ESOS
-#warning "BUILT_ON_ESOS defined"
-#else
-#warning "BUILT_ON_ESOS not defined"
-#endif
-
 #if 0
 uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre);
 uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre) {
@@ -812,9 +638,10 @@ uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
   return u16_ticks;
 }
 #endif
-
-#define NUM_CHANNELS 1
+#define NUM_CHANNELS 4
 volatile uint16_t au16_buffer[NUM_CHANNELS];
+volatile uint16_t  u16_pot[NUM_CHANNELS];
+
 volatile uint8_t  u8_waiting;
 volatile int lat5;
 
@@ -827,19 +654,18 @@ ESOS_USER_TASK(convADC)
 //	static uint16_t u16_adcVal1, u16_adcVal2;
 //	static float f_adcVal;
 	static uint8_t   u8_i;
-	static uint16_t  u16_pot;
 
     ESOS_TASK_BEGIN();
-
+/*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_STRING("starting ADC task\r\n");
 	ESOS_TASK_WAIT_ON_SEND_STRING("                                 \r");
 	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-	CONFIG_RB0_AS_ANALOG();
-	CONFIG_RB1_AS_ANALOG();
-	CONFIG_RB2_AS_ANALOG();
-	CONFIG_RB3_AS_ANALOG();
+*/
+	CONFIG_RB0_AS_ANALOG();		// 1st knob on monster box
+	CONFIG_RB1_AS_ANALOG();		// 2nd knob on monster box
+	CONFIG_RB2_AS_ANALOG();		// engine temp
+	CONFIG_RB3_AS_ANALOG();		// oil pressure
 /*
 	CONFIG_RB4_AS_ANALOG();
 	CONFIG_RB5_AS_ANALOG();
@@ -857,7 +683,7 @@ ESOS_USER_TASK(convADC)
 //	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN2 |
 //			 ADC_SCAN_AN3 | ADC_SCAN_AN4 | ADC_SCAN_AN5, 31, 0);
 
-	configADC1_AutoScanIrqCH0( 0x000F, 31, 0);
+	configADC1_AutoScanIrqCH0( 0x0003, 31, 0);
 //	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
 	while ( !AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
@@ -870,23 +696,27 @@ ESOS_USER_TASK(convADC)
 		u8_waiting = 0;
 		for ( u8_i=0; u8_i<NUM_CHANNELS; u8_i++)
 		{
-			u16_pot = au16_buffer[u8_i];
-			u16_pot <<= 6;
-			u16_pot |= 0x003F;
+			u16_pot[u8_i] = au16_buffer[u8_i];
+/*			
+			u16_pot[u8_i] <<= 6;
+			if(u16_pot[u8_i] > 1)
+				u16_pot[u8_i] |= 0x003F;
+*/
 
 #if 0
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			if(u8_i == 0)
 			{
 //				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
+				ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
 			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot);
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot[u8_i]>>8));
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot[u8_i]);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 		}
-		ESOS_TASK_WAIT_TICKS(1);
+		ESOS_TASK_WAIT_TICKS(50);
 	}
 	ESOS_TASK_END();
 }
@@ -905,94 +735,335 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-#if 0
-#ifndef PWM_PERIOD
-#define PWM_PERIOD 2000  // desired period, in us
-#define OC_PWM_CENTER_ALIGN 0x07
-#define OC_SYNCSEL_TIMER2 0x0080
-#endif
+volatile UCHAR menu_context;
 
-#ifdef _NOFLOAT
-#warning "NOFLOAT defined"
-#else
-#warning "NOFLOAT not defined"
-#endif
-
-void  configTimer2(void) 
+//******************************************************************************************//
+//*************************************** menu_task ****************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(menu_task)
 {
-	T2CON = T2_OFF | T2_IDLE_CON | T2_GATE_OFF
-		| T2_32BIT_MODE_OFF
-		| T2_SOURCE_INT
-		| T2_PS_1_256;
-//		| T2_PS_1_64;
-//		| T2_PS_1_8;
-//		| T2_PS_1_1;
-	PR2 = usToU16Ticks(PWM_PERIOD, getTimerPrescale(T2CONbits)) - 1;
-//	PR2 = usToU16Ticks(PWM_PERIOD, T2CONbits.TCKPS) - 1;
-	TMR2  = 0;       //clear timer2 value
-	_T2IF = 0;
-	_T2IP = 1;
-	_T2IE = 1;    //enable the Timer2 interrupt
+	static UCHAR data1;
+	
+    ESOS_TASK_BEGIN();
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_FOR_MAIL();
+
+		while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+			// if there are 5 different menu_context's (5 different menus)			
+			switch(data1)
+			{
+				case 	KP_1:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_2:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_3:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_4:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_5:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_6:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_7:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_8:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_9:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_A:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_B:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_C:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_D:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_POUND:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_AST:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				case	KP_0:
+					switch(menu_context)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						case 2:
+						break;
+						case 3:
+						break;
+						case 4:
+						break;
+						case 5:
+						break;
+						default:
+						break;
+					}	
+				break;
+				default:
+				break;
+			}
+		}
+	}
+    ESOS_TASK_END();
 }
 
-
-void configOutputCompare1(void) 
-{
-	T2CONbits.TON = 0;          //disable Timer when configuring Output compare
-	CONFIG_OC1_TO_RP(RF13_RP);   //map OC1 to RB0
-	OC1RS = 0;  //clear both registers
-	OC1R = 0;
-
-//turn on the compare toggle mode using Timer2
-	OC1CON1 = OC_TIMER2_SRC |		//Timer2 source
-		OC_PWM_CENTER_ALIGN;		//PWM
-	OC1CON2 = OC_SYNCSEL_TIMER2;	//synchronize to timer2
-}
-
-
-void _ISR _T2Interrupt(void) 
-{
-	uint32_t u32_temp;
-	_T2IF = 0;    //clear the timer interrupt bit
-	//update the PWM duty cycle from the ADC value
-	u32_temp = ADC1BUF0;  //use 32-bit value for range
-//	u32_temp = dimmer;
-	//compute new pulse width that is 0 to 99% of PR2
-	// pulse width (PR2) * ADC/1024
-	u32_temp = (u32_temp * (PR2))>> 10 ;  // >>10 is same as divide/1024
-	OC1RS = u32_temp;  //update pulse width value
-	dimmer = u32_temp;
-	SET_SAMP_BIT_ADC1();      //start sampling and conversion
-	lat5++;
-	if(lat5 % 2 == 0)
-		_LATE5 = 0;
-	else _LATE5 = 1;
-}
-#endif
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-int pack(UCHAR low_byte, UCHAR high_byte)
-{
-	int temp;
-	int myint;
-	low_byte = ~low_byte;
-	myint = (int)low_byte;
-	temp = (int)high_byte;
-	temp <<= 8;
-	myint |= temp;
-	return myint;
-}
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-void unpack(int myint, UCHAR *low_byte, UCHAR *high_byte)
-{
-	*low_byte = (UCHAR)myint;
-	myint >>= 8;
-	*high_byte = (UCHAR)myint;
-	*low_byte = ~(*low_byte);
-}

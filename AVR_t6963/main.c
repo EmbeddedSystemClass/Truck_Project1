@@ -20,13 +20,15 @@
 #include <stdlib.h>
 
 #define LEN 200
-#define DEBUG_CHAR			2
-#define DEBUG_GOTO			3
-#define DEBUG_SET_MODE		4
-#define DEBUG_CLRSCR1		5
-#define DEBUG_CLRSCR2		6
-#define DEBUG_CLRSCR3		7
-#define DEBUG_MSG1			8
+#define CHAR_CMD			2
+#define GOTO_CMD			3
+#define SET_MODE_CMD 		4
+#define LCD_CLRSCR1			5
+#define LCD_CLRSCR2			6
+#define LCD_CLRSCR3			7
+#define LCD_MSG1			8
+#define MENU_SETMODE		9
+#define MENU_SETCONTEXT		10
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -45,10 +47,10 @@ ISR(TIMER1_OVF_vect)
 	{
 //		loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
 //		spi_ret = SPDR;
-		SPI_write(xbyte);
+//		SPI_write(xbyte);
 	}
-	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
-//	TCNT1 = 0xF800;
+//	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
+	TCNT1 = 0xF800;
 }
 
 int main(void)
@@ -83,7 +85,9 @@ int main(void)
 //******************************************************************************************//
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
-	_delay_ms(500);
+
+	_delay_ms(1000);
+	GDispStringAt(7,15,"          ");
 //#endif
 
 	xbyte = 0x21;
@@ -97,7 +101,7 @@ int main(void)
 
 	i = 0;
 	dc2 = 0;
-
+/*
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
@@ -112,7 +116,7 @@ int main(void)
 	}
 
 	_delay_ms(500);
-
+*/
 	GDispClrTxt();
 
 	row = col = 0;
@@ -134,7 +138,7 @@ int main(void)
 		{
 			switch(buff[0])
 			{
-				case DEBUG_CHAR:
+				case CHAR_CMD:
 					ch = buff[1];
 					if(ch > 0x1F && ch < 0x7f)
 					{
@@ -147,15 +151,17 @@ int main(void)
 						}
 					}
 				break;
-				case DEBUG_GOTO:
+				case GOTO_CMD:
 					row = (UINT)buff[1];
 					col = (UINT)buff[2];
 					GDispGoto(row,col);
 				break;
-				case DEBUG_CLRSCR3:
+				case SET_MODE_CMD:
+				break;
+				case LCD_CLRSCR3:
 					GDispClrTxt();
 				break;
-				case DEBUG_MSG1:
+				case LCD_MSG1:
 					row = buff[2];
 					row <<= 8;
 					row |= buff[1];
@@ -166,6 +172,10 @@ int main(void)
 					memset(str,0x20,sizeof(str));
 					memcpy(str,&buff[7],str_len);
 					str[str_len] = 0;
+				break;
+				case MENU_SETMODE:
+				break;
+				case MENU_SETCONTEXT:
 				break;
 				default:
 				break;

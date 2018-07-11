@@ -22,6 +22,7 @@
 static int status_line;
 static int error_line1;
 static int error_line2;
+static UCHAR rt_data[50];
 
 static int inc_y(WINDOW *win, int y);
 static void clr_scr(WINDOW *win);
@@ -125,7 +126,7 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ACC",hours,minutes,seconds);
 		break;
 		case TOTAL_UP_TIME:
-			mvwprintw(win,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
+//			mvwprintw(win,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
 		break;
 		default:
 		break;
@@ -144,7 +145,7 @@ int tcp_win2(int cmd)
 	int rc;
 	int x,y,i;
 	UCHAR ret_char = 0x21;
-	char buffer[5];
+	char buffer[50];
 	char errmsg[50];
 	int noerrors = 0;
 	int height, width;
@@ -203,6 +204,7 @@ int tcp_win2(int cmd)
 	minutes = 0;
 	hours = 0;
 	starter_on = acc_on = fp_on = fan_on = 0;
+
 	while((ch = wgetch(twin)) != KEY_F(2))
 	{
 		switch(ch)
@@ -287,6 +289,7 @@ int tcp_win2(int cmd)
 		        break;
 			case KEY_F(8):
 				clr_scr(twin);
+				x = 1;
 				y = 1;
 				break;
 			case KEY_F(9):	// start sequence cmd which enables the starter, turns on acc & fp
@@ -295,9 +298,11 @@ int tcp_win2(int cmd)
 		        put_sock(&cmd2,1,1,errmsg);
 		        acc_on = 1;
 		        fp_on = 1;
+		        fan_on = 0;
 				mvwprintw(twin,status_line,STARTER_STATUS,"ON ");
 				mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
+				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
 			case KEY_F(10):	// test pattern
 				break;
@@ -306,7 +311,7 @@ int tcp_win2(int cmd)
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,4,1,errmsg);
+			rc = get_sock((UCHAR*)buffer,12,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
@@ -329,6 +334,14 @@ int tcp_win2(int cmd)
 				seconds = buffer[1];
 				minutes = buffer[2];
 				hours = buffer[3];
+				rt_data[0] = buffer[4];
+				rt_data[1] = buffer[5];
+				rt_data[2] = buffer[6];
+				rt_data[3] = buffer[7];
+				rt_data[4] = buffer[8];
+				rt_data[5] = buffer[9];
+				rt_data[6] = buffer[10];
+				rt_data[7] = buffer[11];
 								
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
 				if(cmd2 != TOTAL_UP_TIME)
@@ -344,6 +357,15 @@ int tcp_win2(int cmd)
 							clr_scr(twin);
 						}
 					}
+				}else
+				{
+					mvwprintw(twin,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
+					mvwprintw(twin,2,62,"%02x:%02x", rt_data[0],rt_data[1]);
+					mvwprintw(twin,3,62,"%02x:%02x", rt_data[2],rt_data[3]);
+					mvwprintw(twin,4,62,"%02x:%02x", rt_data[4],rt_data[5]);
+					mvwprintw(twin,5,62,"%02x:%02x", rt_data[6],rt_data[7]);
+//					mvwprintw(twin,6,62,"%02d",rc);
+					wrefresh(twin);
 				}
 					
 				noerrors= 0;
