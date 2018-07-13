@@ -70,7 +70,7 @@ int main(void)
 	_delay_ms(10);
     initUSART();
 	_delay_ms(20);
-	initSPImaster();
+//	initSPImaster();
 //	initSPIslave();
 
 //#if 0
@@ -120,7 +120,6 @@ int main(void)
 	GDispClrTxt();
 
 	row = col = 0;
-
     while (1)
     {
 		key = receiveByte();
@@ -157,6 +156,11 @@ int main(void)
 					GDispGoto(row,col);
 				break;
 				case SET_MODE_CMD:
+					mode = buff[1];
+					row = (UINT)buff[2];
+					col = (UINT)buff[3];
+					type = buff[4];
+					GDispSetCursor (mode, row, col, type);
 				break;
 				case LCD_CLRSCR3:
 					GDispClrTxt();

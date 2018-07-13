@@ -26,6 +26,7 @@ ESOS_SEMAPHORE(key_sem);
 ESOS_USER_TASK(spi_task);
 ESOS_USER_TASK(send_char);
 ESOS_USER_TASK(set_cursor);
+ESOS_USER_TASK(set_cursor2);
 ESOS_USER_TASK(goto1);
 ESOS_USER_TASK(test1);
 ESOS_USER_TASK(clr_screen);

@@ -377,3 +377,9 @@ x		x		SS		MOSI	MISO
 19)	42 unassigned
 20)	40 unassigned
 
+looking at 20-pin cable coming from bottom of monster box
+10		<->		1
+20		<->		11
+
+
+

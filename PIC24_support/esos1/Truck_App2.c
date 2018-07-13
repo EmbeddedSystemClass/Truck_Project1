@@ -193,6 +193,7 @@ ESOS_USER_TASK(goto1)
 //******************************************************************************************//
 //************************************** set_cursor ***************************************//
 //******************************************************************************************//
+// send mode, row, col, & type as 4 byte buffer
 ESOS_USER_TASK(set_cursor)
 {
     static UCHAR buff[5];
@@ -207,11 +208,42 @@ ESOS_USER_TASK(set_cursor)
 			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,4);
 			
 			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-//			ESOS_TASK_WAIT_ON_SEND_UINT82(SET_CURSOR_CMD);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(SET_MODE_CMD);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[0]);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[1]);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[2]);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[3]);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+		}
+    } // endof while()
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
+//************************************** set_cursor2 ***************************************//
+//******************************************************************************************//
+// send only the row/col as a UINT
+ESOS_USER_TASK(set_cursor2)
+{
+    static UINT data2;
+    static UCHAR temp1, temp2;
+	
+    ESOS_TASK_BEGIN();
+    while (1)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			data2 = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
+			temp2 = (UCHAR)data2;
+			temp1 = (UCHAR)(data2 >> 8);
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(SET_MODE_CMD);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(TEXT_ON | CURSOR_BLINK_ON);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(temp1);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(temp2);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(LINE_8_CURSOR);
 			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
 		}
@@ -284,13 +316,18 @@ ESOS_USER_TASK(test1)
     static ESOS_TASK_HANDLE goto_handle;
     static ESOS_TASK_HANDLE clrscr_handle;
     static ESOS_TASK_HANDLE fpga_handle;
+    static ESOS_TASK_HANDLE mode_handle;
     static int i,j,k;
     static UCHAR row, col;
+    static UCHAR mode, type;
 
 	send_handle = esos_GetTaskHandle(send_char);
 	goto_handle = esos_GetTaskHandle(goto1);
 	clrscr_handle = esos_GetTaskHandle(clr_screen);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
+	mode_handle = esos_GetTaskHandle(set_cursor2);
+	UCHAR buffer[5];
+
     ESOS_TASK_BEGIN();
 
 	row = col = 0;
@@ -306,10 +343,19 @@ ESOS_USER_TASK(test1)
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
 	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,data2);
+
 	data3 = (UINT)row;
 	data3 <<= 8;
 	data3 |= (UINT)col;
 	__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+/*
+	mode = TEXT_ON | CURSOR_BLINK_ON;
+	buffer[0] = mode;
+	buffer[1] = 2; 		// row
+	buffer[2] = 3; 		// col
+	buffer[3] = LINE_8_CURSOR;
+	__esos_CB_WriteUINT8Buffer(mode_handle->pst_Mailbox->pst_CBuffer, &buffer, 4 );
+*/
 	ESOS_TASK_WAIT_TICKS(1000);
 
 	while(1)
@@ -319,7 +365,7 @@ ESOS_USER_TASK(test1)
 		if(data2 > 0x7e)
 			data2 = 0x21;
 
-		ESOS_TASK_WAIT_TICKS(20);
+		ESOS_TASK_WAIT_TICKS(2);
 
 //		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
 //		ESOS_TASK_WAIT_ON_GET_UINT8(data2);
@@ -341,7 +387,17 @@ ESOS_USER_TASK(test1)
 		if(++i > 639)
 		{
 			i = 0;
-
+/*
+			mode = TEXT_ON | CURSOR_BLINK_ON;
+//			mode = TEXT_ON | CURSOR_ON_BLINK_OFF;
+//			mode = ATTR_BLINK_REVERSE;
+//			mode = ATTR_REVERSE;
+			buffer[0] = mode;
+			buffer[1] = row; 		// row
+			buffer[2] = col; 		// col
+			buffer[3] = LINE_4_CURSOR;
+			__esos_CB_WriteUINT8Buffer(mode_handle->pst_Mailbox->pst_CBuffer, &buffer, 4 );
+*/
 			// with clrscr it doesn't matter what the param is
 			__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,data2);
 			data3 = (UINT)row;
@@ -349,12 +405,14 @@ ESOS_USER_TASK(test1)
 			data3 |= (UINT)col;
 			// send the row/col with the goto cmd
 			__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+			__esos_CB_WriteUINT16(mode_handle->pst_Mailbox->pst_CBuffer,data3);
 			if(++col > 16)
 			{
 				col = 0;
 				if(++row > 40)
 					row = 0;
 			}
+			
 		}			
 	}
     ESOS_TASK_END();
@@ -362,7 +420,6 @@ ESOS_USER_TASK(test1)
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
 //******************************************************************************************//
-
 void user_init(void)
 {
 // can't use SPI for now
@@ -375,6 +432,7 @@ void user_init(void)
 
 	esos_RegisterTask(send_char);
 	esos_RegisterTask(set_cursor);
+	esos_RegisterTask(set_cursor2);
 	esos_RegisterTask(goto1);
 	esos_RegisterTask(clr_screen);
 	esos_RegisterTask(send_fpga);
