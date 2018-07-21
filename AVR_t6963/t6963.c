@@ -167,23 +167,63 @@ void GDispSetMode (UCHAR mode)
  * Notes       :
  *********************************************************************************************************
  */
-void GDispClrTxt (void)
+void GDispClrTxt (UCHAR which)
 {
 	UINT row;
 	UINT col;
+	UINT srow, erow, scol;
 	//Set address pointer to address (TEXT_HOME_ADDR)
 	GDispCmdAddrSend (TEXT_HOME_ADDR, ADDR_PTR_SET);
 	//Set Auto Write ON
 	GDispCmdSend (AUTO_WR_ON);
 
 	//row runs from 0 ... (MAX_ROW_PIXEL/8 -1), in form of a cell of (FontSize x 8) bits
-	for (row = 0; row < MAX_ROW_PIXEL / 8; row++)
+//	for (row = 0; row < MAX_ROW_PIXEL / 8; row++)
+	switch(which)
+	{
+		case 0:		// clear entire screen
+			srow = 0;
+			erow = MAX_ROW_PIXEL;
+			for (row = srow; row < erow / 8; row++)
+			{
+				for (col = 0; col < COLUMN; col++)
+				{
+					GDispAutoDataWr (0x00);
+				}
+			}
+			break;
+		case 1:		// clear 1st 1/2 of screen
+			srow = 0;
+			erow = MAX_ROW_PIXEL/2;
+			for (row = srow; row < erow / 8; row++)
+			{
+				for (col = 0; col < COLUMN; col++)
+				{
+					GDispAutoDataWr (0x00);
+				}
+			}
+			break;
+		case 2:		// clear 2nd 1/2 of screen
+			for(srow = ROWS/2;srow < ROWS;srow++)
+				for(col = 0;col < COLUMN;col++)
+					GDispCharAt(srow, col, 0x20);
+			GDispCharAt(0, 0, 0x20);
+			GDispCharAt(0, 1, 0x20);
+			break;
+		default:
+			srow = 0;
+			erow = MAX_ROW_PIXEL;
+			break;
+	}
+/*
+	for (row = srow; row < erow / 8; row++)
 	{ //write blank to clear screen the first page only, col = 0...(COLUMN-1)
 		for (col = 0; col < COLUMN; col++)
 		{
 			GDispAutoDataWr (0x00);
 		}
 	}
+*/
 	//Set Auto Write OFF
 	GDispCmdSend (AUTO_WR_OFF);
 }

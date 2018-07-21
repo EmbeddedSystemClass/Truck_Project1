@@ -23,22 +23,26 @@
 #define CHAR_CMD			2
 #define GOTO_CMD			3
 #define SET_MODE_CMD 		4
-#define LCD_CLRSCR1			5
-#define LCD_CLRSCR2			6
-#define LCD_CLRSCR3			7
-#define LCD_MSG1			8
-#define MENU_SETMODE		9
-#define MENU_SETCONTEXT		10
+#define LCD_CLRSCR			5
+#define LCD_MSG1			6
+#define MENU_SETMODE		7
+#define MENU_SETCONTEXT		8
+#define PUT_STRING 			22
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
+#define SIZE_NUM			20
 
+#define EEPROM_SIZE 0x400
+char eepromString[EEPROM_SIZE] EEMEM;
 volatile UCHAR xbyte;
 volatile UCHAR high_delay;
 
 volatile int onoff;
 volatile int dc2;
 volatile UCHAR spi_ret;
+volatile UCHAR curr_num[SIZE_NUM];
+volatile char eeprom[EEPROM_SIZE/2];
 
 ISR(TIMER1_OVF_vect)
 {
@@ -63,7 +67,7 @@ int main(void)
 	UINT row, col;
 	char str[30];
 	UCHAR str_len;
-	UCHAR temp;
+	UCHAR index;
 
 	GDispInit();
 //	GDispInitPort();
@@ -78,7 +82,7 @@ int main(void)
 	_delay_us(10);
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
-	GDispClrTxt();
+	GDispClrTxt(0);
 	GDispStringAt(7,15,"LCD is on!");
 
 //	initSPImaster();
@@ -117,7 +121,12 @@ int main(void)
 
 	_delay_ms(500);
 */
-	GDispClrTxt();
+	GDispClrTxt(0);
+
+	memset((void *)curr_num,0,SIZE_NUM);
+	memcpy((void *)curr_num,"0123456\0",7);
+
+	eeprom_read_block((void *)eeprom,(const void *)eepromString,EEPROM_SIZE/2);
 
 	row = col = 0;
     while (1)
@@ -162,29 +171,55 @@ int main(void)
 					type = buff[4];
 					GDispSetCursor (mode, row, col, type);
 				break;
-				case LCD_CLRSCR3:
-					GDispClrTxt();
+				case LCD_CLRSCR:
+					GDispClrTxt(buff[1]);
 				break;
 				case LCD_MSG1:
-					row = buff[2];
-					row <<= 8;
-					row |= buff[1];
-					col = buff[4];
-					col <<= 8;
-					col |= buff[3];
-					str_len = buff[5];
-					memset(str,0x20,sizeof(str));
-					memcpy(str,&buff[7],str_len);
-					str[str_len] = 0;
+					for(i = 0;i < SIZE_NUM;i++)
+						transmitByte(curr_num[i]);
 				break;
 				case MENU_SETMODE:
 				break;
 				case MENU_SETCONTEXT:
 				break;
+				case PUT_STRING:
+					row = (UINT)buff[1];
+					col = (UINT)buff[2];
+					index = buff[3];
+					if(index > 0 && index < 23)
+					{
+						printHexByte(buff[0]);
+						printHexByte(buff[1]);
+						printHexByte(buff[2]);
+						printHexByte(buff[3]);
+
+						j = 0;
+						i = 0;
+						do{
+							j++;
+							if(eeprom[j] == 0)
+							{
+								i++;
+					 			k = j;
+							}
+
+						}while(i < index);
+
+						do{
+							k--;
+						}while(eeprom[k] != 0);
+
+						memset((void *)str,0,sizeof(str));
+						memcpy((void *)str,(const void *)&eeprom[k+1],j-k-1);
+						GDispStringAt(row,col,str);
+						printString(str);
+					}
+				break;
 				default:
 				break;
 			}
 			i = 0;
+			transmitByte(0xFD);	// send 0xFD back to let PIC24 know we are finished with this command
 		}
 //#endif
 	}

@@ -51,10 +51,12 @@ uint8_t receiveByte(void) {
 
 void printString(const char myString[]) {
   uint8_t i = 0;
+  transmitByte(0x20);
   while (myString[i]) {
     transmitByte(myString[i]);
     i++;
   }
+  transmitByte(0xFE);
 }
 
 void readString(char myString[], uint8_t maxLength) {
@@ -118,6 +120,7 @@ void printHexByte(uint8_t byte) {
   transmitByte(nibbleToHexCharacter(nibble));
   nibble = byte & 0b00001111;
   transmitByte(nibbleToHexCharacter(nibble));
+  transmitByte(0x20);
 }
 
 uint8_t getNumber(void) {

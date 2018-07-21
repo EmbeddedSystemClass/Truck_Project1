@@ -42,7 +42,7 @@
 #endif
 
 // Place this define here because many of the the following INCLUDE files need this macro variable
-#define     MAX_NUM_USER_TASKS      16
+#define     MAX_NUM_USER_TASKS      25
 
 
 // Include all the files we need

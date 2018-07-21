@@ -1,3 +1,4 @@
+#if 1
 #ifdef BUILT_ON_ESOS
 #warning "BUILT_ON_ESOS defined"
 #else
@@ -19,20 +20,28 @@
 #include <string.h>
 #include <stdlib.h>
 
-ESOS_USER_TASK(menu_task);
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
+ESOS_SEMAPHORE(lcd_sem);
 ESOS_USER_TASK(spi_task);
 ESOS_USER_TASK(send_char);
+ESOS_USER_TASK(put_str);
 ESOS_USER_TASK(set_cursor);
-ESOS_USER_TASK(set_cursor2);
+ESOS_USER_TASK(cursor_blink_on);
 ESOS_USER_TASK(goto1);
-ESOS_USER_TASK(test1);
+ESOS_USER_TASK(main_proc);
 ESOS_USER_TASK(clr_screen);
 ESOS_USER_TASK(send_fpga);
 ESOS_USER_TASK(recv_lcd);
 ESOS_USER_TASK(send_comm1);
+ESOS_USER_TASK(recv_comm1);
+ESOS_USER_TASK(get_curr_num);
+ESOS_USER_TASK(menu_task);
+ESOS_USER_TASK(password_task);
+ESOS_USER_TASK(numentry_task);
+ESOS_USER_TASK(eeprom_task);
+ESOS_USER_TASK(eeprom_cmd);
 
 #define MY_ESOS1
 #define TIME_DELAY		20
@@ -45,15 +54,47 @@ ESOS_USER_TASK(send_comm1);
 #define RT_OFFSET 0x70
 //#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
 
-#define CHAR_CMD			2
-#define GOTO_CMD			3
-#define SET_MODE_CMD 		4
-#define LCD_CLRSCR1			5
-#define LCD_CLRSCR2			6
-#define LCD_CLRSCR3			7
-#define LCD_MSG1			8
-#define MENU_SETMODE		9
-#define MENU_SETCONTEXT		10
+enum key_types
+{
+	KP_1 = 0xE0, // '1'		- E0
+	KP_2, // '2'		- E1
+	KP_3, // '3'		- E2
+	KP_4, // '4'		- E3
+	KP_5, // '5'		- E4
+	KP_6, // '6'		- E5
+	KP_7, // '7'		- E6
+	KP_8, // '8'		- E7
+	KP_9, // '9'		- E8
+	KP_A, // 'A'		- E9
+	KP_B, // 'B'		- EA
+	KP_C, // 'C'		- EB
+	KP_D, // 'D'		- EC
+	KP_POUND,	// '#'	- ED
+	KP_AST, // '*'		- EE
+	KP_0 	// '0'		- EF
+} KEY_TYPES;
+
+#define CHAR_CMD				2
+#define GOTO_CMD				3
+#define SET_MODE_CMD	 		4
+#define LCD_CLRSCR				5
+#define LCD_MSG1				6
+#define MENU_SETMODE			7
+#define MENU_SETCONTEXT			8
+#define BURN_EEPROM				9
+#define READ_EEPROM				10
+#define DISPLAY_LABELS			11
+#define DISPLAY_RTPARAMS		12
+#define TEST_PATTERN1			13
+#define TEST_PATTERN2			14
+#define TEST_PATTERN3			15
+#define TEST_PATTERN4			16
+#define FAST_TEST_PATTERN1		17
+#define FAST_TEST_PATTERN2		18
+#define FAST_TEST_PATTERN3		19
+#define FAST_TEST_PATTERN4		20
+#define TRANSMIT_ASCII			21
+#define PUT_STRING				22
 
 #define COMM_CMD 0x7E
 
@@ -105,101 +146,280 @@ ESOS_USER_TASK(send_comm1);
 #define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
 #define REV_LIMITER 					0x8C // set the rev limit min & max
 
-enum key_types
-{
-	KP_1 = 0xE0, // '1'		- E0
-	KP_2, // '2'		- E1
-	KP_3, // '3'		- E2
-	KP_4, // '4'		- E3
-	KP_5, // '5'		- E4
-	KP_6, // '6'		- E5
-	KP_7, // '7'		- E6
-	KP_8, // '8'		- E7
-	KP_9, // '9'		- E8
-	KP_A, // 'A'		- E9
-	KP_B, // 'B'		- EA
-	KP_C, // 'C'		- EB
-	KP_D, // 'D'		- EC
-	KP_POUND,	// '#'	- ED
-	KP_AST, // '*'		- EE
-	KP_0 	// '0'		- EF
-} KEY_TYPES;
+#define BUFFER_SIZE 30
 
-#if 0
-UCHAR get_keypress(UCHAR key1)
-{
-	UCHAR wkey;
+volatile char password[12];
+volatile char correct_password[12];
+volatile UCHAR password_valid;
+volatile int password_ptr;
+volatile int password_retries;
+volatile int print_string_buffer_size;
+volatile char print_string_buffer[BUFFER_SIZE];
 
-	switch(key1)
+typedef enum
+{
+	NORMAL,
+	PASSWORD,
+	NUMENTRY,
+	EEPROM
+}KEY_MODE;
+
+volatile KEY_MODE key_mode;
+
+//******************************************************************************************//
+//*************************************** menu_task ****************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(menu_task)
+{
+	static UCHAR data1;
+	static ESOS_TASK_HANDLE send_handle;
+	
+	send_handle = esos_GetTaskHandle(send_char);
+
+    ESOS_TASK_BEGIN();
+
+	while (TRUE)
 	{
-		case '0':
-			wkey = KP_0;
-			break;
-		case '1':
-			wkey = KP_1;
-			break;
-		case '2':
-			wkey = KP_2;
-			break;
-		case '3':
-			wkey = KP_3;
-			break;
-		case '4':
-			wkey = KP_4;
-			break;
-		case '5':
-			wkey = KP_5;
-			break;
-		case '6':
-			wkey = KP_6;
-			break;
-		case '7':
-			wkey = KP_7;
-			break;
-		case '8':
-			wkey = KP_8;
-			break;
-		case '9':
-			wkey = KP_9;
-			break;
-		case '*':
-			wkey = KP_AST;
-			break;
-		case '#':
-			wkey = KP_POUND;
-			break;
-		case 'A':
-		case 'a':
-			wkey = KP_A;
-			break;
-		case 'B':
-		case 'b':
-			wkey = KP_B;
-			break;
-		case 'C':
-		case 'c':
-			wkey = KP_C;
-			break;
-		case 'D':
-		case 'd':
-			wkey = KP_D;
-			break;
-// use 'z' as a shortcut to '*' and 'y' as a shortcut to '#'
-		case 'Y':
-		case 'y':
-			wkey = KP_POUND;
-			break;
-		case 'Z':
-		case 'z':
-			wkey = KP_AST;
-			break;
-		default:
-			wkey = 0xff;
-			break;
+		ESOS_TASK_WAIT_FOR_MAIL();
+
+		while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+			switch(data1)
+			{
+				case 	KP_1:
+					password_valid = 0;
+				break;
+				case	KP_2:
+				break;
+				case	KP_3:
+				break;
+				case	KP_4:
+				break;
+				case	KP_5:
+				break;
+				case	KP_6:
+				break;
+				case	KP_7:
+				break;
+				case	KP_8:
+				break;
+				case	KP_9:
+				break;
+				case	KP_A:
+				break;
+				case	KP_B:
+				break;
+				case	KP_C:
+				break;
+				case	KP_D:
+				break;
+				case	KP_POUND:
+				break;
+				case	KP_AST:
+				break;
+				case	KP_0:
+				break;
+				default:
+				break;
+			}
+			data1 = data1 - KP_1 + 0x31;
+			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
+
+		}
 	}
-	return wkey;
+    ESOS_TASK_END();
 }
-#endif
+
+//******************************************************************************************//
+//************************************* password_task **************************************//
+//******************************************************************************************//
+volatile ESOS_TASK_HANDLE password_task_handle;
+
+ESOS_USER_TASK(password_task)
+{
+	static UCHAR data1;
+	static UINT data3;
+	static UCHAR row, col;
+	static ESOS_TASK_HANDLE send_handle;
+	static ESOS_TASK_HANDLE goto_handle;
+	static ESOS_TASK_HANDLE blink_handle;
+	static ESOS_TASK_HANDLE string_handle;
+    static ESOS_TASK_HANDLE clrscr_handle;
+	static int i;
+	static UCHAR buff[4];
+
+	send_handle = esos_GetTaskHandle(send_char);
+	goto_handle = esos_GetTaskHandle(goto1);
+	blink_handle = esos_GetTaskHandle(cursor_blink_on);
+	string_handle = esos_GetTaskHandle(put_str);
+	clrscr_handle = esos_GetTaskHandle(clr_screen);
+
+    ESOS_TASK_BEGIN();
+    password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
+    
+   	ESOS_TASK_WAIT_TICKS(1000);
+
+	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
+   	ESOS_TASK_WAIT_TICKS(100);
+//	__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,1);
+	buff[0] = 7;	// row 7
+	buff[1] = 0;	// col 0
+	buff[2] = 1;	// string 1 ("enter password")
+	__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+
+/*
+	row = 7;
+	col = 15;
+	data3 = (UINT)row;
+	data3 <<= 8;
+	data3 |= (UINT)col;
+	__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+*/
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_FOR_MAIL();
+
+		while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+			switch(data1)
+			{
+				case	KP_0:
+				case 	KP_1:
+				case	KP_2:
+				case	KP_3:
+				case	KP_4:
+				case	KP_5:
+				case	KP_6:
+				case	KP_7:
+				case	KP_8:
+				case	KP_9:
+					data1 = data1 - KP_1 + 0x31;
+					password[password_ptr++] = data1;
+					__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,'*');
+
+					if(password_ptr > 7)
+					{
+//						__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,2);
+						buff[0] = 0;
+						buff[1] = 0;
+						buff[2] = 3;
+						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 2);
+						
+						password_ptr = 0;
+						row = 7;
+						col = 15;
+						data3 = (UINT)row;
+						data3 <<= 8;
+						data3 |= (UINT)col;
+						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+						password_retries++;
+						if(password_retries > 2)
+							ESOS_TASK_SLEEP();
+					}
+					if(strcmp(password,correct_password) == 0)
+					{
+						password_valid = 1;
+
+						__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
+//						__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,3);
+						buff[0] = 0;
+						buff[1] = 0;
+						buff[2] = 2;
+						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+
+						row = 0;
+						col = 0;
+						data3 = (UINT)row;
+						data3 <<= 8;
+						data3 |= (UINT)col;
+						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+
+						key_mode = NORMAL;
+						password_ptr = 0;
+
+					}
+
+				break;
+				case	KP_A:
+				break;
+				case	KP_B:
+				break;
+				case	KP_C:
+				break;
+				case	KP_D:
+				break;
+				case	KP_POUND:
+				break;
+				case	KP_AST:
+				break;
+				default:
+				break;
+			}
+		}
+	}
+    ESOS_TASK_END();
+}
+
+//******************************************************************************************//
+//************************************* numentry_task **************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(numentry_task)
+{
+	static UCHAR data1;
+	
+    ESOS_TASK_BEGIN();
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_FOR_MAIL();
+
+		while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+
+			switch(data1)
+			{
+				case 	KP_1:
+				break;
+				case	KP_2:
+				break;
+				case	KP_3:
+				break;
+				case	KP_4:
+				break;
+				case	KP_5:
+				break;
+				case	KP_6:
+				break;
+				case	KP_7:
+				break;
+				case	KP_8:
+				break;
+				case	KP_9:
+				break;
+				case	KP_A:
+				break;
+				case	KP_B:
+				break;
+				case	KP_C:
+				break;
+				case	KP_D:
+				break;
+				case	KP_POUND:
+				break;
+				case	KP_AST:
+				break;
+				case	KP_0:
+				break;
+				default:
+				break;
+			}
+		}
+	}
+    ESOS_TASK_END();
+}
+
 /*
 RE0 - p93 - 5th from right inside top			//	row 0
 RE1 - p94 - 4th from right outside top			//	row 1
@@ -269,7 +489,7 @@ typedef enum
 {
 	STATE_WAIT_FOR_PRESS = 0x30,
 	STATE_WAIT_FOR_PRESS2,
-	STATE_WAIT_FOR_RELEASE,
+	STATE_WAIT_FOR_RELEASE
 } ISRSTATE;
 
 volatile ISRSTATE e_isrState;
@@ -354,7 +574,7 @@ uint8_t doKeyScan(void)
 	DRIVE_ROW_LOW();							  //return rows to driving low
 	return('E');								  //error
 }
-
+#endif
 //******************************************************************************************//
 //*************************************** keypad *******************************************//
 //******************************************************************************************//
@@ -429,13 +649,21 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
 {
+
     static ESOS_TASK_HANDLE menu_handle;
+    static ESOS_TASK_HANDLE password_handle;
+    static ESOS_TASK_HANDLE numentry_handle;
+    static ESOS_TASK_HANDLE eeprom_handle;
+
 	static UCHAR data1;
 	static UINT data3;
 	
     ESOS_TASK_BEGIN();
 
 	menu_handle = esos_GetTaskHandle(menu_task);
+	password_handle = esos_GetTaskHandle(password_task);
+	numentry_handle = esos_GetTaskHandle(numentry_task);
+	eeprom_handle = esos_GetTaskHandle(eeprom_task);
 
 	configKeypad();
 	data1 = 0;
@@ -445,18 +673,102 @@ ESOS_USER_TASK(poll_keypad)
 		ESOS_TASK_WAIT_SEMAPHORE(key_sem,1);
 		if(u8_newKey)
 		{
-/*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8(u8_newKey-0xE0+0x30);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-//			__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+			switch(key_mode)
+			{
+				case NORMAL:
+					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+					break;
+				case PASSWORD:
+					__esos_CB_WriteUINT8(password_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+					break;
+				case NUMENTRY:
+					__esos_CB_WriteUINT8(numentry_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+					break;
+				case EEPROM:
+					__esos_CB_WriteUINT8(eeprom_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+					break;
+				default:
+					break;
+			}
 			u8_newKey = 0;	// very important to reset this to 0
 		}
 	}
     ESOS_TASK_END();
 }
+
+//******************************************************************************************//
+//************************************* eeprom_task ****************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(eeprom_task)
+{
+	static UCHAR data1, cmd;
+	static ESOS_TASK_HANDLE eeprom_handle;
+
+	eeprom_handle = esos_GetTaskHandle(eeprom_cmd);
+
+    ESOS_TASK_BEGIN();
+
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_FOR_MAIL();
+
+		while(ESOS_TASK_IVE_GOT_MAIL())
+		{
+			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+
+			switch(data1)
+			{
+				case 	KP_1:
+					cmd = BURN_EEPROM;
+				break;
+				case	KP_2:
+					cmd = READ_EEPROM;
+				break;
+				case	KP_3:
+					cmd = DISPLAY_LABELS;
+				break;
+				case	KP_4:
+					cmd = DISPLAY_RTPARAMS;
+				break;
+				case	KP_5:
+					cmd = TEST_PATTERN1;
+				break;
+				case	KP_6:
+					cmd = TEST_PATTERN2;
+				break;
+				case	KP_7:
+					cmd = TEST_PATTERN3;
+				break;
+				case	KP_8:
+					cmd = TEST_PATTERN4;
+				break;
+				case	KP_9:
+					cmd = FAST_TEST_PATTERN1;
+				break;
+				case	KP_A:
+					cmd = FAST_TEST_PATTERN2;
+				break;
+				case	KP_B:
+					cmd = FAST_TEST_PATTERN3;
+				break;
+				case	KP_C:
+					cmd = FAST_TEST_PATTERN4;
+				break;
+				case	KP_D:
+				case	KP_POUND:
+				case	KP_AST:
+				case	KP_0:
+					cmd = TRANSMIT_ASCII;
+				break;
+				default:
+				break;
+			}
+			__esos_CB_WriteUINT8(eeprom_handle->pst_Mailbox->pst_CBuffer,cmd);
+		}
+	}
+    ESOS_TASK_END();
+}
+
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
@@ -640,9 +952,11 @@ uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
 }
 #endif
 #define NUM_CHANNELS 4
+#define NUM_SIZE 200
 volatile uint16_t au16_buffer[NUM_CHANNELS];
 volatile uint16_t  u16_pot[NUM_CHANNELS];
-
+volatile UCHAR curr_num[NUM_SIZE];
+volatile UCHAR curr_num_ptr;
 volatile uint8_t  u8_waiting;
 volatile int lat5;
 
@@ -736,335 +1050,7 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
+
 volatile UCHAR menu_context;
 
-//******************************************************************************************//
-//*************************************** menu_task ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(menu_task)
-{
-	static UCHAR data1;
-	
-    ESOS_TASK_BEGIN();
-	while (TRUE)
-	{
-		ESOS_TASK_WAIT_FOR_MAIL();
-
-		while(ESOS_TASK_IVE_GOT_MAIL())
-		{
-			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-			// if there are 5 different menu_context's (5 different menus)			
-			switch(data1)
-			{
-				case 	KP_1:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_2:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_3:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_4:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_5:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_6:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_7:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_8:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_9:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_A:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_B:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_C:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_D:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_POUND:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_AST:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				case	KP_0:
-					switch(menu_context)
-					{
-						case 0:
-						break;
-						case 1:
-						break;
-						case 2:
-						break;
-						case 3:
-						break;
-						case 4:
-						break;
-						case 5:
-						break;
-						default:
-						break;
-					}	
-				break;
-				default:
-				break;
-			}
-		}
-	}
-    ESOS_TASK_END();
-}
 
