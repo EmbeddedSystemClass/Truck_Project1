@@ -1,4 +1,3 @@
-#if 1
 //    All rights reserved.
 //
 //    Permission to use, copy, modify, and distribute this software and its
@@ -132,9 +131,9 @@ ESOS_USER_TASK(recv_comm1)
     static UCHAR data1, data2;
     static int i,j;
     static UCHAR buff[50];
-	static ESOS_TASK_HANDLE send_handle;
+//	static ESOS_TASK_HANDLE send_handle;
 	
-	send_handle = esos_GetTaskHandle(send_char);
+//	send_handle = esos_GetTaskHandle(send_char);
 	
     ESOS_TASK_BEGIN();
     i = 0;
@@ -184,7 +183,15 @@ ESOS_USER_TASK(recv_lcd)
 		ESOS_TASK_WAIT_ON_GET_UINT82(data2);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM2();
 		if(data2 == 0xFD)
+		{
 			ESOS_SIGNAL_SEMAPHORE(lcd_sem,1);
+/*
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0x41);
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+		}
 		else
 		{
 			curr_num[curr_num_ptr] = data2;
@@ -192,148 +199,27 @@ ESOS_USER_TASK(recv_lcd)
 
 			if(curr_num > NUM_SIZE)
 				curr_num_ptr = 0;
-//#if 0
+#if 0
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	//		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 	//		ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-//#endif
+#endif
 		}
     } // endof while()
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//***************************************** goto ******************************************//
+//*************************************** AVR_cmd ******************************************//
 //******************************************************************************************//
-ESOS_USER_TASK(goto1)
+ESOS_USER_TASK(AVR_cmd)
 {
     static  UCHAR temp1, temp2;
-    static UINT data2;
-	
-    ESOS_TASK_BEGIN();
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
-			temp2 = (UCHAR)data2;
-			temp1 = (UCHAR)(data2 >> 8);
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(GOTO_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(temp1);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(temp2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************** set_cursor ***************************************//
-//******************************************************************************************//
-// send mode, row, col, & type as 4 byte buffer
-ESOS_USER_TASK(set_cursor)
-{
     static UCHAR buff[5];
+    static int i;
 	
     ESOS_TASK_BEGIN();
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,4);
-			
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(SET_MODE_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[0]);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[1]);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[2]);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[3]);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************ cursor_blink_on *************************************//
-//******************************************************************************************//
-// send only the row/col as a UINT to set the cursor to blink
-ESOS_USER_TASK(cursor_blink_on)
-{
-    static UINT data2;
-    static UCHAR temp1, temp2;
-	
-    ESOS_TASK_BEGIN();
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT16(__pstSelf->pst_Mailbox->pst_CBuffer);
-			temp2 = (UCHAR)data2;
-			temp1 = (UCHAR)(data2 >> 8);
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(SET_MODE_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(TEXT_ON | CURSOR_BLINK_ON);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(temp1);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(temp2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(LINE_8_CURSOR);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************** send_char  ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(send_char)
-{
-    static  UCHAR row, col, data2;
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(CHAR_CMD);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-/*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-	//		ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//**************************************** put_str  ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(put_str)
-{
-    static  UCHAR row, col, data2;
-    static UCHAR buff[3];
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
     while (1)
     {
         ESOS_TASK_WAIT_FOR_MAIL();
@@ -341,23 +227,21 @@ ESOS_USER_TASK(put_str)
         while(ESOS_TASK_IVE_GOT_MAIL())
         {
 			ESOS_TASK_WAIT_SEMAPHORE(lcd_sem,1);
+			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,5);
 
-			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,3);
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(PUT_STRING);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[0]);	// row
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[1]);	// col
-			ESOS_TASK_WAIT_ON_SEND_UINT82(buff[2]);	// which string (starting w/ '1')
+			for(i = 0;i < 5;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT82(buff[i]);
+
 			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+
 /*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(buff[0]);	// row
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(buff[1]);	// col
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(buff[2]);	// which string (starting w/ '1')
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-*/
+ 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8((UCHAR)(buff[0]+0x30));
+		ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/	
+
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -393,59 +277,6 @@ ESOS_USER_TASK(eeprom_cmd)
     } // endof while()
     ESOS_TASK_END();
 }
-
-//******************************************************************************************//
-//************************************** clr_screen  ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(clr_screen)
-{
-    static  UCHAR row, col, data2;
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			ESOS_TASK_WAIT_SEMAPHORE(lcd_sem,1);
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(LCD_CLRSCR);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
-//************************************ get_curr_num  ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(get_curr_num)
-{
-    static  UCHAR row, col, data2;
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(LCD_MSG1);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-#endif
 //******************************************************************************************//
 //*************************************** main_proc ****************************************//
 //******************************************************************************************//
@@ -457,27 +288,15 @@ ESOS_USER_TASK(main_proc)
 	static UCHAR cmd, param;
 	static UINT data3;
 	static UCHAR data4;
-    static ESOS_TASK_HANDLE send_handle;
-    static ESOS_TASK_HANDLE goto_handle;
-    static ESOS_TASK_HANDLE clrscr_handle;
     static ESOS_TASK_HANDLE fpga_handle;
-    static ESOS_TASK_HANDLE mode_handle;
-    static ESOS_TASK_HANDLE blink_handle;
-    static ESOS_TASK_HANDLE num_handle;
-	static ESOS_TASK_HANDLE string_handle;
+    static ESOS_TASK_HANDLE avr_handle;
     static int i,j,k;
     static UCHAR row, col;
     static UCHAR mode, type;
     static int retry_counter;
 
-	send_handle = esos_GetTaskHandle(send_char);
-	goto_handle = esos_GetTaskHandle(goto1);
-	clrscr_handle = esos_GetTaskHandle(clr_screen);
+	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
-	blink_handle = esos_GetTaskHandle(cursor_blink_on);
-	mode_handle = esos_GetTaskHandle(set_cursor);
-	num_handle = esos_GetTaskHandle(get_curr_num);
-	string_handle = esos_GetTaskHandle(put_str);
 	UCHAR buffer[5];
 
     ESOS_TASK_BEGIN();
@@ -520,16 +339,34 @@ ESOS_USER_TASK(main_proc)
 	data2 = 0x21;	
 	while(1)
 	{
-		ESOS_TASK_WAIT_TICKS(50);
-
-		buffer[0] = j;
-		buffer[1] = k;	// col 0
-		buffer[2] = i;	// string 1 ("enter password")
-		
-		__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buffer, 3);
-//		__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data2);
 		if(++data2 > 0x7e)
 			data2 = 0x21;
+
+		buffer[0] = CHAR_CMD;
+		buffer[1] = data2;
+
+//		__esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
+//		AVR_CALL();
+
+		ESOS_TASK_WAIT_TICKS(200);
+
+		buffer[0] = GOTO_CMD;
+		buffer[1] = row;
+		buffer[2] = col;
+//		__esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
+//		AVR_CALL();
+		if(++row > 15)
+		{
+			row = 0;
+			if(++col > 40)
+				col = 0;
+		}
+
+		buffer[0] = PUT_STRING;
+		buffer[1] = j;
+		buffer[2] = k;
+		buffer[3] = i;
+		AVR_CALL();
 
 		if(++i > 22)
 			i = 1;
@@ -538,7 +375,9 @@ ESOS_USER_TASK(main_proc)
 			j = 0;
 			if(k == 20)
 			{
-				__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
+				buffer[0] = LCD_CLRSCR;
+				buffer[1] = 0;
+				AVR_CALL();
 				k = 0;
 			}else k = 20;
 		}
@@ -573,22 +412,24 @@ void user_init(void)
 //	CONFIG_SPI_SLAVE();
 //	esos_RegisterTask(spi_task);
 
-	ESOS_INIT_SEMAPHORE(key_sem,0);
-	ESOS_INIT_SEMAPHORE(lcd_sem,2);
+	ESOS_INIT_SEMAPHORE(key_sem,1);
+	ESOS_INIT_SEMAPHORE(lcd_sem,1);
 	esos_RegisterTask(keypad);
 	esos_RegisterTask(poll_keypad);
+/*
 	esos_RegisterTask(send_char);
 	esos_RegisterTask(put_str);
 	esos_RegisterTask(set_cursor);
 	esos_RegisterTask(cursor_blink_on);
-	esos_RegisterTask(goto1);
 	esos_RegisterTask(clr_screen);
+	esos_RegisterTask(get_curr_num);
+*/
+	esos_RegisterTask(AVR_cmd);
 	esos_RegisterTask(send_fpga);
 	esos_RegisterTask(recv_fpga);
 	esos_RegisterTask(recv_lcd);
 	esos_RegisterTask(main_proc);
 	esos_RegisterTask(convADC);
-	esos_RegisterTask(get_curr_num);
 //	esos_RegisterTask(send_comm1);
 	esos_RegisterTask(recv_comm1);
 	esos_RegisterTask(eeprom_task);
@@ -597,3 +438,4 @@ void user_init(void)
 	esos_RegisterTask(password_task);
 	esos_RegisterTask(numentry_task);
 } // end user_init()
+

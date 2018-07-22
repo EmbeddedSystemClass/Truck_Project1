@@ -20,28 +20,32 @@
 #include <string.h>
 #include <stdlib.h>
 
-ESOS_USER_TASK(keypad);
-ESOS_USER_TASK(poll_keypad);
 ESOS_SEMAPHORE(key_sem);
 ESOS_SEMAPHORE(lcd_sem);
-ESOS_USER_TASK(spi_task);
+ESOS_USER_TASK(keypad);
+ESOS_USER_TASK(poll_keypad);
+//ESOS_USER_TASK(spi_task);
+/*
 ESOS_USER_TASK(send_char);
 ESOS_USER_TASK(put_str);
 ESOS_USER_TASK(set_cursor);
 ESOS_USER_TASK(cursor_blink_on);
-ESOS_USER_TASK(goto1);
-ESOS_USER_TASK(main_proc);
+ESOS_USER_TASK(get_curr_num);
 ESOS_USER_TASK(clr_screen);
+*/
+ESOS_USER_TASK(AVR_cmd);
+ESOS_USER_TASK(main_proc);
 ESOS_USER_TASK(send_fpga);
 ESOS_USER_TASK(recv_lcd);
 ESOS_USER_TASK(send_comm1);
 ESOS_USER_TASK(recv_comm1);
-ESOS_USER_TASK(get_curr_num);
 ESOS_USER_TASK(menu_task);
 ESOS_USER_TASK(password_task);
 ESOS_USER_TASK(numentry_task);
 ESOS_USER_TASK(eeprom_task);
 ESOS_USER_TASK(eeprom_cmd);
+
+#define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
 
 #define MY_ESOS1
 #define TIME_DELAY		20
@@ -172,9 +176,10 @@ volatile KEY_MODE key_mode;
 ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
-	static ESOS_TASK_HANDLE send_handle;
+	static ESOS_TASK_HANDLE avr_handle;
+	static UCHAR buffer[5];
 	
-	send_handle = esos_GetTaskHandle(send_char);
+	avr_handle = esos_GetTaskHandle(AVR_cmd);
 
     ESOS_TASK_BEGIN();
 
@@ -224,7 +229,10 @@ ESOS_USER_TASK(menu_task)
 				break;
 			}
 			data1 = data1 - KP_1 + 0x31;
-			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
+			buffer[0] = CHAR_CMD;
+			buffer[1] = data1;
+			__esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
+//			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
 
 		}
 	}
@@ -241,32 +249,30 @@ ESOS_USER_TASK(password_task)
 	static UCHAR data1;
 	static UINT data3;
 	static UCHAR row, col;
-	static ESOS_TASK_HANDLE send_handle;
-	static ESOS_TASK_HANDLE goto_handle;
-	static ESOS_TASK_HANDLE blink_handle;
-	static ESOS_TASK_HANDLE string_handle;
-    static ESOS_TASK_HANDLE clrscr_handle;
+	static ESOS_TASK_HANDLE avr_handle;
+	static UCHAR buffer[5];
+	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	static int i;
 	static UCHAR buff[4];
-
+/*
 	send_handle = esos_GetTaskHandle(send_char);
 	goto_handle = esos_GetTaskHandle(goto1);
 	blink_handle = esos_GetTaskHandle(cursor_blink_on);
 	string_handle = esos_GetTaskHandle(put_str);
 	clrscr_handle = esos_GetTaskHandle(clr_screen);
-
+*/
     ESOS_TASK_BEGIN();
     password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
     
    	ESOS_TASK_WAIT_TICKS(1000);
 
-	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
+//	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
    	ESOS_TASK_WAIT_TICKS(100);
 //	__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,1);
 	buff[0] = 7;	// row 7
 	buff[1] = 0;	// col 0
 	buff[2] = 1;	// string 1 ("enter password")
-	__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+//	__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
 
 /*
 	row = 7;
@@ -297,7 +303,7 @@ ESOS_USER_TASK(password_task)
 				case	KP_9:
 					data1 = data1 - KP_1 + 0x31;
 					password[password_ptr++] = data1;
-					__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,'*');
+//					__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,'*');
 
 					if(password_ptr > 7)
 					{
@@ -305,7 +311,7 @@ ESOS_USER_TASK(password_task)
 						buff[0] = 0;
 						buff[1] = 0;
 						buff[2] = 3;
-						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 2);
+//						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 2);
 						
 						password_ptr = 0;
 						row = 7;
@@ -313,7 +319,7 @@ ESOS_USER_TASK(password_task)
 						data3 = (UINT)row;
 						data3 <<= 8;
 						data3 |= (UINT)col;
-						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+//						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
 						password_retries++;
 						if(password_retries > 2)
 							ESOS_TASK_SLEEP();
@@ -322,19 +328,19 @@ ESOS_USER_TASK(password_task)
 					{
 						password_valid = 1;
 
-						__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
+//						__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
 //						__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,3);
 						buff[0] = 0;
 						buff[1] = 0;
 						buff[2] = 2;
-						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+//						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
 
 						row = 0;
 						col = 0;
 						data3 = (UINT)row;
 						data3 <<= 8;
 						data3 |= (UINT)col;
-						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
+//						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
 
 						key_mode = NORMAL;
 						password_ptr = 0;

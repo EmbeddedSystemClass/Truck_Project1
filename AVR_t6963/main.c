@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LEN 200
+#define LEN 20
 #define CHAR_CMD			2
 #define GOTO_CMD			3
 #define SET_MODE_CMD 		4
@@ -188,11 +188,12 @@ int main(void)
 					index = buff[3];
 					if(index > 0 && index < 23)
 					{
+/*
 						printHexByte(buff[0]);
 						printHexByte(buff[1]);
 						printHexByte(buff[2]);
 						printHexByte(buff[3]);
-
+*/
 						j = 0;
 						i = 0;
 						do{
@@ -212,13 +213,14 @@ int main(void)
 						memset((void *)str,0,sizeof(str));
 						memcpy((void *)str,(const void *)&eeprom[k+1],j-k-1);
 						GDispStringAt(row,col,str);
-						printString(str);
+//						printString(str);
 					}
 				break;
 				default:
 				break;
 			}
 			i = 0;
+//			_delay_ms(5);
 			transmitByte(0xFD);	// send 0xFD back to let PIC24 know we are finished with this command
 		}
 //#endif
