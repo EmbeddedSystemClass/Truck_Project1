@@ -1,7 +1,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #include "test.priv.h"
 #include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
@@ -304,14 +304,18 @@ int tcp_win2(int cmd)
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
-			case KEY_F(10):	// test pattern
+			case KEY_F(10):
+				cmd2 = PASSWORD_MODE;
+		        put_sock(&cmd2,1,1,errmsg);
+				mvwprintw(twin,status_line,FAN_STATUS,"F10 ");
 				break;
+				
 			default:
 				break;
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,12,1,errmsg);
+			rc = get_sock((UCHAR*)buffer,4,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
@@ -334,6 +338,7 @@ int tcp_win2(int cmd)
 				seconds = buffer[1];
 				minutes = buffer[2];
 				hours = buffer[3];
+/*
 				rt_data[0] = buffer[4];
 				rt_data[1] = buffer[5];
 				rt_data[2] = buffer[6];
@@ -342,7 +347,7 @@ int tcp_win2(int cmd)
 				rt_data[5] = buffer[9];
 				rt_data[6] = buffer[10];
 				rt_data[7] = buffer[11];
-								
+*/
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
 				if(cmd2 != TOTAL_UP_TIME)
 				{
@@ -360,11 +365,13 @@ int tcp_win2(int cmd)
 				}else
 				{
 					mvwprintw(twin,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
+/*
 					mvwprintw(twin,2,62,"%02x:%02x", rt_data[0],rt_data[1]);
 					mvwprintw(twin,3,62,"%02x:%02x", rt_data[2],rt_data[3]);
 					mvwprintw(twin,4,62,"%02x:%02x", rt_data[4],rt_data[5]);
 					mvwprintw(twin,5,62,"%02x:%02x", rt_data[6],rt_data[7]);
 //					mvwprintw(twin,6,62,"%02d",rc);
+*/
 					wrefresh(twin);
 				}
 					

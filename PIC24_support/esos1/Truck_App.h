@@ -19,20 +19,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "../../mytypes.h"
 
 ESOS_SEMAPHORE(key_sem);
 ESOS_SEMAPHORE(lcd_sem);
 ESOS_USER_TASK(keypad);
 ESOS_USER_TASK(poll_keypad);
 //ESOS_USER_TASK(spi_task);
-/*
-ESOS_USER_TASK(send_char);
-ESOS_USER_TASK(put_str);
-ESOS_USER_TASK(set_cursor);
-ESOS_USER_TASK(cursor_blink_on);
-ESOS_USER_TASK(get_curr_num);
-ESOS_USER_TASK(clr_screen);
-*/
 ESOS_USER_TASK(AVR_cmd);
 ESOS_USER_TASK(main_proc);
 ESOS_USER_TASK(send_fpga);
@@ -56,7 +49,7 @@ ESOS_USER_TASK(eeprom_cmd);
 #define VREF 3.3  //assume Vref = 3.3 volts
 #define FLAG1        ESOS_USER_FLAG_1
 #define RT_OFFSET 0x70
-//#define AUX_STRING_LEN 1024	// this should be the same as AUX_STRING_LEN in AVR_t6963/main.h
+#define PASSWORD_RETRIES 5
 
 enum key_types
 {
@@ -77,30 +70,6 @@ enum key_types
 	KP_AST, // '*'		- EE
 	KP_0 	// '0'		- EF
 } KEY_TYPES;
-
-#define CHAR_CMD				2
-#define GOTO_CMD				3
-#define SET_MODE_CMD	 		4
-#define LCD_CLRSCR				5
-#define LCD_MSG1				6
-#define MENU_SETMODE			7
-#define MENU_SETCONTEXT			8
-#define BURN_EEPROM				9
-#define READ_EEPROM				10
-#define DISPLAY_LABELS			11
-#define DISPLAY_RTPARAMS		12
-#define TEST_PATTERN1			13
-#define TEST_PATTERN2			14
-#define TEST_PATTERN3			15
-#define TEST_PATTERN4			16
-#define FAST_TEST_PATTERN1		17
-#define FAST_TEST_PATTERN2		18
-#define FAST_TEST_PATTERN3		19
-#define FAST_TEST_PATTERN4		20
-#define TRANSMIT_ASCII			21
-#define PUT_STRING				22
-
-#define COMM_CMD 0x7E
 
 #define ROWS 16
 #define COLUMN 40
@@ -151,9 +120,10 @@ enum key_types
 #define REV_LIMITER 					0x8C // set the rev limit min & max
 
 #define BUFFER_SIZE 30
+#define PASSWORD_SIZE 12
 
-volatile char password[12];
-volatile char correct_password[12];
+volatile char password[PASSWORD_SIZE];
+volatile char correct_password[PASSWORD_SIZE];
 volatile UCHAR password_valid;
 volatile int password_ptr;
 volatile int password_retries;
@@ -176,10 +146,14 @@ volatile KEY_MODE key_mode;
 ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
+	static UINT row,col;
 	static ESOS_TASK_HANDLE avr_handle;
+	static ESOS_TASK_HANDLE comm1_handle;
 	static UCHAR buffer[5];
+	static int k;
 	
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
+	comm1_handle = esos_GetTaskHandle(send_comm1);
 
     ESOS_TASK_BEGIN();
 
@@ -193,7 +167,6 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
-					password_valid = 0;
 				break;
 				case	KP_2:
 				break;
@@ -228,12 +201,17 @@ ESOS_USER_TASK(menu_task)
 				default:
 				break;
 			}
+			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,data1);
 			data1 = data1 - KP_1 + 0x31;
 			buffer[0] = CHAR_CMD;
 			buffer[1] = data1;
-			__esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
-//			__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,data1);
-
+			AVR_CALL();
+/*
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
 		}
 	}
     ESOS_TASK_END();
@@ -250,38 +228,27 @@ ESOS_USER_TASK(password_task)
 	static UINT data3;
 	static UCHAR row, col;
 	static ESOS_TASK_HANDLE avr_handle;
+	static ESOS_TASK_HANDLE comm1_handle;
 	static UCHAR buffer[5];
-	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	static int i;
-	static UCHAR buff[4];
-/*
-	send_handle = esos_GetTaskHandle(send_char);
-	goto_handle = esos_GetTaskHandle(goto1);
-	blink_handle = esos_GetTaskHandle(cursor_blink_on);
-	string_handle = esos_GetTaskHandle(put_str);
-	clrscr_handle = esos_GetTaskHandle(clr_screen);
-*/
+
     ESOS_TASK_BEGIN();
     password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
+	avr_handle = esos_GetTaskHandle(AVR_cmd);
+	comm1_handle = esos_GetTaskHandle(send_comm1);
     
-   	ESOS_TASK_WAIT_TICKS(1000);
+	ESOS_TASK_WAIT_TICKS(1000);
 
-//	__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
-   	ESOS_TASK_WAIT_TICKS(100);
-//	__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,1);
-	buff[0] = 7;	// row 7
-	buff[1] = 0;	// col 0
-	buff[2] = 1;	// string 1 ("enter password")
-//	__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+	buffer[0] = PUT_STR;
+	buffer[1] = 7;	// row 7
+	buffer[2] = 0;	// col 0
+	buffer[3] = 1;	// string 1 ("enter password")
+	AVR_CALL();
+	buffer[0] = GOTO_CMD;
+	buffer[1] = 7;
+	buffer[2] = 16;
+	AVR_CALL();
 
-/*
-	row = 7;
-	col = 15;
-	data3 = (UINT)row;
-	data3 <<= 8;
-	data3 |= (UINT)col;
-	__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
-*/
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_FOR_MAIL();
@@ -303,48 +270,57 @@ ESOS_USER_TASK(password_task)
 				case	KP_9:
 					data1 = data1 - KP_1 + 0x31;
 					password[password_ptr++] = data1;
-//					__esos_CB_WriteUINT8(send_handle->pst_Mailbox->pst_CBuffer,'*');
+					buffer[0] = CHAR_CMD;
+					buffer[1] = '*';
+					AVR_CALL();
 
-					if(password_ptr > 7)
+					if(password_ptr > strlen(correct_password))
 					{
-//						__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,2);
-						buff[0] = 0;
-						buff[1] = 0;
-						buff[2] = 3;
-//						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 2);
+						// if incorrect password, first display "bad password" message
+						buffer[0] = PUT_STR;
+						buffer[1] = 7;
+						buffer[2] = 0;
+						buffer[3] = 2;
+						AVR_CALL();
 						
+						// then goto just after message
+						buffer[0] = GOTO_CMD;
+						buffer[1] = 7;
+						buffer[2] = 14;
+						AVR_CALL();
+						// then blank out the pevious '*' row
+						buffer[0] = CHAR_CMD;
+						buffer[1] = 0x20;
+						for(i = 0;i < 10;i++)
+							AVR_CALL();
 						password_ptr = 0;
-						row = 7;
-						col = 15;
-						data3 = (UINT)row;
-						data3 <<= 8;
-						data3 |= (UINT)col;
-//						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
 						password_retries++;
-						if(password_retries > 2)
+
+						if(password_retries > PASSWORD_RETRIES)
+						{
 							ESOS_TASK_SLEEP();
+						}
 					}
 					if(strcmp(password,correct_password) == 0)
 					{
 						password_valid = 1;
+						buffer[0] = LCD_CLRSCR;
+						buffer[1] = 0;
+						AVR_CALL();
 
-//						__esos_CB_WriteUINT8(clrscr_handle->pst_Mailbox->pst_CBuffer,0);
-//						__esos_CB_WriteUINT8(string_handle->pst_Mailbox->pst_CBuffer,3);
-						buff[0] = 0;
-						buff[1] = 0;
-						buff[2] = 2;
-//						__esos_CB_WriteUINT8Buffer(string_handle->pst_Mailbox->pst_CBuffer, &buff, 3);
+						buffer[0] = PUT_STR;
+						buffer[1] = 0;
+						buffer[2] = 0;
+						buffer[3] = 3;
+						AVR_CALL();
 
-						row = 0;
-						col = 0;
-						data3 = (UINT)row;
-						data3 <<= 8;
-						data3 |= (UINT)col;
-//						__esos_CB_WriteUINT16(goto_handle->pst_Mailbox->pst_CBuffer,data3);
-
+						buffer[0] = GOTO_CMD;
+						buffer[1] = 1;
+						buffer[2] = 0;
+						AVR_CALL();
 						key_mode = NORMAL;
 						password_ptr = 0;
-
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,0xFB);
 					}
 
 				break;
@@ -1057,6 +1033,36 @@ void _ISR _ADC1Interrupt (void)
 	_AD1IF = 0;   //clear the interrupt flag
 }
 
-volatile UCHAR menu_context;
+//******************************************************************************************//
+//************************************** eeprom_cmd ****************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(eeprom_cmd)
+{
+    static  UCHAR row, col, data2;
+	
+    ESOS_TASK_BEGIN();
+    row = col = 0;
+    while (1)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
+			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
+			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
+/*
+			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
+			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
+		}
+    } // endof while()
+    ESOS_TASK_END();
+}
 
 

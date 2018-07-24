@@ -12,7 +12,7 @@
  * for threads support
  */
 #include <pthread.h>
-#include "../mytypes.h"
+#include "../../mytypes.h"
 //#include "../tasks.h"
 #include "rdwr.h"
 

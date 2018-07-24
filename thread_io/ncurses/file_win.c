@@ -1,7 +1,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #include "test.priv.h"
 #include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"

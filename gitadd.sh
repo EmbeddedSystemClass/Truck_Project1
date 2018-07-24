@@ -6,6 +6,7 @@ git add keypad1.jpg
 git add gitadd.sh
 git add .gitignore
 git add monster_box4a.jpg
+git add mytypes.h
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh
@@ -98,7 +99,6 @@ git add thread_io/linux_make
 git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
-git add thread_io/mytypes.h
 git add thread_io/ncurses/demo_menus2.c
 git add thread_io/ncurses/menu_scroll2.c
 git add thread_io/ncurses/menu_scroll3.c
@@ -138,5 +138,4 @@ git add thread_io/shell2linux.txt
 
 git status
 git log --oneline > oneline.txt
-
 

@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #include "../serial_io.h"
 #include "illist_threads_rw.h"
 #ifdef MAKE_TARGET

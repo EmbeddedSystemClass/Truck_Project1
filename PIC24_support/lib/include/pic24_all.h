@@ -66,8 +66,3 @@
 #include "pic24_ecan.h"
 #include "pic24_flash.h"
 #include "pic24_comparator.h"
-
-typedef unsigned char UCHAR;
-typedef UCHAR* PUCHAR;
-typedef unsigned int UINT;
-typedef unsigned long ULONG;

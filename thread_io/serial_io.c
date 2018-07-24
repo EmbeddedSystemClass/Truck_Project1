@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/time.h>
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "serial_io.h"
 
 #define BAUDRATE B19200

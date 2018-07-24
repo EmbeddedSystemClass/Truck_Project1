@@ -20,7 +20,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <dirent.h>
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
 #include "queue/illist_threads_rw.h"
@@ -109,7 +109,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[38] =
+CMD_STRUCT cmd_array[45] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
@@ -150,8 +150,11 @@ CMD_STRUCT cmd_array[38] =
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
 	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
 	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
+	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
+	{   	PASSWORD_MODE,"PASSWORD_MODE\0" },
+	{		NEW_PASSWORD,"NEW_PASSWORD\0" },
 	{   	BLANK,"BLANK\0" },
 };
 
@@ -473,9 +476,15 @@ UCHAR get_host_cmd_task(int test)
 						printString2("done\0");
 						break;
 
+					case PASSWORD_MODE:
+						test2 = 0xFC;
+						pthread_mutex_lock( &serial_write_lock);
+						write_serial(test2);
+						pthread_mutex_unlock(&serial_write_lock);
+						break;
+
 					case SEND_SERIAL:
 						test2 = 0x21;
-#ifdef CONSOLE_DISABLED
 						pthread_mutex_lock( &serial_write_lock);
 						for(i = 0;i < 4*93;i++)
 						{
@@ -484,7 +493,6 @@ UCHAR get_host_cmd_task(int test)
 							if(++test2 > 0x7e)
 								test2 = 0x21;
 						}
-#endif
 /*
 						test2 = 0x7e;
 						for(i = 0;i < 4*93;i++)
@@ -496,7 +504,6 @@ UCHAR get_host_cmd_task(int test)
 						}
 */
 						pthread_mutex_unlock(&serial_write_lock);
-//#endif
 						break;
 
 					case GET_DIR:
@@ -683,6 +690,26 @@ UCHAR get_host_cmd_task(int test)
 
 					case CLOSE_SOCKET:
 						close_tcp();
+						break;
+
+					case NEW_PASSWORD:
+						recv_tcp((UCHAR*)&fsize,8,1);
+						cur_fsize = (int)fsize;
+						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
+						rc = 0;
+						rc1 = 0;
+						rc += recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
+
+						test2 = 0xFB;
+						pthread_mutex_lock( &serial_write_lock);
+						write_serial(test2);
+
+						for(i = 0;i < cur_fsize;i++)
+							write_serial(upload_buf);
+
+						test2 = 0xFE;	
+						write_serial(test2);
+						pthread_mutex_unlock(&serial_write_lock);
 						break;
 
 					case UPLOAD_NEW:
@@ -1001,12 +1028,13 @@ type:
 			}
 			if(live_window_on)
 			{
-				pthread_mutex_lock( &serial_read_lock);
+//				pthread_mutex_lock( &serial_read_lock);
 
 				buffer[0] = TOTAL_UP_TIME;
 				buffer[1] = trunning_seconds;
 				buffer[2] = trunning_minutes;
 				buffer[3] = trunning_hours;
+/*
 				buffer[4] = rt_data[0];
 				buffer[5] = rt_data[1];
 				buffer[6] = rt_data[2];
@@ -1015,10 +1043,10 @@ type:
 				buffer[9] = rt_data[5];
 				buffer[10] = rt_data[6];
 				buffer[11] = rt_data[7];
+*/
+//				pthread_mutex_unlock(&serial_read_lock);
 
-				pthread_mutex_unlock(&serial_read_lock);
-
-				send_tcp((UCHAR *)buffer,12);
+				send_tcp((UCHAR *)buffer,4);
 			}
 			
 			if(shutdown_all)
@@ -1132,12 +1160,14 @@ UCHAR serial_recv_task(int test)
 		}
 	}
 #endif
-	
+
 	while(TRUE)
 	{
 		pthread_mutex_lock( &serial_read_lock);
 		ch = read_serial(errmsg);
 		pthread_mutex_unlock(&serial_read_lock);
+		send_tcp((UCHAR *)&ch,1);
+#if 0
 		if(errmsg[0] != 0)
 		{
 			myprintf1(errmsg);
@@ -1161,27 +1191,7 @@ UCHAR serial_recv_task(int test)
 				pthread_mutex_unlock(&serial_read_lock);
 			}
 			uSleep(0,TIME_DELAY/100000);
-#if 0
-		if(no_serial_buff < SERIAL_BUFF_SIZE)
-		{
-			serial_buff[no_serial_buff] = read_serial();
-
-			no_serial_buff++;
 		}
-		else
-		{
-//#if 0
-			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-			{
-//				serprintf("%c",serial_buff[i]);
-//				if((i % 93) == 0)
-//					serprintf("\n");
-			}
-//#endif
-			no_serial_buff = 0;
-//			serprintf("\n\n");
-		}
-		pthread_mutex_unlock(&serial_read_lock);
 #endif
 		if(shutdown_all)
 		{

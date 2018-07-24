@@ -50,7 +50,7 @@
 #include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #undef HAVE_RIPOFFLINE
 #include <form.h>
 #include "form_sup.h"
@@ -1072,7 +1072,7 @@ call_Tool(int code)
 
 	switch (code)
 	{
-// CONNECT
+		// CONNECT
 		case 0:
 			if(tcp_connected)
 			{
@@ -1087,7 +1087,7 @@ call_Tool(int code)
 			show_status2("init_client (sim)",Host_Sim,i,0,0,2);
 #else
 			i = init_client(hostid,errmsg);
-			show_status2("init_client",hostid,i,0,0,1);
+//			show_status2("init_client",hostid,i,0,0,1);
 #endif
 			if(i > 0)
 			{
@@ -1098,9 +1098,9 @@ call_Tool(int code)
 					tcp_connected = 0;
 			}
 			if(tcp_connected == 1)
-				show_status2("Connected","errmsg",i,j,tcp_connected,0);
+				show_status2("Connected",hostid,i,j,tcp_connected,0);
 			else
-				show_status2("Not Connected","errmsg",i,j,tcp_connected,0);
+				show_status2("Not Connected",hostid,i,j,tcp_connected,0);
 			
 			if(j < 0)
 			{
@@ -1113,7 +1113,7 @@ call_Tool(int code)
 			put_sock(&cmd,1,1,errmsg);
 			break;
 
-// DISCONNECT
+		// DISCONNECT
 		case 1:
 			if(tcp_connect)
 			{
@@ -1290,7 +1290,7 @@ call_Tool(int code)
 					if(fp < 0)
 					{
 //						printf("can't open file for writing");
-						show_status2("can't open file for writing","",0,0,0,2);
+						show_status2("can't open file for reading","",0,0,0,2);
 					}else
 					{
 						cmd = UPLOAD_NEW;
@@ -1347,6 +1347,75 @@ call_Tool(int code)
 			}else  show_status2("no tcp connection","",code,0,0,2);
 			break;
 
+		// NEW PASSWORD
+		case 16:
+			if(tcp_connected)
+			{
+				show_status2("set new password","",code,0,0,1);
+				strcpy(filename,"newpassword.txt\0");
+				if(access(filename,F_OK) != -1)
+				{
+					fp = open((const char *)filename, O_RDWR);
+					if(fp < 0)
+					{
+//						printf("can't open file for writing");
+						show_status2("can't open file for reading","",0,0,0,2);
+					}else
+					{
+						cmd = NEW_PASSWORD;
+						ret = put_sock(&cmd,1,1,errmsg);
+						strcpy(filename,"newpassword.txt\0");
+						ret = 0;
+						fsize = lseek(fp,0,SEEK_END);
+//						printf("filesize: %ld\n",fsize);
+						show_status2("filesize: ","",fsize,0,0,2);
+
+						ret = put_sock((UCHAR *)&fsize,sizeof(off_t),1,errmsg);
+						// if server is 32-bit machine the sizeof(off_t) is 4
+						// but if client is 64-bit then sizeof(off_t) is 8
+						//			ret = put_sock((UCHAR *)&fsize,4,1,errmsg);
+						if(ret < 0)
+						{
+//							printf("%s\n",errmsg);
+							show_status2("put_sock error: ",errmsg,0,0,0,0);
+//							exit(1);
+						}
+//						printf("ret: %d\n",ret);
+						lseek(fp,0,SEEK_SET);
+
+						buf_bytes = (int)fsize;
+//						printf("starting buf_bytes: %d\n",buf_bytes);
+						show_status2("starting buf bytes: ","",buf_bytes,0,0,1);
+//						usleep(1000000);
+						do
+						{
+							buf_bytes2 = (buf_bytes > UPLOAD_BUFF_SIZE?UPLOAD_BUFF_SIZE:buf_bytes);
+							buf_bytes -= UPLOAD_BUFF_SIZE;
+
+			//				printf("buf_bytes: %d %d ",buf_bytes2,buf_bytes);
+							ret = read(fp,&buf[0],buf_bytes2);
+
+							ret = put_sock((UCHAR *)&buf[0],buf_bytes2,1,errmsg);
+							usleep(10000);
+							if(ret < 0)
+							{
+//								printf("%s\n",errmsg);
+								show_status2("put_sock error:",errmsg,code,0,0,2);
+								exit(1);
+							}
+							show_status2("bytes","",ret,0,0,2);
+			//				else printf("ret: %d\n",ret);
+			//				printf("%s\n",errmsg);
+
+						}while(buf_bytes > 0);
+//						printf("\ndone\n");
+						close_sock();
+						close(fp);
+					}
+				}else show_status2("can't find newpassword.txt"," to upload",code,0,0,2);
+			}else  show_status2("no tcp connection","",code,0,0,2);
+			break;
+
 		default:
 			break;
 	}
@@ -1378,6 +1447,7 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("TCP Window"),					//13
 		MY_DATA2("Live Window"),				//14
 		MY_DATA2("Upload New"),					//15
+		MY_DATA2("New Password"),				//16
 		{(char *) 0, 0, 0}
 	};
 

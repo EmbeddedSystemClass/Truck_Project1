@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/time.h>
-#include "mytypes.h"
+#include "../../mytypes.h"
 #include "client.h"
 #define closesocket      close
 //#define PROTOPORT        5193        /* default protocol port number */

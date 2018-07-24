@@ -18,16 +18,9 @@
 //#include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../mytypes.h"
 
 #define LEN 20
-#define CHAR_CMD			2
-#define GOTO_CMD			3
-#define SET_MODE_CMD 		4
-#define LCD_CLRSCR			5
-#define LCD_MSG1			6
-#define MENU_SETMODE		7
-#define MENU_SETCONTEXT		8
-#define PUT_STRING 			22
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -132,6 +125,7 @@ int main(void)
     while (1)
     {
 		key = receiveByte();
+
 //		GDispCharAt(0,0,key);
 /*
 		if(++dc2 % 2 == 0)
@@ -144,6 +138,11 @@ int main(void)
 //#if 0
 		if(key == 0xfe)
 		{
+			printHexByte(buff[0]);
+			printHexByte(buff[1]);
+			printHexByte(buff[2]);
+			printHexByte(buff[3]);
+
 			switch(buff[0])
 			{
 				case CHAR_CMD:
@@ -188,14 +187,9 @@ int main(void)
 					index = buff[3];
 					if(index > 0 && index < 23)
 					{
-/*
-						printHexByte(buff[0]);
-						printHexByte(buff[1]);
-						printHexByte(buff[2]);
-						printHexByte(buff[3]);
-*/
 						j = 0;
 						i = 0;
+						k = 0;
 						do{
 							j++;
 							if(eeprom[j] == 0)
@@ -222,11 +216,15 @@ int main(void)
 			i = 0;
 //			_delay_ms(5);
 			transmitByte(0xFD);	// send 0xFD back to let PIC24 know we are finished with this command
+//			printHexByte(buff[5]+0x30);
+			printString(" ");
 		}
 //#endif
 	}
     return (0);		// this should never happen
 }
+
+
 
 #if 0
 ISR(SPI_STC_vect)

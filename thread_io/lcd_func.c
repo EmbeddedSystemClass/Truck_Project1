@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "lcd_func.h"
 #include "serial_io.h"
 

@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <string.h>
-#include "mytypes.h"
+#include "../../mytypes.h"
 //#include "ioports.h"
 /*
 Physical Address Region 	Emulates x86 cycle

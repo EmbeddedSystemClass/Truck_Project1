@@ -7,7 +7,7 @@
 #include<time.h>
 #include<stdlib.h>
 #include <sys/time.h>
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "ioports.h"
 /*
 Physical Address Region 	Emulates x86 cycle

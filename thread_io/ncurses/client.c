@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #include "client.h"
 #define closesocket      close
 #define PROTOPORT        5193        /* default protocol port number */
@@ -133,7 +133,7 @@ int tcp_connect(void)
 {
 	if (connect(global_socket, (struct sockaddr *)&sad, sizeof(sad)) < 0)
 	{
-		fprintf( stderr, "connect failed\n");
+//		fprintf( stderr, "connect failed\n");
 		sock_open = 0;
 		return -1;
 	}

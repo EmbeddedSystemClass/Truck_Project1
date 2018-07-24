@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
 #include "tasks.h"
