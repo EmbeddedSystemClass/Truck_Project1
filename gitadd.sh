@@ -2,7 +2,6 @@ git add README.md
 git add Truck_Project1_notes.txt
 git add monster_box.txt
 git add monster_box1.jpg
-git add keypad1.jpg
 git add gitadd.sh
 git add .gitignore
 git add monster_box4a.jpg
@@ -56,9 +55,6 @@ git add Truck_App1/spi_master.vhd
 git add Truck_App1/dtmf.vhd
 git add Truck_App1/dtmf.wcfg
 git add Truck_App1/lcd_pwm.vhd
-git add Truck_App1/test_uart/test_uart.vhd
-git add Truck_App1/test_uart/test_uart.xise
-git add Truck_App1/test_uart/test_uart.ucf
 git add Truck_App1/test_rpm_mph.c
 git add Truck_App1/test_write.c
 git add Truck_App1/fifo.vhd
@@ -122,7 +118,6 @@ git add thread_io/ncurses/text_entry.c
 git add thread_io/ncurses/text_entry.h
 git add thread_io/ncurses/ncurses_cfg.h
 git add thread_io/thread_io_notes.txt
-git add thread_io/dmake4
 git add thread_io/mingetty/*
 git add thread_io/test_tcp/*.c
 git add thread_io/test_tcp/*.h

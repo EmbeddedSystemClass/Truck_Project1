@@ -17,20 +17,22 @@ typedef unsigned long ULONG;
 //#define TDATE_STAMP_STR_LEN 25
 #define TDATE_STAMP_STR_LEN 16
 #define UPLOAD_BUFF_SIZE 10000
+#define NUM_ADC_CHANNELS 4
 
 // tcp command sent to TS-7200 from laptop
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
-	ENABLE_START,
+	ENABLE_START = 1,
 	STARTER_OFF,
+	ON_ACC,
+	OFF_ACC,
 	ON_FUEL_PUMP,
 	OFF_FUEL_PUMP,
 	ON_FAN,
 	OFF_FAN,
-	ON_ACC,
-	OFF_ACC,
 	START_SEQ,
+	SHUTDOWN,
 	SEND_IDATA,
 	SEND_ODATA,
 	EDIT_IDATA,
@@ -48,7 +50,6 @@ enum cmd_types
 	CLEAR_SCREEN,
 	SAVE_TO_DISK,
 	TOGGLE_OUTPUTS,
-	SHUTDOWN,
 	GET_DIR,
 	LCD_SHIFT_RIGHT,
 	LCD_SHIFT_LEFT,
@@ -61,15 +62,12 @@ enum cmd_types
 	TCP_WINDOW_OFF,
 	LIVE_WINDOW_ON,
 	LIVE_WINDOW_OFF,
+	TEST_IOPORT,
+	TEST_IOPORT2,
 	TOTAL_UP_TIME,
 	UPLOAD_NEW,
-	EXIT_PROGRAM,
-	PASSWORD_MODE,
-	NEW_PASSWORD,
-	BLANK
+	EXIT_PROGRAM
 }CMD_TYPES;
-
-#define COMM_CMD 0x7E
 
 typedef struct
 {
@@ -77,10 +75,11 @@ typedef struct
 	char cmd_str[20];
 } CMD_STRUCT;
 
-// msg's sent from PIC24->TS-7200
+// msg's sent from PIC24 to TS-7200
 enum upstream_msg
 {
-	ABLE_TO_START = 0x21,
+	RT_DATA = 0x21,
+	ABLE_TO_START,
 	RPM_OK,
 	RPM_TO_LOW,
 	RPM_TO_HIGH,
@@ -88,10 +87,13 @@ enum upstream_msg
 	ENGINE_TEMP_TOO_HIGH
 } UPSTREAM_MSG;
 
+// msg's sent from TS-7200 to PIC24
 enum downstream_msg
 {
-	RE_ENTER_PASSWORD = 0x21,
-	TEST
+	COMM_CMD = 0x21,
+	RE_ENTER_PASSWORD,
+	TEST1,
+	TEST2
 } DOWNSTREAM_MSG;
 
 enum output_types
@@ -123,29 +125,15 @@ enum output_types
 	BACKUPLIGHTS
 }OUTPUT_TYPES;
 
-#define CHAR_CMD				2
-#define GOTO_CMD				3
+#define CHAR_CMD			2
+#define GOTO_CMD			3
 #define SET_MODE_CMD	 		4
-#define LCD_CLRSCR				5
-#define LCD_MSG1				6
-#define MENU_SETMODE			7
-#define MENU_SETCONTEXT			8
-
-#define BURN_EEPROM				9	// these are used by the eeprom/burn_main.c program
-#define READ_EEPROM				10
-#define DISPLAY_LABELS			11
-#define DISPLAY_RTPARAMS		12
-#define TEST_PATTERN1			13
-#define TEST_PATTERN2			14
-#define TEST_PATTERN3			15
-#define TEST_PATTERN4			16
-#define FAST_TEST_PATTERN1		17
-#define FAST_TEST_PATTERN2		18
-#define FAST_TEST_PATTERN3		19
-#define FAST_TEST_PATTERN4		20
-#define TRANSMIT_ASCII			21
-
-#define PUT_STRING				22
-#define PUT_STR					22
+#define LCD_CLRSCR			5
+#define LCD_MSG1			6
+#define BURN_EEPROM			7	// these are used by the eeprom/burn_main.c program
+#define READ_EEPROM			8
+#define PUT_STRING			9
+#define PUT_STR				9
+#define SEND_RT_VALUES			10
 
 #endif

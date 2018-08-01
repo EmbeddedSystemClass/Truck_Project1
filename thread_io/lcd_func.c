@@ -73,7 +73,6 @@ int myprintf1(char *str)
 	display_current(0);
 
 	sprintf(temp2,"%d: %s",cur_disp_line,str);
-	printString2(temp2);
 	return 1;
 }
 
@@ -99,7 +98,6 @@ int myprintf2(char *str, int x)
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
-	printString2(temp);
 	return 0;
 }
 
@@ -129,7 +127,6 @@ int myprintf3(char *str, int x, int y)
 	strcat(temp,temp2);
 	strcpy((char *)buffer[cur_buf_line],temp);
 	display_current(0);
-	printString2(temp);
 	return 0;
 }
 
@@ -265,6 +262,7 @@ static void lcdinit(void)
 	dio_ddr = &gpio[DIODDR];
 	portfb = &gpio[PORTFB];
 	portfd = &gpio[PORTFD];
+	portled = &gpio[PORTLED];
 
 /*
 volatile UINT *gpio;
@@ -425,6 +423,15 @@ static void lcd_write(UCHAR *dat)
 		i = HOLD;
 		COUNTDOWN(i);
 	} while(*dat);
+}
+
+void red_led(int onoff)
+{
+	setbiobit(portled,1,onoff);
+}
+void green_led(int onoff)
+{
+	setbiobit(portled,0,onoff);
 }
 
 

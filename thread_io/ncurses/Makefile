@@ -49,13 +49,13 @@ demo_forms4.o: demo_forms4.c  test.priv.h ../queue/illist_threads_rw.h ../queue/
 text_entry.o: text_entry.c  test.priv.h form_sup.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c text_entry.c
 
-tcp_win.o: tcp_win.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../mytypes.h
+tcp_win.o: tcp_win.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c tcp_win.c
 
-tcp_win2.o: tcp_win2.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../mytypes.h
+tcp_win2.o: tcp_win2.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c tcp_win2.c
 
-file_win.o: file_win.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../mytypes.h
+file_win.o: file_win.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c file_win.c
 
 file_menu2.o: file_menu2.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h

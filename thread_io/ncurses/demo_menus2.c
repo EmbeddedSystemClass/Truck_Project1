@@ -1348,6 +1348,7 @@ call_Tool(int code)
 			break;
 
 		// NEW PASSWORD
+#if 0
 		case 16:
 			if(tcp_connected)
 			{
@@ -1415,7 +1416,7 @@ call_Tool(int code)
 				}else show_status2("can't find newpassword.txt"," to upload",code,0,0,2);
 			}else  show_status2("no tcp connection","",code,0,0,2);
 			break;
-
+#endif
 		default:
 			break;
 	}
@@ -1447,7 +1448,7 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("TCP Window"),					//13
 		MY_DATA2("Live Window"),				//14
 		MY_DATA2("Upload New"),					//15
-		MY_DATA2("New Password"),				//16
+//		MY_DATA2("New Password"),				//16
 		{(char *) 0, 0, 0}
 	};
 

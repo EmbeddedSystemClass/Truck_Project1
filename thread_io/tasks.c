@@ -68,7 +68,7 @@ UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
-#define SERIAL_BUFF_SIZE  93
+#define SERIAL_BUFF_SIZE  20
 
 static UCHAR serial_buff[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
@@ -80,13 +80,13 @@ static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 static int serial_rec;
 static int change_output(int index, int onoff);
 static int uSleep(time_t sec, long nanosec);
-
+static void basic_controls(UCHAR code);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static int mask2int(UCHAR mask);
 static int timer_inc;
 static int timer_inc2;
 
-static double program_start_time;
+//static double program_start_time;
 static double diff;
 static int starter_on;
 static int tcp_window_on;
@@ -95,7 +95,7 @@ static int engine_running;
 static int fan_delay;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
-static UCHAR rt_data[50];
+static UCHAR rt_data[16];
 
 #define ON 1
 #define OFF 0
@@ -109,17 +109,18 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[45] =
+CMD_STRUCT cmd_array[44] =
 {
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
+	{   	ON_ACC,"ON_ACC\0" },
+	{   	OFF_ACC,"OFF_ACC\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
 	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
 	{   	ON_FAN,"ON_FAN\0" },
 	{   	OFF_FAN,"OFF_FAN\0" },
-	{   	ON_ACC,"ON_ACC\0" },
-	{   	OFF_ACC,"OFF_ACC\0" },
 	{   	START_SEQ,"START_SEQ\0" },
+	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SEND_IDATA,"SEND_IDATA\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
 	{   	EDIT_IDATA,"EDIT_IDATA\0" },
@@ -137,7 +138,6 @@ CMD_STRUCT cmd_array[45] =
 	{   	CLEAR_SCREEN,"CLEAR_SCREEN\0" },
 	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
 	{   	TOGGLE_OUTPUTS,"TOGGLE_OUTPUTS\0" },
-	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
@@ -150,12 +150,11 @@ CMD_STRUCT cmd_array[45] =
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
 	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
 	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
+	{		TEST_IOPORT,"TEST_IOPORT\0" },
+	{		TEST_IOPORT2,"TEST_IOPORT2\0" },
 	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
-	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
-	{   	PASSWORD_MODE,"PASSWORD_MODE\0" },
-	{		NEW_PASSWORD,"NEW_PASSWORD\0" },
-	{   	BLANK,"BLANK\0" },
+	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
 /****************************************************************************************************/
@@ -253,6 +252,7 @@ UCHAR get_host_cmd_task(int test)
 	DIR *d;
 	struct dirent *dir;
 	int num;
+	UCHAR test_io_num = 0;
 	char tempx[50];
 	char *chp;
 	int fname_index;
@@ -266,6 +266,8 @@ UCHAR get_host_cmd_task(int test)
 	struct timeval mtv;
 
 	memset(rt_data,0,sizeof(rt_data));
+//	for(i = 0;i < 16;i++)
+//		rt_data[i] = i+1;
 
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
@@ -300,7 +302,7 @@ UCHAR get_host_cmd_task(int test)
 	running_hours = running_minutes = running_seconds = 0;
 	trunning_hours = trunning_minutes = trunning_seconds = 0;
 	
-	program_start_time = curtime();
+//	program_start_time = curtime();
 
 	illist_init(&ill);
 	if(access(iFileName,F_OK) != -1)
@@ -331,8 +333,25 @@ UCHAR get_host_cmd_task(int test)
 	same_msg = 0;
 	lcd_init();
 
+// flash green and red led's to signal we are up (if LCD screen not attached)
+	for(i = 0;i < 200;i++)
+	{
+		red_led(1);
+		uSleep(0,100000L);
+		red_led(0);
+		uSleep(0,100000L);
+	}
+	for(i = 0;i < 200;i++)
+	{
+		green_led(1);
+		uSleep(0,100000L);
+		green_led(0);
+		uSleep(0,100000L);
+	}
+	
+
 	myprintf1("start....\0");
-	myprintf1("sched v1.10\0");
+	myprintf1("sched v1.11\0");
 
 	while(TRUE)
 	{
@@ -345,12 +364,52 @@ UCHAR get_host_cmd_task(int test)
 					SCROLL_DOWN && 	cmd != SCROLL_UP)
 
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
+
 			if(rc > 0)
 			{
 				rc = 0;
 				switch(cmd)
 				{
-// update a single IDATA record
+
+					case ENABLE_START:
+					case STARTER_OFF:
+					case ON_ACC:
+					case OFF_ACC:
+					case ON_FUEL_PUMP:
+					case OFF_FUEL_PUMP:
+					case ON_FAN:
+					case OFF_FAN:
+					case START_SEQ:
+					case SHUTDOWN:
+						basic_controls(cmd);
+						break;
+
+					case TEST_IOPORT:
+/*
+						recv_tcp((UCHAR *)&test_io_num,1,1);
+						myprintf2("io port: ",test_io_num);
+*/
+						if(test_io_num < 40)
+						{
+							change_output(test_io_num, 1);
+							uSleep(1,0);
+							change_output(test_io_num, 0);
+							myprintf2("io port: ",test_io_num);
+						}
+						if(++test_io_num > 39)
+							test_io_num = 0;
+
+						break;
+
+					case TEST_IOPORT2:
+						if(--test_io_num < 1)
+							test_io_num = 39;
+
+						change_output(test_io_num, 1);
+						uSleep(1,0);
+						change_output(test_io_num, 0);
+						myprintf2("io port: ",test_io_num);
+						break;
 
 					case TCP_WINDOW_ON:
 						tcp_window_on = 1;
@@ -389,13 +448,11 @@ UCHAR get_host_cmd_task(int test)
 						break;
 						
 					case SHOW_IDATA:
-						printString2("show I_DATA\0");	
 						illist_show(&ill);
 						break;
 
 					case SHOW_ODATA:
 //						myprintf1("show O_DATA (tcp_win)\0");
-						printString2("show O_DATA\0");
 						ollist_show(&oll);
 						break;
 
@@ -407,7 +464,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SEND_ODATA:
-// update a single ODATA record
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
 						ollist_insert_data(rec_no, &oll, &tempo1);
@@ -415,7 +471,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SEND_ALL_IDATA:
-						printString2("send all IDATA:\0");
 						rc = 0;
 						itp = &tempi1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -423,11 +478,9 @@ UCHAR get_host_cmd_task(int test)
 							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
 							illist_insert_data(i,&ill,itp);
 						}
-						printString2("done\0");
 						break;
 
 					case SEND_ALL_ODATA:
-						printString2("send all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
@@ -457,7 +510,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case RECV_ALL_ODATA:
-						printString2("recv all ODATA: \0");
 						rc = 0;
 						otp = &tempo1;
 						recv_tcp((UCHAR*)&uch_fname_index,1,1);
@@ -473,16 +525,16 @@ UCHAR get_host_cmd_task(int test)
 							ollist_find_data(i,&otp,&oll);
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
-						printString2("done\0");
 						break;
 
+/*
 					case PASSWORD_MODE:
 						test2 = 0xFC;
 						pthread_mutex_lock( &serial_write_lock);
 						write_serial(test2);
 						pthread_mutex_unlock(&serial_write_lock);
 						break;
-
+*/
 					case SEND_SERIAL:
 						test2 = 0x21;
 						pthread_mutex_lock( &serial_write_lock);
@@ -586,103 +638,6 @@ UCHAR get_host_cmd_task(int test)
 						scroll_down();
 						break;
 
-					case ENABLE_START:
-//						if(engine_running == 0)
-						if(1)
-						{
-							change_output(STARTER, 1);
-							ollist_change_output(STARTER, &oll, 1);
-							starter_on = 1;
-							engine_running = 1;
-							send_live_code(cmd);
-						}
-						break;
-
-					case STARTER_OFF:
-						change_output(STARTER, 0);
-						ollist_change_output(STARTER, &oll, 0);
-						starter_on = 0;
-						break;
-
-					case ON_ACC:
-						ollist_change_output(ACCON, &oll, 1);
-						change_output(ACCON, 1);
-						send_live_code(cmd);
-						break;
-
-					case OFF_ACC:
-						ollist_change_output(ACCON, &oll, 0);
-						change_output(ACCON, 0);
-						send_live_code(cmd);
-						break;
-
-					case ON_FUEL_PUMP:
-						ollist_change_output(FUELPUMP, &oll, 1);
-						change_output(FUELPUMP, 1);
-						send_live_code(cmd);
-						break;
-
-					case OFF_FUEL_PUMP:
-						ollist_change_output(FUELPUMP, &oll, 0);
-						change_output(FUELPUMP, 0);
-						send_live_code(cmd);
-						break;
-
-					case ON_FAN:
-						ollist_change_output(COOLINGFAN, &oll, 1);
-						change_output(COOLINGFAN, 1);
-						send_live_code(cmd);
-						fan_delay = 0;
-						break;
-
-					case OFF_FAN:
-						ollist_change_output(COOLINGFAN, &oll, 0);
-						change_output(COOLINGFAN, 0);
-						send_live_code(cmd);
-						fan_delay = 0;
-						break;
-
-					case START_SEQ:
-//						if(engine_running == 0)
-						if(1)
-						{
-							engine_running = 1;
-							change_output(STARTER, 1);
-							ollist_change_output(STARTER, &oll, 1);
-							starter_on = 1;
-							send_live_code(ENABLE_START);
-
-							usleep(50000);
-							ollist_change_output(ACCON, &oll, 1);
-							change_output(ACCON, 1);
-							send_live_code(ON_ACC);
-
-							usleep(50000);
-							ollist_change_output(FUELPUMP, &oll, 1);
-							change_output(FUELPUMP, 1);
-							send_live_code(ON_FUEL_PUMP);
-							fan_delay = 1;
-						}
-						break;
-
-					case SHUTDOWN:
-//						myprintf1("shutdown\0");
-						otp = &tempo1;
-						for(i = STARTER;i < PRELUBE+1;i++)
-						{
-							ollist_change_output(i, &oll, 0);
-							change_output(i, 0);
-							uSleep(0,TIME_DELAY/10000);
-						}
-						fan_delay = 0;
- 						engine_running = 0;
-						starter_on = 0;
-						send_live_code(STARTER_OFF);
-						send_live_code(OFF_FUEL_PUMP);
-						send_live_code(OFF_FAN);
-						send_live_code(OFF_ACC);
-						running_seconds = running_minutes = running_hours = 0;
-						break;
 
 					case CLEAR_SCREEN:
 						lcd_cls();
@@ -692,6 +647,7 @@ UCHAR get_host_cmd_task(int test)
 						close_tcp();
 						break;
 
+/*
 					case NEW_PASSWORD:
 						recv_tcp((UCHAR*)&fsize,8,1);
 						cur_fsize = (int)fsize;
@@ -711,7 +667,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial(test2);
 						pthread_mutex_unlock(&serial_write_lock);
 						break;
-
+*/
 					case UPLOAD_NEW:
 						recv_tcp((UCHAR*)&fsize,8,1);
 						cur_fsize = (int)fsize;
@@ -720,7 +676,7 @@ UCHAR get_host_cmd_task(int test)
 						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 700);
 						if(fp < 0)
 						{
-							printf("could not create file: %s\n",filename);
+//							printf("could not create file: %s\n",filename);
 							goto exit_program;
 							break;
 						}
@@ -744,7 +700,6 @@ exit_program:
 						{
 							reboot_on_exit = 1;
 							myprintf1("rebooting...\0");
-							printString2("rebooting...\0");
 						}
 						else
 						{
@@ -752,17 +707,14 @@ exit_program:
 							if(reboot_on_exit == 0)
 							{
 								myprintf1("exit to shell\0");
-								printString2("exit to shell\0");
 							}	
 							else if(reboot_on_exit == 1)
 							{
 								myprintf1("rebooting...\0");
-								printString2("rebooting...\0");
 							}
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("shutting down...\0");
-								printString2("shutting down...\0");
 							}
 						}
 
@@ -783,11 +735,16 @@ exit_program:
 						setdioline(7,0);
 						uSleep(2,0);
 						setdioline(7,1);
-
+/*
+						for(i = 0;i < 200;i++)
+						{
+							red_led(1);
+							uSleep(0,TIME_DELAY/30);
+							red_led(0);
+							uSleep(0,TIME_DELAY/30);
+						}
+*/
 						return 0;
-						break;
-
-					default:
 						break;
 				}								  // end of switch
 			}									  // if rc > 0
@@ -799,6 +756,104 @@ exit_program:
 	return test + 1;
 }
 
+/*********************************************************************/
+void basic_controls(UCHAR cmd)
+{
+	int i;
+
+	switch(cmd)
+	{
+		case ENABLE_START:
+			change_output(STARTER, 1);
+			ollist_change_output(STARTER, &oll, 1);
+			starter_on = 1;
+			engine_running = 1;
+			send_live_code(cmd);
+			break;
+
+		case STARTER_OFF:
+			change_output(STARTER, 0);
+			ollist_change_output(STARTER, &oll, 0);
+			starter_on = 0;
+			send_live_code(cmd);
+			break;
+
+		case ON_ACC:
+			ollist_change_output(ACCON, &oll, 1);
+			change_output(ACCON, 1);
+			send_live_code(cmd);
+			break;
+
+		case OFF_ACC:
+			ollist_change_output(ACCON, &oll, 0);
+			change_output(ACCON, 0);
+			send_live_code(cmd);
+			break;
+
+		case ON_FUEL_PUMP:
+			ollist_change_output(FUELPUMP, &oll, 1);
+			change_output(FUELPUMP, 1);
+			send_live_code(cmd);
+			break;
+
+		case OFF_FUEL_PUMP:
+			ollist_change_output(FUELPUMP, &oll, 0);
+			change_output(FUELPUMP, 0);
+			send_live_code(cmd);
+			break;
+
+		case ON_FAN:
+			ollist_change_output(COOLINGFAN, &oll, 1);
+			change_output(COOLINGFAN, 1);
+			send_live_code(cmd);
+			fan_delay = 0;
+			break;
+
+		case OFF_FAN:
+			ollist_change_output(COOLINGFAN, &oll, 0);
+			change_output(COOLINGFAN, 0);
+			send_live_code(cmd);
+			fan_delay = 0;
+			break;
+
+		case START_SEQ:
+			engine_running = 1;
+			change_output(STARTER, 1);
+			ollist_change_output(STARTER, &oll, 1);
+			starter_on = 1;
+			send_live_code(ENABLE_START);
+
+			usleep(50000);
+			ollist_change_output(ACCON, &oll, 1);
+			change_output(ACCON, 1);
+			send_live_code(ON_ACC);
+
+			usleep(50000);
+			ollist_change_output(FUELPUMP, &oll, 1);
+			change_output(FUELPUMP, 1);
+			send_live_code(ON_FUEL_PUMP);
+			fan_delay = 1;
+			break;
+
+		case SHUTDOWN:
+//						myprintf1("shutdown\0");
+			for(i = STARTER;i < PRELUBE+1;i++)
+			{
+				ollist_change_output(i, &oll, 0);
+				change_output(i, 0);
+				uSleep(0,TIME_DELAY/10000);
+			}
+			fan_delay = 0;
+			engine_running = 0;
+			starter_on = 0;
+			send_live_code(STARTER_OFF);
+			send_live_code(OFF_FUEL_PUMP);
+			send_live_code(OFF_FAN);
+			send_live_code(OFF_ACC);
+			running_seconds = running_minutes = running_hours = 0;
+			break;
+	}
+}
 
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -913,6 +968,8 @@ type:
 			uSleep(0,TIME_DELAY/200);
 			if(shutdown_all)
 			{
+//				printf("done mon input tasks\n");
+//				myprintf1("done mon input");
 				return 0;
 			}
 		}
@@ -982,13 +1039,12 @@ type:
 /// using a much better pthread library
 			if(starter_on > 0)
 			{
-				if(++starter_on > 8)
+				if(++starter_on > 10)
 				{
 					starter_on = 0;
 					change_output(STARTER, 0);
 					ollist_change_output(STARTER, &oll, 0);
 					myprintf1("STARTER OFF\0");
-					printString2("STARTER OFF\0");
 					send_live_code(STARTER_OFF);
 				}
 			}
@@ -1016,6 +1072,14 @@ type:
 				}
 			}
 
+			if(trunning_minutes < 2)
+			{
+				if(trunning_seconds % 2 == 0)
+					red_led(1);
+				else
+					red_led(0);
+			}
+
 			if(++trunning_seconds > 59)
 			{
 				trunning_seconds = 0;
@@ -1034,23 +1098,28 @@ type:
 				buffer[1] = trunning_seconds;
 				buffer[2] = trunning_minutes;
 				buffer[3] = trunning_hours;
-/*
+
 				buffer[4] = rt_data[0];
 				buffer[5] = rt_data[1];
 				buffer[6] = rt_data[2];
 				buffer[7] = rt_data[3];
+/*
 				buffer[8] = rt_data[4];
 				buffer[9] = rt_data[5];
 				buffer[10] = rt_data[6];
 				buffer[11] = rt_data[7];
 */
+//				for(i = 0;i < 16;i++)
+//					rt_data[i] = rt_data[i] + 1;
+
 //				pthread_mutex_unlock(&serial_read_lock);
 
-				send_tcp((UCHAR *)buffer,4);
+				send_tcp((UCHAR *)buffer,8);
 			}
 			
 			if(shutdown_all)
 			{
+//				printf("done timer_task\n");
 				return 0;
 			}
 		}
@@ -1110,6 +1179,7 @@ UCHAR read_button_inputs(int test)
 		}
 		if(shutdown_all)
 		{
+//			printf("done read_buttons task\n");
 			return 0;
 		}
 	}
@@ -1145,8 +1215,7 @@ UCHAR serial_recv_task(int test)
 		myprintf1("can't open comm port 1\0");
 		return 0;
 	}
-	printString2("serial_recv_task started");
-
+	
 #if 0
 	while(TRUE)
 	{
@@ -1165,38 +1234,48 @@ UCHAR serial_recv_task(int test)
 	{
 		pthread_mutex_lock( &serial_read_lock);
 		ch = read_serial(errmsg);
+		if(ch == RT_DATA)
+		{
+			for(i = 0;i < NUM_ADC_CHANNELS;i++)
+			{
+				rt_data[i] = read_serial(errmsg);
+			}
+		}
 		pthread_mutex_unlock(&serial_read_lock);
-		send_tcp((UCHAR *)&ch,1);
-#if 0
+		if(ch != RT_DATA)
+		{
+/*
+basic_controls does any of these:
+	ENABLE_START
+	STARTER_OFF
+	ON_FUEL_PUMP
+	OFF_FUEL_PUMP
+	ON_FAN
+	OFF_FAN
+	ON_ACC
+	OFF_ACC
+	START_SEQ
+	SHUTDOWN
+*/
+			basic_controls(ch);
+		}
+/*
 		if(errmsg[0] != 0)
 		{
 			myprintf1(errmsg);
 			memset(errmsg,0,20);
 			uSleep(5,0);
 		}else
-//			if(myprintf2("read:\0",ch) == 1)
-//				printf("lcd not init'd\n");
-			if(ch != COMM_CMD)
-			{
-				if(tcp_window_on == 1)
-					send_tcp((UCHAR *)&ch,1);
-//				printf("%c",ch);
-			}
-			else
-			{
-				pthread_mutex_lock( &serial_read_lock);
-				// read NUM_CHANNELS * 2 or number of ADC channels enabled in esos1/Truck_App.h
-				for(i = 0;i < 8;i++)
-					rt_data[i] = read_serial(errmsg);
-				pthread_mutex_unlock(&serial_read_lock);
-			}
-			uSleep(0,TIME_DELAY/100000);
+		{
+			if(tcp_window_on == 1)
+				send_tcp((UCHAR *)&ch,1);
 		}
-#endif
+*/
 		if(shutdown_all)
 		{
-			printString2("shutting down serial task");
+//			printf("shutting down serial task\n");
 			close_serial();
+			myprintf1("done serial task");
 			return 0;
 		}
 	}
@@ -1226,7 +1305,6 @@ UCHAR serial_recv_task2(int test)
 //		printf("can't open comm port 2\n");
 		return 0;
 	}
-	printString2("serial_recv_task2 started");
 
 	while(TRUE)
 	{
@@ -1253,7 +1331,6 @@ UCHAR serial_recv_task2(int test)
 
 		if(shutdown_all)
 		{
-			printString2("shutting down serial task");
 //			printf("shutting down serial task\0");
 			close_serial2();
 //			printf("serial port closed\n");
@@ -1369,6 +1446,7 @@ UCHAR tcp_monitor_task(int test)
 		}
 		if(shutdown_all)
 		{
+//			myprintf1("done tcp_mon");
 			return 0;
 		}
 	}
@@ -1477,7 +1555,7 @@ static int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 /*********************************************************************/
 void close_tcp(void)
 {
-	myprintf1("closing socket\0");
+//	myprintf1("closing socket\0");
 //	send_tcp("close",5);
 	if(sock_open)
 	{

@@ -244,7 +244,7 @@ extern UCHAR    CGBuffer[8];    /* Buffer for custom pattern                    
 #endif
 void GDispInit(void);
 void GDispSetMode(UCHAR mode);
-void GDispClrTxt(UCHAR which);
+void GDispClrTxt(void);
 void GDispGoto(UINT row, UINT col);
 void GDispChar(UCHAR c);
 void GDispCharAt(UINT row, UINT col, UCHAR c);

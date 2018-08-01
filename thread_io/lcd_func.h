@@ -13,6 +13,10 @@
 #define DIOADR	(0x04 / sizeof(UINT))
 #define PORTFB  (0x30 / sizeof(UINT))
 #define PORTFD	(0x34 / sizeof(UINT))
+#define PORTLED	(0x20 / sizeof(UINT))
+
+//The RED and Green LEDs can be controlled at physical address location 0x8084_0020.
+//Bit 1 is the RED LED and bit 0 is the Green LED. A Logic “1” turns the LED on.
 
 #define HOME 0x80
 #define ROW2 0xA8
@@ -45,6 +49,7 @@ volatile UINT *dio_addr;
 volatile UINT *dio_ddr;
 volatile UINT *portfb;
 volatile UINT *portfd;
+volatile UINT *portled;
 
 static void lcd_cmd(UINT);
 static void lcd_write(UCHAR *);
@@ -70,7 +75,8 @@ void shift_left(void);
 void shift_right(void);
 void lcd_home(void);
 void lcd_cls(void);
-
+void red_led(int onoff);
+void green_led(int onoff);
 int lcd_enabled;
 
 #endif

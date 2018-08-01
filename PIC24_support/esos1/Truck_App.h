@@ -21,24 +21,27 @@
 #include <stdlib.h>
 #include "../../mytypes.h"
 
-ESOS_SEMAPHORE(key_sem);
-ESOS_SEMAPHORE(lcd_sem);
-ESOS_USER_TASK(keypad);
-ESOS_USER_TASK(poll_keypad);
+volatile ESOS_SEMAPHORE(key_sem);
+volatile ESOS_SEMAPHORE(lcd_sem);
+volatile ESOS_USER_TASK(keypad);
+volatile ESOS_USER_TASK(poll_keypad);
 //ESOS_USER_TASK(spi_task);
-ESOS_USER_TASK(AVR_cmd);
-ESOS_USER_TASK(main_proc);
-ESOS_USER_TASK(send_fpga);
-ESOS_USER_TASK(recv_lcd);
-ESOS_USER_TASK(send_comm1);
-ESOS_USER_TASK(recv_comm1);
-ESOS_USER_TASK(menu_task);
-ESOS_USER_TASK(password_task);
-ESOS_USER_TASK(numentry_task);
-ESOS_USER_TASK(eeprom_task);
-ESOS_USER_TASK(eeprom_cmd);
+volatile ESOS_USER_TASK(AVR_cmd);
+volatile ESOS_USER_TASK(main_proc);
+volatile ESOS_USER_TASK(send_fpga);
+volatile ESOS_USER_TASK(recv_lcd);
+volatile ESOS_USER_TASK(send_comm1);
+volatile ESOS_USER_TASK(recv_comm1);
+volatile ESOS_USER_TASK(menu_task);
+volatile ESOS_USER_TASK(password_task);
+volatile ESOS_USER_TASK(numentry_task);
+volatile ESOS_USER_TASK(display_menu);
+volatile ESOS_USER_TASK(display_rtlabels);
 
-#define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &buffer, 5);
+volatile UCHAR avr_buffer[6];
+static ESOS_TASK_HANDLE avr_handle;
+
+#define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &avr_buffer, 5);
 
 #define MY_ESOS1
 #define TIME_DELAY		20
@@ -71,13 +74,29 @@ enum key_types
 	KP_0 	// '0'		- EF
 } KEY_TYPES;
 
+typedef struct
+{
+	UCHAR row;
+	UCHAR col;
+	UCHAR str;
+	UCHAR onoff;
+} FORMAT_STR;
+
+#define NUM_MENU_LABELS 5
+volatile FORMAT_STR menu_str[NUM_MENU_LABELS];
+
+#define NUM_RT_LABELS 13
+volatile FORMAT_STR rtlabel_str[NUM_RT_LABELS];
+
+volatile UCHAR menu_ptr;
+
 #define ROWS 16
 #define COLUMN 40
 #define DISPLAY_OFF         0x90    //0b10010000, display off
 #define CURSOR_ON_BLINK_OFF 0x92    //0b1001xx10, cursor on without blinking
 #define CURSOR_BLINK_ON     0x93    //0b1001xx11, cursor on with blinking
 #define TEXT_ON             0x94    //0b100101xx, text on, graphics off
-#define GRAPHIC_ON           0x98    //0b100110xx, text off, graphics on
+#define GRAPHIC_ON          0x98    //0b100110xx, text off, graphics on
 #define TEXT_GRH_ON         0x9C    //0b100111xx, text on, graphics on
 #define ATTR_NORMAL         0x00    //Normal Display
 #define ATTR_REVERSE        0x05    
@@ -134,8 +153,7 @@ typedef enum
 {
 	NORMAL,
 	PASSWORD,
-	NUMENTRY,
-	EEPROM
+	NUMENTRY
 }KEY_MODE;
 
 volatile KEY_MODE key_mode;
@@ -147,15 +165,15 @@ ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
 	static UINT row,col;
-	static ESOS_TASK_HANDLE avr_handle;
 	static ESOS_TASK_HANDLE comm1_handle;
-	static UCHAR buffer[5];
 	static int k;
+	static int acc, fuel_pump, fan;
 	
-	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	comm1_handle = esos_GetTaskHandle(send_comm1);
 
     ESOS_TASK_BEGIN();
+
+	acc = fuel_pump = fan = 0;
 
 	while (TRUE)
 	{
@@ -167,14 +185,43 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_START);
 				break;
 				case	KP_2:
+					if(acc == 0)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
+						acc = 1;
+					}
+					else{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_ACC);
+						acc = 0;
+					}
 				break;
 				case	KP_3:
+					if(fuel_pump == 0)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
+						fuel_pump = 1;
+					}
+					else{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FUEL_PUMP);
+						fuel_pump = 0;
+					}
 				break;
 				case	KP_4:
+					if(fan == 0)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
+						fan = 1;
+					}
+					else{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FAN);
+						fan = 0;
+					}
 				break;
 				case	KP_5:
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
 				case	KP_6:
 				break;
@@ -184,11 +231,46 @@ ESOS_USER_TASK(menu_task)
 				break;
 				case	KP_9:
 				break;
-				case	KP_A:
+				case	KP_A:		// move up in menu
+					if(menu_ptr < 1)
+						menu_ptr = 6;
+					menu_ptr--;	
+
+					avr_buffer[0] = SET_MODE_CMD;
+					avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
+					avr_buffer[2] = menu_str[menu_ptr].row;
+					avr_buffer[3] = menu_str[menu_ptr].col-2;
+					avr_buffer[4] = (LINE_8_CURSOR);
+					AVR_CALL();
+
 				break;
-				case	KP_B:
+				case	KP_B:		// move down in menu
+					if(++menu_ptr > 5)
+						menu_ptr = 0;
+
+					avr_buffer[0] = SET_MODE_CMD;
+					avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
+					avr_buffer[2] = menu_str[menu_ptr].row;
+					avr_buffer[3] = menu_str[menu_ptr].col-2;
+					avr_buffer[4] = (LINE_8_CURSOR);
+					AVR_CALL();
+
 				break;
-				case	KP_C:
+				case	KP_C:		// exec menu choice
+					avr_buffer[0] = GOTO_CMD;
+					avr_buffer[1] = menu_str[menu_ptr].row;
+					avr_buffer[2] = menu_str[menu_ptr].col-2;
+					AVR_CALL();
+
+					if(menu_str[menu_ptr].onoff == 1)
+						menu_str[menu_ptr].onoff = 0;
+					else menu_str[menu_ptr].onoff = 1;
+					avr_buffer[0] = CHAR_CMD;
+					avr_buffer[1] = (menu_str[menu_ptr].onoff?'X':' ');
+					AVR_CALL();
+
+//					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
+//						(menu_ptr+1)*2+menu_str[menu_ptr].onoff);
 				break;
 				case	KP_D:
 				break;
@@ -201,17 +283,6 @@ ESOS_USER_TASK(menu_task)
 				default:
 				break;
 			}
-			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,data1);
-			data1 = data1 - KP_1 + 0x31;
-			buffer[0] = CHAR_CMD;
-			buffer[1] = data1;
-			AVR_CALL();
-/*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
 		}
 	}
     ESOS_TASK_END();
@@ -225,30 +296,39 @@ volatile ESOS_TASK_HANDLE password_task_handle;
 ESOS_USER_TASK(password_task)
 {
 	static UCHAR data1;
-	static UINT data3;
 	static UCHAR row, col;
-	static ESOS_TASK_HANDLE avr_handle;
 	static ESOS_TASK_HANDLE comm1_handle;
-	static UCHAR buffer[5];
+    static ESOS_TASK_HANDLE menu_handle;
+    static ESOS_TASK_HANDLE rt_handle;
 	static int i;
 
     ESOS_TASK_BEGIN();
     password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
-	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	comm1_handle = esos_GetTaskHandle(send_comm1);
+	menu_handle = esos_GetTaskHandle(display_menu);
+	rt_handle = esos_GetTaskHandle(display_rtlabels);
     
 	ESOS_TASK_WAIT_TICKS(1000);
 
-	buffer[0] = PUT_STR;
-	buffer[1] = 7;	// row 7
-	buffer[2] = 0;	// col 0
-	buffer[3] = 1;	// string 1 ("enter password")
-	AVR_CALL();
-	buffer[0] = GOTO_CMD;
-	buffer[1] = 7;
-	buffer[2] = 16;
+	avr_buffer[0] = PUT_STR;
+	avr_buffer[1] = 7;	// row 7
+	avr_buffer[2] = 0;	// col 0
+	avr_buffer[3] = 1;	// string 1 ("enter password")
 	AVR_CALL();
 
+	avr_buffer[0] = GOTO_CMD;
+	avr_buffer[1] = 7;
+	avr_buffer[2] = 16;
+	AVR_CALL();
+
+/*
+	avr_buffer[0] = (SET_MODE_CMD);
+	avr_buffer[1] = (TEXT_ON | CURSOR_ON_BLINK_OFF);
+	avr_buffer[2] = 7;
+	avr_buffer[3] = 16;
+	avr_buffer[4] = (LINE_8_CURSOR);
+	AVR_CALL();
+*/
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_FOR_MAIL();
@@ -270,31 +350,37 @@ ESOS_USER_TASK(password_task)
 				case	KP_9:
 					data1 = data1 - KP_1 + 0x31;
 					password[password_ptr++] = data1;
-					buffer[0] = CHAR_CMD;
-					buffer[1] = '*';
+					avr_buffer[0] = CHAR_CMD;
+					avr_buffer[1] = '*';
 					AVR_CALL();
 
 					if(password_ptr > strlen(correct_password))
 					{
 						// if incorrect password, first display "bad password" message
-						buffer[0] = PUT_STR;
-						buffer[1] = 7;
-						buffer[2] = 0;
-						buffer[3] = 2;
+						avr_buffer[0] = LCD_CLRSCR;
+						avr_buffer[1] = 0;
 						AVR_CALL();
-						
-						// then goto just after message
-						buffer[0] = GOTO_CMD;
-						buffer[1] = 7;
-						buffer[2] = 14;
+
+						avr_buffer[0] = PUT_STR;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 0;
+						avr_buffer[3] = 2;
 						AVR_CALL();
-						// then blank out the pevious '*' row
-						buffer[0] = CHAR_CMD;
-						buffer[1] = 0x20;
-						for(i = 0;i < 10;i++)
-							AVR_CALL();
+
+						avr_buffer[0] = PUT_STR;
+						avr_buffer[1] = 7;	// row 7
+						avr_buffer[2] = 0;	// col 0
+						avr_buffer[3] = 1;	// string 1 ("enter password")
+						AVR_CALL();
+
+						avr_buffer[0] = GOTO_CMD;
+						avr_buffer[1] = 7;
+						avr_buffer[2] = 16;
+						AVR_CALL();
+
 						password_ptr = 0;
 						password_retries++;
+						memset(password,0,PASSWORD_SIZE);
 
 						if(password_retries > PASSWORD_RETRIES)
 						{
@@ -304,23 +390,35 @@ ESOS_USER_TASK(password_task)
 					if(strcmp(password,correct_password) == 0)
 					{
 						password_valid = 1;
-						buffer[0] = LCD_CLRSCR;
-						buffer[1] = 0;
+						avr_buffer[0] = LCD_CLRSCR;
+						avr_buffer[1] = 0;
 						AVR_CALL();
 
-						buffer[0] = PUT_STR;
-						buffer[1] = 0;
-						buffer[2] = 0;
-						buffer[3] = 3;
+						avr_buffer[0] = (SET_MODE_CMD);
+						avr_buffer[1] = (TEXT_ON | DISPLAY_OFF);
+						avr_buffer[2] = 0;
+						avr_buffer[3] = 0;
+						avr_buffer[4] = (LINE_8_CURSOR);
 						AVR_CALL();
 
-						buffer[0] = GOTO_CMD;
-						buffer[1] = 1;
-						buffer[2] = 0;
+						__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
+
+						__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
+/*
+						avr_buffer[0] = PUT_STR;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 0;
+						avr_buffer[3] = 3;
 						AVR_CALL();
+
+						avr_buffer[0] = GOTO_CMD;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 0;
+						AVR_CALL();
+*/
 						key_mode = NORMAL;
 						password_ptr = 0;
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,0xFB);
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ABLE_TO_START);
 					}
 
 				break;
@@ -635,7 +733,6 @@ ESOS_USER_TASK(poll_keypad)
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE password_handle;
     static ESOS_TASK_HANDLE numentry_handle;
-    static ESOS_TASK_HANDLE eeprom_handle;
 
 	static UCHAR data1;
 	static UINT data3;
@@ -645,7 +742,6 @@ ESOS_USER_TASK(poll_keypad)
 	menu_handle = esos_GetTaskHandle(menu_task);
 	password_handle = esos_GetTaskHandle(password_task);
 	numentry_handle = esos_GetTaskHandle(numentry_task);
-	eeprom_handle = esos_GetTaskHandle(eeprom_task);
 
 	configKeypad();
 	data1 = 0;
@@ -666,9 +762,6 @@ ESOS_USER_TASK(poll_keypad)
 				case NUMENTRY:
 					__esos_CB_WriteUINT8(numentry_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
 					break;
-				case EEPROM:
-					__esos_CB_WriteUINT8(eeprom_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
-					break;
 				default:
 					break;
 			}
@@ -677,80 +770,6 @@ ESOS_USER_TASK(poll_keypad)
 	}
     ESOS_TASK_END();
 }
-
-//******************************************************************************************//
-//************************************* eeprom_task ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(eeprom_task)
-{
-	static UCHAR data1, cmd;
-	static ESOS_TASK_HANDLE eeprom_handle;
-
-	eeprom_handle = esos_GetTaskHandle(eeprom_cmd);
-
-    ESOS_TASK_BEGIN();
-
-	while (TRUE)
-	{
-		ESOS_TASK_WAIT_FOR_MAIL();
-
-		while(ESOS_TASK_IVE_GOT_MAIL())
-		{
-			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			switch(data1)
-			{
-				case 	KP_1:
-					cmd = BURN_EEPROM;
-				break;
-				case	KP_2:
-					cmd = READ_EEPROM;
-				break;
-				case	KP_3:
-					cmd = DISPLAY_LABELS;
-				break;
-				case	KP_4:
-					cmd = DISPLAY_RTPARAMS;
-				break;
-				case	KP_5:
-					cmd = TEST_PATTERN1;
-				break;
-				case	KP_6:
-					cmd = TEST_PATTERN2;
-				break;
-				case	KP_7:
-					cmd = TEST_PATTERN3;
-				break;
-				case	KP_8:
-					cmd = TEST_PATTERN4;
-				break;
-				case	KP_9:
-					cmd = FAST_TEST_PATTERN1;
-				break;
-				case	KP_A:
-					cmd = FAST_TEST_PATTERN2;
-				break;
-				case	KP_B:
-					cmd = FAST_TEST_PATTERN3;
-				break;
-				case	KP_C:
-					cmd = FAST_TEST_PATTERN4;
-				break;
-				case	KP_D:
-				case	KP_POUND:
-				case	KP_AST:
-				case	KP_0:
-					cmd = TRANSMIT_ASCII;
-				break;
-				default:
-				break;
-			}
-			__esos_CB_WriteUINT8(eeprom_handle->pst_Mailbox->pst_CBuffer,cmd);
-		}
-	}
-    ESOS_TASK_END();
-}
-
 //******************************************************************************************//
 //********************************** CONFIG_SPI_SLAVE **************************************//
 //******************************************************************************************//
@@ -933,10 +952,10 @@ uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
   return u16_ticks;
 }
 #endif
-#define NUM_CHANNELS 4
 #define NUM_SIZE 200
-volatile uint16_t au16_buffer[NUM_CHANNELS];
-volatile uint16_t  u16_pot[NUM_CHANNELS];
+volatile uint16_t au16_buffer[NUM_ADC_CHANNELS];
+//volatile uint16_t  u16_pot[NUM_ADC_CHANNELS];
+volatile UCHAR  u8_pot[NUM_ADC_CHANNELS];
 volatile UCHAR curr_num[NUM_SIZE];
 volatile UCHAR curr_num_ptr;
 volatile uint8_t  u8_waiting;
@@ -949,8 +968,10 @@ ESOS_USER_TASK(convADC)
 {
 //    static  uint8_t data1, u8_wdtState;
 //	static uint16_t u16_adcVal1, u16_adcVal2;
-//	static float f_adcVal;
-	static uint8_t   u8_i;
+	static ESOS_TASK_HANDLE comm1_handle;
+	static uint8_t u8_i;
+	static float fres;
+	comm1_handle = esos_GetTaskHandle(send_comm1);
 
     ESOS_TASK_BEGIN();
 /*
@@ -980,7 +1001,7 @@ ESOS_USER_TASK(convADC)
 //	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN2 |
 //			 ADC_SCAN_AN3 | ADC_SCAN_AN4 | ADC_SCAN_AN5, 31, 0);
 
-	configADC1_AutoScanIrqCH0( 0x0003, 31, 0);
+	configADC1_AutoScanIrqCH0( 0x000F, 31, 0);
 //	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
 	while ( !AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
@@ -991,9 +1012,13 @@ ESOS_USER_TASK(convADC)
 			ESOS_TASK_WAIT_TICKS(1);
 			
 		u8_waiting = 0;
-		for ( u8_i=0; u8_i<NUM_CHANNELS; u8_i++)
+		for ( u8_i=0; u8_i<NUM_ADC_CHANNELS; u8_i++)
 		{
-			u16_pot[u8_i] = au16_buffer[u8_i];
+//			u16_pot[u8_i] = au16_buffer[u8_i];
+			fres = (float)au16_buffer[u8_i];
+			fres *= 100.0;
+			fres /= 1023.0;
+			u8_pot[u8_i] = (UCHAR)fres;
 /*			
 			u16_pot[u8_i] <<= 6;
 			if(u16_pot[u8_i] > 1)
@@ -1013,7 +1038,8 @@ ESOS_USER_TASK(convADC)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 #endif
 		}
-		ESOS_TASK_WAIT_TICKS(50);
+		__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
+		ESOS_TASK_WAIT_TICKS(200);
 	}
 	ESOS_TASK_END();
 }
@@ -1025,44 +1051,11 @@ void _ISR _ADC1Interrupt (void)
 	uint8_t			u8_i;
 	uint16_t*		au16_adcHWBuff = (uint16_t*) &ADC1BUF0;
 
-	for ( u8_i=0; u8_i<NUM_CHANNELS; u8_i++)
+	for ( u8_i=0; u8_i<NUM_ADC_CHANNELS; u8_i++)
 	{
 		au16_buffer[u8_i] = au16_adcHWBuff[u8_i];
 	} //end for()
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
-
-//******************************************************************************************//
-//************************************** eeprom_cmd ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(eeprom_cmd)
-{
-    static  UCHAR row, col, data2;
-	
-    ESOS_TASK_BEGIN();
-    row = col = 0;
-    while (1)
-    {
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-        while(ESOS_TASK_IVE_GOT_MAIL())
-        {
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
-			ESOS_TASK_WAIT_ON_SEND_UINT82(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT82(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM2();
-/*
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data2);
-			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-		}
-    } // endof while()
-    ESOS_TASK_END();
-}
-
 

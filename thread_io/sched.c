@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
 	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
 	strcpy(_threads[TIMER].label,"TIMER\0");
-	strcpy(_threads[UNUSED].label,"UNUSED\0");
+	strcpy(_threads[UNUSED].label,"READ_BUTTONS\0");
 #if CONSOLE_DISABLED
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
 #endif
@@ -212,31 +212,32 @@ int main(int argc, char **argv)
 	{
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
-//		printf("closing task : %s\n",_threads[i].label);
+
+//		printf("closing task :%d %s\n",i,_threads[i].label);
 	}
 /*	close_mem(); */
 
 //	RS232_CloseComport(1);
 	strcpy(str2,"close");
 //	send(sd,str2,5,0);
-	printf("reboot_on_exit: %d\n",reboot_on_exit);
+//	printf("reboot_on_exit: %d\n",reboot_on_exit);
 //	usleep(100000);
 //	closesocket(sd);
-	printf("socket closed\n");
+//	printf("socket closed\n");
 //	llist_show(&ll);
 	if(reboot_on_exit == 0)
 	{
-		printf("exit to shell\n");
+//		printf("exit to shell\n");
 		return 0;
 	}
 	else if(reboot_on_exit == 1)
 	{
-		printf("reboot\n");
+//		printf("reboot\n");
 		return 1;
 	}
 	else if(reboot_on_exit == 2)
 	{
-		printf("shutdown\n");
+//		printf("shutdown\n");
 		return 2;
 	}
 }

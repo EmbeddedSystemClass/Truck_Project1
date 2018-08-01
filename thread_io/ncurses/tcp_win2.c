@@ -17,12 +17,12 @@
 #define STARTER_STATUS 10
 #define ACC_STATUS 28
 #define FUEL_PUMP_STATUS 46
-#define FAN_STATUS 62
+#define FAN_STATUS 60
 
 static int status_line;
 static int error_line1;
 static int error_line2;
-static UCHAR rt_data[50];
+static UCHAR rt_data[20];
 
 static int inc_y(WINDOW *win, int y);
 static void clr_scr(WINDOW *win);
@@ -31,31 +31,6 @@ static int acc_on, fp_on, fan_on, starter_on;
 
 extern int tcp_connected;
 
-/*
-		        cmd = ENABLE_START;
-		        put_sock(&cmd,1,1,errmsg);
-
-		        cmd = ON_ACC;
-		        put_sock(&cmd,1,1,errmsg);
-
-		        cmd = OFF_ACC;
-		        put_sock(&cmd,1,1,errmsg);
-
-				cmd =  ON_FUEL_PUMP;
-				ret = put_sock(&cmd,1,1,errmsg);
-
-				cmd =  OFF_FUEL_PUMP;
-				ret = put_sock(&cmd,1,1,errmsg);
-
-				cmd =  ON_FAN;
-				ret = put_sock(&cmd,1,1,errmsg);
-
-				cmd = OFF_FAN;
-				ret = put_sock(&cmd,1,1,errmsg);
-
-				cmd = SHUTDOWN;
-				ret = put_sock(&cmd,1,1,errmsg);
-*/
 //******************************************************************************************//
 //************************************* clear_screen ***************************************//
 //******************************************************************************************//
@@ -145,7 +120,7 @@ int tcp_win2(int cmd)
 	int rc;
 	int x,y,i;
 	UCHAR ret_char = 0x21;
-	char buffer[50];
+	char buffer[20];
 	char errmsg[50];
 	int noerrors = 0;
 	int height, width;
@@ -154,6 +129,7 @@ int tcp_win2(int cmd)
 	UCHAR minutes;
 	int engine_time;
 	UCHAR cmd2;
+	UCHAR ioport = 0;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 	nodelay(stdscr,TRUE);
@@ -189,7 +165,7 @@ int tcp_win2(int cmd)
 		MvWAddCh(twin,height-5,i,ACS_HLINE);
 
 //	mvwprintw(twin,status_line,1,"STARTER:     ACC:     FUEL PUMP:    FAN:             ");
-	mvwprintw(twin,status_line,STARTER_STATUS-9,"STARTER:");	
+	mvwprintw(twin,status_line,STARTER_STATUS-9,"STARTER:");
 	mvwprintw(twin,status_line,ACC_STATUS-5,"ACC:");
 	mvwprintw(twin,status_line,FUEL_PUMP_STATUS-11,"FUEL PUMP:");
 	mvwprintw(twin,status_line,FAN_STATUS-5,"FAN:");
@@ -262,6 +238,7 @@ int tcp_win2(int cmd)
 				}
 			    put_sock(&cmd2,1,1,errmsg);
 				break;
+
 			case KEY_F(7):		// all off
 				cmd2 = SHUTDOWN;
 				put_sock(&cmd2,1,1,errmsg);
@@ -287,11 +264,14 @@ int tcp_win2(int cmd)
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"OFF");
 				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
+
 			case KEY_F(8):
 				clr_scr(twin);
 				x = 1;
 				y = 1;
 				break;
+
+#if 0
 			case KEY_F(9):	// start sequence cmd which enables the starter, turns on acc & fp
 							// and starts a timer which after 1 minute, turns the fan on
 				cmd2 = START_SEQ;
@@ -304,18 +284,30 @@ int tcp_win2(int cmd)
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
-			case KEY_F(10):
-				cmd2 = PASSWORD_MODE;
+#endif
+			case KEY_F(9):
+				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);
-				mvwprintw(twin,status_line,FAN_STATUS,"F10 ");
+		        break;
+
+			case KEY_F(10):
+				cmd2 = TEST_IOPORT;
+		        put_sock(&cmd2,1,1,errmsg);
+/*
+		        put_sock(&ioport,1,1,errmsg);
+				mvwprintw(twin,status_line,FAN_STATUS+4,"%d",ioport);
+				ioport++;
+				if(ioport > 39)
+					ioport = 0;
+*/
 				break;
-				
+
 			default:
 				break;
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,4,1,errmsg);
+			rc = get_sock((UCHAR*)buffer,8,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
@@ -338,11 +330,12 @@ int tcp_win2(int cmd)
 				seconds = buffer[1];
 				minutes = buffer[2];
 				hours = buffer[3];
-/*
+
 				rt_data[0] = buffer[4];
 				rt_data[1] = buffer[5];
 				rt_data[2] = buffer[6];
 				rt_data[3] = buffer[7];
+/*
 				rt_data[4] = buffer[8];
 				rt_data[5] = buffer[9];
 				rt_data[6] = buffer[10];
@@ -351,7 +344,7 @@ int tcp_win2(int cmd)
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
 				if(cmd2 != TOTAL_UP_TIME)
 				{
-					y = inc_y(twin,y++);
+					y = inc_y(twin,y);
 					if(y == 1)
 					{
 						if(x == 1)
@@ -365,13 +358,12 @@ int tcp_win2(int cmd)
 				}else
 				{
 					mvwprintw(twin,1,62,"%02d:%02d:%02d", hours,minutes,seconds);
-/*
-					mvwprintw(twin,2,62,"%02x:%02x", rt_data[0],rt_data[1]);
-					mvwprintw(twin,3,62,"%02x:%02x", rt_data[2],rt_data[3]);
-					mvwprintw(twin,4,62,"%02x:%02x", rt_data[4],rt_data[5]);
-					mvwprintw(twin,5,62,"%02x:%02x", rt_data[6],rt_data[7]);
+					mvwprintw(twin,2,62,"%02d", rt_data[0]);
+					mvwprintw(twin,3,62,"%02d", rt_data[1]);
+					mvwprintw(twin,4,62,"%02d", rt_data[2]);
+					mvwprintw(twin,5,62,"%02d", rt_data[3]);
 //					mvwprintw(twin,6,62,"%02d",rc);
-*/
+
 					wrefresh(twin);
 				}
 					

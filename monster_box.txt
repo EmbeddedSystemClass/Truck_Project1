@@ -359,12 +359,13 @@ x		x		SS		MOSI	MISO
 4)	64 tx_mph     (output)
 5)	62 pwm_spk1     (output)
 6)	61 pwm_spk2     (output)
-7)	was 60 but 5v output not working - 
+7)  gnd
+	was 60 but 5v output not working - 
 	probably bad conv chip
 	so use 3v3 directly to gate of MOSFET
-	and call it pwm_lcd signal (don't use pin 7)
+	and call it pwm_lcd signal so pin 7 is now gnd
 8)	50 unassigned
-9)	35 reserved for SS(1) 
+9)	35 reserved for SS(1) (extra slave select)
 10)	33 rev limiter       (output)
 11)	82 fuel pump shutoff (output)
 12)	76 unassigned
@@ -381,5 +382,7 @@ looking at 20-pin cable coming from bottom of monster box
 10		<->		1
 20		<->		11
 
-
+cable coming from ADC conn. looking at pin side with cable to bottom:
+AVDD	14	12	10	8	6	4	2	0	(0 & 1 are used by knobs on front of panel)
+AVSS	13	15	11	9	7	5	3	1
 

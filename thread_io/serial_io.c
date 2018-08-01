@@ -132,6 +132,8 @@ int init_serial(void)
 	}
 
 	set_interface_attribs (global_handle, BAUDRATE, 0);
+// if set to blocking, the serial_task won't exit properly
+// and then the sched program won't quit	
 //	set_blocking (global_handle, 1);	 // blocking
 	set_blocking (global_handle, 0);	// non-blocking
 /*
