@@ -393,9 +393,9 @@ UCHAR InPortByteF(void)
 /**********************************************************************************************************/
 void close_mem(void)
 {
-	printf("closing mapped mem\r\n");
+//	printf("closing mapped mem\r\n");
 	if(munmap((void *)card_ports,pagesize) == -1)
 		perror("error un-mapping file\n");
 	close(fd);
-	printf("done closing mapped mem\r\n");
+//	printf("done closing mapped mem\r\n");
 }

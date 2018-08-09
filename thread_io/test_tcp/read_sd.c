@@ -11,7 +11,7 @@
 #include <string.h>
 //#define DEVICE "/dev/ide/host0/target0/lun0/disc"
 //#define DEVICE "/mnt/cf/sched.log"
-#define DEVICE "temp_rt.dat"
+#define DEVICE "schedlog.dat"
 
 int main(void)
 {

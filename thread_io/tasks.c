@@ -70,10 +70,11 @@ extern char iFileName[20];
 extern UCHAR reboot_on_exit;
 UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 
-UCHAR rt_data[16];
-UCHAR rt_file_data[200];
-int rt_fd_ptr;
-int odometer;
+static UCHAR rt_data[16];
+static UCHAR rt_file_data[1000];
+static int rt_fd_ptr;
+static int odometer;
+static int tcp_connected_time;
 
 extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
@@ -118,8 +119,10 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[46] =
+CMD_STRUCT cmd_array[47] =
 {
+	{		TEST_IOPORT,"TEST_IOPORT\0" },
+	{		TEST_IOPORT2,"TEST_IOPORT2\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_ACC,"ON_ACC\0" },
@@ -128,6 +131,8 @@ CMD_STRUCT cmd_array[46] =
 	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
 	{   	ON_FAN,"ON_FAN\0" },
 	{   	OFF_FAN,"OFF_FAN\0" },
+	{   	ON_LIGHTS,"ON_LIGHTS\0" },
+	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
 	{   	START_SEQ,"START_SEQ\0" },
 	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SEND_IDATA,"SEND_IDATA\0" },
@@ -160,11 +165,8 @@ CMD_STRUCT cmd_array[46] =
 	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
 	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
 	{		TEST_WRITE_FILE,"TEST_WRITE_FILE\0" },
-	{		TEST_IOPORT,"TEST_IOPORT\0" },
-	{		TEST_IOPORT2,"TEST_IOPORT2\0" },
 	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
-	{   	DONE_PROGRAM,"DONE_PROGRAM\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -365,12 +367,13 @@ UCHAR get_host_cmd_task(int test)
 
 	myprintf1("start....\0");
 
-	myprintf1("sched v1.13\0");
-	printf("sched v1.13\r\n");
-//	printf("sched v1.12\n");
+	myprintf1("sched v1.15\0");
+	printf("sched v1.15\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
 	odometer = 0;
+	tcp_connected_time = 0;
+	mask = 1;
 
 	while(TRUE)
 	{
@@ -379,12 +382,12 @@ UCHAR get_host_cmd_task(int test)
 //		if(1)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
-					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != TEST_IOPORT && cmd != TEST_IOPORT2)
+			tcp_connected_time = 0;
+//			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
+//					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != TEST_IOPORT && cmd != TEST_IOPORT2)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
-//			if(cmd == EXIT_PROGRAM)
-//				printf("exit program\r\n");
+//			printf("cmd:%s\r\n",cmd_array[cmd].cmd_str);
 
 			if(rc > 0)
 			{
@@ -392,93 +395,28 @@ UCHAR get_host_cmd_task(int test)
  				switch(cmd)
 				{
 					case ENABLE_START:
-						change_output(STARTER, 1);
-						starter_on = 1;
-						engine_running = 1;
-						break;
 					case STARTER_OFF:
-						change_output(STARTER, 0);
-						starter_on = 0;
-						break;
 					case ON_ACC:
-						change_output(ACCON, 1);
-						break;
 					case OFF_ACC:
-						change_output(ACCON, 0);
-						break;
 					case ON_FUEL_PUMP:
-						change_output(FUELPUMP, 1);
-						break;
 					case OFF_FUEL_PUMP:
-						change_output(FUELPUMP, 0);
-						break;
 					case ON_FAN:
-						change_output(COOLINGFAN, 1);
-						fan_delay = 0;
-						break;
 					case OFF_FAN:
-						change_output(COOLINGFAN, 0);
-						fan_delay = 0;
-						break;
+					case ON_LIGHTS:
+					case OFF_LIGHTS:
 					case START_SEQ:
-						break;
 					case SHUTDOWN:
-						break;
-
-					case TEST_WRITE_FILE:
-/*
-						for(i = 0;i < 5;i++)
-						{
-							rtp->onoff = i;
-							rtp->port = i+2;
-							rtp->hours = trunning_hours;
-							rtp->minutes = trunning_minutes;
-							rtp->seconds = trunning_seconds;
-							rt_llist_insert_data(&roll,rtp);
-							uSleep(0,100000);
-						}
-*/
-						strcpy(tempx,"temp_rt.dat\0");
-//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
-						fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
-							S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-						if(fp < 0)
-						{
-							printf("can't create temp_rt.dat\n");
-						}else
-						{
-							printf("writing to temp_rt.dat\r\n");
-							rc = write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
-							rt_fd_ptr = 0;
-//							rt_llist_printfile(fp, &roll);
-							close(fp);
-//							printf("rc: %d\r\n",rc);
-//							rt_llist_removeall_data(&roll);
-						}
+					basic_controls(cmd);
 						break;
 
 					case TEST_IOPORT:
 						recv_tcp((UCHAR *)&test_io_num,1,1);
-						if(test_io_num > 39)
-							test_io_num = 0;
-//						myprintf2("io port: ",test_io_num);
-//						printf("io port: %d\r\n",test_io_num);
-
 						recv_tcp((UCHAR *)&mask,1,1);
-
-						rc = ollist_find_data((int)test_io_num,otpp,&oll);
-						printf("%s %d \r\n",otp->label,otp->port);
-						otp->onoff = (UCHAR)mask;
-						ollist_insert_data(otp->port,&oll,otp);
-
 						change_output((int)test_io_num, (int)mask);
-/*
-						otp->onoff = 0;
-						ollist_insert_data(otp->port,&oll,otp);
-						change_output(test_io_num, 0);
-						myprintf2("io port: ",test_io_num);
-*/
-//						printf("io port up: %d\r\n",test_io_num);
+						myprintf2("io port: ",(int)mask);
+						printf("io port: %d %d\r\n",test_io_num,mask);
+						if(mask == 1)
+							mask = 0;
 						break;
 
 					case TEST_IOPORT2:
@@ -488,7 +426,7 @@ UCHAR get_host_cmd_task(int test)
 						{
 
 							rc = ollist_find_data((int)test_io_num,otpp,&oll);
-							printf("%s %d\r\n",otp->label,otp->port);
+//							printf("%s %d\r\n",otp->label,otp->port);
 							otp->onoff = (UCHAR)mask;
 							ollist_insert_data(otp->port,&oll,otp);
 
@@ -665,7 +603,7 @@ UCHAR get_host_cmd_task(int test)
 
 							memset(tempx,0,sizeof(tempx));
 							strcpy(tempx,dir->d_name);
-
+							printf("%s\r\n",tempx);
 							chp = tempx;
 							j = 0;
 
@@ -734,6 +672,26 @@ UCHAR get_host_cmd_task(int test)
 						close_tcp();
 						break;
 
+					case TEST_WRITE_FILE:
+						strcpy(tempx,"sched.log\0");
+//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
+						fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
+							S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+						if(fp < 0)
+						{
+							printf("can't create sched.log\n");
+						}else
+						{
+//							printf("writing to sched.log\r\n");
+							rc = write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
+							rt_fd_ptr = 0;
+//							rt_llist_printfile(fp, &roll);
+							close(fp);
+//							printf("rc: %d\r\n",rc);
+//							rt_llist_removeall_data(&roll);
+						}
+						break;
+
 /*
 					case NEW_PASSWORD:
 						recv_tcp((UCHAR*)&fsize,8,1);
@@ -790,52 +748,52 @@ exit_program:
 						}
 						else
 						{
-							printf("exit program\r\n");
+//							printf("exit program\r\n");
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
-							printf("exit code: %d\r\n",reboot_on_exit);
+//							printf("exit code: %d\r\n",reboot_on_exit);
 							if(reboot_on_exit == 1)
 							{
 								myprintf1("exit to shell\0");
-								printf("exit to shell\r\n");
+//								printf("exit to shell\r\n");
 							}	
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("rebooting...\0");
-								printf("rebooting...\r\n");
+//								printf("rebooting...\r\n");
 							}
 							else if(reboot_on_exit == 3)
 							{
 								myprintf1("shutting down...\0");
-								printf("shutting down...\r\n");
+//								printf("shutting down...\r\n");
 							}
 						}
 
 						if(rt_fd_ptr > 0)
 						{
-							strcpy(tempx,"temp_rt.dat\0");
+							strcpy(tempx,"sched.log\0");
 	//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
 							fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
 								S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 							if(fp < 0)
 							{
-								printf("can't create temp_rt.dat\n");
+								printf("can't create sched.log\n");
 							}else
 							{
-								printf("writing to temp_rt.dat\r\n");
+//								printf("writing to sched.log\r\n");
 								rc = write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
 								close(fp);
 							}
 						}
-						strcpy(tempx,"odometer.dat\0");
+						strcpy(tempx,"odometer.txt\0");
 						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
 					//	fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
 							S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 						if(fp < 0)
 						{
-							printf("can't create odometer.dat\n");
+							printf("can't create odometer.txt\n");
 						}else
 						{
-							printf("writing to odometer.dat\r\n");
+//							printf("writing to odometer.txt\r\n");
 							sprintf(tempx,"%d\r\n\0",odometer);
 							rc = write(fp,(const void *)tempx,strlen(tempx));
 							close(fp);
@@ -892,6 +850,169 @@ exit_program:
 		}
 	}
 	return test + 1;
+}
+/*********************************************************************/
+void basic_controls(UCHAR cmd)
+{
+	int i;
+	UCHAR onoff;
+	O_DATA *otp;
+	O_DATA **otpp = &otp;
+	int rc;
+	int index;
+
+	switch(cmd)
+	{
+		case ENABLE_START:
+			index = STARTER;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			otp->onoff = 1;
+			ollist_insert_data(otp->port,&oll,otp);
+
+			change_output(STARTER, 1);
+			starter_on = 1;
+			engine_running = 1;
+			send_live_code(cmd);
+			break;
+
+		case STARTER_OFF:
+			index = STARTER;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
+
+			change_output(STARTER, 0);
+			starter_on = 0;
+			send_live_code(cmd);
+			break;
+
+		case ON_ACC:
+			index = ACCON;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			otp->onoff =1;
+			ollist_insert_data(otp->port,&oll,otp);
+			change_output(ACCON, 1);
+			send_live_code(cmd);
+			break;
+
+		case OFF_ACC:
+			index = ACCON;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 0;
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			ollist_insert_data(otp->port,&oll,otp);
+			change_output(ACCON, 0);
+			send_live_code(cmd);
+			break;
+
+		case ON_FUEL_PUMP:
+			index = FUELPUMP;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 1;
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			ollist_insert_data(otp->port,&oll,otp);
+			change_output(FUELPUMP, 1);
+			send_live_code(cmd);
+			break;
+
+		case OFF_FUEL_PUMP:
+			index = FUELPUMP;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 0;
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			ollist_insert_data(otp->port,&oll,otp);
+			change_output(FUELPUMP, 0);
+			send_live_code(cmd);
+			break;
+
+		case ON_FAN:
+			index = COOLINGFAN;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 1;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(COOLINGFAN, 1);
+			send_live_code(cmd);
+			break;
+
+		case OFF_FAN:
+			index = COOLINGFAN;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(COOLINGFAN, 0);
+			send_live_code(cmd);
+			break;
+
+		case ON_LIGHTS:
+			index = HEADLAMP;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 1;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(HEADLAMP, 1);
+
+			index = RUNNINGLIGHTS;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 1;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(RUNNINGLIGHTS, 1);
+			break;
+
+		case OFF_LIGHTS:
+			index = HEADLAMP;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(HEADLAMP, 0);
+
+			index = RUNNINGLIGHTS;
+			rc = ollist_find_data(index,otpp,&oll);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_output(RUNNINGLIGHTS, 0);
+			break;
+
+		case START_SEQ:
+			engine_running = 1;
+			change_output(STARTER, 1);
+			starter_on = 1;
+			send_live_code(ENABLE_START);
+
+			usleep(100000);
+			change_output(ACCON, 1);
+			send_live_code(ON_ACC);
+
+			usleep(100000);
+			change_output(FUELPUMP, 1);
+			send_live_code(ON_FUEL_PUMP);
+			fan_delay = 1;
+			break;
+
+		case SHUTDOWN:
+//						myprintf1("shutdown\0");
+			for(i = STARTER;i < PRELUBE+1;i++)
+			{
+				change_output(i, 0);
+				uSleep(0,TIME_DELAY/10000);
+			}
+			fan_delay = 0;
+			engine_running = 0;
+			starter_on = 0;
+			send_live_code(STARTER_OFF);
+			send_live_code(OFF_FUEL_PUMP);
+			send_live_code(OFF_FAN);
+			send_live_code(OFF_ACC);
+			running_seconds = running_minutes = running_hours = 0;
+			break;
+	}
 }
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -996,7 +1117,7 @@ type:
 					illist_find_data(index,itpp,&ill);
 
 					rc = ollist_find_data(itp->affected_output,otpp,&oll);
-					printf("%d %d %s\r\n",rc,otp->port,otp->label);
+//					printf("%d %d %s\r\n",rc,otp->port,otp->label);
 
 					otp->onoff = onoff;
 					ollist_insert_data(otp->port,&oll,otp);
@@ -1025,7 +1146,7 @@ type:
 			uSleep(0,TIME_DELAY/200);
 			if(shutdown_all)
 			{
-				printf("done mon input tasks\r\n");
+//				printf("done mon input tasks\r\n");
 //				myprintf1("done mon input");
 				return 0;
 			}
@@ -1080,6 +1201,8 @@ type:
 		int i;
 		uSleep(0,TIME_DELAY);
 		UCHAR buffer[50];
+		char tempx[20];
+		int fp;
 
 		while(TRUE)
 		{
@@ -1139,6 +1262,12 @@ type:
 //				red_led(0);
 
 			odometer++;
+/*
+			if(tcp_connected_time++ > 30)
+			{
+				close_tcp();
+			}
+*/
 			if(++trunning_seconds > 59)
 			{
 				trunning_seconds = 0;
@@ -1175,12 +1304,34 @@ type:
 
 //				pthread_mutex_unlock(&serial_read_lock);
 
-				send_tcp((UCHAR *)buffer,10);
+				send_tcp((UCHAR *)&buffer[0],10);
+			}
+
+			if(rt_fd_ptr > 950)
+			{
+				strcpy(tempx,"sched.log\0");
+//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
+				fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
+					S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+				if(fp < 0)
+				{
+					printf("can't create sched.log\n");
+				}else
+				{
+//							printf("writing to sched.log\r\n");
+					write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
+					rt_fd_ptr = 0;
+//							rt_llist_printfile(fp, &roll);
+					close(fp);
+//							printf("rc: %d\r\n",rc);
+//							rt_llist_removeall_data(&roll);
+				}
+
 			}
 			
 			if(shutdown_all)
 			{
-				printf("done timer_task\r\n");
+//				printf("done timer_task\r\n");
 				return 0;
 			}
 		}
@@ -1240,7 +1391,7 @@ UCHAR read_button_inputs(int test)
 		}
 		if(shutdown_all)
 		{
-			printf("done read_buttons task\r\n");
+//			printf("done read_buttons task\r\n");
 			return 0;
 		}
 	}
@@ -1335,7 +1486,7 @@ basic_controls does any of these:
 */
 		if(shutdown_all)
 		{
-			printf("shutting down serial task\r\n");
+//			printf("shutting down serial task\r\n");
 			close_serial();
 //			myprintf1("done serial task");
 			return 0;
@@ -1393,7 +1544,7 @@ UCHAR serial_recv_task2(int test)
 
 		if(shutdown_all)
 		{
-			printf("shutting down serial task2\r\n");
+//			printf("shutting down serial task2\r\n");
 			close_serial2();
 //			printf("serial port closed\n");
 			return 0;
@@ -1492,7 +1643,7 @@ UCHAR tcp_monitor_task(int test)
 //				send_tcp((UCHAR *)&cmd,1);
 
 				close_tcp();
-				printf("done tcp_mon\r\n");
+//				printf("done tcp_mon\r\n");
 				return 0;
 			}
 		}
@@ -1508,6 +1659,8 @@ UCHAR tcp_monitor_task(int test)
 			if(global_socket > 0)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
+			tcp_connected_time = 0;
+
 /*
 		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -2;
@@ -1700,91 +1853,5 @@ void *work_routine(void *arg)
 //	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
 //	myprintf2("thread done:\0",*my_id);
 	return(NULL);
-}
-/*********************************************************************/
-void basic_controls(UCHAR cmd)
-{
-	int i;
-
-	switch(cmd)
-	{
-		case ENABLE_START:
-			change_output(STARTER, 1);
-			starter_on = 1;
-			engine_running = 1;
-			send_live_code(cmd);
-			break;
-
-		case STARTER_OFF:
-			change_output(STARTER, 0);
-			starter_on = 0;
-			send_live_code(cmd);
-			break;
-
-		case ON_ACC:
-			change_output(ACCON, 1);
-			send_live_code(cmd);
-			break;
-
-		case OFF_ACC:
-			change_output(ACCON, 0);
-			send_live_code(cmd);
-			break;
-
-		case ON_FUEL_PUMP:
-			change_output(FUELPUMP, 1);
-			send_live_code(cmd);
-			break;
-
-		case OFF_FUEL_PUMP:
-			change_output(FUELPUMP, 0);
-			send_live_code(cmd);
-			break;
-
-		case ON_FAN:
-			change_output(COOLINGFAN, 1);
-			send_live_code(cmd);
-			fan_delay = 0;
-			break;
-
-		case OFF_FAN:
-			change_output(COOLINGFAN, 0);
-			send_live_code(cmd);
-			fan_delay = 0;
-			break;
-
-		case START_SEQ:
-			engine_running = 1;
-			change_output(STARTER, 1);
-			starter_on = 1;
-			send_live_code(ENABLE_START);
-
-			usleep(50000);
-			change_output(ACCON, 1);
-			send_live_code(ON_ACC);
-
-			usleep(50000);
-			change_output(FUELPUMP, 1);
-			send_live_code(ON_FUEL_PUMP);
-			fan_delay = 1;
-			break;
-
-		case SHUTDOWN:
-//						myprintf1("shutdown\0");
-			for(i = STARTER;i < PRELUBE+1;i++)
-			{
-				change_output(i, 0);
-				uSleep(0,TIME_DELAY/10000);
-			}
-			fan_delay = 0;
-			engine_running = 0;
-			starter_on = 0;
-			send_live_code(STARTER_OFF);
-			send_live_code(OFF_FUEL_PUMP);
-			send_live_code(OFF_FAN);
-			send_live_code(OFF_ACC);
-			running_seconds = running_minutes = running_hours = 0;
-			break;
-	}
 }
 

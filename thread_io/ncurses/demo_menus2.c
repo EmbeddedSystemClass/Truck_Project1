@@ -416,8 +416,8 @@ call_Host(int code)
 					strcpy(dat_names[num],dir->d_name);
 					dat_len[num] = strlen(dat_names[num]);
 
-//					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
-//					refresh();
+					mvprintw(LINES-4-num,2,"%d %s  ",num,dat_names[num]);
+					refresh();
 
 					getFileCreationTime(dat_names[num],tdate_stamp[num]);
 					j = GetFileFormat(dat_names[num]);
@@ -473,8 +473,8 @@ call_Host(int code)
 			if(index > 0)
 			{
 				format = GetFileFormat(filename);
-//				mvprintw(LINES-6,2,"%s  %d   %d",filename,index,format);
-//				refresh();
+				mvprintw(LINES-6,2,"%s  %d   %d",filename,index,format);
+				refresh();
 
 				if(format == 0)
 				{
@@ -1104,6 +1104,7 @@ call_Tool(int code)
 			else
 				show_status2("Not Connected",hostid,i,j,tcp_connected,0);
 			
+#if 0
 			if(j < 0)
 			{
 //				close_sock();
@@ -1113,6 +1114,7 @@ call_Tool(int code)
 			}
 			cmd = GET_TIME;
 			put_sock(&cmd,1,1,errmsg);
+#endif
 			break;
 
 		// DISCONNECT
@@ -1167,7 +1169,7 @@ call_Tool(int code)
 		        cmd = ENABLE_START;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("starter seq on  ","",code,0,0,0);
+			show_status2("starter seq on  ","",code,cmd,0,0);
 			break;
 
 		case 4:
@@ -1176,7 +1178,7 @@ call_Tool(int code)
 		        cmd = ON_ACC;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("ACC ON","",code,0,0,1);
+			show_status2("ACC ON","",code,cmd,0,1);
 			break;
 
 		case 5:
@@ -1185,7 +1187,7 @@ call_Tool(int code)
 		        cmd = OFF_ACC;
 		        put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("ACC OFF","",code,0,0,1);
+			show_status2("ACC OFF","",code,cmd,0,1);
 			break;
 
 		case 6:
@@ -1194,7 +1196,7 @@ call_Tool(int code)
 				cmd =  ON_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FUEL PUMP ON","",code,0,0,2);
+			show_status2("FUEL PUMP ON","",code,cmd,0,2);
 			break;
 
 		case 7:
@@ -1203,7 +1205,7 @@ call_Tool(int code)
 				cmd =  OFF_FUEL_PUMP;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FUEL PUMP OFF","",code,0,0,2);
+			show_status2("FUEL PUMP OFF","",code,cmd,0,2);
 			break;
 
 		case 8:
@@ -1212,7 +1214,7 @@ call_Tool(int code)
 				cmd =  ON_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FAN ON","",code,0,0,3);
+			show_status2("FAN ON","",code,cmd,0,3);
 			break;
 
 		case 9:
@@ -1221,7 +1223,7 @@ call_Tool(int code)
 				cmd = OFF_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("FAN OFF","",code,0,0,3);
+			show_status2("FAN OFF","",code,cmd,0,3);
 			break;
 
 		case 10:
@@ -1685,7 +1687,6 @@ perform_menus(void)
 		}
 */
 		ch = menu_getc(mpBanner);
-
 /*
  * Provide for moving the menu around in the screen using shifted
  * cursor keys.
@@ -1769,7 +1770,7 @@ perform_menus(void)
 			ITEM *item = current_item(last_menu);
 			MENU_DATA *td = (MENU_DATA *) item_userptr(item);
 			td->func((int) td->mask);
-//            show_status2("func","",td->mask,0,0,3);
+//            show_status2("func","",td->mask,0,0,4);
 		}
 		if (code == E_REQUEST_DENIED)
 			beep();
@@ -1980,6 +1981,7 @@ main(int argc, char *argv[])
 	noraw();
 	cbreak();
 	noecho();
+//	nodelay(stdscr,TRUE);
 
 	if (has_colors())
 	{

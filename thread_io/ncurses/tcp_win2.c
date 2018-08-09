@@ -27,7 +27,7 @@ static UCHAR rt_data[20];
 static int inc_y(WINDOW *win, int y);
 static void clr_scr(WINDOW *win);
 static void disp_msg(WINDOW *win,char *str);
-static int acc_on, fp_on, fan_on, starter_on;
+static int acc_on, fp_on, fan_on, starter_on, lights_on;
 
 extern int tcp_connected;
 
@@ -130,7 +130,7 @@ int tcp_win2(int cmd)
 	int engine_time;
 	UCHAR cmd2;
 	UCHAR ioport = 0;
-	UCHAR onoff;
+	UCHAR onoff = 0;;
 	int rpm;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
@@ -242,21 +242,17 @@ int tcp_win2(int cmd)
 				break;
 
 			case KEY_F(7):		// all off
+#if 0
+				cmd2 = TEST_IOPORT;
+				onoff = 0;
+				mvwprintw(twin,8,30,"port: %02d onoff: %d",ioport,onoff);
+				put_sock(&cmd2,1,1,errmsg);
+				put_sock(&ioport,1,1,errmsg);				
+				put_sock(&onoff,1,1,errmsg);
+				break;
+#endif
 				cmd2 = SHUTDOWN;
 				put_sock(&cmd2,1,1,errmsg);
-/*
-				cmd2 = OFF_FAN;
-		        put_sock(&cmd2,1,1,errmsg);
-		        usleep(500000);
-				cmd2 = OFF_FUEL_PUMP;
-		        put_sock(&cmd2,1,1,errmsg);
-		        usleep(500000);
-				cmd2 = OFF_ACC;
-		        put_sock(&cmd2,1,1,errmsg);
-		        usleep(500000);
-				cmd2 = STARTER_OFF;
-		        put_sock(&cmd2,1,1,errmsg);
-*/
 		        fan_on = 0;
 		        fp_on = 0;
 		        acc_on = 0;
@@ -268,17 +264,15 @@ int tcp_win2(int cmd)
 		        break;
 
 			case KEY_F(8):
-				cmd2 = TEST_IOPORT2;
-		        put_sock(&cmd2,1,1,errmsg);
-				cmd2 = 1;
-		        put_sock(&cmd2,1,1,errmsg);
-
-//				clr_scr(twin);
-//				x = 1;
-//				y = 1;
+				cmd2 = TEST_IOPORT;
+				onoff = 1;
+				mvwprintw(twin,8,30,"port: %02d onoff: %d",ioport,onoff);
+				put_sock(&cmd2,1,1,errmsg);
+				put_sock(&ioport,1,1,errmsg);				
+				put_sock(&onoff,1,1,errmsg);
 				break;
 
-#if 0
+//#if 0
 			case KEY_F(9):	// start sequence cmd which enables the starter, turns on acc & fp
 							// and starts a timer which after 1 minute, turns the fan on
 				cmd2 = START_SEQ;
@@ -291,24 +285,38 @@ int tcp_win2(int cmd)
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
-#endif
+//#endif
+#if 0
 			case KEY_F(9):
+
+				if(++ioport > 39)
+				{
+					ioport = 0;
+				}
+				mvwprintw(twin,8,30,"%d port: %02d",ioport);
+	/*
 				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);
 				cmd2 = 0;
 		        put_sock(&cmd2,1,1,errmsg);
+*/
 		        break;
-
+#endif
 			case KEY_F(10):
+				cmd2 = TEST_IOPORT2;
+		        put_sock(&cmd2,1,1,errmsg);
+				cmd2 = 0;
+		        put_sock(&cmd2,1,1,errmsg);
+#if 0
 				ioport = 0;
 				onoff = 0;
 				cmd2 = TEST_IOPORT;
-				for(i = 0;i < 200;i++)
+				for(i = 0;i < 160;i++)
 				{
 				    put_sock(&cmd2,1,1,errmsg);
 				    put_sock(&ioport,1,1,errmsg);
 				    put_sock(&onoff,1,1,errmsg);
-				    usleep(30000);
+				    usleep(50000);
 
 				    if(++ioport > 39)
 				    {
@@ -319,13 +327,19 @@ int tcp_win2(int cmd)
 						else onoff = 1;
 				    }
 				}
-/*
-		        put_sock(&ioport,1,1,errmsg);
-				mvwprintw(twin,status_line,FAN_STATUS+4,"%d",ioport);
-				ioport++;
-				if(ioport > 39)
-					ioport = 0;
-*/
+#endif
+			case KEY_F(12):		// can't use F11 - that toggle to full screen & back (F1 is help)
+				if(lights_on == 1)
+				{
+			        cmd2 = OFF_LIGHTS;
+			        lights_on = 0;
+				}
+				else
+				{
+					cmd2 = ON_LIGHTS;
+					lights_on = 1;
+				}
+		        put_sock(&cmd2,1,1,errmsg);
 				break;
 
 			default:

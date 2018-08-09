@@ -214,7 +214,7 @@ int main(int argc, char **argv)
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
 
-		printf("closing task :%d %s\r\n",i,_threads[i].label);
+//		printf("closing task :%d %s\r\n",i,_threads[i].label);
 	}
 	close_mem();
 
@@ -228,17 +228,17 @@ int main(int argc, char **argv)
 //	llist_show(&ll);
 	if(reboot_on_exit == 1)
 	{
-		printf("exit to shell\r\n");
+//		printf("exit to shell\r\n");
 		return 0;
 	}
 	else if(reboot_on_exit == 2)
 	{
-		printf("reboot\r\n");
+//		printf("reboot\r\n");
 		return 1;
 	}
 	else if(reboot_on_exit == 3)
 	{
-		printf("shutdown\r\n");
+//		printf("shutdown\r\n");
 		return 2;
 	}
 }

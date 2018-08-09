@@ -91,7 +91,12 @@ int wGetchar(WINDOW *win)
 	}
 #else
 	c = wgetch(win);
+//	if(c == ERR)
+	
+
 #endif
+//	mvwprintw(win,40,10,"key: %c", c);
+//	wrefresh(win);
 	return c;
 }
 

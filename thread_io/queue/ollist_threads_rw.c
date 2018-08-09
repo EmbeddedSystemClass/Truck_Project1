@@ -60,7 +60,7 @@ int ollist_insert_data (int index, ollist_t *llistp,O_DATA *datap2)
 		{
 			free(cur->datap);
 			cur->datap = datap;
-//			printf("\n\n%s\n\n\n",cur->datap->label);
+//			printf("insert: %d %s\r\n",index, cur->datap->label);
 			found=TRUE;
 			break;
 		}
@@ -150,7 +150,7 @@ int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
 		{
 			*datapp = cur->datap;
 			status = 0;
-//			printf("%d  %d  %d  %d\n", cur->datap->in_port,cur->datap->in_bit,cur->datap->out_port,cur->datap->out_bit);
+//			printf("find: %d %d %d %s\r\n", index, cur->datap->onoff, cur->datap->port, cur->datap->label);
 			break;
 		}
 		else if (cur->index > index)

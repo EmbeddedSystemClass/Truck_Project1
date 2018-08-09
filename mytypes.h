@@ -23,7 +23,9 @@ typedef unsigned long ULONG;
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
-	ENABLE_START = 1,
+	TEST_IOPORT,
+	TEST_IOPORT2,
+	ENABLE_START,
 	STARTER_OFF,
 	ON_ACC,
 	OFF_ACC,
@@ -31,6 +33,8 @@ enum cmd_types
 	OFF_FUEL_PUMP,
 	ON_FAN,
 	OFF_FAN,
+	ON_LIGHTS,
+	OFF_LIGHTS,
 	START_SEQ,
 	SHUTDOWN,
 	SEND_IDATA,
@@ -63,11 +67,8 @@ enum cmd_types
 	LIVE_WINDOW_ON,
 	LIVE_WINDOW_OFF,
 	TEST_WRITE_FILE,
-	TEST_IOPORT,
-	TEST_IOPORT2,
 	TOTAL_UP_TIME,
 	UPLOAD_NEW,
-	DONE_PROGRAM,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -102,8 +103,8 @@ enum output_types
 {
 	STARTER,
 	ACCON,
-	COOLINGFAN,
 	FUELPUMP,
+	COOLINGFAN,
 	PRELUBE,
 	HEADLAMP,
 	BRIGHTS,
