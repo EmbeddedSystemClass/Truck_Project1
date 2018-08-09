@@ -62,10 +62,12 @@ enum cmd_types
 	TCP_WINDOW_OFF,
 	LIVE_WINDOW_ON,
 	LIVE_WINDOW_OFF,
+	TEST_WRITE_FILE,
 	TEST_IOPORT,
 	TEST_IOPORT2,
 	TOTAL_UP_TIME,
 	UPLOAD_NEW,
+	DONE_PROGRAM,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -134,6 +136,7 @@ enum output_types
 #define READ_EEPROM			8
 #define PUT_STRING			9
 #define PUT_STR				9
-#define SEND_RT_VALUES			10
+#define SEND_BYTE_RT_VALUES		10
+#define SEND_INT_RT_VALUES		11
 
 #endif

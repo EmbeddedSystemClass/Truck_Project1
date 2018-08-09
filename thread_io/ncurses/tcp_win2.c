@@ -118,7 +118,7 @@ int tcp_win2(int cmd)
 	int startx, starty;
 	int ch;
 	int rc;
-	int x,y,i;
+	int x,y,i,j;
 	UCHAR ret_char = 0x21;
 	char buffer[20];
 	char errmsg[50];
@@ -130,6 +130,8 @@ int tcp_win2(int cmd)
 	int engine_time;
 	UCHAR cmd2;
 	UCHAR ioport = 0;
+	UCHAR onoff;
+	int rpm;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 	nodelay(stdscr,TRUE);
@@ -266,9 +268,14 @@ int tcp_win2(int cmd)
 		        break;
 
 			case KEY_F(8):
-				clr_scr(twin);
-				x = 1;
-				y = 1;
+				cmd2 = TEST_IOPORT2;
+		        put_sock(&cmd2,1,1,errmsg);
+				cmd2 = 1;
+		        put_sock(&cmd2,1,1,errmsg);
+
+//				clr_scr(twin);
+//				x = 1;
+//				y = 1;
 				break;
 
 #if 0
@@ -288,11 +295,30 @@ int tcp_win2(int cmd)
 			case KEY_F(9):
 				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);
+				cmd2 = 0;
+		        put_sock(&cmd2,1,1,errmsg);
 		        break;
 
 			case KEY_F(10):
+				ioport = 0;
+				onoff = 0;
 				cmd2 = TEST_IOPORT;
-		        put_sock(&cmd2,1,1,errmsg);
+				for(i = 0;i < 200;i++)
+				{
+				    put_sock(&cmd2,1,1,errmsg);
+				    put_sock(&ioport,1,1,errmsg);
+				    put_sock(&onoff,1,1,errmsg);
+				    usleep(30000);
+
+				    if(++ioport > 39)
+				    {
+				    	ioport = 0;
+
+						if(onoff == 1)
+							onoff = 0;
+						else onoff = 1;
+				    }
+				}
 /*
 		        put_sock(&ioport,1,1,errmsg);
 				mvwprintw(twin,status_line,FAN_STATUS+4,"%d",ioport);
@@ -307,7 +333,7 @@ int tcp_win2(int cmd)
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,8,1,errmsg);
+			rc = get_sock((UCHAR*)buffer,10,1,errmsg);
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
@@ -336,10 +362,12 @@ int tcp_win2(int cmd)
 				rt_data[2] = buffer[6];
 				rt_data[3] = buffer[7];
 /*
-				rt_data[4] = buffer[8];
-				rt_data[5] = buffer[9];
-				rt_data[6] = buffer[10];
-				rt_data[7] = buffer[11];
+				rpm = (int)buffer[8];
+				mvwprintw(twin,8,40,"%2x          ",buffer[8]);
+				rpm <<= 8;
+				rpm |= (int)buffer[9];
+				
+				mvwprintw(twin,9,40,"%2x          ",buffer[9]);
 */
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
 				if(cmd2 != TOTAL_UP_TIME)
@@ -362,8 +390,10 @@ int tcp_win2(int cmd)
 					mvwprintw(twin,3,62,"%02d", rt_data[1]);
 					mvwprintw(twin,4,62,"%02d", rt_data[2]);
 					mvwprintw(twin,5,62,"%02d", rt_data[3]);
-//					mvwprintw(twin,6,62,"%02d",rc);
-
+/*
+					mvwprintw(twin,6,40,"rpm: %4d   ",rpm);
+					mvwprintw(twin,7,40,"rpm: %4x   ",rpm);
+*/
 					wrefresh(twin);
 				}
 					

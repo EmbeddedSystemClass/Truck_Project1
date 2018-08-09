@@ -102,9 +102,9 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4
+#all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4 write_sd
 #all :  test_inports test_ioports2 test_ioports4
-#all : test_dio1
+all : write_sd read_sd
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
@@ -160,10 +160,20 @@ test_ioports4.o: test_ioports4.c
 test_ioports4: test_ioports4.o
 	${CC} test_ioports4.o -o test_ioports4
 
+write_sd.o: write_sd.c
+	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c write_sd.c
+
+write_sd: write_sd.o
+	${CC} write_sd.o -o write_sd
+
+read_sd.o: read_sd.c
+	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c read_sd.c
+
+read_sd: read_sd.o
+	${CC} read_sd.o -o read_sd
+
 clean :
 	rm -f *.o *~ *# core client server client2 server2 test_write \
-	test_read test_inports test_ioports2 test_ioports4
+	test_read test_inports test_ioports2 test_ioports4 write_sd
 #	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core server2
-	
-

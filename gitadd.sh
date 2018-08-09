@@ -89,6 +89,8 @@ git add thread_io/queue/illist_threads_rw.h
 git add thread_io/queue/illist_threads_rw.c
 git add thread_io/queue/ollist_threads_rw.h
 git add thread_io/queue/ollist_threads_rw.c
+git add thread_io/queue/rt_llist_threads_rw.h
+git add thread_io/queue/rt_llist_threads_rw.c
 git add thread_io/ncurses/client.c
 git add thread_io/ncurses/client.h
 git add thread_io/linux_make

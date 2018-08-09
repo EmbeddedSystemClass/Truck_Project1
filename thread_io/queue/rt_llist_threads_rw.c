@@ -17,80 +17,74 @@
 #include <string.h>
 #include "../../mytypes.h"
 #include "../serial_io.h"
-#include "ollist_threads_rw.h"
+#include "rt_llist_threads_rw.h"
 #ifdef MAKE_TARGET
 extern int send_tcp(UCHAR *str,int len);
 #endif
 /******************************************************************************/
-int ollist_init (ollist_t *llistp)
+int rt_llist_init (rt_llist_t *llistp)
 {
 	int rtn;
 
 	llistp->first = NULL;
 	if ((rtn = pthread_rdwr_init_np(&(llistp->rwlock), NULL)) !=0)
+	{
+		printf("pthread_rdwr_init_np error %d\n\r",rtn);
 		fprintf(stderr, "pthread_rdwr_init_np error %d",rtn), exit(1);
-//	printf("sizeof O_DATA: %lu\n",sizeof(O_DATA));
+	}
+//	printf("sizeof RI_DATA: %lu\n\r",sizeof(RI_DATA));
 	return 0;
 }
 
 /******************************************************************************/
-int ollist_insert_data (int index, ollist_t *llistp,O_DATA *datap2)
+int rt_llist_insert_data (rt_llist_t *llistp, RI_DATA *datap2)
 {
-	ollist_node_t *cur, *prev, *new;
-	int found = FALSE;
-	O_DATA *datap;
+	rt_llist_node_t *cur, *prev, *new;
+	RI_DATA *datap;
+	static int index = 0;
+	int tindex;
 
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
-	datap = malloc(sizeof(O_DATA));
-	memcpy(datap,datap2,sizeof(O_DATA));
-/*
-	if(datap != NULL)
-	{
-		strcpy(datap->label,"test");
-		datap->port = 2 + index;
-		datap->onoff = index%2?1:0;
-//		printf("%d  %d  %d  %d\n", datap->in_port,datap->in_bit,datap->out_port,datap->out_bit);
-	}
-	else
-		datap = (O_DATA *)NULL;
-*/
+	datap = malloc(sizeof(RI_DATA));
+	memcpy(datap,datap2,sizeof(RI_DATA));
+//	printf("data: %d %d %02d:%02d:%02d\n\r",datap->port,datap->onoff,datap->hours,datap->minutes,datap->seconds);
+
+
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
 	{
-		if (cur->index == index)
-		{
-			free(cur->datap);
-			cur->datap = datap;
-//			printf("\n\n%s\n\n\n",cur->datap->label);
-			found=TRUE;
-			break;
-		}
-		else if (cur->index > index)
-		{
-			break;
-		}
+		tindex = cur->index;
+//		printf("%d ",tindex);
 	}
-	if (!found)
+//	printf("\n\r");
+
+	new = (rt_llist_node_t *)malloc(sizeof(rt_llist_node_t));
+	new->index = index;
+	new->datap = datap;
+	new->nextp = cur;
+
+	if (cur==llistp->first)
 	{
-		new = (ollist_node_t *)malloc(sizeof(ollist_node_t));
-		new->index = index;
-		new->datap = datap;
-		new->nextp = cur;
-		if (cur==llistp->first)
-			llistp->first = new;
-		else
-			prev->nextp = new;
-	}
+		llistp->first = new;
+//		printf("first\r\n");
+	}else
+		prev->nextp = new;
+
+//	printf("%d %d: data: %d %d %02d:%02d:%02d\n\r",index,prev->index,datap->port,datap->onoff,datap->hours,
+//			datap->minutes,datap->seconds);
+
+	index++;
+
 	pthread_rdwr_wunlock_np(&(llistp->rwlock));
 	return 0;
 }
 
 /******************************************************************************/
-int ollist_remove_data(int index, O_DATA **datapp, ollist_t *llistp)
+int rt_llist_remove_data(int index, RI_DATA **datapp, rt_llist_t *llistp)
 {
-	ollist_node_t *cur, *prev;
+	rt_llist_node_t *cur, *prev;
 
 	/* Initialize to "not found" */
-	*datapp = (O_DATA*)NULL;
+	*datapp = (RI_DATA*)NULL;
 
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
@@ -113,19 +107,19 @@ int ollist_remove_data(int index, O_DATA **datapp, ollist_t *llistp)
 }
 
 /******************************************************************************/
-int ollist_removeall_data(ollist_t *llistp)
+int rt_llist_removeall_data(rt_llist_t *llistp)
 {
-	ollist_node_t *cur, *prev;
+	rt_llist_node_t *cur, *prev;
 
 	/* Initialize to "not found" */
-	O_DATA *datapp = (O_DATA*)NULL;
+	RI_DATA *datapp = (RI_DATA*)NULL;
 
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
 	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
 	{
 		datapp = cur->datap;
-//		printf("%s_\n",datapp->label);
+//		printf("%d %d :",datapp->port,datapp->onoff);
 		prev->nextp = cur->nextp;
 		free(cur);
 	}
@@ -133,13 +127,13 @@ int ollist_removeall_data(ollist_t *llistp)
 	return 0;
 }
 /******************************************************************************/
-int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
+int rt_llist_find_data(int index, RI_DATA **datapp, rt_llist_t *llistp)
 {
-	ollist_node_t *cur, *prev;
+	rt_llist_node_t *cur, *prev;
 	int status = -1;
 
 	/* Initialize to "not found" */
-	*datapp = (O_DATA *)NULL;
+	*datapp = (RI_DATA *)NULL;
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
 
@@ -163,75 +157,9 @@ int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
 }
 
 /******************************************************************************/
-int ollist_toggle_output(int index, ollist_t *llistp)
+int rt_llist_change_data(int index, RI_DATA *datap, rt_llist_t *llistp)
 {
-	ollist_node_t *cur, *prev;
-	int status = -1; /* assume failure */
-	O_DATA o_data;
-	int onoff;
-
-	pthread_rdwr_wlock_np(&(llistp->rwlock));
-
-	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
-	{
-		if (cur->index == index)
-		{
-			memcpy(&o_data,cur->datap,sizeof(O_DATA));
-//			printf("%d %s ",o_data.onoff,o_data.label);
-			if(o_data.onoff == 1)
-				o_data.onoff = 0;
-			else o_data.onoff = 1;
-			onoff = o_data.onoff;
-			memcpy(cur->datap,&o_data,sizeof(O_DATA));
-			status = 0;
-			break;
-		}
-		else if (cur->index > index)
-		{
-			break;
-		}
-	}
-	pthread_rdwr_wunlock_np(&(llistp->rwlock));
-	return onoff;
-}
-
-
-/******************************************************************************/
-// I think this is crashing the program on exit
-int ollist_change_output(int index, ollist_t *llistp, int onoff)
-{
-	ollist_node_t *cur, *prev;
-	int status = -1; /* assume failure */
-
-	return -1;
-
-	pthread_rdwr_wlock_np(&(llistp->rwlock));
-
-	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
-	{
-		if (cur->index == index)
-		{
-//			memcpy(&o_data,cur->datap,sizeof(O_DATA));
-//			o_data.onoff = onoff;
-//			memcpy(cur->datap,&o_data,sizeof(O_DATA));
-			cur->datap->onoff = onoff;
-//			printf("%d %s\r\n",o_data.onoff,o_data.label);
-			status = 0;
-			break;
-		}
-		else if (cur->index > index)
-		{
-			break;
-		}
-	}
-	pthread_rdwr_wunlock_np(&(llistp->rwlock));
-	return status;
-}
-
-/******************************************************************************/
-int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
-{
-	ollist_node_t *cur, *prev;
+	rt_llist_node_t *cur, *prev;
 	int status = -1; /* assume failure */
 
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
@@ -258,23 +186,24 @@ int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 
 /******************************************************************************/
 #ifdef MAKE_TARGET
-int ollist_show(ollist_t *llistp)
+int rt_llist_show(rt_llist_t *llistp)
 {
 	char list_buf[50];
 	char *ptr;
 	int iptr;
-	ollist_node_t *cur;
+	rt_llist_node_t *cur;
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
 
 	for (cur=llistp->first; cur != NULL; cur=cur->nextp)
 	{
-		if(cur->datap->label[0] != 0)
+//		if(cur->datap->label[0] != 0)
+		if(1)
 		{
 //			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
 			memset(list_buf,0,50);
 			sprintf(list_buf,"port: %2d onoff: %2d %s",(int)cur->datap->port,\
-			 (int)cur->datap->onoff,cur->datap->label);
+			 (int)cur->datap->onoff,cur->datap->hours, cur->datap->minutes, cur->datap->seconds);
 			 ptr = list_buf;
 			 iptr = 0;
 			 do
@@ -292,34 +221,40 @@ int ollist_show(ollist_t *llistp)
 
 #endif
 
-int ollist_printfile(int fp, ollist_t *llistp)
+/******************************************************************************/
+int rt_llist_printfile(int fp, rt_llist_t *llistp)
 {
-	char list_buf[50];
+	char list_buf[20];
 	char *ptr;
 	int iptr;
-	ollist_node_t *cur;
+	rt_llist_node_t *cur;
+
+	memset(list_buf,0,20);
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
 
 	for (cur=llistp->first; cur != NULL; cur=cur->nextp)
 	{
-		if(cur->datap->label[0] != 0)
+//		if(cur->datap->label[0] != 0)
+		if(1)
 		{
 //			printf("port: %2d\tonoff: %2d\t%s\n",(int)cur->datap->port, (int)cur->datap->onoff,cur->datap->label);
-			memset(list_buf,0,50);
-			sprintf(list_buf,"port: %2d onoff: %2d %s",(int)cur->datap->port,\
-			 (int)cur->datap->onoff,cur->datap->label);
+			sprintf(list_buf,":%2d %2d %02d:%02d:%02d",(int)cur->datap->port,\
+			 (int)cur->datap->onoff,(int)cur->datap->hours, (int)cur->datap->minutes, (int)cur->datap->seconds);
+//			 printf("%s\n\r",list_buf);
+/*
 			 ptr = list_buf;
 			 iptr = 0;
 			 do
 			 {
 			 	iptr++;
 			 }while(*(ptr++) != 0);
-			write(fp,list_buf,50);
-
+*/
+			write(fp,(char *)&list_buf[0],strlen(list_buf));
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
+//	printf("done printfile\n\r");
 	return 0;
 }
 

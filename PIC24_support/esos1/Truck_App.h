@@ -141,6 +141,15 @@ volatile UCHAR menu_ptr;
 #define BUFFER_SIZE 30
 #define PASSWORD_SIZE 12
 
+#define NUM_SIZE 200
+volatile uint16_t au16_buffer[NUM_ADC_CHANNELS];
+//volatile uint16_t  u16_pot[NUM_ADC_CHANNELS];
+volatile UCHAR  u8_pot[NUM_ADC_CHANNELS];
+volatile UCHAR curr_num[NUM_SIZE];
+volatile UCHAR curr_num_ptr;
+volatile uint8_t  u8_waiting;
+volatile int lat5;
+
 volatile char password[PASSWORD_SIZE];
 volatile char correct_password[PASSWORD_SIZE];
 volatile UCHAR password_valid;
@@ -148,6 +157,8 @@ volatile int password_ptr;
 volatile int password_retries;
 volatile int print_string_buffer_size;
 volatile char print_string_buffer[BUFFER_SIZE];
+//volatile UINT sample_rpm;
+volatile ESOS_TASK_HANDLE convADC_task_handle;
 
 typedef enum
 {
@@ -187,6 +198,7 @@ ESOS_USER_TASK(menu_task)
 				case 	KP_1:
 					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_START);
 				break;
+
 				case	KP_2:
 					if(acc == 0)
 					{
@@ -198,6 +210,7 @@ ESOS_USER_TASK(menu_task)
 						acc = 0;
 					}
 				break;
+
 				case	KP_3:
 					if(fuel_pump == 0)
 					{
@@ -209,6 +222,7 @@ ESOS_USER_TASK(menu_task)
 						fuel_pump = 0;
 					}
 				break;
+
 				case	KP_4:
 					if(fan == 0)
 					{
@@ -220,17 +234,31 @@ ESOS_USER_TASK(menu_task)
 						fan = 0;
 					}
 				break;
+
 				case	KP_5:
 					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
+
 				case	KP_6:
+/*
+					avr_buffer[0] = SEND_INT_RT_VALUES;
+					avr_buffer[1] = rtlabel_str[0].row;
+					avr_buffer[2] = rtlabel_str[0].col + 15;
+					avr_buffer[3] = 
+					avr_buffer[4] = 
+					AVR_CALL();
+*/
 				break;
+
 				case	KP_7:
 				break;
+
 				case	KP_8:
 				break;
+
 				case	KP_9:
 				break;
+
 				case	KP_A:		// move up in menu
 					if(menu_ptr < 1)
 						menu_ptr = 6;
@@ -242,8 +270,8 @@ ESOS_USER_TASK(menu_task)
 					avr_buffer[3] = menu_str[menu_ptr].col-2;
 					avr_buffer[4] = (LINE_8_CURSOR);
 					AVR_CALL();
-
 				break;
+
 				case	KP_B:		// move down in menu
 					if(++menu_ptr > 5)
 						menu_ptr = 0;
@@ -254,9 +282,15 @@ ESOS_USER_TASK(menu_task)
 					avr_buffer[3] = menu_str[menu_ptr].col-2;
 					avr_buffer[4] = (LINE_8_CURSOR);
 					AVR_CALL();
-
 				break;
-				case	KP_C:		// exec menu choice
+
+				case	KP_C:
+
+//					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
+//						(menu_ptr+1)*2+menu_str[menu_ptr].onoff);
+				break;
+
+				case	KP_D:		// exec menu choice
 					avr_buffer[0] = GOTO_CMD;
 					avr_buffer[1] = menu_str[menu_ptr].row;
 					avr_buffer[2] = menu_str[menu_ptr].col-2;
@@ -268,18 +302,17 @@ ESOS_USER_TASK(menu_task)
 					avr_buffer[0] = CHAR_CMD;
 					avr_buffer[1] = (menu_str[menu_ptr].onoff?'X':' ');
 					AVR_CALL();
+				break;
 
-//					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
-//						(menu_ptr+1)*2+menu_str[menu_ptr].onoff);
-				break;
-				case	KP_D:
-				break;
 				case	KP_POUND:
 				break;
+
 				case	KP_AST:
 				break;
+
 				case	KP_0:
 				break;
+
 				default:
 				break;
 			}
@@ -419,6 +452,8 @@ ESOS_USER_TASK(password_task)
 						key_mode = NORMAL;
 						password_ptr = 0;
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ABLE_TO_START);
+
+						ESOS_WAKE_TASK(convADC_task_handle);
 					}
 
 				break;
@@ -952,15 +987,6 @@ uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
   return u16_ticks;
 }
 #endif
-#define NUM_SIZE 200
-volatile uint16_t au16_buffer[NUM_ADC_CHANNELS];
-//volatile uint16_t  u16_pot[NUM_ADC_CHANNELS];
-volatile UCHAR  u8_pot[NUM_ADC_CHANNELS];
-volatile UCHAR curr_num[NUM_SIZE];
-volatile UCHAR curr_num_ptr;
-volatile uint8_t  u8_waiting;
-volatile int lat5;
-
 //******************************************************************************************//
 //**************************************** convADC  ****************************************//
 //******************************************************************************************//
@@ -974,6 +1000,7 @@ ESOS_USER_TASK(convADC)
 	comm1_handle = esos_GetTaskHandle(send_comm1);
 
     ESOS_TASK_BEGIN();
+	convADC_task_handle = ESOS_TASK_GET_TASK_HANDLE();
 /*
 	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 	ESOS_TASK_WAIT_ON_SEND_STRING("starting ADC task\r\n");
@@ -1003,8 +1030,10 @@ ESOS_USER_TASK(convADC)
 
 	configADC1_AutoScanIrqCH0( 0x000F, 31, 0);
 //	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
-	while ( !AD1CON1bits.DONE)
+	while (!AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
+
+	ESOS_TASK_SLEEP();
 
 	while (TRUE)
 	{
@@ -1014,32 +1043,26 @@ ESOS_USER_TASK(convADC)
 		u8_waiting = 0;
 		for ( u8_i=0; u8_i<NUM_ADC_CHANNELS; u8_i++)
 		{
-//			u16_pot[u8_i] = au16_buffer[u8_i];
 			fres = (float)au16_buffer[u8_i];
 			fres *= 100.0;
 			fres /= 1023.0;
 			u8_pot[u8_i] = (UCHAR)fres;
-/*			
-			u16_pot[u8_i] <<= 6;
-			if(u16_pot[u8_i] > 1)
-				u16_pot[u8_i] |= 0x003F;
-*/
 
-#if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			if(u8_i == 0)
-			{
-//				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				ESOS_TASK_WAIT_ON_SEND_UINT8(0xFE);
-			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(u16_pot[u8_i]>>8));
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)u16_pot[u8_i]);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-#endif
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = rtlabel_str[6+u8_i].row;
+			avr_buffer[2] = rtlabel_str[6+u8_i].col + 15;
+			avr_buffer[3] = u8_pot[u8_i];
+			AVR_CALL();
+/*
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = rtlabel_str[7].row;
+			avr_buffer[2] = rtlabel_str[7].col + 15;
+			avr_buffer[3] = u8_pot[1];
+			AVR_CALL();
+*/
 		}
 		__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
-		ESOS_TASK_WAIT_TICKS(200);
+		ESOS_TASK_WAIT_TICKS(500);
 	}
 	ESOS_TASK_END();
 }

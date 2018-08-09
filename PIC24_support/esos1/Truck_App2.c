@@ -157,17 +157,19 @@ ESOS_USER_TASK(send_comm1)
         {
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+
 	 		if(data1 != RT_DATA)
 				ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 			else
 			{
 				ESOS_TASK_WAIT_ON_SEND_UINT8(RT_DATA);
+
 				for(i = 0;i < NUM_ADC_CHANNELS;i++)
 				{
-//					ESOS_TASK_WAIT_ON_SEND_UINT8(u16_pot[i]>>8);
-//					ESOS_TASK_WAIT_ON_SEND_UINT8(u16_pot[i]);
 					ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
 				}
+				ESOS_TASK_WAIT_ON_SEND_UINT8((UCHAR)(sample_rpm >> 8));
+				ESOS_TASK_WAIT_ON_SEND_UINT8((UCHAR)sample_rpm);
 			}
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
@@ -375,10 +377,10 @@ ESOS_USER_TASK(main_proc)
 	data3 = FPGA_LCD_PWM;
 	data3 <<= 8;
 	data3 &= 0xFF00;
-//	data3 |= PWM_ON_PARAM;
+	data3 |= PWM_ON_PARAM;
 //	data3 |= PWM_50DC_PARAM;
 //	data3 |= PWM_75DC_PARAM;
-	data3 |= PWM_80DC_PARAM;
+//	data3 |= PWM_80DC_PARAM;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
 	avr_buffer[0] = GOTO_CMD;
@@ -416,10 +418,26 @@ ESOS_USER_TASK(main_proc)
 	avr_buffer[3] = 5;	// string 1 ("enter password")
 	AVR_CALL();
 */
-	data2 = 0x21;	
+	data2 = 0x21;
+//	sample_rpm = 1000;
+	ESOS_TASK_WAIT_TICKS(1000);
+
 	while(1)
 	{
 		ESOS_TASK_WAIT_TICKS(1000);
+/*
+		if(sample_rpm > 5000)
+			sample_rpm = 0;
+
+		sample_rpm += 10;
+
+		avr_buffer[0] = SEND_INT_RT_VALUES;
+		avr_buffer[1] = rtlabel_str[1].row;
+		avr_buffer[2] = rtlabel_str[1].col + 15;
+		avr_buffer[3] = (UCHAR)(sample_rpm >> 8);
+		avr_buffer[4] = (UCHAR)sample_rpm;
+		AVR_CALL();
+*/
 /*
 		if(password_valid == 0)
 		{

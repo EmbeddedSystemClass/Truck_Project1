@@ -568,9 +568,10 @@ call_Host(int code)
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
-				reboot = 0;
+				reboot = 1;
 				put_sock(&cmd,1,1,errmsg);
 				put_sock(&reboot,1,1,errmsg);
+//				get_sock(&num,1,1,errmsg);
 				close_sock();
 			}
 #endif
@@ -581,9 +582,10 @@ call_Host(int code)
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
-				reboot = 1;
+				reboot = 2;
 				put_sock(&cmd,1,1,errmsg);
 				put_sock(&reboot,1,1,errmsg);
+				
 				close_sock();
 			}
 			break;
@@ -593,7 +595,7 @@ call_Host(int code)
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
-				reboot = 2;
+				reboot = 3;
 				put_sock(&cmd,1,1,errmsg);
 				put_sock(&reboot,1,1,errmsg);
 				close_sock();
@@ -1347,6 +1349,11 @@ call_Tool(int code)
 			}else  show_status2("no tcp connection","",code,0,0,2);
 			break;
 
+		case 16:
+			cmd = TEST_WRITE_FILE;
+			ret = put_sock(&cmd,1,1,errmsg);
+			break;
+
 		// NEW PASSWORD
 #if 0
 		case 16:
@@ -1445,10 +1452,10 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("Shutdown"),					  // 10
 		MY_DATA2("Clear Screen"),				  // 11
 		MY_DATA2("Send Serial"),				  // 12
-		MY_DATA2("TCP Window"),					//13
-		MY_DATA2("Live Window"),				//14
-		MY_DATA2("Upload New"),					//15
-//		MY_DATA2("New Password"),				//16
+		MY_DATA2("TCP Window"),						//13
+		MY_DATA2("Live Window"),					//14
+		MY_DATA2("Upload New"),						//15
+		MY_DATA2("Test Write"),						//16
 		{(char *) 0, 0, 0}
 	};
 

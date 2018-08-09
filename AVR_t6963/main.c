@@ -228,22 +228,20 @@ int main(void)
 				// 1st param is row
 				// 2nd param is col
 				// 3rd is int value up to 255
-					row = (UINT)buff[1];
-					col = (UINT)buff[2];
 					byte_val = buff[3];
-
+					sprintf(str,"%02d",byte_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
 				case SEND_INT_RT_VALUES:
 				// 1st param is row
 				// 2nd param is col
-				// 3rd is int value up to 255
-					row = (UINT)buff[1];
-					col = (UINT)buff[2];
+				// 3rd/4th is int value up to 65635
 					int_val = (UINT)buff[3];
 					int_val <<= 8;
 					int_val |= (UINT)buff[4];
-					
+					sprintf(str,"%04d",int_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
 				default:

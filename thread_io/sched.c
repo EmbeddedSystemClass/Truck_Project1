@@ -59,6 +59,8 @@ typedef struct
 	char label[20];
 }THREADS;
 
+#define DEVICE "/mnt/cf/sched.log\0"
+
 /********************************************************************************************************/
 int main(int argc, char **argv)
 {
@@ -68,16 +70,14 @@ int main(int argc, char **argv)
 	int sched = PTIME_SLICE;
 	pthread_attr_t pthread_custom_attr;
 	struct sched_param priority_param;
-	char str2[10];
-	char buf[200];
+//	char str2[10];
+//	char buf[100];
 	UCHAR test1 = 0x21;
 	UCHAR test2;
 	int sd;
 	int rc;
-	char errmsg[50];
-	I_DATA temp;
-	reboot_on_exit = 0;
-	
+	reboot_on_exit = 1;
+
 	if(argc < 2)
 	{
 		strcpy(iFileName,"idata.dat\0");
@@ -108,6 +108,7 @@ int main(int argc, char **argv)
  PTIME_SLICE             4
  PFIFO                   5
 */
+
 	_threads[GET_HOST_CMD].sched = TIME_SLICE;
 	_threads[MONITOR_INPUTS].sched = PFIFO;
 	_threads[TIMER].sched = PTIME_SLICE;
@@ -213,31 +214,31 @@ int main(int argc, char **argv)
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
 
-//		printf("closing task :%d %s\n",i,_threads[i].label);
+		printf("closing task :%d %s\r\n",i,_threads[i].label);
 	}
-/*	close_mem(); */
+	close_mem();
 
 //	RS232_CloseComport(1);
-	strcpy(str2,"close");
+//	strcpy(str2,"close");
 //	send(sd,str2,5,0);
 //	printf("reboot_on_exit: %d\n",reboot_on_exit);
 //	usleep(100000);
 //	closesocket(sd);
 //	printf("socket closed\n");
 //	llist_show(&ll);
-	if(reboot_on_exit == 0)
+	if(reboot_on_exit == 1)
 	{
-//		printf("exit to shell\n");
+		printf("exit to shell\r\n");
 		return 0;
-	}
-	else if(reboot_on_exit == 1)
-	{
-//		printf("reboot\n");
-		return 1;
 	}
 	else if(reboot_on_exit == 2)
 	{
-//		printf("shutdown\n");
+		printf("reboot\r\n");
+		return 1;
+	}
+	else if(reboot_on_exit == 3)
+	{
+		printf("shutdown\r\n");
 		return 2;
 	}
 }

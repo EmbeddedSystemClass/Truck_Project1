@@ -140,6 +140,9 @@ illist_threads_rw.o: queue/illist_threads_rw.c queue/illist_threads_rw.h
 ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/ollist_threads_rw.c
 
+#rt_llist_threads_rw.o: queue/rt_llist_threads_rw.c queue/rt_llist_threads_rw.h
+#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rt_llist_threads_rw.c
+
 rdwr.o: queue/rdwr.c queue/rdwr.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rdwr.c
 
@@ -154,10 +157,11 @@ test_dio1.o: test_dio1.c lcd_func.c lcd_func.h serial_io.c serial_io.h
 
 test_dio1: test_dio1.o lcd_func.o serial_io.o
 
+#sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
 	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
-#	${CC} -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
+#	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o #rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 
 clean :
 	rm -f *.o *~ *# core  sched

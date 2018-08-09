@@ -28,7 +28,7 @@
 
 typedef struct o_data
 {
-	char label[20];
+	char label[OLABELSIZE];
 	UCHAR port;
 	UCHAR onoff;			// 1 of on; 0 if off
 	UCHAR type;
@@ -66,4 +66,5 @@ int ollist_toggle_output(int index, ollist_t *llistp);
 int ollist_change_output(int index, ollist_t *llistp, int onoff);
 int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp);
 int ollist_show(ollist_t *llistp);
+int ollist_printfile(int fp, ollist_t *llistp);
 
