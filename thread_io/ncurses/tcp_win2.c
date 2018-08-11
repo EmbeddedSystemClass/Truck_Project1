@@ -272,7 +272,7 @@ int tcp_win2(int cmd)
 				put_sock(&onoff,1,1,errmsg);
 				break;
 
-//#if 0
+#if 0
 			case KEY_F(9):	// start sequence cmd which enables the starter, turns on acc & fp
 							// and starts a timer which after 1 minute, turns the fan on
 				cmd2 = START_SEQ;
@@ -285,23 +285,15 @@ int tcp_win2(int cmd)
 				mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 				mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 		        break;
-//#endif
-#if 0
+#endif
+//#if 0
 			case KEY_F(9):
-
-				if(++ioport > 39)
-				{
-					ioport = 0;
-				}
-				mvwprintw(twin,8,30,"%d port: %02d",ioport);
-	/*
 				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);
-				cmd2 = 0;
+				cmd2 = 1;
 		        put_sock(&cmd2,1,1,errmsg);
-*/
 		        break;
-#endif
+//#endif
 			case KEY_F(10):
 				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);

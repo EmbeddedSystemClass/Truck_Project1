@@ -108,6 +108,7 @@ git add thread_io/ncurses/make_db
 git add thread_io/ncurses/setiodata.h
 git add thread_io/ncurses/tcp_win.c
 git add thread_io/ncurses/tcp_win2.c
+git add thread_io/ncurses/tcp_win_show.c
 git add thread_io/ncurses/config_file.c
 git add thread_io/ncurses/config_file.h
 git add thread_io/ncurses/file_win.c

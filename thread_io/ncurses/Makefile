@@ -52,6 +52,9 @@ text_entry.o: text_entry.c  test.priv.h form_sup.h
 tcp_win.o: tcp_win.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c tcp_win.c
 
+tcp_win_show.o: tcp_win_show.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c tcp_win_show.c
+
 tcp_win2.o: tcp_win2.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h ../../mytypes.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c tcp_win2.c
 
@@ -77,9 +80,9 @@ rdwr.o: ../queue/rdwr.c ../queue/rdwr.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/rdwr.c
 
 client: demo_menus2.o menu_scroll2.o menu_scroll3.o demo_forms4.o form_supplement.o client.o tcp_win2.o tcp_win.o\
- file_win.o file_menu2.o  config_file.o illist_threads_rw.o ollist_threads_rw.o rdwr.o text_entry.o
+ tcp_win_show.o file_win.o file_menu2.o  config_file.o illist_threads_rw.o ollist_threads_rw.o rdwr.o text_entry.o
 	${CC} menu_scroll2.o menu_scroll3.o demo_menus2.o demo_forms4.o form_supplement.o client.o tcp_win2.o tcp_win.o\
- file_win.o file_menu2.o config_file.o  illist_threads_rw.o ollist_threads_rw.o rdwr.o text_entry.o\
+  tcp_win_show.o file_win.o file_menu2.o config_file.o  illist_threads_rw.o ollist_threads_rw.o rdwr.o text_entry.o\
   -o client -lmenu -lform -lcurses
 
 clean :

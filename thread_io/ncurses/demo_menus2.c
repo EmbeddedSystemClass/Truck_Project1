@@ -61,11 +61,13 @@
 extern int menu_scroll2(int num,int which,char *filename);
 extern int menu_scroll3(int num, UCHAR *str, char *filename);
 extern int tcp_win(int cmd);
+extern int tcp_win_show(int cmd);
 extern int tcp_win2(int cmd);
 extern int file_win(void);
 extern int file_menu2(int num, int which, char *ret_str);
 
 static size_t isize, osize;
+static UCHAR buf[UPLOAD_BUFF_SIZE];
 
 // lists for the host
 illist_t ill;
@@ -714,7 +716,6 @@ call_Target(int code)
 	int i,j,k;
 	char test = 0x21;
 	static char filename[40];
-	char buf[20];
 	char errmsg[40];
 	UCHAR cmd = 0;
 	UCHAR str_len;
@@ -954,14 +955,14 @@ call_Target(int code)
 			cmd = SHOW_IDATA;
 			put_sock(&cmd,1,1,errmsg);
 //			show_status2("show idata tcp win","",code,0,0,1);
-			tcp_win(SHOW_IDATA);
+			tcp_win_show(SHOW_IDATA);
 			break;
 
 		case 9:
 			cmd = SHOW_ODATA;
 			put_sock(&cmd,1,1,errmsg);
 //			show_status2("show odata tcp win","",code,0,0,1);
-			tcp_win(SHOW_ODATA);
+			tcp_win_show(SHOW_ODATA);
 			break;
 //			j = ilLoadConfig(iFileName,&ill,isize,errmsg);
 //			mvprintw(LINES-1,2,"%d   %s   %s  ",j,iFileName,errmsg);
@@ -1046,8 +1047,6 @@ build_Target_menu(MenuNo number)
 
 
 /*****************************************************************************/
-
-UCHAR buf[UPLOAD_BUFF_SIZE];
 
 static void
 call_Tool(int code)

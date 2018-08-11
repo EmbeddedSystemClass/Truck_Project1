@@ -65,7 +65,7 @@ static void disp_msg(WINDOW *win,char *str)
 //******************************************************************************************//
 //**************************************** tcp_win *****************************************//
 //******************************************************************************************//
-int tcp_win(int cmd)
+int tcp_win_show(int cmd)
 {
 	WINDOW *twin;
 	int startx, starty;
@@ -73,27 +73,16 @@ int tcp_win(int cmd)
 	int rc;
 	int x,y,i;
 	UCHAR ret_char = 0x21;
-	char buffer[100];
+	char buffer[110];
 	char errmsg[70];
 	int noerrors = 0;
-	int ascii = 1;
-	int no_non_ascii = 0; 
 	int height, width;
 
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 	nodelay(stdscr,TRUE);
-	if(cmd == SHOW_IDATA || cmd == SHOW_ODATA)
-	{
-		height = SHOW_DATA_HEIGHT;
-		width = SHOW_DATA_WIDTH;
-		starty = ((LINES - height)/4);
-	}
-	else if(cmd == TCP_WINDOW_ON)
-	{
-		height = SERIAL_HEIGHT;
-		width = SERIAL_WIDTH;
-		starty = ((LINES - height)/2)+20;	/* Calculating for a center placement */
-	}
+	height = SHOW_DATA_HEIGHT;
+	width = SHOW_DATA_WIDTH;
+	starty = ((LINES - height)/4);
 
 	status_line = height-4;
 	error_line1 = height-3;
@@ -113,7 +102,7 @@ int tcp_win(int cmd)
 	for(i = 1;i < width-1;i++)
 		MvWAddCh(twin,height-5,i,ACS_HLINE);
 
-	mvwprintw(twin,status_line,1,"F2 - quit; F3 - toggle ascii");
+	mvwprintw(twin,status_line,1,"SHOW ALL: F2 - quit; F3 clear screen");
 
 //	mvwprintw(twin,2,2,"starting server...");
 	wrefresh(twin);
@@ -124,22 +113,10 @@ int tcp_win(int cmd)
 		switch(ch)
 		{
 			case KEY_F(3):
-				if(ascii == 0)
-				{
-					ascii = 1;
-					mvwprintw(twin,status_line,30,"ascii on  ");
-				}
-				else
-				{ 
-					ascii = 0;
-					x = width;
-					y++;
-					mvwprintw(twin,status_line,30,"ascii off  ");
-				}
+				clr_scr(twin);
 				break;
 
 			case KEY_F(4):
-				clr_scr(twin);
 				x = y = 1;
 				break;
 
@@ -154,7 +131,11 @@ int tcp_win(int cmd)
 		if(tcp_connected == 1)
 		{
 //			usleep(100);
-			rc = get_sock(&ret_char,1,1,errmsg);
+			if(cmd == SHOW_IDATA)
+				rc = get_sock(&buffer[0],50,1,errmsg);
+			else if(cmd == SHOW_ODATA)
+				rc = get_sock(&buffer[0],100,1,errmsg);
+
 			if(rc < 0 && errno != 11)
 			{
 				x = 1;
@@ -164,6 +145,7 @@ int tcp_win(int cmd)
 				delwin(twin);
 				return 1;
 			}
+
 			if(errno == 11)
 			{
 				noerrors++;
@@ -172,44 +154,10 @@ int tcp_win(int cmd)
 				errno = 0;
 			}else
 			{
-				x++;
-				if(ascii)
-				{
-					if(ret_char != 0)
-					{
-						if(ret_char < 0x20 || ret_char > 0x7e)
-						{
-							if(++no_non_ascii > 50)
-							{
-								ascii = 0;
-								no_non_ascii = 0;
-							}
-							mvwprintw(twin,y,x,"_");
-						}
-						else 
-							mvwprintw(twin,y,x,"%c",ret_char);
-					}
-					else x = width;
-				}else mvwprintw(twin,y,(x+=2),"%2x ",ret_char);
-
-				if(ascii)
-				{
-					if(x > width-3)
-					{
-						y = inc_y(twin,y);
-						x = 1;
-					}
-					mvwprintw(twin,error_line1,1,"%2d %2d   ",x,y);
-					wrefresh(twin);
-				}
-				else
-				{
-					if(x > width-5)
-					{
-						y = inc_y(twin,y);
-						x = 1;
-					}
-				}
+				mvwprintw(twin,y,1,"%s    ",buffer);
+				mvwprintw(twin,error_line1,1,"%2d   ",y);
+				wrefresh(twin);
+				y = inc_y(twin,y);
 				wrefresh(twin);
 			}
 		}

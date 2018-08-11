@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 	*fptr = 0;
 	strcat(fptr2,csv);
 
+/*
 	printf("opening csv file: %s\n",fptr1);
 	printf("opening csv file: %s\n",fptr2);
 
@@ -97,18 +98,19 @@ int main(int argc, char *argv[])
 	printf("creating odata file: %s\n",fptr2);
 
 	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
+*/
 	i = NUM_PORT_BITS;
-	printf("NUM_PORT_BITS: %d\n",i);
+//	printf("NUM_PORT_BITS: %d\n",i);
 	isize = sizeof(I_DATA);
 	isize *= i;
-	printf("total size: of i_data %lu\n",isize);
+//	printf("total size: of i_data %lu\n",isize);
 
-	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
+//	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
 	i = NUM_PORT_BITS;
-	printf("NUM_PORT_BITS: %d\n",i);
+//	printf("NUM_PORT_BITS: %d\n",i);
 	osize = sizeof(O_DATA);
 	osize *= i;
-	printf("total size of o_data: %lu\n",osize);
+//	printf("total size of o_data: %lu\n",osize);
 
 	curr_i_array = (I_DATA *)malloc(isize);
 	memset((void *)curr_i_array,0,isize);
@@ -153,7 +155,7 @@ int main(int argc, char *argv[])
     		ch++;
     	}
     	ch++;
-    }while(size < 1200);
+    }while(size < 1300);
 
 	cp = ',';
     for(i = 1;i < 41;i++)
@@ -227,7 +229,7 @@ int main(int argc, char *argv[])
 
 	pid = curr_i_array;
 */
-	printf("%s %s has %lu records \n",errmsg,fptr1,isize/sizeof(I_DATA));
+//	printf("%s %s has %lu records \n",errmsg,fptr1,isize/sizeof(I_DATA));
 /*
 	for(i = 0;i < isize/sizeof(I_DATA);i++)
 	{
@@ -293,6 +295,7 @@ int main(int argc, char *argv[])
 	UCHAR type;				// see below
 	UINT time_delay;
 	UCHAR pulse_time;
+	UCHAR reset;
 	char label[OLABELSIZE];
 */
 
@@ -370,6 +373,16 @@ int main(int argc, char *argv[])
 
 		do{
 			ch++;
+		}while(*ch != 0);
+		ch++;
+
+		strcpy(temp,ch);
+//		printf("%s \n",temp);
+
+		pod->reset = atoi(ch);
+
+		do{
+			ch++;
 		}while(*ch != 0 && *ch != '\n');
 		ch++;
 
@@ -392,12 +405,12 @@ int main(int argc, char *argv[])
 
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
-		printf("%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
-				pod->time_delay,pod->pulse_time,pod->label);
+		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
+				pod->time_delay,pod->pulse_time,pod->reset,pod->label);
 		pod++;
 	}
 
-	printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
+//	printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
 
 	free(curr_i_array);
 	free(curr_o_array);

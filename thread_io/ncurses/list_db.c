@@ -136,21 +136,21 @@ int main(int argc, char *argv[])
 		pod = curr_o_array;
 
 		printf("\n");
-		printf("port\tonoff\tpolarity\ttype\ttime_delay\tpulse_time\tlabel\n\n");
+		printf("port\tonoff\tpolarity\ttype\ttime_delay\tpulse_time\treset\tlabel\n\n");
 		for(i = 0;i < osize/sizeof(O_DATA);i++)
 		{
 			if(pod->label[0] != 0)
 			{
 				if(comma_delim == 1)
 				{
-					printf("%d,%d,%d,%d,%d,%d,%s\n",
+					printf("%d,%d,%d,%d,%d,%d,%d,%s\n",
 						pod->port, pod->onoff, pod->polarity, pod->type, pod->time_delay, 
-							pod->pulse_time, pod->label);
+							pod->pulse_time, pod->reset, pod->label);
 				}else
 				{
-					printf("%d\t%d\t%d\t\t%d\t%d\t\t%d\t\t%s\n",
+					printf("%d\t%d\t%d\t\t%d\t%d\t\t%d\t\t%d\t%s\n",
 						pod->port, pod->onoff, pod->polarity, pod->type, pod->time_delay, 
-							pod->pulse_time, pod->label);
+							pod->pulse_time, pod->reset, pod->label);
 				}
 			}
 			pod++;

@@ -422,17 +422,17 @@ UCHAR get_host_cmd_task(int test)
 					case TEST_IOPORT2:
 						recv_tcp((UCHAR*)&mask,1,1);
 						printf("mask = %d\r\n",mask);
-						for(test_io_num = 0;test_io_num < 40;test_io_num++)
+						for(test_io_num = 0;test_io_num < 6;test_io_num++)
 						{
 
 							rc = ollist_find_data((int)test_io_num,otpp,&oll);
-//							printf("%s %d\r\n",otp->label,otp->port);
+							printf("%s %d\r\n",otp->label,otp->port);
 							otp->onoff = (UCHAR)mask;
 							ollist_insert_data(otp->port,&oll,otp);
 
 							change_output((int)test_io_num, (int)mask);
 //							printf("%d\r\n",test_io_num);
-							usleep(50000);
+							usleep(100000);
 						}
 						break;
 
@@ -953,7 +953,7 @@ void basic_controls(UCHAR cmd)
 			rc = ollist_find_data(index,otpp,&oll);
 			otp->onoff = 1;
 			ollist_insert_data(otp->port,&oll,otp);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+	//		printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_output(HEADLAMP, 1);
 
 			index = RUNNINGLIGHTS;
@@ -1020,55 +1020,22 @@ void basic_controls(UCHAR cmd)
 // and record the event in llist
 UCHAR monitor_input_task(int test)
 {
-	I_DATA *itp;
-	I_DATA **itpp = &itp;
+	static I_DATA *itp;
+	static I_DATA **itpp = &itp;
 
-	O_DATA *otp;
-	O_DATA **otpp = &otp;
+	static O_DATA *otp;
+	static O_DATA **otpp = &otp;
 
 //	RI_DATA rp;
 //	RI_DATA *rtp = &rp;
 
-	int status = -1;
-	int bank, index;
-	UCHAR result,result2, mask, mask2;
-	int onoff,i, rc;
+	static int status = -1;
+	static int bank, index;
+	static UCHAR result,result2, mask, mask2, onoff;
+	static int i, rc;
+	
 
-#if 0
-
-	typedef struct o_data
-	{
-		char label[20];
-		UCHAR port;
-		UCHAR onoff;							  // 1 of on; 0 if off
-		UCHAR type;
-		UINT time_delay;
-		UCHAR pulse_time;
-	} O_DATA;
-
-/*
-type:
-0) regular - on/off state doesn't change until user tells it to
-1) on for time delay seconds and then it goes back off
-2) goes on/off at a pulse_time rate until turned off again
-4) goes on/off at pulse_time rate for time_delay seconds and then back off
-5) toggle switch realized in momentary push-buton: push & release of a
-	momentary push-button turns bit on or off
-*/
-	while(1)
-	{
-		uSleep(0,TIME_DELAY);
-	}
-
-	problem: if more than 1 button is pushed in same bank or diff bank?
-
-		while(TRUE)
-	{
-		pthread_mutex_lock( &io_mem_lock);
-		for(i = 0;i < NUM_PORTS;i++)
-			result[i] = InPortByte(i);
-		pthread_mutex_unlock( &io_mem_lock);
-#endif
+//	TODO: what if more than 1 button is pushed in same bank or diff bank at same time?
 
 		pthread_mutex_lock( &io_mem_lock);
 		inportstatus[0] =  ~InPortByteA();
@@ -1117,17 +1084,66 @@ type:
 					illist_find_data(index,itpp,&ill);
 
 					rc = ollist_find_data(itp->affected_output,otpp,&oll);
-//					printf("%d %d %s\r\n",rc,otp->port,otp->label);
 
-					if((otp->type == 1 && otp->polarity == 0) || (otp->type == 0))
+/*
+typedef struct o_data
+{
+	char label[OLABELSIZE];
+	UCHAR port;
+	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
+							// 1 - on input turns output off; off input turns output on
+	UCHAR type;				// see below
+	UINT time_delay;
+	UCHAR pulse_time;
+	UCHAR reset;			// 
+} O_DATA;
+
+
+type:
+0) regular - on/off state responds to assigned input (affected_output)
+1) goes on/off and stays that way until some other event occurs
+	this is useful for a lock-out condition (use reset field)
+2) on for time delay seconds and then it goes back off
+3) goes on/off at a pulse_time rate (ms) until turned off again
+4) goes on/off at pulse_time rate for time_delay seconds and then back off
+
+*/
+					printf("%s\r\n",otp->label);
+
+					if(otp->type == 1)
 					{
-						if(otp->polarity == 0)
+						if(otp->reset == 0)
+						{
+							otp->reset = 1;
+
+/*
+							if(otp->polarity == 1)
+								otp->onoff = (otp->onoff == 1?0:1);
+							else	
+								otp->onoff = (otp->onoff == 1?1:0);
+*/
+							otp->onoff = (otp->onoff == 1?0:1);
+							change_output(otp->port,otp->onoff);
+							ollist_insert_data(otp->port,&oll,otp);
+							printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
+									otp->polarity);
+						}	
+						else if(otp->reset == 1)
+						{
+							otp->reset = 0;
+							printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
+									otp->polarity);
+						}
+					}else
+					{
+						if(otp->polarity == 1)
+							otp->onoff = (onoff == 1?0:1);
+						else	
 							otp->onoff = onoff;
-						else otp->onoff == (onoff == 1?0:1);
+						ollist_insert_data(otp->port,&oll,otp);
+						change_output(otp->port,otp->onoff);
 					}
-					
-					ollist_insert_data(otp->port,&oll,otp);
-					change_output(otp->port,otp->onoff);
 
 					rt_file_data[rt_fd_ptr++] = otp->port;
 					rt_file_data[rt_fd_ptr++] = otp->onoff;
@@ -1149,7 +1165,8 @@ type:
 				inportstatus[bank] = result;
 
 			}
-			uSleep(0,TIME_DELAY/200);
+			uSleep(0,TIME_DELAY/50);
+//			uSleep(0,TIME_DELAY/2);
 			if(shutdown_all)
 			{
 //				printf("done mon input tasks\r\n");
@@ -1665,6 +1682,7 @@ UCHAR tcp_monitor_task(int test)
 			if(global_socket > 0)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
+			printf("connected to socket: \r\n");
 			tcp_connected_time = 0;
 
 /*

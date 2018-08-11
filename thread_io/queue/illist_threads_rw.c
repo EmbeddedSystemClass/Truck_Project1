@@ -226,9 +226,10 @@ int illist_show(illist_t *llistp)
 		{
 //			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
 				cur->datap->affected_output, cur->datap->label);
-			memset(list_buf,0,40);	
+			memset(list_buf,0,50);
 			sprintf(list_buf,"port: %2d aff: %2d %s",cur->datap->port, \
 				cur->datap->affected_output, cur->datap->label);
+/*
 			 ptr = list_buf;
 			 iptr = 0;
 			 do
@@ -236,6 +237,8 @@ int illist_show(illist_t *llistp)
 			 	iptr++;
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
+*/
+			send_tcp((UCHAR *)list_buf,50);
 			printString2(list_buf);
 		}
 	}

@@ -11,7 +11,7 @@
 #include <string.h>
 //#define DEVICE "/dev/ide/host0/target0/lun0/disc"
 //#define DEVICE "/mnt/cf/sched.log"
-#define DEVICE "schedlog.dat"
+#define DEVICE "sched.log"
 
 int main(void)
 {
@@ -19,7 +19,7 @@ int main(void)
 	unsigned char buf[200];
 	long file_len;
 	int i;
-	
+
 	file_desc = open(DEVICE, O_RDWR);
 	if(file_desc < 0)
 	{

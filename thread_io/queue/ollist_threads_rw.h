@@ -37,6 +37,7 @@ typedef struct o_data
 	UCHAR type;				// see below
 	UINT time_delay;
 	UCHAR pulse_time;
+	UCHAR reset;
 } O_DATA;
 
 /*
