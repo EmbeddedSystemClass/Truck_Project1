@@ -29,13 +29,15 @@ int main(int argc, char *argv[])
 	int num_valids = 0;
 
 	int i;
+	int comma_delim;
 	size_t isize;
 	size_t osize;
 	char errmsg[60];
 
+	comma_delim = 0;
 	if(argc < 2)
 	{
-		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
+		printf("usage: %s [idata filename][odata filename][csv format]\n",argv[0]);
 		return 1;
 	}
 	else if(argc < 3)
@@ -43,6 +45,12 @@ int main(int argc, char *argv[])
 		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
 		file2 = 0;
 	}
+	else if(argc > 3)
+	{
+		comma_delim = 1;
+		printf("outputing odata as csv format\n");
+	}
+		
 	fptr1 = argv[1];
 	fptr2 = argv[2];
 
@@ -90,8 +98,15 @@ int main(int argc, char *argv[])
 		for(i = 0;i < isize/sizeof(I_DATA);i++)
 		{
 			if(pid->label[0] != 0)
-				printf("%d\t%d\t\t\t%s\n",pid->port,pid->affected_output,pid->label);
-			pid++;
+
+				if(comma_delim == 1)
+				{
+					printf("%d,%d,%s\n",pid->port,pid->affected_output,pid->label);
+				}else
+				{
+					printf("%d\t%d\t\t\t%s\n",pid->port,pid->affected_output,pid->label);
+				}
+				pid++;
 		}
 
 		pid = curr_i_array;
@@ -121,12 +136,23 @@ int main(int argc, char *argv[])
 		pod = curr_o_array;
 
 		printf("\n");
-		printf("port\tonoff\ttype\ttime_delay\tpulse_time\tlabel\n\n");
+		printf("port\tonoff\tpolarity\ttype\ttime_delay\tpulse_time\tlabel\n\n");
 		for(i = 0;i < osize/sizeof(O_DATA);i++)
 		{
 			if(pod->label[0] != 0)
-				printf("%d\t%d\t%d\t%d\t\t%d\t\t%s\n",
-					pod->port, pod->onoff, pod->type, pod->time_delay, pod->pulse_time, pod->label);
+			{
+				if(comma_delim == 1)
+				{
+					printf("%d,%d,%d,%d,%d,%d,%s\n",
+						pod->port, pod->onoff, pod->polarity, pod->type, pod->time_delay, 
+							pod->pulse_time, pod->label);
+				}else
+				{
+					printf("%d\t%d\t%d\t\t%d\t%d\t\t%d\t\t%s\n",
+						pod->port, pod->onoff, pod->polarity, pod->type, pod->time_delay, 
+							pod->pulse_time, pod->label);
+				}
+			}
 			pod++;
 		}
 

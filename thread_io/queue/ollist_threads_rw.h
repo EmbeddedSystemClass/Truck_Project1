@@ -30,20 +30,23 @@ typedef struct o_data
 {
 	char label[OLABELSIZE];
 	UCHAR port;
-	UCHAR onoff;			// 1 of on; 0 if off
-	UCHAR type;
+	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
+							// 1 - on input turns output off; off input turns output on
+							// but if type is 1 then this tells whether to reset or not
+	UCHAR type;				// see below
 	UINT time_delay;
 	UCHAR pulse_time;
 } O_DATA;
 
 /*
 type:
-0) regular - on/off state doesn't change until user tells it to
-1) on for time delay seconds and then it goes back off
-2) goes on/off at a pulse_time rate (ms) until turned off again
+0) regular - on/off state responds to assigned input (affected_output)
+1) goes on/off and stays that way until some other event occurs
+	this is useful for a lock-out condition 
+2) on for time delay seconds and then it goes back off
+3) goes on/off at a pulse_time rate (ms) until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
-5) toggle switch realized in momentary push-buton: push & release of a
-	momentary push-button turns bit on or off
 */
 
 typedef struct ollist_node {

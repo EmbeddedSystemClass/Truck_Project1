@@ -383,8 +383,8 @@ UCHAR get_host_cmd_task(int test)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			tcp_connected_time = 0;
-//			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
-//					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != TEST_IOPORT && cmd != TEST_IOPORT2)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
+					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != TEST_IOPORT && cmd != TEST_IOPORT2)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
 //			printf("cmd:%s\r\n",cmd_array[cmd].cmd_str);
@@ -1062,7 +1062,7 @@ type:
 
 	problem: if more than 1 button is pushed in same bank or diff bank?
 
-			while(TRUE)
+		while(TRUE)
 	{
 		pthread_mutex_lock( &io_mem_lock);
 		for(i = 0;i < NUM_PORTS;i++)
@@ -1119,7 +1119,13 @@ type:
 					rc = ollist_find_data(itp->affected_output,otpp,&oll);
 //					printf("%d %d %s\r\n",rc,otp->port,otp->label);
 
-					otp->onoff = onoff;
+					if((otp->type == 1 && otp->polarity == 0) || (otp->type == 0))
+					{
+						if(otp->polarity == 0)
+							otp->onoff = onoff;
+						else otp->onoff == (onoff == 1?0:1);
+					}
+					
 					ollist_insert_data(otp->port,&oll,otp);
 					change_output(otp->port,otp->onoff);
 

@@ -386,3 +386,4 @@ cable coming from ADC conn. looking at pin side with cable to bottom:
 AVDD	14	12	10	8	6	4	2	0	(0 & 1 are used by knobs on front of panel)
 AVSS	13	15	11	9	7	5	3	1
 
+

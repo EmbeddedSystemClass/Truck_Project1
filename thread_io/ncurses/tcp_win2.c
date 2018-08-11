@@ -307,6 +307,7 @@ int tcp_win2(int cmd)
 		        put_sock(&cmd2,1,1,errmsg);
 				cmd2 = 0;
 		        put_sock(&cmd2,1,1,errmsg);
+		        break;
 #if 0
 				ioport = 0;
 				onoff = 0;

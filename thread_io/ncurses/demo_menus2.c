@@ -1071,6 +1071,8 @@ call_Tool(int code)
 	off_t fsize;
 	int buf_bytes;
 	int buf_bytes2;
+	// TODO: make all these toggle
+	int lights_on, starter_on, acc_on, fuel_on, fan_on;
 
 	switch (code)
 	{
@@ -1229,12 +1231,21 @@ call_Tool(int code)
 		case 10:
 			if(tcp_connected)
 			{
-				cmd = SHUTDOWN;
+				cmd = OFF_FAN;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}
-			show_status2("SHUTDOWN","",code,0,0,0);
+			show_status2("FAN OFF","",code,cmd,0,3);
 			break;
-
+/*
+		case 10:
+			if(tcp_connected)
+			{
+				cmd = ON_LIGHTS;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}
+			show_status2("lights on","",code,0,0,0);
+			break;
+*/
 		case 11:
 			if(tcp_connected)
 			{

@@ -111,13 +111,16 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-all : init_db list_db 
+all : init_db list_db edit_db
 
 init_db.o: ncurses/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/init_db.c
 
 list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
+
+edit_db.o: ncurses/edit_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/edit_db.c
 
 config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
 	${CC} -DMAKE_TARGET -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
@@ -128,6 +131,9 @@ init_db: config_file.o init_db.o
 list_db: config_file.o list_db.o 
 	${CC} list_db.o config_file.o  -o list_db
 
+edit_db: config_file.o edit_db.o 
+	${CC} edit_db.o config_file.o  -o edit_db
+
 clean :
-	rm -f *.o *~ *# core init_db list_db
+	rm -f *.o *~ *# core init_db list_db edit_db
 

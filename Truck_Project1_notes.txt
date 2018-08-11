@@ -243,83 +243,7 @@ hard-coded in for whatever is needed.
 Don't use the functon pointer array in the thread_io, just have dedicated threads
 and have the serial port one with the highest priority.
 
-Order another 2GB SD card for the TS-7800 to back up OS on.
-
 Get all the ssh's to use keygen instead of passwords
-
-Add extra behavoir info to the I_DATA struct:
-
-typedef struct o_data
-{
-	char label[20];
-	UCHAR port;
-	UCHAR onoff;			// 1 of on; 0 if off
-	UCHAR type;
-	UINT time_delay;
-	UCHAR pulse_time;
-} O_DATA;
-
-typedef struct i_data
-{
-	char label[ILABELSIZE];
-	UCHAR port;
-	UCHAR affected_output;
-	UINT temp;
-} I_DATA;
-
-type:
-0) regular - on/off state doesn't change until user tells it to
-1) on for time delay seconds and then it goes back off
-2) goes on/off at a pulse_time rate until turned off again
-4) goes on/off at pulse_time rate for time_delay seconds and then back off
-5) toggle switch realized in momentary push-buton: push & release of a 
-	momentary push-button turns bit on or off
-
-1 task scans all the outputs using ollist_find_data and if type != 0 && onoff == 1 then
-read last_time_state_changed (UINT) in current O_DATA and check against current time using localtime
-in this case onoff == 1 means its active 
-
-
-10/16/17
-made separate make files (make_db) to compile init_db & list_db on both host and target side
-/thread_io (target) - sched
-/thread_io/ncurses (host) - client
-
-did away with curr_i_array & curr_o_array and just used the ill & oll linked lists
-menus:
-1) Host
-	("Open"),						  // 0
-	("Save File"),					  // 1
-	("Edit idata"),					  // 2
-	("Edit odata"),					  // 3
-	("Exit"),						  // 4
-	("Shift Left"),					  // 5
-	("Shift Right"),				  // 6
-
-2) Target
-	("Open"),						  // 0
-	("Save File"),					  // 1
-	("Save As"),					  // 2
-	("Delete"),						  // 3
-	("List idata"),					  // 4
-	("List odata"),					  // 5
-	("Send idata"),					  // 6
-	("Send odata"),					  // 7
-	("Show All"),					  // 8
-
-3) Tool
-	"Connect"),					// 0
-	"Disconnect"),				// 1
-	"Enable Start"),			// 3	close ckt to start relay for time delay x
-										turn on fuel pump
-										turn on fan after time delay y
-	"On Fuel Pump"),			// 4
-	"Off Fuel Pump"),			// 5
-	"On Fan"),					// 6
-	"Off Fan"),					// 7
-	"Shutdown"),				// 8	turn of all
-	"Clear Screen"),			// 9
-
 
 got the following strange error:
 	A clock IOB / clock component pair have been found that are not placed at an optimal clock IOB /
@@ -366,6 +290,12 @@ or use solar panels (or switch between both)
 
 sched needs a config file so it knows which dat files were used last instead
 of just idata & odata which are loaded by default
+
+PIC24 in monster box will ask for user password before starting mtr. If seat switch
+is opened (driver leaves seat) or if lock-out relay is energized (E-Stop button pushed)
+then user will have to reenter password. So the IO box will send a message to the PIC24
+telling it to go back to password mode. When password is entered, screen goes to normal
+mode and msg is sent to IO box allowing the motor to start.
 
 **************** nice to have's: ****************
 

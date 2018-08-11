@@ -24,7 +24,7 @@ GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 #####################################################
 CC = ${GNUCC}
 
-all : init_db list_db
+all : init_db list_db conv_db
 
 config_file.o: config_file.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
 	${CC} -DMAKE_TARGET ${CC_FLAGS} ${INCLUDE_PATHS} -c config_file.c
@@ -35,11 +35,17 @@ init_db.o: init_db.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
 list_db.o: list_db.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c list_db.c
 
+conv_db.o: conv_db.c ../queue/illist_threads_rw.h ../queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c conv_db.c
+
 init_db: config_file.o init_db.o
 	${CC} init_db.o config_file.o -o init_db
 
 list_db: config_file.o list_db.o
 	${CC} list_db.o config_file.o -o list_db
 
+conv_db: config_file.o conv_db.o
+	${CC} conv_db.o config_file.o -o conv_db
+
 clean :
-	rm -f *.o *~ *# core init_db list_db
+	rm -f *.o *~ *# core init_db list_db conv_db
