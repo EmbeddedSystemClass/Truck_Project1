@@ -172,7 +172,7 @@ int tcp_win2(int cmd)
 	mvwprintw(twin,status_line,FUEL_PUMP_STATUS-11,"FUEL PUMP:");
 	mvwprintw(twin,status_line,FAN_STATUS-5,"FAN:");
 	mvwprintw(twin,error_line1,1,"F2 - quit; F3 - start; F4 - acc; F5 - fuel; F6 - fan; F7 - all off");
-	mvwprintw(twin,error_line2,1,"F8 - clear screen; F9 - start seq");
+	mvwprintw(twin,error_line2,1,"                                   F8 - clear scr; F9 - start seq");
 
 //	mvwprintw(twin,2,2,"starting server...");
 	wrefresh(twin);
@@ -264,12 +264,16 @@ int tcp_win2(int cmd)
 		        break;
 
 			case KEY_F(8):
+				cmd2 = START_SEQ;
+				put_sock(&cmd2,1,1,errmsg);
+/*
 				cmd2 = TEST_IOPORT;
 				onoff = 1;
 				mvwprintw(twin,8,30,"port: %02d onoff: %d",ioport,onoff);
 				put_sock(&cmd2,1,1,errmsg);
 				put_sock(&ioport,1,1,errmsg);				
 				put_sock(&onoff,1,1,errmsg);
+*/
 				break;
 
 #if 0
@@ -318,8 +322,8 @@ int tcp_win2(int cmd)
 		if(tcp_connected == 1)
 		{
 			rc = get_sock((UCHAR*)buffer,10,0,errmsg);
-//			if(rc < 0 && errno != 11)
-			if(rc < 0)
+			if(rc < 0 && errno != 11)
+//			if(rc < 0)
 			{
 				x = 1;
 				y = height - 2;
@@ -331,8 +335,8 @@ int tcp_win2(int cmd)
 			if(errno == 11)
 			{
 				noerrors++;
-//				mvwprintw(twin,error_line2,1,"%s %d  %d           ",errmsg,errno,noerrors);
-//				mvwprintw(twin,error_line2,1,"row: %02d col: %02d",y,x);
+//				mvwprintw(twin,error_line2,1,"%s %d            ",errmsg,errno);
+				mvwprintw(twin,error_line2,1,"row: %02d col: %02d",y,x);
  				wrefresh(twin);
 				errno = 0;
 			}else 

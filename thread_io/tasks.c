@@ -90,6 +90,7 @@ static int change_output(int index, int onoff);
 static int change_input(int index, int onoff);
 static int uSleep(time_t sec, long nanosec);
 static void basic_controls(UCHAR code);
+static void set_output(int type, int onoff);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -99,11 +100,9 @@ static int timer_inc2;
 
 //static double program_start_time;
 static double diff;
-static int starter_on;
 static int tcp_window_on;
 static int live_window_on;
 static int engine_running;
-static int fan_delay;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
 
@@ -186,13 +185,14 @@ static void send_live_code(UCHAR cmd)
 	if(live_window_on == 0)
 		return;
 
-	UCHAR status_line[5];
+	UCHAR status_line[10];
 
+	memset(status_line,0,10);
 	status_line[0] = cmd;
 	status_line[1] = running_seconds;
 	status_line[2] = running_minutes;
 	status_line[3] = running_hours;
-	send_tcp((UCHAR*)status_line,4);
+	send_tcp((UCHAR*)status_line,10);
 }
 
 /*********************************************************************/
@@ -306,9 +306,7 @@ UCHAR get_host_cmd_task(int test)
 	osize = sizeof(O_DATA);
 	osize *= i;
 
-	starter_on = 0;
 	engine_running = 0;
-	fan_delay = 0;
 	running_hours = running_minutes = running_seconds = 0;
 	trunning_hours = trunning_minutes = trunning_seconds = 0;
 	
@@ -348,20 +346,26 @@ UCHAR get_host_cmd_task(int test)
 
 // flash green and red led's to signal we are up (if LCD screen not attached)
 
-	for(i = 0;i < 20;i++)
+	for(i = 0;i < 10;i++)
 	{
 		red_led(1);
-		usleep(20000);
+		usleep(30000);
 		red_led(0);
 		green_led(1);
-		usleep(20000);
+		usleep(30000);
+		green_led(0);
+		red_led(1);
+		usleep(30000);
+		red_led(0);
+		green_led(1);
+		usleep(30000);
 		green_led(0);
 	}
 
 	myprintf1("start....\0");
 
 	myprintf1("sched v1.15\0");
-	printf("sched v1.15\r\n");
+//	printf("sched v1.15\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
 	odometer = 0;
@@ -369,44 +373,38 @@ UCHAR get_host_cmd_task(int test)
 	mask = 1;
 
 #if 0
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		ollist_find_data(i,otpp,&oll);
-		printf("%d %d\r\n",otp->port,otp->onoff);
-		usleep(5000);
-//		change_output(otp->port,otp->onoff);
-		change_output(otp->port,0);
-		usleep(5000);
-	}
-
 	for(i = 0;i < 40;i++)
 	{
-		change_input(i,1);
-		usleep(50000);
-		change_input(i,0);
-		usleep(50000);
+		ollist_find_data(i,otpp,&oll);
+//		printf("%d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
+		if(otp->polarity == 1)
+		{
+			otp->onoff = 1;
+			change_output(otp->port,otp->onoff);
+		}
+		otp->reset = 0;
+		ollist_insert_data(i,&oll,otp);
+		
+		usleep(10000);
+//		change_output(otp->port,otp->onoff);
+//		change_output(otp->port,0);
+//		usleep(5000);
 	}
 
-
-	shutdown_all = 1;
-
-	for(i = 0;i < 20;i++)
+	for(i = 0;i < 4;i++)
 	{
-		red_led(1);
-		usleep(20000);
-		red_led(0);
-		green_led(1);
-		usleep(20000);
-		green_led(0);
-	}
-	printf("done\r\n");
-	usleep(1000000);
-	printf("exiting program...\r\n");
-
-	reboot_on_exit = 1;
-	return 1;
+		ollist_find_data(i,otpp,&oll);
+		printf("port: %d onoff: %d type: %d reset %d\ pol: %d\r\n",otp->port,otp->onoff,
+			otp->type,otp->reset,otp->polarity);
+	}	
 #endif
-
+/*
+	for(i = 0;i < 10;i++)
+	{
+		change_output(i,0);
+		usleep(500000);
+	}
+*/
 	while(TRUE)
 	{
 		cmd = 0;
@@ -442,23 +440,32 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case TEST_IOPORT:
-						for(i = 0;i < 40;i++)
+						change_input(1,1);
+#if 0
+						usleep(5000000);
+						for(i = 0;i < 3;i++)
 						{
 							change_input(i,1);
-//							usleep(2000000);	// 2 seconds
+//							printf("%d\r\n",i);
+							usleep(5000000);	// 2 seconds
+//							usleep(1000000);	// 1 seconds
 //							usleep(500000);		// 1/2 seconds
 //							usleep(250000);		// 1/4 seconds
-							usleep(125000);		// 1/8 seconds
+//							usleep(125000);		// 1/8 seconds
+//							usleep(62500);		// 1/16 seconds
 							change_input(i,0);
-							usleep(5000);	// must have at least 3ms between on/off's
+							usleep(600000);	// must have at least 3ms between on/off's
 						}
+#endif
 						break;
 
 					case TEST_IOPORT2:
-						change_input(0,1);
+						change_input(2,1);
+/*
 						usleep(100000);
 						change_input(0,0);
 						printf("\r\n");
+*/
 						break;
 /*
 						for(test_io_num = 0;test_io_num < 6;test_io_num++)
@@ -483,12 +490,10 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case LIVE_WINDOW_ON:
-						printf("live window on\r\n");
 						live_window_on = 1;
 						break;
 
 					case LIVE_WINDOW_OFF:
-						printf("live window off\r\n");
 						live_window_on = 0;
 						break;
 
@@ -807,17 +812,17 @@ exit_program:
 							if(reboot_on_exit == 1)
 							{
 								myprintf1("exit to shell\0");
-								printf("exit to shell\r\n");
+//								printf("exit to shell\r\n");
 							}	
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("rebooting...\0");
-								printf("rebooting...\r\n");
+//								printf("rebooting...\r\n");
 							}
 							else if(reboot_on_exit == 3)
 							{
 								myprintf1("shutting down...\0");
-								printf("shutting down...\r\n");
+//								printf("shutting down...\r\n");
 							}
 						}
 
@@ -919,30 +924,61 @@ exit_program:
 	return test + 1;
 }
 /*********************************************************************/
-static int change_input(int index, int onoff)
+static void set_output(int type, int onoff)
 {
-	int bank;
-	UCHAR mask = 1;
-	UCHAR state = 0;
-	UCHAR pstate = 0;
 
-	bank = real_banks[index].bank;
-	index = real_banks[index].index;
-
-	mask <<= index;
-
-	pstate = state;
-
-	if(onoff)
-		state |= mask;
-	else
-		state &= ~mask;
-
-//	printf("change input: state: %02x %02x bank: %d mask: %02x\r\n",pstate,state,bank,mask);
-
-	fake_inportstatus2[bank] = state;
+	switch(type)
+	{
+		case 0:
+			if(otp->polarity == 1)
+				otp->onoff = (onoff == 1?0:1);
+			else	
+				otp->onoff = onoff;
+//			printf("0 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
+			change_output(otp->port,otp->onoff);
+			break;
+		case 1:
+			if(otp->reset == 0)
+			{
+//				printf("1a port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
+				otp->reset = 1;
+//				if(otp->polarity == 0)
+				TOGGLE_OTP;
+				change_output(otp->port,otp->onoff);
+//							printf("1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+//										otp->onoff, otp->reset, otp->polarity);
+			}	
+			else if(otp->reset == 1)
+			{
+//				if(otp->polarity == 1)
+//					TOGGLE_OTP;
+				otp->reset = 0;
+//				printf("1b port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
+			}
+			break;
+		case 2:
+			if(otp->reset == 0)
+			{
+				otp->reset = 1;
+				otp->time_left = otp->time_delay;
+//							otp->onoff = onoff;
+				TOGGLE_OTP;
+				change_output(otp->port,onoff);
+//				printf("2 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
+			}
+			break;
+		case 3:
+			break;
+		case 4:
+			break;
+		default:
+			break;
+	}
 }
-
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
 // and if an output applies to that input, change the output
@@ -1011,58 +1047,10 @@ UCHAR monitor_input_task(int test)
 
 				rc = ollist_find_data(itp->affected_output,otpp,&oll);
 
-//					printf("%s\r\n",otp->label);
+				set_output(otp->type, onoff);
 
-				switch(otp->type)
-				{
-					case 0:
-						if(otp->polarity == 1)
-//								TOGGLE_OTP()
-							otp->onoff = (onoff == 1?0:1);
-						else	
-							otp->onoff = onoff;
-						ollist_insert_data(otp->port,&oll,otp);
-						change_output(otp->port,otp->onoff);
-//							printf("port: %d onoff %d pol: %d\r\n",otp->port,otp->onoff,otp->polarity);
-						break;
-					case 1:
-						if(otp->reset == 0)
-						{
-							otp->reset = 1;
+				ollist_insert_data(otp->port,&oll,otp);
 
-							otp->onoff = (otp->onoff == 1?0:1);
-
-							change_output(otp->port,otp->onoff);
-							ollist_insert_data(otp->port,&oll,otp);
-//								printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
-//										otp->polarity);
-						}	
-						else if(otp->reset == 1)
-						{
-							otp->reset = 0;
-//								printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
-//										otp->polarity);
-						}
-					case 2:
-						if(otp->reset == 0)
-						{
-							otp->reset = 1;
-							otp->time_left = otp->time_delay;
-							otp->onoff = onoff;
-//								TOGGLE_OTP;
-							ollist_insert_data(otp->port,&oll,otp);
-							change_output(otp->port,onoff);
-//								printf("port: %d onoff: %d reset: %d\r\n", otp->port, 
-//									otp->onoff, otp->reset);
-						}
-						break;
-					case 3:
-						break;
-					case 4:
-						break;
-					default:
-						break;
-				}
 				inportstatus[bank] = result;
 //				printf("leave 1: %02x\r\n\r\n",inportstatus[bank]);
 			}
@@ -1079,6 +1067,30 @@ UCHAR monitor_input_task(int test)
 	return 1;
 }
 
+/*********************************************************************/
+static int change_input(int index, int onoff)
+{
+	int bank;
+	UCHAR mask = 1;
+	UCHAR state = 0;
+
+	bank = real_banks[index].bank;
+	index = real_banks[index].index;
+
+	mask <<= index;
+
+	if(onoff)
+	{
+		fake_inportstatus2[bank] |= mask;
+	}
+	else
+	{
+		fake_inportstatus2[bank] &= ~mask;
+	}
+
+//	printf("change input: state: %02x %02x bank: %d mask: %02x\r\n",pstate,state,bank,mask);
+
+}
 /*********************************************************************/
 // do the same thing as monitor_input_tasks but with the fake arrays
 // set by change_inputs()
@@ -1111,6 +1123,7 @@ UCHAR monitor_fake_input_task(int test)
 				mask = result ^ fake_inportstatus1[bank];
 //				printf("enter 2: %02x\r\n",fake_inportstatus1[bank]);
 
+//				printf("mask: %02x\r\n",mask);
 				if(mask > 0x80)
 				{
 					myprintf1("bad mask\0");
@@ -1122,10 +1135,12 @@ UCHAR monitor_fake_input_task(int test)
 				if((mask & result) == mask)
 				{
 					onoff = ON;
+	 				fake_inportstatus2[bank] |= mask;
 				}
 				else
 				{
 					onoff = OFF;
+	 				fake_inportstatus2[bank] &= ~mask;
 				}
 
 				for(i = 0;i < 40;i++)
@@ -1139,61 +1154,13 @@ UCHAR monitor_fake_input_task(int test)
 
 				rc = ollist_find_data(itp->affected_output,otpp,&oll);
 
-//					printf("%s\r\n",otp->label);
+				set_output(otp->type, onoff);
 
-				switch(otp->type)
-				{
-					case 0:
-						if(otp->polarity == 1)
-//								TOGGLE_OTP()
-							otp->onoff = (onoff == 1?0:1);
-						else	
-							otp->onoff = onoff;
-						ollist_insert_data(otp->port,&oll,otp);
-						change_output(otp->port,otp->onoff);
-//							printf("port: %d onoff %d pol: %d\r\n",otp->port,otp->onoff,otp->polarity);
-						break;
-					case 1:
-						if(otp->reset == 0)
-						{
-							otp->reset = 1;
+				ollist_insert_data(otp->port,&oll,otp);
 
-							otp->onoff = (otp->onoff == 1?0:1);
+ 				fake_inportstatus1[bank] = fake_inportstatus2[bank];
 
-							change_output(otp->port,otp->onoff);
-							ollist_insert_data(otp->port,&oll,otp);
-//								printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
-//										otp->polarity);
-						}	
-						else if(otp->reset == 1)
-						{
-							otp->reset = 0;
-//								printf("onoff: %d reset: %d pol: %d\r\n", otp->onoff, otp->reset, 
-//										otp->polarity);
-						}
-					case 2:
-						if(otp->reset == 0)
-						{
-							otp->reset = 1;
-							otp->time_left = otp->time_delay;
-							otp->onoff = onoff;
-//								TOGGLE_OTP;
-							ollist_insert_data(otp->port,&oll,otp);
-							change_output(otp->port,onoff);
-//								printf("port: %d onoff: %d reset: %d\r\n", otp->port, 
-//									otp->onoff, otp->reset);
-						}
-						break;
-					case 3:
-						break;
-					case 4:
-						break;
-					default:
-						break;
-				}
 
-				fake_inportstatus1[bank] = result;
-				fake_inportstatus2[bank] = result;
 //				printf("leave 2: %02x %02x\r\n\r\n",fake_inportstatus1[bank],fake_inportstatus2[bank]);
 			}
 		}
@@ -1258,7 +1225,10 @@ UCHAR timer_task(int test)
 	uSleep(0,TIME_DELAY);
 	UCHAR buffer[50];
 	char tempx[20];
+	int index = 0;
+	int bank = 0;
 	int fp;
+	UCHAR mask;
 
 	while(TRUE)
 	{
@@ -1273,17 +1243,6 @@ UCHAR timer_task(int test)
 // this is a kludge until I have time to redesign the whole mess from the ground up
 /// using a much better pthread library
 
-		if(starter_on > 0)
-		{
-			if(++starter_on > 10)
-			{
-				starter_on = 0;
-				change_output(STARTER, 0);
-				myprintf1("STARTER OFF\0");
-				send_live_code(STARTER_OFF);
-			}
-		}
-
 		if(engine_running > 0)
 		{
 			if(++running_seconds > 59)
@@ -1296,6 +1255,7 @@ UCHAR timer_task(int test)
 						running_hours = 0;
 				}
 			}
+/*
 			if(fan_delay > 0)
 			{
 				if(++fan_delay > 30)
@@ -1305,6 +1265,7 @@ UCHAR timer_task(int test)
 					fan_delay = 0;
 				}
 			}
+*/
 		}
 
 		odometer++;
@@ -1360,9 +1321,31 @@ UCHAR timer_task(int test)
 					TOGGLE_OTP;
 					change_output(i,otp->onoff);
 					otp->reset = 0;
+					ollist_insert_data(otp->port,&oll,otp);
+					// if this is a result of a fake input, we turn it 
+					// off here but the fake input has know way of
+					// knowing it got turned off (toggled)
+					// so look it up and reset it in the
+					// fake_inportstatus if its a result
+					// of implicit or explicit input
+					mask = 1;
+					bank = real_banks[otp->port].bank;
+					index = real_banks[otp->port].index;
+					mask <<= index;
+
+					fake_inportstatus1[bank] &= ~mask;
+					fake_inportstatus2[bank] &= ~mask;
+/*
+					if(otp->onoff)
+						fake_inportstatus1[bank] |= mask;
+					else
+						fake_inportstatus1[bank] &= ~mask;
+*/
+//					printf("cd1: %02x %02x %02x %d %d\r\n",fake_inportstatus1[bank],
+//						fake_inportstatus2[bank],mask,bank,index);
 				}
-				ollist_insert_data(i,&oll,otp);
-//					printf("%d %s\r\n",otp->time_left,otp->label);
+//				printf("cd2: %02x %02x\r\n",fake_inportstatus1[0], fake_inportstatus2[0]);
+//				printf("%d %s\r\n",otp->time_left,otp->label);
 			}
 		}
 
@@ -1481,6 +1464,7 @@ UCHAR serial_recv_task(int test)
 	no_serial_buff = 0;
 	memset(errmsg,0,20);
 
+/*
 	while(TRUE)
 	{
 		if(shutdown_all)
@@ -1491,7 +1475,7 @@ UCHAR serial_recv_task(int test)
 		usleep(10000);
 	}
 	uSleep(10,0);
-
+*/
 	if(fd = init_serial() < 0)
 	{
 		myprintf1("can't open comm port 1\0");
@@ -1527,19 +1511,6 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		if(ch != RT_DATA)
 		{
-/*
-basic_controls does any of these:
-	ENABLE_START
-	STARTER_OFF
-	ON_FUEL_PUMP
-	OFF_FUEL_PUMP
-	ON_FAN
-	OFF_FAN
-	ON_ACC
-	OFF_ACC
-	START_SEQ
-	SHUTDOWN
-*/
 			basic_controls(ch);
 		}
 /*
@@ -1565,65 +1536,6 @@ basic_controls does any of these:
 	return 1;
 }
 
-/*********************************************************************/
-// serial receive task
-#if 0
-UCHAR serial_recv_task2(int test)
-{
-	serial_rec = 0;
-	int i;
-	int j = 0;
-	UCHAR ch;
-	int fd;
-	char errmsg[20];
-
-	memset(serial_buff,0,SERIAL_BUFF_SIZE);
-	no_serial_buff = 0;
-	memset(errmsg,0,20);
-
-	uSleep(10,0);
-
-	if(fd = init_serial2() < 0)
-	{
-		myprintf1("can't open comm port 2\0");
-//		printf("can't open comm port 2\n");
-		return 0;
-	}
-
-	while(TRUE)
-	{
-		pthread_mutex_lock( &serial_read_lock2);
-		ch = read_serial2(errmsg);
-//		ch = read_serial2(errmsg);
-		pthread_mutex_unlock(&serial_read_lock2);
-		if(errmsg[0] != 0)
-		{
-			myprintf1(errmsg);
-//			printf("%s\n",errmsg);
-			memset(errmsg,0,20);
-			uSleep(5,0);
-		}else
-//			if(myprintf2("read:\0",ch) == 1)
-//				printf("lcd not init'd\n");
-			if(ch != 0x7e)
-			{
-				if(tcp_window_on == 1)
-					send_tcp((UCHAR *)&ch,1);
-//				printf("%c",ch);
-			}
-			uSleep(0,TIME_DELAY/100000);
-
-		if(shutdown_all)
-		{
-//			printf("shutting down serial task2\r\n");
-			close_serial2();
-//			printf("serial port closed\n");
-			return 0;
-		}
-	}
-	return 1;
-}
-#endif
 
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor
@@ -1727,23 +1639,23 @@ UCHAR tcp_monitor_task(int test)
 		else
 		{
 			myprintf1("Server Waiting...\0");
-			printf("Server Waiting...\r\n");
+//			printf("Server Waiting...\r\n");
 
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, &alen)) < 0)
 			{
 				myprintf1("accept failed\0");
-				printf("accept failed\r\n");
+//				printf("accept failed\r\n");
 				return 0;
 //					exit (1);
 			}
 			if(global_socket > 0)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
-			printf("connected to socket: \r\n");
+//			printf("connected to socket: \r\n");
 			tcp_connected_time = 0;
 			if(shutdown_all)
 			{
-				printf("tcp task closing\r\n");
+//				printf("tcp task closing\r\n");
 				return 0;
 			}
 /*
@@ -1955,16 +1867,9 @@ void basic_controls(UCHAR cmd)
 	{
 		case ENABLE_START:
 			index = STARTER;
-
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			otp->onoff = 1;
-			ollist_insert_data(otp->port,&oll,otp);
-		
-			change_output(STARTER, 1);
-			starter_on = 1;
-
-//			change_input(STARTER,1);
+//			printf("on: %s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(STARTER,1);
 			engine_running = 1;
 			send_live_code(cmd);
 			break;
@@ -1972,12 +1877,8 @@ void basic_controls(UCHAR cmd)
 		case STARTER_OFF:
 			index = STARTER;
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
-
-			change_output(STARTER, 0);
-			starter_on = 0;
+//			printf("off: %s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(STARTER,0);
 			send_live_code(cmd);
 			break;
 
@@ -1985,120 +1886,100 @@ void basic_controls(UCHAR cmd)
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			otp->onoff =1;
-			ollist_insert_data(otp->port,&oll,otp);
-			change_output(ACCON, 1);
+			change_input(ACCON, 1);
 			send_live_code(cmd);
 			break;
 
 		case OFF_ACC:
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 0;
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			ollist_insert_data(otp->port,&oll,otp);
-			change_output(ACCON, 0);
+			change_input(ACCON, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_FUEL_PUMP:
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 1;
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			ollist_insert_data(otp->port,&oll,otp);
-			change_output(FUELPUMP, 1);
+			change_input(FUELPUMP, 1);
 			send_live_code(cmd);
 			break;
 
 		case OFF_FUEL_PUMP:
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 0;
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			ollist_insert_data(otp->port,&oll,otp);
-			change_output(FUELPUMP, 0);
+			change_input(FUELPUMP, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_FAN:
 			index = COOLINGFAN;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 1;
-			ollist_insert_data(otp->port,&oll,otp);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(COOLINGFAN, 1);
+			change_input(COOLINGFAN, 1);
 			send_live_code(cmd);
 			break;
 
 		case OFF_FAN:
 			index = COOLINGFAN;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(COOLINGFAN, 0);
+			change_input(COOLINGFAN, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_LIGHTS:
 			index = HEADLAMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 1;
-			ollist_insert_data(otp->port,&oll,otp);
-	//		printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(HEADLAMP, 1);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(HEADLAMP, 1);
 
 			index = RUNNINGLIGHTS;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 1;
-			ollist_insert_data(otp->port,&oll,otp);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(RUNNINGLIGHTS, 1);
+			change_input(RUNNINGLIGHTS, 1);
 			break;
 
 		case OFF_LIGHTS:
 			index = HEADLAMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(HEADLAMP, 0);
+			change_input(HEADLAMP, 0);
 
 			index = RUNNINGLIGHTS;
 			rc = ollist_find_data(index,otpp,&oll);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_output(RUNNINGLIGHTS, 0);
+			change_input(RUNNINGLIGHTS, 0);
 			break;
 
 		case START_SEQ:
 			engine_running = 1;
-			change_output(STARTER, 1);
-			starter_on = 1;
+			change_input(STARTER, 1);
 			send_live_code(ENABLE_START);
 
-			usleep(100000);
-			change_output(ACCON, 1);
+			usleep(4000);
+			change_input(ACCON, 1);
 			send_live_code(ON_ACC);
 
-			usleep(100000);
-			change_output(FUELPUMP, 1);
+			usleep(4000);
+			change_input(FUELPUMP, 1);
 			send_live_code(ON_FUEL_PUMP);
-			fan_delay = 1;
+
+			usleep(4000);
+			change_input(COOLINGFAN, 1);
+			send_live_code(ON_FUEL_PUMP);
 			break;
 
 		case SHUTDOWN:
 //						myprintf1("shutdown\0");
 			for(i = STARTER;i < PRELUBE+1;i++)
 			{
-				change_output(i, 0);
-				uSleep(0,TIME_DELAY/10000);
+				change_input(i, 0);
+				usleep(50000);
 			}
-			fan_delay = 0;
 			engine_running = 0;
-			starter_on = 0;
 			send_live_code(STARTER_OFF);
 			send_live_code(OFF_FUEL_PUMP);
 			send_live_code(OFF_FAN);
