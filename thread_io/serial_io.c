@@ -21,14 +21,8 @@
 #define MODEMDEVICE "/dev/ttyS1"				  // 7800 uses ttyS1 as the 2nd serial port
 #else
 
-#ifdef CONSOLE_DISABLED
-#warning "CONSOLE_DISLABLED"
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
 #define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
-#else
-#warning "CONSOLE_ENABLED"
-#define MODEMDEVICE "/dev/ttyAM1"				  // 7200 uses ttyAM0 if console disabled
-#endif // end of ifdef CONSOLE_DISABLED
 #endif	// end of ifdef TS_7800
 #endif	// end of ifdef MAKE_SIM
 #define _POSIX_SOURCE 1							  /* POSIX compliant source */
@@ -108,10 +102,6 @@ static void set_blocking (int fd, int should_block)
 /************************************************************************************/
 int init_serial(void)
 {
-#ifndef CONSOLE_DISABLED
-	printf("console enabled\n");
-	return -1;
-#else
 	char buf[LEN];
 	UCHAR test = 0x21;
 	global_handle = -1;
@@ -122,7 +112,6 @@ int init_serial(void)
 		perror(MODEMDEVICE);
 		exit(-1);
 	}
-#endif
 //	printf("global_handle = %d\nse",global_handle);
 
 	if(tcgetattr(global_handle,&oldtio) != 0)	  /* save current port settings */

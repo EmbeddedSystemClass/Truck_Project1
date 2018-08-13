@@ -93,10 +93,8 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes	doesn't compile "// ..comments.."
 # gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
 # gcc3/4 doesn't work with -mapcs-32
-#use this for TS-7200 with console enabled
-#CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
-#use this for TS-7200 with console disabled
-CC_FLAGS = -DCONSOLE_DISABLED -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+#use this for TS-7200
+CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
 #CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
@@ -131,6 +129,9 @@ ioports.o: ioports.c ioports.h
 tasks.o: tasks.c tasks.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c tasks.c
 
+read_sd.o: read_sd.c ../mytypes.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c read_sd.c
+
 serial_io.o: serial_io.c serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
 
@@ -163,6 +164,12 @@ sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o 
 	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 #	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o #rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 
+read_sd: read_sd.o
+	${CC} read_sd.o -o read_sd
+
+#lcd: lcd_func.o
+#	${CC} lcd_func.o -o lcd
+
 clean :
-	rm -f *.o *~ *# core  sched
+	rm -f *.o *~ *# core  sched read_sd
 

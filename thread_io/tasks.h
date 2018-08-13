@@ -1,11 +1,7 @@
 #ifndef __TASKS_H
 #define  __TASKS_H
 
-#if CONSOLE_DISABLED
-#define NUM_TASKS           6
-#else
-#define NUM_TASKS           5
-#endif
+#define NUM_TASKS           	7
 
 #define DEFAULT                 0
 #define TIME_SLICE              1
@@ -19,17 +15,17 @@ enum task_types
 {
 	GET_HOST_CMD,
 	MONITOR_INPUTS,
+	MONITOR_INPUTS2,
 	TIMER,
-	UNUSED,
-#if CONSOLE_DISABLED
+	BUTTONS,
 	SERIAL_RECV,
-#endif
 //	SERIAL_RECV2,
-	TCP_MONITOR
+	TCP_MONITOR,
 } TASK_TYPES;
 
 UCHAR get_host_cmd_task(int test);
 UCHAR monitor_input_task(int test);
+UCHAR monitor_fake_input_task(int test);
 UCHAR timer_task(int test);
 UCHAR read_button_inputs(int test);
 UCHAR serial_recv_task(int test);

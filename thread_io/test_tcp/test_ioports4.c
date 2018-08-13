@@ -153,9 +153,6 @@ int main(int argc, char **argv)
 	char script[200];
 	int scr_ptr;
 
-	printf("test\n");
-	exit(0);
-
 	if(argc > 1)
 	{
 		strcpy(scriptfilename,argv[1]);

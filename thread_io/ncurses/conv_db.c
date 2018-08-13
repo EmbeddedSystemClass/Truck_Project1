@@ -369,6 +369,16 @@ int main(int argc, char *argv[])
 		strcpy(temp,ch);
 //		printf("%s \n",temp);
 
+		pod->time_left = atoi(ch);
+
+		do{
+			ch++;
+		}while(*ch != 0);
+		ch++;
+
+		strcpy(temp,ch);
+//		printf("%s \n",temp);
+
 		pod->pulse_time = atoi(ch);
 
 		do{
@@ -405,8 +415,8 @@ int main(int argc, char *argv[])
 
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
-		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
-				pod->time_delay,pod->pulse_time,pod->reset,pod->label);
+		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
+				pod->time_delay,pod->time_left, pod->pulse_time,pod->reset,pod->label);
 		pod++;
 	}
 

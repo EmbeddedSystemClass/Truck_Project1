@@ -193,6 +193,7 @@ int main(int argc, char *argv[])
 		pod->polarity = 0;
 		pod->type = 0;
 		pod->time_delay = 0;
+		pod->time_left = 0;
 		pod->pulse_time = 0;
 		pod->reset = 0;
 		pod++;
@@ -295,8 +296,8 @@ int main(int argc, char *argv[])
 	pod = curr_o_array;
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
-		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
-				pod->time_delay,pod->pulse_time,pod->reset,pod->label);
+		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
+				pod->time_delay,pod->time_left, pod->pulse_time,pod->reset,pod->label);
 		pod++;
 	}
 

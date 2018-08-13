@@ -278,9 +278,10 @@ int ollist_show(ollist_t *llistp)
 						cur->datap->reset, cur->datap->label);
 */
 			memset(list_buf,0,100);
-			sprintf(list_buf,"%2d  %2d  %2d  %2d  %2d  %2d  %2d      %s",(int)cur->datap->port,\
+			sprintf(list_buf,"%2d  %2d  %2d  %2d  %2d  %2d  %2d  %2d   %s",(int)cur->datap->port,\
 			 (int)cur->datap->onoff, (int)cur->datap->polarity, (int)cur->datap->type,
-			 	 (int)cur->datap->time_delay, (int)cur->datap->pulse_time, (int)cur->datap->reset,
+			 	 (int)cur->datap->time_delay, (int)cur->datap->time_left,
+			 	 	(int)cur->datap->pulse_time, (int)cur->datap->reset,
 			 	  cur->datap->label);
 			 ptr = list_buf;
 			 iptr = 0;

@@ -33,20 +33,20 @@ typedef struct o_data
 	UCHAR onoff;			// current state: 1 of on; 0 if off
 	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
 							// 1 - on input turns output off; off input turns output on
-							// but if type is 1 then this tells whether to reset or not
 	UCHAR type;				// see below
-	UINT time_delay;
+	UINT time_delay;		// when type 2-4 this is used as the time delay
+	UINT time_left;			// gets set to time_delay and then counts down
 	UCHAR pulse_time;
-	UCHAR reset;
+	UCHAR reset;			// used to make 2nd pass
 } O_DATA;
 
 /*
 type:
 0) regular - on/off state responds to assigned input (affected_output)
 1) goes on/off and stays that way until some other event occurs
-	this is useful for a lock-out condition 
-2) on for time delay seconds and then it goes back off
-3) goes on/off at a pulse_time rate (ms) until turned off again
+	this is useful for a lock-out condition (use reset field)
+2) on for time_delay seconds and then it goes back off
+3) goes on/off at a pulse_time rate (250ms) until turned off again
 4) goes on/off at pulse_time rate for time_delay seconds and then back off
 */
 

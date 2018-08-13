@@ -288,39 +288,16 @@ int tcp_win2(int cmd)
 #endif
 //#if 0
 			case KEY_F(9):
-				cmd2 = TEST_IOPORT2;
-		        put_sock(&cmd2,1,1,errmsg);
-				cmd2 = 1;
+				cmd2 = TEST_IOPORT;
 		        put_sock(&cmd2,1,1,errmsg);
 		        break;
+
 //#endif
 			case KEY_F(10):
 				cmd2 = TEST_IOPORT2;
 		        put_sock(&cmd2,1,1,errmsg);
-				cmd2 = 0;
-		        put_sock(&cmd2,1,1,errmsg);
 		        break;
-#if 0
-				ioport = 0;
-				onoff = 0;
-				cmd2 = TEST_IOPORT;
-				for(i = 0;i < 160;i++)
-				{
-				    put_sock(&cmd2,1,1,errmsg);
-				    put_sock(&ioport,1,1,errmsg);
-				    put_sock(&onoff,1,1,errmsg);
-				    usleep(50000);
 
-				    if(++ioport > 39)
-				    {
-				    	ioport = 0;
-
-						if(onoff == 1)
-							onoff = 0;
-						else onoff = 1;
-				    }
-				}
-#endif
 			case KEY_F(12):		// can't use F11 - that toggle to full screen & back (F1 is help)
 				if(lights_on == 1)
 				{
@@ -340,15 +317,16 @@ int tcp_win2(int cmd)
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,10,1,errmsg);
-			if(rc < 0 && errno != 11)
+			rc = get_sock((UCHAR*)buffer,10,0,errmsg);
+//			if(rc < 0 && errno != 11)
+			if(rc < 0)
 			{
 				x = 1;
 				y = height - 2;
 				mvwprintw(twin,y,x,"%s             ",errmsg);
 				wrefresh(twin);
-				delwin(twin);
-				return 1;
+//				delwin(twin);
+//				return 1;
 			}
 			if(errno == 11)
 			{
@@ -406,7 +384,14 @@ int tcp_win2(int cmd)
 					
 				noerrors= 0;
 			}
-		}
+		}	// if tcp_connected
+		else
+		{
+			werase(twin);
+			wrefresh(twin);
+			refresh();
+			return 1;
+		}		
 	}	// while getch() != F2
 	werase(twin);
 	wrefresh(twin);

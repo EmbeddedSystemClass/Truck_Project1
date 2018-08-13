@@ -56,10 +56,8 @@ typedef struct
 	int sched;
 	int prio_min;
 	int prio_max;
-	char label[20];
+	char label[30];
 }THREADS;
-
-#define DEVICE "/mnt/cf/sched.log\0"
 
 /********************************************************************************************************/
 int main(int argc, char **argv)
@@ -111,21 +109,19 @@ int main(int argc, char **argv)
 
 	_threads[GET_HOST_CMD].sched = TIME_SLICE;
 	_threads[MONITOR_INPUTS].sched = PFIFO;
+	_threads[MONITOR_INPUTS2].sched = PFIFO;
 	_threads[TIMER].sched = PTIME_SLICE;
-	_threads[UNUSED].sched = TIME_SLICE;
-#if CONSOLE_DISABLED
+	_threads[BUTTONS].sched = TIME_SLICE;
 	_threads[SERIAL_RECV].sched = TIME_SLICE;
-#endif
 //	_threads[SERIAL_RECV2].sched = TIME_SLICE;
 	_threads[TCP_MONITOR].sched = TIME_SLICE;
 
 	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
 	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
+	strcpy(_threads[MONITOR_INPUTS2].label,"MONITOR_INPUTS2\0");
 	strcpy(_threads[TIMER].label,"TIMER\0");
-	strcpy(_threads[UNUSED].label,"READ_BUTTONS\0");
-#if CONSOLE_DISABLED
+	strcpy(_threads[BUTTONS].label,"READ_BUTTONS\0");
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
-#endif
 //	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
 	strcpy(_threads[TCP_MONITOR].label,"TCP_MONITOR\0");
 
@@ -185,7 +181,6 @@ int main(int argc, char **argv)
 				break;
 		}
 //		printf("%s %d %d \n", _threads[i].label,_threads[i].prio_min, _threads[i].prio_max);
-
 //			if(i == 5)
 //				priority_param.sched_priority = _threads[i].prio_max;
 //			else
@@ -228,17 +223,17 @@ int main(int argc, char **argv)
 //	llist_show(&ll);
 	if(reboot_on_exit == 1)
 	{
-//		printf("exit to shell\r\n");
+		printf("exit to shell\r\n");
 		return 0;
 	}
 	else if(reboot_on_exit == 2)
 	{
-//		printf("reboot\r\n");
+		printf("reboot\r\n");
 		return 1;
 	}
 	else if(reboot_on_exit == 3)
 	{
-//		printf("shutdown\r\n");
+		printf("shutdown\r\n");
 		return 2;
 	}
 }

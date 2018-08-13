@@ -566,7 +566,6 @@ call_Host(int code)
 
 // EXIT but don't reboot
 		case 4:
-#ifndef CONSOLE_DISABLED
 			cmd =  EXIT_PROGRAM;
 			if(tcp_connected)
 			{
@@ -576,7 +575,6 @@ call_Host(int code)
 //				get_sock(&num,1,1,errmsg);
 				close_sock();
 			}
-#endif
 			break;
 
 // EXIT and reboot
@@ -1279,13 +1277,13 @@ call_Tool(int code)
 
 		// LIVE_WINDOW
 		case 14:
-//			if(tcp_connected)
-			if(1)
+			if(tcp_connected)
+//			if(1)
 			{
 				show_status2("start live window","",code,0,0,1);
 				cmd = LIVE_WINDOW_ON;
 				ret = put_sock(&cmd,1,1,errmsg);
-				tcp_win2(cmd);
+				ret = tcp_win2(cmd);
 				cmd = LIVE_WINDOW_OFF;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}else show_status2("tcp not conn","a",code,0,0,2);

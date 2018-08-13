@@ -1,9 +1,3 @@
-#ifdef CONSOLE_DISABLED
-#warning "CONSOLE_DISABLED"
-#else
-#warning "console enabled"
-#endif
-
 int init_serial2(void);
 int write_serial2(UCHAR byte);
 void printString2(char *myString);
