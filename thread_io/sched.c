@@ -224,16 +224,16 @@ int main(int argc, char **argv)
 	if(reboot_on_exit == 1)
 	{
 //		printf("exit to shell\r\n");
-		return 0;
+		return 1;
 	}
 	else if(reboot_on_exit == 2)
 	{
 //		printf("reboot\r\n");
-		return 1;
+		return 2;
 	}
 	else if(reboot_on_exit == 3)
 	{
 //		printf("shutdown\r\n");
-		return 2;
+		return 3;
 	}
 }

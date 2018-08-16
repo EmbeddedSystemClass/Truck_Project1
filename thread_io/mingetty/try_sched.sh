@@ -34,14 +34,10 @@ fi
  if [ $OUT -eq 2 ]
  then
   echo "rebooting from script" >> status.txt
+ /sbin/reboot
  fi 
-# /sbin/reboot
  if [ $OUT -eq 3 ]
  then
   echo "shutdown from script" >> status.txt
- fi 
- 
-# /sbin/shutdown -h now
-# else /sbin/reboot
-#	else echo "reboot by default"
-
+ /sbin/shutdown -h now
+fi

@@ -69,7 +69,7 @@ int myprintf1(char *str)
 //	printf("%d\n",cur_buf_line);
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
-	sprintf((char*)buffer[cur_buf_line],"%d: %s",cur_disp_line,str);
+	sprintf((char*)buffer[cur_buf_line],"%d:%s",cur_disp_line,str);
 	display_current(0);
 
 	sprintf(temp2,"%d: %s",cur_disp_line,str);
@@ -90,7 +90,7 @@ int myprintf2(char *str, int x)
 		return 1;
 	}
 
-	sprintf(temp,"%d: %s",cur_disp_line, str);
+	sprintf(temp,"%d:%s",cur_disp_line, str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	cur_buf_line = cur_buf_size;
@@ -120,7 +120,7 @@ int myprintf3(char *str, int x, int y)
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 
-	sprintf(temp,"%d: %s",cur_disp_line,str);
+	sprintf(temp,"%d:%s",cur_disp_line,str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	sprintf(temp2,"% d",y);

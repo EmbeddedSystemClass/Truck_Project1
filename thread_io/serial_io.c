@@ -11,8 +11,8 @@
 #include "../mytypes.h"
 #include "serial_io.h"
 
-//#define BAUDRATE B19200
-#define BAUDRATE B115200
+#define BAUDRATE B19200
+//#define BAUDRATE B115200
 #ifdef MAKE_SIM
 #define MODEMDEVICE "/dev/ttyS0"
 #else
@@ -120,6 +120,8 @@ int init_serial(void)
 		close(global_handle);
 		exit(1);
 	}
+	sleep(2); //required to make flush work, for some reason
+	tcflush(global_handle,TCIOFLUSH);
 
 	set_interface_attribs (global_handle, BAUDRATE, 0);
 // if set to blocking, the serial_task won't exit properly

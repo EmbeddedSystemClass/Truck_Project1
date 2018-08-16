@@ -62,16 +62,16 @@ static O_DATA **otpp = &otp;
 extern char oFileName[20];
 extern char iFileName[20];
 
-//int odometer;
-
 extern UCHAR reboot_on_exit;
 UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 
-static UCHAR rt_data[16];
+static UCHAR rt_data[20];
 static UCHAR rt_file_data[1000];
 static int rt_fd_ptr;
 static int odometer;
+static int trip;
 static int tcp_connected_time;
+static int serial_recv_on;
 
 extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
@@ -91,6 +91,8 @@ static int change_input(int index, int onoff);
 static int uSleep(time_t sec, long nanosec);
 static void basic_controls(UCHAR code);
 static void set_output(int type, int onoff);
+static void send_PIC_serial(int port, int onoff, int type, int time_delay);
+static void send_PIC_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -105,6 +107,7 @@ static int live_window_on;
 static int engine_running;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
+static UINT rpm, mph;		// just sample data
 
 #define ON 1
 #define OFF 0
@@ -118,10 +121,9 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[47] =
+CMD_STRUCT cmd_array[52] =
 {
-	{		TEST_IOPORT,"TEST_IOPORT\0" },
-	{		TEST_IOPORT2,"TEST_IOPORT2\0" },
+	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_ACC,"ON_ACC\0" },
@@ -166,6 +168,11 @@ CMD_STRUCT cmd_array[47] =
 	{		TEST_WRITE_FILE,"TEST_WRITE_FILE\0" },
 	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{		GET_DEBUG_INFO,"GET_DEBUG_INFO\0" },
+	{		GET_DEBUG_INFO2,"GET_DEBUG_INFO2\0" },
+	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
+	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
+	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -283,6 +290,8 @@ UCHAR get_host_cmd_task(int test)
 // the check_inputs & change_outputs functions
 // use the array to adjust from index to bank
 // since there are only 4 bits in banks 3 & 5
+	serial_recv_on = 1;
+	
 	for(i = 0;i < 20;i++)
 	{
 		real_banks[i].i = i;
@@ -362,13 +371,14 @@ UCHAR get_host_cmd_task(int test)
 		green_led(0);
 	}
 
-	myprintf1("start....\0");
+//	myprintf1("start....\0");
 
-	myprintf1("sched v1.15\0");
+	myprintf1("sched v1.16\0");
 //	printf("sched v1.15\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
 	odometer = 0;
+	trip = 0;
 	tcp_connected_time = 0;
 	mask = 1;
 
@@ -414,7 +424,8 @@ UCHAR get_host_cmd_task(int test)
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
-					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != TEST_IOPORT && cmd != TEST_IOPORT2)
+					SCROLL_DOWN && 	cmd != SCROLL_UP && cmd != LIVE_WINDOW_ON 
+						&& cmd != LIVE_WINDOW_OFF)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
 //			printf("cmd:%s\r\n",cmd_array[cmd].cmd_str);
@@ -439,47 +450,58 @@ UCHAR get_host_cmd_task(int test)
 					basic_controls(cmd);
 						break;
 
-					case TEST_IOPORT:
-						change_input(1,1);
-#if 0
-						usleep(5000000);
-						for(i = 0;i < 3;i++)
+					case SET_SERIAL_RECV_ON:
+						send_live_code(cmd);
+						if(fd = init_serial() < 0)
 						{
-							change_input(i,1);
-//							printf("%d\r\n",i);
-							usleep(5000000);	// 2 seconds
-//							usleep(1000000);	// 1 seconds
-//							usleep(500000);		// 1/2 seconds
-//							usleep(250000);		// 1/4 seconds
-//							usleep(125000);		// 1/8 seconds
-//							usleep(62500);		// 1/16 seconds
-							change_input(i,0);
-							usleep(600000);	// must have at least 3ms between on/off's
+							myprintf1("can't open comm port 1\0");
+							return 0;
 						}
-#endif
+						serial_recv_on = 1;
 						break;
 
-					case TEST_IOPORT2:
-						change_input(2,1);
-/*
-						usleep(100000);
-						change_input(0,0);
-						printf("\r\n");
-*/
+					case SET_SERIAL_RECV_OFF:
+						send_live_code(cmd);
+						close_serial();
+						serial_recv_on = 0;
 						break;
-/*
-						for(test_io_num = 0;test_io_num < 6;test_io_num++)
-						{
-							rc = ollist_find_data((int)test_io_num,otpp,&oll);
-							printf("%s %d\r\n",otp->label,otp->port);
-							otp->onoff = (UCHAR)mask;
-							ollist_insert_data(otp->port,&oll,otp);
 
-							change_output((int)test_io_num, (int)mask);
-//							printf("%d\r\n",test_io_num);
-							usleep(100000);
-						}
-*/
+					case NEW_PASSWORD1:
+						rc = 0;
+						memset(tempx,0,50);
+						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
+						myprintf2("read: ",rc);
+
+						send_PIC_serialother(NEW_PASSWORD2,tempx[0],
+							tempx[1],tempx[2],tempx[3]);
+						send_PIC_serialother(NEW_PASSWORD3,tempx[4],
+							tempx[5],tempx[6],tempx[7]);
+						send_PIC_serialother(NEW_PASSWORD4,tempx[8],
+							tempx[9],tempx[10],tempx[11]);
+//						for(i = 0;i < 12;i++)
+//							myprintf2("tempx: ",tempx[i]);
+//						myprintf1("done");
+						break;
+
+					case CLEAR_SCREEN:
+//						lcd_cls();
+						send_PIC_serialother(CLEAR_SCREEN,CLEAR_SCREEN,
+							CLEAR_SCREEN,CLEAR_SCREEN,CLEAR_SCREEN);
+						break;
+
+					case GET_DEBUG_INFO:
+						send_PIC_serialother(GET_DEBUG_INFO,(UCHAR)engine_running,
+							(UCHAR)running_seconds,(UCHAR)running_minutes,(UCHAR)running_hours);
+						break;
+						
+					case GET_DEBUG_INFO2:
+						send_PIC_serialother(GET_DEBUG_INFO2,(UCHAR)(rpm >> 8),
+							(UCHAR)rpm, (UCHAR)(mph >> 8),(UCHAR)mph);
+						break;
+						
+					case RE_ENTER_PASSWORD:
+						send_PIC_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
+						break;
 
 					case TCP_WINDOW_ON:
 						tcp_window_on = 1;
@@ -600,32 +622,9 @@ UCHAR get_host_cmd_task(int test)
 /*
 					case PASSWORD_MODE:
 						test2 = 0xFC;
-						pthread_mutex_lock( &serial_write_lock);
-						write_serial(test2);
-						pthread_mutex_unlock(&serial_write_lock);
 						break;
 */
 					case SEND_SERIAL:
-						test2 = 0x21;
-						pthread_mutex_lock( &serial_write_lock);
-						for(i = 0;i < 4*93;i++)
-						{
-							write_serial(test2);
-//							uSleep(1,TIME_DELAY);
-							if(++test2 > 0x7e)
-								test2 = 0x21;
-						}
-/*
-						test2 = 0x7e;
-						for(i = 0;i < 4*93;i++)
-						{
-							write_serial2(test2);
-//							uSleep(1,TIME_DELAY);
-							if(--test2 < 0x21)
-								test2 = 0x7e;
-						}
-*/
-						pthread_mutex_unlock(&serial_write_lock);
 						break;
 
 					case GET_DIR:
@@ -708,11 +707,6 @@ UCHAR get_host_cmd_task(int test)
 						scroll_down();
 						break;
 
-
-					case CLEAR_SCREEN:
-						lcd_cls();
-						break;
-
 					case CLOSE_SOCKET:
 						close_tcp();
 						break;
@@ -737,27 +731,6 @@ UCHAR get_host_cmd_task(int test)
 						}
 						break;
 
-/*
-					case NEW_PASSWORD:
-						recv_tcp((UCHAR*)&fsize,8,1);
-						cur_fsize = (int)fsize;
-						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
-						rc = 0;
-						rc1 = 0;
-						rc += recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
-
-						test2 = 0xFB;
-						pthread_mutex_lock( &serial_write_lock);
-						write_serial(test2);
-
-						for(i = 0;i < cur_fsize;i++)
-							write_serial(upload_buf);
-
-						test2 = 0xFE;	
-						write_serial(test2);
-						pthread_mutex_unlock(&serial_write_lock);
-						break;
-*/
 					case UPLOAD_NEW:
 						recv_tcp((UCHAR*)&fsize,8,1);
 						cur_fsize = (int)fsize;
@@ -890,7 +863,7 @@ exit_program:
 						write(logfile_handle,&trip,sizeof(int));
 						close(logfile_handle);
 */
-/*
+
 						for(i = 0;i < 20;i++)
 						{
 							setdioline(7,0);
@@ -901,7 +874,7 @@ exit_program:
 						setdioline(7,0);
 						uSleep(2,0);
 						setdioline(7,1);
-*/
+
 						for(i = 0;i < 20;i++)
 						{
 							red_led(1);
@@ -978,6 +951,35 @@ static void set_output(int type, int onoff)
 		default:
 			break;
 	}
+	send_PIC_serial(otp->port,otp->onoff,otp->type, otp->time_delay);
+	
+}
+/*********************************************************************/
+static void send_PIC_serial(int port, int onoff, int type, int time_delay)
+{
+// send what just changed to the PIC24/AVR to dispaly on screen
+	pthread_mutex_lock( &serial_write_lock);
+	
+	write_serial(OUTPUT_MSG);
+	write_serial((UCHAR)port);
+	write_serial((UCHAR)onoff);
+	write_serial((UCHAR)type);
+	write_serial((UCHAR)time_delay);
+
+	pthread_mutex_unlock(&serial_write_lock);
+}
+/*********************************************************************/
+static void send_PIC_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
+{
+	pthread_mutex_lock( &serial_write_lock);
+
+	write_serial(cmd);
+	write_serial(data1);
+	write_serial(data2);
+	write_serial(data3);
+	write_serial(data4);
+
+	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -1229,6 +1231,10 @@ UCHAR timer_task(int test)
 	int bank = 0;
 	int fp;
 	UCHAR mask;
+	time_t curtime2;
+	struct timeval mtv;
+
+	rpm = mph = 0;
 
 	while(TRUE)
 	{
@@ -1243,8 +1249,39 @@ UCHAR timer_task(int test)
 // this is a kludge until I have time to redesign the whole mess from the ground up
 /// using a much better pthread library
 
+		gettimeofday(&mtv, NULL);
+		curtime2 = mtv.tv_sec;
+		strftime(buffer,30,"%m-%d-%Y %T.\0",localtime(&curtime2));
+
+		// send only date, month, minutes
+		send_PIC_serialother(TIME_DATA1,buffer[0],buffer[1],buffer[3],buffer[4]);
+		send_PIC_serialother(TIME_DATA2,buffer[8],buffer[9],buffer[11],buffer[12]);
+		send_PIC_serialother(TIME_DATA3,buffer[14],buffer[15],buffer[17],buffer[18]);
+
 		if(engine_running > 0)
 		{
+			send_PIC_serialother(LIVE_DATA1,(UCHAR)(rpm >> 8),
+				(UCHAR)rpm, (UCHAR)(mph >> 8),(UCHAR)mph);
+
+			send_PIC_serialother(LIVE_DATA2,(UCHAR)(odometer >> 8),
+				(UCHAR)odometer, (UCHAR)(trip >> 8),(UCHAR)trip);
+
+/*
+			if(running_seconds > 0 && running_seconds < 5 && running_minutes == 0)
+			{
+				send_PIC_serialEngineRunning(1);
+				myprintf1("engine on\0");
+			}	
+			else	
+				send_PIC_serialRPM(rpm,mph);
+*/
+			rpm++;
+			if(rpm % 3 == 0)
+				mph++;
+
+			if(rpm > 5000)
+				rpm = 500;
+
 			if(++running_seconds > 59)
 			{
 				running_seconds = 0;
@@ -1255,20 +1292,21 @@ UCHAR timer_task(int test)
 						running_hours = 0;
 				}
 			}
-/*
-			if(fan_delay > 0)
+		}
+
+		else if(engine_running == 0)
+		{
+			if(rpm > 0 || mph > 0)
 			{
-				if(++fan_delay > 30)
-				{
-					change_output(COOLINGFAN, 1);
-					send_live_code(ON_FAN);
-					fan_delay = 0;
-				}
+//				send_PIC_serialEngineRunning(0);
+				myprintf1("engine off\0");
+				rpm = mph = 0;
 			}
-*/
 		}
 
 		odometer++;
+		if(odometer % 2 == 0)
+			trip++;
 
 		if(++trunning_seconds > 59)
 		{
@@ -1291,24 +1329,19 @@ UCHAR timer_task(int test)
 			buffer[2] = trunning_minutes;
 			buffer[3] = trunning_hours;
 
-			buffer[4] = rt_data[0];
+			buffer[4] = rt_data[0];		// ADC data
 			buffer[5] = rt_data[1];
 			buffer[6] = rt_data[2];
 			buffer[7] = rt_data[3];
-			buffer[8] = rt_data[4];
-			buffer[9] = rt_data[5];
-/*
-			buffer[10] = rt_data[6];
-			buffer[11] = rt_data[7];
-*/
-//				for(i = 0;i < 16;i++)
-//					rt_data[i] = rt_data[i] + 1;
 
-//				pthread_mutex_unlock(&serial_read_lock);
+			buffer[8] = (UCHAR)(rpm >> 8);
+			buffer[9] = (UCHAR)rpm;
+			buffer[10] = (UCHAR)(mph >> 8);
+			buffer[11] = (UCHAR)mph;
 
-			send_tcp((UCHAR *)&buffer[0],10);
+			send_tcp((UCHAR *)&buffer[0],12);
 		}
-
+		
 		// check if one of the outputs is set to type 2 (time_delay)
 		for(i = 0;i < NUM_PORTS;i++)
 		{
@@ -1335,6 +1368,7 @@ UCHAR timer_task(int test)
 
 					fake_inportstatus1[bank] &= ~mask;
 					fake_inportstatus2[bank] &= ~mask;
+					send_PIC_serial(otp->port,otp->onoff,otp->type, otp->time_delay);
 /*
 					if(otp->onoff)
 						fake_inportstatus1[bank] |= mask;
@@ -1384,16 +1418,6 @@ UCHAR read_button_inputs(int test)
 {
 	int i,j;
 	UCHAR inputs,mask;
-
-	while(TRUE)
-	{
-		if(shutdown_all)
-		{
-//			printf("done read_buttons task\r\n");
-			return 0;
-		}
-		usleep(10000);
-	}
 
 	while(TRUE)
 	{
@@ -1464,55 +1488,32 @@ UCHAR serial_recv_task(int test)
 	no_serial_buff = 0;
 	memset(errmsg,0,20);
 
-/*
-	while(TRUE)
-	{
-		if(shutdown_all)
-		{
-//			printf("done read_buttons task\r\n");
-			return 0;
-		}
-		usleep(10000);
-	}
-	uSleep(10,0);
-*/
 	if(fd = init_serial() < 0)
 	{
 		myprintf1("can't open comm port 1\0");
 		return 0;
 	}
 	
-#if 0
 	while(TRUE)
 	{
-		uSleep(5,TIME_DELAY);
-		if(shutdown_all)
+		if(serial_recv_on == 1)
 		{
-			printf("shutting down serial task\n");
-			close_serial();
-			printf("serial port closed\n");
-			return 0;
-		}
-	}
-#endif
+			pthread_mutex_lock( &serial_read_lock);
+			ch = read_serial(errmsg);
+			if(ch == RT_DATA)
+				// number of ADC channels + 2 bytes for the rpm
+				for(i = 0;i < NUM_ADC_CHANNELS;i++)
+					rt_data[i] = read_serial(errmsg);
 
-	while(TRUE)
-	{
-		pthread_mutex_lock( &serial_read_lock);
-		ch = read_serial(errmsg);
-		if(ch == RT_DATA)
-		{
-			// number of ADC channels + 2 bytes for the rpm
-			for(i = 0;i < NUM_ADC_CHANNELS+2;i++)
+			pthread_mutex_unlock(&serial_read_lock);
+
+			if(ch >= ENABLE_START && ch <= ON_LIGHTS)
 			{
-				rt_data[i] = read_serial(errmsg);
+				basic_controls(ch);
 			}
 		}
-		pthread_mutex_unlock(&serial_read_lock);
-		if(ch != RT_DATA)
-		{
-			basic_controls(ch);
-		}
+						
+//		else if(ch == 
 /*
 		if(errmsg[0] != 0)
 		{
@@ -1785,22 +1786,6 @@ void close_tcp(void)
 	}
 }
 
-/*********************************************************************/
-void SendByte(unsigned char byte)
-{
-	pthread_mutex_lock( &serial_write_lock);
-	write_serial(byte);
-	pthread_mutex_unlock(&serial_write_lock);
-}
-
-/*********************************************************************/
-UCHAR ReceiveByte(void)
-{
-	int n,i;
-	UCHAR rec;
-	return rec;
-}
-
 /**********************************************************************/
 void *work_routine(void *arg)
 {
@@ -1863,6 +1848,7 @@ void basic_controls(UCHAR cmd)
 	int rc;
 	int index;
 
+//	myprintf2("basic ctls: ",cmd);
 	switch(cmd)
 	{
 		case ENABLE_START:
@@ -1959,32 +1945,37 @@ void basic_controls(UCHAR cmd)
 			change_input(STARTER, 1);
 			send_live_code(ENABLE_START);
 
-			usleep(4000);
+			uSleep(1,0);
 			change_input(ACCON, 1);
 			send_live_code(ON_ACC);
 
-			usleep(4000);
+			uSleep(1,0);
 			change_input(FUELPUMP, 1);
 			send_live_code(ON_FUEL_PUMP);
 
-			usleep(4000);
+			uSleep(1,0);
 			change_input(COOLINGFAN, 1);
-			send_live_code(ON_FUEL_PUMP);
+			send_live_code(ON_FAN);
 			break;
 
 		case SHUTDOWN:
 //						myprintf1("shutdown\0");
-			for(i = STARTER;i < PRELUBE+1;i++)
+			running_seconds = running_minutes = running_hours = 0;
+			for(i = STARTER;i < COOLINGFAN+1;i++)
 			{
 				change_input(i, 0);
-				usleep(50000);
+				usleep(100000);
 			}
 			engine_running = 0;
 			send_live_code(STARTER_OFF);
+			uSleep(0,100000);
 			send_live_code(OFF_FUEL_PUMP);
+			uSleep(0,100000);
 			send_live_code(OFF_FAN);
+			uSleep(0,100000);
 			send_live_code(OFF_ACC);
-			running_seconds = running_minutes = running_hours = 0;
+			myprintf1("stopping all ctls\0");
+			uSleep(0,100000);
 			break;
 	}
 }

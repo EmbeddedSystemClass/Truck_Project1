@@ -8,30 +8,66 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-char menu_labels[23][17] = {
-	{"enter password:"},
-	{"bad password"},
-	{"start engine"},
-	{"retries left"},
-	{"enable starter"},
+
+
+
+
+
+
+
+#define NUM_STR 51
+char menu_labels[NUM_STR][20] = {
+	{"RPM"},			// rt values
+	{"MPH"},
+	{"ENG TEMP"},
+	{"OIL PRES"},
+	{"AIR TEMP"},
+	{"MAP"},
+	{"OIL TEMP"},
+	{"O2"},
+	{"ODOM"},
+	{"TRIP"},
+	{"STARTER"},			// RT_VALUES_OFFSET + 11
+	{"ACCON"},
+	{"FUELPUMP"},
+	{"COOLINGFAN"},
+	{"PRELUBE"},
+	{"HEADLAMP"},
+	{"BRIGHTS"},
+	{"LEFTBLINKER"},
+	{"RIGHTBLINKER"},
+	{"RUNNINGLIGHTS"},
+	{"ALARMSPEAKER"},
+	{"ALARMLIGHT"},
+	{"BATTERYCHARGERELAY"},
+	{"DASHHEATER"},
+	{"BATTERYCOMPHEATER"},
+	{"CRANKCASEHEATER"},
+	{"TRAILERBRAKES"},
+	{"TRAILERLEFTBLINKER"},
+	{"TRAILERRIGHTBLINKER"},
+	{"INTRUDERALARM"},
+	{"DOMELIGHT"},
+	{"LIGHTBAR"},
+	{"BLINKINDICATE"},
+	{"BRAKELIGHTS"},
+	{"BACKUPLIGHTS"},
+	{"enable starter"},		// menu choices
 	{"ignition"},
 	{"fuel pump"},
 	{"cooling fan"},
 	{"running lights"},
 	{"headlights"},
-	{"RPM"},
-	{"MPH"},
-	{"TIME"},
-	{"ODOM"},
-	{"TRIP"},
-	{"ENG TEMP"},
-	{"AIR TEMP"},
-	{"OIL PRES"},
-	{"MAP"},
-	{"OIL TEMP"},
-	{"O2"},
-	{"AUX1"},
-	{"AUX2"}
+	{"set dim time"},
+	{"enter password:"},	// various message string
+	{"bad password"},
+	{"start engine"},
+	{"retries left"},
+	{"ON   "},
+	{"OFF  "},
+	{"re-enter password"},
+	{"in    seconds"},
+	{"oh shitsky"}
 };
 
 #define STRING_LEN 0x400
@@ -47,7 +83,7 @@ int main(void)
 	i = 0;
 	j = 0;
 
-	for(i = 0;i < 23;i++)
+	for(i = 0;i < NUM_STR;i++)
 	{
 		memcpy((void *)temp+j,(const void *)menu_labels[i],strlen(menu_labels[i]));
 		j += strlen(menu_labels[i]);

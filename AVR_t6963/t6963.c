@@ -157,6 +157,47 @@ void GDispSetMode (UCHAR mode)
 {
 	GDispCmdSend (mode);
 }
+void GDispClrSection(UCHAR srow, UCHAR scol, UCHAR erow, UCHAR ecol)
+
+{
+	int i;
+	UINT row, col;
+#if 0
+	UINT usrow, uerow, uscol, uecol;
+	UINT arow, acol;
+	
+	usrow = (UINT)srow;
+	uerow = (UINT)erow;
+	uscol = (UINT)scol;
+	uecol = (UINT)ecol;
+	arow = uerow - usrow;
+	acol = uecol - uscol;
+
+//	if(uerow > usrow && uecol > uscol && uerow < 40 && uecol < 16)
+if(1)
+	{
+		for(row = usrow;row < arow;row++)
+		{
+			for(col = uscol;col < acol;col++)
+			{
+				GDispCharAt(row,col,0x20);
+				_delay_ms(60);
+			}
+		}
+	}
+#endif
+		for(row = 1;row < 9;row++)
+		{
+			for(col = 20;col < 39;col++)
+			{
+				GDispCharAt(row,col,0x20);
+				_delay_us(1);
+			}
+		}
+
+}
+
+
 /*
 *********************************************************************************************************
  *                                           CLEAR TEXT SCREEN
@@ -285,7 +326,7 @@ void GDispCharAt (UINT row, UINT col, UCHAR c)
 	GDispCmdSend (DATA_WR);
 }
 
-void GDispStringAt(UINT row, UINT col, char *c)
+int GDispStringAt(UINT row, UINT col, char *c)
 {
 	char *str;
 	int i;
@@ -297,8 +338,9 @@ void GDispStringAt(UINT row, UINT col, char *c)
 		GDispCharAt(row,col+i,*(str+i));
 		i++;
 		if(i > 100)
-			return;
+			return -1;
 	}
+	return i;	
 }
 /*
 *********************************************************************************************************

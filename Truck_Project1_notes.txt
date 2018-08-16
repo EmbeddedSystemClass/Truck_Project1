@@ -297,6 +297,14 @@ then user will have to reenter password. So the IO box will send a message to th
 telling it to go back to password mode. When password is entered, screen goes to normal
 mode and msg is sent to IO box allowing the motor to start.
 
+When E-Stop button is pushed and if lights are one, the lights will stay on for a preset
+amount of time. 
+
+If a button is not pushed within so many seconds the screen will dim and eventually go
+dark. 
+
+
+
 **************** nice to have's: ****************
 
 use 2 extra pins from FPGA to 25 watt stereo amp using pwm2.vhd to play tunes

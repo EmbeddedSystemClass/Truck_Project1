@@ -38,7 +38,5 @@ int recv_tcp(UCHAR *str, int strlen,int block);
 void close_tcp(void);
 int test_sd(int test);
 int test_sock(void);
-void SendByte(UCHAR byte);
-UCHAR ReceiveByte(void);
 
 #endif

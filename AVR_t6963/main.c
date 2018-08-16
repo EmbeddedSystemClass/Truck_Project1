@@ -35,7 +35,8 @@ volatile int onoff;
 volatile int dc2;
 volatile UCHAR spi_ret;
 volatile UCHAR curr_num[SIZE_NUM];
-volatile char eeprom[EEPROM_SIZE/2];
+volatile char eeprom[EEPROM_SIZE];
+volatile UINT xrow, xcol;
 
 typedef struct
 {
@@ -43,17 +44,24 @@ typedef struct
 	UINT col;
 }RT_LABEL_POS;
 
+// use timer to keep track of things like:
+// - seconds before re-enter password
+// - how long to wait before shutting down screen
+//   if not char's entered
+// - 
 ISR(TIMER1_OVF_vect)
 {
+	GDispCharAt(xrow,xcol,spi_ret);
+	if(++spi_ret > 0x41)
+		spi_ret = 0x30;
 
-	if(+dc2 % 100 == 0)
+	if(++xcol > 39)
 	{
-//		loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
-//		spi_ret = SPDR;
-//		SPI_write(xbyte);
+		xcol = 35;
+		if(++xrow > 15)
+			xrow = 13;
 	}
 //	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
-	TCNT1 = 0xF800;
 }
 
 int main(void)
@@ -66,11 +74,15 @@ int main(void)
 	UCHAR byte_val;
 	UINT int_val;
 	UINT row, col;
+	UCHAR srow, scol, erow, ecol;
 	char str[30];
 	UCHAR str_len;
 	UCHAR index;
 	RT_LABEL_POS pos[20];
 	UCHAR no_rt_values;
+	UCHAR blanks;
+	int gdsip_strlen;
+	UCHAR tspi_ret;
 
 	GDispInit();
 //	GDispInitPort();
@@ -99,44 +111,44 @@ int main(void)
 
 	xbyte = 0x21;
 
-	TCNT1 = 0xFF00;
 	TCCR1A = 0x00;
-//	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
-	TCCR1B = (1<<CS11);
+	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
+//	TCCR1B = (1<<CS11);
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
 //	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
 
 	i = 0;
 	dc2 = 0;
+	spi_ret = 0x30;
+	xrow = 13;
+	xcol = 35;
 /*
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
 		{
 			GDispCharAt(row,col,xbyte);
-			_delay_ms(1);
+			_delay_ms(2);
 			if(++xbyte > 0x7e)
 			{
 				xbyte = 0x21;
 			}
 		}
 	}
-
-	_delay_ms(500);
 */
+	_delay_ms(50);
+
 	GDispClrTxt();
 
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
 
-	eeprom_read_block((void *)eeprom,(const void *)eepromString,EEPROM_SIZE/2);
+	eeprom_read_block((void *)eeprom,(const void *)eepromString,EEPROM_SIZE);
 
 	row = col = 0;
     while (1)
     {
 		key = receiveByte();
-
-//		GDispCharAt(0,0,key);
 /*
 		if(++dc2 % 2 == 0)
 			_SB(PORTB,PORTB1);
@@ -154,6 +166,8 @@ int main(void)
 			printHexByte(buff[2]);
 			printHexByte(buff[3]);
 */
+//			GDispCharAt(0,0,buff[0]+0x20);
+
 			switch(buff[0])
 			{
 				case CHAR_CMD:
@@ -185,6 +199,14 @@ int main(void)
 					GDispSetCursor (mode, row, col, type);
 				break;
 
+				case LCD_CLRSCR2:
+					srow = buff[1];
+					scol = buff[2];
+					erow = buff[3];
+					ecol = buff[4];	
+					GDispClrSection(srow, scol, erow, ecol);
+				break;
+
 				case LCD_CLRSCR:
 					GDispClrTxt();
 				break;
@@ -193,12 +215,18 @@ int main(void)
 					for(i = 0;i < SIZE_NUM;i++)
 						transmitByte(curr_num[i]);
 				break;
-
-				case PUT_STRING:
+				// params after cmd:
+				// 1 row
+				// 2 col
+				// 3 index into eeprom + 1
+				// 4 no of spaces to put after string
+				case EEPROM_STR:
 					row = (UINT)buff[1];
 					col = (UINT)buff[2];
 					index = buff[3];
-					if(index > 0 && index < 23)
+					blanks = buff[4];
+
+					if(index >= 0 && index < 52)
 					{
 						j = 0;
 						i = 0;
@@ -219,8 +247,17 @@ int main(void)
 
 						memset((void *)str,0,sizeof(str));
 						memcpy((void *)str,(const void *)&eeprom[k+1],j-k-1);
-						GDispStringAt(row,col,str);
-//						printString(str);
+
+						GDispGoto(row,col);
+						for(i = 0;i < blanks;i++)
+ 							GDispChar(0x20);
+						gdsip_strlen = GDispStringAt(row,col,str);
+/*
+						gdsip_strlen = GDispStringAt(row,col,str);
+						GDispGoto(row,col+gdsip_strlen);
+						for(i = 0;i < blanks;i++)
+ 							GDispChar(0x20);
+*/
 					}
 				break;
 
@@ -229,7 +266,7 @@ int main(void)
 				// 2nd param is col
 				// 3rd is int value up to 255
 					byte_val = buff[3];
-					sprintf(str,"%02d",byte_val);
+					sprintf(str,"%02d ",byte_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 

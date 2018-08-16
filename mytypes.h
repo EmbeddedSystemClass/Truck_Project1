@@ -23,8 +23,7 @@ typedef unsigned long ULONG;
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
-	TEST_IOPORT,
-	TEST_IOPORT2,
+	RE_ENTER_PASSWORD,
 	ENABLE_START,
 	STARTER_OFF,
 	ON_ACC,
@@ -69,6 +68,11 @@ enum cmd_types
 	TEST_WRITE_FILE,
 	TOTAL_UP_TIME,
 	UPLOAD_NEW,
+	GET_DEBUG_INFO,
+	GET_DEBUG_INFO2,
+	NEW_PASSWORD1,
+	SET_SERIAL_RECV_ON,
+	SET_SERIAL_RECV_OFF,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -82,23 +86,36 @@ typedef struct
 enum upstream_msg
 {
 	RT_DATA = 0x21,
+	RPM_DATA,
 	ABLE_TO_START,
 	RPM_OK,
-	RPM_TO_LOW,
-	RPM_TO_HIGH,
+	RPM_TOO_LOW,
+	RPM_TOO_HIGH,
 	OIL_PRESS_TOO_LOW,
 	ENGINE_TEMP_TOO_HIGH
 } UPSTREAM_MSG;
 
 // msg's sent from TS-7200 to PIC24
+// each cmd must be followed by 4 bytes of data
+// using send_PIC_serialother()
 enum downstream_msg
 {
-	COMM_CMD = 0x21,
-	RE_ENTER_PASSWORD,
-	TEST1,
-	TEST2
+	COMM_CMD = 0x3F,
+	RE_ENTER_PASSWORD1,
+	OUTPUT_MSG,
+	LIVE_DATA1,
+	LIVE_DATA2,
+	LIVE_DATA3,
+	TIME_DATA1,
+	TIME_DATA2,
+	TIME_DATA3,
+	TEST_DTMF_TONE,
+	NEW_PASSWORD2,
+	NEW_PASSWORD3,
+	NEW_PASSWORD4,
 } DOWNSTREAM_MSG;
 
+// 25 total output_types
 enum output_types
 {
 	STARTER,
@@ -128,16 +145,16 @@ enum output_types
 	BACKUPLIGHTS
 }OUTPUT_TYPES;
 
-#define CHAR_CMD			2
-#define GOTO_CMD			3
+#define CHAR_CMD				2
+#define GOTO_CMD				3
 #define SET_MODE_CMD	 		4
-#define LCD_CLRSCR			5
-#define LCD_MSG1			6
-#define BURN_EEPROM			7	// these are used by the eeprom/burn_main.c program
-#define READ_EEPROM			8
-#define PUT_STRING			9
-#define PUT_STR				9
+#define LCD_CLRSCR				5
+#define LCD_MSG1				6
+#define BURN_EEPROM				7	// these are used by the eeprom/burn_main.c program
+#define READ_EEPROM				8
+#define EEPROM_STR				9
 #define SEND_BYTE_RT_VALUES		10
 #define SEND_INT_RT_VALUES		11
+#define LCD_CLRSCR2				12
 
 #endif
