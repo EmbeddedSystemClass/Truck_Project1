@@ -386,4 +386,32 @@ cable coming from ADC conn. looking at pin side with cable to bottom:
 AVDD	14	12	10	8	6	4	2	0	(0 & 1 are used by knobs on front of panel)
 AVSS	13	15	11	9	7	5	3	1
 
+need extra handshacking between PIC24 and FPGA
+
+signal 0 & 1 are from PIC24 to FPGA
+(output on PIC24, input on FPGA)
+signal 2 is from FPGA to PIC24
+(output on FPGA, input on PIC24)
+
+signal 2 goes high when FPGA is ready for data
+PIC24 waits for signal 2 to go high before sending data
+signal 0 goes high when data is sent
+signal 1 is high when cmd is sent
+signal 1 is low when param is sent
+signal 0 goes low when signal 2 is low
+
+on FPGA:
+use pin 24 for DataReady (input from PIC24)
+use pin 30 for CmdParam (input from PIC24)
+use pin 28 for DataSent (output to PIC24)
+
+on PIC24:
+use 95 for DataReady
+use 96 for CmdParam
+use 97 for DataSent
+
+can't call ESOS_TASK_WAIT_TICKS from within main recipient
+
+note: don't do any assignment statements before ESOS_TASK_BEGIN()
+it causes strange side-effects
 

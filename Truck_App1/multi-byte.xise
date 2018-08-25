@@ -17,7 +17,9 @@
   <files>
     <file xil_pn:name="bcd.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
+      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="1"/>
     </file>
     <file xil_pn:name="debounce.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
@@ -42,12 +44,6 @@
     <file xil_pn:name="sensor.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
-    </file>
-    <file xil_pn:name="testmain.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="19"/>
-      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="12"/>
-      <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="12"/>
-      <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="12"/>
     </file>
     <file xil_pn:name="uart_rx.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="8"/>
@@ -115,7 +111,7 @@
       <library xil_pn:name="XESS"/>
     </file>
     <file xil_pn:name="spi_master.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
     <file xil_pn:name="dtmf.vhd" xil_pn:type="FILE_VHDL">
@@ -131,8 +127,14 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="14"/>
     </file>
     <file xil_pn:name="spi_slave.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="84"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="13"/>
+    </file>
+    <file xil_pn:name="testmain.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="19"/>
+      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="85"/>
+      <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="85"/>
+      <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="85"/>
     </file>
   </files>
 
@@ -368,7 +370,7 @@
     <property xil_pn:name="Shift Register Extraction" xil_pn:value="true" xil_pn:valueState="default"/>
     <property xil_pn:name="Show All Models" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Simulation Model Target" xil_pn:value="VHDL" xil_pn:valueState="default"/>
-    <property xil_pn:name="Simulation Run Time ISim" xil_pn:value="1000 ms" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Simulation Run Time ISim" xil_pn:value="100 ms" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Simulation Run Time Map" xil_pn:value="1000 ns" xil_pn:valueState="default"/>
     <property xil_pn:name="Simulation Run Time Par" xil_pn:value="1000 ns" xil_pn:valueState="default"/>
     <property xil_pn:name="Simulation Run Time Translate" xil_pn:value="1000 ns" xil_pn:valueState="default"/>

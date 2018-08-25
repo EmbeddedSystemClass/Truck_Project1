@@ -187,6 +187,73 @@ package CommonPckg is
 
 	constant ZeroA: integer:= 24153;
 	constant ZeroB: integer:= 17012;
+
+	constant pwm_delay1: integer:= 8187;
+	constant pwm_delay2: integer:= 16374;
+	constant pwm_delay3: integer:= 24561;
+	constant pwm_delay4: integer:= 32748;
+	constant pwm_delay5: integer:= 40935;
+	constant pwm_delay6: integer:= 49122;
+	constant pwm_delay7: integer:= 57309;
+	constant pwm_delay8: integer:= 65496;
+	constant pwm_delay9: integer:= 73683;
+	constant pwm_delay10: integer:= 81870;
+	constant pwm_delay11: integer:= 90057;
+	constant pwm_delay12: integer:= 98244;
+	constant pwm_delay13: integer:= 106431;
+	constant pwm_delay14: integer:= 114618;
+	constant pwm_delay15: integer:= 122805;
+	constant pwm_delay16: integer:= 130992;
+	constant pwm_delay17: integer:= 139179;
+	constant pwm_delay18: integer:= 147366;
+	constant pwm_delay19: integer:= 155553;
+	constant pwm_delay20: integer:= 163740;
+	constant pwm_delay21: integer:= 171927;
+	constant pwm_delay22: integer:= 180114;
+	constant pwm_delay23: integer:= 188301;
+	constant pwm_delay24: integer:= 196488;
+	constant pwm_delay25: integer:= 204675;
+	constant pwm_delay26: integer:= 212862;
+	constant pwm_delay27: integer:= 221049;
+	constant pwm_delay28: integer:= 229236;
+	constant pwm_delay29: integer:= 237423;
+	constant pwm_delay30: integer:= 245610;
+	constant pwm_delay31: integer:= 253797;
+	constant pwm_delay32: integer:= 262000;
+
+	
+	-- constant pwm_delay1: integer:= 8191;
+	-- constant pwm_delay2: integer:= 16382;
+	-- constant pwm_delay3: integer:= 24573;
+	-- constant pwm_delay4: integer:= 32764;
+	-- constant pwm_delay5: integer:= 40955;
+	-- constant pwm_delay6: integer:= 49146;
+	-- constant pwm_delay7: integer:= 57337;
+	-- constant pwm_delay8: integer:= 65528;
+	-- constant pwm_delay9: integer:= 73719;
+	-- constant pwm_delay10: integer:= 81910;
+	-- constant pwm_delay11: integer:= 90101;
+	-- constant pwm_delay12: integer:= 98292;
+	-- constant pwm_delay13: integer:= 106483;
+	-- constant pwm_delay14: integer:= 114674;
+	-- constant pwm_delay15: integer:= 122865;
+	-- constant pwm_delay16: integer:= 131056;
+	-- constant pwm_delay17: integer:= 139247;
+	-- constant pwm_delay18: integer:= 147438;
+	-- constant pwm_delay19: integer:= 155629;
+	-- constant pwm_delay20: integer:= 163820;
+	-- constant pwm_delay21: integer:= 172011;
+	-- constant pwm_delay22: integer:= 180202;
+	-- constant pwm_delay23: integer:= 188393;
+	-- constant pwm_delay24: integer:= 196584;
+	-- constant pwm_delay25: integer:= 204775;
+	-- constant pwm_delay26: integer:= 212966;
+	-- constant pwm_delay27: integer:= 221157;
+	-- constant pwm_delay28: integer:= 229348;
+	-- constant pwm_delay29: integer:= 237539;
+	-- constant pwm_delay30: integer:= 245730;
+	-- constant pwm_delay31: integer:= 253921;
+	-- constant pwm_delay32: integer:= 262143;
 	
 	constant TIME_DELAY0: integer:= 40000;
 -- 16 bits = FFFF (65,535)		~1.5ms
@@ -243,33 +310,32 @@ package CommonPckg is
 	constant RPM_MINIMUM: integer:= 20000;
 	constant MAX_TIME:  integer:=  131071;
 	constant SIZE_32: integer:= 32;
-	constant div_const: integer:= 8192;
 
-	constant OFF_CMD: std_logic_vector(4 downto 0):= "00000";
-	constant SEND_CHAR_CMD: std_logic_vector(4 downto 0):= "00001";
-	constant SET_BRIGHTNESS_CMD: std_logic_vector(4 downto 0):= "00010";
-	constant SET_CDECIMAL_CMD: std_logic_vector(4 downto 0):= "00011";
-	constant SET_UPDATE_RATE_CMD: std_logic_vector(4 downto 0):= "00100";
-	constant SET_FACTOR_CMD: std_logic_vector(4 downto 0):= "00101";
-	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(4 downto 0):= "00110";
-	constant DTMF_TONE_ON: std_logic_vector(4 downto 0):=  "00111";
-	constant DTMF_TONE_OFF: std_logic_vector(4 downto 0):= "01000";
-	constant SPECIAL_TONE_ON: std_logic_vector(4 downto 0):= "01001";
-	constant LCD_PWM: std_logic_vector(4 downto 0):= "01010";
-	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(4 downto 0):= "01011";
-	constant SET_MAX_REV_LIMITER: std_logic_vector(4 downto 0):= "01100";
-	constant SET_MIN_REV_LIMITER: std_logic_vector(4 downto 0):= "01101";
-	constant TEST_RPM_LIMIT: std_logic_vector(4 downto 0):= "01110";
+	constant OFF_CMD: std_logic_vector(7 downto 0):= X"01";
+	constant SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
+	constant SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"03";
+	constant SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"04";
+	constant SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"05";
+	constant SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"06";
+	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(7 downto 0):= X"07";
+	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"08";
+	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"09";
+	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"0A";
+	constant LCD_PWM: std_logic_vector(7 downto 0):= X"0B";
+	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(7 downto 0):= X"0C";
+	constant SET_MAX_REV_LIMITER: std_logic_vector(7 downto 0):= X"0D";
+	constant SET_MIN_REV_LIMITER: std_logic_vector(7 downto 0):= X"0E";
+	constant TEST_RPM_LIMIT: std_logic_vector(7 downto 0):= X"0F";
 
-	constant UNUSED_CMD3: std_logic_vector(4 downto 0):= "01111";
-	constant UNUSED_CMD5: std_logic_vector(4 downto 0):= "10000";
-	constant UNUSED_CMD6: std_logic_vector(4 downto 0):= "10001";
-	constant UNUSED_CMD7: std_logic_vector(4 downto 0):= "10010";
-	constant UNUSED_CMD8: std_logic_vector(4 downto 0):= "10011";
-	constant UNUSED_CMD9: std_logic_vector(4 downto 0):= "10100";
-	constant UNUSED_CMD10: std_logic_vector(4 downto 0):= "10101";
-	constant UNUSED_CMD11: std_logic_vector(4 downto 0):= "10110";
-	constant UNUSED_CMD12: std_logic_vector(4 downto 0):= "10111";
+	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
+	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";
+	constant  PWM_80DC_PARAM: std_logic_vector(7 downto 0):= X"1A";
+	constant  PWM_75DC_PARAM: std_logic_vector(7 downto 0):= X"16";
+	constant  PWM_60DC_PARAM: std_logic_vector(7 downto 0):= X"12";
+	constant  PWM_50DC_PARAM: std_logic_vector(7 downto 0):= X"0E";
+	constant  PWM_30DC_PARAM: std_logic_vector(7 downto 0):= X"0A";
+	constant  PWM_25DC_PARAM: std_logic_vector(7 downto 0):= X"06";
+	constant  PWM_12DC_PARAM: std_logic_vector(7 downto 0):= X"02";
 
 	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
 	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
@@ -316,7 +382,7 @@ package CommonPckg is
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);
 	signal stlv_data_ptr : std_logic_vector(7 downto 0);
-		
+
 	impure function average(a : in my_array3) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;
 	impure function block_ff(a : in std_logic_vector) return std_logic_vector;
@@ -325,6 +391,7 @@ package CommonPckg is
 --	impure function add_queue(a : std_logic_vector) return integer;
 	impure function manage_queue(a : std_logic_vector; dq : data_queue; stlv_ptr : std_logic_vector; add : integer) return std_logic_vector;
 	impure function load_dtmf(a : integer) return dtmf_array;
+	impure function load_pwm_delay(a : integer) return std_logic_vector;
 
 end package;
 
@@ -458,6 +525,117 @@ variable stlv_tone2: std_logic_vector(19 downto 0):= (others=>'0');
 		dtmf(1) := stlv_tone2;
 		
 		return dtmf;
+	end function;
+
+impure function load_pwm_delay(a : integer) return std_logic_vector is
+variable delay: integer range 0 to 262145:= 0;
+variable stlv_delay: std_logic_vector(W2_SIZE-1 downto 0):= (others=>'0');
+	begin
+
+	case a is
+		when 0 =>
+			delay:= pwm_delay1;
+		
+		when 1 =>
+			delay:= pwm_delay2;
+
+		when 2 =>
+			delay:= pwm_delay3;
+
+		when 3 =>
+			delay:= pwm_delay4;
+
+		when 4 =>
+			delay:= pwm_delay5;
+
+		when 5 =>
+			delay:= pwm_delay6;
+
+		when 6 =>
+			delay:= pwm_delay7;
+
+		when 7 =>
+			delay:= pwm_delay8;
+
+		when 8 =>
+			delay:= pwm_delay9;
+
+		when 9 =>
+			delay:= pwm_delay10;
+
+		when 10 =>
+			delay:= pwm_delay11;
+
+		when 11 =>
+			delay:= pwm_delay12;
+
+		when 12 =>
+			delay:= pwm_delay13;
+
+		when 13 =>
+			delay:= pwm_delay14;
+
+		when 14 =>
+			delay:= pwm_delay15;
+
+		when 15 =>
+			delay:= pwm_delay16;
+
+		when 16 =>
+			delay:= pwm_delay17;
+
+		when 17 =>
+			delay:= pwm_delay18;
+
+		when 18 =>
+			delay:= pwm_delay19;
+
+		when 19 =>
+			delay:= pwm_delay20;
+
+		when 20 =>
+			delay:= pwm_delay21;
+
+		when 21 =>
+			delay:= pwm_delay22;
+
+		when 22 =>
+			delay:= pwm_delay23;
+
+		when 23 =>
+			delay:= pwm_delay24;
+
+		when 24 =>
+			delay:= pwm_delay25;
+
+		when 25 =>
+			delay:= pwm_delay26;
+
+		when 26 =>
+			delay:= pwm_delay27;
+
+		when 27 =>
+			delay:= pwm_delay28;
+
+		when 28 =>
+			delay:= pwm_delay29;
+
+		when 29 =>
+			delay:= pwm_delay30;
+
+		when 30 =>
+			delay:= pwm_delay31;
+
+		when 31 =>
+			delay:= pwm_delay32;
+
+		when others =>
+			delay:= 99;
+	end case;
+
+	stlv_delay:= conv_std_logic_vector(delay,W2_SIZE);
+
+	return stlv_delay;
 	end function;
 
 impure function div_int(a : integer; b : integer) return integer is

@@ -367,6 +367,7 @@ int tcp_win2(int cmd)
 				clr_scr(twin);
 				help_screen(twin);
 				y = 17;
+				x = 1;
 		        break;
 
 			case KEY_F(10):
@@ -453,8 +454,8 @@ int tcp_win2(int cmd)
 					mvwprintw(twin,4,67,"%02d", rt_data[2]);
 					mvwprintw(twin,5,67,"%02d", rt_data[3]);
 
-					mvwprintw(twin,6,60,"rpm: %d%d",rt_data[4],rt_data[5]);
-					mvwprintw(twin,7,60,"mph: %d%d",rt_data[6],rt_data[7]);
+//					mvwprintw(twin,6,60,"rpm: %d%d",rt_data[4],rt_data[5]);
+//					mvwprintw(twin,7,60,"mph: %d%d",rt_data[6],rt_data[7]);
 					mvwprintw(twin,8,63,"rc: %d ",rc);
 
 					wrefresh(twin);

@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include "../mytypes.h"
 
-#define LEN 20
+#define LEN 200
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -68,6 +68,7 @@ int main(void)
 {
 	int i,j,k;
 	UCHAR ch;
+	int chptr;
 	UCHAR key;
 	UCHAR buff[LEN];
 	UCHAR mode, type;
@@ -117,12 +118,14 @@ int main(void)
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
 //	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
 
-	i = 0;
+	chptr = 0;
 	dc2 = 0;
 	spi_ret = 0x30;
 	xrow = 13;
 	xcol = 35;
+
 /*
+	for(i = 0;i < 100;i++)
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
@@ -146,6 +149,7 @@ int main(void)
 	eeprom_read_block((void *)eeprom,(const void *)eepromString,EEPROM_SIZE);
 
 	row = col = 0;
+	
     while (1)
     {
 		key = receiveByte();
@@ -155,18 +159,22 @@ int main(void)
 		else
 			_CB(PORTB,PORTB1);
 */
-		buff[i] = key;
-		i++;
+		buff[chptr] = key;
+		chptr++;
 //#if 0
 		if(key == 0xfe)
 		{
+
+//			for(i = 0;i < 5;i++)
+//				transmitByte(buff[i]);
 /*
 			printHexByte(buff[0]);
 			printHexByte(buff[1]);
 			printHexByte(buff[2]);
 			printHexByte(buff[3]);
+			printHexByte(buff[4]);
 */
-//			GDispCharAt(0,0,buff[0]+0x20);
+//			GDispCharAt(0,0,buff[0]+0x30);
 
 			switch(buff[0])
 			{
@@ -266,7 +274,16 @@ int main(void)
 				// 2nd param is col
 				// 3rd is int value up to 255
 					byte_val = buff[3];
-					sprintf(str,"%02d ",byte_val);
+					sprintf(str,"%02d",byte_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
+				break;
+
+				case SEND_BYTE_HEX_VALUES:
+				// 1st param is row
+				// 2nd param is col
+				// 3rd is int value up to 255
+					byte_val = buff[3];
+					sprintf(str,"%02x",byte_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
@@ -284,7 +301,7 @@ int main(void)
 				default:
 				break;
 			}
-			i = 0;
+			chptr = 0;
 //			_delay_ms(5);
 			transmitByte(0xFD);	// send 0xFD back to let PIC24 know we are finished with this command
 //			printHexByte(buff[5]+0x30);

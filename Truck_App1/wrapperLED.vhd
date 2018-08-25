@@ -17,7 +17,7 @@ entity wrapperLED is
 		start: in std_logic;
 		tx: out std_logic;
 		sensor: in std_logic;
-		cmd: in std_logic_vector(4 downto 0);
+		cmd: in std_logic_vector(7 downto 0);
 		param: in std_logic_vector(7 downto 0);
 		factor: in std_logic_vector(5 downto 0);
 		display_update_rate: in std_logic_vector(25 downto 0);
@@ -44,7 +44,7 @@ architecture arch of wrapperLED is
 --	signal sub_cmd: std_logic_vector(2 downto 0);
 --	signal sub_param: std_logic_vector(7 downto 0);
 	signal start_sendchar: std_logic;
-	signal sub_cmd: std_logic_vector(4 downto 0);
+	signal sub_cmd: std_logic_vector(7 downto 0);
 	signal sub_param: std_logic_vector(7 downto 0);
 	signal display_update_proc_done: std_logic;
 begin

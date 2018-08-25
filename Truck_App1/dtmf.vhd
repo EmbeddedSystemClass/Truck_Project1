@@ -170,9 +170,10 @@ begin
 				next_note <= '1';		-- trigger the play_note process which sets the on/off times
 				start_dtmf <= '1';
 				state_dtmf_next <= dtmf_next2;
+
 			when dtmf_next2 =>
 				next_note <= '0';
-				if time_delay_reg2 > TIME_DELAY5a then
+				if time_delay_reg2 > TIME_DELAY6a then
 					time_delay_next2 <= (others=>'0');
 					state_dtmf_next <= dtmf_done;
 				else
@@ -182,6 +183,7 @@ begin
 						state_dtmf_next <= dtmf_done;
 					end if;	
 				end if;
+
 			when dtmf_done =>
 				state_dtmf_next <= dtmf_idle;
 				start_dtmf <= '0';

@@ -1201,8 +1201,25 @@ call_Tool(int code)
 			show_status2("done tcp win","",code,0,0,3);
 			break;
 
-		// UPLOAD_NEW
+		// FPGA_WINDOW (same as live window for now)
 		case 6:
+//			cmd = LIVE_WINDOW_ON;
+//			tcp_win2(cmd);
+			if(tcp_connected)
+//			if(1)
+			{
+				show_status2("start live window","",code,0,0,1);
+				cmd = LIVE_WINDOW_ON;
+				ret = put_sock(&cmd,1,1,errmsg);
+				ret = tcp_win2(cmd);
+				cmd = LIVE_WINDOW_OFF;
+				ret = put_sock(&cmd,1,1,errmsg);
+			}else show_status2("tcp not conn","a",code,0,0,2);
+			show_status2("done tcp win","",code,0,0,3);
+			break;
+
+		// UPLOAD_NEW
+		case 7:
 			if(tcp_connected)
 			{
 				show_status2("upload new sched","",code,0,0,1);
@@ -1276,7 +1293,7 @@ call_Tool(int code)
 			break;
 */
 		// NEW PASSWORD
-		case 7:
+		case 8:
 			if(tcp_connected)
 			{
 				show_status2("set new password","",code,0,0,1);
@@ -1356,8 +1373,9 @@ build_Tool_menu(MenuNo number)
 		MY_DATA2("Get Time"),					  // 3
 		MY_DATA2("TCP Window"),						//4
 		MY_DATA2("Live Window"),					//5
-		MY_DATA2("Upload New"),						//6
-		MY_DATA2("New Password"),					//7
+		MY_DATA2("FPGA Window"),					//6
+		MY_DATA2("Upload New"),						//7
+		MY_DATA2("New Password"),					//8
 		{(char *) 0, 0, 0}
 	};
 

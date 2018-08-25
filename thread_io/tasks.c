@@ -1260,25 +1260,6 @@ UCHAR timer_task(int test)
 
 		if(engine_running > 0)
 		{
-			send_PIC_serialother(LIVE_DATA1,(UCHAR)(rpm >> 8),
-				(UCHAR)rpm, (UCHAR)(mph >> 8),(UCHAR)mph);
-
-			send_PIC_serialother(LIVE_DATA2,(UCHAR)(odometer >> 8),
-				(UCHAR)odometer, (UCHAR)(trip >> 8),(UCHAR)trip);
-
-/*
-			if(running_seconds > 0 && running_seconds < 5 && running_minutes == 0)
-			{
-				send_PIC_serialEngineRunning(1);
-				myprintf1("engine on\0");
-			}	
-			else	
-				send_PIC_serialRPM(rpm,mph);
-*/
-			rpm++;
-			if(rpm % 3 == 0)
-				mph++;
-
 			if(rpm > 5000)
 				rpm = 500;
 
@@ -1294,50 +1275,41 @@ UCHAR timer_task(int test)
 			}
 		}
 
-		else if(engine_running == 0)
-		{
-			if(rpm > 0 || mph > 0)
-			{
-//				send_PIC_serialEngineRunning(0);
-				myprintf1("engine off\0");
-				rpm = mph = 0;
-			}
-		}
-
 		odometer++;
 		if(odometer % 2 == 0)
 			trip++;
+
+		buffer[0] = TOTAL_UP_TIME;
+		buffer[1] = trunning_seconds;
+		buffer[2] = trunning_minutes;
+		buffer[3] = trunning_hours;
+
+		buffer[4] = rt_data[0];		// ADC data
+		buffer[5] = rt_data[1];
+		buffer[6] = rt_data[2];
+		buffer[7] = rt_data[3];
 
 		if(++trunning_seconds > 59)
 		{
 			trunning_seconds = 0;
 			if(++trunning_minutes > 59)
-			{
 				trunning_minutes = 0;
-
-// hours can be up to 255 or 10 1/2 days
-//					if(++trunning_hours > 24)
-//						trunning_hours = 0;
-			}
 		}
+
 		if(live_window_on)
 		{
 //				pthread_mutex_lock( &serial_read_lock);
 
-			buffer[0] = TOTAL_UP_TIME;
-			buffer[1] = trunning_seconds;
-			buffer[2] = trunning_minutes;
-			buffer[3] = trunning_hours;
-
-			buffer[4] = rt_data[0];		// ADC data
-			buffer[5] = rt_data[1];
-			buffer[6] = rt_data[2];
-			buffer[7] = rt_data[3];
-
+/*
 			buffer[8] = (UCHAR)(rpm >> 8);
 			buffer[9] = (UCHAR)rpm;
 			buffer[10] = (UCHAR)(mph >> 8);
 			buffer[11] = (UCHAR)mph;
+*/
+			buffer[8] = 1;
+			buffer[9] = 2;
+			buffer[10] = 3;
+			buffer[11] = 4;
 
 			send_tcp((UCHAR *)&buffer[0],12);
 		}
@@ -1500,7 +1472,7 @@ UCHAR serial_recv_task(int test)
 		{
 			pthread_mutex_lock( &serial_read_lock);
 			ch = read_serial(errmsg);
-			if(ch == RT_DATA)
+			if(ch == RT_DATA && live_window_on)
 				// number of ADC channels + 2 bytes for the rpm
 				for(i = 0;i < NUM_ADC_CHANNELS;i++)
 					rt_data[i] = read_serial(errmsg);

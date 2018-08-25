@@ -154,7 +154,8 @@ enum output_types
 #define READ_EEPROM				8
 #define EEPROM_STR				9
 #define SEND_BYTE_RT_VALUES		10
-#define SEND_INT_RT_VALUES		11
-#define LCD_CLRSCR2				12
+#define SEND_BYTE_HEX_VALUES	11
+#define SEND_INT_RT_VALUES		12
+#define LCD_CLRSCR2				13
 
 #endif

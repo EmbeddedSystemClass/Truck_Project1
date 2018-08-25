@@ -16,7 +16,7 @@ entity sendcharLED is
 		clk, reset: in std_logic;
 		tx: out std_logic;
 		start: in std_logic;
-		cmd: in std_logic_vector(4 downto 0);
+		cmd: in std_logic_vector(7 downto 0);
 		param: in std_logic_vector(7 downto 0);
 		LED0: in std_logic_vector(3 downto 0);
 		LED1: in std_logic_vector(3 downto 0);

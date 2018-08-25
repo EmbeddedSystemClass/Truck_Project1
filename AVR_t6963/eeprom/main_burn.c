@@ -52,14 +52,14 @@ char menu_labels[NUM_STR][20] = {
 	{"BLINKINDICATE"},
 	{"BRAKELIGHTS"},
 	{"BACKUPLIGHTS"},
-	{"enable starter"},		// menu choices
+	{"enable starter"},		// menu choices	(MENU_VALUE_OFFSET)
 	{"ignition"},
 	{"fuel pump"},
 	{"cooling fan"},
 	{"running lights"},
 	{"headlights"},
 	{"set dim time"},
-	{"enter password:"},	// various message string
+	{"enter password:"},	// various message string	(VARIOUS_MSG_OFFSET)
 	{"bad password"},
 	{"start engine"},
 	{"retries left"},

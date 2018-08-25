@@ -240,3 +240,7 @@ RE7 CE
 RE8 RD
 RE9 WR
 
+Handshaking Lines:
+DataReady	RG14	(output) FPGA is ready to do serial read
+CmdParam	RG12	(output) data sent to FPGA is 1 for cmd; 0 for param
+DataSent	RG13	(input) FPGA has processed data and is ready for another cmd/param
