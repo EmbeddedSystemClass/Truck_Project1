@@ -46,7 +46,7 @@ architecture truck_arch of multi_byte is
 	type state_uart1 is (idle10, idle1, start, start_a, start_b, start_c, start_d, delay);
 	signal state_tx1_reg, state_tx1_next: state_uart1;
 
---	type state_uart2 is (idle2, start1, start2, uart2_test1, uart2_test2, uart2_test3,  done);
+	-- recv_uart
 	type state_uart2 is (pre_idle, idle2, next1, start1, done);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
 
@@ -56,37 +56,18 @@ architecture truck_arch of multi_byte is
 	type state_rev is (idle_rev, start_rev, done_rev);
 	signal state_reg_rev, state_next_rev: state_rev;
 
-	type calc_type is (idle0, idle1_a, calc3, calc4, done, donex);
-	signal cstate_reg, cstate_next: calc_type;
-
 	type calc_type2 is (idle2a, spin2);
 	signal main_reg2, main_next2: calc_type2;
 
 	type calc_type1 is (idle1a, spin1);
 	signal main_reg1, main_next1: calc_type1;
 
-	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
-	signal state_dout_reg, state_dout_next: state_dout;
-
 	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
 	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
-	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
-	signal time_delay_reg2, time_delay_next2: unsigned(23 downto 0);	-- calc_proc
-	signal time_delay_reg3, time_delay_next3: unsigned(23 downto 0);	-- calc_proc2
---	signal time_delay_reg4, time_delay_next4: unsigned(23 downto 0);
---	signal time_delay_reg5, time_delay_next5: unsigned(23 downto 0);
---	signal time_delay_reg6, time_delay_next6: unsigned(23 downto 0);
-	signal time_delay_reg7, time_delay_next7: unsigned(23 downto 0);
-	signal time_delay_reg8, time_delay_next8: unsigned(24 downto 0);
+	signal time_delay_reg, time_delay_next: unsigned(16 downto 0);		-- send_uart1
+	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
 
-	--	signal tempx: std_logic_vector(7 downto 0);
---	signal temp3_int: std_logic_vector(7 downto 0);
-
---	signal stdlv_rpm_update_rate: std_logic_vector(23 downto 0);
---	signal rpm_update_rate: unsigned(23 downto 0);
---	signal stdlv_mph_update_rate: std_logic_vector(23 downto 0);
---	signal mph_update_rate: unsigned(23 downto 0);
 	signal rpm_db, mph_db: std_logic;
 	signal cmd_rpm: std_logic_vector(7 downto 0):= (others=>'0');
 	signal cmd_mph: std_logic_vector(7 downto 0):= (others=>'0');
@@ -106,15 +87,15 @@ architecture truck_arch of multi_byte is
 
 	signal mph_done, rpm_done: std_logic;
 
-	signal stlv_temp1 : std_logic_vector(7 downto 0);
-	signal stlv_temp1a : std_logic_vector(7 downto 0);
-	signal stlv_temp2 : std_logic_vector(7 downto 0);
-	signal stlv_temp2a : std_logic_vector(7 downto 0);
-	signal stlv_temp3 : std_logic_vector(7 downto 0);
-	signal stlv_temp4 : std_logic_vector(7 downto 0);
-	signal stlv_temp5 : std_logic_vector(7 downto 0);
-	signal stlv_temp6 : std_logic_vector(7 downto 0);
-	signal stlv_temp7 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp1 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp1a : std_logic_vector(7 downto 0);
+	-- signal stlv_temp2 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp2a : std_logic_vector(7 downto 0);
+	-- signal stlv_temp3 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp4 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp5 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp6 : std_logic_vector(7 downto 0);
+	-- signal stlv_temp7 : std_logic_vector(7 downto 0);
 	signal start_mph_wrapper: std_logic;
 	signal start_rpm_wrapper: std_logic;
 	signal mcmd: std_logic_vector(7 downto 0);
@@ -364,7 +345,7 @@ begin
 			when start_d =>	
 				start_tx <= '0';
 				if done_tx = '1' then
-					data_tx <= stlv_temp5;
+--					data_tx <= stlv_temp5;
 					start_tx <= '1';
 					state_tx1_next <= delay;
 				end if;
@@ -393,7 +374,7 @@ begin
 		start_rx <= '0';
 		mparam <= (others=>'0');
 		mcmd <= (others=>'0');
-		led1 <= "1111";
+--		led1 <= "1111";
 		start_calc <= '0';
 		data_sent <= '0';
 
@@ -414,7 +395,7 @@ begin
 			when next1 =>
 				if done_rx = '1' then
 					start_rx <= '0';
-					led1 <= data_rx(3 downto 0);
+--					led1 <= data_rx(3 downto 0);
 					if cmd_param = '1' then
 						mcmd <= data_rx;
 						data_sent <= '0';
@@ -446,31 +427,22 @@ begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
 		main_next1 <= idle1a;
-		time_delay_reg3 <= (others=>'0');
-		time_delay_next3 <= (others=>'0');
-		time_delay_mph <= "00" & X"FFFFFF";
-		time_delay_rpm <= "00" & X"7FFFFF";
---		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
---		time_delay_rpm <= "00" & X"1FFFFF";		-- 92ms
---		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
---		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
---		time_delay_rpm <= "00" & X"03FFFF";		-- 11ms
 		stlv_duty_cycle <= (others=>'1');
 		special <= '0';
 		dtmf_index <= (others=>'0');
-		stlv_temp2a <= X"00";
-		stlv_temp3 <= (others=>'0');
-		stlv_temp4 <= (others=>'0');
-		stlv_temp6 <= (others=>'0');
-		stlv_temp7 <= (others=>'0');
-		stlv_temp5 <= (others=>'0');
+		-- stlv_temp2a <= X"00";
+		-- stlv_temp3 <= (others=>'0');
+		-- stlv_temp4 <= (others=>'0');
+		-- stlv_temp6 <= (others=>'0');
+		-- stlv_temp7 <= (others=>'0');
+		-- stlv_temp5 <= (others=>'0');
 		calc_done <= '0';
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
 		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
 		rev_limit_min <= conv_std_logic_vector(RPM_MINIMUM,7);
 		reset_rev_limits <= '0';
-		stlv_temp2 <= (others=>'1');
+--		stlv_temp2 <= (others=>'1');
 		test_rpm_rev_limits <= '0';
 
 	elsif clk'event and clk = '1' then
@@ -478,27 +450,16 @@ begin
 			when idle1a =>
 				reset_rev_limits <= '0';
 				if start_calc = '1' then
-					stlv_temp6 <= mcmd;
-					stlv_temp7 <= mparam;
+--					stlv_temp6 <= mcmd;
+--					stlv_temp7 <= mparam;
 					calc_done <= '0';
 					main_next1 <= spin1;
 				end if;
 			when spin1 =>
 				case mcmd is
-					when SET_DISPLAY_UPDATE_RATE =>
---						if mph_or_not = '0' then
-							time_delay_rpm <= mparam & "11" & X"FFFF";
---						else 
-							time_delay_mph <= mparam & "11" & X"FFFF";
---						end if;
-					when SET_FACTOR_CMD =>	
-						if mph_or_not = '0' then
-							rpm_factor <= mparam(5 downto 0);
-						else mph_factor <= mparam(5 downto 0);
-						end if;
-					when SET_UPDATE_RATE_CMD =>
+					when SET_UPDATE_RATE =>
 						stdlv_transmit_update_rate <= mparam & X"FFFF";
-						stlv_temp3 <= mparam;
+--						stlv_temp3 <= mparam;
 					when DTMF_TONE_ON =>
 						dtmf_index <= mparam(4 downto 0);
 						special <= '0';
@@ -511,28 +472,27 @@ begin
 						start_dtmf <= '1';
 					when LCD_PWM =>
 						stlv_duty_cycle <= mparam(4 downto 0);
---						led1 <= mparam(3 downto 0);
+----						led1 <= mparam(3 downto 0);
 					when FP_SHUTOFF_OVERRIDE =>
 						fp_override <= mparam(0);
-						stlv_temp2a <= mparam;
+--						stlv_temp2a <= mparam;
 					when SET_MAX_REV_LIMITER =>
 						rev_limit_max <= mparam(6 downto 0);
 						reset_rev_limits <= '1';
-						stlv_temp2a <= mparam;
+--						stlv_temp2a <= mparam;
 					when SET_MIN_REV_LIMITER =>
 						rev_limit_max <= mparam(6 downto 0);
 						reset_rev_limits <= '1';
-						stlv_temp2a <= mparam;
+--						stlv_temp2a <= mparam;
 					when TEST_RPM_LIMIT =>
 						test_rpm_rev_limits <= mparam(0);
-						stlv_temp2a <= mparam;
+--						stlv_temp2a <= mparam;
 					when others =>	
 				end case;
 				calc_done <= '1';
 				main_next1 <= idle1a;
 		end case;
 		main_reg1 <= main_next1;
-		time_delay_reg3 <= time_delay_next3;
 	end if;
 end process;		
 
@@ -542,11 +502,10 @@ begin
 	if reset = '0' then
 		main_reg2 <= idle2a;
 		main_next2 <= idle2a;
-		time_delay_reg3 <= (others=>'0');
-		time_delay_next3 <= (others=>'0');
-		cmd_mph <= SEND_CHAR_CMD;
-		cmd_rpm <= SEND_CHAR_CMD;
---		cmd_mph <= SEND_CHAR_CMD;
+		time_delay_reg2 <= (others=>'0');
+		time_delay_next2 <= (others=>'0');
+		cmd_mph <= MPH_SEND_CHAR_CMD;
+		cmd_rpm <= RPM_SEND_CHAR_CMD;
 		param_mph <= (others=>'1');
 		param_rpm <= (others=>'1');
 		time_delay_mph <= "00" & X"FFFFFF";
@@ -559,7 +518,7 @@ begin
 		start_rpm_wrapper <= '1';
 		start_mph_wrapper <= '1';
 		mph_or_not <= '0';
-		
+		led1 <= "1111";
 
 	elsif clk'event and clk = '1' then
 		case main_reg2 is
@@ -568,13 +527,51 @@ begin
 					main_next2 <= spin2;
 				end if;
 			when spin2 =>
-				case mcmd is
-				end case;
-		main_reg1 <= main_next1;
-		time_delay_reg3 <= time_delay_next3;
+			case mcmd is
+				when RPM_OFF_CMD =>
+					cmd_rpm <= mcmd;
+				when RPM_SEND_CHAR_CMD =>
+					led1 <= "1110";
+					cmd_rpm <= mcmd;
+				when RPM_SET_BRIGHTNESS_CMD =>
+					cmd_rpm <= mcmd;
+					led1 <= "1101";
+				when RPM_SET_CDECIMAL_CMD =>
+					cmd_rpm <= mcmd;
+				when RPM_SET_UPDATE_RATE_CMD =>
+					cmd_rpm <= mcmd;
+					led1 <= "1100";
+					time_delay_rpm <= mparam & "11" & X"FFFF";
+				when RPM_SET_FACTOR_CMD =>
+					cmd_rpm <= mcmd;
+					rpm_factor <= mparam(5 downto 0);
+					led1 <= "1011";
+					when MPH_OFF_CMD =>
+					cmd_mph <= mcmd;
+					led1 <= "1010";
+				when MPH_SEND_CHAR_CMD =>
+					cmd_mph <= mcmd;
+					led1 <= "1001";
+				when MPH_SET_BRIGHTNESS_CMD =>
+					cmd_mph <= mcmd;
+					led1 <= "1000";
+				when MPH_SET_CDECIMAL_CMD =>
+					cmd_mph <= mcmd;
+					led1 <= "0111";
+				when MPH_SET_UPDATE_RATE_CMD =>
+					cmd_mph <= mcmd;
+					time_delay_mph <= mparam & "11" & X"FFFF";
+					led1 <= "0110";
+				when MPH_SET_FACTOR_CMD =>
+					cmd_mph <= mcmd;
+					mph_factor <= mparam(5 downto 0);
+					led1 <= "0101";
+				when others =>
+			end case;
+		end case;
+		main_reg2 <= main_next2;
+		time_delay_reg2 <= time_delay_next2;
 	end if;
 end process;		
-
-
 
 end truck_arch;

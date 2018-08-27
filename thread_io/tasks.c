@@ -402,14 +402,14 @@ UCHAR get_host_cmd_task(int test)
 		otp->reset = 0;
 		ollist_insert_data(i,&oll,otp);
 	}
-
-	for(i = 0;i < 4;i++)
+#endif
+	for(i = 0;i < 40;i++)
 	{
 		ollist_find_data(i,otpp,&oll);
 		printf("port: %d onoff: %d type: %d reset %d\ pol: %d\r\n",otp->port,otp->onoff,
 			otp->type,otp->reset,otp->polarity);
 	}	
-#endif
+//#endif
 
 	while(TRUE)
 	{
@@ -777,17 +777,13 @@ UCHAR get_host_cmd_task(int test)
 exit_program:
 
 
-//						for(i = 0;i < NUM_PORT_BITS;i++)
-/*
-						for(i = 0;i < 6;i++)
+						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_find_data(i,otpp,&oll);
-//							printf("%d %d\r\n",otp->port,otp->onoff);
-							usleep(100000);
-							change_output(otp->port,0);
-							usleep(100000);
+							printf("port: %d onoff: %d reset: %d pol: %d %s\r\n", otp->port,
+								otp->onoff, otp->reset, otp->polarity, otp->label);
 						}
-*/
+
 						if(cmd == UPLOAD_NEW)
 						{
 							reboot_on_exit = 1;
@@ -863,6 +859,7 @@ exit_program:
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
+
 //						close_tcp();
 						shutdown_all = 1;
 
@@ -950,7 +947,7 @@ static void set_output(O_DATA *otp, int onoff)
 				TOGGLE_OTP;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
 //										otp->onoff, otp->reset, otp->polarity);
 			}	
 			else if(otp->reset == 1)
@@ -963,6 +960,7 @@ static void set_output(O_DATA *otp, int onoff)
 			}
 			break;
 		case 2:
+		case 3:
 			if(otp->reset == 0)
 			{
 				otp->reset = 1;
@@ -972,13 +970,11 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 1;
 				change_output(otp->port,1);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("type 2 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
 //							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		// other 2 types not implemented yet (see queue directory)
-		case 3:
-			break;
 		case 4:
 			break;
 		default:
@@ -992,6 +988,7 @@ static void set_output(O_DATA *otp, int onoff)
 static void send_PIC_serial(int port, int onoff, int type, int time_delay)
 {
 // send what just changed to the PIC24/AVR to dispaly on screen
+return;
 	pthread_mutex_lock( &serial_write_lock);
 	
 	write_serial(OUTPUT_MSG);
@@ -1005,6 +1002,7 @@ static void send_PIC_serial(int port, int onoff, int type, int time_delay)
 /*********************************************************************/
 static void send_PIC_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
 {
+return;
 	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
@@ -1274,6 +1272,7 @@ UCHAR timer2_task(int test)
 	UCHAR mask;
 	static int led_counter;
 	static int led_onoff;
+	static int seconds_counter;
 
 	static I_DATA *itp2;
 	static I_DATA **itpp2 = &itp2;
@@ -1282,11 +1281,11 @@ UCHAR timer2_task(int test)
 	static O_DATA **otpp2 = &otp2;
 	
 	led_counter = 0;
-	led_onoff = 0;	
+	led_onoff = 0;
 	
 	while(TRUE)
 	{
-		uSleep(0,TIME_DELAY/10);
+		uSleep(0,TIME_DELAY/10); 
 
 		if(++led_counter > 9)
 		{
@@ -1302,11 +1301,12 @@ UCHAR timer2_task(int test)
 			}
 			led_onoff = (led_onoff == 1?0:1);
 		}
-			
+		
 #if 0
 		// find the status of the E-Stop switch
 		illist_find_data(ESTOPMONITOR,itpp2,&ill);
 		ollist_find_data(itp2->affected_output,otpp2,&oll);
+
 
 		// and if it's open then turn off the fuel pump and ignition
 		// the ESTOPMONITOR output controls the relay in series with the
@@ -1316,8 +1316,9 @@ UCHAR timer2_task(int test)
 		// if the relay uses the nc contacts
 		// the polarity can be normal
 		// but the type is set and to 1 so it will stay off 
-		if(otp2->onoff == 1)
+		if(otp2->onoff == 0)
 		{
+			printf("port: %d onoff: %d \r\n", otp2->port, otp2->onoff);
 			ollist_find_data(FUELPUMP,otpp2,&oll);
 			otp2->onoff = 0;
 			set_output(otp2->type, 0);
@@ -1330,7 +1331,6 @@ UCHAR timer2_task(int test)
 			ollist_insert_data(otp2->port,&oll,otp2);
 		}
 #endif
-
 		if(shutdown_all)
 			return 0;
 	}
@@ -1437,19 +1437,21 @@ UCHAR timer_task(int test)
 			ollist_find_data(i,otpp,&oll);
 			if((otp->type == 2 || otp->type == 3) && otp->reset == 1)
 			{
-				otp->time_left--;
 
 				// if blink type the toggle on and off every second
+				// this doesn't toggle on and off for time_delay, it 
+				// toggles every second so set the time delay for 2x what you want it to last
 				if(otp->type == 3)
-				{
-					TOGGLE_OTP;
-				}
-//				printf("%d %s\r\n",otp->time_left,otp->label);
+					change_output(otp->port,((otp->time_delay - otp->time_left) % 2 == 0?0:1));
+
+				otp->time_left--;
+//				printf("%d %d\r\n",otp->port,otp->time_left);
+
 				if(otp->time_left == 0)
 				{
 					// delay_time was not even then toggle again
-//					if(otp->type == 3 && (otp->time_delay % 2 == 0))
-//						TOGGLE_OTP;
+					if(otp->type == 3 && (otp->time_delay % 2 == 0))
+						TOGGLE_OTP;
 
 //					change_output(i,otp->onoff);
 					change_output(i,0);
@@ -1459,7 +1461,6 @@ UCHAR timer_task(int test)
 
 //					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
 //							otp->onoff, otp->reset, otp->polarity);
-
 
 					// if this is a result of a fake input, we turn it 
 					// off here but the fake input has know way of
@@ -2048,10 +2049,10 @@ void basic_controls(UCHAR cmd)
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(HEADLAMP, 1);
 
-			index = RUNNINGLIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
+//			index = RUNNINGLIGHTS;
+//			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RUNNINGLIGHTS, 1);
+//			change_input(RUNNINGLIGHTS, 1);
 			break;
 
 		case OFF_LIGHTS:
@@ -2060,10 +2061,10 @@ void basic_controls(UCHAR cmd)
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(HEADLAMP, 0);
 
-			index = RUNNINGLIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
+//			index = RUNNINGLIGHTS;
+//			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RUNNINGLIGHTS, 0);
+//			change_input(RUNNINGLIGHTS, 0);
 			break;
 
 		case START_SEQ:

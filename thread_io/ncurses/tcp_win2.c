@@ -49,7 +49,9 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,13,1,"C - test RE_ENTER_PASSWORD");
 	mvwprintw(win,14,1,"D - turn off serial_recv (do this before shutting off monster box)");
 	mvwprintw(win,15,1,"E - turn on serial_recv");
-	mvwprintw(win,16,1,"Q - quit (same as F2)");
+	mvwprintw(win,16,1,"F - turn on Headlamp");
+	mvwprintw(win,17,1,"G - turn off Headlamp");
+	mvwprintw(win,18,1,"Q - quit (same as F2)");
 }
 
 //******************************************************************************************//
@@ -255,10 +257,28 @@ int tcp_win2(int cmd)
 				break;
 
 			case 'E':
-				mvwprintw(twin,error_line2,STARTER_STATUS,"D - turn on serial_recv");
+				mvwprintw(twin,error_line2,STARTER_STATUS,"E - turn on serial_recv");
 				if(tcp_connected == 1)
 				{
 					cmd2 = SET_SERIAL_RECV_ON;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'F':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"F - turn on headlamp");
+				if(tcp_connected == 1)
+				{
+					cmd2 = ON_LIGHTS;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'G':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"G - turn off headlamp");
+				if(tcp_connected == 1)
+				{
+					cmd2 = OFF_LIGHTS;
 					put_sock(&cmd2,1,1,errmsg);
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
@@ -372,7 +392,7 @@ int tcp_win2(int cmd)
 			case KEY_F(9):
 				clr_scr(twin);
 				help_screen(twin);
-				y = 17;
+				y = 19;
 				x = 1;
 		        break;
 

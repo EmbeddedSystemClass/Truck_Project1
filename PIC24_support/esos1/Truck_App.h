@@ -299,15 +299,16 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 0;
-					avr_buffer[3] = test++;
-					AVR_CALL();
+					data3 = RPM_SEND_CHAR_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
 				break;
 
 				case 	KP_2:
+					data3 = RPM_SET_BRIGHTNESS_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(acc == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
@@ -320,6 +321,9 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_3:
+					data3 = RPM_SET_CDECIMAL_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(fuel_pump == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
@@ -332,6 +336,9 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_4:
+					data3 = RPM_SET_UPDATE_RATE_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(fan == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
@@ -344,20 +351,35 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_5:
+					data3 = MPH_OFF_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
 
 				case	KP_6:
+					data3 = MPH_SEND_CHAR_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
 				break;
 
 				case	KP_7:
+					data3 = MPH_SET_BRIGHTNESS_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_8:
+					data3 = MPH_SET_CDECIMAL_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_9:
+					data3 = MPH_SET_UPDATE_RATE_CMD;
+					data3 <<= 8;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_A:		// move up in menu
