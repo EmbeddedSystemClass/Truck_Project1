@@ -28,7 +28,7 @@ static int inc_y(WINDOW *win, int y);
 static void clr_scr(WINDOW *win);
 static void disp_msg(WINDOW *win,char *str);
 static void help_screen(WINDOW *win);
-static int acc_on, fp_on, fan_on, starter_on, lights_on;
+static int acc_on, fp_on, fan_on, starter_on, lights_on, estop_on;
 
 extern int tcp_connected;
 
@@ -43,7 +43,7 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,7,1,"F8 - start sequence");
 	mvwprintw(win,8,1,"F9 - help");
 	mvwprintw(win,9,1,"F10 - clear screen");
-	mvwprintw(win,10,1,"F12 - toggle lights");
+	mvwprintw(win,10,1,"F12 - toggle estop");
 	mvwprintw(win,11,1,"A - clear mbox screen");
 	mvwprintw(win,12,1,"B - get debug info");
 	mvwprintw(win,13,1,"C - test RE_ENTER_PASSWORD");
@@ -120,6 +120,12 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case OFF_ACC:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ACC",hours,minutes,seconds);
+		break;
+		case ON_ESTOP:
+			mvwprintw(win,row,col,"%02d:%02d:%02d  ON_ESTOP",hours,minutes,seconds);
+		break;
+		case OFF_ESTOP:
+			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ESTOP",hours,minutes,seconds);
 		break;
 		case SET_SERIAL_RECV_ON:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  SERIAL_RECV_ON",hours,minutes,seconds);
@@ -205,7 +211,7 @@ int tcp_win2(int cmd)
 	seconds = 0;
 	minutes = 0;
 	hours = 0;
-	starter_on = acc_on = fp_on = fan_on = 0;
+	starter_on = acc_on = fp_on = fan_on = estop_on = 0;
 
 	while((ch = wgetch(twin)) != KEY_F(2) && ch != 'Q')
 	{
@@ -378,15 +384,15 @@ int tcp_win2(int cmd)
 			case KEY_F(12):		// can't use F11 - that toggle to full screen & back (F1 is help)
 				if(tcp_connected == 1)
 				{
-					if(lights_on == 1)
+					if(estop_on == 1)
 					{
-					    cmd2 = OFF_LIGHTS;
-					    lights_on = 0;
+					    cmd2 = OFF_ESTOP;
+					    estop_on = 0;
 					}
 					else
 					{
-						cmd2 = ON_LIGHTS;
-						lights_on = 1;
+						cmd2 = ON_ESTOP;
+						estop_on = 1;
 					}
 				    put_sock(&cmd2,1,1,errmsg);
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");

@@ -1,3 +1,5 @@
+// main_burn.c - run this from AVR_t6963/eeprom directory to burn menu_labes into the eeprom
+// (make flash)
 #include <avr/io.h>
 //#include "../Atmel/toolchain/avr/include/util/delay.h"
 #include "../../../Atmel_other/avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
@@ -12,9 +14,7 @@
 
 
 
-
-
-
+// values start at line 20 so its easy to find the offsewt
 #define NUM_STR 51
 char menu_labels[NUM_STR][20] = {
 	{"RPM"},			// rt values
@@ -30,8 +30,8 @@ char menu_labels[NUM_STR][20] = {
 	{"STARTER"},			// RT_VALUES_OFFSET + 11
 	{"ACCON"},
 	{"FUELPUMP"},
+	{"ESTOP"},
 	{"COOLINGFAN"},
-	{"PRELUBE"},
 	{"HEADLAMP"},
 	{"BRIGHTS"},
 	{"LEFTBLINKER"},

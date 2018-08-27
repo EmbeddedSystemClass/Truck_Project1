@@ -59,8 +59,11 @@ architecture truck_arch of multi_byte is
 	type calc_type is (idle0, idle1_a, calc3, calc4, done, donex);
 	signal cstate_reg, cstate_next: calc_type;
 
-	type calc_type2 is (idle1a, spin1);
-	signal main_reg1, main_next1: calc_type2;
+	type calc_type2 is (idle2a, spin2);
+	signal main_reg2, main_next2: calc_type2;
+
+	type calc_type1 is (idle1a, spin1);
+	signal main_reg1, main_next1: calc_type1;
 
 	type state_dout is (idle_dout, start_dout, done_dout, wait_dout);
 	signal state_dout_reg, state_dout_next: state_dout;
@@ -97,7 +100,7 @@ architecture truck_arch of multi_byte is
 	signal time_delay_mph: std_logic_vector(25 downto 0);
 	signal time_delay_rpm: std_logic_vector(25 downto 0);
 	signal stdlv_transmit_update_rate: std_logic_vector(23 downto 0):= X"0FFFFF";
-	signal bcda, bcdb, bcdc: std_logic_vector(15 downto 0);
+	signal bcd_mph, bcd_rpm, bcdc: std_logic_vector(15 downto 0);
 	signal start_tx, done_tx, start_rx, done_rx: std_logic;
 	signal data_tx, data_rx: std_logic_vector(7 downto 0);
 
@@ -148,7 +151,7 @@ mph_wrapper_unit: entity work.wrapperLED(arch)
 	param=>param_mph,
 	factor=>mph_factor,
 	display_update_rate=>time_delay_mph,
-	bcd_o=>bcda,
+	bcd_o=>bcd_mph,
 	result=>mph_result,
 	sensor_done1=>mph_done);
 
@@ -162,7 +165,7 @@ rpm_wrapper_unit: entity work.wrapperLED(arch)
 	param=>param_rpm,
 	factor=>rpm_factor,
 	display_update_rate=>time_delay_rpm,
-	bcd_o=>bcdb,
+	bcd_o=>bcd_rpm,
 	result=>rpm_result,
 	sensor_done1=>rpm_done);
 
@@ -208,6 +211,7 @@ dtmf_unit: entity work.dtmf
 		start=>start_dtmf,
 		done=>dtmf_done1);
 		
+-- ********************************************************************************
 mon_fp: process(clk, reset, state_reg_fp)
 begin
 	if reset = '0' then
@@ -244,9 +248,9 @@ begin
 	end if;
 end process;
 
+-- ********************************************************************************
 -- 1) check if rpm > MAX -> turn off
 -- 2) wait for rpm to be < MIN -> turn on
-
 mon_rev: process(clk, reset, state_reg_rev)
 begin
 	if reset = '0' then
@@ -285,6 +289,8 @@ begin
 end process;
 
 -- ********************************************************************************
+-- send rpm & mph results rpm first, high_byte first
+-- could also send it in bcd form
 send_uart1: process(clk, reset, state_tx1_reg)
 variable temp_uart: integer range 0 to 255:= 33;
 begin
@@ -303,6 +309,7 @@ begin
 		case state_tx1_reg is
 			when idle10 =>
 				start_tx <= '0';
+				-- never goes faster than this delay
  				if time_delay_reg > TIME_DELAY8c then
 					time_delay_next <= (others=>'0');
 					state_tx1_next <= idle1;
@@ -311,47 +318,48 @@ begin
 				end if;	
 			when idle1 =>
 
---				low_byte <= rpm_result(7 downto 0);
---				high_byte <= rpm_result(15 downto 8);
+				low_byte <= rpm_result(7 downto 0);
+				high_byte <= rpm_result(15 downto 8);
 				data_tx <= X"FF";
 				start_tx <= '1';
 				state_tx1_next <= start;
 			when start =>
 				start_tx <= '0';
-					if done_tx = '1' then
---						data_tx <= bcdc(15 downto 8);
---						data_tx <= stlv_temp2a;	-- dtmf tone param
-						data_tx <= stlv_temp6;
-						start_tx <= '1';
-						state_tx1_next <= start_a;
+				if done_tx = '1' then
+					if low_byte = X"FF" then
+						low_byte <= X"FE";
 					end if;
+--						data_tx <= bcd_rpm(15 downto 8);
+					data_tx <= high_byte;
+					start_tx <= '1';
+					state_tx1_next <= start_a;
+				end if;
 			when start_a =>
 				start_tx <= '0';
 				if done_tx = '1' then
---					data_tx <= bcdc(7 downto 0);
---					data_tx <= stlv_temp3;	-- lcd param
-					data_tx <= stlv_temp7;
+--					data_tx <= bcd_rpm(7 downto 0);
+					data_tx <= low_byte;
 					start_tx <= '1';
+					low_byte <= mph_result(7 downto 0);
+					high_byte <= mph_result(15 downto 8);
 					state_tx1_next <= start_b;
 				end if;
 			when start_b =>
 				start_tx <= '0';
 				if done_tx = '1' then
---					data_tx <= high_byte;
---					data_tx <= stlv_temp4;	-- set update rate
-					data_tx <= stlv_temp3;
+					data_tx <= high_byte;
 					start_tx <= '1';
 					state_tx1_next <= start_c;
 				end if;
 			when start_c =>
 				start_tx <= '0';
 				if done_tx = '1' then
-					-- if low_byte = X"FF" then
-						-- low_byte <= X"FE";
-					-- end if;
-					data_tx <= stlv_temp2a;
+					if low_byte = X"FF" then
+						low_byte <= X"FE";
+					end if;
+					data_tx <= low_byte;
 					start_tx <= '1';
-					state_tx1_next <= start_d;
+					state_tx1_next <= delay;
 				end if;
 			when start_d =>	
 				start_tx <= '0';
@@ -365,12 +373,10 @@ begin
 				if time_delay_reg > unsigned(stdlv_transmit_update_rate) - 1 then
 -- 				if time_delay_reg > TIME_DELAY5a then
 					time_delay_next <= (others=>'0');
-					bcdc <= bcdb;
 					state_tx1_next <= idle1;
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;	
---				state_tx1_next <= idle1;
 		end case;
 		time_delay_reg <= time_delay_next;
 		state_tx1_reg <= state_tx1_next;
@@ -433,20 +439,15 @@ begin
 	end if;
 end process;
 
+
 -- ********************************************************************************
-calc_proc2: process(clk,reset,main_reg1)
-variable test: integer range 0 to 1:= 0;
+calc_proc1: process(clk,reset,main_reg1)
 begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
 		main_next1 <= idle1a;
 		time_delay_reg3 <= (others=>'0');
 		time_delay_next3 <= (others=>'0');
-		cmd_mph <= SEND_CHAR_CMD;
-		cmd_rpm <= SEND_CHAR_CMD;
---		cmd_mph <= SEND_CHAR_CMD;
-		param_mph <= (others=>'1');
-		param_rpm <= (others=>'1');
 		time_delay_mph <= "00" & X"FFFFFF";
 		time_delay_rpm <= "00" & X"7FFFFF";
 --		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
@@ -454,9 +455,6 @@ begin
 --		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
 --		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
 --		time_delay_rpm <= "00" & X"03FFFF";		-- 11ms
-		start_rpm_wrapper <= '0';
-		start_mph_wrapper <= '0';
-		mph_or_not <= '0';
 		stlv_duty_cycle <= (others=>'1');
 		special <= '0';
 		dtmf_index <= (others=>'0');
@@ -488,10 +486,11 @@ begin
 			when spin1 =>
 				case mcmd is
 					when SET_DISPLAY_UPDATE_RATE =>
-						if mph_or_not = '0' then
+--						if mph_or_not = '0' then
 							time_delay_rpm <= mparam & "11" & X"FFFF";
-						else time_delay_mph <= mparam & "11" & X"FFFF";
-						end if;
+--						else 
+							time_delay_mph <= mparam & "11" & X"FFFF";
+--						end if;
 					when SET_FACTOR_CMD =>	
 						if mph_or_not = '0' then
 							rpm_factor <= mparam(5 downto 0);
@@ -536,5 +535,46 @@ begin
 		time_delay_reg3 <= time_delay_next3;
 	end if;
 end process;		
+
+-- ********************************************************************************
+calc_proc2: process(clk,reset,main_reg2)
+begin
+	if reset = '0' then
+		main_reg2 <= idle2a;
+		main_next2 <= idle2a;
+		time_delay_reg3 <= (others=>'0');
+		time_delay_next3 <= (others=>'0');
+		cmd_mph <= SEND_CHAR_CMD;
+		cmd_rpm <= SEND_CHAR_CMD;
+--		cmd_mph <= SEND_CHAR_CMD;
+		param_mph <= (others=>'1');
+		param_rpm <= (others=>'1');
+		time_delay_mph <= "00" & X"FFFFFF";
+		time_delay_rpm <= "00" & X"7FFFFF";
+--		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
+--		time_delay_rpm <= "00" & X"1FFFFF";		-- 92ms
+--		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
+--		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
+--		time_delay_rpm <= "00" & X"03FFFF";		-- 11ms
+		start_rpm_wrapper <= '1';
+		start_mph_wrapper <= '1';
+		mph_or_not <= '0';
+		
+
+	elsif clk'event and clk = '1' then
+		case main_reg2 is
+			when idle2a =>
+				if start_calc = '1' then
+					main_next2 <= spin2;
+				end if;
+			when spin2 =>
+				case mcmd is
+				end case;
+		main_reg1 <= main_next1;
+		time_delay_reg3 <= time_delay_next3;
+	end if;
+end process;		
+
+
 
 end truck_arch;

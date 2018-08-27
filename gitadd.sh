@@ -1,10 +1,9 @@
 git add README.md
 git add Truck_Project1_notes.txt
 git add monster_box.txt
-git add monster_box1.jpg
+git add io_box.txt
 git add gitadd.sh
 git add .gitignore
-git add monster_box4a.jpg
 git add mytypes.h
 
 git add AVR_t6963/atmega328p.conf
@@ -35,8 +34,8 @@ git add Truck_App1/Frequency.vhd
 git add Truck_App1/period.vhd
 git add Truck_App1/mod_m.vhd
 git add Truck_App1/div.vhd
-git add Truck_App1/pwm1.vhd
-git add Truck_App1/pwm2.vhd
+#git add Truck_App1/pwm1.vhd
+#git add Truck_App1/pwm2.vhd
 git add Truck_App1/bcd.vhd
 git add Truck_App1/debounce.vhd
 git add Truck_App1/3S500E_layout_bottom.txt
@@ -53,13 +52,11 @@ git add Truck_App1/wrapperLED.vhd
 git add Truck_App1/spi_slave.vhd
 git add Truck_App1/spi_master.vhd
 git add Truck_App1/dtmf.vhd
-git add Truck_App1/dtmf.wcfg
+#git add Truck_App1/dtmf.wcfg
 git add Truck_App1/lcd_pwm.vhd
-git add Truck_App1/test_rpm_mph.c
-git add Truck_App1/test_write.c
-git add Truck_App1/fifo.vhd
+#git add Truck_App1/fifo.vhd
 git add Truck_App1/test_outputs.zip
-git add Truck_App1/lib/*
+git add Truck_App1/lib/Common.vhd
 
 git add PIC24_support/lib/*
 git add PIC24_support/esos/*
@@ -67,7 +64,6 @@ git add PIC24_support/esos1/Truck_App2.c
 git add PIC24_support/esos1/Truck_App.h
 git add PIC24_support/PIC24FJ_pinlist.ods
 git add PIC24_support/PIC24_board_pinout.txt
-git add PIC24_support/esos1/esos1_notes.txt
 git add PIC24_support/esos1/copy.sh
 git add PIC24_support/esos1/extract.sh
 git add PIC24_support/esos1/make_avr

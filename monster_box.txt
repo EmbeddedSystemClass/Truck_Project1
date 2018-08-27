@@ -151,7 +151,7 @@ pin 15 RB13
 extra 18-pin socket
 
 1) to 3v3 via 4k7 pullup	| jumper these 2 together
-2) to pin 13 (MCLR)			| after programming the chip
+2) to pin 13 (MCLR)			| after programming the chip*
 3)
 4)
 5) gnd (ref for VEE & VO)
@@ -166,6 +166,10 @@ extra 18-pin socket
 14) PGC orange wire
 15) TX UART1
 16) nc yellow wire
+
+*pins 1 & 2 are jumpered together after programming the PIC24 using MPLABX:
+go to icon of downpointing green arrow to right of right-pointing green "go"
+icon and choose "make and program device"
 
 3 pins to left of lower conv chip:
 gnd gnd 3v3
@@ -254,6 +258,8 @@ connections to FPGA:
 #	74		69
 #	76		75
 #	82		77
+
+(24, 30 & 28 have wires soldered to the top of the FPGA for handshaking - see below)
 
 starting from left outside going up
 77) tx	|	UART1
@@ -410,7 +416,7 @@ use 95 for DataReady
 use 96 for CmdParam
 use 97 for DataSent
 
-can't call ESOS_TASK_WAIT_TICKS from within main recipient
+can't call ESOS_TASK_WAIT_TICKS from within mail recipient?
 
 note: don't do any assignment statements before ESOS_TASK_BEGIN()
 it causes strange side-effects

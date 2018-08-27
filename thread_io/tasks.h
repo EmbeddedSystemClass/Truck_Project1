@@ -1,7 +1,7 @@
 #ifndef __TASKS_H
 #define  __TASKS_H
 
-#define NUM_TASKS           	7
+#define NUM_TASKS           	8
 
 #define DEFAULT                 0
 #define TIME_SLICE              1
@@ -17,9 +17,9 @@ enum task_types
 	MONITOR_INPUTS,
 	MONITOR_INPUTS2,
 	TIMER,
+	TIMER2,
 	BUTTONS,
 	SERIAL_RECV,
-//	SERIAL_RECV2,
 	TCP_MONITOR,
 } TASK_TYPES;
 
@@ -27,6 +27,7 @@ UCHAR get_host_cmd_task(int test);
 UCHAR monitor_input_task(int test);
 UCHAR monitor_fake_input_task(int test);
 UCHAR timer_task(int test);
+UCHAR timer2_task(int test);
 UCHAR read_button_inputs(int test);
 UCHAR serial_recv_task(int test);
 UCHAR serial_recv_task2(int test);

@@ -205,7 +205,7 @@ strcat(sup_string[i],tempx);
 
 /* Create the window to be associated with the menu */
 
-	twin = newwin(num+3, win_width, 2, 33);
+	twin = newwin(num+3, win_width+2, 2, 33);
 	keypad(twin, TRUE);
 
 /* Set main window and sub window */
@@ -225,12 +225,12 @@ WINDOW *derwin(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x);
 	print_in_middle(twin, 1, 2, 40, filename, COLOR_PAIR(1));
 
 	mvwaddch(twin,num,0,ACS_LTEE);
-	mvwaddch(twin,num,win_width-1,ACS_RTEE);
-	mvwhline(twin, num, 1, ACS_HLINE, win_width-2);
+	mvwaddch(twin,num,win_width+1, ACS_RTEE);
+	mvwhline(twin, num, 1, ACS_HLINE, win_width);
 
 	mvwaddch(twin, 2, 0, ACS_LTEE);
-	mvwhline(twin, 2, 1, ACS_HLINE, win_width-2);
-	mvwaddch(twin, 2, win_width-1, ACS_RTEE);
+	mvwhline(twin, 2, 1, ACS_HLINE, win_width);
+	mvwaddch(twin, 2, win_width+1, ACS_RTEE);
 /*
 	mvwaddch(twin,num,0,ACS_LTEE);
 	mvwaddch(twin,num,38,ACS_RTEE);

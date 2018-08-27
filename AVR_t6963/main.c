@@ -1,8 +1,7 @@
 //******************************************************************************************//
 //*************************************** main.c  ******************************************//
 //******************************************************************************************//
-// main program that drives the t6963 LCD (32 col x 15 row) display - text only
-// see t6963_notes.txt for more details
+// main program that drives the t6963 LCD (40 col x 16 row) display - text only
 #include <avr/io.h>
 #include<avr/interrupt.h>
 //#include "../avr8-gnu-toolchain-linux_x86/avr/include/util/delay.h"
@@ -207,6 +206,9 @@ int main(void)
 					GDispSetCursor (mode, row, col, type);
 				break;
 
+				// could not get this to work as far as being able to select starting, ending
+				// cols & rows so for now it just clears a predetermined section in the upper right
+				// of the screen
 				case LCD_CLRSCR2:
 					srow = buff[1];
 					scol = buff[2];
@@ -219,6 +221,7 @@ int main(void)
 					GDispClrTxt();
 				break;
 
+				// not used
 				case LCD_MSG1:
 					for(i = 0;i < SIZE_NUM;i++)
 						transmitByte(curr_num[i]);
@@ -227,7 +230,8 @@ int main(void)
 				// 1 row
 				// 2 col
 				// 3 index into eeprom + 1
-				// 4 no of spaces to put after string
+				// 4 no of spaces to put down starting a beginning of string
+				// to blank out what was there before
 				case EEPROM_STR:
 					row = (UINT)buff[1];
 					col = (UINT)buff[2];

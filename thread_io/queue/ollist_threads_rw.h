@@ -30,13 +30,13 @@ typedef struct o_data
 {
 	char label[OLABELSIZE];
 	UCHAR port;
-	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR onoff;			// current state: 1 if on; 0 if off
 	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
 							// 1 - on input turns output off; off input turns output on
 	UCHAR type;				// see below
 	UINT time_delay;		// when type 2-4 this is used as the time delay
 	UINT time_left;			// gets set to time_delay and then counts down
-	UCHAR pulse_time;
+	UCHAR pulse_time;		// not used
 	UCHAR reset;			// used to make 2nd pass
 } O_DATA;
 
@@ -46,8 +46,11 @@ type:
 1) goes on/off and stays that way until some other event occurs
 	this is useful for a lock-out condition (use reset field)
 2) on for time_delay seconds and then it goes back off
-3) goes on/off at a pulse_time rate (250ms) until turned off again
-4) goes on/off at pulse_time rate for time_delay seconds and then back off
+3) goes on/off every second until time_delay is up
+4) goes on/off at pulse_time rate in 10ths of a second then
+	goes off when time_delay is up
+5) goes on/off at pulse_rate in 10ths of a second if onoff is 
+	active only
 */
 
 typedef struct ollist_node {

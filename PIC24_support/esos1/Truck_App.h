@@ -1,3 +1,35 @@
+//    All rights reserved.
+//
+//    Permission to use, copy, modify, and distribute this software and its
+//    documentation for any purpose, without fee, and without written agreement is
+//    hereby granted, provided that the above copyright notice, the following
+//    two paragraphs and the authors appear in all copies of this software.
+//
+//    IN NO EVENT SHALL THE "AUTHORS" BE LIABLE TO ANY PARTY FOR
+//    DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+//    OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE "AUTHORS"
+//    HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//    THE "AUTHORS" SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+//    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+//    AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+//    ON AN "AS IS" BASIS, AND THE "AUTHORS" HAS NO OBLIGATION TO
+//    PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+//
+//    Please maintain this header in its entirety when copying/modifying
+//    these files.
+//
+// *********************************************
+// Truck_App2.c
+// *********************************************
+
+/*
+can't call ESOS_TASK_WAIT_TICKS from within mail recipient?
+
+note: don't do any assignment statements before ESOS_TASK_BEGIN()
+it causes strange side-effects
+*/
+
 #if 1
 #if 1
 #ifdef BUILT_ON_ESOS
@@ -158,21 +190,34 @@ volatile UCHAR menu_ptr;
 #define LINE_2_CURSOR       0xA1    //2-Line cursor mode
 #define LINE_1_CURSOR       0xA0    //1-Line cursor mode
 
-#define FPGA_OFF_CMD					0x01
-#define FPGA_SEND_CHAR_CMD				0x02
-#define FPGA_SET_BRIGHTNESS_CMD			0x03 // set brightness for LED display
-#define FPGA_SET_CDECIMAL_CMD			0x04 // set decimal point   "    "
-#define FPGA_SET_UPDATE_RATE_CMD		0x05 // serial port transmit rate
-#define FPGA_SET_FACTOR_CMD				0x06 // set the div. factor for rpm/mph calc
-#define FPGA_SET_DISPLAY_UPDATE_RATE 	0x07 // display update rate for LED display
-#define FPGA_DTMF_TONE_ON				0x08 // DTMF tones on dual speakers (on)
-#define FPGA_DTMF_TONE_OFF				0x09 // DTMF tones on dual speakers (off)
-#define FPGA_SPECIAL_TONE_ON			0x0A // siren for dual speakers
-#define FPGA_LCD_PWM					0x0B // command for LCD display (brightness)
-#define FPGA_FP_SHUTOFF_OVERRIDE		0x0C
-#define FPGA_SET_MAX_REV_LIMITER		0x0D
-#define FPGA_SET_MIN_REV_LIMITER		0x0E
-#define FPGA_TEST_RPM_LIMIT				0x0F
+// commands for RPM LED display
+#define RPM_OFF_CMD 				0x01
+#define RPM_SEND_CHAR_CMD 			0x02
+#define RPM_SET_BRIGHTNESS_CMD 		0x03
+#define RPM_SET_CDECIMAL_CMD 		0x04
+#define RPM_SET_UPDATE_RATE_CMD 	0x05
+#define RPM_SET_FACTOR_CMD 			0x06
+
+// commands for MPH LED display
+#define MPH_OFF_CMD 				0x0A
+#define MPH_SEND_CHAR_CMD 			0x0B
+#define MPH_SET_BRIGHTNESS_CMD 		0x0C
+#define MPH_SET_CDECIMAL_CMD 		0x0D
+#define MPH_SET_UPDATE_RATE_CMD 	0x0E
+#define MPH_SET_FACTOR_CMD 			0x0F
+
+// other FPGA commands
+#define SET_DISPLAY_UPDATE_RATE 	0x20
+#define DTMF_TONE_ON 				0x21
+#define DTMF_TONE_OFF 				0x22
+#define SPECIAL_TONE_ON 			0x23
+#define LCD_PWM 					0x24
+#define FP_SHUTOFF_OVERRIDE 		0x25
+#define SET_MAX_REV_LIMITER 		0x26
+#define SET_MIN_REV_LIMITER 		0x27
+#define TEST_RPM_LIMIT 				0x28
+
+
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on
 #define PWM_80DC_PARAM					0x1A // duty_cycle = 80%
@@ -204,6 +249,10 @@ static UCHAR password_valid;
 static int password_ptr;
 static int password_retries;
 static int dim_screen;
+static int silent_key;
+static UINT gl_rpm, gl_mph;
+static UCHAR seconds_display_low;
+static UCHAR seconds_display_high;
 //static ESOS_TASK_HANDLE convADC_task_handle;
 
 typedef enum
@@ -211,7 +260,6 @@ typedef enum
 	NORMAL,
 	PASSWORD,
 	NUMENTRY,
-	TEST
 }KEY_MODE;
 
 KEY_MODE key_mode;
@@ -222,13 +270,14 @@ KEY_MODE key_mode;
 //******************************************************************************************//
 ESOS_USER_TASK(menu_task)
 {
-	static UCHAR data1, data3;
+	static UCHAR data1;
 	static UINT data4;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 
 	static int acc, fuel_pump, fan;
 	static ESOS_TASK_HANDLE comm1_handle;
+	static UCHAR test;
 	
     ESOS_TASK_BEGIN();
 
@@ -239,6 +288,7 @@ ESOS_USER_TASK(menu_task)
 
 	acc = fuel_pump = fan = 0;
 
+	test= 0;
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_FOR_MAIL();
@@ -249,6 +299,12 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 0;
+					avr_buffer[3] = test++;
+					AVR_CALL();
+
 				break;
 
 				case 	KP_2:
@@ -288,9 +344,11 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_5:
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
 
 				case	KP_6:
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
 				break;
 
 				case	KP_7:
@@ -317,13 +375,14 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_B:		// move down in menu
+/*
 					avr_buffer[0] = SEND_INT_RT_VALUES;
 					avr_buffer[1] = 0;
 					avr_buffer[2] = 0;
 					avr_buffer[3] = 1;
 					avr_buffer[4] = 2;
 					AVR_CALL();
-
+*/
 
 					if(++menu_ptr > NUM_MENU_LABELS - 1)
 						menu_ptr = 0;
@@ -367,19 +426,23 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_POUND:
-					data4 = FPGA_LCD_PWM;
+					data4 = LCD_PWM;
 					data4 <<= 8;
 					data4 &= 0xFF00;
 					data4 |= PWM_OFF_PARAM;
 					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+					key_enter_time = 250;	// something > 240 so it won't come back on
+											// unless key is pressed
+					
 				break;
 
 				case	KP_AST:
-					data4 = FPGA_LCD_PWM;
+					data4 = LCD_PWM;
 					data4 <<= 8;
 					data4 &= 0xFF00;
 					data4 |= PWM_ON_PARAM;
 					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+					key_enter_time = 0;
 
 				break;
 
@@ -434,19 +497,23 @@ ESOS_USER_TASK(password_task)
 	menu_handle = esos_GetTaskHandle(display_menu);
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
     
-	ESOS_TASK_WAIT_TICKS(1000);
+	ESOS_TASK_WAIT_TICKS(100);
 
+	avr_buffer[0] = LCD_CLRSCR;
+	avr_buffer[1] = 0;
+	AVR_CALL();
 
 	avr_buffer[0] = GOTO_CMD;
 	avr_buffer[1] = 7;
+	avr_buffer[2] = 0;
 	avr_buffer[2] = (UCHAR)strlen(correct_password);
 	AVR_CALL();
-
+/*
 	avr_buffer[0] = CHAR_CMD;
 	avr_buffer[1] = 7;
 	avr_buffer[2] = 0x3C;  // '<'
 	AVR_CALL();
-
+*/
 	avr_buffer[0] = EEPROM_STR;
 	avr_buffer[1] = 6;	// row 6
 	avr_buffer[2] = 0;	// col 0
@@ -509,6 +576,7 @@ ESOS_USER_TASK(password_task)
 */
 					break;
 
+				// backspace over current password
 				case	KP_B:
 					password_ptr--;
 					avr_buffer[0] = SET_MODE_CMD;
@@ -848,9 +916,10 @@ ESOS_USER_TASK(keypad)
 
     ESOS_TASK_BEGIN();
 
-
     data2 = 0;
     data1 = 0;
+   	silent_key = 1;
+
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(2);
@@ -870,14 +939,16 @@ ESOS_USER_TASK(keypad)
 					u8_newKey = doKeyScan();
 					e_isrState = STATE_WAIT_FOR_RELEASE;
 // send the message to FPGA to turn on DTMF tone
+					if(silent_key == 0)
+					{
+						data1 = DTMF_TONE_ON;
+						data1 <<= 8;
+						data1 &= 0xFF00;
 
-					data1 = FPGA_DTMF_TONE_ON;
-					data1 <<= 8;
-					data1 &= 0xFF00;
+						data1 |= u8_newKey - 0xE0;
 
-					data1 |= u8_newKey - 0xE0;
-
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
+						__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
+					}
 
 
 				} else e_isrState = STATE_WAIT_FOR_PRESS;
@@ -891,11 +962,14 @@ ESOS_USER_TASK(keypad)
 					e_isrState = STATE_WAIT_FOR_PRESS;
 // send the message to FPGA to turn on DTMF tone
 
-					data1 = FPGA_DTMF_TONE_OFF;
-					data1 <<= 8;
-					data1 &= 0xFF00;
+					if(silent_key == 0)
+					{
+						data1 = DTMF_TONE_OFF;
+						data1 <<= 8;
+						data1 &= 0xFF00;
 
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
+						__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data1);
+					}
 
 				}
 				break;
@@ -910,16 +984,23 @@ ESOS_USER_TASK(keypad)
 //******************************************************************************************//
 //************************************ key_timer_task **************************************//
 //******************************************************************************************//
+// dim the display after so many seconds of not getting a keypress
 ESOS_USER_TASK(key_timer_task)
 {
 	static UINT data3;
+	static UCHAR prev_seconds_high;
+	static UCHAR prev_seconds_low;
 
     ESOS_TASK_BEGIN();
 
     key_enter_time = 0;
 	dim_screen = 0;
+	
+	prev_seconds_high = prev_seconds_low = 0;
 	while (TRUE)
 	{
+		ESOS_TASK_WAIT_TICKS(1000);
+
 /*
 		avr_buffer[0] = SEND_INT_RT_VALUES;
 		avr_buffer[1] = rtlabel_str[RPM].row;
@@ -934,12 +1015,30 @@ ESOS_USER_TASK(key_timer_task)
 		avr_buffer[3] = (UCHAR)(mph >> 8);
 		avr_buffer[4] = (UCHAR)mph;
 		AVR_CALL();
-*/
-		ESOS_TASK_WAIT_TICKS(1000);
 
+
+		if(seconds_display_high != prev_seconds_high)
+		{
+			prev_seconds_high = seconds_display_high;
+		}
+		if(seconds_display_low != prev_seconds_low)
+		{
+			prev_seconds_low = seconds_display_low;
+		}
+		if(++prev_seconds_low > 9)
+			prev_seconds_low = 0;
+
+		avr_buffer[0] = GOTO_CMD;
+		avr_buffer[1] = 0;
+		avr_buffer[2] = 39;		
+
+		avr_buffer[0] = CHAR_CMD;
+		avr_buffer[1] = prev_seconds_low;
+		AVR_CALL();
+*/		
 		if(key_enter_time == 30)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_80DC_PARAM;
@@ -948,7 +1047,7 @@ ESOS_USER_TASK(key_timer_task)
 		}
 		if(key_enter_time == 45)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_75DC_PARAM;
@@ -957,34 +1056,34 @@ ESOS_USER_TASK(key_timer_task)
 		}
 		if(key_enter_time == 60)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_50DC_PARAM;
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 120)
+		if(key_enter_time == 90)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_25DC_PARAM;
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 240)
+		if(key_enter_time == 120)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_12DC_PARAM;
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 480)
+		if(key_enter_time == 240)
 		{
-			data3 = FPGA_LCD_PWM;
+			data3 = LCD_PWM;
 			data3 <<= 8;
 			data3 &= 0xFF00;
 			data3 |= PWM_OFF_PARAM;
@@ -1001,14 +1100,14 @@ ESOS_USER_TASK(key_timer_task)
 ESOS_USER_TASK(poll_keypad)
 {
 
-    static ESOS_TASK_HANDLE menu_handle;
+    static ESOS_TASK_HANDLE menu_task_handle;
     static ESOS_TASK_HANDLE password_handle;
     static ESOS_TASK_HANDLE numentry_handle;
-	static UCHAR data3;
+	static UINT data3;
 
     ESOS_TASK_BEGIN();
 
-	menu_handle = esos_GetTaskHandle(menu_task);
+	menu_task_handle = esos_GetTaskHandle(menu_task);
 	password_handle = esos_GetTaskHandle(password_task);
 	numentry_handle = esos_GetTaskHandle(numentry_task);
 
@@ -1022,10 +1121,7 @@ ESOS_USER_TASK(poll_keypad)
 			switch(key_mode)
 			{
 				case NORMAL:
-					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
-					break;
-				case TEST:
-					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
+					__esos_CB_WriteUINT8(menu_task_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
 					break;
 				case PASSWORD:
 					__esos_CB_WriteUINT8(password_handle->pst_Mailbox->pst_CBuffer,u8_newKey);
@@ -1039,10 +1135,10 @@ ESOS_USER_TASK(poll_keypad)
 			u8_newKey = 0;	// very important to reset this to 0
 			// if key_enter_time has dimmed screen then
 			// turn it back on
-
+	
 			if(dim_screen > 0)
 			{
-				data3 = FPGA_LCD_PWM;
+				data3 = LCD_PWM;
 				data3 <<= 8;
 				data3 &= 0xFF00;
 				data3 |= PWM_ON_PARAM;
@@ -1304,22 +1400,15 @@ ESOS_USER_TASK(convADC)
 
 				// this puts the ADC data on the AVR screen
 				avr_buffer[0] = SEND_BYTE_RT_VALUES;
-
 				avr_buffer[1] = rtlabel_str[ENG_TEMP+u8_i].row;
 				avr_buffer[2] = rtlabel_str[ENG_TEMP+u8_i].data_col;
 				avr_buffer[3] = u8_pot[u8_i];
 				AVR_CALL();
-	/*
-				avr_buffer[0] = SEND_BYTE_RT_VALUES;
-				avr_buffer[1] = rtlabel_str[7].row;
-				avr_buffer[2] = rtlabel_str[7].col + 15;
-				avr_buffer[3] = u8_pot[1];
-				AVR_CALL();
-	*/
 			}
 			// this sends the ADC data to the TS-7200
 			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
 		}
+		// this can in the future be a predetermined time set in the menu
 		ESOS_TASK_WAIT_TICKS(1000);
 	}
 	ESOS_TASK_END();
@@ -1339,38 +1428,3 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
-
-
-/*
-	while (TRUE)
-	{
-		CmdParam = 1;
-		ESOS_TASK_WAIT_TICKS(5);
-		DataReady = 1;
-
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
-		ESOS_TASK_WAIT_ON_SEND_UINT83(data2);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
-
-		ESOS_TASK_WAIT_TICKS(5);
-		CmdParam = 0;
-		ESOS_TASK_WAIT_TICKS(5);
-		DataReady = 0;
-		ESOS_TASK_WAIT_TICKS(5);
-		DataReady = 1;
-
-		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM3();
-		ESOS_TASK_WAIT_ON_SEND_UINT83(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
-
-		ESOS_TASK_WAIT_TICKS(5);
-		DataReady = 0;
-		
-		data1++;
-		if(data1 > 0x7e)
-			data1 = 0x21;
-		data2--;
-		if(data2 < 0x21)
-			data2 = 0x7e;
-		ESOS_TASK_WAIT_TICKS(200);
-*/

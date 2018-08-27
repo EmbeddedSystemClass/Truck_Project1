@@ -427,11 +427,11 @@ static void lcd_write(UCHAR *dat)
 
 void red_led(int onoff)
 {
-	setbiobit(portled,1,onoff);
+	setbiobit((UCHAR *)portled,1,onoff);
 }
 void green_led(int onoff)
 {
-	setbiobit(portled,0,onoff);
+	setbiobit((UCHAR *)portled,0,onoff);
 }
 
 

@@ -82,9 +82,9 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"ACCON\0");
 	pid++;
-	strcpy(pid->label,"COOLINGFAN\0");
-	pid++;
 	strcpy(pid->label,"FUELPUMP\0");
+	pid++;
+	strcpy(pid->label,"COOLINGFAN\0");
 	pid++;
 	strcpy(pid->label,"PRELUBE\0");
 	pid++;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"BACKUPLIGHTS\0");
 	pid++;
-	strcpy(pid->label,"TESTINPUT25\0");
+	strcpy(pid->label,"ESTOPMONITOR\0");
 	pid++;
 	strcpy(pid->label,"TESTINPUT26\0");
 	pid++;
@@ -205,9 +205,9 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"ACCON\0");
 	pod++;
-	strcpy(pod->label,"COOLINGFAN\0");
-	pod++;
 	strcpy(pod->label,"FUELPUMP\0");
+	pod++;
+	strcpy(pod->label,"COOLINGFAN\0");
 	pod++;
 	strcpy(pod->label,"PRELUBE\0");
 	pod++;

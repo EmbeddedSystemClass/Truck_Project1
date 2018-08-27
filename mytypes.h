@@ -6,7 +6,6 @@ typedef unsigned int UINT;
 typedef UCHAR* PUCHAR;
 typedef unsigned long ULONG;
 
-//#define TIME_DELAY 000000000
 #define TIME_DELAY   990000000L
 
 // this is the same as NUM_PORT_BITS (should be...)
@@ -28,6 +27,8 @@ enum cmd_types
 	STARTER_OFF,
 	ON_ACC,
 	OFF_ACC,
+	ON_ESTOP,
+	OFF_ESTOP,
 	ON_FUEL_PUMP,
 	OFF_FUEL_PUMP,
 	ON_FAN,
@@ -103,26 +104,31 @@ enum downstream_msg
 	COMM_CMD = 0x3F,
 	RE_ENTER_PASSWORD1,
 	OUTPUT_MSG,
-	LIVE_DATA1,
-	LIVE_DATA2,
-	LIVE_DATA3,
 	TIME_DATA1,
 	TIME_DATA2,
 	TIME_DATA3,
-	TEST_DTMF_TONE,
 	NEW_PASSWORD2,
 	NEW_PASSWORD3,
 	NEW_PASSWORD4,
 } DOWNSTREAM_MSG;
 
 // 25 total output_types
+// until now the input labels match the outputs
+// this is not always the case
+// the labels for the I_DATA types
+// are the same up to TESTOUTPUT25
+// then all the labels for the inputs
+// are called TESTINPUTXX
+
+// also need to insert signals for fuelpump and ignition interrupt relays
+// controlled by the FPGA in series with primary fuelpump and ignition relays (1 & 2)
 enum output_types
 {
 	STARTER,
 	ACCON,
 	FUELPUMP,
+	ESTOPMONITOR,
 	COOLINGFAN,
-	PRELUBE,
 	HEADLAMP,
 	BRIGHTS,
 	LEFTBLINKER,
@@ -142,8 +148,24 @@ enum output_types
 	LIGHTBAR,
 	BLINKINDICATE,
 	BRAKELIGHTS,
-	BACKUPLIGHTS
+	BACKUPLIGHTS,
+	TESTOUTPUT25,
+	TESTOUTPUT26,
+	TESTOUTPUT27,
+	TESTOUTPUT28,
+	TESTOUTPUT29,
+	TESTOUTPUT30,
+	TESTOUTPUT31,
+	TESTOUTPUT32,
+	TESTOUTPUT33,
+	TESTOUTPUT34,
+	TESTOUTPUT35,
+	TESTOUTPUT36,
+	TESTOUTPUT37,
+	TESTOUTPUT38,
+	NULL2
 }OUTPUT_TYPES;
+
 
 #define CHAR_CMD				2
 #define GOTO_CMD				3

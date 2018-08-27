@@ -1,0 +1,265 @@
+Relays on IO cards are 5A so use 5v power from DC-DC converter inside io box as coil voltage for 10A 
+relay arrays.
+
+typedef struct i_data
+{
+	char label[ILABELSIZE];
+	UCHAR port;
+	UCHAR affected_output;
+	UINT temp;
+} I_DATA;
+
+typedef struct o_data
+{
+	char label[OLABELSIZE];
+	UCHAR port;				// io port 0->39 (20 on each card)
+	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
+							// 1 - on input turns output off; off input turns output on
+	UCHAR type;				// see below
+	UINT time_delay;		// when type 2-4 this is used as the time delay
+	UINT time_left;			// gets set to time_delay and then counts down
+	UCHAR pulse_time;		// not implemented
+	UCHAR reset;			// used to make 2nd pass
+} O_DATA;
+
+
+type:
+0) regular - on/off state responds to assigned input (affected_output)
+1) goes on/off and stays that way until some other event occurs
+	this is useful for a lock-out condition (use reset field)
+2) on for time_delay seconds and then it goes back off
+3) goes on/off every second until time_delay is up
+4) goes on/off at pulse_time rate for time_delay seconds and then back off (not implemented)
+
+reset is used when type is 1 and 2: when type 1 it sets reset on the 1st pass
+and then on 2nd pass it will change the output - 2 for time delay - there is
+a loop in the timer task which checks all the output records for type 2 and
+counts down using the time_left field.
+
+monitor_input_task scans all the outputs using ollist_find_data and if type != 0 && onoff == 1 then
+read last_time_state_changed (UINT) in current O_DATA and check against current time using localtime
+in this case onoff == 1 means its active 
+
+monitor_input_task does the scanning of the actual input ports and changes the outputs accordingly
+
+monitor_fake_input_task scans an array called fake_inportstatus1 & 2 set by change_inputs()
+so the outputs can be set implicitly.
+
+
+config jumpers for io card:
+base address		JP1		JP2
+0x240				0		0
+0x260				0		1
+0x280				1		0
+0x300				1		1
+
+JP1 	JP2 (see note 1)
+123		123
+on for JP1 is jumper from 1->2
+on for JP2 is jumper from 2->3
+
+card on top is configured starting at 0x280
+bottom card is 0x300 
+
+PortA outputs 0x280	(8 bits)
+PortB outputs 0x281	(8 bits)
+PortC outputs 0x282	(4 bits)
+
+PortD outputs 0x300	(8 bits)
+PortE outputs 0x301	(8 bits)
+PortF outputs 0x302	(4 bits)
+
+PortA inputs 0x284	(8 bits)
+PortB inputs 0x285	(8 bits)
+PortC inputs 0x286	(4 bits)
+
+PortD inputs 0x304	(8 bits)
+PortE inputs 0x305	(8 bits)
+PortF inputs 0x306	(4 bits)
+(see ioports.h)
+
+relays start at upper left and go down then lower right and go up (see note 1)
+
+		left side		right side
+
+		1				20
+		2				19
+		3				18
+		4				17
+		5				16
+		6				15
+		7				14
+		8				13
+		9				12
+		10				11
+
+inputs start from left (see note 1)
+note 1) looking at card from component side w/PC-104 on bottom:
+
+when compiling for TS-7200:
+edit thread_io/Makefile so it compiles for TS-7200:
+
+#use this for TS-7200
+CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+#use this for TS-7800
+#CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+
+the client program (in ncurses directory) takes the ip address as the 1st param
+the 2nd & 3rd params are optional idata & odata files.
+
+ "192.168.42.146"	TS-7200
+ "192.168.42.148"		"
+ "192.168.42.149"		"	<- using this one in IO box
+ "192.168.42.145"	TS-7250
+ "192.168.42.124"	TS-7250
+
+if using the make file for the simulator: thread_io/linux_make, 
+use the ip address for the linux box as 1st param for client
+of the linux box that the sched simulator is running on
+
+perf board for flashing light and 2 buttons:
+
+pins at bottom:
+1) +5v
+2) gnd
+3) LED light (to DIO1 7)
+4) green button (to DIO1_0)
+5) read button (to DIO1_1)
+
+pinout for RJ-45 jack break-out
+
+green /w	3	5	blue /w
+green		6	4	blue
+brown /w	1	7	brown /w
+orange		2	8	brown
+
+small switch on upper right front panel is console switch:
+console = comm1 (left)
+console off (right)
+
+to mount sd card for TS-7200 see thread_io/how2formatSDCardExt.png and mountcf.sh
+(also see: https://www.tldp.org/HOWTO/Flash-Memory-HOWTO/ext2.html)
+
+to manage TS-7200 redboot see thread_io/manage_boot_bios.txt 
+(if cant' get back downto linux shell)
+
+40-pin ICD connector on side of IO box starts with port 0 on top right and
+goes to port 19 on top left, then starts with port 20 on lower right and goes
+to left (port 39) - the only exception is 6 is skipped over and is between
+9 and 10
+
+19 18 17 16 15 14 13 12 11 10  6  9  8  7  5  4  3  2  1  0		-> front of IO box
+39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20
+
+need a way to save the odometer reading to disk.
+Use the llist type database files to add another type to record the real-time data:
+time from engine start or total time (trunning_hours/minutes/seconds)
+no - just create a file called odometer.txt and write an int to it.
+
+8/8/18 - getting intermittent segment fault when doing change_output() - seems to
+happen more often when doing using tcp command but never does it from within
+monitor_input_task ~? - something flakey about card 146 - 149 works ok
+
+8/13/18 - thread_io was causing segment fault crash because when live window was up there was some
+un received tcp messages so I set the get_sock call in tcp_win2 to non-blocking and that seemed to 
+fix it.
+
+don't name anything in sched directory with ext of "*.dat" except the [i|o]data?.dat files
+it makes havic with the GET_DIR command
+
+10/16/17
+made separate make files (make_db) to compile init_db & list_db on both host and target side
+/thread_io (target) - sched
+/thread_io/ncurses (host) - client
+
+current menus in the ncurses program:
+
+1) Host
+	("Open"),						  // 0
+	("Save File"),					  // 1
+	("Edit idata"),					  // 2
+	("Edit odata"),					  // 3
+	("goto to sh"),					  // 4
+	("Reboot"),						  // 5
+	("Shutdown"),					  // 6
+	("Shift Left"),					  // 7
+	("Shift Right"),				  // 8
+	("Scroll Up"),					  // 9
+	("Scroll Down"),				  // 10
+	("Exit"),						  // 11
+
+2) Target
+	("Open"),						  // 0
+	("Save File"),					  // 1
+	("Save As"),					  // 2
+	("Delete"),						  // 3
+	("Recv idata"),					  // 4	- recv all idata from target and store in host
+	("Recv odata"),					  // 5	- recv all odata from target and store in host
+	("Send idata"),					  // 6	- send all idata from host to target
+	("Send odata"),					  // 7	- send all odata from host to target
+	("Show idata"),					  // 8	- show what's currently in idata db
+	("Show odata"),					  // 9	- show what's currently in odata db
+
+3) Tool
+	("Connect"),					// 0
+	("Disconnect"),					// 1
+	("Set Time"),					// 2
+	("Get Time"),					// 3
+	("TCP Window"),					// 4
+	("Live Window"),				// 5
+	("FPGA Window"),				// 6
+	("Upload New"),					// 7	- send new sched exe to target's sched directory and reboot
+	("Test Write"),					// 8	- save all output events triggered by inputs to sched.log file
+
+
+Lock-Out Relay:
+
+Lock-Out Relay (LOR) uses nc contacts in series with nc E-Stop switch which supplies the
+common +12vdc to the primary relays for fuel pump and ignition (FUELPUMP & ACCON).
+The coil for the LOR is a signal from the TS-7200 labeled "ESTOPMONITOR" (output).
+The input for ESTOPMONITOR is the 12vdc (convertedd to 5v) from the E-Stop switch.
+When the TS-7200 detects a drop in voltage (E-Stop switch is opened) then it energizes
+the coil for the LOR, keeping the primary relays for fuel pump and ignition off.
+There is a timer task running in the thread_io program which monitors the status of
+the ESTOPMONITOR signal and explicitly turns the fuel pump and ignition off. The
+O_DATA type of ESTOPMONITOR is set to '1' so it will stay off. If the LOR uses the
+nc contacts in series with the E-Stop switch then it will have to have reverse polarity.
+The polarity feature only works with type '0' so the task will have to first energize
+the relay initially.
+
+Other events that should trigger an ESTOP signal (in addition to the E-Stop switch):
+
+1) Oil pressure goes to 0 or too low
+2) Engine temp too high (should give warning first)
+3) catostrofic crash (use accelerometer)
+
+Also, the FPGA has signals that control special relays:
+
+1) fuel pump shutoff (additional relay in series with primary fuelpump relay)
+2) engine over speed (additional relay in series with primary ignition relay)
+
+The monster box will have to send a special message to the FPGA telling it
+to override the fuel pump shutoff just to get started
+
+(optionally the FPGA can just send signals to the IO box to control the primary relays)
+
+in tasks.c serial_recv_task() if byte recv'd is RT_DATA then recv the ADC channels
+from the PIC24 which are sent from send_comm1
+
+tasks.c sends data to PIC24 using write_serial at several places prefixed by the commands:
+CLEAR_SCREEN
+GET_DEBUG_INFO
+GET_DEBUG_INFO2
+OUTPUT_MSG
+these all must be a total of 5 bytes including the command - they are received by recv_comm1
+in the PIC24
+
+todo:
+
+- get rpm/mph data sent to comm3 of PIC24
+- thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
+- setup spare AVR to generate sample rpm/mph signals to test LEDs
+- check operation of fp shutoff/override and rev limiter
+- figure out lock-out relay from ebay
+- fix problem with client - host open, edit and save file

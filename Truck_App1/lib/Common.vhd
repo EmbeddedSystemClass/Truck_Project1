@@ -311,21 +311,29 @@ package CommonPckg is
 	constant MAX_TIME:  integer:=  131071;
 	constant SIZE_32: integer:= 32;
 
-	constant OFF_CMD: std_logic_vector(7 downto 0):= X"01";
-	constant SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
-	constant SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"03";
-	constant SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"04";
-	constant SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"05";
-	constant SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"06";
-	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(7 downto 0):= X"07";
-	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"08";
-	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"09";
-	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"0A";
-	constant LCD_PWM: std_logic_vector(7 downto 0):= X"0B";
-	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(7 downto 0):= X"0C";
-	constant SET_MAX_REV_LIMITER: std_logic_vector(7 downto 0):= X"0D";
-	constant SET_MIN_REV_LIMITER: std_logic_vector(7 downto 0):= X"0E";
-	constant TEST_RPM_LIMIT: std_logic_vector(7 downto 0):= X"0F";
+	constant RPM_OFF_CMD: std_logic_vector(7 downto 0):= X"01";
+	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
+	constant RPM_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"03";
+	constant RPM_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"04";
+	constant RPM_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"05";
+	constant RPM_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"06";
+
+	constant MPH_OFF_CMD: std_logic_vector(7 downto 0):= X"0A";
+	constant MPH_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"0B";
+	constant MPH_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"0C";
+	constant MPH_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"0D";
+	constant MPH_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"0E";
+	constant MPH_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"0F";
+
+	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(7 downto 0):= X"20";
+	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"21";
+	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"22";
+	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"23";
+	constant LCD_PWM: std_logic_vector(7 downto 0):= X"24";
+	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(7 downto 0):= X"25";
+	constant SET_MAX_REV_LIMITER: std_logic_vector(7 downto 0):= X"26";
+	constant SET_MIN_REV_LIMITER: std_logic_vector(7 downto 0):= X"27";
+	constant TEST_RPM_LIMIT: std_logic_vector(7 downto 0):= X"28";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";

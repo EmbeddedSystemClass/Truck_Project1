@@ -111,6 +111,7 @@ int main(int argc, char **argv)
 	_threads[MONITOR_INPUTS].sched = PFIFO;
 	_threads[MONITOR_INPUTS2].sched = PFIFO;
 	_threads[TIMER].sched = PTIME_SLICE;
+	_threads[TIMER2].sched = PTIME_SLICE;
 	_threads[BUTTONS].sched = TIME_SLICE;
 	_threads[SERIAL_RECV].sched = TIME_SLICE;
 //	_threads[SERIAL_RECV2].sched = TIME_SLICE;
@@ -120,6 +121,7 @@ int main(int argc, char **argv)
 	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
 	strcpy(_threads[MONITOR_INPUTS2].label,"MONITOR_INPUTS2\0");
 	strcpy(_threads[TIMER].label,"TIMER\0");
+	strcpy(_threads[TIMER2].label,"TIMER2\0");
 	strcpy(_threads[BUTTONS].label,"READ_BUTTONS\0");
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
 //	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
