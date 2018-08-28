@@ -47,13 +47,13 @@ int main(int argc, char *argv[])
 	char csv[5] = "csv\0";
     FILE* fd = NULL;
     char buff[2000];
-    char records[41][50];
+    char records[41][100];
     char *ch, *ch2;
 	int j, k,l;
 	int i;
     size_t fsize;
 	size_t size;
-	char temp[40];
+	char temp[500];
 	char cp;
 	
 	if(argc < 2)
@@ -90,27 +90,27 @@ int main(int argc, char *argv[])
 	*fptr = 0;
 	strcat(fptr2,csv);
 
-/*
 	printf("opening csv file: %s\n",fptr1);
 	printf("opening csv file: %s\n",fptr2);
 
-	printf("creating idata file: %s\n",fptr1);
-	printf("creating odata file: %s\n",fptr2);
+	printf("creating idata file: %s\n",fptr1_org);
+	printf("creating odata file: %s\n",fptr2_org);
 
 	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
-*/
-	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
-	isize = sizeof(I_DATA);
-	isize *= i;
-//	printf("total size: of i_data %lu\n",isize);
 
-//	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
 	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
+	printf("NUM_PORT_BITS: %d\n",i);
+	isize = sizeof(I_DATA);
+	printf("sizeof IDATA: %lu\n",isize);
+	isize *= i;
+	printf("total size: of i_data %lu\n",isize);
+
+	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
+	i = NUM_PORT_BITS;
+	printf("NUM_PORT_BITS: %d\n",i);
 	osize = sizeof(O_DATA);
 	osize *= i;
-//	printf("total size of o_data: %lu\n",osize);
+	printf("total size of o_data: %lu\n",osize);
 
 	curr_i_array = (I_DATA *)malloc(isize);
 	memset((void *)curr_i_array,0,isize);
@@ -132,8 +132,8 @@ int main(int argc, char *argv[])
 	fsize = ftell(fd);
 	fseek(fd,0,SEEK_SET);
 	memset(buff,0,sizeof(buff));
-	memset(records,0,41*50);
-    size = fread((void*)&buff[0],1,1500,fd);
+	memset(records,0,41*100);
+    size = fread((void*)&buff[0],1,2000,fd);
 	fclose(fd);
     ch = buff;
     size = 0;
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     		ch++;
     	}
     	ch++;
-    }while(size < 1300);
+    }while(size < 2000);
 
 	cp = ',';
     for(i = 1;i < 41;i++)
@@ -177,23 +177,23 @@ int main(int argc, char *argv[])
 		memset(temp,0,sizeof(temp));
 
 		strcpy(temp,ch);
-//		printf("%s \n",temp);
 
 		pid->port = atoi(ch);
+//		printf("port: %d\n",pid->port);
 
-		do{
+		for(j = 0;j < 10;j++)
+		{
+			do{
+				ch++;
+			}while(*ch != 0);
 			ch++;
-		}while(*ch != 0);
-		ch++;
 
-		strcpy(temp,ch);
-//		printf("%s \n",temp);
+			strcpy(temp,ch);
+//			printf("%s \n",temp);
 
-		pid->affected_output = atoi(ch);
+			pid->affected_output[j] = atoi(ch);
+		}
 
-		strcpy(temp,ch);
-//		printf("%s \n",temp);
-		pid->port = atoi(ch);
 		do{
 			ch++;
 		}while(*ch != '\n' && *ch != 0);
@@ -210,12 +210,18 @@ int main(int argc, char *argv[])
 	pid = curr_i_array;
 	for(i = 0;i < isize/sizeof(I_DATA);i++)
 	{
-		printf("%d %d\t%s\n",pid->port,pid->affected_output,pid->label);
+//		printf("%d %d\t%s\n",pid->port,pid->affected_output[i],pid->label);
+		printf("%d,",pid->port);
+		for(j = 0;j < 10;j++)
+			printf("%d,",pid->affected_output[j]);
+		printf("%s\n",pid->label);
+
 		pid++;
 	}
 
 	pid = curr_i_array;
 
+	printf("file: %s\n",fptr1_org);
 	ret = iWriteConfig(fptr1_org,curr_i_array,isize,errmsg);
 	if(ret < 0)
 		printf("iWriteConfig: %s\n",errmsg);
@@ -258,8 +264,8 @@ int main(int argc, char *argv[])
 	fsize = ftell(fd);
 	fseek(fd,0,SEEK_SET);
 	memset(buff,0,sizeof(buff));
-	memset(records,0,41*50);
-    size = fread((void*)&buff[0],1,1500,fd);
+	memset(records,0,41*100);
+    size = fread((void*)&buff[0],1,2000,fd);
 	fclose(fd);
     ch = buff;
     size = 0;
@@ -281,23 +287,37 @@ int main(int argc, char *argv[])
     		ch++;
     	}
     	ch++;
-    }while(size < 1200);
+    }while(size < 2000);
 
 //    for(i = 1;i < 41;i++)
 //    	printf("%s\n",records[i]);
 
 /*
+	char label[OLABELSIZE];
 	UCHAR port;
-	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR onoff;			// current state: 1 if on; 0 if off
 	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
 							// 1 - on input turns output off; off input turns output on
-							// but if type is 1 then this tells whether to reset or not
 	UCHAR type;				// see below
-	UINT time_delay;
-	UCHAR pulse_time;
-	UCHAR reset;
-	char label[OLABELSIZE];
+	UINT time_delay;		// when type 2-4 this is used as the time delay
+	UINT time_left;			// gets set to time_delay and then counts down
+	UCHAR pulse_time;		// not used
+	UCHAR reset;			// used to make 2nd pass
+} O_DATA;
+
+/*
+type:
+0) regular - on/off state responds to assigned input (affected_output)
+1) goes on/off and stays that way until some other event occurs
+	this is useful for a lock-out condition (use reset field)
+2) on for time_delay seconds and then it goes back off
+3) goes on/off every second until time_delay is up
+4) goes on/off at pulse_time rate in 10ths of a second then
+	goes off when time_delay is up
+5) goes on/off at pulse_rate in 10ths of a second if onoff is 
+	active only
 */
+
 
     for(i = 1;i < 41;i++)
     {
@@ -320,6 +340,7 @@ int main(int argc, char *argv[])
 //		printf("%s \n",temp);
 
 		pod->port = atoi(ch);
+//		printf("port: %d\n",pod->port);
 
 		do{
 			ch++;
@@ -330,6 +351,7 @@ int main(int argc, char *argv[])
 //		printf("%s \n",temp);
 
 		pod->onoff = atoi(ch);
+//		printf("onoff: %d\n",pod->onoff);
 
 		do{
 			ch++;
@@ -340,6 +362,7 @@ int main(int argc, char *argv[])
 //		printf("%s \n",temp);
 
 		pod->polarity = atoi(ch);
+//		printf("pol: %d\n",pod->polarity);
 
 		do{
 			ch++;
@@ -390,28 +413,37 @@ int main(int argc, char *argv[])
 //		printf("%s \n",temp);
 
 		pod->reset = atoi(ch);
+//		printf("reset: %d\n",pod->reset);
 
 		do{
 			ch++;
+//			if(pod->port > 10 && pod->port < 20)
+//				printf("%c",*ch);
 		}while(*ch != 0 && *ch != '\n');
 		ch++;
 
 		strcpy(temp,ch);
-//		printf("%s\n",temp);
+		
+//		if(pod->port > 10 && pod->port < 20)
+//			printf("%s\n",temp);
 
 		strcpy(pod->label,temp);
+//		if(pod->port > 10 && pod->port < 20)
+//			printf("label: %s\n",pod->label);
 
 		pod++;
 	}
 
 	pod = curr_o_array;
 
+	printf("file: %s\n",fptr2_org);
 	ret = oWriteConfig(fptr2_org,curr_o_array,osize,errmsg);
 	if(ret < 0)
 		printf("oWriteConfig: %s\n",errmsg);
 	else printf("%s %s has %lu records \n",errmsg,fptr2,osize/sizeof(O_DATA));
 
 	pod = curr_o_array;
+
 
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{

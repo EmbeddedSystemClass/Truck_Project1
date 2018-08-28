@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	I_DATA *pid;
 	O_DATA *curr_o_array;
 	O_DATA *pod;
-	int i;
+	int i,j;
 	size_t isize;
 	size_t osize;
 	char *fptr1;
@@ -72,7 +72,9 @@ int main(int argc, char *argv[])
 	for(i = 0;i < isize/sizeof(I_DATA);i++)
 	{
 		pid->port = i;
-		pid->affected_output = i;
+		pid->affected_output[0] = i;
+		for(j = 1;j < 10;j++)
+			pid->affected_output[j] = 41;
 		pid++;
 	}
 
@@ -84,9 +86,9 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"FUELPUMP\0");
 	pid++;
-	strcpy(pid->label,"COOLINGFAN\0");
+	strcpy(pid->label,"ESTOPMONITOR\0");
 	pid++;
-	strcpy(pid->label,"PRELUBE\0");
+	strcpy(pid->label,"COOLINGFAN\0");
 	pid++;
 	strcpy(pid->label,"HEADLAMP\0");
 	pid++;

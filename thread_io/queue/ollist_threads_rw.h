@@ -24,7 +24,7 @@
 #define FALSE   0
 #endif
 
-#define OLABELSIZE 20
+#define OLABELSIZE 30
 
 typedef struct o_data
 {
@@ -50,7 +50,7 @@ type:
 4) goes on/off at pulse_time rate in 10ths of a second then
 	goes off when time_delay is up
 5) goes on/off at pulse_rate in 10ths of a second if onoff is 
-	active only
+	active only (not implemented yet)
 */
 
 typedef struct ollist_node {

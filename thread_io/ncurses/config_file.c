@@ -25,14 +25,17 @@
 // CONFIG_FILE is the define used for compiling the list_db and init_db programs
 // so (i/ol)(Load/Write)Config is used by sched/tasks etc
 #ifndef CONFIG_FILE
-int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
+int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg)
 {
 	char *fptr;
 	int fp = -1;
 	int i = 0;
+	int j;
 	fptr = (char *)filename;
 	UCHAR id;
 	I_DATA i_data;
+	UCHAR temp[150];
+	int rc;
 
 	fp = open((const char *)fptr, O_RDWR);
 	if(fp < 0)
@@ -62,10 +65,31 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 		return -1;
 	}
 
+//	printf("sizeof I_DATA: %lu\r\n",sizeof(I_DATA));
 	for(i = 0;i < NUM_PORT_BITS;i++)
 	{
-		read(fp,&i_data,sizeof(I_DATA));
-//		printf("%d %d %d %s\n",i_data.port,i_data.affected_output,i_data.temp,i_data.label);
+//		rc = read(fp,&i_data,sizeof(I_DATA));
+		rc = read(fp,&temp[0],sizeof(I_DATA));
+		
+		memcpy((void *)&i_data,(void *)&temp[0],sizeof(I_DATA));
+//		for(j = 30;j < 50;j++)
+//			printf("%02x ",temp[j]);
+
+//		printf("\r\n");	
+/*
+		printf("%2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %s\r\n",rc, i_data.port,
+			i_data.affected_output[0],
+			i_data.affected_output[1],
+			i_data.affected_output[2],
+			i_data.affected_output[3],
+			i_data.affected_output[4],
+			i_data.affected_output[5],
+			i_data.affected_output[6],
+			i_data.affected_output[7],
+			i_data.affected_output[8],
+			i_data.affected_output[9],
+			i_data.label);
+*/
 		illist_insert_data(i, ill, &i_data);
 	}
 
@@ -352,7 +376,9 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 		close(fp);
 		return -1;
 	}
+	size = 1760;
 	i = read(fp,(void*)curr_i_array,size);
+//	i = read(fp,(void*)curr_i_array,size);
 //	mvprintw(LINES - 4,0,"%s\n",strerror(errno));
 //	display_legend(6,5,strerror(errno)," ");
 //	printf("fp:%d  read: %d bytes in iLoadConfig\n",fp,i);

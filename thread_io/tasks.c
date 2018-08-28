@@ -402,15 +402,34 @@ UCHAR get_host_cmd_task(int test)
 		otp->reset = 0;
 		ollist_insert_data(i,&oll,otp);
 	}
-#endif
+
 	for(i = 0;i < 40;i++)
 	{
 		ollist_find_data(i,otpp,&oll);
-		printf("port: %d onoff: %d type: %d reset %d\ pol: %d\r\n",otp->port,otp->onoff,
+		printf("port: %d onoff: %d type: %d reset %d pol: %d\r\n",otp->port,otp->onoff,
 			otp->type,otp->reset,otp->polarity);
-	}	
-//#endif
+	}
+	printf("\r\n");
+	illist_show(&ill);
+#endif
+/*
+	change_input(ESTOPMONITOR,1);
+	usleep(100000);
+	change_input(FUELPUMP,0);
+	usleep(100000);
+	change_input(ACCON,0);
+	usleep(100000);
 
+	usleep(100000);
+	ollist_find_data(ESTOPMONITOR,&otp,&oll);
+	printf("E-Stop port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+					otp->onoff, otp->reset, otp->polarity);
+	usleep(100000);
+	otp->onoff = 1;
+	ollist_insert_data(ESTOPMONITOR, &oll, &tempo1);
+	printf("E-Stop port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+					otp->onoff, otp->reset, otp->polarity);
+*/
 	while(TRUE)
 	{
 		cmd = 0;
@@ -658,7 +677,7 @@ UCHAR get_host_cmd_task(int test)
 
 							memset(tempx,0,sizeof(tempx));
 							strcpy(tempx,dir->d_name);
-							printf("%s\r\n",tempx);
+//							printf("%s\r\n",tempx);
 							chp = tempx;
 							j = 0;
 
@@ -775,15 +794,6 @@ UCHAR get_host_cmd_task(int test)
 
 					case EXIT_PROGRAM:
 exit_program:
-
-
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_find_data(i,otpp,&oll);
-							printf("port: %d onoff: %d reset: %d pol: %d %s\r\n", otp->port,
-								otp->onoff, otp->reset, otp->polarity, otp->label);
-						}
-
 						if(cmd == UPLOAD_NEW)
 						{
 							reboot_on_exit = 1;
@@ -932,8 +942,8 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = (onoff == 1?0:1);
 			else	
 				otp->onoff = onoff;
-//			printf("type 0 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+			printf("type 0 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+							otp->onoff, otp->reset, otp->polarity);
 			change_output(otp->port,otp->onoff);
 			ollist_insert_data(otp->port,&oll,otp);
 			break;
@@ -947,16 +957,16 @@ static void set_output(O_DATA *otp, int onoff)
 				TOGGLE_OTP;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
-//										otp->onoff, otp->reset, otp->polarity);
+				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+										otp->onoff, otp->reset, otp->polarity);
 			}	
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 0;
-//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		case 2:
@@ -970,8 +980,8 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 1;
 				change_output(otp->port,1);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
+							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		// other 2 types not implemented yet (see queue directory)
@@ -1085,10 +1095,17 @@ UCHAR monitor_input_task(int test)
 				// itpp is a pointer to itp
 				illist_find_data(index,itpp,&ill);
 
-				// find the input assigned to the output
-				rc = ollist_find_data(itp->affected_output,otpp,&oll);
+				// find the input assigned to the output(s)
 
-				set_output(otp,  onoff);
+				for(i = 0;i < 10;i++)
+				{
+					if(itp->affected_output[i] != 41)
+					{
+						ollist_find_data(itp->affected_output[i],otpp,&oll);
+						set_output(otp,  onoff);
+//						printf("port: %d\r\n",otp->port);
+					}
+				}
 
 				inportstatus[bank] = result;
 //				printf("leave 1: %02x\r\n\r\n",inportstatus[bank]);
@@ -1195,14 +1212,17 @@ UCHAR monitor_fake_input_task(int test)
 				}
 				illist_find_data(index,itpp,&ill);
 
-				rc = ollist_find_data(itp->affected_output,otpp,&oll);
-
-				set_output(otp, onoff);
-
-//				ollist_insert_data(otp->port,&oll,otp);
+				for(i = 0;i < 10;i++)
+				{
+					if(itp->affected_output[i] != 41)
+					{
+						ollist_find_data(itp->affected_output[i],otpp,&oll);
+						set_output(otp,  onoff);
+//						printf("port: %d\r\n",otp->port);
+					}
+				}
 
  				fake_inportstatus1[bank] = fake_inportstatus2[bank];
-
 
 //				printf("leave 2: %02x %02x\r\n\r\n",fake_inportstatus1[bank],fake_inportstatus2[bank]);
 			}
@@ -1459,8 +1479,8 @@ UCHAR timer_task(int test)
 					otp->reset = 0;
 					ollist_insert_data(otp->port,&oll,otp);
 
-//					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+							otp->onoff, otp->reset, otp->polarity);
 
 					// if this is a result of a fake input, we turn it 
 					// off here but the fake input has know way of
@@ -2129,4 +2149,5 @@ void basic_controls(UCHAR cmd)
 					rt_llist_insert_data(&roll,rtp);
 					printf("%d %d\r\n",rtp->port,rtp->onoff);
 */
+
 

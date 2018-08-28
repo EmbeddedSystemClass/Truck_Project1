@@ -175,7 +175,7 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 {
 	illist_node_t *cur, *prev;
 	int status = -1; /* assume failure */
-
+	int i;
 
 	pthread_rdwr_wlock_np(&(llistp->rwlock));
 
@@ -192,7 +192,8 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 			}
 			memcpy(newdatap->label,datap->label,ILABELSIZE);
 			newdatap->port = datap->port;
-			newdatap->affected_output = datap->affected_output;
+			for(i = 0;i < 10;i++)
+				newdatap->affected_output[i] = datap->affected_output[i];
 			cur->datap = newdatap;
 			prev->nextp = cur->nextp;
 //			printf("2:%d\t%s\n",index,cur->datap->label);
@@ -213,7 +214,7 @@ int illist_change_data(int index, I_DATA *datap, illist_t *llistp)
 #ifdef MAKE_TARGET
 int illist_show(illist_t *llistp)
 {
-	char list_buf[50];
+//	char list_buf[200];
 	char *ptr;
 	int iptr;
 	illist_node_t *cur;
@@ -224,12 +225,34 @@ int illist_show(illist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
-//			printf("port: %2d\taffected: %2d\t%s\n",cur->datap->port, \
-				cur->datap->affected_output, cur->datap->label);
-			memset(list_buf,0,50);
-			sprintf(list_buf,"port: %2d aff: %2d %s",cur->datap->port, \
-				cur->datap->affected_output, cur->datap->label);
+			printf("%2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %s\r\n",cur->datap->port,
+				cur->datap->affected_output[0],
+				cur->datap->affected_output[1],
+				cur->datap->affected_output[2],
+				cur->datap->affected_output[3],
+				cur->datap->affected_output[4],
+				cur->datap->affected_output[5],
+				cur->datap->affected_output[6],
+				cur->datap->affected_output[7],
+				cur->datap->affected_output[8],
+				cur->datap->affected_output[9],
+				cur->datap->label);
+
 /*
+			memset(list_buf,0,200);
+			sprintf(list_buf,"port: %2d aff: %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %s",cur->datap->port, \
+				cur->datap->affected_output[0],
+				cur->datap->affected_output[1],
+				cur->datap->affected_output[2],
+				cur->datap->affected_output[3],
+				cur->datap->affected_output[4],
+				cur->datap->affected_output[5],
+				cur->datap->affected_output[6],
+				cur->datap->affected_output[7],
+				cur->datap->affected_output[8],
+				cur->datap->affected_output[9],
+				 cur->datap->label);
+
 			 ptr = list_buf;
 			 iptr = 0;
 			 do
@@ -238,8 +261,9 @@ int illist_show(illist_t *llistp)
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
 */
-			send_tcp((UCHAR *)list_buf,50);
-			printString2(list_buf);
+//			send_tcp((UCHAR *)list_buf,50);
+//			printString2(list_buf);
+//			printf("%s\r\n",list_buf);
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

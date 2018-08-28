@@ -28,8 +28,9 @@ int main(int argc, char *argv[])
 	int file2 = 1;
 	int num_valids = 0;
 
-	int i;
+	int i,j;
 	int comma_delim;
+//	size_t isize;
 	size_t isize;
 	size_t osize;
 	char errmsg[60];
@@ -72,9 +73,12 @@ int main(int argc, char *argv[])
 
 	isize = sizeof(I_DATA);
 	isize *= i;
+	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
+	printf("sizeof size_t: %lu\n",sizeof(size_t));
 
 	osize = sizeof(O_DATA);
 	osize *= i;
+	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
 
 	curr_i_array = (I_DATA *)malloc(isize);
 	memset((void *)curr_i_array,0,isize);
@@ -101,10 +105,14 @@ int main(int argc, char *argv[])
 
 				if(comma_delim == 1)
 				{
-					printf("%d,%d,%s\n",pid->port,pid->affected_output,pid->label);
+//					printf("%d,%d,%s\n",pid->port,pid->affected_output[0],pid->label);
+					printf("%d,",pid->port);
+					for(j = 0;j < 10;j++)
+						printf("%d,",pid->affected_output[j]);
+					printf("%s\n",pid->label);
 				}else
 				{
-					printf("%d\t%d\t\t\t%s\n",pid->port,pid->affected_output,pid->label);
+					printf("%d\t%d\t\t\t%s\n",pid->port,pid->affected_output[0],pid->label);
 				}
 				pid++;
 		}

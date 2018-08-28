@@ -51,7 +51,15 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,15,1,"E - turn on serial_recv");
 	mvwprintw(win,16,1,"F - turn on Headlamp");
 	mvwprintw(win,17,1,"G - turn off Headlamp");
-	mvwprintw(win,18,1,"Q - quit (same as F2)");
+	mvwprintw(win,18,1,"I - show all I_DATA");
+	mvwprintw(win,19,1,"O - show all O_DATA");
+	mvwprintw(win,20,1,"J - enable starter");
+	mvwprintw(win,21,1,"K - toggle acc");
+	mvwprintw(win,22,1,"L - toggle fuelpump");
+	mvwprintw(win,23,1,"M - toggle cooling fan");
+	mvwprintw(win,24,1,"N - E-Stop on");
+	mvwprintw(win,25,1,"P - E-Stop off");
+	mvwprintw(win,26,1,"Q - quit (same as F2)");
 }
 
 //******************************************************************************************//
@@ -283,7 +291,43 @@ int tcp_win2(int cmd)
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
+			case 'I':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"H - show all I_DATA");
+				if(tcp_connected == 1)
+				{
+					cmd2 = SHOW_IDATA;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'O':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"I - show all O_DATA");
+				if(tcp_connected == 1)
+				{
+					cmd2 = SHOW_ODATA;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'N':
+				if(tcp_connected == 1)
+				{
+				    cmd2 = ON_ESTOP;
+					put_sock(&cmd2,1,1,errmsg);
+			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+
+			case 'P':
+				if(tcp_connected == 1)
+				{
+				    cmd2 = OFF_ESTOP;
+					put_sock(&cmd2,1,1,errmsg);
+			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
 			case KEY_F(3):
+			case 'J':
 				if(tcp_connected == 1)
 				{
 				    cmd2 = ENABLE_START;;
@@ -293,6 +337,7 @@ int tcp_win2(int cmd)
 				break;
 
 			case KEY_F(4):
+			case 'K':
 				if(tcp_connected == 1)
 				{
 					if(acc_on == 1)
@@ -312,6 +357,7 @@ int tcp_win2(int cmd)
 				break;
 
 			case KEY_F(5):
+			case 'L':
 				if(tcp_connected == 1)
 				{
 					if(fp_on == 1)
@@ -331,6 +377,7 @@ int tcp_win2(int cmd)
 				break;
 
 			case KEY_F(6):
+			case 'M':
 				if(tcp_connected == 1)
 				{
 					if(fan_on == 1)
@@ -392,7 +439,7 @@ int tcp_win2(int cmd)
 			case KEY_F(9):
 				clr_scr(twin);
 				help_screen(twin);
-				y = 19;
+				y = 27;
 				x = 1;
 		        break;
 

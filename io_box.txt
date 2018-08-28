@@ -215,18 +215,19 @@ current menus in the ncurses program:
 
 Lock-Out Relay:
 
-Lock-Out Relay (LOR) uses nc contacts in series with nc E-Stop switch which supplies the
+Lock-Out Relay (LOR) uses no contacts in series with nc E-Stop switch which supplies the
 common +12vdc to the primary relays for fuel pump and ignition (FUELPUMP & ACCON).
 The coil for the LOR is a signal from the TS-7200 labeled "ESTOPMONITOR" (output).
 The input for ESTOPMONITOR is the 12vdc (convertedd to 5v) from the E-Stop switch.
-When the TS-7200 detects a drop in voltage (E-Stop switch is opened) then it energizes
+When the TS-7200 detects a drop in voltage (E-Stop switch is opened) then it de-energizes
 the coil for the LOR, keeping the primary relays for fuel pump and ignition off.
-There is a timer task running in the thread_io program which monitors the status of
-the ESTOPMONITOR signal and explicitly turns the fuel pump and ignition off. The
-O_DATA type of ESTOPMONITOR is set to '1' so it will stay off. If the LOR uses the
-nc contacts in series with the E-Stop switch then it will have to have reverse polarity.
-The polarity feature only works with type '0' so the task will have to first energize
-the relay initially.
+The ESTOPMONITOR input has itself, the FUELPUMP & ACCON as the extra outputs
+assigned to it in the affected_outputs array in its I_DATA record. The output - O_DATA
+record makes it a type 1 which means it needs both and on followed by an off to 
+change states. To enable the fuelpump and ignition, send an estop signal (on). If
+the E-Stop button is pushed then all 3 outputs will go off (ESTOPMONITOR, FUELPUMP & ACCON)
+Then the ESTOPMONITOR must be sent and off followed by an on to re-enable the circuit
+and turn the fuelpump and ignition back on.
 
 Other events that should trigger an ESTOP signal (in addition to the E-Stop switch):
 

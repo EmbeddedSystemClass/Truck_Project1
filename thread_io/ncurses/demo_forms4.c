@@ -252,7 +252,7 @@ int demo_forms(void *curr, int which, int index)
 			refresh();
 */
 			buffer = field_buffer(f[6],0);
-			pid->affected_output = atoi(buffer);
+//			pid->affected_output = atoi(buffer);
 
 			buffer = field_buffer(f[2],0);		  // label
 			fp = buffer;

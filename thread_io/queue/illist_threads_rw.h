@@ -31,7 +31,7 @@ enum bit_type
 #define FALSE   0
 #endif
 
-#define ILABELSIZE 20
+#define ILABELSIZE 30
 
 // there is a record for all of the outputs that are hooked up (implemented in the hw)
 // and also a record for all the inputs that directly effect the same output
@@ -45,13 +45,9 @@ typedef struct i_data
 {
 	char label[ILABELSIZE];
 	UCHAR port;
-	UCHAR affected_output;
-	UINT temp;
-#if 0
-#ifndef NOMAIN
-	UCHAR temp;		// compiled on target sizeof(I_DATA) = 24 while on host is 28
-#endif
-#endif
+	UCHAR affected_output[10];
+	UCHAR temp[3];		// ARM aligns data on 4-byte alignment so this makes sizeof(I_DATA) 44 on both machines
+						// otherwise the list/init_db programs won't work on ARM
 } I_DATA;
 
 typedef struct illist_node {
