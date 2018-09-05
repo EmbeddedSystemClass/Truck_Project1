@@ -241,12 +241,18 @@ from regular functions, even when called from and esos task, nor can you call an
 ESOS_TASK macros so now the menu choices and screen display will just have to be
 hard-coded in for whatever is needed.
 
+(9/4/18)
+realized if I'm measuring the pulse of 1 plug wire, then I am getting a pulse for 
+every 2 revolutions of the crankshaft. So since I couldn't figure out how to set
+the RPM_DVND and RPM_CLOCK_COUNT in lib/Common.vhd, I just doubled the result value
+in sensor.vhd returned from the averaging algoritm. 
+
 Don't use the functon pointer array in the thread_io, just have dedicated threads
 and have the serial port one with the highest priority.
 
 Get all the ssh's to use keygen instead of passwords
 
-got the following strange error:
+got the following strange wtf error:
 	A clock IOB / clock component pair have been found that are not placed at an optimal clock IOB /
    clock site pair. The clock component <reset_IBUF_BUFG> is placed at site <BUFGMUX_X2Y0>. 
    The IO component <reset> is placed at site <IPAD119>.  This will not allow the use of the
@@ -259,6 +265,18 @@ then added the line:
 NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
 in the ucf file to turn it to a warning after trying for 3 days to fix it. Some kind of 
 timing problem...
+
+when setting VHDL variables in the declaration statement like:
+	"signal fubar: std_logic_vector(7 downto 0):= "00000000";"
+and then trying to set the variable again in the reset section of the FSM, it will
+use the value set in the reset section in the simulator, but when running the program
+on the chip, it will use the value set in the declaration. Spent about 3-4 hours
+on this one night.
+
+can't call ESOS_TASK_WAIT_TICKS from within mail recipient?
+
+note: don't do any assignment statements before ESOS_TASK_BEGIN()
+it causes strange side-effects
 
 **************** todo ****************
 
@@ -285,13 +303,14 @@ the O_DATA database which points to a on-off database (or text file).
 In task2 when we check for a change in the inputs, check for a time-up in a list of
 which active time-up array and then check the time of day to see if that port should
 be turned on or off.
+(9-4-18) -this works for types 0-3
 
 Use 12vdc->5vdc converter from separate motorcycle battery to power whole system.
 Then have a way to keep the battery charged - either charge it from the car battery
 or use solar panels (or switch between both)
 
 sched needs a config file so it knows which dat files were used last instead
-of just idata & odata which are loaded by default
+of just idata & odata which are loaded by default (see odometer.txt)
 
 PIC24 in monster box will ask for user password before starting mtr. If seat switch
 is opened (driver leaves seat) or if lock-out relay is energized (E-Stop button pushed)

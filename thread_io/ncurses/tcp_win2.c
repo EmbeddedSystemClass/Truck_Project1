@@ -408,8 +408,18 @@ int tcp_win2(int cmd)
 #endif
 				if(tcp_connected == 1)
 				{
-					cmd2 = SHUTDOWN;
+				    cmd2 = OFF_FUEL_PUMP;
 					put_sock(&cmd2,1,1,errmsg);
+					usleep(1000000);
+				    cmd2 = OFF_FAN;
+					put_sock(&cmd2,1,1,errmsg);
+					usleep(1000000);
+				    cmd2 = STARTER_OFF;
+					put_sock(&cmd2,1,1,errmsg);
+					usleep(1000000);
+				    cmd2 = OFF_ACC;
+					put_sock(&cmd2,1,1,errmsg);
+
 				    fan_on = 0;
 				    fp_on = 0;
 				    acc_on = 0;
@@ -418,22 +428,33 @@ int tcp_win2(int cmd)
 					mvwprintw(twin,status_line,ACC_STATUS,"OFF");
 					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"OFF");
 					mvwprintw(twin,status_line,FAN_STATUS,"OFF");
-				}else mvwprintw(twin,status_line,STARTER_STATUS,"no tcp connection ");
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 		        break;
 
 			case KEY_F(8):
 				if(tcp_connected == 1)
 				{
-					cmd2 = START_SEQ;
+				    cmd2 = ON_FUEL_PUMP;
 					put_sock(&cmd2,1,1,errmsg);
-				    acc_on = 1;
-				    fp_on = 1;
+					usleep(1000000);
+				    cmd2 = ON_FAN;
+					put_sock(&cmd2,1,1,errmsg);
+					usleep(1000000);
+				    cmd2 = ENABLE_START;
+					put_sock(&cmd2,1,1,errmsg);
+					usleep(1000000);
+				    cmd2 = ON_ACC;
+					put_sock(&cmd2,1,1,errmsg);
+
 				    fan_on = 0;
+				    fp_on = 0;
+				    acc_on = 0;
+				    starter_on = 0;
 					mvwprintw(twin,status_line,STARTER_STATUS,"ON ");
 					mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
-					mvwprintw(twin,status_line,FAN_STATUS,"OFF");
-				}else mvwprintw(twin,status_line,STARTER_STATUS,"no tcp connection ");
+					mvwprintw(twin,status_line,FAN_STATUS,"ON ");
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
 			case KEY_F(9):

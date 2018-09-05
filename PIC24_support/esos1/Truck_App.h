@@ -228,7 +228,7 @@ volatile UCHAR menu_ptr;
 #define PWM_25DC_PARAM					0x06 // duty_cycle = 25%
 #define PWM_12DC_PARAM					0x02 // duty_cycle = 12%
 
-#define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
+//#define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
 #define REV_LIMITER 					0x8C // set the rev limit min & max
 
 #define BUFFER_SIZE 30
@@ -271,7 +271,7 @@ KEY_MODE key_mode;
 ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
-	static UINT data4;
+	static UINT data4, data3;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 

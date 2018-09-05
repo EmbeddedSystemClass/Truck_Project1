@@ -25,6 +25,7 @@ entity period_counter is
 		clk, reset: in std_logic;
 		start, si: in std_logic;
 		done_tick: out std_logic;
+		reset_prd: in std_logic;
 		prd: out std_logic_vector(T_REG_SIZE-1 downto 0));
 end period_counter;
 
@@ -57,6 +58,12 @@ rpm_proc: process(clk,reset)
 			t_reg <= t_next;
 			p_reg <= p_next;
 			delay_reg <= si;
+			if reset_prd = '1' then
+				pstate_reg <= idle;
+				t_reg <= (others=>'0');
+				p_reg <= (others=>'0');
+				delay_reg <= '0';
+			end if;
 	end if;
 end process;
 

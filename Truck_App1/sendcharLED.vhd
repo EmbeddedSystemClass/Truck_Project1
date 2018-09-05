@@ -110,13 +110,21 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 					higher_than_0 <= '0';
 					nodigits <= (others=>'0');
 						case cmd is
-						when OFF_CMD => 
+						when RPM_OFF_CMD => 
 							send_state_next <= idle;
-						when SEND_CHAR_CMD => 
+						when MPH_OFF_CMD => 
+							send_state_next <= idle;
+						when RPM_SEND_CHAR_CMD => 
 							send_state_next <= start1;
-						when SET_BRIGHTNESS_CMD => 
+						when MPH_SEND_CHAR_CMD => 
+							send_state_next <= start1;
+						when RPM_SET_BRIGHTNESS_CMD => 
 							send_state_next <= set_bright;
-						when SET_CDECIMAL_CMD => 
+						when MPH_SET_BRIGHTNESS_CMD => 
+							send_state_next <= set_bright;
+						when RPM_SET_CDECIMAL_CMD => 
+							send_state_next <= set_decimal;
+						when MPH_SET_CDECIMAL_CMD => 
 							send_state_next <= set_decimal;
 --						when SET_TEST_CMD1 => send_state_next <= idle;
 --						when SET_TEST_CMD2 => send_state_next <= idle;

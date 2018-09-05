@@ -57,6 +57,7 @@ git add Truck_App1/lcd_pwm.vhd
 #git add Truck_App1/fifo.vhd
 git add Truck_App1/test_outputs.zip
 git add Truck_App1/lib/Common.vhd
+git add Truck_App1/lib/freq_gen.c
 
 git add PIC24_support/lib/*
 git add PIC24_support/esos/*

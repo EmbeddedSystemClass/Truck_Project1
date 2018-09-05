@@ -218,6 +218,7 @@ int illist_show(illist_t *llistp)
 	char *ptr;
 	int iptr;
 	illist_node_t *cur;
+	char list_buf[200];
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
 
@@ -225,6 +226,7 @@ int illist_show(illist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
+/*
 			printf("%2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %s\r\n",cur->datap->port,
 				cur->datap->affected_output[0],
 				cur->datap->affected_output[1],
@@ -237,8 +239,7 @@ int illist_show(illist_t *llistp)
 				cur->datap->affected_output[8],
 				cur->datap->affected_output[9],
 				cur->datap->label);
-
-/*
+*/
 			memset(list_buf,0,200);
 			sprintf(list_buf,"port: %2d aff: %2d %2d %2d %2d %2d %2d %2d %2d %2d %2d %s",cur->datap->port, \
 				cur->datap->affected_output[0],
@@ -252,7 +253,7 @@ int illist_show(illist_t *llistp)
 				cur->datap->affected_output[8],
 				cur->datap->affected_output[9],
 				 cur->datap->label);
-
+/*
 			 ptr = list_buf;
 			 iptr = 0;
 			 do
@@ -261,7 +262,7 @@ int illist_show(illist_t *llistp)
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
 */
-//			send_tcp((UCHAR *)list_buf,50);
+			send_tcp((UCHAR *)list_buf,200);
 //			printString2(list_buf);
 //			printf("%s\r\n",list_buf);
 		}

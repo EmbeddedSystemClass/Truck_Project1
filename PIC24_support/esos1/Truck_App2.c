@@ -146,6 +146,21 @@ ESOS_USER_TASK(recv_fpga)
 	data2 = 0x21;
 	gl_rpm = gl_mph = 0;
 	
+	while(1)
+	{
+
+		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
+		ESOS_TASK_WAIT_ON_GET_UINT83(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
+
+ 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+		ESOS_TASK_WAIT_TICKS(2);
+    } // endof while()
+    ESOS_TASK_END();
+
+#if 0
     while (1)
     {
 		if(key_mode == NORMAL)
@@ -199,9 +214,8 @@ ESOS_USER_TASK(recv_fpga)
 			}
 
 		}
-		ESOS_TASK_WAIT_TICKS(1);
-    } // endof while()
-    ESOS_TASK_END();
+ 		ESOS_TASK_WAIT_TICKS(1);
+#endif
 }
 //******************************************************************************************//
 //************************************* display_menu ***************************************//
@@ -811,14 +825,14 @@ ESOS_USER_TASK(main_proc)
 	data3 <<= 8;
 	data3 &= 0xFF00;
 //	data3 |= PWM_80DC_PARAM;
-//	data3 |= PWM_ON_PARAM;
-	data3 |= PWM_12DC_PARAM;
+	data3 |= PWM_ON_PARAM;
+//	data3 |= PWM_12DC_PARAM;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
 	data3 = SET_DISPLAY_UPDATE_RATE;
 	data3 <<= 8;
-	data3 &= 0xFFFF;
-	data3 |= 0xFF;
+	data3 &= 0xFF00;
+	data3 |= 0x1F;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 	ESOS_TASK_WAIT_TICKS(100);
 
@@ -949,7 +963,7 @@ void user_init(void)
 //	esos_RegisterTask(numentry_task);
 	esos_RegisterTask(display_menu);
 	esos_RegisterTask(display_rtlabels);
-	esos_RegisterTask(key_timer_task);
+//	esos_RegisterTask(key_timer_task);
 
 } // end user_init()
 

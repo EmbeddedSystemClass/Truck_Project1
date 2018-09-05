@@ -388,48 +388,6 @@ UCHAR get_host_cmd_task(int test)
 	tcp_connected_time = 0;
 	mask = 1;
 
-
-#if 0
-	for(i = 0;i < 40;i++)
-	{
-		ollist_find_data(i,otpp,&oll);
-//		printf("%d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-		if(otp->polarity == 1)
-		{
-			otp->onoff = 1;
-			change_output(otp->port,otp->onoff);
-		}
-		otp->reset = 0;
-		ollist_insert_data(i,&oll,otp);
-	}
-
-	for(i = 0;i < 40;i++)
-	{
-		ollist_find_data(i,otpp,&oll);
-		printf("port: %d onoff: %d type: %d reset %d pol: %d\r\n",otp->port,otp->onoff,
-			otp->type,otp->reset,otp->polarity);
-	}
-	printf("\r\n");
-	illist_show(&ill);
-#endif
-/*
-	change_input(ESTOPMONITOR,1);
-	usleep(100000);
-	change_input(FUELPUMP,0);
-	usleep(100000);
-	change_input(ACCON,0);
-	usleep(100000);
-
-	usleep(100000);
-	ollist_find_data(ESTOPMONITOR,&otp,&oll);
-	printf("E-Stop port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-					otp->onoff, otp->reset, otp->polarity);
-	usleep(100000);
-	otp->onoff = 1;
-	ollist_insert_data(ESTOPMONITOR, &oll, &tempo1);
-	printf("E-Stop port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-					otp->onoff, otp->reset, otp->polarity);
-*/
 	while(TRUE)
 	{
 		cmd = 0;
@@ -438,8 +396,7 @@ UCHAR get_host_cmd_task(int test)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			tcp_connected_time = 0;
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != 
-					SCROLL_DOWN && 	cmd != SCROLL_UP)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP)
 //					 && cmd != LIVE_WINDOW_ON 
 //						&& cmd != LIVE_WINDOW_OFF)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
@@ -751,7 +708,7 @@ UCHAR get_host_cmd_task(int test)
 							S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 						if(fp < 0)
 						{
-							printf("can't create sched.log\n");
+							myprintf1("can't create sched.log\0");
 						}else
 						{
 //							printf("writing to sched.log\r\n");
@@ -864,12 +821,12 @@ exit_program:
 							usleep(1000);
 							ollist_insert_data(i,&oll,otp);
 						}
-*/
+
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-
+*/
 //						close_tcp();
 						shutdown_all = 1;
 
@@ -902,6 +859,7 @@ exit_program:
 						setdioline(7,1);
 
 						// pulse the LED's on the card FWIW
+/*
 						for(i = 0;i < 20;i++)
 						{
 							red_led(1);
@@ -911,7 +869,7 @@ exit_program:
 							usleep(20000);
 							green_led(0);
 						}
-
+*/
 						return 1;
 						break;
 				}								  // end of switch
@@ -942,31 +900,29 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = (onoff == 1?0:1);
 			else	
 				otp->onoff = onoff;
-			printf("type 0 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-							otp->onoff, otp->reset, otp->polarity);
+			printf("type 0 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 			change_output(otp->port,otp->onoff);
 			ollist_insert_data(otp->port,&oll,otp);
 			break;
 		case 1:
 			if(otp->reset == 0)
 			{
-//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+				printf("type 1 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 				otp->reset = 1;
 //				if(otp->polarity == 0)
 				TOGGLE_OTP;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
-										otp->onoff, otp->reset, otp->polarity);
+//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+//										otp->onoff, otp->reset, otp->polarity);
 			}	
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 0;
-				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-							otp->onoff, otp->reset, otp->polarity);
+//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		case 2:
@@ -980,8 +936,8 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 1;
 				change_output(otp->port,1);
 				ollist_insert_data(otp->port,&oll,otp);
-				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
-							otp->onoff, otp->reset, otp->polarity);
+//				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		// other 2 types not implemented yet (see queue directory)
@@ -991,14 +947,14 @@ static void set_output(O_DATA *otp, int onoff)
 			break;
 	}
 	// send message to monster box telling which port was toggled
-	send_PIC_serial(otp->port,otp->onoff,otp->type, otp->time_delay);
+	send_PIC_serial(otp-> port,otp->onoff,otp->type, otp->time_delay);
 	
 }
 /*********************************************************************/
 static void send_PIC_serial(int port, int onoff, int type, int time_delay)
 {
-// send what just changed to the PIC24/AVR to dispaly on screen
 return;
+// send what just changed to the PIC24/AVR to dispaly on screen
 	pthread_mutex_lock( &serial_write_lock);
 	
 	write_serial(OUTPUT_MSG);
@@ -1322,35 +1278,6 @@ UCHAR timer2_task(int test)
 			led_onoff = (led_onoff == 1?0:1);
 		}
 		
-#if 0
-		// find the status of the E-Stop switch
-		illist_find_data(ESTOPMONITOR,itpp2,&ill);
-		ollist_find_data(itp2->affected_output,otpp2,&oll);
-
-
-		// and if it's open then turn off the fuel pump and ignition
-		// the ESTOPMONITOR output controls the relay in series with the
-		// E-Stop switch which opens the common 12v to the 2 secondary
-		// relays controlling the fuelpump and ignition
-		// so its already handled by the monitor input task
-		// if the relay uses the nc contacts
-		// the polarity can be normal
-		// but the type is set and to 1 so it will stay off 
-		if(otp2->onoff == 0)
-		{
-			printf("port: %d onoff: %d \r\n", otp2->port, otp2->onoff);
-			ollist_find_data(FUELPUMP,otpp2,&oll);
-			otp2->onoff = 0;
-			set_output(otp2->type, 0);
-			otp2->onoff = 0;
-			ollist_insert_data(otp2->port,&oll,otp2);
-			ollist_find_data(ACCON,otpp2,&oll);
-			otp2->onoff = 0;
-			set_output(otp2->type, 0);
-			otp2->onoff = 0;
-			ollist_insert_data(otp2->port,&oll,otp2);
-		}
-#endif
 		if(shutdown_all)
 			return 0;
 	}
@@ -1458,9 +1385,10 @@ UCHAR timer_task(int test)
 			if((otp->type == 2 || otp->type == 3) && otp->reset == 1)
 			{
 
-				// if blink type the toggle on and off every second
+				// if blink type, toggle on and off every second
 				// this doesn't toggle on and off for time_delay, it 
-				// toggles every second so set the time delay for 2x what you want it to last
+				// toggles every second so set the time delay for 2x 
+				// no. of seconds you want it to last
 				if(otp->type == 3)
 					change_output(otp->port,((otp->time_delay - otp->time_left) % 2 == 0?0:1));
 
@@ -1479,8 +1407,8 @@ UCHAR timer_task(int test)
 					otp->reset = 0;
 					ollist_insert_data(otp->port,&oll,otp);
 
-					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-							otp->onoff, otp->reset, otp->polarity);
+//					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
 
 					// if this is a result of a fake input, we turn it 
 					// off here but the fake input has know way of
@@ -1913,7 +1841,7 @@ void close_tcp(void)
 	}else
 	{
 		myprintf1("socket already closed\0");
-		printf("socket already closed\r\n");
+//		printf("socket already closed\r\n");
 	}
 }
 
@@ -2092,15 +2020,13 @@ void basic_controls(UCHAR cmd)
 			change_input(STARTER, 1);
 			send_live_code(ENABLE_START);
 
-			uSleep(1,0);
-			change_input(ACCON, 1);
-			send_live_code(ON_ACC);
+			uSleep(0,100000);
+			change_input(ESTOPMONITOR, 0);
 
-			uSleep(1,0);
-			change_input(FUELPUMP, 1);
-			send_live_code(ON_FUEL_PUMP);
+			uSleep(0,100000);
+			change_input(ESTOPMONITOR, 1);
 
-			uSleep(1,0);
+			uSleep(0,100000);
 			change_input(COOLINGFAN, 1);
 			send_live_code(ON_FAN);
 			break;
@@ -2108,10 +2034,22 @@ void basic_controls(UCHAR cmd)
 		case SHUTDOWN:
 //						myprintf1("shutdown\0");
 			running_seconds = running_minutes = running_hours = 0;
+			engine_running = 0;
+			change_input(STARTER, 0);
+			send_live_code(STARTER_OFF);
+
+			uSleep(0,100000);
+			change_input(ESTOPMONITOR, 0);
+
+			uSleep(0,100000);
+			change_input(COOLINGFAN, 0);
+			send_live_code(OFF_FAN);
+
+/*
 			for(i = STARTER;i < COOLINGFAN+1;i++)
 			{
 				change_input(i, 0);
-				usleep(100000);
+			uSleep(0,100000);
 			}
 			engine_running = 0;
 			send_live_code(STARTER_OFF);
@@ -2123,6 +2061,7 @@ void basic_controls(UCHAR cmd)
 			send_live_code(OFF_ACC);
 			myprintf1("stopping all ctls\0");
 			uSleep(0,100000);
+*/
 			break;
 	}
 }

@@ -308,41 +308,53 @@ conv chips:
 6 5 4
 1 2 3
 
-chip 1 has 1st 4 (77 -> 64)
-and goes to left
-chip 2 has next 4 (62 -> 48)
-and goes to left
-chip 3 has next 3 (45 -> 39) 
-and skips over gnd and
-then the one after gnd (35)
-chip 4 1st on on right has
-next one on outside (33)
-and then starts with 1st on
-bottom of inside
+
+
+10 11 12 13		14 15 6  16		17 18 19 20
+
+1  2  3  4		5  x  8  a		b  c  d  9
+
+a 2nd from left bottom on SPI port (MOSI)
+b 1st from left bottom on SPI port (MISO)
+c 2nd from left top on SPI port (SCLK)
+d 3rd from left bottom SPI (SS)
 
 3v3 tx is 36
 3v3 rx is 34
 
-34	rx				33		| chip 4 (1st one)
-36	tx				35	|	chip 3
-5v					gnd
-40	|				39	|	chip 3
-42	|	chip 6		41	|
-47	|				45	|
-49	|				48		|
-55		|			50		|	chip 2
-61		|	chip 5	60		|
-63		|			62		|
-65		|			64	|
-74	|				69	|	chip 1
-76	| chip 4		75	|
-82	|				77	|
+20-pin ICD conn. looking at top of card w/FPGA on right
+1	2	3	4	5	6	7	8	9	10
+11	12	13	14	15	16	17	18	19	20
+
+1)	77 rpm_signal	(input)
+2)	75 mph_signal	(input)
+3)	69 tx_rpm		(output)
+4)	64 tx_mph		(output)
+5)	62 pwm_spk1     (output)
+6)	60 pwm_lcd		(output)
+7)  gnd
+	was 60 but 5v output not working - 
+	probably bad conv chip
+	so use 3v3 directly to gate of MOSFET
+	and call it pwm_lcd signal so pin 7 is now gnd
+8)	50 unassigned
+9)	35 reserved for SS(1) (extra slave select)
+10)	40 rev limiter       (output)
+11)	42 fuel pump shutoff (output)
+12)	47 unassigned
+13)	49 unassigned
+14)	55 unassigned
+15)	61 pwm_spk2
+16)	65 unassigned
+17)	74 unassigned
+18)	76 unassigned
+19)	82 unassigned
+20)	33 unassigned
 
 MOSI 48
 MISO 45
 SCLK 41
 SS   39
-
 
 5-pin ICD conn. to SPI on main board
 (from underside of FPGA card w/ chips on bottom)
@@ -355,34 +367,6 @@ x		x		SS		MOSI	MISO
 39 - SS(0)
 35 - SS(1)
 
-20-pin ICD conn. looking at top of card w/FPGA on right
-1	2	3	4	5	6	7	8	9	10
-11	12	13	14	15	16	17	18	19	20
-
-1)	77 rpm_signal (input)
-2)	75 mph_signal (input)
-3)	69 tx_rpm     (output)
-4)	64 tx_mph     (output)
-5)	62 pwm_spk1     (output)
-6)	61 pwm_spk2     (output)
-7)  gnd
-	was 60 but 5v output not working - 
-	probably bad conv chip
-	so use 3v3 directly to gate of MOSFET
-	and call it pwm_lcd signal so pin 7 is now gnd
-8)	50 unassigned
-9)	35 reserved for SS(1) (extra slave select)
-10)	33 rev limiter       (output)
-11)	82 fuel pump shutoff (output)
-12)	76 unassigned
-13)	74 unassigned
-14)	65 unassigned
-15)	63 unassigned
-16)	55 unassigned
-17)	49 unassigned
-18)	47 unassigned
-19)	42 unassigned
-20)	40 unassigned
 
 looking at 20-pin cable coming from bottom of monster box
 10		<->		1
@@ -416,8 +400,24 @@ use 95 for DataReady
 use 96 for CmdParam
 use 97 for DataSent
 
-can't call ESOS_TASK_WAIT_TICKS from within mail recipient?
+2 signals from FPGA (fp_shutoff and rev_limit) control 2 relays
+in series with the fuelpump and ignition relays resp.
 
-note: don't do any assignment statements before ESOS_TASK_BEGIN()
-it causes strange side-effects
+If the rpm goes to zero the signal holding the fuelpump relay
+on will go low, shutting off the fuel pump.
+
+If the rpm goes too high, the signal to the ignition will go off
+shutting off the ignition, and then go back on after a time.
+
+The rpm which is too high and the time to go back on is settable
+from either the laptop or the monster box interface.
+
+There should be either a signal or message sent to the FPGA telling
+it to over-ride the fp_shutoff on startup.
+
+RJ-11 socket going to rpm/mph box:
+black: mph
+yellow: rpm
+green: gnd
+red: 5vdc
 

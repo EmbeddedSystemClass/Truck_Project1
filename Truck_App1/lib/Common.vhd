@@ -282,6 +282,7 @@ package CommonPckg is
 	constant TIME_DELAY8b:  integer:= 150000;	-- 12ms
 	constant TIME_DELAY8c:  integer:= 100000;
 	constant TIME_DELAY9:  integer:=  40000;
+	constant TIME_DELAY_500RPM:  integer:=  4191000;
 	
 -- baud rates for 7-seg displays	
 	constant DVSR_MU_9600: integer:= 320;	-- 9600 baud
@@ -291,12 +292,9 @@ package CommonPckg is
 	constant MPH_CLOCK_COUNT: integer:= 12500;
 	constant MPH_DVND: integer:= 128514;
 												-- 26ms should be 2254
-	constant RPM_CLOCK_COUNT: integer:= 500;	-- 26ms = 2409
---	constant RPM_CLOCK_COUNT: integer:= 510;	-- 2362
---	constant RPM_CLOCK_COUNT: integer:= 520;	-- 2316
---	constant RPM_CLOCK_COUNT: integer:= 525;	-- 2294
---	constant RPM_CLOCK_COUNT: integer:= 527;	-- 2281
---	constant RPM_CLOCK_COUNT: integer:= 530;	-- 2272
+--	constant RPM_CLOCK_COUNT: integer:= 500;
+--	constant RPM_CLOCK_COUNT: integer:= 454;
+	constant RPM_CLOCK_COUNT: integer:= 908;
 	constant RPM_DVND: integer:= 6000000;
 	constant DVND_SIZE: integer:= 30;
 	constant RESULT_SIZE: integer:= 18;
@@ -305,12 +303,13 @@ package CommonPckg is
 	constant DVSR_SIZE2: integer:= 23;
 	constant W2_SIZE: integer:= 19;
 	constant MPH_P_REG_SIZE: integer:= 16;
-	constant FP_RPM_MINIMUM: integer:= 10000;
+	constant FP_RPM_MINIMUM: integer:= 100;
 	constant RPM_MAXIMUM: integer:= 50000;
 	constant RPM_MINIMUM: integer:= 20000;
 	constant MAX_TIME:  integer:=  131071;
 	constant SIZE_32: integer:= 32;
 
+	-- commands for rpm/mph LED
 	constant RPM_OFF_CMD: std_logic_vector(7 downto 0):= X"01";
 	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
 	constant RPM_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"03";
@@ -325,7 +324,7 @@ package CommonPckg is
 	constant MPH_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"0E";
 	constant MPH_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"0F";
 
-	constant SET_DISPLAY_UPDATE_RATE: std_logic_vector(7 downto 0):= X"20";
+	constant SET_UPDATE_RATE: std_logic_vector(7 downto 0):= X"20";
 	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"21";
 	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"22";
 	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"23";

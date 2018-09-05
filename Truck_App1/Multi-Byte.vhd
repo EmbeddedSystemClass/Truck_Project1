@@ -69,15 +69,15 @@ architecture truck_arch of multi_byte is
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
 
 	signal rpm_db, mph_db: std_logic;
-	signal cmd_rpm: std_logic_vector(7 downto 0):= (others=>'0');
-	signal cmd_mph: std_logic_vector(7 downto 0):= (others=>'0');
-	signal param_mph: std_logic_vector(7 downto 0):= (others=>'0');
-	signal param_rpm: std_logic_vector(7 downto 0):= (others=>'0');
+	signal cmd_rpm: std_logic_vector(7 downto 0);
+	signal cmd_mph: std_logic_vector(7 downto 0);
+	signal param_mph: std_logic_vector(7 downto 0);
+	signal param_rpm: std_logic_vector(7 downto 0);
 	signal rpm_result: std_logic_vector(16 downto 0);
 	signal urpm_result: unsigned(16 downto 0);
 	signal mph_result: std_logic_vector(16 downto 0);
-	signal mph_factor: std_logic_vector(5 downto 0):= (others=>'0');
-	signal rpm_factor: std_logic_vector(5 downto 0):= (others=>'0');
+	signal mph_factor: std_logic_vector(5 downto 0);
+	signal rpm_factor: std_logic_vector(5 downto 0);
 	signal time_delay_mph: std_logic_vector(25 downto 0);
 	signal time_delay_rpm: std_logic_vector(25 downto 0);
 	signal stdlv_transmit_update_rate: std_logic_vector(23 downto 0):= X"0FFFFF";
@@ -291,7 +291,7 @@ begin
 			when idle10 =>
 				start_tx <= '0';
 				-- never goes faster than this delay
- 				if time_delay_reg > TIME_DELAY8c then
+ 				if time_delay_reg > TIME_DELAY7 then
 					time_delay_next <= (others=>'0');
 					state_tx1_next <= idle1;
 				else
@@ -347,7 +347,8 @@ begin
 				if done_tx = '1' then
 --					data_tx <= stlv_temp5;
 					start_tx <= '1';
-					state_tx1_next <= delay;
+--					state_tx1_next <= delay;
+					state_tx1_next <= idle10;
 				end if;
 			when delay =>
 				start_tx <= '0';
@@ -419,7 +420,6 @@ begin
 		end if;
 	end if;
 end process;
-
 
 -- ********************************************************************************
 calc_proc1: process(clk,reset,main_reg1)
@@ -509,8 +509,8 @@ begin
 		param_mph <= (others=>'1');
 		param_rpm <= (others=>'1');
 		time_delay_mph <= "00" & X"FFFFFF";
-		time_delay_rpm <= "00" & X"7FFFFF";
---		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
+--		time_delay_rpm <= "00" & X"7FFFFF";
+		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
 --		time_delay_rpm <= "00" & X"1FFFFF";		-- 92ms
 --		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
 --		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
@@ -524,7 +524,8 @@ begin
 		case main_reg2 is
 			when idle2a =>
 				if start_calc = '1' then
-					main_next2 <= spin2;
+--					main_next2 <= spin2;
+					main_next2 <= idle2a;
 				end if;
 			when spin2 =>
 			case mcmd is

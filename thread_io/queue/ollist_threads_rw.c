@@ -264,6 +264,7 @@ int ollist_show(ollist_t *llistp)
 	char *ptr;
 	int iptr;
 	ollist_node_t *cur;
+	char list_buf[100];
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
 
@@ -271,11 +272,12 @@ int ollist_show(ollist_t *llistp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
+/*
 			printf("%2d\t%2d\t%2d\t%2d\t%2d\t%2d\t%2d\t%s\r\n",
 				(int)cur->datap->port, (int)cur->datap->onoff, cur->datap->polarity,
 					 cur->datap->type, cur->datap->time_delay, cur->datap->pulse_time,
 						cur->datap->reset, cur->datap->label);
-/*
+*/
 			memset(list_buf,0,100);
 			sprintf(list_buf,"%2d  %2d  %2d  %2d  %2d  %2d  %2d  %2d   %s",(int)cur->datap->port,\
 			 (int)cur->datap->onoff, (int)cur->datap->polarity, (int)cur->datap->type,
@@ -284,14 +286,14 @@ int ollist_show(ollist_t *llistp)
 			 	  cur->datap->label);
 			 ptr = list_buf;
 			 iptr = 0;
-
+/*
 			 do
 			 {
 			 	iptr++;
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
 */
-//			send_tcp((UCHAR *)&list_buf[0],100);
+			send_tcp((UCHAR *)&list_buf[0],100);
 //			printf("iptr: %d\r\n",iptr);
 //			printString2(list_buf);
 

@@ -215,25 +215,30 @@ current menus in the ncurses program:
 
 Lock-Out Relay:
 
-Lock-Out Relay (LOR) uses no contacts in series with nc E-Stop switch which supplies the
-common +12vdc to the primary relays for fuel pump and ignition (FUELPUMP & ACCON).
-The coil for the LOR is a signal from the TS-7200 labeled "ESTOPMONITOR" (output).
-The input for ESTOPMONITOR is the 12vdc (convertedd to 5v) from the E-Stop switch.
-When the TS-7200 detects a drop in voltage (E-Stop switch is opened) then it de-energizes
-the coil for the LOR, keeping the primary relays for fuel pump and ignition off.
-The ESTOPMONITOR input has itself, the FUELPUMP & ACCON as the extra outputs
-assigned to it in the affected_outputs array in its I_DATA record. The output - O_DATA
-record makes it a type 1 which means it needs both and on followed by an off to 
-change states. To enable the fuelpump and ignition, send an estop signal (on). If
-the E-Stop button is pushed then all 3 outputs will go off (ESTOPMONITOR, FUELPUMP & ACCON)
-Then the ESTOPMONITOR must be sent and off followed by an on to re-enable the circuit
-and turn the fuelpump and ignition back on.
+The lock-out relay is implemented by a I/O port call ESTOPMONITOR.
+(see diagram estop1.jpg)
+When the E-Stop button is pushed the estop secondary relay will turn off
+the 12vdc common to the fuelpump and ignition relays regardless of the
+signals from the computer to the coils. The only problem is that if the
+signals to the fuelpump and ignition are turned off, When the estop signal
+is reset by the computer, the fuelpump and ignition will come back on.
+This may or may not be a problem.
 
+
+Use little blue Sanyou relays to reverse logic the input of ESTOPMON signal
+
+(looking at underside)
+
+no	      nc
+
+coil	coil
+   common
+	
 Other events that should trigger an ESTOP signal (in addition to the E-Stop switch):
 
 1) Oil pressure goes to 0 or too low
 2) Engine temp too high (should give warning first)
-3) catostrofic crash (use accelerometer)
+3) catastrofic crash (use accelerometer)
 
 Also, the FPGA has signals that control special relays:
 
@@ -264,3 +269,6 @@ todo:
 - check operation of fp shutoff/override and rev limiter
 - figure out lock-out relay from ebay
 - fix problem with client - host open, edit and save file
+- only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
+	then polarity feature could be implemented but the current IO settings would have to be set
+	initially after loading the db and the db would have to be save on exit

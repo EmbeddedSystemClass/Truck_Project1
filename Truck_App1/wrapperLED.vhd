@@ -99,7 +99,7 @@ begin
 		wrapper_state_next <= u_idle;
 		u_time_reg <= (others=>'0');
 		u_time_next <= (others=>'0');
-		sub_cmd <= SEND_CHAR_CMD;
+		sub_cmd <= (others=>'0');
 		sub_param <= (others=>'0');
 --		sub_param <= (others=>'0');
 --		sendchar_busy <= '0';		-- flag to tell the other commands to wait

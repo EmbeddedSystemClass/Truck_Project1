@@ -25,15 +25,18 @@ NET		"pwm_spk2"		LOC = "P61";
 
 # pwm for dimmer for LCD screen
 NET		"pwm_lcd"		LOC = "P60";
-NET		"d_start"		LOC = "P63";
 NET		"fp_shutoff"	LOC = "P33";
-NET		"rev_limit"	LOC = "P82";
+NET		"rev_limit"		LOC = "P82";
 
 #SPI master signals
-NET		"MOSI_o"	LOC = "P48";
-NET		"MISO_i"	LOC = "P45";
-NET		"SCLK_o"	LOC = "P41";
-NET		"SS_o"		LOC = "P39";
+#NET		"MOSI_o"	LOC = "P48";
+#NET		"MISO_i"	LOC = "P45";
+#NET		"SCLK_o"	LOC = "P41";
+#NET		"SS_o"		LOC = "P39";
+
+NET 	"data_ready"	LOC = "P24";
+NET 	"cmd_param"		LOC = "P30";
+NET 	"data_sent"		LOC = "P28";
 
 # if using slave select for 2 different SPI slaves
 #NET	"SS_o[0]"   LOC = "P39";
