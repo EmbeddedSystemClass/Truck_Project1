@@ -110,14 +110,16 @@ architecture truck_arch of multi_byte is
 	signal special: std_logic;
 	signal done_pwm: std_logic;
 	signal fp_override: std_logic;
-	signal rev_limit_max: std_logic_vector(6 downto 0);
-	signal rev_limit_min: std_logic_vector(6 downto 0);
-	signal urev_limit_max: unsigned(6 downto 0);
-	signal urev_limit_min: unsigned(6 downto 0);
+	signal rev_limit_max: std_logic_vector(7 downto 0);
+	signal rev_limit_min: std_logic_vector(7 downto 0);
+	signal urev_limit_max: unsigned(16 downto 0);
+	signal urev_limit_min: unsigned(16 downto 0);
+	signal stdlv_temp1, stdlv_temp2: std_logic_vector(16 downto 0);
 	signal reset_rev_limits: std_logic;
 	signal test_rpm_rev_limits: std_logic;
 	signal start_calc: std_logic;
 	signal calc_done: std_logic;
+	signal shutdown_rpm, shutdown_mph: std_logic;
 	
 begin
 
@@ -134,6 +136,7 @@ mph_wrapper_unit: entity work.wrapperLED(arch)
 	display_update_rate=>time_delay_mph,
 	bcd_o=>bcd_mph,
 	result=>mph_result,
+	shutdown_fp=>shutdown_mph,
 	sensor_done1=>mph_done);
 
 rpm_wrapper_unit: entity work.wrapperLED(arch)
@@ -148,6 +151,7 @@ rpm_wrapper_unit: entity work.wrapperLED(arch)
 	display_update_rate=>time_delay_rpm,
 	bcd_o=>bcd_rpm,
 	result=>rpm_result,
+	shutdown_fp=>shutdown_rpm,
 	sensor_done1=>rpm_done);
 
 tx_uart_wrapper_unit: entity work.uartLED(str_arch)
@@ -211,16 +215,19 @@ begin
 				end if;
 				state_next_fp <= start_fp;
 			when start_fp =>
-				if fp_override = '1' then
+				if fp_override = '1' or urpm_result > 700 then
 					fp_shutoff <= '1';		-- close relay to fuel pump
 					state_next_fp <= idle_fp;
 				else
 					state_next_fp <= done_fp;
 				end if;	
 			when done_fp =>
-				if urpm_result < FP_RPM_MINIMUM then
+				-- if urpm_result < FP_RPM_MINIMUM then
+					-- fp_shutoff <= '0';
+				-- else fp_shutoff <= '1';
+				-- end if;
+				if shutdown_rpm = '1' then
 					fp_shutoff <= '0';
-				else fp_shutoff <= '1';
 				end if;
 				state_next_fp <= idle_fp;
 		end case;
@@ -242,8 +249,10 @@ begin
 	else if clk'event and clk = '1' then
 		case state_reg_rev is
 			when idle_rev =>
-				urev_limit_max <= unsigned(rev_limit_max);
-				urev_limit_min <= unsigned(rev_limit_min);
+				stdlv_temp1 <= "00000" & rev_limit_max & "0000";
+				stdlv_temp2 <= "00000" & rev_limit_min & "0000";
+				urev_limit_max <= unsigned(stdlv_temp1);
+				urev_limit_min <= unsigned(stdlv_temp2);
 				state_next_rev <= start_rev;
 			when start_rev =>
 				if reset_rev_limits = '1' then
@@ -257,11 +266,9 @@ begin
 			when done_rev =>
 				if reset_rev_limits = '1' then
 					state_next_rev <= idle_rev;
-				else
-					if urpm_result < urev_limit_min then
-						rev_limit <= '1';
-						state_next_rev <= start_rev;
-					end if;
+				elsif urpm_result < urev_limit_min then
+					rev_limit <= '1';
+					state_next_rev <= start_rev;
 				end if;
 		end case;
 		state_reg_rev <= state_next_rev;
@@ -427,20 +434,18 @@ begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
 		main_next1 <= idle1a;
-		stlv_duty_cycle <= (others=>'1');
+		stlv_duty_cycle <= (others=>'0');
 		special <= '0';
 		dtmf_index <= (others=>'0');
-		-- stlv_temp2a <= X"00";
-		-- stlv_temp3 <= (others=>'0');
-		-- stlv_temp4 <= (others=>'0');
-		-- stlv_temp6 <= (others=>'0');
-		-- stlv_temp7 <= (others=>'0');
-		-- stlv_temp5 <= (others=>'0');
 		calc_done <= '0';
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
-		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
-		rev_limit_min <= conv_std_logic_vector(RPM_MINIMUM,7);
+--		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
+--		rev_limit_min <= conv_std_logic_vector(RPM_MINIMUM,7);
+-- 4000 = 0xFA0
+-- 3888 = 0xF30
+		rev_limit_max <= X"FA";
+		rev_limit_min <= X"F3";
 		reset_rev_limits <= '0';
 --		stlv_temp2 <= (others=>'1');
 		test_rpm_rev_limits <= '0';
@@ -477,11 +482,11 @@ begin
 						fp_override <= mparam(0);
 --						stlv_temp2a <= mparam;
 					when SET_MAX_REV_LIMITER =>
-						rev_limit_max <= mparam(6 downto 0);
+						rev_limit_max <= mparam;
 						reset_rev_limits <= '1';
 --						stlv_temp2a <= mparam;
 					when SET_MIN_REV_LIMITER =>
-						rev_limit_max <= mparam(6 downto 0);
+						rev_limit_max <= mparam;
 						reset_rev_limits <= '1';
 --						stlv_temp2a <= mparam;
 					when TEST_RPM_LIMIT =>
@@ -536,9 +541,11 @@ begin
 					cmd_rpm <= mcmd;
 				when RPM_SET_BRIGHTNESS_CMD =>
 					cmd_rpm <= mcmd;
+					param_rpm <= mparam;
 					led1 <= "1101";
 				when RPM_SET_CDECIMAL_CMD =>
 					cmd_rpm <= mcmd;
+					param_rpm <= mparam;
 				when RPM_SET_UPDATE_RATE_CMD =>
 					cmd_rpm <= mcmd;
 					led1 <= "1100";
@@ -555,9 +562,11 @@ begin
 					led1 <= "1001";
 				when MPH_SET_BRIGHTNESS_CMD =>
 					cmd_mph <= mcmd;
+					param_mph <= mparam;
 					led1 <= "1000";
 				when MPH_SET_CDECIMAL_CMD =>
 					cmd_mph <= mcmd;
+					param_mph <= mparam;
 					led1 <= "0111";
 				when MPH_SET_UPDATE_RATE_CMD =>
 					cmd_mph <= mcmd;

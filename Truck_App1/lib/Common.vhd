@@ -282,7 +282,8 @@ package CommonPckg is
 	constant TIME_DELAY8b:  integer:= 150000;	-- 12ms
 	constant TIME_DELAY8c:  integer:= 100000;
 	constant TIME_DELAY9:  integer:=  40000;
-	constant TIME_DELAY_500RPM:  integer:=  4191000;
+--	constant TIME_DELAY_500RPM:  integer:=  5454260;
+	constant TIME_DELAY_500RPM:  integer:=  16000000;	-- 330 rpm
 	
 -- baud rates for 7-seg displays	
 	constant DVSR_MU_9600: integer:= 320;	-- 9600 baud
@@ -299,13 +300,12 @@ package CommonPckg is
 	constant DVND_SIZE: integer:= 30;
 	constant RESULT_SIZE: integer:= 18;
 	constant PRD_SIZE: integer:= 17;
-	constant DVSR_SIZE: integer:= 22;
-	constant DVSR_SIZE2: integer:= 23;
+	constant DVSR_SIZE: integer:= 23;
 	constant W2_SIZE: integer:= 19;
 	constant MPH_P_REG_SIZE: integer:= 16;
 	constant FP_RPM_MINIMUM: integer:= 100;
-	constant RPM_MAXIMUM: integer:= 50000;
-	constant RPM_MINIMUM: integer:= 20000;
+	constant RPM_MAXIMUM: integer:= 4000;
+	constant RPM_MINIMUM: integer:= 3900;
 	constant MAX_TIME:  integer:=  131071;
 	constant SIZE_32: integer:= 32;
 

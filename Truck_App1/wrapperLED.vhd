@@ -24,6 +24,7 @@ entity wrapperLED is
 --		bcd0_o, bcd1_o, bcd2_o, bcd3_o: out std_logic_vector(3 downto 0);
 		bcd_o: out std_logic_vector(15 downto 0);
 		result: out std_logic_vector(16 downto 0);
+		shutdown_fp: out std_logic;
 		sensor_done1: out std_logic
 		);
 end wrapperLED;
@@ -66,7 +67,7 @@ begin
 		end if;	
 	end if;
 end process;
-		
+
 sensor_unit: entity work.sensor(arch)
 	generic map(CLK_COUNT=>CLK_COUNT,DVND_FACTOR=>DVND)
 	port map(clk=>clk, reset=>reset,
@@ -77,6 +78,7 @@ sensor_unit: entity work.sensor(arch)
 		LED1m=>bcd1,
 		LED2m=>bcd2,
 		LED3m=>bcd3,
+		shutdown=>shutdown_fp,
 		sensor_done=>done_sensor);
 
 sendcharLED_unit: entity work.sendcharLED(arch)

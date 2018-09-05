@@ -339,8 +339,8 @@ d 3rd from left bottom SPI (SS)
 	and call it pwm_lcd signal so pin 7 is now gnd
 8)	50 unassigned
 9)	35 reserved for SS(1) (extra slave select)
-10)	40 rev limiter       (output)
-11)	42 fuel pump shutoff (output)
+10)	40 unassigned
+11)	42 unassigned
 12)	47 unassigned
 13)	49 unassigned
 14)	55 unassigned
@@ -348,8 +348,8 @@ d 3rd from left bottom SPI (SS)
 16)	65 unassigned
 17)	74 unassigned
 18)	76 unassigned
-19)	82 unassigned
-20)	33 unassigned
+19)	82 rev limiter       (output)
+20)	33 fuel pump shutoff (output)
 
 MOSI 48
 MISO 45
@@ -403,11 +403,20 @@ use 97 for DataSent
 2 signals from FPGA (fp_shutoff and rev_limit) control 2 relays
 in series with the fuelpump and ignition relays resp.
 
-If the rpm goes to zero the signal holding the fuelpump relay
+If the rpm goes to less than around 350 rpm
+the signal holding the fuelpump relay
 on will go low, shutting off the fuel pump.
 
 If the rpm goes too high, the signal to the ignition will go off
 shutting off the ignition, and then go back on after a time.
+
+Currently, the default rev limits are: 4000 max and 3888 min.
+The min and max are sent as bytes and then shifted over 8 bits
+to use to compare to the current rpm so 0xFA is the max:
+(0xFA shifted over 1 byte is 0xFA0 - 4000 and 0xF3 is 3888)
+So send any value over as the param to the SET_MAX_REV_LIMITER
+commnd (or SET_MIN_REV_LIMITER) and it will be a factor of
+16.
 
 The rpm which is too high and the time to go back on is settable
 from either the laptop or the monster box interface.

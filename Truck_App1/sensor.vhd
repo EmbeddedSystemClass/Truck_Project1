@@ -18,6 +18,7 @@ entity sensor is
 		LED1m: out std_logic_vector(3 downto 0);
 		LED2m: out std_logic_vector(3 downto 0);
 		LED3m: out std_logic_vector(3 downto 0);
+		shutdown: out std_logic;
 		sensor_done: out std_logic);
 end sensor;
 
@@ -30,10 +31,6 @@ architecture arch of sensor is
 
 	signal s_time_reg, s_time_next: unsigned(24 downto 0);
 
-	constant RESULT_SIZE: integer:= 18;
-	constant PRD_SIZE: integer:= 14;
-	constant DVSR_SIZE: integer:= 23;
-	constant MPH_P_REG_SIZE: integer:= 16;
 	signal prd: std_logic_vector(PRD_SIZE-1 downto 0);
 	signal dvsr, dvnd, quo: std_logic_vector(DVSR_SIZE-1 downto 0);
 	signal prd_start, div_start, b2b_start: std_logic;
@@ -104,7 +101,7 @@ begin
 --	dvnd <= std_logic_vector(to_unsigned(DVND_FACTOR, DVSR_SIZE));
 --  quo + rem = dvnd/dvsr
 	dvnd <= factor;
-	dvsr <= "000000000" & prd;
+	dvsr <= "000000" & prd;
 
    --===============================================
    -- Master FSM for mph
@@ -143,6 +140,7 @@ begin
 		data_array4(14) <= INIT_PRD+7;
 		data_array4(15) <= INIT_PRD+8;
 		first_flag <= '0';
+		shutdown <= '0';
 
 	elsif clk'event and clk = '1' then	
 		case fstate_reg is
@@ -150,6 +148,7 @@ begin
 				sensor_done <= '0';
 				fstate_next <= count;
 				prd_start <='1';
+				shutdown <= '0';
 			when count =>
 				prd_start <= '0';
 				if (prd_done_tick='1') then
@@ -159,6 +158,7 @@ begin
 				if time_up = '1' then
 					result <= (others=>'0');
 					result2 <= (others=>'0');
+					shutdown <= '1';
 					fstate_next <= calc6;
 				end if;
 			when frq =>
@@ -227,9 +227,9 @@ begin
 				s_state_next <= s_delay;
 			when s_delay =>
 				if s_time_reg > TIME_DELAY_500RPM then
-		 			s_state_next <= s_idle;
 					time_up <= '1';
 					prd_reset <= '1';
+		 			s_state_next <= s_idle;
 				else
 					s_time_next <= s_time_reg + 1;
 					if prd_done_tick = '1' then
