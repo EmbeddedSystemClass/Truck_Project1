@@ -31,6 +31,54 @@ note: don't do any assignment statements before ESOS_TASK_BEGIN()
 it causes strange side-effects
 */
 //******************************************************************************************//
+//************************************ display_rtvalues ************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(display_rtvalues)
+{
+	static ESOS_TASK_HANDLE comm1_handle;
+    static int i;
+    static UCHAR buffer[20];
+    static UCHAR data1;
+
+    ESOS_TASK_BEGIN();
+
+
+	data1 = 0x21;
+	comm1_handle = esos_GetTaskHandle(send_comm1);
+
+	while(1)
+	{
+		if(key_mode == NORMAL)
+		{
+			for(i = ENG_TEMP;i < O2+1;i++)
+			{
+				avr_buffer[0] = SEND_BYTE_RT_VALUES;
+				avr_buffer[1] = rtlabel_str[i].row;
+				avr_buffer[2] = rtlabel_str[i].data_col;
+				avr_buffer[3] = u8_pot[i];
+				AVR_CALL();
+			}
+
+//	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFF);
+
+// 2 knobs on front of mbox
+/*	send to serial port for testing
+			for(i = 0;i < 2;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
+
+			for(i = 8;i < 11;i++)
+				ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+		}
+*/
+		ESOS_TASK_WAIT_TICKS(600);
+	}
+    ESOS_TASK_END();
+}
+
+
+//******************************************************************************************//
 //*************************************** send_fpga ****************************************//
 //******************************************************************************************//
 // send data to the FPGA and use handshaking lines DataReady & CmdParam
@@ -118,13 +166,13 @@ ESOS_USER_TASK(send_fpga)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM3();
 			ESOS_TASK_WAIT_TICKS(1);
 			DataReady = 0;
-
+/*
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFF);
 			ESOS_TASK_WAIT_ON_SEND_UINT8(cmd);
 			ESOS_TASK_WAIT_ON_SEND_UINT8(param);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 		} 	// end of got mail
     } // endof while()
     ESOS_TASK_END();
@@ -146,21 +194,6 @@ ESOS_USER_TASK(recv_fpga)
 	data2 = 0x21;
 	gl_rpm = gl_mph = 0;
 	
-	while(1)
-	{
-
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
-		ESOS_TASK_WAIT_ON_GET_UINT83(data2);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-
- 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
-		ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-		ESOS_TASK_WAIT_TICKS(2);
-    } // endof while()
-    ESOS_TASK_END();
-
-#if 0
     while (1)
     {
 		if(key_mode == NORMAL)
@@ -172,7 +205,11 @@ ESOS_USER_TASK(recv_fpga)
 			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
 			ESOS_TASK_WAIT_ON_GET_UINT83(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-
+/*
+	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+*/
 			// FPGA sends
 			// 1 - 0xFF
 			// 2 - high byte of rpm
@@ -195,7 +232,7 @@ ESOS_USER_TASK(recv_fpga)
 				gl_mph <<= 8;
 				gl_mph |= (UINT)temp[3];
 				i = 0;
-/*
+
 				// display the values
 				avr_buffer[0] = SEND_INT_RT_VALUES;
 
@@ -210,12 +247,12 @@ ESOS_USER_TASK(recv_fpga)
 				avr_buffer[3] = temp[2];
 				avr_buffer[4] = temp[3];
 				AVR_CALL();
-*/
 			}
 
 		}
- 		ESOS_TASK_WAIT_TICKS(1);
-#endif
+		ESOS_TASK_WAIT_TICKS(1);
+    } // endof while()
+    ESOS_TASK_END();
 }
 //******************************************************************************************//
 //************************************* display_menu ***************************************//
@@ -306,7 +343,7 @@ ESOS_USER_TASK(send_comm1)
 
 				for(i = 0;i < NUM_ADC_CHANNELS;i++)
 				{
-					ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
+//					ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
 				}
 			}
 			else ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
@@ -831,8 +868,8 @@ ESOS_USER_TASK(main_proc)
 
 	data3 = SET_DISPLAY_UPDATE_RATE;
 	data3 <<= 8;
-	data3 &= 0xFF00;
-	data3 |= 0x1F;
+	data3 &= 0xFFFF;
+	data3 |= 0x7F;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 	ESOS_TASK_WAIT_TICKS(100);
 
@@ -954,9 +991,9 @@ void user_init(void)
 
 	esos_RegisterTask(recv_fpga);
 	esos_RegisterTask(recv_lcd);
-//	esos_RegisterTask(convADC);
+	esos_RegisterTask(convADC);
 	esos_RegisterTask(main_proc);
-//	esos_RegisterTask(send_comm1);
+	esos_RegisterTask(send_comm1);
 	esos_RegisterTask(recv_comm1);
 	esos_RegisterTask(menu_task);
 	esos_RegisterTask(password_task);
@@ -964,6 +1001,6 @@ void user_init(void)
 	esos_RegisterTask(display_menu);
 	esos_RegisterTask(display_rtlabels);
 //	esos_RegisterTask(key_timer_task);
-
+	esos_RegisterTask(display_rtvalues);
 } // end user_init()
 

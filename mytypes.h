@@ -16,7 +16,7 @@ typedef unsigned long ULONG;
 //#define TDATE_STAMP_STR_LEN 25
 #define TDATE_STAMP_STR_LEN 16
 #define UPLOAD_BUFF_SIZE 10000
-#define NUM_ADC_CHANNELS 4
+#define NUM_ADC_CHANNELS 11
 
 // tcp command sent to TS-7200 from laptop
 // these have to exactly match what's in cmd_array[] in tasks.c

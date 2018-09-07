@@ -65,7 +65,7 @@ architecture truck_arch of multi_byte is
 	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
 	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
-	signal time_delay_reg, time_delay_next: unsigned(16 downto 0);		-- send_uart1
+	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
 
 	signal rpm_db, mph_db: std_logic;
@@ -80,7 +80,7 @@ architecture truck_arch of multi_byte is
 	signal rpm_factor: std_logic_vector(5 downto 0);
 	signal time_delay_mph: std_logic_vector(25 downto 0);
 	signal time_delay_rpm: std_logic_vector(25 downto 0);
-	signal stdlv_transmit_update_rate: std_logic_vector(23 downto 0):= X"0FFFFF";
+	signal stdlv_transmit_update_rate: std_logic_vector(23 downto 0);
 	signal bcd_mph, bcd_rpm, bcdc: std_logic_vector(15 downto 0);
 	signal start_tx, done_tx, start_rx, done_rx: std_logic;
 	signal data_tx, data_rx: std_logic_vector(7 downto 0);
@@ -298,14 +298,13 @@ begin
 			when idle10 =>
 				start_tx <= '0';
 				-- never goes faster than this delay
- 				if time_delay_reg > TIME_DELAY7 then
+ 				if time_delay_reg > TIME_DELAY9 then
 					time_delay_next <= (others=>'0');
 					state_tx1_next <= idle1;
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;	
 			when idle1 =>
-
 				low_byte <= rpm_result(7 downto 0);
 				high_byte <= rpm_result(15 downto 8);
 				data_tx <= X"FF";
@@ -347,15 +346,15 @@ begin
 					end if;
 					data_tx <= low_byte;
 					start_tx <= '1';
-					state_tx1_next <= delay;
+					state_tx1_next <= start_d;
 				end if;
 			when start_d =>	
 				start_tx <= '0';
 				if done_tx = '1' then
 --					data_tx <= stlv_temp5;
 					start_tx <= '1';
---					state_tx1_next <= delay;
-					state_tx1_next <= idle10;
+					state_tx1_next <= delay;
+--					state_tx1_next <= idle10;
 				end if;
 			when delay =>
 				start_tx <= '0';
@@ -434,10 +433,11 @@ begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
 		main_next1 <= idle1a;
-		stlv_duty_cycle <= (others=>'0');
+		stlv_duty_cycle <= (others=>'1');
 		special <= '0';
 		dtmf_index <= (others=>'0');
 		calc_done <= '0';
+		stdlv_transmit_update_rate <=  X"1FFFFF";
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
 --		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
@@ -514,8 +514,8 @@ begin
 		param_mph <= (others=>'1');
 		param_rpm <= (others=>'1');
 		time_delay_mph <= "00" & X"FFFFFF";
---		time_delay_rpm <= "00" & X"7FFFFF";
-		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
+		time_delay_rpm <= "00" & X"7FFFFF";
+--		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
 --		time_delay_rpm <= "00" & X"1FFFFF";		-- 92ms
 --		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
 --		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
@@ -533,51 +533,54 @@ begin
 					main_next2 <= idle2a;
 				end if;
 			when spin2 =>
-			case mcmd is
-				when RPM_OFF_CMD =>
-					cmd_rpm <= mcmd;
-				when RPM_SEND_CHAR_CMD =>
-					led1 <= "1110";
-					cmd_rpm <= mcmd;
-				when RPM_SET_BRIGHTNESS_CMD =>
-					cmd_rpm <= mcmd;
-					param_rpm <= mparam;
-					led1 <= "1101";
-				when RPM_SET_CDECIMAL_CMD =>
-					cmd_rpm <= mcmd;
-					param_rpm <= mparam;
-				when RPM_SET_UPDATE_RATE_CMD =>
-					cmd_rpm <= mcmd;
-					led1 <= "1100";
-					time_delay_rpm <= mparam & "11" & X"FFFF";
-				when RPM_SET_FACTOR_CMD =>
-					cmd_rpm <= mcmd;
-					rpm_factor <= mparam(5 downto 0);
-					led1 <= "1011";
-					when MPH_OFF_CMD =>
-					cmd_mph <= mcmd;
-					led1 <= "1010";
-				when MPH_SEND_CHAR_CMD =>
-					cmd_mph <= mcmd;
-					led1 <= "1001";
-				when MPH_SET_BRIGHTNESS_CMD =>
-					cmd_mph <= mcmd;
-					param_mph <= mparam;
-					led1 <= "1000";
-				when MPH_SET_CDECIMAL_CMD =>
-					cmd_mph <= mcmd;
-					param_mph <= mparam;
-					led1 <= "0111";
-				when MPH_SET_UPDATE_RATE_CMD =>
-					cmd_mph <= mcmd;
-					time_delay_mph <= mparam & "11" & X"FFFF";
-					led1 <= "0110";
-				when MPH_SET_FACTOR_CMD =>
-					cmd_mph <= mcmd;
-					mph_factor <= mparam(5 downto 0);
-					led1 <= "0101";
-				when others =>
-			end case;
+				case mcmd is
+					when RPM_OFF_CMD =>
+						cmd_rpm <= mcmd;
+					when RPM_SEND_CHAR_CMD =>
+						led1 <= "1110";
+						cmd_rpm <= mcmd;
+					when RPM_SET_BRIGHTNESS_CMD =>
+						cmd_rpm <= mcmd;
+						param_rpm <= mparam;
+						led1 <= "1101";
+					when RPM_SET_CDECIMAL_CMD =>
+						cmd_rpm <= mcmd;
+						param_rpm <= mparam;
+					when RPM_SET_UPDATE_RATE_CMD =>
+						cmd_rpm <= mcmd;
+						led1 <= "1100";
+						time_delay_rpm <= mparam & "11" & X"FFFF";
+					when RPM_SET_FACTOR_CMD =>
+						cmd_rpm <= mcmd;
+						rpm_factor <= mparam(5 downto 0);
+						led1 <= "1011";
+						when MPH_OFF_CMD =>
+						cmd_mph <= mcmd;
+						led1 <= "1010";
+					when MPH_SEND_CHAR_CMD =>
+						cmd_mph <= mcmd;
+						led1 <= "1001";
+					when MPH_SET_BRIGHTNESS_CMD =>
+						cmd_mph <= mcmd;
+						param_mph <= mparam;
+						led1 <= "1000";
+					when MPH_SET_CDECIMAL_CMD =>
+						cmd_mph <= mcmd;
+						param_mph <= mparam;
+						led1 <= "0111";
+					when MPH_SET_UPDATE_RATE_CMD =>
+						cmd_mph <= mcmd;
+						time_delay_mph <= mparam & "11" & X"FFFF";
+						led1 <= "0110";
+					when MPH_SET_FACTOR_CMD =>
+						cmd_mph <= mcmd;
+						mph_factor <= mparam(5 downto 0);
+						led1 <= "0101";
+					when others =>
+				end case;
+				cmd_mph <= MPH_SEND_CHAR_CMD;
+				cmd_rpm <= RPM_SEND_CHAR_CMD;
+				main_next2 <= idle2a;
 		end case;
 		main_reg2 <= main_next2;
 		time_delay_reg2 <= time_delay_next2;

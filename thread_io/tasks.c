@@ -64,7 +64,7 @@ extern char iFileName[20];
 extern UCHAR reboot_on_exit;
 UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 
-static UCHAR rt_data[20];
+static UCHAR rt_data[30];
 static UCHAR rt_file_data[1000];
 static int rt_fd_ptr;
 static int odometer;

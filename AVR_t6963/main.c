@@ -278,7 +278,7 @@ int main(void)
 				// 2nd param is col
 				// 3rd is int value up to 255
 					byte_val = buff[3];
-					sprintf(str,"%02d",byte_val);
+					sprintf(str,"%02d ",byte_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
@@ -287,7 +287,7 @@ int main(void)
 				// 2nd param is col
 				// 3rd is int value up to 255
 					byte_val = buff[3];
-					sprintf(str,"%02x",byte_val);
+					sprintf(str,"%02x ",byte_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
@@ -298,7 +298,7 @@ int main(void)
 					int_val = (UINT)buff[3];
 					int_val <<= 8;
 					int_val |= (UINT)buff[4];
-					sprintf(str,"%04d",int_val);
+					sprintf(str,"%04d ",int_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 

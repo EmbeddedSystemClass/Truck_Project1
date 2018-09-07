@@ -71,6 +71,7 @@ ESOS_USER_TASK(numentry_task);
 ESOS_USER_TASK(display_menu);
 ESOS_USER_TASK(display_rtlabels);
 ESOS_USER_TASK(key_timer_task);
+ESOS_USER_TASK(display_rtvalues);
 
 static UCHAR avr_buffer[15];
 static ESOS_TASK_HANDLE avr_handle;
@@ -107,8 +108,8 @@ enum rt_values_offsets
 	RPM,
 	MPH,
 	ENG_TEMP,
-	AIR_TEMP,
 	OIL_PRES,
+	AIR_TEMP,
 	MAP,
 	OIL_TEMP,
 	O2,
@@ -228,16 +229,11 @@ volatile UCHAR menu_ptr;
 #define PWM_25DC_PARAM					0x06 // duty_cycle = 25%
 #define PWM_12DC_PARAM					0x02 // duty_cycle = 12%
 
-//#define FP_SHUTOFF_OVERRIDE  			0x8B // override the fuel pump shutoff to get it started
-#define REV_LIMITER 					0x8C // set the rev limit min & max
-
-#define BUFFER_SIZE 30
 #define PASSWORD_SIZE 13
 
 #define NUM_SIZE 200
 static uint16_t au16_buffer[NUM_ADC_CHANNELS];
-//volatile uint16_t  u16_pot[NUM_ADC_CHANNELS];
-static UCHAR  u8_pot[NUM_ADC_CHANNELS];
+static UCHAR u8_pot[NUM_ADC_CHANNELS];
 static UCHAR curr_num[NUM_SIZE];
 static UCHAR curr_num_ptr;
 uint8_t  u8_waiting;
@@ -271,7 +267,7 @@ KEY_MODE key_mode;
 ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
-	static UINT data4, data3;
+	static UINT data4;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 
@@ -299,16 +295,9 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
-					data3 = RPM_SEND_CHAR_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
-
 				break;
 
 				case 	KP_2:
-					data3 = RPM_SET_BRIGHTNESS_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(acc == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
@@ -321,9 +310,6 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_3:
-					data3 = RPM_SET_CDECIMAL_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(fuel_pump == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
@@ -336,9 +322,6 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_4:
-					data3 = RPM_SET_UPDATE_RATE_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 					if(fan == 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
@@ -351,35 +334,20 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_5:
-					data3 = MPH_OFF_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
 
 				case	KP_6:
-					data3 = MPH_SEND_CHAR_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
 				break;
 
 				case	KP_7:
-					data3 = MPH_SET_BRIGHTNESS_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_8:
-					data3 = MPH_SET_CDECIMAL_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_9:
-					data3 = MPH_SET_UPDATE_RATE_CMD;
-					data3 <<= 8;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 				break;
 
 				case	KP_A:		// move up in menu
@@ -1362,43 +1330,43 @@ ESOS_USER_TASK(convADC)
 {
 //    static  uint8_t data1, u8_wdtState;
 //	static uint16_t u16_adcVal1, u16_adcVal2;
-	static ESOS_TASK_HANDLE comm1_handle;
-	static uint8_t u8_i;
+	static uint8_t u8_i, i;
 	static float fres;
 
     ESOS_TASK_BEGIN();
 
-	comm1_handle = esos_GetTaskHandle(send_comm1);
+	convADC_task_handle = ESOS_TASK_GET_TASK_HANDLE();
 
-//	convADC_task_handle = ESOS_TASK_GET_TASK_HANDLE();
-/*
-	ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-	ESOS_TASK_WAIT_ON_SEND_STRING("starting ADC task\r\n");
-	ESOS_TASK_WAIT_ON_SEND_STRING("                                 \r");
-	ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-	CONFIG_RB0_AS_ANALOG();		// 1st knob on monster box
-	CONFIG_RB1_AS_ANALOG();		// 2nd knob on monster box
+	CONFIG_RB0_AS_ANALOG();		// 2nd knob on monster box
+	CONFIG_RB1_AS_ANALOG();		// 1st knob on monster box
 	CONFIG_RB2_AS_ANALOG();		// engine temp
 	CONFIG_RB3_AS_ANALOG();		// oil pressure
+
+	CONFIG_RB4_AS_ANALOG();		// air temp
+	CONFIG_RB5_AS_ANALOG();		// map
 /*
-	CONFIG_RB4_AS_ANALOG();
-	CONFIG_RB5_AS_ANALOG();
-	CONFIG_RB6_AS_ANALOG();
-	CONFIG_RB7_AS_ANALOG();
-	CONFIG_RB8_AS_ANALOG();
-	CONFIG_RB9_AS_ANALOG();
-	CONFIG_RB10_AS_ANALOG();
-	CONFIG_RB11_AS_ANALOG();
-	CONFIG_RB12_AS_ANALOG();
-	CONFIG_RB13_AS_ANALOG();
-	CONFIG_RB14_AS_ANALOG();
-	CONFIG_RB15_AS_ANALOG();
+	CONFIG_RB6_AS_ANALOG();		// can't use these
+	CONFIG_RB7_AS_ANALOG();		// unless prog to chip and jumper
 */
+	CONFIG_RB8_AS_ANALOG();		// oil temp
+	CONFIG_RB9_AS_ANALOG();		// o2
+
+	CONFIG_RB10_AS_ANALOG();	// extra
+	CONFIG_RB11_AS_ANALOG();	// extra
+
+	CONFIG_RB12_AS_ANALOG();	// extra
+//	CONFIG_RB13_AS_ANALOG();
+
+//	CONFIG_RB14_AS_ANALOG();
+//	CONFIG_RB15_AS_ANALOG();
+
 //	configADC1_AutoScanIrqCH0( ADC_SCAN_AN0 | ADC_SCAN_AN1 | ADC_SCAN_AN2 |
 //			 ADC_SCAN_AN3 | ADC_SCAN_AN4 | ADC_SCAN_AN5, 31, 0);
 
-	configADC1_AutoScanIrqCH0( 0x000F, 31, 0);
+//	configADC1_AutoScanIrqCH0( 0xFFFF, 31, 0);
+	/// can't do 6 & 7 unless program to chip and use jumpers
+	// because 6 & 7 are shared by Pickit programmer!
+	configADC1_AutoScanIrqCH0( 0x1F3F, 31, 0);
 //	configADC1_AutoHalfScanIrqCH0(0x00FF, 31, 0);
 	while (!AD1CON1bits.DONE)
 		ESOS_TASK_WAIT_TICKS(1);
@@ -1411,27 +1379,19 @@ ESOS_USER_TASK(convADC)
 		{
 			while (u8_waiting)	// wait for valid data in ISR
 				ESOS_TASK_WAIT_TICKS(1);
-			
-			u8_waiting = 0;
-			for ( u8_i=0; u8_i<NUM_ADC_CHANNELS; u8_i++)
-			{
-				fres = (float)au16_buffer[u8_i];
-				fres *= 100.0;
-				fres /= 1023.0;
-				u8_pot[u8_i] = (UCHAR)fres;
 
-				// this puts the ADC data on the AVR screen
-				avr_buffer[0] = SEND_BYTE_RT_VALUES;
-				avr_buffer[1] = rtlabel_str[ENG_TEMP+u8_i].row;
-				avr_buffer[2] = rtlabel_str[ENG_TEMP+u8_i].data_col;
-				avr_buffer[3] = u8_pot[u8_i];
-				AVR_CALL();
-			}
+			u8_waiting = 0;
+			for (i = 0;i<NUM_ADC_CHANNELS;i++)
+			{
+				fres = (float)au16_buffer[i];
+				fres *= 107.0;
+				fres /= 1023.0;
+				u8_pot[i] = (UCHAR)fres;
+
 			// this sends the ADC data to the TS-7200
 			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
 		}
-		// this can in the future be a predetermined time set in the menu
-		ESOS_TASK_WAIT_TICKS(1000);
+		ESOS_TASK_WAIT_TICKS(500);
 	}
 	ESOS_TASK_END();
 }

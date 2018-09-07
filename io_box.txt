@@ -1,3 +1,5 @@
+io_box.txt - notes on the box with the TS-7200 card and the (2) 20 port IO cards
+
 Relays on IO cards are 5A so use 5v power from DC-DC converter inside io box as coil voltage for 10A 
 relay arrays.
 
@@ -224,7 +226,6 @@ signals to the fuelpump and ignition are turned off, When the estop signal
 is reset by the computer, the fuelpump and ignition will come back on.
 This may or may not be a problem.
 
-
 Use little blue Sanyou relays to reverse logic the input of ESTOPMON signal
 
 (looking at underside)
@@ -238,7 +239,7 @@ Other events that should trigger an ESTOP signal (in addition to the E-Stop swit
 
 1) Oil pressure goes to 0 or too low
 2) Engine temp too high (should give warning first)
-3) catastrofic crash (use accelerometer)
+3) wreck or crash (use accelerometer)
 
 Also, the FPGA has signals that control special relays:
 
@@ -266,8 +267,6 @@ todo:
 - get rpm/mph data sent to comm3 of PIC24
 - thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
 - setup spare AVR to generate sample rpm/mph signals to test LEDs
-- check operation of fp shutoff/override and rev limiter
-- figure out lock-out relay from ebay
 - fix problem with client - host open, edit and save file
 - only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
 	then polarity feature could be implemented but the current IO settings would have to be set

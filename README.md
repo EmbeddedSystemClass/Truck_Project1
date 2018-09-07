@@ -37,8 +37,6 @@ for using a PIC24 (or most other 16-bit controllers from Microchip*) while the e
 directory is the RTOS which uses some of the /lib directory files. There is a file in<br />
 the PIC24_support directory called esos_examples.c that explains how to use the ESOS system.<br />
 <br />
-*Microchip was bought out by AVR so you have to go to the AVR site to find the documentation.<br />
-<br />
 <h2>thread_io</h2>
 The thread_io directory has files used to compile an embedded linux program that uses<br />
 the POSIX pthread library to handle serial io and tcp/ip traffic and drive a io card that<br />
@@ -100,4 +98,10 @@ This can be kind of dicey for things like the starter motor so the ioport assign
 to the start switch only activates a relay that enables a button on the dash to close<br />
 the circuit the the actual starter solinoid. <br />
 <br />
+See also:<br />
+Truck_Project1_notes.txt - for more extensive notes<br />
+io_box.txt - notes on the box with the TS-7200 and (2) IO cards<br />
+monster_box.txt - notes on the 'monster box' which is one of those green plastic<br />
+dboxes you get from the mint when you buy coins. It has the PIC24, AVR and FPGA in it.<br />
+
 

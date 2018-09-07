@@ -86,7 +86,7 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 				start_proc1 <= '0';
 				if u_time_reg > TIME_DELAY9 then
 					u_time_next <= (others=>'0');
-					set_char_out <= X"0F";
+					set_char_out <= X"FF";
 					start_proc1 <= '1';
 					send_state_next <= set_init_bright_param;
 				else

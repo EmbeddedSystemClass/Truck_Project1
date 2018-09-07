@@ -27,7 +27,8 @@ TS-7200 and the LCD screen.
 The menuing of the LCD screen and can display optional real time info like engine speed,
 engine temp, oil pressure etc coming directly from the FPGA.
 
-There will also be a task to read the AD C's which measure temp sensors and the oil pressure.
+There will also be a task to read the ADC's which measure temp sensors and the oil pressure
+(among other things like the photodiode behind the windshield).
 The FPGA has 2 serial ports (transmit only) that send rpm & mph data to a couple of off-the-
 shelf 4 digit LED's that will be on the dashboard. The FPGA also sends the rpm & mph data to
 the PIC via the serial port.
@@ -49,13 +50,11 @@ for using a PIC24 (or most other 16-bit controllers from Microchip*) while the e
 directory is the RTOS which uses some of the /lib directory files. There is a file in
 the PIC24_support directory called esos_examples.c that explains how to use the ESOS system.
 
-*Microchip was bought out by AVR so you have to go to the AVR site to find the documentation.
-
 The thread_io directory has files used to compile an embedded linux program that uses
 the POSIX pthread library to handle serial io and tcp/ip traffic and drive a io card that
-plugs into the TS-7XXX PC-104 bus. I bought the cards used on ebay. They are orginally from
+plugs into the TS-7XXX PC-104 bus. I bought the cards used on ebay. They are made by
 Tri-M Engineering. Each card has 20 inputs and 20 outputs. The outputs are small 5A relays
-onboard the card. The cards can be set to accessed and different memory/io addresses so up
+onboard the card. The cards can be set to access different memory/io addresses so up
 to 4 can be stacked on each other. I've tried just about every free RTOS out there and
 no-one seems to have the ports to work on the TS-7200 which use the ARM920T processor with
 the EP9301 chipset. I like the uCOS-II Jean J. Labrosse of Micrium, Weston, FL and he has
@@ -92,9 +91,9 @@ on the chip executes each instruction from the binary file step by step. With th
 processor core. In other words, the ISE development system actually routes the 
 connections on the chip so you can have parallel processes running completely
 independent of each other in real time. This is really powerful when doing high speed
-data aquisition but its a steep learning curve. The ISim is really helpful and I took
-most of my code from the examples from the book 'FPGA Prototyping by VHDL example' by
-Pong. P. Chu. 
+data aquisition but its a steep learning curve. The ISim (simulator) is really helpful 
+and I took most of my code from the examples from the book 'FPGA Prototyping by VHDL 
+example' by Pong. P. Chu. 
 
 The thread_io/ncurses directory has all the source and support files for compiling a
 linux program that runs on any linux desktop and uses ncurses to communicate over a
@@ -169,23 +168,6 @@ client can log on and off at anytime.
 
 So currently there is an extra serial port available on the FPGA and one extra on the
 TS-7200.
-
-The dashboard will have a DB9 connector for the TS-7200 monitor and one for the FPGA
-plus a RJ-45 connector to the TS-7200 ethernet port. (Use a crossover ethernet cable
-from the linux laptop to the RJ-45 jack - or use a old D-link router as hub in case
-for another client to log into the TS-7200).
-
-The dashboard will have programming connectors for:
-1) the PIC24 - 6 pin din
-2) 14 pin ICD connector to program the FPGA
-3) the programmer for the AVR - 4 pins
-
-The TS-7200 has a reset button on board and can be re-wired to bring it out to the
-dashboard.
-
-So the 2 DB9 connectors, the 3 programming jacks, the RJ-45 jack, the reset buttons
-and the on/off switches can be in a panel with a cover so it can be opened only for
-upgrading, testing and debugging.
 
 FPGA connections:
 
@@ -344,17 +326,10 @@ send it over as a static.
 Instead of ncurses program running on laptop, just gen up a PHP web interface and use
 the brower. (see dev2/TS-7260/www/) Yeah, right.
 
-make an extra field in the O_DATA and I_DATA structs called group for acting on a group
-
-need a way to enter password (alnum stuff)
-
 GPS and accel modules on FPGA (serial?)
 
 cadmium sulfide photodetector under windshield for measuing light level to 
 dim display to rpm/mph LED's and LCD screen automatically.
-
-get alnum to work - just do it like the edit boxes only A->D is printed and
-'*' is escape and '#' is 'enter'
 
 have a 100 or so byte section at beginning of dat files (just after the id tag) reserved
 for comments that can be edited and viewed.
