@@ -5,8 +5,6 @@ relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 
 even worse, 12v you can screw up the cards inside the box - this cost me a day or so of trouble-
 shooting and rewiring the io box)
 
-
-
 typedef struct i_data
 {
 	char label[ILABELSIZE];
@@ -218,10 +216,14 @@ current menus in the ncurses program:
 	("Test Write"),					// 8	- save all output events triggered by inputs to sched.log file
 
 
-In the timer2_task of tasks.c make a special check for the E-Stop switch input which is normally-closed
-so that when it goes low, the fuel pump and ignition will be set low and a msg will be sent to the
-PIC24 that tells it that the E-Stop button was pressed so it can ask for the password to be re-entered
-or shutdown everything.
+9-14-18 - added a new type to O_DATA (type 4) to be used as a lockout relay. The E-Stop switch is connected
+to port 19 and affects outputs 1 & 2 (ignition and fuel pump). The types for 1 & 2 are set to type 4
+so when the E-Stop switch is pressed it will turn then off so they stay off unless a special message
+(_RESET_TYPE4) is sent which resets the reset field to 0. They have to be turned on not by using the 
+change_input but change_output function.
+
+Then a msg will be sent to the PIC24 that tells it that the E-Stop button was pressed so it can ask 
+for the password to be re-entered or shutdown everything.
 
 in tasks.c serial_recv_task() if byte recv'd is RT_DATA then recv the ADC channels
 from the PIC24 which are sent from send_comm1

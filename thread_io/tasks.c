@@ -77,8 +77,8 @@ extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg
 
 #define SERIAL_BUFF_SIZE  20
 
-static UCHAR serial_buff[SERIAL_BUFF_SIZE];
-static int no_serial_buff;
+//static UCHAR serial_buff[SERIAL_BUFF_SIZE];
+//static int no_serial_buff;
 
 static char dat_names[NUM_DAT_NAMES][DAT_NAME_STR_LEN];
 
@@ -90,7 +90,7 @@ static int change_input(int index, int onoff);
 static int uSleep(time_t sec, long nanosec);
 static void basic_controls(UCHAR code);
 static void set_output(O_DATA *otp, int onoff);
-static void send_PIC_serial(int port, int onoff, int type, int time_delay);
+static void send_PIC_serial(int port, int onoff);
 static void send_PIC_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -118,15 +118,12 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[56] =
+CMD_STRUCT cmd_array[53] =
 {
-	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_ACC,"ON_ACC\0" },
 	{   	OFF_ACC,"OFF_ACC\0" },
-	{		ON_ESTOP,"ON_ESTOP\0" },
-	{		OFF_ESTOP,"OFF_ESTOP\0" },
 	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
 	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
 	{   	ON_FAN,"ON_FAN\0" },
@@ -173,6 +170,7 @@ CMD_STRUCT cmd_array[56] =
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
 	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
+	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{		_RESET_TYPE4,"RESET_TYPE4\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
@@ -400,7 +398,8 @@ UCHAR get_host_cmd_task(int test)
 		{
 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			tcp_connected_time = 0;
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
+					&& cmd != GET_TIME && cmd != SET_TIME)
 //					 && cmd != LIVE_WINDOW_ON 
 //						&& cmd != LIVE_WINDOW_OFF)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
@@ -412,21 +411,6 @@ UCHAR get_host_cmd_task(int test)
 				rc = 0;
  				switch(cmd)
 				{
-					case _RESET_TYPE4:
-						// send this message to reset type 4 so it can be turned back on after
-						// turning off - used as a lock-out condition
-						rc = recv_tcp((UCHAR *)&utemp1,1,1);	// get port no.
-						printf("reset port: %d\r\n",utemp1);
-						ollist_find_data(utemp1,&otp,&oll);
-						if(otp->type == 4)
-						{
-							otp->onoff = 0;
-							otp->reset = 0;
-							change_output(otp->port,otp->onoff);
-							ollist_insert_data(otp->port,&oll,otp);
-						}
-					break;							
-
 					case TEST_ALL_IO:
 //						printf("turning all IO on\r\n");
 						for(i = 0;i < 40;i++)
@@ -446,6 +430,7 @@ UCHAR get_host_cmd_task(int test)
 
 					// ENABLE_START closes a relay for so many seconds so a button
 					// on the dash can close the ckt to the starter solinoid
+					case _RESET_TYPE4:
 					case ENABLE_START:
 					case STARTER_OFF:
 					// ingition - power to the coil
@@ -457,8 +442,6 @@ UCHAR get_host_cmd_task(int test)
 					case OFF_FAN:
 					case ON_LIGHTS:
 					case OFF_LIGHTS:
-					case ON_ESTOP:
-					case OFF_ESTOP:
 					// START_SEQ turns on acc, fp, fan and enables starter button
 					case START_SEQ:
 					// SHUTDOWN shuts off the starter enable, fp, acc and fan
@@ -506,19 +489,18 @@ UCHAR get_host_cmd_task(int test)
 					// clear the lcd screen and redraw the menus and rt labels
 					case CLEAR_SCREEN:
 //						lcd_cls();
-						send_PIC_serialother(CLEAR_SCREEN,CLEAR_SCREEN,
-							CLEAR_SCREEN,CLEAR_SCREEN,CLEAR_SCREEN);
+						send_PIC_serialother(CLEAR_SCREEN1,0,0,0,0);
 						break;
 
 					case GET_DEBUG_INFO:
-						send_PIC_serialother(GET_DEBUG_INFO,(UCHAR)engine_running,
+						send_PIC_serialother(GET_DEBUG_INFOA,(UCHAR)engine_running,
 							(UCHAR)running_seconds,(UCHAR)running_minutes,(UCHAR)running_hours);
 						break;
 						
 					// this must be sent in 2 diff msg's because we can only send 5 bytes
 					// at a time
 					case GET_DEBUG_INFO2:
-						send_PIC_serialother(GET_DEBUG_INFO2,(UCHAR)(rpm >> 8),
+						send_PIC_serialother(GET_DEBUG_INFO2A,(UCHAR)(rpm >> 8),
 							(UCHAR)rpm, (UCHAR)(mph >> 8),(UCHAR)mph);
 						break;
 						
@@ -936,7 +918,7 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = (onoff == 1?0:1);
 			else	
 				otp->onoff = onoff;
-			printf("type 0 port: %d onoff: %d\r\n", otp->port, otp->onoff);
+//			printf("type 0 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 			change_output(otp->port,otp->onoff);
 			ollist_insert_data(otp->port,&oll,otp);
 			break;
@@ -949,16 +931,16 @@ static void set_output(O_DATA *otp, int onoff)
 				TOGGLE_OTP;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
-										otp->onoff, otp->reset, otp->polarity);
+//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+//										otp->onoff, otp->reset, otp->polarity);
 			}	
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 0;
-				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-							otp->onoff, otp->reset, otp->polarity);
+//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+//							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		case 2:
@@ -986,45 +968,44 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
+				send_PIC_serial(ESTOPSWITCH,0);
 
-				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
-										otp->onoff, otp->reset);
+//				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
+//										otp->onoff, otp->reset);
 			}	
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 3;
-				printf("type 4b port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
-										otp->onoff, otp->reset);
+//				printf("type 4b port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
+//										otp->onoff, otp->reset);
 			}
 			break;
 		default:
 			break;
 	}
 	// send message to monster box telling which port was toggled
-	send_PIC_serial(otp->port, otp->onoff, otp->type, otp->time_delay);
+	send_PIC_serial(otp->port, otp->onoff);
 	
 }
 /*********************************************************************/
-static void send_PIC_serial(int port, int onoff, int type, int time_delay)
+static void send_PIC_serial(int port, int onoff)
 {
-return;
+//return;
 // send what just changed to the PIC24/AVR to dispaly on screen
 	pthread_mutex_lock( &serial_write_lock);
 	
 	write_serial(OUTPUT_MSG);
 	write_serial((UCHAR)port);
  	write_serial((UCHAR)onoff);
-	write_serial((UCHAR)type);
-	write_serial((UCHAR)time_delay);
 
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 static void send_PIC_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
 {
-return;
+//return;
 	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
@@ -1318,7 +1299,7 @@ UCHAR timer2_task(int test)
 
 		if(++led_counter > 9)
 		{
-			if(led_onoff == 1)
+				if(led_onoff == 1)
 			{
 				led_counter = 0;
 				setdioline(7,1);
@@ -1342,7 +1323,8 @@ UCHAR timer2_task(int test)
 UCHAR timer_task(int test)
 {
 	int i;
-	UCHAR buffer[50];
+	UCHAR time_buffer[20];
+	UCHAR s_buffer[5];
 	char tempx[20];
 	int index = 0;
 	int bank = 0;
@@ -1354,14 +1336,13 @@ UCHAR timer_task(int test)
 	O_DATA **otpp = &otp;
 
 	rpm = mph = 0;
-
 	while(TRUE)
 	{
 		uSleep(1,0);
 
 		gettimeofday(&mtv, NULL);
 		curtime2 = mtv.tv_sec;
-		strftime((char*)&buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
+		strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
 
 		// send only date, month, minutes
 		// 0,1 - month
@@ -1371,10 +1352,9 @@ UCHAR timer_task(int test)
 		// 14,15 - minute
 		// 17,18 - seconds
 
-		send_PIC_serialother(TIME_DATA1,buffer[0],buffer[1],buffer[3],buffer[4]);
-		send_PIC_serialother(TIME_DATA2,buffer[8],buffer[9],buffer[11],buffer[12]);
-		send_PIC_serialother(TIME_DATA3,buffer[14],buffer[15],buffer[17],buffer[18]);
-
+		send_PIC_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],time_buffer[4]);
+		send_PIC_serialother(TIME_DATA2,time_buffer[8],time_buffer[9],time_buffer[11],time_buffer[12]);
+		send_PIC_serialother(TIME_DATA3,time_buffer[14],time_buffer[15],time_buffer[17],time_buffer[18]);
 
 // if driver seat switch goes low the tell monster box to start re-enter password sequence
 //		send_PIC_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
@@ -1400,15 +1380,15 @@ UCHAR timer_task(int test)
 		if(odometer % 2 == 0)
 			trip++;
 
-		buffer[0] = TOTAL_UP_TIME;
-		buffer[1] = trunning_seconds;
-		buffer[2] = trunning_minutes;
-		buffer[3] = trunning_hours;
+		s_buffer[0] = TOTAL_UP_TIME;
+		s_buffer[1] = trunning_seconds;
+		s_buffer[2] = trunning_minutes;
+		s_buffer[3] = trunning_hours;
 
-		buffer[4] = rt_data[0];		// ADC data
-		buffer[5] = rt_data[1];
-		buffer[6] = rt_data[2];
-		buffer[7] = rt_data[3];
+//		buffer[4] = rt_data[0];		// ADC data
+//		buffer[5] = rt_data[1];
+//		buffer[6] = rt_data[2];
+//		buffer[7] = rt_data[3];
 
 		if(++trunning_seconds > 59)
 		{
@@ -1427,12 +1407,7 @@ UCHAR timer_task(int test)
 			buffer[10] = (UCHAR)(mph >> 8);
 			buffer[11] = (UCHAR)mph;
 */
-			buffer[8] = 1;
-			buffer[9] = 2;
-			buffer[10] = 3;
-			buffer[11] = 4;
-
-			send_tcp((UCHAR *)&buffer[0],12);
+			send_tcp((UCHAR *)&s_buffer[0],4);
 		}
 		
 		// check if one of the outputs is set to type 2 (time_delay)
@@ -1480,7 +1455,7 @@ UCHAR timer_task(int test)
 
 					fake_inportstatus1[bank] &= ~mask;
 					fake_inportstatus2[bank] &= ~mask;
-					send_PIC_serial(otp->port,otp->onoff,otp->type, otp->time_delay);
+					send_PIC_serial(otp->port,otp->onoff);
 /*
 					if(otp->onoff)
 						fake_inportstatus1[bank] |= mask;
@@ -1598,8 +1573,8 @@ UCHAR serial_recv_task(int test)
 	int fd;
 	char errmsg[20];
 
-	memset(serial_buff,0,SERIAL_BUFF_SIZE);
-	no_serial_buff = 0;
+//	memset(serial_buff,0,SERIAL_BUFF_SIZE);
+//	no_serial_buff = 0;
 	memset(errmsg,0,20);
 
 	if(fd = init_serial() < 0)
@@ -1614,12 +1589,14 @@ UCHAR serial_recv_task(int test)
 		{
 			pthread_mutex_lock( &serial_read_lock);
 			ch = read_serial(errmsg);
+/*			
 			if(ch == RT_DATA)
 			{
 				// number of ADC channels + 2 bytes for the rpm
 				for(i = 0;i < NUM_ADC_CHANNELS;i++)
 					rt_data[i] = read_serial(errmsg);
 			}
+*/
 			pthread_mutex_unlock(&serial_read_lock);
 
 			if(ch >= ENABLE_START && ch <= SHUTDOWN)
@@ -1987,7 +1964,7 @@ void basic_controls(UCHAR cmd)
 		case ON_ACC:
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
-			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 1;
 //			ollist_insert_data(index,&oll,otp);
 //			change_input(ACCON, 1);
@@ -1999,7 +1976,7 @@ void basic_controls(UCHAR cmd)
 		case OFF_ACC:
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
-			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 0;
 //			ollist_insert_data(index,&oll,otp);
 //			change_input(ACCON, 0);
@@ -2012,7 +1989,7 @@ void basic_controls(UCHAR cmd)
 
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 1;
 //			otp->reset = 0;
 //			ollist_insert_data(index,&oll,otp);
@@ -2026,7 +2003,7 @@ void basic_controls(UCHAR cmd)
 
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 0;
 //			otp->reset = 0;
 //			change_input(FUELPUMP, 0);
@@ -2035,22 +2012,6 @@ void basic_controls(UCHAR cmd)
 			if(otp->reset == 0)
 				change_output(FUELPUMP, 0);
 			send_live_code(cmd);
-			break;
-
-		case ON_ESTOP:
-//			index = ESTOPMONITOR;
-//			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-//			change_input(ESTOPMONITOR, 1);
-//			send_live_code(cmd);
-			break;
-
-		case OFF_ESTOP:
-//			index = ESTOPMONITOR;
-//			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-//			change_input(ESTOPMONITOR, 0);
-//			send_live_code(cmd);
 			break;
 
 		case ON_FAN:
@@ -2094,54 +2055,51 @@ void basic_controls(UCHAR cmd)
 			break;
 
 		case START_SEQ:
-			engine_running = 1;
+			myprintf1("start seq\0");
+			ollist_find_data(ACCON,&otp,&oll);
+			otp->onoff = 1;
+			otp->reset = 0;
+			change_output(otp->port,otp->onoff);
+			usleep(100000);
+			ollist_insert_data(otp->port,&oll,otp);
+			ollist_find_data(FUELPUMP,&otp,&oll);
+			otp->onoff = 1;
+			otp->reset = 0;
+			change_output(otp->port,otp->onoff);
+			usleep(100000);
+			ollist_insert_data(otp->port,&oll,otp);
 			change_input(STARTER, 1);
 			send_live_code(ENABLE_START);
-
-//			uSleep(0,100000);
-//			change_input(ESTOPMONITOR, 0);
-
-//			uSleep(0,100000);
-//			change_input(ESTOPMONITOR, 1);
-
-			uSleep(0,100000);
-//			change_input(COOLINGFAN, 1);
-//			send_live_code(ON_FAN);
 			break;
 
 		case SHUTDOWN:
-//						myprintf1("shutdown\0");
+			myprintf1("shutdown\0");
 			running_seconds = running_minutes = running_hours = 0;
 			engine_running = 0;
 			change_input(STARTER, 0);
-			send_live_code(STARTER_OFF);
-
-//			uSleep(0,100000);
-//			change_input(ESTOPMONITOR, 0);
-
-			uSleep(0,10000);
-			change_input(COOLINGFAN, 0);
-			send_live_code(OFF_FAN);
-
-/*
-			for(i = STARTER;i < COOLINGFAN+1;i++)
-			{
-				change_input(i, 0);
-			uSleep(0,100000);
-			}
-			engine_running = 0;
-			send_live_code(STARTER_OFF);
-			uSleep(0,100000);
-			send_live_code(OFF_FUEL_PUMP);
-			uSleep(0,100000);
-			send_live_code(OFF_FAN);
-			uSleep(0,100000);
-			send_live_code(OFF_ACC);
-			myprintf1("stopping all ctls\0");
-			uSleep(0,100000);
-*/
+			usleep(100000);
+			change_output(ACCON, 0);
+			usleep(100000);
+			change_output(FUELPUMP, 0);
+			send_live_code(SHUTDOWN);
 			break;
+
+		case _RESET_TYPE4:
+			ollist_find_data(ACCON,&otp,&oll);
+			otp->onoff = 0;
+			otp->reset = 0;
+			change_output(otp->port,otp->onoff);
+			ollist_insert_data(otp->port,&oll,otp);
+			ollist_find_data(FUELPUMP,&otp,&oll);
+			otp->onoff = 0;
+			otp->reset = 0;
+			change_output(otp->port,otp->onoff);
+			ollist_insert_data(otp->port,&oll,otp);
+			break;
+
 	}
+	send_PIC_serial(index,0);
+
 }
 /*
 					rt_file_data[rt_fd_ptr++] = otp->port;				// 0

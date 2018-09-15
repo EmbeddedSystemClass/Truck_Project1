@@ -26,23 +26,20 @@
 #define SIZE_NUM			20
 
 #define EEPROM_SIZE 0x400
+#define STR_LEN 30
 char eepromString[EEPROM_SIZE] EEMEM;
 volatile UCHAR xbyte;
 volatile UCHAR high_delay;
+static char str[STR_LEN];
 
 volatile int onoff;
 volatile int dc2;
 volatile UCHAR spi_ret;
 volatile UCHAR curr_num[SIZE_NUM];
-volatile char eeprom[EEPROM_SIZE];
+static char eeprom[EEPROM_SIZE];
 volatile UINT xrow, xcol;
-
-typedef struct
-{
-	UINT row;
-	UINT col;
-}RT_LABEL_POS;
-
+volatile UCHAR buff[LEN];
+static char *eeprom_str_lookup(int index, char *str);
 // use timer to keep track of things like:
 // - seconds before re-enter password
 // - how long to wait before shutting down screen
@@ -65,24 +62,21 @@ ISR(TIMER1_OVF_vect)
 
 int main(void)
 {
-	int i,j,k;
+	int i;
 	UCHAR ch;
 	int chptr;
 	UCHAR key;
-	UCHAR buff[LEN];
 	UCHAR mode, type;
 	UCHAR byte_val;
 	UINT int_val;
 	UINT row, col;
 	UCHAR srow, scol, erow, ecol;
-	char str[30];
-	UCHAR str_len;
+//	UCHAR str_len;
 	UCHAR index;
-	RT_LABEL_POS pos[20];
-	UCHAR no_rt_values;
+//	UCHAR no_rt_values;
 	UCHAR blanks;
-	int gdsip_strlen;
-	UCHAR tspi_ret;
+//	int gdsip_strlen;
+//	UCHAR tspi_ret;
 
 	GDispInit();
 //	GDispInitPort();
@@ -240,30 +234,13 @@ int main(void)
 
 					if(index >= 0 && index < 52)
 					{
-						j = 0;
-						i = 0;
-						k = 0;
-						do{
-							j++;
-							if(eeprom[j] == 0)
-							{
-								i++;
-					 			k = j;
-							}
 
-						}while(i < index);
-
-						do{
-							k--;
-						}while(eeprom[k] != 0);
-
-						memset((void *)str,0,sizeof(str));
-						memcpy((void *)str,(const void *)&eeprom[k+1],j-k-1);
+						strcpy(str,eeprom_str_lookup(index, str));
 
 						GDispGoto(row,col);
 						for(i = 0;i < blanks;i++)
  							GDispChar(0x20);
-						gdsip_strlen = GDispStringAt(row,col,str);
+						GDispStringAt(row,col,str);
 /*
 						gdsip_strlen = GDispStringAt(row,col,str);
 						GDispGoto(row,col+gdsip_strlen);
@@ -302,6 +279,29 @@ int main(void)
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
+				case SHOW_EEPROM:
+				break;
+				
+				case PASSWORD_MODE:
+					GDispClrTxt();
+					GDispGoto(7,(int)buff[1]);
+					strcpy(str,eeprom_str_lookup(VARIOUS_MSG_OFFSET, str));
+					GDispStringAt(6,0,str);
+					_delay_ms(2);
+					GDispSetCursor (TEXT_ON | CURSOR_BLINK_ON, 7, 0, LINE_2_CURSOR);
+				break;
+
+				case DISPLAY_MENU_LABELS:
+					for(i = 0;i < NUM_MENU_LABELS;i++)
+					{
+						strcpy(str,eeprom_str_lookup(1, str));
+						GDispStringAt(6,0,str);
+					}						
+				break;
+
+				case DISPLAY_RT_LABELS:
+				break;
+
 				default:
 				break;
 			}
@@ -316,6 +316,31 @@ int main(void)
     return (0);		// this should never happen
 }
 
+static char *eeprom_str_lookup(int index, char *str)
+{
+	int i,j,k;
+	i = j = k = 0;
+
+	do{
+		j++;
+		if(eeprom[j] == 0)
+		{
+			i++;
+ 			k = j;
+		}
+//		printf("%c",eeprom[j]);
+
+	}while(i < index);
+
+	do{
+		k--;
+	}while(eeprom[k] != 0);
+
+//	printf("\ni: %d j: %d k: %d\n",i,j,k);
+	memset(str,0,STR_LEN);
+	memcpy(str,&eeprom[k+1],j-k);
+	return str;
+}
 
 
 #if 0

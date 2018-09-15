@@ -2,29 +2,62 @@
 #include <string.h>
 #include <stdlib.h>
 
-char menu_labels[23][17] = {
-	{"enter password:"},
-	{"bad password"},
-	{"start engine"},
-	{"test1"},
-	{"test2"},
-	{"hello1"},
-	{"hello2"},
-	{"hello3"},
-	{"hello4"},
-	{"hello5"},
-	{"RPM"},
-	{"ENG TEMP"},
-	{"TRIP"},
-	{"TIME"},
-	{"AIR TEMP"},
+char *eeprom_str_lookup(int index, char *str);
+
+#define NUM_STR 52
+char menu_labels[NUM_STR][20] = {
+	{"RPM"},			// rt values
 	{"MPH"},
+	{"ENG TEMP"},
 	{"OIL PRES"},
+	{"AIR TEMP"},
 	{"MAP"},
 	{"OIL TEMP"},
 	{"O2"},
-	{"AUX1"},
-	{"AUX2"}
+	{"ODOM"},
+	{"TRIP"},
+	{"STARTER"},			// RT_VALUES_OFFSET + 11
+	{"ACCON"},
+	{"FUELPUMP"},
+	{"ESTOP"},
+	{"COOLINGFAN"},
+	{"HEADLAMP"},
+	{"BRIGHTS"},
+	{"LEFTBLINKER"},
+	{"RIGHTBLINKER"},
+	{"RUNNINGLIGHTS"},
+	{"ALARMSPEAKER"},
+	{"ALARMLIGHT"},
+	{"BATTERYCHARGERELAY"},
+	{"DASHHEATER"},
+	{"BATTERYCOMPHEATER"},
+	{"CRANKCASEHEATER"},
+	{"TRAILERBRAKES"},
+	{"TRAILERLEFTBLINKER"},
+	{"TRAILERRIGHTBLINKER"},
+	{"INTRUDERALARM"},
+	{"DOMELIGHT"},
+	{"LIGHTBAR"},
+	{"BLINKINDICATE"},
+	{"BRAKELIGHTS"},
+	{"BACKUPLIGHTS"},
+	{"enable starter"},		// menu choices	(MENU_VALUE_OFFSET)
+	{"ignition"},
+	{"fuel pump"},
+	{"cooling fan"},
+	{"running lights"},
+	{"headlights"},
+	{"set dim time"},
+	{"enter password:"},	// various message string	(VARIOUS_MSG_OFFSET)
+	{"bad password"},
+	{"start engine"},
+	{"retries left"},
+	{"ON   "},
+	{"OFF  "},
+	{"re-enter password"},
+	{"in    seconds"},
+	{"engine on:"},
+	{"engine shutoff"}
 };
 
 unsigned char eeprom[1024];
@@ -32,7 +65,7 @@ unsigned char eeprom[1024];
 int main(int argc, char **argv)
 {
 	int i,j,k,index;
-	char str[30];
+	char str[40];
 
 	if(argc == 1)
 	{
@@ -41,7 +74,7 @@ int main(int argc, char **argv)
 	}else index = atoi(argv[1]);
 
 	j = 0;
-	for(i = 0;i < 23;i++)
+	for(i = 0;i < 52;i++)
 	{
 		memcpy((void *)eeprom+j,(const void *)menu_labels[i],strlen(menu_labels[i]));
 		j += strlen(menu_labels[i]);
@@ -57,6 +90,9 @@ int main(int argc, char **argv)
 	j = 0;
 	i = 0;
 //	printf("j: %d\n",j);
+
+	printf("%s\n",eeprom_str_lookup(index,str));
+	return 0;
 
 	do{
 		j++;
@@ -95,3 +131,30 @@ int main(int argc, char **argv)
 	printf("%s\n",str);
 	return 0;
 }
+
+char *eeprom_str_lookup(int index, char *str)
+{
+	int i,j,k;
+	i = j = k = 0;
+
+	do{
+		j++;
+		if(eeprom[j] == 0)
+		{
+			i++;
+ 			k = j;
+		}
+//		printf("%c",eeprom[j]);
+
+	}while(i < index);
+
+	do{
+		k--;
+	}while(eeprom[k] != 0);
+
+//	printf("\ni: %d j: %d k: %d\n",i,j,k);
+	memset(str,0,sizeof(str));
+	memcpy(str,&eeprom[k+1],j-k);
+	return str;
+}
+

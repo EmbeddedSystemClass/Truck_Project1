@@ -22,13 +22,10 @@ typedef unsigned long ULONG;
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
-	RE_ENTER_PASSWORD,
 	ENABLE_START,
 	STARTER_OFF,
 	ON_ACC,
 	OFF_ACC,
-	ON_ESTOP,
-	OFF_ESTOP,
 	ON_FUEL_PUMP,
 	OFF_FUEL_PUMP,
 	ON_FAN,
@@ -75,6 +72,7 @@ enum cmd_types
 	SET_SERIAL_RECV_ON,
 	SET_SERIAL_RECV_OFF,
 	TEST_ALL_IO,
+	RE_ENTER_PASSWORD,
 	_RESET_TYPE4,
 	EXIT_PROGRAM
 }CMD_TYPES;
@@ -88,7 +86,7 @@ typedef struct
 // msg's sent from PIC24 to TS-7200
 enum upstream_msg
 {
-	RT_DATA = 0x21,
+	RT_DATA = 0xD0,
 	RPM_DATA,
 	ABLE_TO_START,
 	RPM_OK,
@@ -104,9 +102,10 @@ enum upstream_msg
 // using send_PIC_serialother()
 enum downstream_msg
 {
-	COMM_CMD = 0x3F,
+	START_DS_MSG = 0xD0,
 	RE_ENTER_PASSWORD1,
-	ESTOP_MSG,
+	GET_DEBUG_INFOA,
+	GET_DEBUG_INFO2A,
 	OUTPUT_MSG,
 	TIME_DATA1,
 	TIME_DATA2,
@@ -114,6 +113,8 @@ enum downstream_msg
 	NEW_PASSWORD2,
 	NEW_PASSWORD3,
 	NEW_PASSWORD4,
+	CLEAR_SCREEN1,
+	END_DS_MSG
 } DOWNSTREAM_MSG;
 
 // 25 total output_types
@@ -183,5 +184,22 @@ enum output_types
 #define SEND_BYTE_HEX_VALUES	11
 #define SEND_INT_RT_VALUES		12
 #define LCD_CLRSCR2				13
+#define SHOW_EEPROM				14
+#define PASSWORD_MODE			15
+#define DISPLAY_MENU_LABELS		16
+#define DISPLAY_RT_LABELS		17
 
+// offsets into eeprom
+#define RT_VALUES_OFFSET 1
+#define MENU_VALUES_OFFSET 35
+#define VARIOUS_MSG_OFFSET 42
+
+// start positions on screen
+#define START_RT_VALUE_ROW 10
+#define START_MENU_VALUE_ROW 1
+#define START_RT_VALUE_COL 2
+#define START_MENU_VALUE_COL 2
+#define NUM_MENU_LABELS 7
+#define NUM_RT_LABELS 10
+#define NUM_OUTPUT_LABELS 25
 #endif

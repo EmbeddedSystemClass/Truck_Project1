@@ -87,17 +87,6 @@ static ESOS_TASK_HANDLE fpga_handle;
 #define FLAG1	ESOS_USER_FLAG_1
 #define PASSWORD_RETRIES_NUM 5
 
-// offsets into eeprom
-#define RT_VALUES_OFFSET 1
-#define MENU_VALUES_OFFSET 36
-#define VARIOUS_MSG_OFFSET 43
-
-// start positions on screen
-#define START_RT_VALUE_ROW 10
-#define START_MENU_VALUE_ROW 1
-#define START_RT_VALUE_COL 2
-#define START_MENU_VALUE_COL 2
-
 // handshaking lines to FPGA
 #define DataReady _LATG14		// output
 #define CmdParam _LATG12		// output
@@ -156,13 +145,10 @@ typedef struct
 	UCHAR onoff;
 } FORMAT_STR;
 
-#define NUM_MENU_LABELS 7
 static FORMAT_STR menu_str[NUM_MENU_LABELS];
 
-#define NUM_RT_LABELS 10
 static FORMAT_STR rtlabel_str[NUM_RT_LABELS];
 
-#define NUM_OUTPUT_LABELS 25
 //static FORMAT_STR outputlabel_str[NUM_OUTPUT_LABELS+1];
 
 volatile UCHAR menu_ptr;
@@ -272,6 +258,7 @@ ESOS_USER_TASK(menu_task)
 	static UINT data4;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
+    static int i,j;
 
 	static int acc, fuel_pump, fan;
 	static ESOS_TASK_HANDLE comm1_handle;
@@ -297,54 +284,32 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
-					engine_shutdown = 1;
+//					engine_shutdown = 1;
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_STARTER);
 				break;
 
 				case 	KP_2:
-					if(acc == 0)
-					{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
-						acc = 1;
-					}
-					else{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_ACC);
-						acc = 0;
-					}
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
 				break;
 
 				case	KP_3:
-					if(fuel_pump == 0)
-					{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
-						fuel_pump = 1;
-					}
-					else{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FUEL_PUMP);
-						fuel_pump = 0;
-					}
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_ACC);
 				break;
 
 				case	KP_4:
-					if(fan == 0)
-					{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
-						fan = 1;
-					}
-					else{
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FAN);
-						fan = 0;
-					}
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
 				break;
 
 				case	KP_5:
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FUEL_PUMP);
 				break;
 
 				case	KP_6:
-						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
 				break;
 
 				case	KP_7:
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
 				break;
 
 				case	KP_8:
@@ -492,13 +457,13 @@ ESOS_USER_TASK(password_task)
     
 	ESOS_TASK_WAIT_TICKS(100);
 
+#if 0
 	avr_buffer[0] = LCD_CLRSCR;
 	avr_buffer[1] = 0;
 	AVR_CALL();
 
 	avr_buffer[0] = GOTO_CMD;
 	avr_buffer[1] = 7;
-	avr_buffer[2] = 0;
 	avr_buffer[2] = (UCHAR)strlen(correct_password);
 	AVR_CALL();
 /*
@@ -520,7 +485,7 @@ ESOS_USER_TASK(password_task)
 	avr_buffer[3] = 0;
 	avr_buffer[4] = (LINE_2_CURSOR);
 	AVR_CALL();
-
+#endif
 	temp = 0;
 	while (TRUE)
 	{
@@ -643,7 +608,7 @@ ESOS_USER_TASK(password_task)
 				avr_buffer[1] = 0;
 				AVR_CALL();
 
-				__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
+//				__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
 
 				__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
 				key_mode = NORMAL;
@@ -1341,8 +1306,10 @@ ESOS_USER_TASK(convADC)
 //	static uint16_t u16_adcVal1, u16_adcVal2;
 	static uint8_t i;
 	static float fres;
+//	static ESOS_TASK_HANDLE comm1_handle;
 
     ESOS_TASK_BEGIN();
+//	comm1_handle = esos_GetTaskHandle(send_comm1);
 
 	CONFIG_RB0_AS_ANALOG();		// 2nd knob on monster box
 	CONFIG_RB1_AS_ANALOG();		// 1st knob on monster box

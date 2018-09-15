@@ -15,7 +15,7 @@
 
 
 // values start at line 20 so its easy to find the offsewt
-#define NUM_STR 52
+#define NUM_STR 53
 char menu_labels[NUM_STR][20] = {
 	{"RPM"},			// rt values
 	{"MPH"},
@@ -30,7 +30,6 @@ char menu_labels[NUM_STR][20] = {
 	{"STARTER"},			// RT_VALUES_OFFSET + 11
 	{"ACCON"},
 	{"FUELPUMP"},
-	{"ESTOP"},
 	{"COOLINGFAN"},
 	{"HEADLAMP"},
 	{"BRIGHTS"},
@@ -47,7 +46,7 @@ char menu_labels[NUM_STR][20] = {
 	{"TRAILERLEFTBLINKER"},
 	{"TRAILERRIGHTBLINKER"},
 	{"INTRUDERALARM"},
-	{"DOMELIGHT"},
+	{"ESTOPSWITCH"},
 	{"LIGHTBAR"},
 	{"BLINKINDICATE"},
 	{"BRAKELIGHTS"},
@@ -68,7 +67,8 @@ char menu_labels[NUM_STR][20] = {
 	{"re-enter password"},
 	{"in    seconds"},
 	{"engine on:"},
-	{"engine shutoff"}
+	{"engine shutoff"},
+	{"press   to"}
 };
 
 #define STRING_LEN 0x400

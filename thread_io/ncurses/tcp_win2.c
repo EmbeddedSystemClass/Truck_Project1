@@ -137,8 +137,11 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case SET_SERIAL_RECV_OFF:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  SERIAL_RECV_OFF",hours,minutes,seconds);
+		case SHUTDOWN:	
+			mvwprintw(win,row,col,"%02d:%02d:%02d  SHUTDOWN",hours,minutes,seconds);
 		break;
 		default:
+			mvwprintw(win,row,col,"%02d:%02d:%02d  unknown: %d",hours,minutes,seconds,cmd);
 		break;
 	}
 	wrefresh(win);
@@ -340,7 +343,6 @@ int tcp_win2(int cmd)
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
-
 			case 'P':
 				if(tcp_connected == 1)
 				{
@@ -384,6 +386,7 @@ int tcp_win2(int cmd)
 */
 					cmd2 = _RESET_TYPE4;
 			        put_sock(&cmd2,1,1,errmsg);
+/*
 			        cmd2 = ACCON;
 			        put_sock(&cmd2,1,1,errmsg);
 			        usleep(100000);
@@ -392,6 +395,7 @@ int tcp_win2(int cmd)
 			        cmd2 = FUELPUMP;
 			        put_sock(&cmd2,1,1,errmsg);
 			        usleep(100000);
+*/
 					mvwprintw(twin,error_line1,0,"reset ");
 				} else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
@@ -444,26 +448,11 @@ int tcp_win2(int cmd)
 			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
-			case KEY_F(7):		// all off
-#if 0
-				cmd2 = TEST_IOPORT;
-				onoff = 0;
-				mvwprintw(twin,8,30,"port: %02d onoff: %d",ioport,onoff);
-				put_sock(&cmd2,1,1,errmsg);
-				put_sock(&ioport,1,1,errmsg);				
-				put_sock(&onoff,1,1,errmsg);
-				break;
-#endif
+			case KEY_F(7):
 				if(tcp_connected == 1)
 				{
-				    cmd2 = OFF_ACC;
+				    cmd2 = SHUTDOWN;
 					put_sock(&cmd2,1,1,errmsg);
-					usleep(10000);
-				    cmd2 = OFF_FUEL_PUMP;
-					put_sock(&cmd2,1,1,errmsg);
-//					usleep(100000);
-//				    cmd2 = OFF_FAN;
-//					put_sock(&cmd2,1,1,errmsg);
 				    fan_on = 0;
 				    fp_on = 0;
 				    acc_on = 0;
@@ -478,16 +467,7 @@ int tcp_win2(int cmd)
 			case KEY_F(8):
 				if(tcp_connected == 1)
 				{
-				    cmd2 = ON_FUEL_PUMP;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(100000);
-//				    cmd2 = ON_FAN;
-//					put_sock(&cmd2,1,1,errmsg);
-//					usleep(100000);
-				    cmd2 = ENABLE_START;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(100000);
-				    cmd2 = ON_ACC;
+				    cmd2 = START_SEQ;
 					put_sock(&cmd2,1,1,errmsg);
 
 				    fan_on = 0;
@@ -524,7 +504,7 @@ int tcp_win2(int cmd)
 		}
 		if(tcp_connected == 1)
 		{
-			rc = get_sock((UCHAR*)buffer,12,0,errmsg);
+			rc = get_sock((UCHAR*)buffer,4,0,errmsg);
 			if(rc < 0 && errno != 11)
 //			if(rc < 0)
 			{
@@ -549,6 +529,7 @@ int tcp_win2(int cmd)
 				minutes = buffer[2];
 				hours = buffer[3];
 
+/*
 				rt_data[0] = buffer[4];
 				rt_data[1] = buffer[5];
 				rt_data[2] = buffer[6];
@@ -558,7 +539,7 @@ int tcp_win2(int cmd)
 				rt_data[5] = buffer[9];
 				rt_data[6] = buffer[10];
 				rt_data[7] = buffer[11];
-
+*/
 				disp_port(twin,y,x,cmd2,seconds,minutes,hours);
 				if(cmd2 != TOTAL_UP_TIME)
 				{
@@ -576,15 +557,13 @@ int tcp_win2(int cmd)
 				}else
 				{
 					mvwprintw(twin,1,61,"%02d:%02d:%02d", hours,minutes,seconds);
+/*
 					mvwprintw(twin,2,67,"%02d", rt_data[0]);
 					mvwprintw(twin,3,67,"%02d", rt_data[1]);
 					mvwprintw(twin,4,67,"%02d", rt_data[2]);
 					mvwprintw(twin,5,67,"%02d", rt_data[3]);
-
-//					mvwprintw(twin,6,60,"rpm: %d%d",rt_data[4],rt_data[5]);
-//					mvwprintw(twin,7,60,"mph: %d%d",rt_data[6],rt_data[7]);
 					mvwprintw(twin,8,63,"rc: %d ",rc);
-
+*/
 					wrefresh(twin);
 				}
 					

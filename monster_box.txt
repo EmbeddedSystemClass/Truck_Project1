@@ -429,10 +429,20 @@ yellow: rpm
 green: gnd
 red: 5vdc
 
+small toggle switch on right side just above the serial port
+is the reset switch: down is program (when using the Pickit
+programmer) and up is run. When turning it on the first time
+switch must be down, then turn up to start.
+
+Entering the password correctly when prompted doesn't enable the
+starter, it should just indicate that the engine is ready to
+start. e.g. "press x to enable starter, then push green button"
+
 Events that should trigger a password re-enter
 
 1) starting it up after engine was shut-off
 2) if the driver gets out of the seat
+3) the E-Stop button was pressed
 
 Screen should dim after 5-10 seconds of engine being shutdown.
 If driver gets out of seat, warning should display with time in
