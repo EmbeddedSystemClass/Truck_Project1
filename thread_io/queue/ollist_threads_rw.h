@@ -43,14 +43,15 @@ typedef struct o_data
 /*
 type:
 0) regular - on/off state responds to assigned input (affected_output)
-1) goes on/off and stays that way until some other event occurs
-	this is useful for a lock-out condition (use reset field)
+1) goes on/off and stays that way until another on/off
 2) on for time_delay seconds and then it goes back off
 3) goes on/off every second until time_delay is up
-4) goes on/off at pulse_time rate in 10ths of a second then
+4) if on, turn off and wait for msg (serial or tcp) to turn back on
+6) goes on/off at pulse_time rate in 10ths of a second then
 	goes off when time_delay is up
-5) goes on/off at pulse_rate in 10ths of a second if onoff is 
+7) goes on/off at pulse_rate in 10ths of a second if onoff is 
 	active only (not implemented yet)
+
 */
 
 typedef struct ollist_node {

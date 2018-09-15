@@ -73,21 +73,24 @@ it is necessary to write the following values to the registers specified:
 #define			OUTPORTF_OFFSET		5
 
 
-#define			ROC_1	0x280	// relay output control registers
-#define			ROC_2	0x281
-#define			ROC_3	0x282	// bank 3 only uses first 4 bits
+#define			CARD1	0x280
+#define			CARD2	0x300
 
-#define			DIR_1	0x284	// digital input reading registers
-#define			DIR_2	0x285
-#define			DIR_3	0x286	// bank 3 only uses first 4 bits
+#define			ROC_1	CARD1			// relay output control registers
+#define			ROC_2	CARD1 + 1
+#define			ROC_3	CARD1 + 2		// bank 3 only uses first 4 bits
 
-#define			ROC_4	0x300	// relay output control registers
-#define			ROC_5	0x301
-#define			ROC_6	0x302	// bank 3 only uses first 4 bits
+#define			DIR_1	CARD1 + 4		// digital input reading registers
+#define			DIR_2	CARD1 + 5
+#define			DIR_3	CARD1 + 6		// bank 3 only uses first 4 bits
 
-#define			DIR_4	0x304	// digital input reading registers
-#define			DIR_5	0x305
-#define			DIR_6	0x306	// bank 3 only uses first 4 bits
+#define			ROC_4	CARD2			// relay output control registers
+#define			ROC_5	CARD2 + 1
+#define			ROC_6	CARD2 + 2		// bank 3 only uses first 4 bits
+
+#define			DIR_4	CARD2 + 4		// digital input reading registers
+#define			DIR_5	CARD2 + 5
+#define			DIR_6	CARD2 + 6		// bank 3 only uses first 4 bits
 
 #define			UCHAR unsigned char
 #define			UINT unsigned int
@@ -298,6 +301,36 @@ void do_scr(int key)
 			OutPortA(1,4);
 			mydelay(100);
 			OutPortA(1,5);
+			mydelay(100);
+			OutPortA(1,6);
+			mydelay(100);
+			OutPortA(1,7);
+			mydelay(100);
+
+			OutPortB(1,0);
+			mydelay(100);
+			OutPortB(1,1);
+			mydelay(100);
+			OutPortB(1,2);
+			mydelay(100);
+			OutPortB(1,3);
+			mydelay(100);
+			OutPortB(1,4);
+			mydelay(100);
+			OutPortB(1,5);
+			mydelay(100);
+			OutPortB(1,6);
+			mydelay(100);
+			OutPortB(1,7);
+			mydelay(100);
+
+			OutPortC(1,0);
+			mydelay(100);
+			OutPortC(1,1);
+			mydelay(100);
+			OutPortC(1,2);
+			mydelay(100);
+			OutPortC(1,3);
 		break;
 		case 'b':
 			printf("all off\n");
@@ -311,13 +344,125 @@ void do_scr(int key)
 			mydelay(100);
 			OutPortA(0,4);
 			mydelay(100);
-			OutPortA(0,5);
+			OutPortA(0,6);
+			mydelay(100);
+			OutPortA(0,7);
+			mydelay(100);
+
+			OutPortB(0,0);
+			mydelay(100);
+			OutPortB(0,1);
+			mydelay(100);
+			OutPortB(0,2);
+			mydelay(100);
+			OutPortB(0,3);
+			mydelay(100);
+			OutPortB(0,4);
+			mydelay(100);
+			OutPortB(0,5);
+			mydelay(100);
+			OutPortB(0,6);
+			mydelay(100);
+			OutPortB(0,7);
+			mydelay(100);
+
+			OutPortC(0,0);
+			mydelay(100);
+			OutPortC(0,1);
+			mydelay(100);
+			OutPortC(0,2);
+			mydelay(100);
+			OutPortC(0,3);
+			mydelay(100);
+
 		break;
 		case 'c':
-			ToggleOutPortA(0);
+			printf("all on\n");
+			OutPortD(1,0);
+			mydelay(100);
+			OutPortD(1,1);
+			mydelay(100);
+			OutPortD(1,2);
+			mydelay(100);
+			OutPortD(1,3);
+			mydelay(100);
+			OutPortD(1,4);
+			mydelay(100);
+			OutPortD(1,5);
+			mydelay(100);
+			OutPortD(1,6);
+			mydelay(100);
+			OutPortD(1,7);
+			mydelay(100);
+
+			OutPortE(1,0);
+			mydelay(100);
+			OutPortE(1,1);
+			mydelay(100);
+			OutPortE(1,2);
+			mydelay(100);
+			OutPortE(1,3);
+			mydelay(100);
+			OutPortE(1,4);
+			mydelay(100);
+			OutPortE(1,5);
+			mydelay(100);
+			OutPortE(1,6);
+			mydelay(100);
+			OutPortE(1,7);
+			mydelay(100);
+
+			OutPortF(1,0);
+			mydelay(100);
+			OutPortF(1,1);
+			mydelay(100);
+			OutPortF(1,2);
+			mydelay(100);
+			OutPortF(1,3);
 		break;
 		case 'd':
-			ToggleOutPortA(1);
+			printf("all off\n");
+			OutPortD(0,0);
+			mydelay(100);
+			OutPortD(0,1);
+			mydelay(100);
+			OutPortD(0,2);
+			mydelay(100);
+			OutPortD(0,3);
+			mydelay(100);
+			OutPortD(0,4);
+			mydelay(100);
+			OutPortD(0,6);
+			mydelay(100);
+			OutPortD(0,7);
+			mydelay(100);
+
+			OutPortE(0,0);
+			mydelay(100);
+			OutPortE(0,1);
+			mydelay(100);
+			OutPortE(0,2);
+			mydelay(100);
+			OutPortE(0,3);
+			mydelay(100);
+			OutPortE(0,4);
+			mydelay(100);
+			OutPortE(0,5);
+			mydelay(100);
+			OutPortE(0,6);
+			mydelay(100);
+			OutPortE(0,7);
+			mydelay(100);
+
+			OutPortF(0,0);
+			mydelay(100);
+			OutPortF(0,1);
+			mydelay(100);
+			OutPortF(0,2);
+			mydelay(100);
+			OutPortF(0,3);
+			mydelay(100);
+
 		break;
 		case 'e':
 			printf("toggle near workbench\n");
@@ -343,66 +488,16 @@ void do_scr(int key)
 			mydelay(100);
 		break;
 		case 'h':
-			printf("short delay\n");
-			mydelay(200);
 		break;
 		case 'i':
-			printf("regular delay\n");
-			mydelay(2000);
 		break;
 		case 'j':
-			printf("long delay\n");
-			mydelay(4000);
 		break;
 		case 'k':
-			printf("very long delay\n");
-			mydelay(10000);
 		break;
 		case 'l':
-			printf("very very long delay\n");
-			mydelay(100000);
 		break;
 		case 'n':
-			for(i = 0;i < 6;i++)
-			{
-				ToggleOutPortA(i);
-				mydelay(DELAYTIME);
-			}
-			for(i = 5;i >= 0;i--)
-			{
-				ToggleOutPortA(i);
-				mydelay(DELAYTIME);
-			}
-			for(i = 5;i >= 0;i--)
-			{
-				ToggleOutPortA(i);
-				mydelay(DELAYTIME);
-			}
-			for(i = 0;i < 6;i++)
-			{
-				ToggleOutPortA(i);
-				mydelay(DELAYTIME);
-			}
-
-			for(i = 0;i < 6;i++)
-			{
-				OutPortA(1,i);
-				mydelay(DELAYTIME);
-				OutPortA(0,i);
-				mydelay(5);
-			}
-
-			OutPortA(0,5);
-
-			for(i = 4;i > 0;i--)
-			{
-				OutPortA(1,i);
-				mydelay(DELAYTIME);
-				OutPortA(0,i);
-				mydelay(5);
-			}
-
-			printf("\ndone\n");
 		break;
 		case 'o':
 		break;
@@ -421,18 +516,10 @@ void do_scr(int key)
 /**********************************************************************************************************/
 void Menu()
 {
-	printf("a - all on\n");
-	printf("b - all off\n");
-	printf("c - toggle 4 bulb overhead\n");
-	printf("d - toggle 2 bulb overhead\n");
-	printf("e - toggle near workbench\n");
-	printf("f - toggle far workbench\n");
-	printf("g - toggle all\n");
-	printf("h - short time delay\n");
-	printf("i - regular time delay\n");
-	printf("j - long time delay\n");
-	printf("k - very long time delay\n");
-	printf("l - very very long time delay\n");
+	printf("a - all on Port A,B,C\n");
+	printf("b - all off Port A,B,C\n");
+	printf("c - all on Port D,E,F\n");
+	printf("d - all off Port D,E,F\n");
 	printf("m - Menu\n");
 	printf("n - special function\n");
 	printf("q - quit\n");

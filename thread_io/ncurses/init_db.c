@@ -86,8 +86,6 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"FUELPUMP\0");
 	pid++;
-	strcpy(pid->label,"ESTOPMONITOR\0");
-	pid++;
 	strcpy(pid->label,"COOLINGFAN\0");
 	pid++;
 	strcpy(pid->label,"HEADLAMP\0");
@@ -120,7 +118,7 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"INTRUDERALARM\0");
 	pid++;
-	strcpy(pid->label,"DOMELIGHT\0");
+	strcpy(pid->label,"ESTOPSWITCH\0");
 	pid++;
 	strcpy(pid->label,"LIGHTBAR\0");
 	pid++;
@@ -130,7 +128,9 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"BACKUPLIGHTS\0");
 	pid++;
-	strcpy(pid->label,"ESTOPMONITOR\0");
+	strcpy(pid->label,"TESTINPUT24\0");
+	pid++;
+	strcpy(pid->label,"TESTINPUT25\0");
 	pid++;
 	strcpy(pid->label,"TESTINPUT26\0");
 	pid++;
@@ -211,8 +211,6 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"COOLINGFAN\0");
 	pod++;
-	strcpy(pod->label,"PRELUBE\0");
-	pod++;
 	strcpy(pod->label,"HEADLAMP\0");
 	pod++;
 	strcpy(pod->label,"BRIGHTS\0");
@@ -243,7 +241,7 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"INTRUDERALARM\0");
 	pod++;
-	strcpy(pod->label,"DOMELIGHT\0");
+	strcpy(pod->label,"ESTOPSWITCH\0");
 	pod++;
 	strcpy(pod->label,"LIGHTBAR\0");
 	pod++;
@@ -252,6 +250,8 @@ int main(int argc, char *argv[])
 	strcpy(pod->label,"BRAKELIGHTS\0");
 	pod++;
 	strcpy(pod->label,"BACKUPLIGHTS\0");
+	pod++;
+	strcpy(pod->label,"TESTOUTPUT24\0");
 	pod++;
 	strcpy(pod->label,"TESTOUTPUT25\0");
 	pod++;

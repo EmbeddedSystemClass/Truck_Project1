@@ -28,7 +28,7 @@ static int inc_y(WINDOW *win, int y);
 static void clr_scr(WINDOW *win);
 static void disp_msg(WINDOW *win,char *str);
 static void help_screen(WINDOW *win);
-static int acc_on, fp_on, fan_on, starter_on, lights_on, estop_on;
+static int acc_on, fp_on, fan_on, starter_on, lights_on;
 
 extern int tcp_connected;
 
@@ -43,7 +43,7 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,7,1,"F8 - start sequence");
 	mvwprintw(win,8,1,"F9 - help");
 	mvwprintw(win,9,1,"F10 - clear screen");
-	mvwprintw(win,10,1,"F12 - toggle estop");
+	mvwprintw(win,10,1,"F12 - unused");
 	mvwprintw(win,11,1,"A - clear mbox screen");
 	mvwprintw(win,12,1,"B - get debug info");
 	mvwprintw(win,13,1,"C - test RE_ENTER_PASSWORD");
@@ -54,12 +54,13 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,18,1,"I - show all I_DATA");
 	mvwprintw(win,19,1,"O - show all O_DATA");
 	mvwprintw(win,20,1,"J - enable starter");
-	mvwprintw(win,21,1,"K - toggle acc");
-	mvwprintw(win,22,1,"L - toggle fuelpump");
-	mvwprintw(win,23,1,"M - toggle cooling fan");
-	mvwprintw(win,24,1,"N - E-Stop on");
-	mvwprintw(win,25,1,"P - E-Stop off");
-	mvwprintw(win,26,1,"Q - quit (same as F2)");
+	mvwprintw(win,21,1,"K - ignition on");
+	mvwprintw(win,22,1,"L - ignition off");
+	mvwprintw(win,23,1,"M - fuel pump on");
+	mvwprintw(win,24,1,"N - fuel pump off");
+	mvwprintw(win,25,1,"P - not used");
+	mvwprintw(win,26,1,"R - Test All IO");
+	mvwprintw(win,27,1,"Q - quit (same as F2)");
 }
 
 //******************************************************************************************//
@@ -130,12 +131,6 @@ static void disp_port(WINDOW *win, int row, int col, UCHAR cmd, UCHAR seconds, U
 		break;
 		case OFF_ACC:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ACC",hours,minutes,seconds);
-		break;
-		case ON_ESTOP:
-			mvwprintw(win,row,col,"%02d:%02d:%02d  ON_ESTOP",hours,minutes,seconds);
-		break;
-		case OFF_ESTOP:
-			mvwprintw(win,row,col,"%02d:%02d:%02d  OFF_ESTOP",hours,minutes,seconds);
 		break;
 		case SET_SERIAL_RECV_ON:
 			mvwprintw(win,row,col,"%02d:%02d:%02d  SERIAL_RECV_ON",hours,minutes,seconds);
@@ -221,7 +216,7 @@ int tcp_win2(int cmd)
 	seconds = 0;
 	minutes = 0;
 	hours = 0;
-	starter_on = acc_on = fp_on = fan_on = estop_on = 0;
+	starter_on = acc_on = fp_on = fan_on;
 
 	while((ch = wgetch(twin)) != KEY_F(2) && ch != 'Q')
 	{
@@ -309,19 +304,53 @@ int tcp_win2(int cmd)
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
-			case 'N':
+			case 'K':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"I - ignition on");
 				if(tcp_connected == 1)
 				{
-				    cmd2 = ON_ESTOP;
+					cmd2 = ON_ACC;
 					put_sock(&cmd2,1,1,errmsg);
-			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'L':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"I - ignition off");
+				if(tcp_connected == 1)
+				{
+					cmd2 = OFF_ACC;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'M':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"I - fuel pump on");
+				if(tcp_connected == 1)
+				{
+					cmd2 = ON_FUEL_PUMP;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'N':
+				mvwprintw(twin,error_line2,STARTER_STATUS,"I - fuel pump off");
+				if(tcp_connected == 1)
+				{
+					cmd2 = OFF_FUEL_PUMP;
+					put_sock(&cmd2,1,1,errmsg);
+				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
 
 			case 'P':
 				if(tcp_connected == 1)
 				{
-				    cmd2 = OFF_ESTOP;
+			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'R':
+				if(tcp_connected == 1)
+				{
+				    cmd2 = TEST_ALL_IO;
 					put_sock(&cmd2,1,1,errmsg);
 			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
@@ -337,9 +366,9 @@ int tcp_win2(int cmd)
 				break;
 
 			case KEY_F(4):
-			case 'K':
 				if(tcp_connected == 1)
 				{
+/*
 					if(acc_on == 1)
 					{
 					    cmd2 = OFF_ACC;
@@ -352,14 +381,25 @@ int tcp_win2(int cmd)
 						acc_on = 1;
 						mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 					}
+*/
+					cmd2 = _RESET_TYPE4;
 			        put_sock(&cmd2,1,1,errmsg);
+			        cmd2 = ACCON;
+			        put_sock(&cmd2,1,1,errmsg);
+			        usleep(100000);
+					cmd2 = _RESET_TYPE4;
+			        put_sock(&cmd2,1,1,errmsg);
+			        cmd2 = FUELPUMP;
+			        put_sock(&cmd2,1,1,errmsg);
+			        usleep(100000);
+					mvwprintw(twin,error_line1,0,"reset ");
 				} else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
 			case KEY_F(5):
-			case 'L':
 				if(tcp_connected == 1)
 				{
+/*
 					if(fp_on == 1)
 					{
 						fp_on = 0;
@@ -373,11 +413,19 @@ int tcp_win2(int cmd)
 						mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 					}
 				    put_sock(&cmd2,1,1,errmsg);
+*/
+					cmd2 = ON_ACC;
+			        put_sock(&cmd2,1,1,errmsg);
+
+			        usleep(100000);
+					cmd2 = ON_FUEL_PUMP;
+			        put_sock(&cmd2,1,1,errmsg);
+
 		        }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+
 				break;
 
 			case KEY_F(6):
-			case 'M':
 				if(tcp_connected == 1)
 				{
 					if(fan_on == 1)
@@ -408,18 +456,14 @@ int tcp_win2(int cmd)
 #endif
 				if(tcp_connected == 1)
 				{
-				    cmd2 = OFF_FUEL_PUMP;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
-				    cmd2 = OFF_FAN;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
-				    cmd2 = STARTER_OFF;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
 				    cmd2 = OFF_ACC;
 					put_sock(&cmd2,1,1,errmsg);
-
+					usleep(10000);
+				    cmd2 = OFF_FUEL_PUMP;
+					put_sock(&cmd2,1,1,errmsg);
+//					usleep(100000);
+//				    cmd2 = OFF_FAN;
+//					put_sock(&cmd2,1,1,errmsg);
 				    fan_on = 0;
 				    fp_on = 0;
 				    acc_on = 0;
@@ -427,7 +471,7 @@ int tcp_win2(int cmd)
 					mvwprintw(twin,status_line,STARTER_STATUS,"OFF");
 					mvwprintw(twin,status_line,ACC_STATUS,"OFF");
 					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"OFF");
-					mvwprintw(twin,status_line,FAN_STATUS,"OFF");
+//					mvwprintw(twin,status_line,FAN_STATUS,"OFF");
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 		        break;
 
@@ -436,13 +480,13 @@ int tcp_win2(int cmd)
 				{
 				    cmd2 = ON_FUEL_PUMP;
 					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
-				    cmd2 = ON_FAN;
-					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
+					usleep(100000);
+//				    cmd2 = ON_FAN;
+//					put_sock(&cmd2,1,1,errmsg);
+//					usleep(100000);
 				    cmd2 = ENABLE_START;
 					put_sock(&cmd2,1,1,errmsg);
-					usleep(1000000);
+					usleep(100000);
 				    cmd2 = ON_ACC;
 					put_sock(&cmd2,1,1,errmsg);
 
@@ -453,14 +497,14 @@ int tcp_win2(int cmd)
 					mvwprintw(twin,status_line,STARTER_STATUS,"ON ");
 					mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 					mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
-					mvwprintw(twin,status_line,FAN_STATUS,"ON ");
+//					mvwprintw(twin,status_line,FAN_STATUS,"ON ");
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
 			case KEY_F(9):
 				clr_scr(twin);
 				help_screen(twin);
-				y = 27;
+				y = 30;
 				x = 1;
 		        break;
 
@@ -472,17 +516,6 @@ int tcp_win2(int cmd)
 			case KEY_F(12):		// can't use F11 - that toggle to full screen & back (F1 is help)
 				if(tcp_connected == 1)
 				{
-					if(estop_on == 1)
-					{
-					    cmd2 = OFF_ESTOP;
-					    estop_on = 0;
-					}
-					else
-					{
-						cmd2 = ON_ESTOP;
-						estop_on = 1;
-					}
-				    put_sock(&cmd2,1,1,errmsg);
 				}else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 

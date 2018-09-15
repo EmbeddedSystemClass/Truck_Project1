@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
 		comma_delim = 1;
 		printf("outputing odata as csv format\n");
 	}
-		
 	fptr1 = argv[1];
 	fptr2 = argv[2];
 

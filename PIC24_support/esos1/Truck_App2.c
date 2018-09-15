@@ -37,7 +37,6 @@ ESOS_USER_TASK(display_rtvalues)
 {
 	static ESOS_TASK_HANDLE comm1_handle;
     static int i;
-    static UCHAR buffer[20];
     static UCHAR data1;
 
     ESOS_TASK_BEGIN();
@@ -72,12 +71,11 @@ ESOS_USER_TASK(display_rtvalues)
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
 */
+		}
 		ESOS_TASK_WAIT_TICKS(600);
 	}
     ESOS_TASK_END();
 }
-
-
 //******************************************************************************************//
 //*************************************** send_fpga ****************************************//
 //******************************************************************************************//
@@ -701,8 +699,6 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = data5;
 			AVR_CALL();
-			seconds_display_high = data4;
-			seconds_display_low = data5;
 		}
 
     } // endof while()

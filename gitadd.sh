@@ -135,6 +135,6 @@ git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 
-git status
-git log --oneline > oneline.txt
+./gitstatus.sh
+oneline.sh > oneline.txt
 

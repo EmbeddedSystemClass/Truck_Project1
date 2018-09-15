@@ -310,19 +310,24 @@ package CommonPckg is
 	constant SIZE_32: integer:= 32;
 
 	-- commands for rpm/mph LED
-	constant RPM_OFF_CMD: std_logic_vector(7 downto 0):= X"01";
-	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
-	constant RPM_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"03";
-	constant RPM_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"04";
-	constant RPM_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"05";
-	constant RPM_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"06";
+	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"01";
+	constant MPH_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
+
+	-- these must match what's in PIC24_support/esos1/Truck_App.h
+
+	constant RPM_OFF_CMD: std_logic_vector(7 downto 0):= X"04";
+	constant RPM_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"05";
+	constant RPM_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"06";
+	constant RPM_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"07";
+	constant RPM_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"08";
+	constant RPM_SET_FACTORY_RESET: std_logic_vector(7 downto 0):= X"09";
 
 	constant MPH_OFF_CMD: std_logic_vector(7 downto 0):= X"0A";
-	constant MPH_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"0B";
 	constant MPH_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"0C";
 	constant MPH_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"0D";
 	constant MPH_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"0E";
 	constant MPH_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"0F";
+	constant MPH_SET_FACTORY_RESET: std_logic_vector(7 downto 0):= X"10";
 
 	constant SET_UPDATE_RATE: std_logic_vector(7 downto 0):= X"20";
 	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"21";
@@ -352,6 +357,7 @@ package CommonPckg is
 	constant SET_SEG2_CTL: std_logic_vector(7 downto 0):= X"7C";
 	constant SET_SEG3_CTL: std_logic_vector(7 downto 0):= X"7D";
 	constant SET_SEG4_CTL: std_logic_vector(7 downto 0):= X"7E";
+	constant FACTORY_RESET_CTL: std_logic_vector(7 downto 0):= X"81";
 
 	constant NUM_DATA_ARRAY : integer:= 16;
 	constant RT_RPM		: std_logic_vector := X"70";

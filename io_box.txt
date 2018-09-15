@@ -1,7 +1,11 @@
 io_box.txt - notes on the box with the TS-7200 card and the (2) 20 port IO cards
 
-Relays on IO cards are 5A so use 5v power from DC-DC converter inside io box as coil voltage for 10A 
-relay arrays.
+Relays on IO cards are 5A so use 5v power from separate DC-DC converter as coil voltage for 10A 
+relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 5v to gnd or
+even worse, 12v you can screw up the cards inside the box - this cost me a day or so of trouble-
+shooting and rewiring the io box)
+
+
 
 typedef struct i_data
 {
@@ -148,10 +152,9 @@ to manage TS-7200 redboot see thread_io/manage_boot_bios.txt
 
 40-pin ICD connector on side of IO box starts with port 0 on top right and
 goes to port 19 on top left, then starts with port 20 on lower right and goes
-to left (port 39) - the only exception is 6 is skipped over and is between
-9 and 10
+to left (port 39)
 
-19 18 17 16 15 14 13 12 11 10  6  9  8  7  5  4  3  2  1  0		-> front of IO box
+19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0		-> front of IO box
 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20
 
 need a way to save the odometer reading to disk.
@@ -215,41 +218,10 @@ current menus in the ncurses program:
 	("Test Write"),					// 8	- save all output events triggered by inputs to sched.log file
 
 
-Lock-Out Relay:
-
-The lock-out relay is implemented by a I/O port call ESTOPMONITOR.
-(see diagram estop1.jpg)
-When the E-Stop button is pushed the estop secondary relay will turn off
-the 12vdc common to the fuelpump and ignition relays regardless of the
-signals from the computer to the coils. The only problem is that if the
-signals to the fuelpump and ignition are turned off, When the estop signal
-is reset by the computer, the fuelpump and ignition will come back on.
-This may or may not be a problem.
-
-Use little blue Sanyou relays to reverse logic the input of ESTOPMON signal
-
-(looking at underside)
-
-no	      nc
-
-coil	coil
-   common
-	
-Other events that should trigger an ESTOP signal (in addition to the E-Stop switch):
-
-1) Oil pressure goes to 0 or too low
-2) Engine temp too high (should give warning first)
-3) wreck or crash (use accelerometer)
-
-Also, the FPGA has signals that control special relays:
-
-1) fuel pump shutoff (additional relay in series with primary fuelpump relay)
-2) engine over speed (additional relay in series with primary ignition relay)
-
-The monster box will have to send a special message to the FPGA telling it
-to override the fuel pump shutoff just to get started
-
-(optionally the FPGA can just send signals to the IO box to control the primary relays)
+In the timer2_task of tasks.c make a special check for the E-Stop switch input which is normally-closed
+so that when it goes low, the fuel pump and ignition will be set low and a msg will be sent to the
+PIC24 that tells it that the E-Stop button was pressed so it can ask for the password to be re-entered
+or shutdown everything.
 
 in tasks.c serial_recv_task() if byte recv'd is RT_DATA then recv the ADC channels
 from the PIC24 which are sent from send_comm1
@@ -262,9 +234,9 @@ OUTPUT_MSG
 these all must be a total of 5 bytes including the command - they are received by recv_comm1
 in the PIC24
 
-todo:
+todo: (x) = done
 
-- get rpm/mph data sent to comm3 of PIC24
+- get rpm/mph data sent to comm3 of PIC24 (x)
 - thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
 - setup spare AVR to generate sample rpm/mph signals to test LEDs
 - fix problem with client - host open, edit and save file

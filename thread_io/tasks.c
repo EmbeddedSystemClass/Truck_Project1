@@ -118,7 +118,7 @@ typedef struct
 
 static REAL_BANKS real_banks[40];
 
-CMD_STRUCT cmd_array[54] =
+CMD_STRUCT cmd_array[56] =
 {
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -172,6 +172,8 @@ CMD_STRUCT cmd_array[54] =
 	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
+	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
+	{		_RESET_TYPE4,"RESET_TYPE4\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -276,6 +278,8 @@ UCHAR get_host_cmd_task(int test)
 	int num;
 	UCHAR test_io_num = 0;
 	char tempx[50];
+	UCHAR utemp1;
+	UCHAR utemp2;
 	char *chp;
 	int fname_index;
 	UCHAR uch_fname_index;
@@ -408,6 +412,38 @@ UCHAR get_host_cmd_task(int test)
 				rc = 0;
  				switch(cmd)
 				{
+					case _RESET_TYPE4:
+						// send this message to reset type 4 so it can be turned back on after
+						// turning off - used as a lock-out condition
+						rc = recv_tcp((UCHAR *)&utemp1,1,1);	// get port no.
+						printf("reset port: %d\r\n",utemp1);
+						ollist_find_data(utemp1,&otp,&oll);
+						if(otp->type == 4)
+						{
+							otp->onoff = 0;
+							otp->reset = 0;
+							change_output(otp->port,otp->onoff);
+							ollist_insert_data(otp->port,&oll,otp);
+						}
+					break;							
+
+					case TEST_ALL_IO:
+//						printf("turning all IO on\r\n");
+						for(i = 0;i < 40;i++)
+						{
+							change_output(i,1);
+//							printf("%d\r\n",i);
+							usleep(100000);
+						}
+//						printf("turning all IO off\r\n");
+						for(i = 0;i < 40;i++)
+						{
+							change_output(i,0);
+//							printf("%d\r\n",i);
+							usleep(100000);
+						}
+					break;
+
 					// ENABLE_START closes a relay for so many seconds so a button
 					// on the dash can close the ckt to the starter solinoid
 					case ENABLE_START:
@@ -810,15 +846,15 @@ exit_program:
 							rc = write(fp,(const void *)tempx,strlen(tempx));
 							close(fp);
 						}
-/*
+
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_find_data(i,otpp,&oll);
-					//		printf("%d %d\r\n",otp->port,otp->onoff);
+							printf("%d %d\r\n",otp->port,otp->onoff);
 							usleep(1000);
 					//		change_output(otp->port,otp->onoff);
-							change_output(otp->port,0);
-							usleep(1000);
+					//		change_output(otp->port,0);
+					//		usleep(1000);
 							ollist_insert_data(i,&oll,otp);
 						}
 
@@ -826,7 +862,7 @@ exit_program:
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-*/
+
 //						close_tcp();
 						shutdown_all = 1;
 
@@ -907,22 +943,22 @@ static void set_output(O_DATA *otp, int onoff)
 		case 1:
 			if(otp->reset == 0)
 			{
-				printf("type 1 port: %d onoff: %d\r\n", otp->port, otp->onoff);
+//				printf("type 1 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 				otp->reset = 1;
 //				if(otp->polarity == 0)
 				TOGGLE_OTP;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
-//										otp->onoff, otp->reset, otp->polarity);
+				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
+										otp->onoff, otp->reset, otp->polarity);
 			}	
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 0;
-//				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
+							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		case 2:
@@ -940,14 +976,34 @@ static void set_output(O_DATA *otp, int onoff)
 //							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
-		// other 2 types not implemented yet (see queue directory)
 		case 4:
+			if(otp->reset == 0)
+			{
+//				printf("type 1 port: %d onoff: %d\r\n", otp->port, otp->onoff);
+				otp->reset = 1;
+//				if(otp->polarity == 0)
+//				TOGGLE_OTP;
+				otp->onoff = 0;
+				change_output(otp->port,otp->onoff);
+				ollist_insert_data(otp->port,&oll,otp);
+
+				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
+										otp->onoff, otp->reset);
+			}	
+			else if(otp->reset == 1)
+			{
+//				if(otp->polarity == 1)
+//					TOGGLE_OTP;
+				otp->reset = 3;
+				printf("type 4b port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
+										otp->onoff, otp->reset);
+			}
 			break;
 		default:
 			break;
 	}
 	// send message to monster box telling which port was toggled
-	send_PIC_serial(otp-> port,otp->onoff,otp->type, otp->time_delay);
+	send_PIC_serial(otp->port, otp->onoff, otp->type, otp->time_delay);
 	
 }
 /*********************************************************************/
@@ -959,7 +1015,7 @@ return;
 	
 	write_serial(OUTPUT_MSG);
 	write_serial((UCHAR)port);
-	write_serial((UCHAR)onoff);
+ 	write_serial((UCHAR)onoff);
 	write_serial((UCHAR)type);
 	write_serial((UCHAR)time_delay);
 
@@ -1055,7 +1111,7 @@ UCHAR monitor_input_task(int test)
 
 				for(i = 0;i < 10;i++)
 				{
-					if(itp->affected_output[i] != 41)
+					if(itp->affected_output[i] < 40)
 					{
 						ollist_find_data(itp->affected_output[i],otpp,&oll);
 						set_output(otp,  onoff);
@@ -1101,9 +1157,6 @@ static int change_input(int index, int onoff)
 	{
 		fake_inportstatus2[bank] &= ~mask;
 	}
-
-//	printf("change input: state: %02x %02x bank: %d mask: %02x\r\n",pstate,state,bank,mask);
-
 }
 /*********************************************************************/
 // do the same thing as monitor_input_tasks but with the fake arrays
@@ -1143,7 +1196,7 @@ UCHAR monitor_fake_input_task(int test)
 				if(mask > 0x80)
 				{
 					myprintf1("bad mask\0");
-					printf("bad mask %02x\r\n",mask);
+//					printf("bad mask %02x\r\n",mask);
 					continue;
 				}
 				index = mask2int(mask);
@@ -1170,7 +1223,7 @@ UCHAR monitor_fake_input_task(int test)
 
 				for(i = 0;i < 10;i++)
 				{
-					if(itp->affected_output[i] != 41)
+					if(itp->affected_output[i] < 40)
 					{
 						ollist_find_data(itp->affected_output[i],otpp,&oll);
 						set_output(otp,  onoff);
@@ -1321,6 +1374,10 @@ UCHAR timer_task(int test)
 		send_PIC_serialother(TIME_DATA1,buffer[0],buffer[1],buffer[3],buffer[4]);
 		send_PIC_serialother(TIME_DATA2,buffer[8],buffer[9],buffer[11],buffer[12]);
 		send_PIC_serialother(TIME_DATA3,buffer[14],buffer[15],buffer[17],buffer[18]);
+
+
+// if driver seat switch goes low the tell monster box to start re-enter password sequence
+//		send_PIC_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
 
 		if(engine_running > 0)
 		{
@@ -1930,49 +1987,70 @@ void basic_controls(UCHAR cmd)
 		case ON_ACC:
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(ACCON, 1);
+			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			otp->onoff = 1;
+//			ollist_insert_data(index,&oll,otp);
+//			change_input(ACCON, 1);
+			if(otp->reset == 0)
+				change_output(ACCON, 1);
 			send_live_code(cmd);
 			break;
 
 		case OFF_ACC:
 			index = ACCON;
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(ACCON, 0);
+			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			otp->onoff = 0;
+//			ollist_insert_data(index,&oll,otp);
+//			change_input(ACCON, 0);
+			if(otp->reset == 0)
+				change_output(ACCON, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_FUEL_PUMP:
+
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(FUELPUMP, 1);
+			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			otp->onoff = 1;
+//			otp->reset = 0;
+//			ollist_insert_data(index,&oll,otp);
+			if(otp->reset == 0)
+				change_output(FUELPUMP, 1);
+
 			send_live_code(cmd);
 			break;
 
 		case OFF_FUEL_PUMP:
+
 			index = FUELPUMP;
 			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(FUELPUMP, 0);
+			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+//			otp->onoff = 0;
+//			otp->reset = 0;
+//			change_input(FUELPUMP, 0);
+//			ollist_insert_data(index,&oll,otp);
+
+			if(otp->reset == 0)
+				change_output(FUELPUMP, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_ESTOP:
-			index = ESTOPMONITOR;
-			rc = ollist_find_data(index,otpp,&oll);
+//			index = ESTOPMONITOR;
+//			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(ESTOPMONITOR, 1);
-			send_live_code(cmd);
+//			change_input(ESTOPMONITOR, 1);
+//			send_live_code(cmd);
 			break;
 
 		case OFF_ESTOP:
-			index = ESTOPMONITOR;
-			rc = ollist_find_data(index,otpp,&oll);
+//			index = ESTOPMONITOR;
+//			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(ESTOPMONITOR, 0);
-			send_live_code(cmd);
+//			change_input(ESTOPMONITOR, 0);
+//			send_live_code(cmd);
 			break;
 
 		case ON_FAN:
@@ -2020,15 +2098,15 @@ void basic_controls(UCHAR cmd)
 			change_input(STARTER, 1);
 			send_live_code(ENABLE_START);
 
-			uSleep(0,100000);
-			change_input(ESTOPMONITOR, 0);
+//			uSleep(0,100000);
+//			change_input(ESTOPMONITOR, 0);
+
+//			uSleep(0,100000);
+//			change_input(ESTOPMONITOR, 1);
 
 			uSleep(0,100000);
-			change_input(ESTOPMONITOR, 1);
-
-			uSleep(0,100000);
-			change_input(COOLINGFAN, 1);
-			send_live_code(ON_FAN);
+//			change_input(COOLINGFAN, 1);
+//			send_live_code(ON_FAN);
 			break;
 
 		case SHUTDOWN:
@@ -2038,10 +2116,10 @@ void basic_controls(UCHAR cmd)
 			change_input(STARTER, 0);
 			send_live_code(STARTER_OFF);
 
-			uSleep(0,100000);
-			change_input(ESTOPMONITOR, 0);
+//			uSleep(0,100000);
+//			change_input(ESTOPMONITOR, 0);
 
-			uSleep(0,100000);
+			uSleep(0,10000);
 			change_input(COOLINGFAN, 0);
 			send_live_code(OFF_FAN);
 

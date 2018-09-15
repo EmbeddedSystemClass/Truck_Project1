@@ -191,21 +191,23 @@ volatile UCHAR menu_ptr;
 #define LINE_2_CURSOR       0xA1    //2-Line cursor mode
 #define LINE_1_CURSOR       0xA0    //1-Line cursor mode
 
-// commands for RPM LED display
-#define RPM_OFF_CMD 				0x01
-#define RPM_SEND_CHAR_CMD 			0x02
-#define RPM_SET_BRIGHTNESS_CMD 		0x03
-#define RPM_SET_CDECIMAL_CMD 		0x04
-#define RPM_SET_UPDATE_RATE_CMD 	0x05
-#define RPM_SET_FACTOR_CMD 			0x06
+// commands for RPM/MPH LED display
+#define RPM_SEND_CHAR_CMD 			0x01
+#define MPH_SEND_CHAR_CMD 			0x02
 
-// commands for MPH LED display
+#define RPM_OFF_CMD 				0x04
+#define RPM_SET_BRIGHTNESS_CMD 		0x05
+#define RPM_SET_CDECIMAL_CMD 		0x06
+#define RPM_SET_UPDATE_RATE_CMD 	0x07
+#define RPM_SET_FACTOR_CMD 			0x08
+#define RPM_SET_FACTORY_RESET		0x09
+
 #define MPH_OFF_CMD 				0x0A
-#define MPH_SEND_CHAR_CMD 			0x0B
 #define MPH_SET_BRIGHTNESS_CMD 		0x0C
 #define MPH_SET_CDECIMAL_CMD 		0x0D
 #define MPH_SET_UPDATE_RATE_CMD 	0x0E
 #define MPH_SET_FACTOR_CMD 			0x0F
+#define MPH_SET_FACTORY_RESET		0x10
 
 // other FPGA commands
 #define SET_DISPLAY_UPDATE_RATE 	0x20
@@ -247,8 +249,8 @@ static int password_retries;
 static int dim_screen;
 static int silent_key;
 static UINT gl_rpm, gl_mph;
-static UCHAR seconds_display_low;
-static UCHAR seconds_display_high;
+static int engine_run_time;
+static int engine_shutdown;
 //static ESOS_TASK_HANDLE convADC_task_handle;
 
 typedef enum
@@ -295,6 +297,7 @@ ESOS_USER_TASK(menu_task)
 			switch(data1)
 			{
 				case 	KP_1:
+					engine_shutdown = 1;
 				break;
 
 				case 	KP_2:
@@ -978,54 +981,60 @@ ESOS_USER_TASK(keypad)
 ESOS_USER_TASK(key_timer_task)
 {
 	static UINT data3;
-	static UCHAR prev_seconds_high;
-	static UCHAR prev_seconds_low;
 
     ESOS_TASK_BEGIN();
 
     key_enter_time = 0;
 	dim_screen = 0;
-	
-	prev_seconds_high = prev_seconds_low = 0;
+	engine_run_time = 0;
+	engine_shutdown = 0;
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(1000);
+		engine_run_time++;
 
-/*
-		avr_buffer[0] = SEND_INT_RT_VALUES;
-		avr_buffer[1] = rtlabel_str[RPM].row;
-		avr_buffer[2] = rtlabel_str[RPM].data_col;
-		avr_buffer[3] = (UCHAR)(rpm >> 8);
-		avr_buffer[4] = (UCHAR)rpm;
+		avr_buffer[0] = EEPROM_STR;
+		avr_buffer[1] = 0;	// row 0
+		avr_buffer[2] = 0;	// col 0
+		avr_buffer[3] = VARIOUS_MSG_OFFSET + 8;	//  engine run time msg
+		avr_buffer[4] = 10;
 		AVR_CALL();
 
 		avr_buffer[0] = SEND_INT_RT_VALUES;
-		avr_buffer[1] = rtlabel_str[RPM].row;
-		avr_buffer[2] = rtlabel_str[RPM].data_col;
-		avr_buffer[3] = (UCHAR)(mph >> 8);
-		avr_buffer[4] = (UCHAR)mph;
-		AVR_CALL();
-
-
-		if(seconds_display_high != prev_seconds_high)
-		{
-			prev_seconds_high = seconds_display_high;
-		}
-		if(seconds_display_low != prev_seconds_low)
-		{
-			prev_seconds_low = seconds_display_low;
-		}
-		if(++prev_seconds_low > 9)
-			prev_seconds_low = 0;
-
-		avr_buffer[0] = GOTO_CMD;
 		avr_buffer[1] = 0;
-		avr_buffer[2] = 39;		
-
-		avr_buffer[0] = CHAR_CMD;
-		avr_buffer[1] = prev_seconds_low;
+		avr_buffer[2] = 21;
+		avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
+		avr_buffer[4] = (UCHAR)engine_run_time;
 		AVR_CALL();
-*/		
+
+		if(engine_shutdown == 1)
+		{
+			avr_buffer[0] = EEPROM_STR;
+			avr_buffer[1] = 0;	// row 0
+			avr_buffer[2] = 0;	// col 0
+			avr_buffer[3] = VARIOUS_MSG_OFFSET + 6;	//  re-enter password
+			avr_buffer[4] = 10;
+			AVR_CALL();
+
+			avr_buffer[0] = EEPROM_STR;
+			avr_buffer[1] = 0;	// row 0
+			avr_buffer[2] = 0;	// col 0
+			avr_buffer[3] = VARIOUS_MSG_OFFSET + 7;	//  in x seconds
+			avr_buffer[4] = 10;
+			AVR_CALL();
+		}
+		if(engine_shutdown > 1 && engine_shutdown < 10)
+		{
+			avr_buffer[0] = SEND_INT_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 21;
+			avr_buffer[3] = (UCHAR)((10 - engine_shutdown) >> 8);
+			avr_buffer[4] = (UCHAR)(10 - engine_shutdown);
+			AVR_CALL();
+		}
+		if(engine_shutdown == 1)
+			engine_shutdown++;
+
 		if(key_enter_time == 30)
 		{
 			data3 = LCD_PWM;
@@ -1330,12 +1339,10 @@ ESOS_USER_TASK(convADC)
 {
 //    static  uint8_t data1, u8_wdtState;
 //	static uint16_t u16_adcVal1, u16_adcVal2;
-	static uint8_t u8_i, i;
+	static uint8_t i;
 	static float fres;
 
     ESOS_TASK_BEGIN();
-
-	convADC_task_handle = ESOS_TASK_GET_TASK_HANDLE();
 
 	CONFIG_RB0_AS_ANALOG();		// 2nd knob on monster box
 	CONFIG_RB1_AS_ANALOG();		// 1st knob on monster box
@@ -1387,9 +1394,9 @@ ESOS_USER_TASK(convADC)
 				fres *= 107.0;
 				fres /= 1023.0;
 				u8_pot[i] = (UCHAR)fres;
-
+			}
 			// this sends the ADC data to the TS-7200
-			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
+//			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
 		}
 		ESOS_TASK_WAIT_TICKS(500);
 	}

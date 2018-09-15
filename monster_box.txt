@@ -429,3 +429,17 @@ yellow: rpm
 green: gnd
 red: 5vdc
 
+Events that should trigger a password re-enter
+
+1) starting it up after engine was shut-off
+2) if the driver gets out of the seat
+
+Screen should dim after 5-10 seconds of engine being shutdown.
+If driver gets out of seat, warning should display with time in
+seconds until engine is shutdown and password must be re-entered.
+(or) If driver gets out of seat and engine rpm goes above idle.
+(so I can leave it running while stopping at the store in the
+winter)
+
+
+

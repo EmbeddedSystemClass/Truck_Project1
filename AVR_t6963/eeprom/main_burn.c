@@ -15,7 +15,7 @@
 
 
 // values start at line 20 so its easy to find the offsewt
-#define NUM_STR 51
+#define NUM_STR 52
 char menu_labels[NUM_STR][20] = {
 	{"RPM"},			// rt values
 	{"MPH"},
@@ -67,7 +67,8 @@ char menu_labels[NUM_STR][20] = {
 	{"OFF  "},
 	{"re-enter password"},
 	{"in    seconds"},
-	{"oh shitsky"}
+	{"engine on:"},
+	{"engine shutoff"}
 };
 
 #define STRING_LEN 0x400

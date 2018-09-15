@@ -36,7 +36,7 @@ architecture arch of sendcharLED is
 	type state_type is (clear_disp, set_init_bright, set_init_bright_param, idle, 
 		start1, set_cursor_pos, send_cursor_param, wait_done1, wait_done2, 
 			send_digit0,send_digit1, send_digit2, send_digit3, wait_done3, 
-				set_bright, set_decimal, wait_send_param, 
+				set_bright, set_decimal, factory_reset, wait_send_param, 
 						send_param, wait_done_send_param, state_done);
 
 	signal send_state_reg, send_state_next: state_type;
@@ -63,6 +63,8 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 	if reset='0' then
 		send_state_reg <= clear_disp;
 		send_state_next <= clear_disp;
+--		send_state_reg <= idle;
+--		send_state_next <= idle;
 		nodigits <= (others=>'0');
 		set_char_out <= (others=>'0');
 		display_done <= '0';
@@ -109,7 +111,7 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 				if start = '1' then
 					higher_than_0 <= '0';
 					nodigits <= (others=>'0');
-						case cmd is
+					case cmd is
 						when RPM_OFF_CMD => 
 							send_state_next <= idle;
 						when MPH_OFF_CMD => 
@@ -120,20 +122,24 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 							send_state_next <= start1;
 						when RPM_SET_BRIGHTNESS_CMD => 
 							send_state_next <= set_bright;
+						when RPM_SET_FACTORY_RESET =>
+							send_state_next <= factory_reset;
 						when MPH_SET_BRIGHTNESS_CMD => 
 							send_state_next <= set_bright;
 						when RPM_SET_CDECIMAL_CMD => 
 							send_state_next <= set_decimal;
 						when MPH_SET_CDECIMAL_CMD => 
 							send_state_next <= set_decimal;
+						when MPH_SET_FACTORY_RESET =>
+							send_state_next <= factory_reset;
 --						when SET_TEST_CMD1 => send_state_next <= idle;
 --						when SET_TEST_CMD2 => send_state_next <= idle;
 --						when SET_TEST_CMD3 => send_state_next <= idle;
 --						when SET_TEST_CMD4 => send_state_next <= idle;
 						when others => 
 							send_state_next <= idle;
-						end case;
-						display_done <= '0';
+					end case;
+					display_done <= '0';
 				else
 					send_state_next <= idle;
 				end if;	
@@ -222,6 +228,10 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 				set_char_out <= SET_DECIMAL_CTL;	-- set decimal command
 				start_proc1 <= '1';
 				send_state_next <= wait_send_param;
+			when factory_reset =>	
+				set_char_out <= FACTORY_RESET_CTL;	-- factory_reset
+				start_proc1 <= '1';
+				send_state_next <= wait_done_send_param;
 			when wait_send_param =>
 				start_proc1 <= '0';
 				if uart_done = '1' then
@@ -240,6 +250,7 @@ tx_uart_wrapper_unit3: entity work.uartLED(str_arch)
 			when state_done =>
 				display_done <= '1';
 				send_state_next <= idle;
+--				send_state_next <= start1;
 				nodigits <= (others=>'0');
 		end case;
 		send_state_reg <= send_state_next;

@@ -42,21 +42,24 @@ VUCHAR *card_mem 	- PORTBASEADD78		0xE8000000
 // card_port can start from IOCARDBASEADD72 - just add 4 for the outputs
 // the inputs can start from "     "
 
-#define			ROC_1	0x280	// relay output control registers
-#define			ROC_2	0x281
-#define			ROC_3	0x282	// bank 3 only uses first 4 bits
+#define			CARD1	0x280
+#define			CARD2	0x300
 
-#define			DIR_1	0x284	// digital input reading registers
-#define			DIR_2	0x285
-#define			DIR_3	0x286	// bank 3 only uses first 4 bits
+#define			ROC_1	CARD1			// relay output control registers
+#define			ROC_2	CARD1 + 1
+#define			ROC_3	CARD1 + 2		// bank 3 only uses first 4 bits
 
-#define			ROC_4	0x300	// relay output control registers
-#define			ROC_5	0x301
-#define			ROC_6	0x302	// bank 3 only uses first 4 bits
+#define			DIR_1	CARD1 + 4		// digital input reading registers
+#define			DIR_2	CARD1 + 5
+#define			DIR_3	CARD1 + 6		// bank 3 only uses first 4 bits
 
-#define			DIR_4	0x304	// digital input reading registers
-#define			DIR_5	0x305
-#define			DIR_6	0x306	// bank 3 only uses first 4 bits
+#define			ROC_4	CARD2			// relay output control registers
+#define			ROC_5	CARD2 + 1
+#define			ROC_6	CARD2 + 2		// bank 3 only uses first 4 bits
+
+#define			DIR_4	CARD2 + 4		// digital input reading registers
+#define			DIR_5	CARD2 + 5
+#define			DIR_6	CARD2 + 6		// bank 3 only uses first 4 bits
 
 #define			DELAYTIME 50
 

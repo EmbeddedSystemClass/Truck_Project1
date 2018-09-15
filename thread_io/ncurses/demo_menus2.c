@@ -992,6 +992,7 @@ call_Target(int code)
 
 
 /*****************************************************************************/
+// 2nd col of menu choices
 static void
 build_Target_menu(MenuNo number)
 {

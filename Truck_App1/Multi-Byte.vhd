@@ -56,10 +56,11 @@ architecture truck_arch of multi_byte is
 	type state_rev is (idle_rev, start_rev, done_rev);
 	signal state_reg_rev, state_next_rev: state_rev;
 
-	type calc_type2 is (idle2a, spin2);
+	type calc_type2 is (idle2a, wait_for_rpm_done, wait_for_mph_done, delay_rpm, delay_mph, do_rpm_cmd, 
+				do_mph_cmd, special_rpm_done, special_mph_done);
 	signal main_reg2, main_next2: calc_type2;
 
-	type calc_type1 is (idle1a, spin1);
+	type calc_type1 is (idle1a, do_mcmd, other_cmd);
 	signal main_reg1, main_next1: calc_type1;
 
 	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
@@ -118,7 +119,6 @@ architecture truck_arch of multi_byte is
 	signal reset_rev_limits: std_logic;
 	signal test_rpm_rev_limits: std_logic;
 	signal start_calc: std_logic;
-	signal calc_done: std_logic;
 	signal shutdown_rpm, shutdown_mph: std_logic;
 	
 begin
@@ -436,7 +436,6 @@ begin
 		stlv_duty_cycle <= (others=>'1');
 		special <= '0';
 		dtmf_index <= (others=>'0');
-		calc_done <= '0';
 		stdlv_transmit_update_rate <=  X"1FFFFF";
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
@@ -455,46 +454,48 @@ begin
 			when idle1a =>
 				reset_rev_limits <= '0';
 				if start_calc = '1' then
---					stlv_temp6 <= mcmd;
---					stlv_temp7 <= mparam;
-					calc_done <= '0';
-					main_next1 <= spin1;
+					case mcmd is
+						when SET_UPDATE_RATE =>
+							stdlv_transmit_update_rate <= mparam & X"FFFF";
+							main_next1 <= do_mcmd;
+						when DTMF_TONE_ON =>
+							dtmf_index <= mparam(4 downto 0);
+							special <= '0';
+							start_dtmf <= '1';
+							main_next1 <= do_mcmd;
+						when DTMF_TONE_OFF =>
+							start_dtmf <= '0';
+							special <= '0';
+							main_next1 <= do_mcmd;
+						when SPECIAL_TONE_ON =>
+							special <= '1';
+							start_dtmf <= '1';
+							main_next1 <= do_mcmd;
+						when LCD_PWM =>
+							stlv_duty_cycle <= mparam(4 downto 0);
+							main_next1 <= do_mcmd;
+						when FP_SHUTOFF_OVERRIDE =>
+							fp_override <= mparam(0);
+							main_next1 <= do_mcmd;
+						when SET_MAX_REV_LIMITER =>
+							rev_limit_max <= mparam;
+							reset_rev_limits <= '1';
+							main_next1 <= do_mcmd;
+						when SET_MIN_REV_LIMITER =>
+							rev_limit_min <= mparam;
+							reset_rev_limits <= '1';
+							main_next1 <= do_mcmd;
+						when TEST_RPM_LIMIT =>
+							test_rpm_rev_limits <= mparam(0);
+							main_next1 <= do_mcmd;
+						when others =>
+--							main_next1 <= idle1a;
+							main_next1 <= other_cmd;
+					end case;
 				end if;
-			when spin1 =>
-				case mcmd is
-					when SET_UPDATE_RATE =>
-						stdlv_transmit_update_rate <= mparam & X"FFFF";
---						stlv_temp3 <= mparam;
-					when DTMF_TONE_ON =>
-						dtmf_index <= mparam(4 downto 0);
-						special <= '0';
-						start_dtmf <= '1';
-					when DTMF_TONE_OFF =>
-						start_dtmf <= '0';
-						special <= '0';
-					when SPECIAL_TONE_ON =>
-						special <= '1';
-						start_dtmf <= '1';
-					when LCD_PWM =>
-						stlv_duty_cycle <= mparam(4 downto 0);
-----						led1 <= mparam(3 downto 0);
-					when FP_SHUTOFF_OVERRIDE =>
-						fp_override <= mparam(0);
---						stlv_temp2a <= mparam;
-					when SET_MAX_REV_LIMITER =>
-						rev_limit_max <= mparam;
-						reset_rev_limits <= '1';
---						stlv_temp2a <= mparam;
-					when SET_MIN_REV_LIMITER =>
-						rev_limit_max <= mparam;
-						reset_rev_limits <= '1';
---						stlv_temp2a <= mparam;
-					when TEST_RPM_LIMIT =>
-						test_rpm_rev_limits <= mparam(0);
---						stlv_temp2a <= mparam;
-					when others =>	
-				end case;
-				calc_done <= '1';
+			when do_mcmd =>
+				main_next1 <= idle1a;
+			when other_cmd =>	
 				main_next1 <= idle1a;
 		end case;
 		main_reg1 <= main_next1;
@@ -513,74 +514,151 @@ begin
 		cmd_rpm <= RPM_SEND_CHAR_CMD;
 		param_mph <= (others=>'1');
 		param_rpm <= (others=>'1');
-		time_delay_mph <= "00" & X"FFFFFF";
-		time_delay_rpm <= "00" & X"7FFFFF";
---		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
+		time_delay_mph <= "00" & X"3FF000";
+		time_delay_rpm <= "00" & X"3FFFFF";		-- 184ms
 --		time_delay_rpm <= "00" & X"1FFFFF";		-- 92ms
 --		time_delay_rpm <= "00" & X"0FFFFF";		-- 46ms
 --		time_delay_rpm <= "00" & X"07FFFF";		-- 23ms
 --		time_delay_rpm <= "00" & X"03FFFF";		-- 11ms
+		-- these start the rpm/mph wrappers in the normal
+		-- send char mode
 		start_rpm_wrapper <= '1';
 		start_mph_wrapper <= '1';
 		mph_or_not <= '0';
 		led1 <= "1111";
 
+-- if mcmd is one of the special commands other than
+-- the normal SEND_CHAR_CMD then we must stop the wrapper
+-- and wait for the sendcharLED to finish
+-- the sendcharLED sets the display_done1 in wrapperLED
+-- and wrapperLED sets either the rpm_done or the mph_done 
+-- flags
+
 	elsif clk'event and clk = '1' then
 		case main_reg2 is
 			when idle2a =>
 				if start_calc = '1' then
---					main_next2 <= spin2;
-					main_next2 <= idle2a;
-				end if;
-			when spin2 =>
-				case mcmd is
-					when RPM_OFF_CMD =>
-						cmd_rpm <= mcmd;
-					when RPM_SEND_CHAR_CMD =>
-						led1 <= "1110";
-						cmd_rpm <= mcmd;
-					when RPM_SET_BRIGHTNESS_CMD =>
-						cmd_rpm <= mcmd;
-						param_rpm <= mparam;
-						led1 <= "1101";
-					when RPM_SET_CDECIMAL_CMD =>
-						cmd_rpm <= mcmd;
-						param_rpm <= mparam;
-					when RPM_SET_UPDATE_RATE_CMD =>
-						cmd_rpm <= mcmd;
-						led1 <= "1100";
-						time_delay_rpm <= mparam & "11" & X"FFFF";
-					when RPM_SET_FACTOR_CMD =>
-						cmd_rpm <= mcmd;
-						rpm_factor <= mparam(5 downto 0);
-						led1 <= "1011";
+
+					case mcmd is
+						when RPM_OFF_CMD =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							main_next2 <= wait_for_rpm_done;
+						when RPM_SET_BRIGHTNESS_CMD =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							main_next2 <= wait_for_rpm_done;
+						when RPM_SET_CDECIMAL_CMD =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							main_next2 <= wait_for_rpm_done;
+						when RPM_SET_UPDATE_RATE_CMD =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							time_delay_rpm <= mparam & "11" & X"FFFF";
+							main_next2 <= wait_for_rpm_done;
+						when RPM_SET_FACTOR_CMD =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							mph_factor <= mparam(5 downto 0);
+							main_next2 <= wait_for_rpm_done;
+						when RPM_SET_FACTORY_RESET =>
+							start_rpm_wrapper <= '0';
+							cmd_rpm <= mcmd;
+							param_rpm <= mparam;
+							main_next2 <= wait_for_rpm_done;
 						when MPH_OFF_CMD =>
-						cmd_mph <= mcmd;
-						led1 <= "1010";
-					when MPH_SEND_CHAR_CMD =>
-						cmd_mph <= mcmd;
-						led1 <= "1001";
-					when MPH_SET_BRIGHTNESS_CMD =>
-						cmd_mph <= mcmd;
-						param_mph <= mparam;
-						led1 <= "1000";
-					when MPH_SET_CDECIMAL_CMD =>
-						cmd_mph <= mcmd;
-						param_mph <= mparam;
-						led1 <= "0111";
-					when MPH_SET_UPDATE_RATE_CMD =>
-						cmd_mph <= mcmd;
-						time_delay_mph <= mparam & "11" & X"FFFF";
-						led1 <= "0110";
-					when MPH_SET_FACTOR_CMD =>
-						cmd_mph <= mcmd;
-						mph_factor <= mparam(5 downto 0);
-						led1 <= "0101";
-					when others =>
-				end case;
-				cmd_mph <= MPH_SEND_CHAR_CMD;
-				cmd_rpm <= RPM_SEND_CHAR_CMD;
-				main_next2 <= idle2a;
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							main_next2 <= wait_for_mph_done;
+						when MPH_SET_BRIGHTNESS_CMD =>
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							main_next2 <= wait_for_mph_done;
+						when MPH_SET_CDECIMAL_CMD =>
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							main_next2 <= wait_for_mph_done;
+						when MPH_SET_UPDATE_RATE_CMD =>
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							time_delay_mph <= mparam & "11" & X"FFFF";
+							main_next2 <= wait_for_mph_done;
+						when MPH_SET_FACTOR_CMD =>
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							mph_factor <= mparam(5 downto 0);
+							main_next2 <= wait_for_mph_done;
+						when MPH_SET_FACTORY_RESET =>
+							start_mph_wrapper <= '0';
+							cmd_mph <= mcmd;
+							param_mph <= mparam;
+							main_next2 <= wait_for_mph_done;
+						when others =>
+							main_next2 <= idle2a;
+					end case;	
+				end if;	
+
+			when wait_for_rpm_done =>
+				if rpm_done = '1' then
+					start_rpm_wrapper <= '1';
+					main_next2 <= delay_rpm;
+				end if;
+
+			when wait_for_mph_done =>
+				if mph_done = '1' then
+					start_mph_wrapper <= '1';
+					main_next2 <= delay_mph;
+				end if;
+
+			when delay_rpm =>
+				if time_delay_reg2 > TIME_DELAY9/500 then
+					time_delay_next2 <= (others=>'0');
+					main_next2 <= do_rpm_cmd;
+				else
+					time_delay_next2 <= time_delay_reg2 + 1;
+				end if;
+			when delay_mph =>
+				if time_delay_reg2 > TIME_DELAY9/500 then
+					time_delay_next2 <= (others=>'0');
+					main_next2 <= do_mph_cmd;
+				else
+					time_delay_next2 <= time_delay_reg2 + 1;
+				end if;
+				
+			when do_rpm_cmd =>
+					start_rpm_wrapper <= '0';
+					cmd_rpm <= RPM_SEND_CHAR_CMD;
+					param_rpm <= (others=>'0');
+					main_next2 <= special_rpm_done;
+
+			when do_mph_cmd =>
+					start_mph_wrapper <= '0';
+					cmd_mph <= MPH_SEND_CHAR_CMD;
+					param_mph <= (others=>'0');
+					main_next2 <= special_mph_done;
+
+			when special_rpm_done =>
+--				if rpm_done = '1' then
+					start_rpm_wrapper <= '1';
+					main_next2 <= idle2a;
+--				end if;
+
+			when special_mph_done =>
+--				if mph_done = '1' then
+					start_mph_wrapper <= '1';
+					main_next2 <= idle2a;
+--				end if;
 		end case;
 		main_reg2 <= main_next2;
 		time_delay_reg2 <= time_delay_next2;

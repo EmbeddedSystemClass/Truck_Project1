@@ -73,7 +73,7 @@ int tcp_win_show(int cmd)
 	int rc;
 	int x,y,i;
 	UCHAR ret_char = 0x21;
-	char buffer[110];
+	char buffer[210];
 	char errmsg[70];
 	int noerrors = 0;
 	int height, width;
@@ -132,7 +132,7 @@ int tcp_win_show(int cmd)
 		{
 //			usleep(100);
 			if(cmd == SHOW_IDATA)
-				rc = get_sock(&buffer[0],50,1,errmsg);
+				rc = get_sock(&buffer[0],200,1,errmsg);
 			else if(cmd == SHOW_ODATA)
 				rc = get_sock(&buffer[0],100,1,errmsg);
 
