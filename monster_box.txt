@@ -169,7 +169,8 @@ extra 18-pin socket
 
 *pins 1 & 2 are jumpered together after programming the PIC24 using MPLABX:
 go to icon of downpointing green arrow to right of right-pointing green "go"
-icon and choose "make and program device"
+icon and choose "make and program device" small toggle switch is hooked up
+to this (see below)
 
 3 pins to left of lower conv chip:
 gnd gnd 3v3
@@ -292,7 +293,8 @@ starting from left inside going up
 42) pwm output to LCD
 
 
-82)
+82) rev limiter
+
 connections to outside:
 
 monitor for PIC24*
@@ -307,8 +309,6 @@ conv chips:
 
 6 5 4
 1 2 3
-
-
 
 10 11 12 13		14 15 6  16		17 18 19 20
 
@@ -375,6 +375,13 @@ cable coming from ADC conn. looking at pin side with cable to top:
 AVDD	14	12	10	8	6	4	2	0	(14 & 13 are used by knobs on front of panel)
 AVSS	13	15	11	9	7	5	3	1
 
+0) Engine Temp
+1) Oil Pressure
+2) Air Temp
+3) MAP
+4) Oil Temp
+5) O2
+
 need extra handshacking between PIC24 and FPGA
 
 signal 0 & 1 are from PIC24 to FPGA
@@ -438,6 +445,16 @@ Entering the password correctly when prompted doesn't enable the
 starter, it should just indicate that the engine is ready to
 start. e.g. "press x to enable starter, then push green button"
 
+currently when the engine is ready to start, the buttons on the
+keypad are assigned as:
+1) enable starter
+2) ignition on
+3) ignition off
+4) fuel pump on
+5) fuel pump off
+6) start sequence: (enable start, ign/fp on)
+7) shutdown: ign/fp off
+
 Events that should trigger a password re-enter
 
 1) starting it up after engine was shut-off
@@ -451,5 +468,34 @@ seconds until engine is shutdown and password must be re-entered.
 (so I can leave it running while stopping at the store in the
 winter)
 
+Do switch/case statements in menu_task depending on what the menu_ptr
+is when you pick the menus with the A->D buttons. With every menu
+change, the menu list will show the choices.
+
+menu 1:
+1) enable starter
+2) ignition on
+3) ingintion off
+4) fuel pump on
+5) fuel pump off
+6) start sequence (1,2,4)
+7) shutdown (all off)
+
+menu 2: - screen dim
+1) screen on
+2) screen off
+3) screen 80%
+4) screen 75%
+5) screen 60%
+6) screen 50%
+7) screen 30%
+8) screen 25%
+9) screen 12%
+
+menu 3: - rev limit & fuel pump shutoff limit (rpm)
+1) set high rev limit
+2) set low rev limit
+4) set low rpm fp shutoff (modify mon_fp in Mutli-Byte.vhd)
+5) 
 
 

@@ -59,8 +59,6 @@ ESOS_USER_TASK(display_rtvalues)
 			}
 
 //	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//			ESOS_TASK_WAIT_ON_SEND_UINT8(0xFF);
-
 // 2 knobs on front of mbox
 /*	send to serial port for testing
 			for(i = 0;i < 2;i++)
@@ -72,7 +70,7 @@ ESOS_USER_TASK(display_rtvalues)
 		}
 */
 		}
-		ESOS_TASK_WAIT_TICKS(600);
+		ESOS_TASK_WAIT_TICKS(500);
 	}
     ESOS_TASK_END();
 }
@@ -203,17 +201,18 @@ ESOS_USER_TASK(recv_fpga)
 			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
 			ESOS_TASK_WAIT_ON_GET_UINT83(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-/*
+
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
+
 			// FPGA sends
 			// 1 - 0xFF
 			// 2 - high byte of rpm
 			// 3 - low byte of rpm
 			// 4 - high byte of mph
 			// 5 - low byte of mph
+
 			if(data2 == 0xFF)
 				i = 0;
 			else{
@@ -246,7 +245,6 @@ ESOS_USER_TASK(recv_fpga)
 				avr_buffer[4] = temp[3];
 				AVR_CALL();
 			}
-
 		}
 		ESOS_TASK_WAIT_TICKS(1);
     } // endof while()
@@ -320,11 +318,13 @@ ESOS_USER_TASK(display_rtlabels)
 ESOS_USER_TASK(send_comm1)
 {
     static UCHAR data1;
+    static UCHAR test;
     static int i;
 	
     ESOS_TASK_BEGIN();
     i = 0;
     data1 = 0;
+    test = 0;
     while (1)
     {
         ESOS_TASK_WAIT_FOR_MAIL();
@@ -523,35 +523,7 @@ ESOS_USER_TASK(recv_comm1)
  			memset(password,0,PASSWORD_SIZE);
 			password_ptr = 0;
 //			password_retries = 0;
-#if 0
-			avr_buffer[0] = LCD_CLRSCR;
-			avr_buffer[1] = 0;
-			AVR_CALL();
 
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 7;
-			avr_buffer[2] = (UCHAR)strlen(correct_password);
-			AVR_CALL();
-/*
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = 7;
-			avr_buffer[2] = '<';
-			AVR_CALL();
-*/
-			avr_buffer[0] = EEPROM_STR;
-			avr_buffer[1] = 6;	// row 6
-			avr_buffer[2] = 0;	// col 0
-			avr_buffer[3] = VARIOUS_MSG_OFFSET;	//  ("enter password")
-			avr_buffer[4] = 10;
-			AVR_CALL();
-
-			avr_buffer[0] = SET_MODE_CMD;
-			avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
-			avr_buffer[2] = 7;
-			avr_buffer[3] = 0;
-			avr_buffer[4] = (LINE_1_CURSOR);
-			AVR_CALL();
-#endif
 			avr_buffer[0] = PASSWORD_MODE;
 			avr_buffer[1] = (UCHAR)strlen(correct_password);
 			AVR_CALL();
@@ -752,10 +724,6 @@ ESOS_USER_TASK(recv_lcd)
 
     ESOS_TASK_BEGIN();
 
-	curr_num_ptr = 0;
-
- 	memset(curr_num,0,NUM_SIZE);
-
     i = 0;
 
     while (1)
@@ -770,15 +738,9 @@ ESOS_USER_TASK(recv_lcd)
 		}
 		else
 		{
-			curr_num[curr_num_ptr] = data2;
-			curr_num_ptr++;
-
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-			if(curr_num_ptr > NUM_SIZE)
-				curr_num_ptr = 0;
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -847,6 +809,7 @@ ESOS_USER_TASK(main_proc)
 
 	ESOS_TASK_BEGIN();
 
+	engine_on = 0;
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 
@@ -946,7 +909,8 @@ ESOS_USER_TASK(main_proc)
 	memset(password,0,PASSWORD_SIZE);
 
 	avr_buffer[0] = PASSWORD_MODE;
-	avr_buffer[1] = (UCHAR)strlen(correct_password);
+//	avr_buffer[1] = (UCHAR)strlen(correct_password);
+	avr_buffer[1] = 0;
 	AVR_CALL();
 
 	i = 0;
@@ -984,6 +948,14 @@ ESOS_USER_TASK(main_proc)
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(500);
+		data3 = TEST_COMM;
+		data3 <<= 8;
+		data3 &= 0xFF00;
+		data3 |= data2;
+		__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
+
+		if(++data2 > 0x7e)
+			data2 = 0x21;
 
 /*
 		if(password_valid == 0)
@@ -1039,10 +1011,10 @@ void user_init(void)
 	esos_RegisterTask(recv_comm1);
 	esos_RegisterTask(menu_task);
 	esos_RegisterTask(password_task);
-//	esos_RegisterTask(numentry_task);
+	esos_RegisterTask(numentry_task);
 	esos_RegisterTask(display_menu);
 	esos_RegisterTask(display_rtlabels);
-//	esos_RegisterTask(key_timer_task);
+	esos_RegisterTask(key_timer_task);
 	esos_RegisterTask(display_rtvalues);
 } // end user_init()
 

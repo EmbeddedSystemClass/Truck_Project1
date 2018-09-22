@@ -5,6 +5,11 @@ git add io_box.txt
 git add gitadd.sh
 git add .gitignore
 git add mytypes.h
+git add getstatus.sh
+git add gitstatus.sh
+git add engine_startup_notes.txt
+git add alot_of_work.txt
+git add backup_client.sh
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh
@@ -134,6 +139,7 @@ git add thread_io/how2formatSDCardExt.png
 git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
+git add thread_io/IO_card_layout.png
 
 ./gitstatus.sh
 oneline.sh > oneline.txt

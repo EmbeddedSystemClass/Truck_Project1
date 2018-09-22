@@ -1,0 +1,51 @@
+Notes on engine startup (first time)
+9/2/18
+
+(copied from somewhere online)
+
+"On non computer cars, ignition timing should be approx. 22-25 degrees timing @ 1800 rpms. Less at lower rpm.
+
+Start the engine and bring rpm up to 1200-1300 rpm until water temperature just begins to rise. It is a good idea to leave your radiator cap off until your thermostat opens and water starts to circulate. Add coolant to bring coolant level up when the air locks circulate to radiator. Have some coolant mix ready to add to the radiator when this happens. Watch your timing mark to make sure you are between 15-25 degrees. As soon as your water temperature just starts to rise, bring rpm up to 1800 rpm, and check ignition timing to make sure you are approx. 22-25 degrees timing for engine break-in. Run the engine at 1800 rpm for at least half an hour, making sure someone is monitoring oil pressure and water temperature at all times! After your half hour or more break-in, bring engine up to 3000 rpm and check total timing. Most engines need to be between 32-38 degrees total timing. Bring engine to idle and quickly check initial timing. Time to factory specs. You can give a little bit more timing at idle for higher elevations, but total timing cannot be too much or engine damage can occur. You may have to have your distributor re-curved if the timing curve is not correct. Most non-computer vehicles need about 8 to 12 degrees at idle, and 32 to 38 degrees total timing.
+
+If your car is computer controlled, then you will have to follow instructions for your particular vehicle to do the ignition timing, but rpm is followed in the same manor as above.
+
+After engine break-in, turn engine off and let it cool. After it has cooled down, check for leaks (oil and water), check your oil for discoloration and level, and check your coolant level.
+
+If everything looks and sounds OK, then take it out for a test drive. Still don't let the engine idle for any length of time. If you get stuck in traffic, or at a long light, then place car in neutral or park and bring rpm up slightly until you are ready to proceed.
+
+Take your vehicle someplace where you can drive between 30 and 65 mph. Take vehicle up to 65 mph then let completely off the gas and let vehicle come down to approx. 30 mph. Do this about 10 times to help your rings seat. Do not beat your new engine! Just drive normal. Do not take engine above 4000 rpm, and do not pull any heavy loads for the first 2 oil and filter changes. Your first oil and filter change should be done at or before 500 miles. Preferably right away. Remember that everything in that new engine has to wear-in, and all that wear-in metal needs to get out of the system. Your second oil and filter change should be done approx. 1500 miles after your first one was done. Then every 2500-3000 increments for the rest of its life."
+
+
+Also what I've learned:
+
+It's not good for the motor to run it the first time for less than 20 minutes or under 1800 rpm. You can lope the cam.
+I had to shut mine off several times because it was getting very hot: over 200F. I learned later from a forum that
+they will run hot when breaking in because of all the friction. Plus if the timing is too retarted it will run hot.
+My biggest heat problem, as I found out from the forum and a bit of googling, was that I was trying to pull air 
+through a 4-core radiator with an electric fan. I went back to the original mechanical fan and a 2-core radiator and
+it never got over 175F. I also waited until early in the AM before it got hot and I strapped a couple box fans onto
+the grill to blow air into the radiator (not sure if that helped). Another problem I noted was that when I drained
+all the water out the previous day to change the radiator, there were some air pockets left in the engine block and
+when I ran it and the T-stat opened up, the water from the radiator went into the engine and immediately boiled and
+shot up out of the cap (which was off as I was going to top it off). I guess the only way around that it to fill the
+engine up with with the T-stat out. Another thing I could have done was to run the heater because with my setup, 
+there is always water circulating through the heater core. 
+
+Just before starting it, I drained the oil into a clean Homer bucket, let it set and poured it into another bucket
+to see if there were any engine filings in the bottom of the bucket (since I had already ran the motor).
+I then put the oil back in the engine. 
+
+With my setup, I'm controlling the ingition, fuel pump and starter from the laptop. The starter has a feature where
+it only enables a relay the gets power to the starter solinoid relay for 8 seconds. Since the laptop was in the
+cab I couldn't climb under the hood in time to hand choke the carb and hit the remote start button. I already had
+the ign relay on because I wanted the electric choke to start opening since I didn't want too much gas into the
+engine on start up as it could wash the oil out of the cylinders. To circumvent this, place a jumper across the
+nc contacts of the secondary relay for the starter solinoid.
+
+Another thing is the timing marks are hard to
+see so mark them with chalk at 10,20 & 30 degrees BTDC.
+
+
+
+
+

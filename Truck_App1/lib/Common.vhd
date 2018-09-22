@@ -338,6 +338,7 @@ package CommonPckg is
 	constant SET_MAX_REV_LIMITER: std_logic_vector(7 downto 0):= X"26";
 	constant SET_MIN_REV_LIMITER: std_logic_vector(7 downto 0):= X"27";
 	constant TEST_RPM_LIMIT: std_logic_vector(7 downto 0):= X"28";
+	constant TEST_COMM: std_logic_vector(7 downto 0):= X"29";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";

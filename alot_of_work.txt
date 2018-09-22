@@ -1,0 +1,16 @@
+9-12-18
+
+I was planning on using a small relay with a 12vdc coil as a lock-out relay. There was 5vdc going threw the
+nc contacts of the coil. I was using the 5vdc from inside the io box, the same 5v that was powering the
+TS-7200 cards and the 2 daughter boards. I was doing some trouble-shooting with the VOM and touched the
+coil to the contacts and sent 12v to the 5v. I saw the LCD screen on the io box go blank and shut everything
+off. When I turned it back on, all the primary relays were on, so I shut it off again and tore open the
+io box and took off the daughter cards. I started the TS-7200 without the daughter cards and it worked ok.
+I thought I had zapped my card. Then I tested each daughter card and found they were both bad. I had to
+re-wire all the 40 wires with the ground connections to each of the new daughter cards (thankfully I had
+several extras) and also the wires from the LCD and DIO port on the TS-7200. It took me about a day to get
+everything straightened out again. So I decided not to use the 5vdc/gnd from inside the box, but use a
+separate 12->5vdc dcdc converter outside the box to power the secondary relays. After another day or two
+I got the lock-out relay implemented by adding a new O_DATA type (4) and connected the E-Stop switch to
+port 19 and made it affect port 1 & 2 (ignition and fuel pump) and did a few other work arounds.
+

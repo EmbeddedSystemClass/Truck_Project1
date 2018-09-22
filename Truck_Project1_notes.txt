@@ -8,7 +8,7 @@ I/O (turning on and off lights and reading switches).
 
   												| AVR |===> t6963 LCD screen
   												  ^
-  												  |
+  												  | RS-232
 ----|											  |							Laptop (optional)
 	|											  |							    ^
 F	|											  |								|

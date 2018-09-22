@@ -19,12 +19,6 @@
 #include <stdlib.h>
 #include "../mytypes.h"
 
-#define LEN 200
-
-#define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
-#define ROWS                16
-#define SIZE_NUM			20
-
 #define EEPROM_SIZE 0x400
 #define STR_LEN 30
 char eepromString[EEPROM_SIZE] EEMEM;
@@ -36,6 +30,7 @@ volatile int onoff;
 volatile int dc2;
 volatile UCHAR spi_ret;
 volatile UCHAR curr_num[SIZE_NUM];
+static int num_entry_mode;
 static char eeprom[EEPROM_SIZE];
 volatile UINT xrow, xcol;
 volatile UCHAR buff[LEN];
@@ -77,12 +72,14 @@ int main(void)
 	UCHAR blanks;
 //	int gdsip_strlen;
 //	UCHAR tspi_ret;
+	int num_entry_ptr = 0;
+	num_entry_mode = 0;
 
 	GDispInit();
 //	GDispInitPort();
-	_delay_ms(10);
+	_delay_ms(1);
     initUSART();
-	_delay_ms(20);
+	_delay_ms(1);
 //	initSPImaster();
 //	initSPIslave();
 
@@ -99,8 +96,8 @@ int main(void)
 //*********************************** start of main loop ***********************************//
 //******************************************************************************************//
 
-	_delay_ms(1000);
-	GDispStringAt(7,15,"          ");
+//	_delay_ms(1000);
+//	GDispStringAt(7,15,"          ");
 //#endif
 
 	xbyte = 0x21;
@@ -132,7 +129,7 @@ int main(void)
 		}
 	}
 */
-	_delay_ms(50);
+	_delay_ms(1);
 
 	GDispClrTxt();
 
@@ -183,8 +180,12 @@ int main(void)
 							if(++row > ROWS-1)
 								row = 0;
 						}
+						if(num_entry_mode == 1)
+							if(num_entry_ptr < SIZE_NUM)
+								curr_num[num_entry_ptr++] = ch;
+						
 					}
-				break;
+					break;
 
 				case GOTO_CMD:
 					row = (UINT)buff[1];
@@ -284,7 +285,10 @@ int main(void)
 				
 				case PASSWORD_MODE:
 					GDispClrTxt();
-					GDispGoto(7,(int)buff[1]);
+					row = 7;
+					col = (UINT)buff[1];
+					GDispGoto(row,col);
+					_delay_ms(2);
 					strcpy(str,eeprom_str_lookup(VARIOUS_MSG_OFFSET, str));
 					GDispStringAt(6,0,str);
 					_delay_ms(2);
@@ -300,6 +304,11 @@ int main(void)
 				break;
 
 				case DISPLAY_RT_LABELS:
+				break;
+
+				case SET_NUM_ENTRY_MODE:
+					num_entry_mode = buff[1];
+					num_entry_ptr = 0;
 				break;
 
 				default:

@@ -172,6 +172,14 @@ enum output_types
 }OUTPUT_TYPES;
 
 
+#define LEN 200
+
+#define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
+#define ROWS                16
+#define SIZE_NUM			20		// size of buffer used by num entry mode
+#define PASSWORD_SIZE 13
+
+// messages sent from PIC24 to AVR using the AVR_cmd task
 #define CHAR_CMD				2
 #define GOTO_CMD				3
 #define SET_MODE_CMD	 		4
@@ -188,6 +196,7 @@ enum output_types
 #define PASSWORD_MODE			15
 #define DISPLAY_MENU_LABELS		16
 #define DISPLAY_RT_LABELS		17
+#define SET_NUM_ENTRY_MODE		18
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
