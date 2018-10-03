@@ -10,6 +10,7 @@ void close_sock(void);
 #define HOST148 "192.168.42.148"
 #define HOST149 "192.168.42.149"
 #define HOST124 "192.168.42.124"
+#define HOST116 "192.168.42.116"
 #define Host_Sim "192.168.42.110"				  // simulated host on linux box
 #ifdef NOMAIN
 #warning "NOMAIN defined"

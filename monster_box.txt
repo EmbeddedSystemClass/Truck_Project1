@@ -150,8 +150,8 @@ pin 15 RB13
 
 extra 18-pin socket
 
-1) to 3v3 via 4k7 pullup	| jumper these 2 together
-2) to pin 13 (MCLR)			| after programming the chip*
+1) (not used) to 3v3 via 4k7 pullup	| jumper these 2 together
+2) (not used) to pin 13 (MCLR)			| after programming the chip*
 3)
 4)
 5) gnd (ref for VEE & VO)
@@ -168,9 +168,14 @@ extra 18-pin socket
 16) nc yellow wire
 
 *pins 1 & 2 are jumpered together after programming the PIC24 using MPLABX:
-go to icon of downpointing green arrow to right of right-pointing green "go"
-icon and choose "make and program device" small toggle switch is hooked up
-to this (see below)
+(not used as of 8/22/18 - use toggle switch on lower right side of box)
+with switch on lower right in down position and power off,
+connect the PicKit 3 cable, then apply power, 
+then go to the hammer icon on left and chose 'build project' not build for debug
+then go to icon of downpointing green arrow to right of right-pointing green "go"
+icon and choose "make and program device" small toggle switch is hooked up,
+then exit program, shutdown power, disconnect Pickit 3 cable, turn power back
+on and turn toggle switch to up position and it should start up.
 
 3 pins to left of lower conv chip:
 gnd gnd 3v3
@@ -474,28 +479,35 @@ change, the menu list will show the choices.
 
 menu 1:
 1) enable starter
-2) ignition on
-3) ingintion off
-4) fuel pump on
-5) fuel pump off
-6) start sequence (1,2,4)
-7) shutdown (all off)
+2) start sequence
+3) shutdown
+4) key silent
+5) dim screen
+6) bright screen
+7) toggle lights
+8) set time/date		(num entry)
+9) shutdown io box
+0) reboot io box
+*) time till off eng	(num entry)
+#) fpga send rate		(num entry)
 
-menu 2: - screen dim
-1) screen on
-2) screen off
-3) screen 80%
-4) screen 75%
-5) screen 60%
-6) screen 50%
-7) screen 30%
-8) screen 25%
-9) screen 12%
+menu 2: - screen dim	(num entry)
+1) rpm/mph update rate	(num entry)
+2) high rev limit		(num entry)
+3) low rev limit		(num entry)
+4) set lights off		(num entry)
+5) fpga comm
+6) change password		(num entry)
+7) block heater on temp
+8) block heater off temp
+9) batt heater on temp
+0) batt heater off temp
+*) 
+#) 
 
-menu 3: - rev limit & fuel pump shutoff limit (rpm)
-1) set high rev limit
-2) set low rev limit
-4) set low rpm fp shutoff (modify mon_fp in Mutli-Byte.vhd)
-5) 
+Use the A & B keys choose a different menu then 
+Each time the menu is changed, display a
+different menu group showing what the 1,2,3...9 key do.
 
-
+When one of the menu choices needs to change a numeric value, use the
+numentry_task.

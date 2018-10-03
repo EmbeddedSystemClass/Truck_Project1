@@ -225,17 +225,17 @@ int main(int argc, char **argv)
 //	llist_show(&ll);
 	if(reboot_on_exit == 1)
 	{
-//		printf("exit to shell\r\n");
+//		printf("sched: exit to shell\r\n");
 		return 1;
 	}
 	else if(reboot_on_exit == 2)
 	{
-//		printf("reboot\r\n");
+//		printf("sched: reboot\r\n");
 		return 2;
 	}
 	else if(reboot_on_exit == 3)
 	{
-//		printf("shutdown\r\n");
+//		printf("sched: shutdown\r\n");
 		return 3;
 	}
 }

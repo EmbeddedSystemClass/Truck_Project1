@@ -186,9 +186,9 @@ if(1)
 		}
 	}
 #endif
-		for(row = 1;row < 9;row++)
+		for(row = 0;row < 9;row++)
 		{
-			for(col = 20;col < 39;col++)
+			for(col = 0;col < 39;col++)
 			{
 				GDispCharAt(row,col,0x20);
 				_delay_us(1);

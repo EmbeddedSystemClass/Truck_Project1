@@ -106,6 +106,7 @@ enum rt_values_offsets
 	TRIP
 } RT_VALUES_OFFSETS_TYPES;
 
+/*
 enum menu_values_offsets
 {
 	ENABLE_STARTER,
@@ -115,7 +116,7 @@ enum menu_values_offsets
 	RUNNING_LIGHTS,
 	HEADLIGHTS
 } MENU_VALUES_OFFSETS_TYPES;
-
+*/
 enum key_types
 {
 	KP_1 = 0xE0, // '1'		- E0
@@ -145,11 +146,9 @@ typedef struct
 	UCHAR onoff;
 } FORMAT_STR;
 
-static FORMAT_STR menu_str[NUM_MENU_LABELS];
+static FORMAT_STR menu_str[NUM_MENU_LABELS*NO_MENUS];
 
 static FORMAT_STR rtlabel_str[NUM_RT_LABELS];
-
-//static FORMAT_STR outputlabel_str[NUM_OUTPUT_LABELS+1];
 
 volatile UCHAR menu_ptr;
 
@@ -196,7 +195,7 @@ volatile UCHAR menu_ptr;
 #define MPH_SET_FACTORY_RESET		0x10
 
 // other FPGA commands
-#define SET_DISPLAY_UPDATE_RATE 	0x20
+#define SET_FPGA_SEND_UPDATE_RATE 	0x20
 #define DTMF_TONE_ON 				0x21
 #define DTMF_TONE_OFF 				0x22
 #define SPECIAL_TONE_ON 			0x23
@@ -237,9 +236,12 @@ static int engine_shutdown;
 static int engine_shuttingdown;
 static char num_entry_num[SIZE_NUM];
 static int num_entry_ptr;
+static int num_entry_limit;
+static int num_entry_type;
 static UINT curr_num_entry_row;
 static UINT curr_num_entry_col;
-//static ESOS_TASK_HANDLE convADC_task_handle;
+static void init_menu_labels(void);
+static void init_rt_labels(void);
 
 typedef enum
 {
@@ -260,9 +262,11 @@ ESOS_USER_TASK(menu_task)
 	static UINT data4;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
-    static int i,j;
-
 	static ESOS_TASK_HANDLE comm1_handle;
+	static int screen_dim;
+	static UCHAR screen_dim_array[9];
+	static int screen_dim_ptr;
+	static int lights;
 	
     ESOS_TASK_BEGIN();
 
@@ -270,6 +274,19 @@ ESOS_USER_TASK(menu_task)
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
 
 	comm1_handle = esos_GetTaskHandle(send_comm1);
+	screen_dim = 0;
+
+	screen_dim_array[0] =  PWM_OFF_PARAM;
+	screen_dim_array[1] =  PWM_ON_PARAM;
+	screen_dim_array[2] =  PWM_80DC_PARAM;
+	screen_dim_array[3] =  PWM_75DC_PARAM;
+	screen_dim_array[4] =  PWM_60DC_PARAM;
+	screen_dim_array[5] =  PWM_50DC_PARAM;
+	screen_dim_array[6] =  PWM_30DC_PARAM;
+	screen_dim_array[7] =  PWM_25DC_PARAM;
+	screen_dim_array[8] =  PWM_12DC_PARAM;
+	screen_dim_ptr = 0;
+	lights = 0;
 
 	while (TRUE)
 	{
@@ -278,221 +295,222 @@ ESOS_USER_TASK(menu_task)
 		while(ESOS_TASK_IVE_GOT_MAIL())
 		{
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-//	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-//			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-//			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
 			switch(data1)
 			{
 				case 	KP_1:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_STARTER);
-					engine_on = 1;
-
-					data4 = SET_DISPLAY_UPDATE_RATE;
-					data4 <<= 8;
-					data4 &= 0xFFFF;
-					data4 |= 0xFF;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-/*
-					data4 = LCD_PWM;
-					data4 <<= 8;
-					data4 &= 0xFF00;
-					data4 |= PWM_60DC_PARAM;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-*/
+					switch(menu_ptr)
+					{
+						case 0:
+							if(engine_on == 0)
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_START);
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case 	KP_2:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_ACC);
-					data4 = SET_DISPLAY_UPDATE_RATE;
-					data4 <<= 8;
-					data4 &= 0xFFFF;
-					data4 |= 0x7F;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-/*
-					data4 = LCD_PWM;
-					data4 <<= 8;
-					data4 &= 0xFF00;
-					data4 |= PWM_80DC_PARAM;
-					data3 |= PWM_ON_PARAM;
-					data4 |= PWM_12DC_PARAM;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-*/
+					switch(menu_ptr)
+					{
+						case 0:
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
+							engine_on = 1;
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_3:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_ACC);
-					data4 = SET_DISPLAY_UPDATE_RATE;
-					data4 <<= 8;
-					data4 &= 0xFFFF;
-					data4 |= 0x3F;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-/*
-					data4 = SPECIAL_TONE_ON;
-					data4 <<= 8;
-					data4 &= 0xFF00;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-*/
+					switch(menu_ptr)
+					{
+						case 0:
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
+							engine_on = 0;
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_4:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FUEL_PUMP);
-					data4 = SET_DISPLAY_UPDATE_RATE;
-					data4 <<= 8;
-					data4 &= 0xFFFF;
-					data4 |= 0x1F;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+					switch(menu_ptr)
+					{
+						case 0:
+							silent_key = (silent_key == 1?0:1);
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_5:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FUEL_PUMP);
+					switch(menu_ptr)
+					{
+						case 0:
+							data4 = LCD_PWM;
+							data4 <<= 8;
+							data4 &= 0xFF00;
+							data4 |= screen_dim_array[screen_dim_ptr];
+							__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+							if(++screen_dim_ptr > 9)
+								screen_dim_ptr = 0;
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_6:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
-					engine_on = 1;
+					switch(menu_ptr)
+					{
+						case 0:
+							data4 = LCD_PWM;
+							data4 <<= 8;
+							data4 &= 0xFF00;
+							data4 |= screen_dim_array[screen_dim_ptr];
+							__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+							if(--screen_dim_ptr < 0)
+								screen_dim_ptr = 9;
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_7:
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
-					engine_on = 0;
+					switch(menu_ptr)
+					{
+						case 0:	// toggle lights
+							if(lights == 0)
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_LIGHTS);
+							else __esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
+							lights = (lights == 1?0:1);
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_8:
-					avr_buffer[0] = LCD_CLRSCR;
-					avr_buffer[1] = 0;
-					AVR_CALL();
-					curr_num_entry_row = 7;
-					curr_num_entry_col = 2;
-					avr_buffer[0] = GOTO_CMD;
-					avr_buffer[1] = (UCHAR)curr_num_entry_row;
-					avr_buffer[2] = (UCHAR)curr_num_entry_col;
-					AVR_CALL();
-					key_mode = NUMENTRY;
+/*
+					switch(menu_ptr)
+					{
+
+						case 0:	// set time & date - use numentry and enter as: MMDDYYHHMM
+							curr_num_entry_row = 7;
+							curr_num_entry_col = 0;
+							avr_buffer[0] = GOTO_CMD;
+							avr_buffer[1] = (UCHAR)curr_num_entry_row;
+							avr_buffer[2] = (UCHAR)curr_num_entry_col;
+							AVR_CALL();
+							key_mode = NUMENTRY;
+							num_entry_type = TIME_DATE;
+							num_entry_limit = 1;
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
+*/
 				break;
 
 				case	KP_9:
-					key_mode = NORMAL;
-//					engine_shuttingdown = 1;
-				break;
-
-				case	KP_A:		// move up in menu
-					if(menu_ptr < 1)
-						menu_ptr = NUM_MENU_LABELS;
-					menu_ptr--;	
-
-					avr_buffer[0] = SET_MODE_CMD;
-					avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
-					avr_buffer[2] = menu_str[menu_ptr].row;
-					avr_buffer[3] = menu_str[menu_ptr].col-2;
-					avr_buffer[4] = (LINE_8_CURSOR);
-					AVR_CALL();
-
-				break;
-
-				case	KP_B:		// move down in menu
-/*
-					avr_buffer[0] = SEND_INT_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 0;
-					avr_buffer[3] = 1;
-					avr_buffer[4] = 2;
-					AVR_CALL();
-*/
-
-					if(++menu_ptr > NUM_MENU_LABELS - 1)
-						menu_ptr = 0;
-
-					avr_buffer[0] = SET_MODE_CMD;
-					avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
-					avr_buffer[2] = menu_str[menu_ptr].row;
-					avr_buffer[3] = menu_str[menu_ptr].col-2;
-					avr_buffer[4] = (LINE_8_CURSOR);
-					AVR_CALL();
-
-				break;
-
-				case	KP_C:
-					silent_key = 1;
-/*
-					avr_buffer[0] = SEND_INT_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 0;
-					avr_buffer[3] = 2;
-					avr_buffer[4] = 3;
-					AVR_CALL();
-*/
-//					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
-//						(menu_ptr+1)*2+menu_str[menu_ptr].onoff);
-				break;
-
-				case	KP_D:		// exec menu choice
-					silent_key = 0;
-					avr_buffer[0] = GOTO_CMD;
-					avr_buffer[1] = menu_str[menu_ptr].row;
-					avr_buffer[2] = menu_str[menu_ptr].col-2;
-					AVR_CALL();
-
-					if(menu_str[menu_ptr].onoff == 1)
-						menu_str[menu_ptr].onoff = 0;
-					else menu_str[menu_ptr].onoff = 1;
-					avr_buffer[0] = CHAR_CMD;
-					avr_buffer[1] = (menu_str[menu_ptr].onoff?'X':' ');
-					AVR_CALL();
-
+					switch(menu_ptr)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_POUND:
-					data4 = LCD_PWM;
-					data4 <<= 8;
-					data4 &= 0xFF00;
-					data4 |= PWM_OFF_PARAM;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-					key_enter_time = 6500;	// something > 6400 so it won't come back on
-											// unless key is pressed
-					
+
+					switch(menu_ptr)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_AST:
-					data4 = LCD_PWM;
-					data4 <<= 8;
-					data4 &= 0xFF00;
-					data4 |= PWM_ON_PARAM;
-					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-					key_enter_time = 0;
-
-					avr_buffer[0] = LCD_CLRSCR;
-					avr_buffer[1] = 0;
-					AVR_CALL();
+					switch(menu_ptr)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
 				break;
 
 				case	KP_0:
-					avr_buffer[0] = LCD_CLRSCR;
-					avr_buffer[1] = 0;
-					AVR_CALL();
+					switch(menu_ptr)
+					{
+						case 0:
+						break;
+						case 1:
+						break;
+						default:
+						break;
+					}
+				break;
 
-					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
-					__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
+				case	KP_A:		// change menu
+
+					if(menu_ptr > NO_MENUS)
+						menu_ptr = 0;
+					menu_ptr++;	
+					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,menu_ptr*NUM_MENU_LABELS);
+				break;
+
+				case	KP_B:		// toggle screen brightness
+					data4 = LCD_PWM;
+					data4 <<= 8;
+					data4 &= 0xFF00;
+					if(screen_dim == 1)
+						data4 |= PWM_12DC_PARAM;
+					else data4 |= PWM_ON_PARAM;
+					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
+					screen_dim = (screen_dim == 1?0:1);
 
 				break;
+
+				case	KP_C:		// toggle keypress tones
+					silent_key = (silent_key == 1?0:1);
+				break;
+
+				case	KP_D:
+				break;
+
 
 				default:
 				break;
 			}
-/*
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			if(data1 >= KP_1 && data1 <= KP_9)
-				avr_buffer[1] = data1 + 0x30-KP_1;
-			else if(data1 >= KP_A && data1 <= KP_D)
-				avr_buffer[1] = data1 + 0xE8-KP_A;
-			else avr_buffer[1] = data1 + KP_1;	
-			AVR_CALL();
-*/
 		}
 	}
     ESOS_TASK_END();
@@ -519,35 +537,6 @@ ESOS_USER_TASK(password_task)
     
 	ESOS_TASK_WAIT_TICKS(100);
 
-#if 0
-	avr_buffer[0] = LCD_CLRSCR;
-	avr_buffer[1] = 0;
-	AVR_CALL();
-
-	avr_buffer[0] = GOTO_CMD;
-	avr_buffer[1] = 7;
-	avr_buffer[2] = (UCHAR)strlen(correct_password);
-	AVR_CALL();
-/*
-	avr_buffer[0] = CHAR_CMD;
-	avr_buffer[1] = 7;
-	avr_buffer[2] = 0x3C;  // '<'
-	AVR_CALL();
-*/
-	avr_buffer[0] = EEPROM_STR;
-	avr_buffer[1] = 6;	// row 6
-	avr_buffer[2] = 0;	// col 0
-	avr_buffer[3] = VARIOUS_MSG_OFFSET;	//  ("enter password")
-	avr_buffer[4] = 10;
-	AVR_CALL();
-
-	avr_buffer[0] = SET_MODE_CMD;
-	avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
-	avr_buffer[2] = 7;
-	avr_buffer[3] = 0;
-	avr_buffer[4] = (LINE_2_CURSOR);
-	AVR_CALL();
-#endif
 	temp = 0;
 	while (TRUE)
 	{
@@ -584,18 +573,6 @@ ESOS_USER_TASK(password_task)
 				break;
 
 				case	KP_A:
-/*
-					i = 0;
-					while(password[i] != 0 && correct_password[i] != 0 &&
-													 password[i] == correct_password[i])
-					{
-						i++;
-					}
-					if(i > PASSWORD_SIZE)
-						temp == 2;
-					else if(password[i] == correct_password[i])
-						temp = 3;
-*/
 					break;
 
 				// backspace over current password
@@ -630,17 +607,6 @@ ESOS_USER_TASK(password_task)
 				avr_buffer[1] = 0;
 				AVR_CALL();
 
-/*
-				avr_buffer[0] = GOTO_CMD;
-				avr_buffer[0] = 7;
-				avr_buffer[0] = strlen(correct_password);
-				AVR_CALL();
-
-				avr_buffer[0] = CHAR_CMD;
-				avr_buffer[0] = 7;
-				avr_buffer[0] = '<';
-				AVR_CALL();
-*/
 				avr_buffer[0] = EEPROM_STR;
 				avr_buffer[1] = 5;
 				avr_buffer[2] = 0;
@@ -679,32 +645,6 @@ ESOS_USER_TASK(password_task)
 				engine_shuttingdown = 0;
 			}
 			
-//			}else if (password_ptr > strlen(correct_password) || )
-
-			// for debugging - just start over
-/*
-			if(password_retries > 3)
-			{
-				password_valid = 1;
-				avr_buffer[0] = LCD_CLRSCR;
-				avr_buffer[1] = 0;
-				AVR_CALL();
-
-				avr_buffer[0] = EEPROM_STR;
-				avr_buffer[1] = 6;	// row 6
-				avr_buffer[2] = 0;	// col 0
-				avr_buffer[3] = VARIOUS_MSG_OFFSET;	//  ("enter password")
-				avr_buffer[4] = 10;
-				AVR_CALL();
-
-				avr_buffer[0] = SET_MODE_CMD;
-				avr_buffer[1] = TEXT_ON | CURSOR_BLINK_ON;
-				avr_buffer[2] = 7;
-				avr_buffer[3] = 0;
-				avr_buffer[4] = (LINE_1_CURSOR);
-				AVR_CALL();
-			}
-*/
 			password_ptr++;
 			if(password_ptr > PASSWORD_SIZE)
 				password_ptr = 0;
@@ -725,6 +665,7 @@ ESOS_USER_TASK(numentry_task)
     ESOS_TASK_BEGIN();
 	memset(num_entry_num,0,SIZE_NUM);
 	num_entry_ptr = 0;
+	num_entry_limit = 0;
 	
 	while (TRUE)
 	{
@@ -733,25 +674,6 @@ ESOS_USER_TASK(numentry_task)
 		while(ESOS_TASK_IVE_GOT_MAIL())
 		{
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
-/*
-	KP_1 = 0xE0, // '1'		- E0
-	KP_2, // '2'		- E1
-	KP_3, // '3'		- E2
-	KP_4, // '4'		- E3
-	KP_5, // '5'		- E4
-	KP_6, // '6'		- E5
-	KP_7, // '7'		- E6
-	KP_8, // '8'		- E7
-	KP_9, // '9'		- E8
-	KP_A, // 'A'		- E9
-	KP_B, // 'B'		- EA
-	KP_C, // 'C'		- EB
-	KP_D, // 'D'		- EC
-	KP_POUND,	// '#'	- ED
-	KP_AST, // '*'		- EE
-	KP_0 	// '0'		- EF
-*/
 
 			switch(data1)
 			{
@@ -770,6 +692,10 @@ ESOS_USER_TASK(numentry_task)
 					else	
 						data1 = data1 - KP_1 + 1;
 					num_entry_num[num_entry_ptr++] = data1;
+					if(num_entry_ptr > num_entry_limit)
+					{
+						num_entry_ptr = num_entry_limit;
+					}
 					avr_buffer[0] = CHAR_CMD;
 					avr_buffer[1] = data1 + 0x30;
 					AVR_CALL();
@@ -798,7 +724,9 @@ ESOS_USER_TASK(numentry_task)
 					avr_buffer[3] = curr_num_entry_col;
 					avr_buffer[4] = (LINE_1_CURSOR);
 					AVR_CALL();
-					num_entry_ptr--;
+					
+					if(--num_entry_ptr < 0)
+						num_entry_ptr = 0;
 				break;
 				// clear entry and start over
 				case	KP_A:
@@ -839,6 +767,28 @@ ESOS_USER_TASK(numentry_task)
 							AVR_CALL();
 						}
 						key_mode = NORMAL;
+						// now do something with the number just entered in num_entry_num
+						switch(num_entry_type)
+						{
+							case TIME_DATE:
+							break;
+							case TIME_ENG_OFF:
+							break;
+							case FPGA_SEND_RATE:
+							break;
+							case RPM_MPH_UPDATE_RATE:
+							break;
+							case HIGH_REV_LIMIT:
+							break;
+							case LOW_REV_LIMIT:
+							break;
+							case SET_LIGHTS_OFF:
+							break;
+							case CHANGE_PASSWORD:
+							break;
+							default:
+							break;
+						}
 					}
 					memset(num_entry_num,0,SIZE_NUM);
 					num_entry_ptr = 0;
@@ -1260,7 +1210,7 @@ ESOS_USER_TASK(key_timer_task)
 			AVR_CALL();
 */
 		}
-		if(key_enter_time == 200)
+		if(key_enter_time == 200)	// 3 1/3 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1269,7 +1219,7 @@ ESOS_USER_TASK(key_timer_task)
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 400)
+		if(key_enter_time == 400)	// 6 2/3 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1278,7 +1228,7 @@ ESOS_USER_TASK(key_timer_task)
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 800)
+		if(key_enter_time == 800)	// 13 1/3 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1287,7 +1237,7 @@ ESOS_USER_TASK(key_timer_task)
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 1600)
+		if(key_enter_time == 1600)	// ~26 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1296,7 +1246,7 @@ ESOS_USER_TASK(key_timer_task)
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 3200)
+		if(key_enter_time == 3200)	// ~52 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1305,7 +1255,7 @@ ESOS_USER_TASK(key_timer_task)
 			__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 			dim_screen++;
 		}
-		if(key_enter_time == 6400)
+		if(key_enter_time == 6400)	// ~1 hour & 46 minutes
 		{
 			data3 = LCD_PWM;
 			data3 <<= 8;
@@ -1374,189 +1324,6 @@ ESOS_USER_TASK(poll_keypad)
 	}
     ESOS_TASK_END();
 }
-//******************************************************************************************//
-//********************************** CONFIG_SPI_SLAVE **************************************//
-//******************************************************************************************//
-#if 0
-static void CONFIG_SPI_SLAVE(void)
-{
-  SPI1CON1 = SEC_PRESCAL_8_1		|		//8:1 secondary prescale
-             PRI_PRESCAL_64_1		|		//64:1 primary prescale
-             CLK_POL_ACTIVE_HIGH	|		//clock active high (CKP = 0)
-             SPI_CKE_ON				|		//out changes active to idle (CKE=1)
-             SPI_MODE8_ON			|		//8-bit mode
-//             SPI_SMP_ON				|		// input data sampled at end of data output time
-             SLAVE_ENABLE_ON;				//master mode
-
-	CONFIG_SDI1_TO_RP(RD14_RP);
-	CONFIG_RD14_AS_DIG_INPUT();
-	CONFIG_SDO1_TO_RP(RD15_RP);
-	CONFIG_RD15_AS_DIG_OUTPUT();
-	CONFIG_SCK1IN_TO_RP(RF4_RP);
-	CONFIG_RF4_AS_DIG_INPUT();
-	CONFIG_SS1IN_TO_RP(RF5_RP);
-	CONFIG_RF5_AS_DIG_INPUT();
-	SPI1STATbits.SPIEN = 1;  //enable SPI mode
-}
-volatile uint8_t  cmd_array[24] = {0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-//******************************************************************************************//
-//**************************************** echo_spi ****************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(spi_task)
-{
-	static uint8_t data1;
-//	static uint8_t data2;
-	static uint8_t cmd;
-	static uint8_t i;
-
-//	static char rpm_disp[5];
-//	static char mph_disp[5];
-//	static uint16_t res;
-	static uint8_t res2;
-//	static uint16_t res3, res4;
-//	static char res_str[10];
-//	static char res2_str[10];
-
-	static uint8_t  res_array[24];
-
-    ESOS_TASK_BEGIN();
-
-	data1 = 0x21;
-    while(TRUE)
-	{
-
-//		ESOS_TASK_WAIT_TICKS(TDELAY2);
-//#if 0
-		for(i = 0;i < 24;i++)
-		{
-			cmd = cmd_array[i];
-			ESOS_TASK_WAIT_ON_AVAILABLE_SPI();
-			ESOS_TASK_WAIT_ON_READ1SPI1(data1);
-			ESOS_TASK_WAIT_ON_WRITE1SPI1(cmd);
-			ESOS_TASK_SIGNAL_AVAILABLE_SPI();
-
-			if(res_array[i] != data1)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(i);
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
-			res_array[i] = data1;
-
-			if(i == 0)
-				ESOS_TASK_WAIT_TICKS(TDELAY2);
-			res2++;
-			if((res2 % 300) == 0)
-			{
-				ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-				ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING((uint8_t)(res2>>8));
-//				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-//				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-			}
-
-#if 0
-			ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			if(i == 2)
-			{
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\n');
-				ESOS_TASK_WAIT_ON_SEND_UINT8('\r');
-			}
-			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
-	//        ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
-		    ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
-			switch(i)
-			{
-				case 2:
-					rpm_disp[0] = data1 + 0x30;
-					break;
-				case 3:
-					rpm_disp[1] = data1 + 0x30;
-					break;
-				case 4:
-					rpm_disp[2] = data1 + 0x30;
-					break;
-				case 5:
-					rpm_disp[3] = data1 + 0x30;
-					break;
-				case 6:
-					mph_disp[0] = data1 + 0x30;
-					break;
-				case 7:
-					mph_disp[1] = data1 + 0x30;
-					break;
-				case 8:
-					mph_disp[2] = data1 + 0x30;
-					break;
-				case 9:
-					mph_disp[3] = data1 + 0x30;
-					res = res2 = 0;
-					res3 = res4 = 0;
-					break;
-
-				case 10:
-					res = (uint16_t)data1;
-	//					printf("%2x\t",res);
-					break;
-				case 11:
-					res2 = (uint16_t)data1;
-	//					printf("%2x\t",res2);
-					res2 <<= 8;
-					res2 &= 0xff00;
-					res |= res2;
-					break;
-				case 12:
-					res3 = data1;
-					break;
-				case 13:
-					res4 = data1;
-					res4 <<= 8;
-					res4 &= 0xff00;
-					res3 |= res4;
-					break;
-				case 15:
-					ESOS_TASK_WAIT_ON_SEND_STRING(rpm_disp);
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
-					ESOS_TASK_WAIT_ON_SEND_STRING(mph_disp);
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
-					sprintf(res_str,"%4d",res);
-					sprintf(res2_str,"%4d",res2);
-					ESOS_TASK_WAIT_ON_SEND_STRING(res);
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
-					ESOS_TASK_WAIT_ON_SEND_STRING(res2);
-					ESOS_TASK_WAIT_ON_SEND_UINT8('\t');
-					break;
-			}
-#endif
-		}
-    }
-    ESOS_TASK_END();
-}
-#endif
-#if 0
-uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre);
-uint32_t ticksToUs2(uint32_t u32_ticks, uint16_t u16_tmrPre) {
-  // Because of the wide range of the numbers, use a float for precision.
-  float f_ticks;
-  uint32_t u32_timeUs;
-
-  f_ticks = u32_ticks;   //convert to float
-  f_ticks = ((f_ticks*u16_tmrPre)/FCY)*1E6;
-  u32_timeUs = roundFloatToUint32(f_ticks);  //back to int32_t
-  return u32_timeUs;
-}
-uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre);
-uint16_t usToU16Ticks2(uint16_t u16_us, uint16_t u16_pre) {
-  // Use a float internally for precision purposes to accomodate wide range of FCY, u16_pre
-  float f_ticks = FCY;
-  uint16_t u16_ticks;
-  f_ticks = (f_ticks*u16_us)/u16_pre/1E6;
-  ASSERT(f_ticks < 65535.5);
-  u16_ticks = roundFloatToUint16(f_ticks);  //back to integer
-  return u16_ticks;
-}
-#endif
 //******************************************************************************************//
 //**************************************** convADC  ****************************************//
 //******************************************************************************************//

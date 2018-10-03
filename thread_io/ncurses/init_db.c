@@ -98,9 +98,9 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"RUNNINGLIGHTS\0");
 	pid++;
-	strcpy(pid->label,"ALARMSPEAKER\0");
+	strcpy(pid->label,"RBRAKELIGHT\0");
 	pid++;
-	strcpy(pid->label,"ALARMLIGHT\0");
+	strcpy(pid->label,"LBRAKELIGHT\0");
 	pid++;
 	strcpy(pid->label,"BATTERYCHARGERELAY\0");
 	pid++;
@@ -112,9 +112,9 @@ int main(int argc, char *argv[])
 	pid++;
 	strcpy(pid->label,"TRAILERBRAKES\0");
 	pid++;
-	strcpy(pid->label,"TRAILERLEFTBLINKER\0");
+	strcpy(pid->label,"TRLEFTBLINKER\0");
 	pid++;
-	strcpy(pid->label,"TRAILERRIGHTBLINKER\0");
+	strcpy(pid->label,"TRRIGHTBLINKER\0");
 	pid++;
 	strcpy(pid->label,"INTRUDERALARM\0");
 	pid++;
@@ -221,9 +221,9 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"RUNNINGLIGHTS\0");
 	pod++;
-	strcpy(pod->label,"ALARMSPEAKER\0");
+	strcpy(pod->label,"RBRAKELIGHT\0");
 	pod++;
-	strcpy(pod->label,"ALARMLIGHT\0");
+	strcpy(pod->label,"LBRAKELIGHT\0");
 	pod++;
 	strcpy(pod->label,"BATTERYCHARGERELAY\0");
 	pod++;
@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"BLINKINDICATE\0");
 	pod++;
-	strcpy(pod->label,"BRAKELIGHTS\0");
+	strcpy(pod->label,"ALARMSPEAKER\0");
 	pod++;
 	strcpy(pod->label,"BACKUPLIGHTS\0");
 	pod++;

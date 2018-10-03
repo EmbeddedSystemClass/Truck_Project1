@@ -245,3 +245,6 @@ todo: (x) = done
 - only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
 	then polarity feature could be implemented but the current IO settings would have to be set
 	initially after loading the db and the db would have to be save on exit
+- wired 1st 2 relays as left br/dim and right br/dim (nc = dim) and 3rd & 4th relays as
+	left & right headlamps - common of 1st 2 comes from no of next 2 - dim is nc on 1st 2 so make
+	changes accordingly in the O_DATA.

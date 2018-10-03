@@ -32,8 +32,13 @@ enum cmd_types
 	OFF_FAN,
 	ON_LIGHTS,
 	OFF_LIGHTS,
+	ON_BRIGHTS,
+	OFF_BRIGHTS,
 	START_SEQ,
 	SHUTDOWN,
+	SHUTDOWN_IOBOX,
+	TEMP,
+	REBOOT_IOBOX,
 	SEND_IDATA,
 	SEND_ODATA,
 	EDIT_IDATA,
@@ -73,7 +78,6 @@ enum cmd_types
 	SET_SERIAL_RECV_OFF,
 	TEST_ALL_IO,
 	RE_ENTER_PASSWORD,
-	_RESET_TYPE4,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -133,42 +137,42 @@ enum output_types
 	ACCON,					// 1
 	FUELPUMP,				// 2
 	COOLINGFAN,				// 3
-	HEADLAMP,				// 4
-	BRIGHTS,				// 5
-	LEFTBLINKER,			// 6
-	RIGHTBLINKER,			// 7
-	RUNNINGLIGHTS,			// 8
-	ALARMSPEAKER,			// 9
-	ALARMLIGHT,				// 10
-	BATTERYCHARGERELAY,		// 11
-	DASHHEATER,				// 12
-	BATTERYCOMPHEATER,		// 13
-	CRANKCASEHEATER,		// 14
-	TRAILERBRAKES,			// 15
-	TRAILERLEFTBLINKER,		// 16
-	TRAILERRIGHTBLINKER,	// 17
-	INTRUDERALARM,			// 18
-	ESTOPSWITCH,			// 19
-	LIGHTBAR,				// 20
-	BLINKINDICATE,			// 21
-	BRAKELIGHTS,			// 22
-	BACKUPLIGHTS,			// 23
-	TESTOUTPUT24,			// 24
-	TESTOUTPUT25,			// 25
-	TESTOUTPUT26,			// 26
-	TESTOUTPUT27,			// 27
-	TESTOUTPUT28,			// 28
-	TESTOUTPUT29,			// 29
-	TESTOUTPUT30,			// 30
-	TESTOUTPUT31,			// 31
-	TESTOUTPUT32,			// 32
-	TESTOUTPUT33,			// 33
-	TESTOUTPUT34,			// 34
-	TESTOUTPUT35,			// 35
-	TESTOUTPUT36,			// 36
-	TESTOUTPUT37,			// 37
-	TESTOUTPUT38,			// 38
-	NULL2					// 39
+	LHEADLAMP,				// 4
+	LBRIGHTS,				// 5
+	RHEADLAMP,				// 6
+	RBRIGHTS,				// 7
+	LEFTBLINKER,			// 8
+	RIGHTBLINKER,			// 9
+	RUNNINGLIGHTS,			// 10
+	RBRAKELIGHT,			// 11
+	LBRAKELIGHT,			// 12
+	BATTERYCHARGER,			// 13
+	DASHHEATER,				// 14
+	BATTERYCOMPHEATER,		// 15
+	CRANKCASEHEATER,		// 16
+	ESTOPSWITCH,			// 17
+	TRAILERBRAKES,			// 18
+	TRLEFTBLINKER,			// 19
+	TRRIGHTBLINKER,			// 20
+	INTRUDERALARM,			// 21
+	LIGHTBAR,				// 22
+	BLINKINDICATE,			// 23
+	ALARMSPEAKER,			// 24
+	BACKUPLIGHTS,			// 25
+	TESTOUTPUT24,			// 26
+	TESTOUTPUT25,			// 27
+	TESTOUTPUT26,			// 28
+	TESTOUTPUT27,			// 29
+	TESTOUTPUT28,			// 30
+	TESTOUTPUT29,			// 31
+	TESTOUTPUT30,			// 32
+	TESTOUTPUT31,			// 33
+	TESTOUTPUT32,			// 34
+	TESTOUTPUT33,			// 35
+	TESTOUTPUT34,			// 36
+	TESTOUTPUT35,			// 37
+	TESTOUTPUT36,			// 38
+	NULL2,					// 39
 }OUTPUT_TYPES;
 
 
@@ -200,15 +204,40 @@ enum output_types
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
-#define MENU_VALUES_OFFSET 35
-#define VARIOUS_MSG_OFFSET 42
+#define MENU_VALUES_OFFSET 23
+#define VARIOUS_MSG_OFFSET 12
+#define NO_MENUS 2
 
 // start positions on screen
 #define START_RT_VALUE_ROW 10
 #define START_MENU_VALUE_ROW 1
 #define START_RT_VALUE_COL 2
 #define START_MENU_VALUE_COL 2
-#define NUM_MENU_LABELS 7
-#define NUM_RT_LABELS 10
-#define NUM_OUTPUT_LABELS 25
+#define NUM_MENU_LABELS 12
+#define NUM_RT_LABELS 11
+/*
+8) set time/date		(num entry)
+*) time till off eng	(num entry)
+#) fpga send rate		(num entry)
+
+menu 2: - screen dim	(num entry)
+1) rpm/mph update rate	(num entry)
+2) high rev limit		(num entry)
+3) low rev limit		(num entry)
+4) set lights off		(num entry)
+6) change password		(num entry)
+*/
+
+enum num_entry_types
+{
+	TIME_DATE,
+	TIME_ENG_OFF,
+	FPGA_SEND_RATE,
+	RPM_MPH_UPDATE_RATE,
+	HIGH_REV_LIMIT,
+	LOW_REV_LIMIT,
+	SET_LIGHTS_OFF,
+	CHANGE_PASSWORD
+}NUM_ENTRY_TYPES;
+	
 #endif

@@ -205,6 +205,7 @@ int main(int argc, char *argv[] )
 	int i;
 	char errmsg[20];
 	memset(errmsg,0,20);
+	char test_str[100];
 
 	if(argc < 2)
 	{
@@ -215,8 +216,12 @@ int main(int argc, char *argv[] )
 #ifdef MAKE_SIM
 	rc = init_client(Host_Sim,errmsg);
 #else
-	rc = init_client(HOST149,errmsg);
+	rc = init_client(HOST116,errmsg);
 #endif
+
+	test1 = 0x21;
+	for(i = 0;i < 20;i++)
+		test_str[i] = test1++;
 
 	if(test_sock() == 0)
 	{
@@ -229,22 +234,36 @@ int main(int argc, char *argv[] )
 		{
 			printf("%s\n",errmsg);
 			return -1;
+		}
 	}
 
-	for(i = 0;i < 500;i++)
+	for(i = 0;i < 20;i++)
 	{
 		rc = put_sock(&test1,1,1,errmsg);
 		if(rc < 0)
 			printf("%s\n",errmsg);
-
-		printf("%c",test1);
-		usleep(TIME_DELAY);
-		rc = get_sock(&test1,1,1,errmsg);
-		if(rc < 0)
-			printf("%s\n",errmsg);
 	}
-	test1 = 0xff;
-	put_sock(&test1,1,1,errmsg);
+	test1 = 0;
+	printf("sent msg\n");
+	i = 0;
+	do
+	{
+		rc = get_sock(&test1,1,1,errmsg);
+		if(rc < 0 && rc != 11)
+			printf("%s\n",errmsg);
+		test_str[i++] = test1;	
+		printf("%02x ",test1);
+	}while(test1 != '#');
+
+	printf("\n");
+
+	for(i = 0;i < 50;i++)
+	{
+		if(test_str[i] < 0x7e && test_str[i] != 0)
+			printf("%c",test_str[i]);
+	}
+	printf("\n");
+
 	close_sock();
 	return 0;
 }

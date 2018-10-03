@@ -1196,6 +1196,12 @@ call_Tool(int code)
 				cmd = LIVE_WINDOW_ON;
 				ret = put_sock(&cmd,1,1,errmsg);
 				ret = tcp_win2(cmd);
+				if(ret == 1)
+				{
+					destroy_menus();
+					endwin();
+					ExitProgram(EXIT_SUCCESS);
+				}	
 				cmd = LIVE_WINDOW_OFF;
 				ret = put_sock(&cmd,1,1,errmsg);
 			}else show_status2("tcp not conn","a",code,0,0,2);

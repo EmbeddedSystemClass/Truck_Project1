@@ -201,11 +201,11 @@ ESOS_USER_TASK(recv_fpga)
 			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
 			ESOS_TASK_WAIT_ON_GET_UINT83(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-
+/*
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+*/
 			// FPGA sends
 			// 1 - 0xFF
 			// 2 - high byte of rpm
@@ -272,8 +272,9 @@ ESOS_USER_TASK(display_menu)
 			{
 				avr_buffer[1] = menu_str[i].row;
 				avr_buffer[2] = menu_str[i].col;
-				avr_buffer[3] = menu_str[i].str;
-				avr_buffer[4] = 5;
+				avr_buffer[3] = menu_str[i].str + data2;	// data2 is the offset into the 
+															// menu labels
+				avr_buffer[4] = 1;
 
 				AVR_CALL();
 			}
@@ -350,13 +351,12 @@ ESOS_USER_TASK(send_comm1)
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 
-/*
 			avr_buffer[0] = SEND_BYTE_RT_VALUES;
 			avr_buffer[1] = 0;
 			avr_buffer[2] = 0;
 			avr_buffer[3] = data1;
 			AVR_CALL();
-*/
+
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -373,7 +373,7 @@ ESOS_USER_TASK(recv_comm1)
 	static ESOS_TASK_HANDLE menu_handle;
 	static ESOS_TASK_HANDLE rt_handle;
 	static ESOS_TASK_HANDLE fpga_handle;
-	static int row, col, str;
+//	static int row, col, str;
 
 	ESOS_TASK_BEGIN();
 
@@ -426,7 +426,8 @@ ESOS_USER_TASK(recv_comm1)
 */
 		if(data1 == CLEAR_SCREEN1)
 		{
-
+	
+/*
 			col = START_RT_VALUE_COL;
 			for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
 			{
@@ -459,7 +460,7 @@ ESOS_USER_TASK(recv_comm1)
 					col += 19;
 				}
 			}
-
+*/
 			avr_buffer[0] = LCD_CLRSCR;
 			avr_buffer[1] = 0;
 			AVR_CALL();
@@ -583,6 +584,7 @@ ESOS_USER_TASK(recv_comm1)
 			AVR_CALL();
 		}else if(data1 == OUTPUT_MSG && key_mode == NORMAL)
 		{
+#if 0
 			avr_buffer[0] = EEPROM_STR;
 			avr_buffer[1] = 1;
 			avr_buffer[2] = 20;
@@ -602,6 +604,7 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[3] = temp;
 			avr_buffer[4] = 1;
 			AVR_CALL();
+#endif
 			// if the port was the E-Stop switch then we must go back to password mode
 			if(data2 == ESTOPSWITCH)
 			{
@@ -709,7 +712,6 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[1] = data5;
 			AVR_CALL();
 		}
-
     } // endof while()
     ESOS_TASK_END();
 }
@@ -804,7 +806,7 @@ ESOS_USER_TASK(main_proc)
 	static UINT data3;
 
 	static int i,j,k;
-	static int row, col, str;
+//	static int row, col, str;
 //	static int retry_counter;
 
 	ESOS_TASK_BEGIN();
@@ -813,42 +815,6 @@ ESOS_USER_TASK(main_proc)
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 
-	// use enum rt_values_offsets to index rtlabels_str array
-
-	col = START_RT_VALUE_COL;
-	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
-	{
-		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
-		rtlabel_str[str].row = row;
-		rtlabel_str[str].col = col;
-		rtlabel_str[str].data_col = col+10;
-		rtlabel_str[str].onoff = 0;
-
-		if(row == 15)
-		{
-			row = START_RT_VALUE_ROW-1;
-			col += 17;
-		}
-	}
-
-	// use menu_values_offsets to index menu_str array
-	for(str = 0,row = START_MENU_VALUE_ROW,col = START_MENU_VALUE_COL;
-				str < NUM_MENU_LABELS;str++,row++)
-	{
-		menu_str[str].str = str + MENU_VALUES_OFFSET;
-		menu_str[str].row = row;
-		menu_str[str].col = col;
-		menu_str[str].data_col = col+10;
-		menu_str[str].onoff = 0;
-
-		if(row == 7)
-		{
-			row = START_MENU_VALUE_ROW-1;
-			col += 19;
-		}
-	}
-
-	row = col = 0;
 	i = 0;
 	j = 0;
 	k = 0x1f;
@@ -861,10 +827,10 @@ ESOS_USER_TASK(main_proc)
 //	data3 |= PWM_12DC_PARAM;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 
-	data3 = SET_DISPLAY_UPDATE_RATE;
+	data3 = SET_FPGA_SEND_UPDATE_RATE;
 	data3 <<= 8;
 	data3 &= 0xFFFF;
-	data3 |= 0x7F;
+	data3 |= 0xFF;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
 //	ESOS_TASK_WAIT_TICKS(100);
 
@@ -945,10 +911,15 @@ ESOS_USER_TASK(main_proc)
 	avr_buffer[4] = 10;
 	AVR_CALL();
 */
+	init_rt_labels();
+	init_menu_labels();
+	ignore_comm1 = 0;
+
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(500);
-		data3 = TEST_COMM;
+/*
+		data3 = TEST_COMM;	// used for testing serial connection to FPGA - changes the 4 leds on the FPGA
 		data3 <<= 8;
 		data3 &= 0xFF00;
 		data3 |= data2;
@@ -956,7 +927,7 @@ ESOS_USER_TASK(main_proc)
 
 		if(++data2 > 0x7e)
 			data2 = 0x21;
-
+*/
 /*
 		if(password_valid == 0)
 		{
@@ -985,6 +956,50 @@ ESOS_USER_TASK(main_proc)
 #endif
 	}
     ESOS_TASK_END();
+}
+
+
+
+// use menu_values_offsets to index menu_str array
+static void init_menu_labels(void)
+{
+	static int col, row,str;
+	for(str = 0,row = START_MENU_VALUE_ROW,col = START_MENU_VALUE_COL;
+				str < NUM_MENU_LABELS*NO_MENUS;str++,row++)
+	{
+		menu_str[str].str = str + MENU_VALUES_OFFSET;
+		menu_str[str].row = row;
+		menu_str[str].col = col;
+		menu_str[str].data_col = col+10;
+		menu_str[str].onoff = 0;
+
+		if(row == 7)
+		{
+			row = START_MENU_VALUE_ROW-1;
+			col += 19;
+		}
+	}
+}
+// use enum rt_values_offsets to index rtlabels_str array
+static void init_rt_labels(void)
+{
+	static int col, row,str;
+	
+	col = START_RT_VALUE_COL;
+	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
+	{
+		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
+		rtlabel_str[str].row = row;
+		rtlabel_str[str].col = col;
+		rtlabel_str[str].data_col = col+10;
+		rtlabel_str[str].onoff = 0;
+
+		if(row == 15)
+		{
+			row = START_RT_VALUE_ROW-1;
+			col += 17;
+		}
+	}
 }
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//

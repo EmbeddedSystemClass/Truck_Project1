@@ -14,9 +14,9 @@
 
 
 
-// values start at line 20 so its easy to find the offsewt
+// values start at line 20 so its easy to calculate the offset
 #define NUM_STR 53
-char menu_labels[NUM_STR][20] = {
+char menu_labels[NUM_STR][24] = {
 	{"RPM"},			// rt values
 	{"MPH"},
 	{"ENG TEMP"},
@@ -27,37 +27,7 @@ char menu_labels[NUM_STR][20] = {
 	{"O2"},
 	{"ODOM"},
 	{"TRIP"},
-	{"STARTER"},			// RT_VALUES_OFFSET + 11
-	{"ACCON"},
-	{"FUELPUMP"},
-	{"COOLINGFAN"},
-	{"HEADLAMP"},
-	{"BRIGHTS"},
-	{"LEFTBLINKER"},
-	{"RIGHTBLINKER"},
-	{"RUNNINGLIGHTS"},
-	{"ALARMSPEAKER"},
-	{"ALARMLIGHT"},
-	{"BATTERYCHARGERELAY"},
-	{"DASHHEATER"},
-	{"BATTERYCOMPHEATER"},
-	{"CRANKCASEHEATER"},
-	{"TRAILERBRAKES"},
-	{"TRAILERLEFTBLINKER"},
-	{"TRAILERRIGHTBLINKER"},
-	{"INTRUDERALARM"},
-	{"ESTOPSWITCH"},
-	{"LIGHTBAR"},
-	{"BLINKINDICATE"},
-	{"BRAKELIGHTS"},
-	{"BACKUPLIGHTS"},
-	{"enable starter"},		// menu choices	(MENU_VALUE_OFFSET)
-	{"ignition"},
-	{"fuel pump"},
-	{"cooling fan"},
-	{"running lights"},
-	{"headlights"},
-	{"set dim time"},
+	{"RUN TIME"},  
 	{"enter password:"},	// various message string	(VARIOUS_MSG_OFFSET)
 	{"bad password"},
 	{"start engine"},
@@ -68,7 +38,31 @@ char menu_labels[NUM_STR][20] = {
 	{"in    seconds"},
 	{"engine on:"},
 	{"engine shutoff"},
-	{"press   to"}
+	{"press   to"},
+	{"enable starter"},			// 1	start of menu strings
+	{"start sequence"},			// 2
+	{"shutdown"},				// 3
+	{"key silent"},				// 4
+	{"dim screen"},				// 5
+	{"bright screen"},			// 6
+	{"toggle lights"},			// 7
+	{"set time/date"},			// 8
+	{"shutdown io box"},		// 9
+	{"reboot io box"},			// 0
+	{"engine off time"},		// *
+	{"fpga send rate"},			// #
+	{"LED update rate"},		// 1
+	{"high rev limit"},			// 2
+	{"low rev limit"},			// 3
+	{"set lights off"},			// 4
+	{"fpga comm"},				// 5
+	{"change password"},		// 6
+	{"blk ht on temp"},			// 7
+	{"blk ht off temp"},		// 8
+	{"batt ht on temp"},		// 9
+	{"batt ht off temp"},		// 0
+	{"unused 1"},				// *
+	{"unused 2"}				// #
 };
 
 #define STRING_LEN 0x400

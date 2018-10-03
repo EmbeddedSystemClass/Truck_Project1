@@ -59,7 +59,7 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,23,1,"M - fuel pump on");
 	mvwprintw(win,24,1,"N - fuel pump off");
 	mvwprintw(win,25,1,"P - not used");
-	mvwprintw(win,26,1,"R - Test All IO");
+	mvwprintw(win,26,1,"R - Test all lights");
 	mvwprintw(win,27,1,"Q - quit (same as F2)");
 }
 
@@ -370,6 +370,9 @@ int tcp_win2(int cmd)
 			case KEY_F(4):
 				if(tcp_connected == 1)
 				{
+					cmd2 = SHUTDOWN_IOBOX;
+			        put_sock(&cmd2,1,1,errmsg);
+					return 1;
 /*
 					if(acc_on == 1)
 					{
@@ -384,8 +387,8 @@ int tcp_win2(int cmd)
 						mvwprintw(twin,status_line,ACC_STATUS,"ON ");
 					}
 */
-					cmd2 = _RESET_TYPE4;
-			        put_sock(&cmd2,1,1,errmsg);
+//					cmd2 = _RESET_TYPE4;
+//			        put_sock(&cmd2,1,1,errmsg);
 /*
 			        cmd2 = ACCON;
 			        put_sock(&cmd2,1,1,errmsg);
@@ -396,13 +399,17 @@ int tcp_win2(int cmd)
 			        put_sock(&cmd2,1,1,errmsg);
 			        usleep(100000);
 */
-					mvwprintw(twin,error_line1,0,"reset ");
+//					mvwprintw(twin,error_line1,0,"reset ");
 				} else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
 			case KEY_F(5):
 				if(tcp_connected == 1)
 				{
+					cmd2 = REBOOT_IOBOX;
+			        put_sock(&cmd2,1,1,errmsg);
+			        ch = 'Q';
+			        return 1;
 /*
 					if(fp_on == 1)
 					{
@@ -417,14 +424,14 @@ int tcp_win2(int cmd)
 						mvwprintw(twin,status_line,FUEL_PUMP_STATUS,"ON ");
 					}
 				    put_sock(&cmd2,1,1,errmsg);
-*/
+
 					cmd2 = ON_ACC;
 			        put_sock(&cmd2,1,1,errmsg);
 
 			        usleep(100000);
 					cmd2 = ON_FUEL_PUMP;
 			        put_sock(&cmd2,1,1,errmsg);
-
+*/
 		        }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 
 				break;

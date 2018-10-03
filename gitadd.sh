@@ -10,6 +10,8 @@ git add gitstatus.sh
 git add engine_startup_notes.txt
 git add alot_of_work.txt
 git add backup_client.sh
+git add append_br.c
+git add replace_tabs.c
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh
@@ -82,6 +84,7 @@ git add thread_io/Makefile
 git add thread_io/sched.c
 git add thread_io/ioports.h
 git add thread_io/tasks.c
+git add thread_io/cmd_tasks.c
 git add thread_io/tasks.h
 git add thread_io/lcd_func.c
 git add thread_io/lcd_func.h
