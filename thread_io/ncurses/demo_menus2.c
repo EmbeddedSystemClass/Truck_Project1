@@ -1198,6 +1198,7 @@ call_Tool(int code)
 				ret = tcp_win2(cmd);
 				if(ret == 1)
 				{
+					close_sock();
 					destroy_menus();
 					endwin();
 					ExitProgram(EXIT_SUCCESS);

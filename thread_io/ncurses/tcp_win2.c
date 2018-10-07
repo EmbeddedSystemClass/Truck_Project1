@@ -58,9 +58,10 @@ static void help_screen(WINDOW *win)
 	mvwprintw(win,22,1,"L - ignition off");
 	mvwprintw(win,23,1,"M - fuel pump on");
 	mvwprintw(win,24,1,"N - fuel pump off");
-	mvwprintw(win,25,1,"P - not used");
-	mvwprintw(win,26,1,"R - Test all lights");
-	mvwprintw(win,27,1,"Q - quit (same as F2)");
+	mvwprintw(win,25,1,"R - Test all lights");
+	mvwprintw(win,26,1,"S - Test left blinkers");
+	mvwprintw(win,27,1,"T - Test right blinkers");
+	mvwprintw(win,28,1,"Q - quit (same as F2)");
 }
 
 //******************************************************************************************//
@@ -357,6 +358,22 @@ int tcp_win2(int cmd)
 			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
 				break;
 
+			case 'S':
+				if(tcp_connected == 1)
+				{
+				    cmd2 = TEST_LEFT_BLINKER;
+					put_sock(&cmd2,1,1,errmsg);
+			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
+			case 'T':
+				if(tcp_connected == 1)
+				{
+				    cmd2 = TEST_RIGHT_BLINKER;
+					put_sock(&cmd2,1,1,errmsg);
+			    }else mvwprintw(twin,error_line2,STARTER_STATUS,"no tcp connection ");
+				break;
+
 			case KEY_F(3):
 			case 'J':
 				if(tcp_connected == 1)
@@ -406,6 +423,7 @@ int tcp_win2(int cmd)
 			case KEY_F(5):
 				if(tcp_connected == 1)
 				{
+
 					cmd2 = REBOOT_IOBOX;
 			        put_sock(&cmd2,1,1,errmsg);
 			        ch = 'Q';

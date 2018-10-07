@@ -52,6 +52,8 @@ type:
 7) goes on/off at pulse_rate in 10ths of a second if onoff is 
 	active only (not implemented yet)
 
+type 6 & 7 not implemented yet
+
 */
 
 typedef struct ollist_node {

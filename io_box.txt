@@ -248,3 +248,30 @@ todo: (x) = done
 - wired 1st 2 relays as left br/dim and right br/dim (nc = dim) and 3rd & 4th relays as
 	left & right headlamps - common of 1st 2 comes from no of next 2 - dim is nc on 1st 2 so make
 	changes accordingly in the O_DATA.
+	
+Wiring colors:
+	Front:	(going threw terminal block on pass-side fender well
+	Orange	-	LBRIGHTS
+	White	-	RBRIGHTS
+	Grey	-	LHEADLAMP
+	Purple	-	RHEADLAMP
+	Blue	-	ACCON
+	Brown	-	STARTER
+	Green	-	(to extra relay)
+	Yellow	-		"	"
+	Black	-		"	"
+
+	
+	Rear:
+	Orange	-	RBRAKELIGHT
+	White	-	LBRAKELIGHT
+	Grey	-	LEFTBLINKER
+	Purple	-	RIGHTBLINKER
+	Blue	-	RUNNINGLIGHTS
+	Brown	-	BACKUPLIGHTS
+	Green	-	TRLEFTBLINKER
+	Yellow	-	TRRIGHTBLINKER
+	Black	-	TRAILERBRAKES
+	(extra wires from blinkers and running lights
+	also go to front)
+

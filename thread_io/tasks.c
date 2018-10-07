@@ -483,6 +483,7 @@ int change_output(int index, int onoff)
 {
 	int bank;
 
+//	printf("change output: %d %d\r\n",index,onoff);
 	pthread_mutex_lock( &io_mem_lock);
 
 	bank = real_banks[index].bank;
@@ -512,6 +513,7 @@ int change_output(int index, int onoff)
 			break;
 	}
 	pthread_mutex_unlock(&io_mem_lock);
+//	printf("change output: %d %d\r\n",index,onoff);
 	return index;
 }
 
@@ -558,7 +560,10 @@ UCHAR timer2_task(int test)
 		}
 		
 		if(shutdown_all)
+		{
+//			printf("done timer2 task\r\n");
 			return 0;
+		}		
 	}
 	return 1;
 
@@ -657,11 +662,17 @@ UCHAR timer_task(int test)
 */
 			send_tcp((UCHAR *)&s_buffer[0],4);
 		}
-		
+
 		// check if one of the outputs is set to type 2 (time_delay)
-		for(i = 0;i < NUM_PORTS;i++)
+//		for(i = 0;i < NUM_PORTS;i++)
+		for(i = STARTER;i < TESTOUTPUT24;i++)
 		{
 			ollist_find_data(i,otpp,&oll);
+//			printf("%d ",otp->port);
+//			if(i == NUM_PORTS-1)
+//				printf("\r\n");
+//			printf("(timer) type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
+//						otp->onoff, otp->reset, otp->polarity);
 			if((otp->type == 2 || otp->type == 3) && otp->reset == 1)
 			{
 
@@ -673,7 +684,7 @@ UCHAR timer_task(int test)
 					change_output(otp->port,((otp->time_delay - otp->time_left) % 2 == 0?0:1));
 
 				otp->time_left--;
-//				printf("%d %d\r\n",otp->port,otp->time_left);
+//				printf("time left: %d %d\r\n",otp->port,otp->time_left);
 
 				if(otp->time_left == 0)
 				{
@@ -742,7 +753,7 @@ UCHAR timer_task(int test)
 		
 		if(shutdown_all)
 		{
-//				printf("done timer_task\r\n");
+//			printf("done timer_task\r\n");
 			return 0;
 		}
 	}
@@ -1265,18 +1276,34 @@ void basic_controls(UCHAR cmd)
 			change_input(LBRIGHTS, 1);
 			break;
 
+		case TEST_LEFT_BLINKER:
+			index = LEFTBLINKER;
+			rc = ollist_find_data(index,otpp,&oll);
+			change_input(LEFTBLINKER,1);
+		break;
+
+		case TEST_RIGHT_BLINKER:
+			index = RIGHTBLINKER;
+			rc = ollist_find_data(index,otpp,&oll);
+			change_input(RIGHTBLINKER,1);
+		break;
+
 		case START_SEQ:
 			myprintf1("start seq\0");
 			ollist_find_data(ACCON,&otp,&oll);
 			otp->onoff = 1;
 			otp->reset = 0;
-			change_output(otp->port,otp->onoff);
+//			printf("%d %s\r\n",otp->port,otp->label);
+//			change_output(otp->port,otp->onoff);
+			change_output(ACCON,1);
 			usleep(100000);
 			ollist_insert_data(otp->port,&oll,otp);
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 1;
 			otp->reset = 0;
-			change_output(otp->port,otp->onoff);
+//			printf("%d %s\r\n",otp->port,otp->label);
+//			change_output(otp->port,otp->onoff);
+			change_output(FUELPUMP,1);
 			usleep(100000);
 			ollist_insert_data(otp->port,&oll,otp);
 			change_input(STARTER, 1);
@@ -1291,7 +1318,13 @@ void basic_controls(UCHAR cmd)
 			usleep(100000);
 			change_output(ACCON, 0);
 			usleep(100000);
+			ollist_find_data(ACCON,&otp,&oll);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
 			change_output(FUELPUMP, 0);
+			ollist_find_data(FUELPUMP,&otp,&oll);
+			otp->onoff = 0;
+			ollist_insert_data(otp->port,&oll,otp);
 			send_live_code(SHUTDOWN);
 			break;
 
@@ -1341,13 +1374,10 @@ void basic_controls(UCHAR cmd)
 				myprintf1("reboot iobox\0");
 			}
 //			printf("reboot on exit: %d\r\n",reboot_on_exit);
-
 			shutdown_all = 1;
-			return;
-			break;
+			break;		
 	}
 	send_serial(index,0);
-
 }
 /*
 					rt_file_data[rt_fd_ptr++] = otp->port;				// 0

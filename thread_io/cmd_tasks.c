@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[57] =
+CMD_STRUCT cmd_array[59] =
 {
 //	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -92,9 +92,14 @@ CMD_STRUCT cmd_array[57] =
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
 	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
+	{		TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
+	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
+
+extern illist_t ill;
+extern ollist_t oll;
 
 /*
 extern int tcp_window_on;
@@ -257,30 +262,44 @@ UCHAR get_host_cmd_task(int test)
  			rc = recv_tcp(&cmd,1,1);			  // blocking
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
-					&& cmd != GET_TIME && cmd != SET_TIME)
+					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 //					 && cmd != LIVE_WINDOW_ON 
 //						&& cmd != LIVE_WINDOW_OFF)
-				myprintf2(cmd_array[cmd].cmd_str,cmd);
+				myprintf2(cmd_array[cmd-1].cmd_str,cmd-1);
 
-//			printf("cmd:%s\r\n",cmd_array[cmd].cmd_str);
+//			if(cmd > 0)
+//				printf("cmd: %d %s\r\n",cmd-1,cmd_array[cmd-1].cmd_str);
 
-			if(rc > 0)
+			if(rc > 0 && cmd > 0)
 			{
 				rc = 0;
  				switch(cmd)
 				{
-					case TEST_ALL_IO:
+					case TEST_ALL_IO:	// test all lights except blinkers
 //						printf("turning all IO on\r\n");
-						for(i = LHEADLAMP;i < BATTERYCHARGER;i++)
+						for(i = LHEADLAMP;i < LEFTBLINKER;i++)
 						{
-							change_output(i,1);
+							change_input(i,1);
 //							printf("%d\r\n",i);
 							usleep(100000);
 						}
-//						printf("turning all IO off\r\n");
-						for(i = LHEADLAMP;i < BATTERYCHARGER;i++)
+						for(i = RUNNINGLIGHTS;i < BATTERYCHARGER;i++)
 						{
-							change_output(i,0);
+							change_input(i,1);
+//							printf("%d\r\n",i);
+							usleep(100000);
+						}
+
+//						printf("turning all IO off\r\n");
+						for(i = LHEADLAMP;i < LEFTBLINKER;i++)
+						{
+							change_input(i,0);
+//							printf("%d\r\n",i);
+							usleep(100000);
+						}
+						for(i = RUNNINGLIGHTS;i < BATTERYCHARGER;i++)
+						{
+							change_input(i,0);
 //							printf("%d\r\n",i);
 							usleep(100000);
 						}
@@ -303,6 +322,10 @@ UCHAR get_host_cmd_task(int test)
 					case START_SEQ:
 					// SHUTDOWN shuts off the starter enable, fp, acc and fan
 					case SHUTDOWN:
+					case SHUTDOWN_IOBOX:
+					case REBOOT_IOBOX:
+					case TEST_LEFT_BLINKER:
+					case TEST_RIGHT_BLINKER:
 						basic_controls(cmd);
 						break;
 
@@ -692,9 +715,9 @@ exit_program:
 							ollist_find_data(i,otpp,&oll);
 //							printf("%d %d\r\n",otp->port,otp->onoff);
 							usleep(1000);
-					//		change_output(otp->port,otp->onoff);
-					//		change_output(otp->port,0);
-					//		usleep(1000);
+							change_output(otp->port,otp->onoff);
+							change_output(otp->port,0);
+							usleep(1000);
 							ollist_insert_data(i,&oll,otp);
 						}
 

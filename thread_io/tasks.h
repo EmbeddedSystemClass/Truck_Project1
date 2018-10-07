@@ -66,7 +66,7 @@ static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
 static UINT rpm, mph;		// just sample data
 
-static REAL_BANKS real_banks[40];
+REAL_BANKS real_banks[40];
 
 static UCHAR rt_data[30];
 static UCHAR rt_file_data[1000];
@@ -85,6 +85,6 @@ extern UCHAR reboot_on_exit;
 UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 static int same_msg;
 
-static int shutdown_all;
+int shutdown_all;
 
 #endif

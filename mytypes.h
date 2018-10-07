@@ -22,7 +22,7 @@ typedef unsigned long ULONG;
 // these have to exactly match what's in cmd_array[] in tasks.c
 enum cmd_types
 {
-	ENABLE_START,
+	ENABLE_START = 1,
 	STARTER_OFF,
 	ON_ACC,
 	OFF_ACC,
@@ -77,6 +77,8 @@ enum cmd_types
 	SET_SERIAL_RECV_ON,
 	SET_SERIAL_RECV_OFF,
 	TEST_ALL_IO,
+	TEST_LEFT_BLINKER,
+	TEST_RIGHT_BLINKER,
 	RE_ENTER_PASSWORD,
 	EXIT_PROGRAM
 }CMD_TYPES;

@@ -5,7 +5,6 @@ git add io_box.txt
 git add gitadd.sh
 git add .gitignore
 git add mytypes.h
-git add getstatus.sh
 git add gitstatus.sh
 git add engine_startup_notes.txt
 git add alot_of_work.txt
