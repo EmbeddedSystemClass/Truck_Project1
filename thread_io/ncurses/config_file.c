@@ -70,7 +70,7 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg)
 	{
 //		rc = read(fp,&i_data,sizeof(I_DATA));
 		rc = read(fp,&temp[0],sizeof(I_DATA));
-		
+
 		memcpy((void *)&i_data,(void *)&temp[0],sizeof(I_DATA));
 //		for(j = 30;j < 50;j++)
 //			printf("%02x ",temp[j]);
@@ -286,6 +286,7 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 	{
 		ollist_find_data(i,&pio,oll);
 		j += write(fp,(const void*)pio,sizeof(O_DATA));
+
 	}
 
 	close(fp);
@@ -472,6 +473,8 @@ int rtLoadConfig(char *filename, RI_DATA *curr_o_array,size_t size,char *errmsg)
 	return 0;
 }
 #endif
+///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
+
 /////////////////////////////////////////////////////////////////////////////
 int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 {
@@ -563,6 +566,271 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 		j += write(fp,(const void*)pio,sizeof(O_DATA));
 		curr_o_array2++;
 	}
+
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return 0;
+}
+/////////////////////////////////////////////////////////////////////////////
+int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i,j,k;
+	fptr = (char *)filename;
+	I_DATA io;
+	I_DATA *pio = &io;
+	I_DATA *curr_i_array2 = curr_i_array;
+	char labels[5][20] = {"I_DATA","label","port","affected_output","temp"};
+	char open_br = '<';
+	char close_br = '>';
+	char open_br_slash[2] = "</";
+	char nl = 0x0A;
+	char tabx = 0x09;
+	char temp[5];
+	char tempx[30];
+	char first_line[] = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>";
+	char table[] = "Table";
+	char tick = '\'';
+	char space = 0x21;
+
+//#ifdef NOTARGET
+	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+#ifndef MAKE_SIM
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+#endif
+		return -2;
+	}
+
+	j = 0;
+//	printf("fp = %d\n",fp);
+//	printf("seek=%lu\n",lseek(fp,0,SEEK_SET));
+	i = lseek(fp,0,SEEK_SET);
+
+	write(fp,(const void*)&first_line[0],strlen(first_line));
+	write(fp,(const void*)&nl,1);
+	write(fp,(const void*)&open_br,1);
+	write(fp,(const void*)&table[0],strlen(table));
+	write(fp,(const void*)&close_br,1);
+	write(fp,(const void*)&nl,1);
+
+	for(i = 0;i < size/sizeof(O_DATA);i++)
+	{
+		pio = curr_i_array2;
+
+		write(fp,(const void*)&tabx,1);
+		write(fp,(const void*)&open_br,1);
+		write(fp,(const void*)&labels[0],strlen(labels[0]));
+		write(fp,(const void*)&close_br,1);
+		write(fp,(const void*)&nl,1);
+
+		k = 0;
+		for(j = 1;j < 13;j++)
+		{
+			write(fp,(const void*)&tabx,1);
+			write(fp,(const void*)&tabx,1);
+			write(fp,(const void*)&open_br,1);
+
+			if(j == 1)
+			{
+				write(fp,(const void*)&labels[1],strlen(labels[1]));
+				write(fp,(const void*)&close_br,1);
+				sprintf(tempx,pio->label,strlen(pio->label));
+				write(fp,(const void*)&tempx[0],strlen(tempx));
+				write(fp,(const void*)&open_br_slash,2);
+				write(fp,(const void*)&labels[1],strlen(labels[1]));
+				write(fp,(const void*)&close_br,1);
+			}else if(j == 2)
+			{
+				write(fp,(const void*)&labels[2],strlen(labels[2]));
+				write(fp,(const void*)&close_br,1);
+				sprintf(temp,"%d",pio->port);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				write(fp,(const void*)&open_br_slash,2);
+				write(fp,(const void*)&labels[2],strlen(labels[2]));
+				write(fp,(const void*)&close_br,1);
+			}else
+			{
+				write(fp,(const void*)&labels[3],strlen(labels[3]));
+				sprintf(temp,"%d",k);
+				write(fp,(const void*)&tick,1);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				write(fp,(const void*)&tick,1);
+				write(fp,(const void*)&close_br,1);
+
+				sprintf(temp,"%d",pio->affected_output[k]);
+				write(fp,(const void*)&temp[0],strlen(temp));
+
+				write(fp,(const void*)&open_br_slash,2);
+				write(fp,(const void*)&labels[3],strlen(labels[3]));
+				sprintf(temp,"%d",k++);
+				write(fp,(const void*)&tick,1);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				write(fp,(const void*)&tick,1);
+				write(fp,(const void*)&close_br,1);
+			}
+			write(fp,(const void*)&nl,1);
+		}
+		write(fp,(const void*)&tabx,1);
+		write(fp,(const void*)&open_br_slash,2);
+		write(fp,(const void*)&labels[0],strlen(labels[0]));
+		write(fp,(const void*)&close_br,1);
+		write(fp,(const void*)&nl,1);
+		curr_i_array2++;
+	}
+	write(fp,(const void*)&nl,1);
+	write(fp,(const void*)&open_br_slash,1);
+	write(fp,(const void*)&table[0],strlen(table));
+	write(fp,(const void*)&close_br,1);
+	write(fp,(const void*)&nl,1);
+
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i,j,k;
+	fptr = (char *)filename;
+	O_DATA io;
+	O_DATA *pio = &io;
+	O_DATA *curr_o_array2 = curr_o_array;
+	char labels[10][20] = {"O_DATA","label","port","onoff",
+			"polarity","type","time_delay","time_left","pulse_time","reset"};
+	char open_br = '<';
+	char close_br = '>';
+	char open_br_slash[2] = "</";
+	char nl = 0x0A;
+	char tabx = 0x09;
+	char temp[5];
+	char tempx[30];
+	char first_line[] = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>";
+	char table[] = "Table";
+
+//#ifdef NOTARGET
+	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+#ifdef MAKE_TARGET
+		printf("%s  %s\n",errmsg,filename);
+#else
+#ifndef MAKE_SIM
+		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
+		refresh();
+#endif
+#endif
+		return -2;
+	}
+
+	j = 0;
+//	printf("fp = %d\n",fp);
+//	printf("seek=%lu\n",lseek(fp,0,SEEK_SET));
+	i = lseek(fp,0,SEEK_SET);
+
+	write(fp,(const void*)&first_line[0],strlen(first_line));
+	write(fp,(const void*)&nl,1);
+	write(fp,(const void*)&open_br,1);
+	write(fp,(const void*)&table[0],strlen(table));
+	write(fp,(const void*)&close_br,1);
+	write(fp,(const void*)&nl,1);
+
+	for(i = 0;i < size/sizeof(O_DATA);i++)
+	{
+//		memset(pio,0,sizeof(IO_DATA));
+		pio = curr_o_array2;
+
+		write(fp,(const void*)&tabx,1);
+		write(fp,(const void*)&open_br,1);
+		write(fp,(const void*)&labels[0],strlen(labels[0]));
+		write(fp,(const void*)&close_br,1);
+		write(fp,(const void*)&nl,1);
+
+		for(j = 1;j < 10;j++)
+		{
+			write(fp,(const void*)&tabx,1);
+			write(fp,(const void*)&tabx,1);
+			write(fp,(const void*)&open_br,1);
+			write(fp,(const void*)&labels[j],strlen(labels[j]));
+			write(fp,(const void*)&close_br,1);
+
+			switch(j)
+			{
+				case 1:
+				sprintf(tempx,pio->label,strlen(pio->label));
+				write(fp,(const void*)&tempx[0],strlen(tempx));
+				break;
+				case 2:
+				sprintf(temp,"%d",pio->port);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 3:
+				sprintf(temp,"%d",pio->onoff);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 4:
+				sprintf(temp,"%d",pio->polarity);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 5:
+				sprintf(temp,"%d",pio->type);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 6:
+				sprintf(temp,"%d",pio->time_delay);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 7:
+				sprintf(temp,"%d",pio->time_left);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 8:
+				sprintf(temp,"%d",pio->pulse_time);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 9:
+				sprintf(temp,"%d",pio->reset);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+			}
+
+			write(fp,(const void*)&open_br_slash,2);
+			write(fp,(const void*)&labels[j],strlen(labels[j]));
+			write(fp,(const void*)&close_br,1);
+			write(fp,(const void*)&nl,1);
+		}
+		write(fp,(const void*)&tabx,1);
+		write(fp,(const void*)&open_br_slash,2);
+		write(fp,(const void*)&labels[0],strlen(labels[0]));
+		write(fp,(const void*)&close_br,1);
+		write(fp,(const void*)&nl,1);
+		curr_o_array2++;
+	}
+//	write(fp,(const void*)&nl,1);
+	write(fp,(const void*)&open_br_slash,2);
+	write(fp,(const void*)&table[0],strlen(table));
+	write(fp,(const void*)&close_br,1);
+	write(fp,(const void*)&nl,1);
 
 	close(fp);
 	strcpy(errmsg,"Success\0");

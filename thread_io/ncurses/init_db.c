@@ -13,6 +13,8 @@
 #include "setiodata.h"
 #include "config_file.h"
 
+extern int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
+extern int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
@@ -31,15 +33,18 @@ int main(int argc, char *argv[])
 	char *fptr2;
 	char errmsg[60];
 	int ret;
+	int do_xml = 0;
 
 	if(argc < 2)
 	{
 		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
+		printf("or add 3rd param to create xml format file\n");
 		return 1;
 	}
 	else if(argc < 3)
 	{
 		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
+		printf("or add 3rd param to create xml format file\n");
 		return 1;
 	}
 	fptr1 = argv[1];
@@ -47,20 +52,24 @@ int main(int argc, char *argv[])
 
 	printf("creating idata file: %s\n",fptr1);
 	printf("creating odata file: %s\n",fptr2);
+	if(argc > 3)
+	{
+		printf("creating XML file\n");
+		do_xml = 1;
+	}
 
-	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
 	i = NUM_PORT_BITS;
-	printf("NUM_PORT_BITS: %d\n",i);
+//	printf("NUM_PORT_BITS: %d\n",i);
 	isize = sizeof(I_DATA);
 	isize *= i;
-	printf("total size: of i_data %lu\n",isize);
+//	printf("total size: of i_data %lu\n",isize);
 
-	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
+//	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
 	i = NUM_PORT_BITS;
-	printf("NUM_PORT_BITS: %d\n",i);
+//	printf("NUM_PORT_BITS: %d\n",i);
 	osize = sizeof(O_DATA);
 	osize *= i;
-	printf("total size of o_data: %lu\n",osize);
+//	printf("total size of o_data: %lu\n",osize);
 
 	curr_i_array = (I_DATA *)malloc(isize);
 	memset((void *)curr_i_array,0,isize);
@@ -162,9 +171,12 @@ int main(int argc, char *argv[])
 
 	pid = curr_i_array;
 
+	if(do_xml == 0)
+	{
 	ret = iWriteConfig(fptr1,curr_i_array,isize,errmsg);
 	if(ret < 0)
 		printf("iWriteConfig: %s\n",errmsg);
+	}else  iWriteConfigXML(fptr1,curr_i_array,isize,errmsg);
 
 /*
 	memset((void *)curr_i_array,0,isize);
@@ -175,11 +187,14 @@ int main(int argc, char *argv[])
 
 	pid = curr_i_array;
 */
-	printf("%s %s has %lu records \n",errmsg,fptr1,isize/sizeof(I_DATA));
-	for(i = 0;i < isize/sizeof(I_DATA);i++)
+	if(do_xml == 0)
 	{
-		printf("%d\t%s\n",pid->port,pid->label);
-		pid++;
+		printf("%s %s has %lu records \n",errmsg,fptr1,isize/sizeof(I_DATA));
+		for(i = 0;i < isize/sizeof(I_DATA);i++)
+		{
+			printf("%d\t%s\n",pid->port,pid->label);
+			pid++;
+		}
 	}
 	// outputs
 
@@ -283,7 +298,10 @@ int main(int argc, char *argv[])
 	pod++;
 	strcpy(pod->label,"NULL\0");
 
-	ret = oWriteConfig(fptr2,curr_o_array,osize,errmsg);
+	if(do_xml == 1)
+		ret = oWriteConfigXML(fptr2,curr_o_array,osize,errmsg);
+	else
+		ret = oWriteConfig(fptr2,curr_o_array,osize,errmsg);
 	if(ret < 0)
 		printf("oWriteConfig: %s\n",errmsg);
 	else printf("%s %s has %lu records \n",errmsg,fptr2,osize/sizeof(O_DATA));
@@ -296,14 +314,16 @@ int main(int argc, char *argv[])
 		printf("oLoadConfig: %s\n",errmsg);
 */
 	pod = curr_o_array;
-	for(i = 0;i < osize/sizeof(O_DATA);i++)
+	if(do_xml == 0)
 	{
-		printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
-				pod->time_delay,pod->time_left, pod->pulse_time,pod->reset,pod->label);
-		pod++;
+		for(i = 0;i < osize/sizeof(O_DATA);i++)
+		{
+			printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
+					pod->time_delay,pod->time_left, pod->pulse_time,pod->reset,pod->label);
+			pod++;
+		}
+		printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
 	}
-
-	printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
 
 	free(curr_i_array);
 	free(curr_o_array);

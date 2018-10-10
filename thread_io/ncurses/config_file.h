@@ -21,6 +21,8 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
+int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
+int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 //int rtLoadConfig(char *filename, RI_DATA *curr_o_array,size_t size,char *errmsg);
 //int rtWriteConfig(char *filename, RI_DATA *curr_o_array,size_t size,char *errmsg);
 int GetFileFormat(char *filename);
