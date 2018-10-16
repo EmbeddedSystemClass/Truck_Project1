@@ -142,6 +142,16 @@ git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 git add thread_io/IO_card_layout.png
+git add thread_io/cs_client/App.config
+git add thread_io/cs_client/EpServerEngineSampleClient.csproj
+git add thread_io/cs_client/Program.cs
+git add thread_io/cs_client/FrmSampleClient.cs
+git add thread_io/cs_client/FrmSampleClient.Designer.cs
+git add thread_io/cs_client/FrmSampleClient.resx
+git add thread_io/cs_client/server_on_linux.c
+git add thread_io/cs_client/server_on_linux2.c
+git add thread_io/cs_client/new_client.txt
+git add thread_io/cs_client/SampleClientUI.JPG
 
 ./gitstatus.sh
 oneline.sh > oneline.txt

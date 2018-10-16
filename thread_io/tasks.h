@@ -44,6 +44,7 @@ void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR da
 int uSleep(time_t sec, long nanosec);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
+int get_msg(void);
 
 void *work_routine(void *arg);
 int send_tcp(UCHAR *str,int len);

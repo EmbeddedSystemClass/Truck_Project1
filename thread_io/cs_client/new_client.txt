@@ -1,0 +1,43 @@
+new client that runs on Windows 10 laptop compiled with VS2017 using C#
+
+This program duplicates what the client running on linux using ncurses did:
+
+1) send commands to server (io box) to turn on/off relays for starter, ignition & fp, etc.
+2) send and receive a copy of the database.
+3) connect/disconnect from the server.
+4) set the time on the server.
+5) get a list of the *.dat files on the server in the /home/dan/dev/sched directory
+6) shutdown/reboot the server
+
+The one main difference is that the databases are stored on an sql server on the 
+laptop and are manipulated with datasets, tables and data adapters and there is
+a grid to view the table. The *.dat files (idata.dat odata.dat) are flat files
+that are read by the server to keep track of the io states. Currently the sql
+databases only use the odata.dat format (O_DATA).
+
+Current features:
+1) a button called 'Send Data' which sends the entire record in 
+	the table to the server. 
+2) a pull-down list box called 'Update Single Record' which shows a list of the
+	labels and sends the current record in the datagrid as just the label, onoff,
+	type & time_delay fields.
+3) a list of checkboxes on the left to turn on/off the common relays: 
+	a) starter
+	b) ignition
+	c) fuelpump
+	d) cooling fan
+	e) lights
+	f) brights
+4) a button which reads an xml file of the table and loads it to the grid
+5) a button to show what's in the current database.
+6) a button to update the db with what's in the grid
+
+todo:
+- option to write current table (in grid or in db) to an xml file
+- option to set the time on the server (since there is no rtc yet)
+- option to choose which table in the database to:
+	a) load to the grid to edit
+	b) send to the server
+	c) save to xml file
+- option to stop the server and have it load either a new database sent over
+	using the send data button or load another dat file on the server

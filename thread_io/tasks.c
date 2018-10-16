@@ -531,12 +531,13 @@ UCHAR timer2_task(int test)
 	static int led_onoff;
 	static int seconds_counter;
 
+/*
 	static I_DATA *itp2;
 	static I_DATA **itpp2 = &itp2;
 
 	static O_DATA *otp2;
 	static O_DATA **otpp2 = &otp2;
-	
+*/
 	led_counter = 0;
 	led_onoff = 0;
 	
@@ -604,9 +605,12 @@ UCHAR timer_task(int test)
 
 		if(time_set)
 		{
-			send_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],time_buffer[4]);
-			send_serialother(TIME_DATA2,time_buffer[8],time_buffer[9],time_buffer[11],time_buffer[12]);
-			send_serialother(TIME_DATA3,time_buffer[14],time_buffer[15],time_buffer[17],time_buffer[18]);
+			send_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],
+				time_buffer[4]);
+			send_serialother(TIME_DATA2,time_buffer[8],time_buffer[9],
+				time_buffer[11],time_buffer[12]);
+			send_serialother(TIME_DATA3,time_buffer[14],time_buffer[15],
+				time_buffer[17],time_buffer[18]);
 		}
 
 // if driver seat switch goes low the tell monster box to start re-enter password sequence

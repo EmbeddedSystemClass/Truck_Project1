@@ -101,6 +101,8 @@ CMD_STRUCT cmd_array[59] =
 extern illist_t ill;
 extern ollist_t oll;
 
+UCHAR msg_buff[1000];
+
 /*
 extern int tcp_window_on;
 int serial_recv_on;
@@ -149,7 +151,7 @@ UCHAR get_host_cmd_task(int test)
 	off_t fsize;
 	int cur_fsize;
 	struct timeval mtv;
-
+	int msg_len;
 	serial_recv_on = 1;
 	time_set = 0;
 	shutdown_all = 0;
@@ -259,7 +261,10 @@ UCHAR get_host_cmd_task(int test)
 		if(test_sock() == 1)
 //		if(1)
 		{
- 			rc = recv_tcp(&cmd,1,1);			  // blocking
+// 			rc = recv_tcp(&cmd,1,1);			  // blocking
+			msg_len = get_msg();
+			rc = recv_tcp(&msg_buff[0],msg_len,1);
+			cmd = msg_buff[0];
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
@@ -352,7 +357,8 @@ UCHAR get_host_cmd_task(int test)
 					case NEW_PASSWORD1:
 						rc = 0;
 						memset(tempx,0,50);
-						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
+//						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
+						memcpy((void *)&tempx[0],&msg_buff[0],12);
 						myprintf2("read: ",rc);
 
 						send_serialother(NEW_PASSWORD2,tempx[0],
@@ -408,6 +414,7 @@ UCHAR get_host_cmd_task(int test)
 
 					case SET_TIME:
 						curtime2 = 0L;
+/*
 						rc += recv_tcp((UCHAR *)&test2,1,1);
 						curtime2 = (time_t)test2;
 						rc += recv_tcp((UCHAR *)&test2,1,1);
@@ -416,6 +423,16 @@ UCHAR get_host_cmd_task(int test)
 						curtime2 |= (time_t)(test2<<16);
 						rc += recv_tcp((UCHAR *)&test2,1,1);
 						curtime2 |= (time_t)(test2<<24);
+*/
+						test2 = msg_buff[1];
+						curtime2 = (time_t)test2;
+						test2 = msg_buff[2];
+						curtime2 |= (time_t)(test2<<8);
+						test2 = msg_buff[3];
+						curtime2 |= (time_t)(test2<<16);
+						test2 = msg_buff[4];
+						curtime2 |= (time_t)(test2<<24);
+
 						rc = stime(&curtime2);
 						time_set = 1;
 						break;
@@ -782,6 +799,23 @@ exit_program:
 	}
 	return test + 1;
 }
+/*********************************************************************/
+// get preamble & msg len from client
+// preamble is: {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00,
+//	 msg_len(lowbyte),msg_len(highbyte),0x00,0x00,0x00,0x00,0x00,0x00}
+int get_msg(void)
+{
+	static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
+	int len;
+	int ret;
+	UCHAR preamble[20];
+	ret = recv_tcp(preamble,16,1);
+	if(memcmp(preamble,pre_preamble,8) != 0)
+		return -1;
+	len = (int)preamble[7];
+	return len;
+}
+	
 /*********************************************************************/
 int recv_tcp(UCHAR *str, int strlen,int block)
 {
