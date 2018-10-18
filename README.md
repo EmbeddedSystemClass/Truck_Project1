@@ -25,7 +25,7 @@ file that can be downloaded later.<br />
 PIC24_support - source and libs for PIC24FJ128GB110 (uses MPLAB X)<br />
 AVR_t6963 - ATMEGA328p source and support files (uses avrdude)<br />
 thread_io - source for the TS-7200/7800 cards (from Technologic Systems)<br />
-thread_io/ncurses - source for the ncurses program that runs on the laptop and communicates<br />
+thread_io/cs_client - source for the windows program that runs on the laptop and communicates<br />
 						with the TS-7200/7800.<br />
 Truck_App1 - source for the FPGA (Xilinx Spartan-3E) in VHDL<br />
 <br />
@@ -84,18 +84,17 @@ data aquisition but its a steep learning curve. The ISim is really helpful and I
 most of my code from the examples from the book 'FPGA Prototyping by VHDL example' by<br />
 Pong. P. Chu. <br />
 <br />
-<h2>thread_io/ncurses</h2>
-The thread_io/ncurses directory has all the source and support files for compiling a<br />
-linux program that runs on any linux desktop and uses ncurses to communicate over a<br />
-tcp/ip connection to the TS-7200/7800 box. The program running on the TS-7XXX box<br />
-opens a couple binary files ending in .dat which are a data base where each record is<br />
-a configuration for each of the 20 io ports. The dat files starting with an 'o' are<br />
-for the the 20 output ports and the dat files starting with an 'i' are for the 20<br />
-input ports. Basically, when there is a change on one of the inputs, it can effect<br />
-any one of the 20 outputs. So that way you can assign different outputs to inputs.<br />
-The ncurses program lets you change the configuration or load different dat files.<br />
-This can be kind of dicey for things like the starter motor so the ioport assigned<br />
-to the start switch only activates a relay that enables a button on the dash to close<br />
+<h2>thread_io/cs_client</h2>
+The thread_io/cs_client directory has the main *.cs files for compiling a windows<br />
+program in Visual Studio 2017 using C# using SQL server and a tcp/ip connection to the<br />
+TS-7200/7800 box. The program running on the TS-7XXX box opens a couple binary files ending 
+in .dat which are a data base where each record is a configuration for each of the 20 io ports.
+The dat files starting with an 'o' are for the the 20 output ports and the dat files starting 
+with an 'i' are for the 20 input ports. Basically, when there is a change on one of the inputs,
+it can effect any one of the 20 outputs. So that way you can assign different outputs to
+inputs. The windows program lets you change the configuration or load different dat files.
+This can be kind of dicey for things like the starter motor so the ioport assigned
+to the start switch only activates a relay that enables a button on the dash to close
 the circuit the the actual starter solinoid. <br />
 <br />
 See also:<br />

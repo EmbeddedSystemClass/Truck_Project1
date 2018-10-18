@@ -34,7 +34,7 @@ Current features:
 
 todo:
 - option to write current table (in grid or in db) to an xml file
-- option to set the time on the server (since there is no rtc yet)
+- option to set the time on the server (since there is no rtc yet) (x)
 - option to choose which table in the database to:
 	a) load to the grid to edit
 	b) send to the server

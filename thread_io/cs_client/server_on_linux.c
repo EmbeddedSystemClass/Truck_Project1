@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <time.h>
 
 #define PROTOPORT 8000
 #define BUF_SIZE 1000
@@ -38,13 +39,22 @@ int main(int argc, char *argv[])
 	unsigned char buf[BUF_SIZE];
 	int buf2[BUF_SIZE];
 	int i,j,k,l;
-	char tempx[40];
+	char tempx[100];
 	char tempx2[10];
 	int rc;
 	int option = 1;
+	time_t curtime2;
+	struct timeval mtv;
 	
 	int temp;
-
+/*
+		curtime2 = 0L;
+		gettimeofday(&mtv,NULL);
+		curtime2 = mtv.tv_sec;
+		strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
+		printf("%s\n",tempx);
+	exit(0);
+*/
 	memset((char  *)&sad,0,sizeof(sad));	  /* clear sockaddr structure   */
 	sad.sin_family = AF_INET;				  /* set family to Internet     */
 	sad.sin_addr.s_addr = INADDR_ANY;		  /* set the local IP address */
@@ -109,8 +119,9 @@ int main(int argc, char *argv[])
 // and then sends the msg size as an int (2 bytes)
 // and then sends (6) zeros
 // and then send the msg in int's
-#if 0
-	for(j = 0;j < 8;j++)
+//#if 0
+//	for(j = 0;j < 3;j++)
+if(1)
 	{
 		memset(buf,0,BUF_SIZE);
 		memset(buf2,0,BUF_SIZE);
@@ -135,16 +146,22 @@ int main(int argc, char *argv[])
 		for(i = 0;i < msg_size/2;i++)
 		{
 	//		printf("%c",(char)buf2[i]);
-			printf("%02x ",(char)buf2[i]);
+//			printf("%02x ",(char)buf2[i]);
 			tempx[i] = (char)buf2[i];
 		}
 		tempx[i] = 0;
-	//	printf("sent: %s\n",tempx);
+		printf("%s\n",tempx);
 		printf("\n");
+		curtime2 = 0L;
+		gettimeofday(&mtv,NULL);
+		curtime2 = mtv.tv_sec;
+		strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
+		printf("%s\n",tempx);
+		
 	}
 	close(socket_fd);
 	exit(0);
-#endif
+//#endif
 
 // test receiving entire table
 

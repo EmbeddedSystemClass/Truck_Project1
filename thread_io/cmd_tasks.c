@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[59] =
+CMD_STRUCT cmd_array[63] =
 {
 //	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -95,6 +95,9 @@ CMD_STRUCT cmd_array[59] =
 	{		TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
 	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
+	{		CLOSE_DB,"CLOSE_DB\0" },
+	{		OPEN_DB,"OPEN_DB\0" },
+	{		BAD_MSG,"BAD_MSG\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -103,11 +106,12 @@ extern ollist_t oll;
 
 UCHAR msg_buff[1000];
 
-/*
-extern int tcp_window_on;
-int serial_recv_on;
-extern int time_set;
-*/
+int shutdown_all;
+
+//extern int tcp_window_on;
+//int serial_recv_on;
+int time_set;
+
 /*********************************************************************/
 // task to get commands from the host
 UCHAR get_host_cmd_task(int test)
@@ -138,7 +142,9 @@ UCHAR get_host_cmd_task(int test)
 	struct dirent *dir;
 	int num;
 	UCHAR test_io_num = 0;
-	char tempx[50];
+	char tempx[100];
+	char temp_time[5];
+	static char *pch;
 	UCHAR utemp1;
 	UCHAR utemp2;
 	char *chp;
@@ -146,11 +152,14 @@ UCHAR get_host_cmd_task(int test)
 	UCHAR uch_fname_index;
 	UCHAR mask;
 	time_t curtime2;
+	time_t *pcurtime2 = &curtime2;
 	tcp_window_on = 0;	
 	int fp;
 	off_t fsize;
 	int cur_fsize;
 	struct timeval mtv;
+	struct tm t;
+	struct tm *pt = &t;
 	int msg_len;
 	serial_recv_on = 1;
 	time_set = 0;
@@ -246,8 +255,8 @@ UCHAR get_host_cmd_task(int test)
 
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.17\0");
-//	printf("sched v1.17\r\n");
+	myprintf1("sched v1.18\0");
+//	printf("sched v1.18\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
 	odometer = 0;
@@ -262,9 +271,17 @@ UCHAR get_host_cmd_task(int test)
 //		if(1)
 		{
 // 			rc = recv_tcp(&cmd,1,1);			  // blocking
+			memset(msg_buff,0,sizeof(msg_buff));
 			msg_len = get_msg();
-			rc = recv_tcp(&msg_buff[0],msg_len,1);
-			cmd = msg_buff[0];
+			if(msg_len < 0)
+			{
+//				printf("bad msg\r\n");
+				cmd = BAD_MSG;
+			}else
+			{
+				rc = recv_tcp(&msg_buff[0],msg_len,1);
+				cmd = msg_buff[0];
+			}
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
@@ -414,26 +431,103 @@ UCHAR get_host_cmd_task(int test)
 
 					case SET_TIME:
 						curtime2 = 0L;
-/*
-						rc += recv_tcp((UCHAR *)&test2,1,1);
-						curtime2 = (time_t)test2;
-						rc += recv_tcp((UCHAR *)&test2,1,1);
-						curtime2 |= (time_t)(test2<<8);
-						rc += recv_tcp((UCHAR *)&test2,1,1);
-						curtime2 |= (time_t)(test2<<16);
-						rc += recv_tcp((UCHAR *)&test2,1,1);
-						curtime2 |= (time_t)(test2<<24);
-*/
-						test2 = msg_buff[1];
-						curtime2 = (time_t)test2;
-						test2 = msg_buff[2];
-						curtime2 |= (time_t)(test2<<8);
-						test2 = msg_buff[3];
-						curtime2 |= (time_t)(test2<<16);
-						test2 = msg_buff[4];
-						curtime2 |= (time_t)(test2<<24);
+						j = 0;
+						memset(tempx,0,sizeof(tempx));
+						
+						for(i = 2;i < msg_len;i+=2)
+							memcpy((void*)&tempx[j++],(char*)&msg_buff[i],1);
+						msg_buff[msg_len/2] = 0;
+//							if(msg_buff[i] > 0x1f && msg_buff[i] < 0x7e)
+//								printf("%c",msg_buff[i]);
+//						printf("%s\r\n",tempx);
+						memset(temp_time,0,sizeof(temp_time));
+						i = 0;
+						pch = &tempx[0];
 
-						rc = stime(&curtime2);
+						while(*(pch++) != '/' && i < msg_len)
+						{
+							i++;
+//							printf("%c",*pch);
+						}
+						memcpy(&temp_time[0],&tempx[0],i);
+						i = atoi(temp_time);
+//						printf("mon: %d\r\n",i - 1);
+						pt->tm_mon = i - 1;
+						i = 0;
+
+						while(*(pch++) != '/' && i < msg_len)
+						{
+							i++;
+							printf("%c",*pch);
+						}
+						memset(temp_time,0,sizeof(temp_time));
+						memcpy(temp_time,pch-i-1,i);
+//						printf("%s\n",temp_time);
+						i = atoi(temp_time);
+						pt->tm_mday = i;
+//						printf("day: %d\r\n",i);
+				//		return 0;
+
+						i = 0;
+						while(*(pch++) != ' ' && i < msg_len)
+						{
+							i++;
+//							printf("%c\r\n",*pch);
+						}
+
+						memset(temp_time,0,sizeof(temp_time));
+						memcpy(temp_time,pch-3,2);
+						i = atoi(temp_time);
+						i += 100;
+						pt->tm_year = i;
+//						printf("year: %d\r\n",i-100);
+				//		return 0;
+						i = 0;
+
+						while(*(pch++) != ':' && i < msg_len)
+							i++;
+						memset(temp_time,0,sizeof(temp_time));
+						memcpy(temp_time,pch-i-1,i);
+//						printf("%s \n",temp_time);
+						i = atoi(temp_time);
+						pt->tm_hour = i;
+//						printf("hour: %d\r\n",i);
+				//		return 0;
+
+						i = 0;
+						while(*(pch++) != ':' && i < msg_len)
+							i++;
+						memset(temp_time,0,sizeof(temp_time));
+						memcpy(temp_time,pch-3,2);
+//						printf("%s \n",temp_time);
+						i = atoi(temp_time);
+						pt->tm_min = i;
+//						printf("min: %d\r\n",i);
+
+						i = 0;
+						while(*(pch++) != ' ' && i < msg_len)
+							i++;
+						memset(temp_time,0,sizeof(temp_time));
+						memcpy(temp_time,pch-3,2);
+//						printf("%s \n",temp_time);
+						i = atoi(temp_time);
+						pt->tm_sec = i;
+//						printf("sec: %d\r\n",i);
+//						printf("%c %x\n",*pch,*pch);
+						if(*pch == 'P')
+						{
+//							printf("PM\n");
+							pt->tm_hour += 12;
+						}
+
+						curtime2 = mktime(pt);
+						stime(pcurtime2);
+/*
+						gettimeofday(&mtv, NULL);
+						curtime2 = mtv.tv_sec;
+						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
+						printf("%s\n",tempx);
+*/
 						time_set = 1;
 						break;
 
@@ -613,10 +707,52 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case CLOSE_SOCKET:
+//						printf("close socket\r\n");
 						close_tcp();
 						break;
 
+					case CLOSE_DB:
+//						printf("closing: %s %s\r\n",iFileName,oFileName);
+						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
+							myprintf1(errmsg);
+						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
+							myprintf1(errmsg);
+//						printf("db's closed\r\n");	
+						break;
+
+					case OPEN_DB:
+//						printf("opening: %s %s\r\n",iFileName,oFileName);
+						if(access(iFileName,F_OK) != -1)
+						{
+							rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
+							if(rc > 0)
+							{
+								myprintf1(errmsg);
+					//			return 1;
+							}
+						}
+						if(access(oFileName,F_OK) != -1)
+						{
+							rc = olLoadConfig(oFileName,&oll,osize,errmsg);
+							if(rc > 0)
+							{
+								myprintf1(errmsg);
+							}
+						}
+/*
+						for(i = 0;i < NUM_PORT_BITS;i++)
+						{
+							ollist_find_data(i,otpp,&oll);
+							printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->type);
+						}
+*/
+						break;
+
 					// update the sched.log file with current log of events
+					case BAD_MSG:
+						shutdown_all = 1;
+						break;
+
 					case TEST_WRITE_FILE:
 						strcpy(tempx,"sched.log\0");
 //						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
@@ -744,7 +880,6 @@ exit_program:
 							myprintf1(errmsg);
 
 //						close_tcp();
-						shutdown_all = 1;
 
 //						strcpy(tempx,"sched.log\0");
 //						WriteOdometer(tempx, &odometer, errmsg);
@@ -786,7 +921,8 @@ exit_program:
 							green_led(0);
 						}
 */
-						return 1;
+						shutdown_all = 1;
+						return 0;
 						break;
 				}								  // end of switch
 			}									  // if rc > 0
@@ -808,11 +944,17 @@ int get_msg(void)
 	static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 	int len;
 	int ret;
+	int i;
+	
 	UCHAR preamble[20];
 	ret = recv_tcp(preamble,16,1);
+//	for(i = 0;i < 15;i++)
+//		printf("%02x ",preamble[i]);
+//	printf("\n");
 	if(memcmp(preamble,pre_preamble,8) != 0)
 		return -1;
-	len = (int)preamble[7];
+	len = (int)preamble[8];
+//	printf("len: %d\n",len);
 	return len;
 }
 	

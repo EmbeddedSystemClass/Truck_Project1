@@ -76,7 +76,6 @@ static int odometer;
 static int trip;
 static int tcp_connected_time;
 static int serial_recv_on;
-static int time_set;
 static char dat_names[NUM_DAT_NAMES][DAT_NAME_STR_LEN];
 
 extern char oFileName[20];
@@ -85,7 +84,5 @@ extern char iFileName[20];
 extern UCHAR reboot_on_exit;
 UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 static int same_msg;
-
-int shutdown_all;
 
 #endif

@@ -68,7 +68,8 @@ static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static int mask2int(UCHAR mask);
-
+extern int shutdown_all;
+extern int time_set;
 //static double program_start_time;
 
 #define ON 1
@@ -466,7 +467,7 @@ UCHAR monitor_fake_input_task(int test)
 //			uSleep(0,TIME_DELAY/2);
 		if(shutdown_all)
 		{
-//				printf("done mon input tasks\r\n");
+//				printf("done mon fake input tasks\r\n");
 //				myprintf1("done mon input");
 			return 0;
 		}
@@ -603,6 +604,7 @@ UCHAR timer_task(int test)
 		// 14,15 - minute
 		// 17,18 - seconds
 
+/*
 		if(time_set)
 		{
 			send_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],
@@ -612,7 +614,7 @@ UCHAR timer_task(int test)
 			send_serialother(TIME_DATA3,time_buffer[14],time_buffer[15],
 				time_buffer[17],time_buffer[18]);
 		}
-
+*/
 // if driver seat switch goes low the tell monster box to start re-enter password sequence
 //		send_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
 
@@ -929,7 +931,7 @@ UCHAR tcp_monitor_task(int test)
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
 	if(s != 0)
 //		handle_err_en(s, "pthread_setcancelstate");
-		printf("setcancelstate\r\n");
+//		printf("setcancelstate\r\n");
 
 	memset((char  *)&sad,0,sizeof(sad));	  /* clear sockaddr structure   */
 	sad.sin_family = AF_INET;				  /* set family to Internet     */
@@ -945,6 +947,7 @@ UCHAR tcp_monitor_task(int test)
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
 		myprintf1("cannot map tcp to protocol number\0");
+		printf("cannot map tcp to protocol number\r\n");
 //			exit (1);
 	}
 	listen_sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
@@ -957,6 +960,7 @@ UCHAR tcp_monitor_task(int test)
 	if (listen_sd < 0)
 	{
 		myprintf1("socket creation failed\0");
+		printf("socket creation failed\r\n");
 //			exit(1);
 	}
 
@@ -964,6 +968,7 @@ UCHAR tcp_monitor_task(int test)
 	if (bind(listen_sd, (struct sockaddr *)&sad, sizeof (sad)) < 0)
 	{
 		myprintf1("bind failed\0");
+		printf("bind failed\r\n");
 //		exit(1);
 	}
 
@@ -971,6 +976,7 @@ UCHAR tcp_monitor_task(int test)
 	if (listen(listen_sd, QLEN) < 0)
 	{
 		myprintf1("listen failed\0");
+		printf("listen failed\r\n");
 //			exit(1);
 	}
 
@@ -993,11 +999,11 @@ UCHAR tcp_monitor_task(int test)
 		{
 			myprintf1("Server Waiting...\0");
 //			printf("Server Waiting...\r\n");
-
+//
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, (socklen_t *)&alen)) < 0)
 			{
 				myprintf1("accept failed\0");
-//				printf("accept failed\r\n");
+				printf("accept failed\r\n");
 				return 0;
 //					exit (1);
 			}
@@ -1008,7 +1014,7 @@ UCHAR tcp_monitor_task(int test)
 			tcp_connected_time = 0;
 			if(shutdown_all)
 			{
-//				printf("tcp task closing\r\n");
+				printf("tcp task closing\r\n");
 				return 0;
 			}
 /*
@@ -1216,7 +1222,7 @@ void basic_controls(UCHAR cmd)
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(RUNNINGLIGHTS, 1);
-
+/*
 			usleep(100000);
 
 			index = LBRIGHTS;
@@ -1230,6 +1236,7 @@ void basic_controls(UCHAR cmd)
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(RBRIGHTS, 1);
+*/
 			break;
 
 		case OFF_LIGHTS:
@@ -1381,7 +1388,7 @@ void basic_controls(UCHAR cmd)
 			shutdown_all = 1;
 			break;		
 	}
-	send_serial(index,0);
+//	send_serial(index,0);
 }
 /*
 					rt_file_data[rt_fd_ptr++] = otp->port;				// 0
