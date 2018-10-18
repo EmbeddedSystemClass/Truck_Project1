@@ -147,8 +147,8 @@ ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
 rdwr.o: queue/rdwr.c queue/rdwr.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rdwr.c
 
-config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
+config_file.o: cs_client/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/config_file.c
 
 lcd_func.o: lcd_func.c lcd_func.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c

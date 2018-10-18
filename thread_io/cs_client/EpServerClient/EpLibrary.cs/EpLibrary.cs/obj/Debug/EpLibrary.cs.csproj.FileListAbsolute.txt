@@ -1,0 +1,11 @@
+C:\Users\Daniel\dev\client_server_samples\EpServerEngine.cs-master\EpLibrary.cs\EpLibrary.cs\bin\Debug\EpLibrary.cs.dll
+C:\Users\Daniel\dev\client_server_samples\EpServerEngine.cs-master\EpLibrary.cs\EpLibrary.cs\bin\Debug\EpLibrary.cs.pdb
+C:\Users\Daniel\dev\client_server_samples\EpServerEngine.cs-master\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.csproj.CoreCompileInputs.cache
+C:\Users\Daniel\dev\client_server_samples\EpServerEngine.cs-master\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.dll
+C:\Users\Daniel\dev\client_server_samples\EpServerEngine.cs-master\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.pdb
+c:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\bin\Debug\EpLibrary.cs.dll
+c:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\bin\Debug\EpLibrary.cs.pdb
+c:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.csproj.CoreCompileInputs.cache
+c:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.dll
+c:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.pdb
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Debug\EpLibrary.cs.csprojResolveAssemblyReference.cache

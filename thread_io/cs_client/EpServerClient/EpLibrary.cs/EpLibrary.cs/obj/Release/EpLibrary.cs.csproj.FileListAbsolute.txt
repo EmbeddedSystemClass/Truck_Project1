@@ -1,0 +1,5 @@
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\bin\Release\EpLibrary.cs.dll
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\bin\Release\EpLibrary.cs.pdb
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Release\EpLibrary.cs.csproj.CoreCompileInputs.cache
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Release\EpLibrary.cs.dll
+C:\Users\Daniel\dev\EpServerClient\EpLibrary.cs\EpLibrary.cs\obj\Release\EpLibrary.cs.pdb

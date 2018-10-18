@@ -63,7 +63,6 @@ git add Truck_App1/lcd_pwm.vhd
 #git add Truck_App1/fifo.vhd
 git add Truck_App1/test_outputs.zip
 git add Truck_App1/lib/Common.vhd
-git add Truck_App1/lib/freq_gen.c
 
 git add PIC24_support/lib/*
 git add PIC24_support/esos/*
@@ -95,8 +94,6 @@ git add thread_io/queue/ollist_threads_rw.h
 git add thread_io/queue/ollist_threads_rw.c
 git add thread_io/queue/rt_llist_threads_rw.h
 git add thread_io/queue/rt_llist_threads_rw.c
-git add thread_io/ncurses/client.c
-git add thread_io/ncurses/client.h
 git add thread_io/linux_make
 git add thread_io/make_db
 git add thread_io/serial_io.c
@@ -104,30 +101,6 @@ git add thread_io/serial_io.h
 git add thread_io/read_sd.c
 git add thread_io/idata.csv
 git add thread_io/odata.csv
-git add thread_io/ncurses/demo_menus2.c
-git add thread_io/ncurses/menu_scroll2.c
-git add thread_io/ncurses/menu_scroll3.c
-git add thread_io/ncurses/Makefile
-git add thread_io/ncurses/init_db.c
-git add thread_io/ncurses/list_db.c
-git add thread_io/ncurses/conv_db.c
-git add thread_io/ncurses/make_db
-git add thread_io/ncurses/setiodata.h
-git add thread_io/ncurses/tcp_win.c
-git add thread_io/ncurses/tcp_win2.c
-git add thread_io/ncurses/tcp_win_show.c
-git add thread_io/ncurses/config_file.c
-git add thread_io/ncurses/config_file.h
-git add thread_io/ncurses/file_win.c
-git add thread_io/ncurses/file_menu2.c
-git add thread_io/ncurses/demo_forms4.c
-git add thread_io/ncurses/form_supplement.c
-git add thread_io/ncurses/form_sup.h
-git add thread_io/ncurses/forms.sh
-git add thread_io/ncurses/test.priv.h
-git add thread_io/ncurses/text_entry.c
-git add thread_io/ncurses/text_entry.h
-git add thread_io/ncurses/ncurses_cfg.h
 git add thread_io/thread_io_notes.txt
 git add thread_io/mingetty/*
 git add thread_io/test_tcp/*.c
@@ -142,16 +115,16 @@ git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 git add thread_io/IO_card_layout.png
-git add thread_io/cs_client/App.config
-git add thread_io/cs_client/EpServerEngineSampleClient.csproj
-git add thread_io/cs_client/Program.cs
-git add thread_io/cs_client/FrmSampleClient.cs
-git add thread_io/cs_client/FrmSampleClient.Designer.cs
-git add thread_io/cs_client/FrmSampleClient.resx
+git add thread_io/cs_client/EpServerClient/*
 git add thread_io/cs_client/server_on_linux.c
 git add thread_io/cs_client/server_on_linux2.c
 git add thread_io/cs_client/new_client.txt
-git add thread_io/cs_client/SampleClientUI.JPG
+git add thread_io/cs_client/init_db.c
+git add thread_io/cs_client/list_db.c
+git add thread_io/cs_client/conv_db.c
+git add thread_io/cs_client/make_db
+git add thread_io/cs_client/config_file.c
+git add thread_io/cs_client/config_file.h
 
 ./gitstatus.sh
 oneline.sh > oneline.txt

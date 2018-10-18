@@ -27,7 +27,7 @@
 #include "queue/ollist_threads_rw.h"
 //#include "queue/rt_llist_threads_rw.h"
 #include "tasks.h"
-#include "ncurses/config_file.h"
+#include "cs_client/config_file.h"
 #include "lcd_func.h"
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 

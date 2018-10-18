@@ -26,7 +26,7 @@
 #include "queue/ollist_threads_rw.h"
 //#include "queue/rt_llist_threads_rw.h"
 #include "tasks.h"
-#include "ncurses/config_file.h"
+#include "cs_client/config_file.h"
 #include "lcd_func.h"
 
 extern pthread_mutex_t     tcp_read_lock;
