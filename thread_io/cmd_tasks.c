@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[63] =
+CMD_STRUCT cmd_array[68] =
 {
 //	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -49,6 +49,10 @@ CMD_STRUCT cmd_array[63] =
 	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
 	{   	ON_BRIGHTS,"ON_BRIGHTS\0" },
 	{   	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{		ON_BRAKES,"ON_BRAKES\0" },
+	{		OFF_BRAKES,"OFF_BRAKES\0" },
+	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
+	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
 	{   	START_SEQ,"START_SEQ\0" },
 	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
@@ -79,11 +83,13 @@ CMD_STRUCT cmd_array[63] =
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
 	{   	GET_TIME,"GET_TIME\0" },
+/*
 	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
 	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
 	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
 	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
 	{		TEST_WRITE_FILE,"TEST_WRITE_FILE\0" },
+*/
 	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		GET_DEBUG_INFO,"GET_DEBUG_INFO\0" },
@@ -107,6 +113,8 @@ extern ollist_t oll;
 UCHAR msg_buff[1000];
 
 int shutdown_all;
+int live_window_on;
+static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 
 //extern int tcp_window_on;
 //int serial_recv_on;
@@ -255,8 +263,8 @@ UCHAR get_host_cmd_task(int test)
 
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.18\0");
-//	printf("sched v1.18\r\n");
+	myprintf1("sched v1.19\0");
+//	printf("sched v1.19\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
 	odometer = 0;
@@ -299,6 +307,7 @@ UCHAR get_host_cmd_task(int test)
 				{
 					case TEST_ALL_IO:	// test all lights except blinkers
 //						printf("turning all IO on\r\n");
+#if 0
 						for(i = LHEADLAMP;i < LEFTBLINKER;i++)
 						{
 							change_input(i,1);
@@ -325,6 +334,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%d\r\n",i);
 							usleep(100000);
 						}
+#endif
 					break;
 
 					// ENABLE_START closes a relay for so many seconds so a button
@@ -348,6 +358,12 @@ UCHAR get_host_cmd_task(int test)
 					case REBOOT_IOBOX:
 					case TEST_LEFT_BLINKER:
 					case TEST_RIGHT_BLINKER:
+					case ON_BRIGHTS:
+					case OFF_BRIGHTS:
+					case ON_BRAKES:
+					case OFF_BRAKES:
+					case ON_RUNNING_LIGHTS:
+					case OFF_RUNNING_LIGHTS:
 						basic_controls(cmd);
 						break;
 
@@ -413,22 +429,6 @@ UCHAR get_host_cmd_task(int test)
 						send_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
 						break;
 
-					case TCP_WINDOW_ON:
-						tcp_window_on = 1;
-						break;
-
-					case TCP_WINDOW_OFF:
-						tcp_window_on = 0;
-						break;
-
-					case LIVE_WINDOW_ON:
-						live_window_on = 1;
-						break;
-
-					case LIVE_WINDOW_OFF:
-						live_window_on = 0;
-						break;
-
 					case SET_TIME:
 						curtime2 = 0L;
 						j = 0;
@@ -458,7 +458,7 @@ UCHAR get_host_cmd_task(int test)
 						while(*(pch++) != '/' && i < msg_len)
 						{
 							i++;
-							printf("%c",*pch);
+//							printf("%c",*pch);
 						}
 						memset(temp_time,0,sizeof(temp_time));
 						memcpy(temp_time,pch-i-1,i);
@@ -753,6 +753,7 @@ UCHAR get_host_cmd_task(int test)
 						shutdown_all = 1;
 						break;
 
+/*
 					case TEST_WRITE_FILE:
 						strcpy(tempx,"sched.log\0");
 //						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
@@ -772,7 +773,7 @@ UCHAR get_host_cmd_task(int test)
 //							rt_llist_removeall_data(&roll);
 						}
 						break;
-
+*/
 					// upload this program and then goto reboot so it comes up using the
 					// newly uploaded program (see try_sched.sh in /home/dan/dev/sched)
 					case UPLOAD_NEW:
@@ -941,7 +942,6 @@ exit_program:
 //	 msg_len(lowbyte),msg_len(highbyte),0x00,0x00,0x00,0x00,0x00,0x00}
 int get_msg(void)
 {
-	static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 	int len;
 	int ret;
 	int i;
@@ -958,6 +958,30 @@ int get_msg(void)
 	return len;
 }
 	
+/*********************************************************************/
+void send_msg(int msg_len, UCHAR *msg)
+{
+	int len;
+	int ret;
+	int i;
+	return;
+	
+	ret = send_tcp(&pre_preamble[0],8);
+	send_tcp((UCHAR *)&msg_len,1);
+	ret = 0;
+	send_tcp((UCHAR *)&ret,1);
+
+	for(i = 0;i < 6;i++)
+		send_tcp((UCHAR *)&ret,1);
+	ret = 2;
+	send_tcp((UCHAR *)&ret,1);
+	ret = 0;
+	for(i = 0;i < msg_len;i++)
+	{
+		send_tcp((UCHAR *)&msg[i],1);
+		send_tcp((UCHAR *)&ret,1);	
+	}
+}
 /*********************************************************************/
 int recv_tcp(UCHAR *str, int strlen,int block)
 {

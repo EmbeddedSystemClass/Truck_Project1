@@ -21,6 +21,16 @@
 #warning "MAKE_TARGET not defined"
 #endif
 
+static char open_br = '<';
+static char close_br = '>';
+static char open_br_slash[2] = "</";
+static char nl = 0x0A;
+static char tabx = 0x09;
+static char first_line[] = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>";
+static char table[6] = "Table\0";
+static char tick = '\'';
+static char space = 0x21;
+
 /////////////////////////////////////////////////////////////////////////////
 // CONFIG_FILE is the define used for compiling the list_db and init_db programs
 // so (i/ol)(Load/Write)Config is used by sched/tasks etc
@@ -582,17 +592,8 @@ int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errms
 	I_DATA *pio = &io;
 	I_DATA *curr_i_array2 = curr_i_array;
 	char labels[5][20] = {"I_DATA","label","port","affected_output","temp"};
-	char open_br = '<';
-	char close_br = '>';
-	char open_br_slash[2] = "</";
-	char nl = 0x0A;
-	char tabx = 0x09;
 	char temp[5];
 	char tempx[30];
-	char first_line[] = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>";
-	char table[] = "Table";
-	char tick = '\'';
-	char space = 0x21;
 
 //#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
@@ -690,8 +691,7 @@ int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errms
 		write(fp,(const void*)&nl,1);
 		curr_i_array2++;
 	}
-	write(fp,(const void*)&nl,1);
-	write(fp,(const void*)&open_br_slash,1);
+	write(fp,(const void*)&open_br_slash,2);
 	write(fp,(const void*)&table[0],strlen(table));
 	write(fp,(const void*)&close_br,1);
 	write(fp,(const void*)&nl,1);
@@ -713,15 +713,8 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 	O_DATA *curr_o_array2 = curr_o_array;
 	char labels[10][20] = {"O_DATA","label","port","onoff",
 			"polarity","type","time_delay","time_left","pulse_time","reset"};
-	char open_br = '<';
-	char close_br = '>';
-	char open_br_slash[2] = "</";
-	char nl = 0x0A;
-	char tabx = 0x09;
 	char temp[5];
 	char tempx[30];
-	char first_line[] = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>";
-	char table[] = "Table";
 
 //#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);

@@ -70,6 +70,7 @@ static UCHAR fake_inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static int mask2int(UCHAR mask);
 extern int shutdown_all;
 extern int time_set;
+extern int live_window_on;
 //static double program_start_time;
 
 #define ON 1
@@ -88,17 +89,20 @@ static double curtime(void)
 
 void send_live_code(UCHAR cmd)
 {
-	if(live_window_on == 0)
-		return;
+//	if(live_window_on == 0)
+ 		return;
 
 	UCHAR status_line[10];
-
+/*
 	memset(status_line,0,10);
 	status_line[0] = cmd;
 	status_line[1] = running_seconds;
 	status_line[2] = running_minutes;
 	status_line[3] = running_hours;
-	send_tcp((UCHAR*)status_line,10);
+//	send_tcp((UCHAR*)status_line,10);
+*/
+	strcpy(status_line,"test xyz\0");
+	send_msg(strlen(status_line),(UCHAR*)status_line);
 }
 
 /*********************************************************************/
@@ -586,6 +590,8 @@ UCHAR timer_task(int test)
 	struct timeval mtv;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
+	O_DATA *otp2;
+	O_DATA **otpp2 = &otp2;
 
 	rpm = mph = 0;
 	while(TRUE)
@@ -1011,6 +1017,7 @@ UCHAR tcp_monitor_task(int test)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
 //			printf("connected to socket: \r\n");
+			live_window_on = 1;
 			tcp_connected_time = 0;
 			if(shutdown_all)
 			{
@@ -1210,33 +1217,10 @@ void basic_controls(UCHAR cmd)
 			change_input(LHEADLAMP, 1);
 
 			usleep(100000);
-
 			index = RHEADLAMP;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(RHEADLAMP, 1);
-
-			usleep(100000);
-
-			index = RUNNINGLIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RUNNINGLIGHTS, 1);
-/*
-			usleep(100000);
-
-			index = LBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRIGHTS, 1);
-
-			usleep(100000);
-
-			index = RBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RBRIGHTS, 1);
-*/
 			break;
 
 		case OFF_LIGHTS:
@@ -1246,13 +1230,21 @@ void basic_controls(UCHAR cmd)
 			change_input(LHEADLAMP, 0);
 
 			usleep(100000);
-
 			index = RHEADLAMP;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
 			change_input(RHEADLAMP, 0);
 
-			usleep(100000);
+			break;
+
+		case ON_RUNNING_LIGHTS:
+			index = RUNNINGLIGHTS;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(RUNNINGLIGHTS, 1);
+			break;
+
+		case OFF_RUNNING_LIGHTS:
 			index = RUNNINGLIGHTS;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
@@ -1277,14 +1269,14 @@ void basic_controls(UCHAR cmd)
 			index = LBRIGHTS;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRIGHTS, 1);
+			change_input(LBRIGHTS, 0);
 
 			usleep(100000);
 
-			index = LBRIGHTS;
+			index = RBRIGHTS;
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRIGHTS, 1);
+			change_input(RBRIGHTS, 0);
 			break;
 
 		case TEST_LEFT_BLINKER:
@@ -1297,6 +1289,34 @@ void basic_controls(UCHAR cmd)
 			index = RIGHTBLINKER;
 			rc = ollist_find_data(index,otpp,&oll);
 			change_input(RIGHTBLINKER,1);
+		break;
+
+		case ON_BRAKES:
+			index = LBRAKELIGHT;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(LBRAKELIGHT, 1);
+/*
+			usleep(100000);
+			index = RBRAKELIGHT;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(RBRAKELIGHT, 1);
+*/
+		break;
+
+		case OFF_BRAKES:
+			index = LBRAKELIGHT;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(LBRAKELIGHT, 0);
+/*
+			usleep(100000);
+			index = RBRAKELIGHT;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
+			change_input(RBRAKELIGHT, 0);
+*/
 		break;
 
 		case START_SEQ:
@@ -1378,11 +1398,13 @@ void basic_controls(UCHAR cmd)
 			{
 				reboot_on_exit = 3;
 				myprintf1("shutdown iobox\0");
+//				printf("shutdown iobox\0");
 			}	
 			else 
 			{
 				reboot_on_exit = 2;
 				myprintf1("reboot iobox\0");
+//				printf("reboot iobox\0");
 			}
 //			printf("reboot on exit: %d\r\n",reboot_on_exit);
 			shutdown_all = 1;

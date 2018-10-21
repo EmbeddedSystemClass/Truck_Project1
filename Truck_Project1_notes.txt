@@ -107,6 +107,8 @@ The ncurses program lets you change the configuration or load different dat file
 This can be kind of dicey for things like the starter motor so the ioport assigned
 to the start switch only activates a relay that enables a button on the dash to close
 the circuit the the actual starter solinoid. 
+(as of 9-17-18 the ncurses program is no longer used as it has been replaced
+	by a windows app compiled in Visual Studio using C#)
 
 A 4x4 keypad is attached to the PIC24 so when a key is pressed, one of the 
 following bytes is decoded:
@@ -322,9 +324,6 @@ on top of it and the other IO boards underneath which might be safer.
 
 Find out how to get TS-7200 to use the pthreadlib in its lib dir so we don't have to
 send it over as a static.
-
-Instead of ncurses program running on laptop, just gen up a PHP web interface and use
-the brower. (see dev2/TS-7260/www/) Yeah, right.
 
 GPS and accel modules on FPGA (serial?)
 

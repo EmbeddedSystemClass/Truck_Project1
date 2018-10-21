@@ -28,6 +28,8 @@ Current features:
 	d) cooling fan
 	e) lights
 	f) brights
+(this will go away because it should be set from the database only because
+these port assignments can change)
 4) a button which reads an xml file of the table and loads it to the grid
 5) a button to show what's in the current database.
 6) a button to update the db with what's in the grid
@@ -41,3 +43,20 @@ todo:
 	c) save to xml file
 - option to stop the server and have it load either a new database sent over
 	using the send data button or load another dat file on the server
+- the input ports don't have to necessarily match 1 for 1 each output port
+	for instance, the starter, ignition & fuelpump does not have an
+	input switch so the inputs marked as STARTER, ACCON, & FUELPUMP
+	are never used. The inputs can just as easily start with HEADLIGHTS,
+	RUNNING_LIGHTS, BRAKE_SWITCH or anything where a physical switch is
+	hooked up as an input to the io box. They will just have to be
+	re-directed to whatever output port it affects. So the I_DATA db
+	in the io box running on linux doesn't have to be exactly 40 ports
+	like the O_DATA. It should match the SQL datafile. In fact, the SQL
+	datasource for I_DATA should have joins showing what input affects
+	which output.
+- the only O_DATA fields the user needs to change are:
+	- onoff, polarity, type, pulse_time & time_delay. the others are used internally
+	by the linux program. (polarity & pulse_time ain't implemented yet)
+- another table can be set up in as an SQL database and used to do programmed
+	future events, like turn on the battery warmer at a certain time or temp.
+	Also there is the possibility of executable scripts or functions.

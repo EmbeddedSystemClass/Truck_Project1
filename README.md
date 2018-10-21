@@ -26,7 +26,8 @@ PIC24_support - source and libs for PIC24FJ128GB110 (uses MPLAB X)<br />
 AVR_t6963 - ATMEGA328p source and support files (uses avrdude)<br />
 thread_io - source for the TS-7200/7800 cards (from Technologic Systems)<br />
 thread_io/cs_client - source for the windows program that runs on the laptop and communicates<br />
-						with the TS-7200/7800.<br />
+with the TS-7200/7800.<br />
+(see: https://github.com/juhgiyo/EpServerEngine.cs)<br />
 Truck_App1 - source for the FPGA (Xilinx Spartan-3E) in VHDL<br />
 <br />
 <h2>PIC24_support</h2>

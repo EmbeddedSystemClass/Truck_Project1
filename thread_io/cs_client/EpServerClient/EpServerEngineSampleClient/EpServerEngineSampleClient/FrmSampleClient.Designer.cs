@@ -90,12 +90,12 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbReceived.Location = new System.Drawing.Point(16, 220);
+            this.tbReceived.Location = new System.Drawing.Point(16, 324);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(332, 385);
+            this.tbReceived.Size = new System.Drawing.Size(332, 281);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -145,7 +145,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(93, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.145";
+            this.tbHostname.Text = "192.168.42.149";
             // 
             // btnXML
             // 
@@ -431,13 +431,15 @@
             "FUELPUMP",
             "COOLINGFAN",
             "LIGHTS",
-            "BRIGHTS"});
-            this.cblistCommon.Location = new System.Drawing.Point(16, 108);
+            "BRIGHTS",
+            "TEST_LEFT_BLINKER",
+            "TEST_RIGHT_BLINKER",
+            "BRAKES",
+            "RUNNING_LIGHTS"});
+            this.cblistCommon.Location = new System.Drawing.Point(16, 91);
             this.cblistCommon.Name = "cblistCommon";
-            this.cblistCommon.Size = new System.Drawing.Size(138, 106);
+            this.cblistCommon.Size = new System.Drawing.Size(183, 174);
             this.cblistCommon.TabIndex = 9;
-            this.cblistCommon.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.cblist_ItemCheck);
-            this.cblistCommon.Click += new System.EventHandler(this.cblist_Clicked);
             this.cblistCommon.SelectedValueChanged += new System.EventHandler(this.cblist_SelValueChanged);
             // 
             // btn_SetTime
@@ -448,7 +450,7 @@
             this.btn_SetTime.TabIndex = 3;
             this.btn_SetTime.Text = "Set Time";
             this.btn_SetTime.UseVisualStyleBackColor = true;
-            this.btn_SetTime.Click += new System.EventHandler(this.btn_SetTime_Click);
+            this.btn_SetTime.Click += new System.EventHandler(this.Btn_SetTime_Click);
             // 
             // button3
             // 
@@ -594,7 +596,7 @@
         private System.Windows.Forms.Button btnXML;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Data.DataSet ds;
-        private System.Data.SqlClient.SqlDataAdapter da;
+//        private System.Data.SqlClient.SqlDataAdapter da;
         private System.Windows.Forms.BindingSource bindingSource1;
         private System.Windows.Forms.Button btnShow;
         private System.Data.DataTable table;

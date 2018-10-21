@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Xml;
 using System.Data;
 using System.Data.SqlClient;
-using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using EpServerEngine.cs;
 using System.Diagnostics;
 using System.Globalization;
+using EpLibrary.cs;
+using System.IO;
+
+
 
 namespace EpServerEngineSampleClient
 {
@@ -31,6 +32,10 @@ namespace EpServerEngineSampleClient
             OFF_LIGHTS,
             ON_BRIGHTS,
             OFF_BRIGHTS,
+            ON_BRAKES,
+            OFF_BRAKES,
+            ON_RUNNING_LIGHTS,
+            OFF_RUNNING_LIGHTS,
             START_SEQ,
             SHUTDOWN,
             SHUTDOWN_IOBOX,
@@ -61,11 +66,6 @@ namespace EpServerEngineSampleClient
             ENABLE_LCD,
             SET_TIME,
             GET_TIME,
-            TCP_WINDOW_ON,
-            TCP_WINDOW_OFF,
-            LIVE_WINDOW_ON,
-            LIVE_WINDOW_OFF,
-            TEST_WRITE_FILE,
             TOTAL_UP_TIME,
             UPLOAD_NEW,
             GET_DEBUG_INFO,
@@ -81,6 +81,7 @@ namespace EpServerEngineSampleClient
             OPEN_DB,
             BAD_MSG,
             EXIT_PROGRAM
+
         }
         public class CommonControls : IEquatable<CommonControls>
         {
@@ -118,12 +119,12 @@ namespace EpServerEngineSampleClient
         public FrmSampleClient()
         {
             InitializeComponent();
-            Load_Grid(currentconnectionString);
+            use_main_odata = true;
             this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
-//            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
+            //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             ctls = new List<CommonControls>();
             foreach (object item in cblistCommon.Items)
-                ctls.Add(new CommonControls() { CtlName = item.ToString(), CtlSet = 0, Changed = 0  });
+                ctls.Add(new CommonControls() { CtlName = item.ToString(), CtlSet = 0, Changed = 0 });
             cblistCommon.Enabled = false;
             tbHostname.Enabled = true;
             tbPort.Enabled = true;
@@ -134,7 +135,7 @@ namespace EpServerEngineSampleClient
             button2.Enabled = false;
             tbConnected.Text = "not connected";
             target_db_closed = false;
-            use_main_odata = true;
+            Load_Grid(currentconnectionString);
         }
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -156,9 +157,9 @@ namespace EpServerEngineSampleClient
                 btnConnect.Text = "Connect";
                 if (m_client.IsConnectionAlive)
                     m_client.Disconnect();
-//                string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.CLOSE_SOCKET);
-//                AddMsg("shutdown: " + cmd);
-//                Send_Cmd(cmd, 0);
+                //                string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.CLOSE_SOCKET);
+                //                AddMsg("shutdown: " + cmd);
+                //                Send_Cmd(cmd, 0);
             }
         }
         public void OnConnected(INetworkClient client, ConnectStatus status)
@@ -211,51 +212,64 @@ namespace EpServerEngineSampleClient
             recno = (int)chars[0];
             type_msg = (int)chars[1];
             string str_recno = recno.ToString();
-//            AddMsg(recno.ToString() + " " + type_msg.ToString());
+            //            AddMsg(recno.ToString() + " " + type_msg.ToString());
             System.Buffer.BlockCopy(bytes, 4, chars2, 0, bytes.Length - 4);
             ret = new string(chars2);
-//            MessageBox.Show(ret);
-//            AddMsg(ret + "\r\n");
-
-            if (type_msg == 1)  // sent single record (port, onoff, type, time_delay)
+            //            MessageBox.Show(ret);
+            //            AddMsg(ret + "\r\n");
+            MessageBox.Show(bytes.Length.ToString() + " " + type_msg.ToString());
+            //            if (type_msg == 1)  // sent single record (port, onoff, type, time_delay)
+            switch (type_msg)
             {
-                int i = 0;
-                int port = 0;
-                int onoff = 0;
-                int type = 0;
-                int time_delay = 0;
-                string label = "";
-                string[] words = ret.Split(' ');
-                foreach (var word in words)
-                {
-//                    temp = int.Parse(word);
-                    switch (i)
+                case 0:
+                    int i = 0;
+                    int port = 0;
+                    int onoff = 0;
+                    int type = 0;
+                    int time_delay = 0;
+                    string label = "";
+                    string[] words = ret.Split(' ');
+                    foreach (var word in words)
                     {
-                        case 0:
-                            label = (string)word;
-                            break;
-                        case 1:
-                            port = int.Parse(word);
-                            break;
-                        case 2:
-                            onoff = int.Parse(word);
-                            break;
-                        case 3:
-                            type = int.Parse(word);
-                            break;
-                        case 4:
-                            time_delay = int.Parse(word);
-                            Update_Record(port, label, onoff, type, time_delay);
-                            break;
-                        default:
-                            break;
+                        //                    temp = int.Parse(word);
+                        switch (i)
+                        {
+                            case 0:
+                                label = (string)word;
+                                break;
+                            case 1:
+                                port = int.Parse(word);
+                                break;
+                            case 2:
+                                onoff = int.Parse(word);
+                                break;
+                            case 3:
+                                type = int.Parse(word);
+                                break;
+                            case 4:
+                                time_delay = int.Parse(word);
+                                Update_Record(port, label, onoff, type, time_delay);
+                                break;
+                            default:
+                                break;
+                        }
+                        i++;
                     }
-                    i++;
-                }
-            }
-            else if(type_msg == 2)
-            {
-                AddMsg(ret + "\r\n");
+                    break;
+                case 1:
+                    AddMsg("msg 1");
+                    break;
+                case 2:
+                    AddMsg("msg 2");
+                    break;
+                case 3:
+                    AddMsg("msg 3");
+                    break;
+                case 4:
+                    AddMsg("msg 4");
+                    break;
+                default:
+                    break;
             }
         }
         void ProcessIOnums2(string nums)
@@ -285,7 +299,7 @@ namespace EpServerEngineSampleClient
                     System.Data.SqlClient.SqlCommand cmd;
                     if (use_main_odata)
                     {
-                            cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label, onoff=@onoff, polarity=@polarity, type=@type, time_delay= @time_delay,time_left=@time_left, reset=@reset WHERE port=@port", conn);
+                        cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label, onoff=@onoff, polarity=@polarity, type=@type, time_delay= @time_delay,time_left=@time_left, reset=@reset WHERE port=@port", conn);
                     }
                     else
                     {
@@ -301,7 +315,7 @@ namespace EpServerEngineSampleClient
                     cmd.Parameters.AddWithValue("@pulse_time", "0");
                     cmd.Parameters.AddWithValue("@reset", "0");
                     int rows = cmd.ExecuteNonQuery();
-//                    AddMsg(rows.ToString() + "updated: " + port.ToString());
+                    //                    AddMsg(rows.ToString() + "updated: " + port.ToString());
                 }
             }
             catch (SqlException ex)
@@ -310,7 +324,7 @@ namespace EpServerEngineSampleClient
             }
         }
         private void Update_Table(int port, string data)
-        { 
+        {
             SqlConnection sqlCnn;
             SqlCommandBuilder cmdBuilder;
             //string sql ="INSERT INTO dbo.O_DATA (label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset) VALUES(@label,@port,@onoff,@polarity,@type, @time_delay,@time_left,@reset)";
@@ -318,7 +332,7 @@ namespace EpServerEngineSampleClient
             //            SqlDataAdapter adapter = new SqlDataAdapter();
             DataSet ds2 = new DataSet();
             int i = 0;
-            if(use_main_odata)
+            if (use_main_odata)
                 sql = "select * from O_DATA";
             else
                 sql = "select * from O_DATA2";
@@ -441,8 +455,8 @@ namespace EpServerEngineSampleClient
             try
             {
                 XmlReader xmlFile;
-//                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
-                xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
+                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
+                //xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
                 ds.ReadXml(xmlFile);
                 dataGridView1.DataSource = ds.Tables[0];
                 bindingSource1.DataSource = ds.Tables[0];
@@ -459,7 +473,7 @@ namespace EpServerEngineSampleClient
             SqlDataAdapter adapter = new SqlDataAdapter();
             DataSet ds2 = new DataSet();
             string sql = null;
-            if(use_main_odata)
+            if (use_main_odata)
                 sql = "Select * from O_DATA";
             else
                 sql = "Select * from O_DATA2";
@@ -489,11 +503,11 @@ namespace EpServerEngineSampleClient
         private void btn_Update_Click(object sender, EventArgs e)
         {
             try
-            { 
+            {
                 this.Validate();
                 bindingSource1.EndEdit();
                 //Delete_O_DATA();
-                da.Update((DataTable)bindingSource1.DataSource);
+                //                da.Update((DataTable)bindingSource1.DataSource);
                 //AddMsg(da.Container.Components.Count.ToString());
             }
             catch (Exception ex)
@@ -505,10 +519,10 @@ namespace EpServerEngineSampleClient
         private void Load_Grid(string connection_string)
         {
             SqlConnection sqlCnn;
-//            SqlDataAdapter adapter = new SqlDataAdapter();
+            SqlDataAdapter adapter = new SqlDataAdapter();
             int i = 0;
             string sql = null;
-            if(use_main_odata)
+            if (use_main_odata)
                 sql = "Select label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA";
             else
                 sql = "Select label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA2";
@@ -519,21 +533,20 @@ namespace EpServerEngineSampleClient
                 sqlCnn.Open();
                 string tconstr = sqlCnn.ConnectionString;
 
-                tconstr = tconstr.Substring(tconstr.IndexOf("Client"),20);
+                tconstr = tconstr.Substring(tconstr.IndexOf("Client"), 20);
                 tconstr = tconstr.Substring(0, tconstr.IndexOf(';'));
                 tbConnectionString.Text = tconstr;
-
-                da = new SqlDataAdapter(sql, sqlCnn);
+                adapter = new SqlDataAdapter(sql, sqlCnn);
                 dataGridView1.DataSource = bindingSource1;
 
                 table.Locale = System.Globalization.CultureInfo.InvariantCulture;
                 table.Clear();
-                da.Fill(table);
+                adapter.Fill(table);
                 bindingSource1.DataSource = table;
-                SqlCommandBuilder builder = new SqlCommandBuilder(da);
-                da.DeleteCommand = builder.GetDeleteCommand();
-                da.UpdateCommand = builder.GetUpdateCommand();
-                da.InsertCommand = builder.GetInsertCommand();
+                SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+                adapter.DeleteCommand = builder.GetDeleteCommand();
+                adapter.UpdateCommand = builder.GetUpdateCommand();
+                //                da.InsertCommand = builder.GetInsertCommand();
                 dataGridView1.DataSource = table;
                 dataGridView1.Columns["port"].ReadOnly = true;
                 //                dataGridView1.Columns["label"].MinimumWidth = 150;
@@ -557,10 +570,10 @@ namespace EpServerEngineSampleClient
         }
         private void Btn_SendData_Click(object sender, EventArgs e)
         {
-            int i,j,k;
+            int i, j, k;
             String str;
-        
-            da.Fill(ds);
+
+            //            da.Fill(ds);
 
             for (i = 0; i < 40; i++)
             {
@@ -582,69 +595,85 @@ namespace EpServerEngineSampleClient
         private void Send_Cmd(string cmd, int onoff)
         {
             string test = " ";
-            int send_cmd = 0;
+            int sendcmd = 0;
             byte[] bytes = BytesFromString(test);
 
-//            MessageBox.Show(cmd);
+            //            MessageBox.Show(cmd);
             switch (cmd)
             {
                 case "STARTER":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ENABLE_START;
-                    else send_cmd = (int)Server_cmds.STARTER_OFF;
+                        sendcmd = (int)Server_cmds.ENABLE_START;
+                    else sendcmd = (int)Server_cmds.STARTER_OFF;
                     break;
                 case "IGNITION":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ON_ACC;
-                    else send_cmd = (int)Server_cmds.OFF_ACC;
+                        sendcmd = (int)Server_cmds.ON_ACC;
+                    else sendcmd = (int)Server_cmds.OFF_ACC;
                     break;
                 case "FUELPUMP":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ON_FUEL_PUMP;
-                    else send_cmd = (int)Server_cmds.OFF_FUEL_PUMP;
+                        sendcmd = (int)Server_cmds.ON_FUEL_PUMP;
+                    else sendcmd = (int)Server_cmds.OFF_FUEL_PUMP;
                     break;
                 case "COOLINGFAN":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ON_FAN;
-                    else send_cmd = (int)Server_cmds.OFF_FAN;
+                        sendcmd = (int)Server_cmds.ON_FAN;
+                    else sendcmd = (int)Server_cmds.OFF_FAN;
                     break;
                 case "LIGHTS":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ON_LIGHTS;
-                    else send_cmd = (int)Server_cmds.OFF_LIGHTS;
+                        sendcmd = (int)Server_cmds.ON_LIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_LIGHTS;
                     break;
                 case "BRIGHTS":
                     if (onoff == 1)
-                        send_cmd = (int)Server_cmds.ON_BRIGHTS;
-                    else send_cmd = (int)Server_cmds.OFF_BRIGHTS;
+                        sendcmd = (int)Server_cmds.ON_BRIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_BRIGHTS;
                     break;
                 case "START_SEQ":
-                        send_cmd = (int)Server_cmds.START_SEQ;
+                    sendcmd = (int)Server_cmds.START_SEQ;
                     break;
                 case "SHUTDOWN":
-                    send_cmd = (int)Server_cmds.SHUTDOWN;
+                    sendcmd = (int)Server_cmds.SHUTDOWN;
                     break;
                 case "SHUTDOWN_IOBOX":
-                    send_cmd = (int)Server_cmds.SHUTDOWN_IOBOX;
+                    sendcmd = (int)Server_cmds.SHUTDOWN_IOBOX;
                     break;
                 case "REBOOT_IOBOX":
-                    send_cmd = (int)Server_cmds.REBOOT_IOBOX;
+                    sendcmd = (int)Server_cmds.REBOOT_IOBOX;
                     break;
                 case "CLOSE_DB":
-                    send_cmd = (int)Server_cmds.CLOSE_DB;
+                    sendcmd = (int)Server_cmds.CLOSE_DB;
                     break;
                 case "OPEN_DB":
-                    send_cmd = (int)Server_cmds.OPEN_DB;
+                    sendcmd = (int)Server_cmds.OPEN_DB;
                     break;
-                //case "CLOSE_SOCKET":
-                //    send_cmd = (int)Server_cmds.CLOSE_SOCKET;
-                //    break;
+                case "TEST_LEFT_BLINKER":
+                    sendcmd = (int)Server_cmds.TEST_LEFT_BLINKER;
+                    break;
+                case "TEST_RIGHT_BLINKER":
+                    sendcmd = (int)Server_cmds.TEST_RIGHT_BLINKER;
+                    break;
+                case "UPLOAD_NEW":
+                    sendcmd = (int)Server_cmds.UPLOAD_NEW;
+                    break;
+                case "BRAKES":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_BRAKES;
+                    else sendcmd = (int)Server_cmds.OFF_BRAKES;
+                    break;
+                case "RUNNING_LIGHTS":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_RUNNING_LIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_RUNNING_LIGHTS;
+                    break;
                 default:
                     return;
             }
-            bytes.SetValue((byte)send_cmd,0);
-            AddMsg(Enum.GetName(typeof(Server_cmds), send_cmd));
-            //            MessageBox.Show(send_cmd.ToString());
+            bytes.SetValue((byte)sendcmd, 0);
+            AddMsg(Enum.GetName(typeof(Server_cmds), sendcmd));
+            //MessageBox.Show(send_cmd.ToString());
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);
 
@@ -714,7 +743,7 @@ namespace EpServerEngineSampleClient
             SqlDataAdapter adapter = new SqlDataAdapter();
 
             string sql = null;
-            if(use_main_odata)
+            if (use_main_odata)
                 sql = "delete O_DATA";
             else sql = "delete O_DATA2";
 
@@ -792,18 +821,6 @@ namespace EpServerEngineSampleClient
             foreach (DataGridViewRow item in dataGridView1.SelectedRows)
                 dataGridView1.Rows.RemoveAt(item.Index);
         }
-        private void cblist_Clicked(object sender, EventArgs e)
-        {
-            //foreach (object itemChecked in cblistCommon.CheckedItems)
-            //    if (cblistCommon.GetItemCheckState(cblistCommon.Items.IndexOf(itemChecked)).ToString() == "Checked")
-            //        MessageBox.Show(cblistCommon.Items.IndexOf(itemChecked).ToString());
-        }
-        private void cblist_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            //foreach(object itemChecked in cblistCommon.CheckedItems)
-            //    if(cblistCommon.GetItemCheckState(cblistCommon.Items.IndexOf(itemChecked)).ToString() == "Checked")
-            //    MessageBox.Show(cblistCommon.Items.IndexOf(itemChecked).ToString());
-        }
         private void cblist_SelValueChanged(object sender, EventArgs e)
         {
             int i;
@@ -850,10 +867,6 @@ namespace EpServerEngineSampleClient
         {
 
         }
-        private void SetTime_Click(object sender, EventArgs e)
-        {
-            AddMsg("test2");
-        }
         private void btn_CloseDB_Click(object sender, EventArgs e)
         {
             string cmd = null;
@@ -876,7 +889,7 @@ namespace EpServerEngineSampleClient
         private void button2_Click(object sender, EventArgs e)
         {
             string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.START_SEQ);
-//            AddMsg("start seq: " + cmd);
+            //            AddMsg("start seq: " + cmd);
             Send_Cmd(cmd, 0);
         }
         // shutdown engine
@@ -887,7 +900,7 @@ namespace EpServerEngineSampleClient
         }
         private void SwitchTable_Click(object sender, EventArgs e)
         {
-            if(use_main_odata)
+            if (use_main_odata)
             {
                 use_main_odata = false;
                 tbCurrentTable.Text = "O_DATA2";
@@ -898,13 +911,11 @@ namespace EpServerEngineSampleClient
                 tbCurrentTable.Text = "O_DATA";
             }
         }
-
         private void DeleteO_DATA_Click(object sender, EventArgs e)
         {
             Delete_O_DATA();
         }
-
-        private void btn_SetTime_Click(object sender, EventArgs e)
+        private void Btn_SetTime_Click(object sender, EventArgs e)
         {
             DateTime localDate = DateTime.Now;
             String cultureName = "en-US";
@@ -915,52 +926,8 @@ namespace EpServerEngineSampleClient
             byte[] bytes2 = new byte[bytes.Count() + 2];
             System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
             bytes2[0] = (byte)Server_cmds.SET_TIME;
-            //            System.Buffer.BlockCopy(src, srcOffset, Dst, dstoffset)
             Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
         }
     }
 }
-//            SqlConnection sqlCnn;
-//            SqlCommandBuilder cmdBuilder;
-//            //string sql ="INSERT INTO dbo.O_DATA (label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset) VALUES(@label,@port,@onoff,@polarity,@type, @time_delay,@time_left,@reset)";
-//            string sql = "select * from O_DATA2";
-////            SqlDataAdapter adapter = new SqlDataAdapter();
-//            DataSet ds2 = new DataSet();
-//            int i = 0;
-//            sqlCnn = new SqlConnection(currentconnectionString);
-////            adapter.SelectCommand = sqlCmd;
-//            try
-//            {
-//                DataTable table;
-//                DataRow row;
-//                Delete_O_DATA(2);
-//                table = MakeNamesTable();
-//                sqlCnn.Open();
-//                //              MessageBox.Show(ds2.DataSetName);
-//                for (i = 0; i < 40; i++)
-//                {
-//                    row = table.NewRow();
-//                    row["label"] = "test " + i.ToString();
-//                    row["onoff"] = i+6;
-//                    row["polarity"] = i+5;
-//                    row["type"] = i+4;
-//                    row["time_delay"] = i+3;
-//                    row["time_left"] = i+2;
-//                    row["pulse_time"] = i+1;
-//                    row["reset"] = i;
-//                    table.Rows.Add(row);
-//                }
-//                dataGridView1.DataSource = bindingSource1;
-//                bindingSource1.DataSource = table;
-//                SqlDataAdapter adapter = new SqlDataAdapter(sql, sqlCnn);
-//                cmdBuilder = new SqlCommandBuilder(adapter);
-//                adapter.Update(table);
-//                //adapter.UpdateCommand = sqlCnn.CreateCommand();
-//                //adapter.UpdateCommand.CommandText = sql;
-//                //adapter.UpdateCommand.ExecuteNonQuery();
-//            }
-//            catch (Exception ex)
-//            {
-//                MessageBox.Show(ex.Message);
-//            }

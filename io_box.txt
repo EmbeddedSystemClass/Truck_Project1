@@ -275,3 +275,10 @@ Wiring colors:
 	(extra wires from blinkers and running lights
 	also go to front)
 
+Work-around for tail-light delima:
+The tail light has 2 filements: 1 dim and 1 bright. The dim is one of the running-lights. So
+what happens if you press on the brakes and the blinkers at the same time? There are 2 outputs
+for each tail-light, blinker and brake. When the brakes are on the blinker is supposed to
+flash the bright while the other brake stays on. So make the inputs to the blinkers reference
+an additional ouput which goes to a coil which shuts off the brake light relay so the blinker
+can flash it. 
