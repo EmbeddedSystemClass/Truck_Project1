@@ -1,0 +1,48 @@
+###########################################################
+# makefile for myserver
+###########################################################
+# list/makefile
+#
+# makefile for the example programs 
+#
+INCLUDE_PATHS = -I.
+# Tru64 UNIX compile flags
+T64CC = cc
+T64CFLAGS = -g -std1 -warnprotos -pthread
+T64LDFLAGS = -non_shared
+T64LDFLAGS_T = ${T64LDFLAGS} -pthread
+
+# GCC/Linux compile flags
+GNUCC = gcc
+#GNUCFLAGS = -g -ansi -Wstrict-prototypes
+GNUCFLAGS = -static
+GNULDFLAGS = -static
+#CC_FLAGS = -DNOMAIN -DCONFIG_FILE ${GNUCFLAGS}
+
+GNULDFLAGS_T = ${GNULDFLAGS} -pthread
+
+#####################################################
+CC = ${GNUCC}
+
+all : list_db2
+
+ollist_threads_rw.o: ../queue/ollist_threads_rw.c ../queue/ollist_threads_rw.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/ollist_threads_rw.c
+
+rdwr.o: ../queue/rdwr.c ../queue/rdwr.h
+	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ../queue/rdwr.c
+
+config_file.o: config_file.c ../queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c config_file.c
+
+list_db2.o: list_db2.c ../queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c list_db2.c
+
+list_db.o: list_db.c  ../queue/ollist_threads_rw.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c list_db.c
+
+list_db2: config_file.o list_db2.o ollist_threads_rw.o rdwr.o
+	${CC} list_db2.o config_file.o ollist_threads_rw.o rdwr.o -o list_db2
+
+clean :
+	rm -f *.o *~ *# core list_db2
