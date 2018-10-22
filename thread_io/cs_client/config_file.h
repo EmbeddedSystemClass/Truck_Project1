@@ -1,8 +1,3 @@
-#ifdef MAKE_TARGET
-#warning "MAKE_TARGET defined"
-#else
-#warning "MAKE_TARGET not defined"
-#endif
 #ifndef CONFIG_FILE
 #warning "CONFIG_FILE not defined"
 extern illist_t ill;

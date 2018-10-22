@@ -60,3 +60,16 @@ todo:
 - another table can be set up in as an SQL database and used to do programmed
 	future events, like turn on the battery warmer at a certain time or temp.
 	Also there is the possibility of executable scripts or functions.
+- actually, the I_DATA is not really needed - the O_DATA can have a field that
+	specifies which input is affected by it, if any. The way it's setup now,
+	one input can affect one or more outputs. But would it be useful for more
+	than one input to affect a single output? Can't think of any reason to do 
+	that:
+	
+input 1 affects -> output 1,2 & 3
+
+inputs 1,2 & 3 affects -> output 1	
+
+So just have a field in each O_DATA record that specifies which input is affected
+by it. And if one input can affect more than one output, then the 2 outputs affected
+would have that field set to the same input.

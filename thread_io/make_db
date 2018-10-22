@@ -113,14 +113,14 @@ BULD_TARGET = $(PROJECT)
 
 all : init_db list_db
 
-init_db.o: ncurses/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/init_db.c
+init_db.o: cs_client/init_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h cs_client/config_file.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/init_db.c
 
-list_db.o: ncurses/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/list_db.c
+list_db.o: cs_client/list_db.c queue/illist_threads_rw.h queue/ollist_threads_rw.h cs_client/config_file.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/list_db.c
 
-config_file.o: ncurses/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h ncurses/config_file.h
-	${CC} -DMAKE_TARGET -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c ncurses/config_file.c
+config_file.o: cs_client/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h cs_client/config_file.h
+	${CC} -DMAKE_TARGET -DCONFIG_FILE ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/config_file.c
 
 init_db: config_file.o init_db.o 
 	${CC} init_db.o config_file.o -o init_db

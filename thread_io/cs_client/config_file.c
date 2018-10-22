@@ -14,13 +14,6 @@
 #include "../ioports.h"
 #include "config_file.h"
 
-#ifdef MAKE_TARGET
-#warning "MAKE_TARGET defined"
-#else
-#include "test.priv.h"
-#warning "MAKE_TARGET not defined"
-#endif
-
 static char open_br = '<';
 static char close_br = '>';
 static char open_br_slash[2] = "</";
@@ -52,16 +45,7 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#else
-		printf("%s  %s\n",errmsg,filename);
-#endif
-#endif
 		return -2;
 	}
 
@@ -130,14 +114,7 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -160,56 +137,6 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
-/////////////////////////////////////////////////////////////////////////////
-#if 0
-int rlLoadConfig(char *filename, rt_llist_t *oll, size_t size,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i = 0;
-	fptr = (char *)filename;
-	UCHAR id;
-	RI_DATA o_data;
-
-	fp = open((const char *)fptr, O_RDWR);
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-#ifdef MAKE_TARGET
-		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
-		return -2;
-	}
-
-	i = lseek(fp,0,SEEK_SET);
-	i = 0;
-	read(fp,&id,1);
-	if(id != 0xAA)
-	{
-		strcpy(errmsg,"invalid file format - id is not 0x55\0");
-		close(fp);
-		return -1;
-	}
-/*
-	for(i = 0;i < NUM_PORT_BITS;i++)
-	{
-		read(fp,&o_data,sizeof(RI_DATA));
-		ollist_insert_data(i, oll, &o_data);
-	}
-*/
-//	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-#endif
 /////////////////////////////////////////////////////////////////////////////
 int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 {
@@ -230,14 +157,7 @@ int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 	j = 0;
@@ -276,14 +196,6 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
-		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -303,55 +215,6 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
-#if 0
-/////////////////////////////////////////////////////////////////////////////
-int rlWriteConfig(char *filename,  rt_llist_t *oll, size_t size,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i,j,k;
-	fptr = (char *)filename;
-	RI_DATA io;
-	RI_DATA *pio = &io;
-	UCHAR id = 0xAA;
-
-//#ifdef NOTARGET
-	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-//#else
-//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-//#endif
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-#ifdef MAKE_TARGET
-		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
-		return -2;
-	}
-
-	j = 0;
-//	printf("fp = %d\n",fp);
-//	printf("seek=%lu\n",lseek(fp,0,SEEK_SET));
-	i = lseek(fp,0,SEEK_SET);
-	write(fp,&id,1);
-	for(i = 0;i < size/sizeof(RI_DATA);i++)
-	{
-		ollist_find_data(i,&pio,oll);
-		j += write(fp,(const void*)pio,sizeof(RI_DATA));
-	}
-
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-#endif
 #endif
 /////////////////////////////////////////////////////////////////////////////
 int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
@@ -367,14 +230,7 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -415,14 +271,7 @@ int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -441,48 +290,6 @@ int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-/////////////////////////////////////////////////////////////////////////////
-#if 0
-int rtLoadConfig(char *filename, RI_DATA *curr_o_array,size_t size,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i = 0;
-	fptr = (char *)filename;
-	UCHAR id;
-
-	fp = open((const char *)fptr, O_RDWR);
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-#ifdef MAKE_TARGET
-		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
-		return -2;
-	}
-
-	i = lseek(fp,0,SEEK_SET);
-	i = 0;
-	read(fp,&id,1);
-	if(id != 0xAA)
-	{
-		strcpy(errmsg,"invalid file format - id is not 0x55\0");
-		close(fp);
-		return -1;
-	}
-	i = read(fp,(void*)curr_o_array,size);
-//	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-#endif
 ///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
@@ -505,14 +312,7 @@ int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 	j = 0;
@@ -553,14 +353,7 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -604,14 +397,7 @@ int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errms
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -725,14 +511,7 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
@@ -829,57 +608,6 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-#if 0
-/////////////////////////////////////////////////////////////////////////////
-int rtWriteConfig(char *filename, RI_DATA *curr_o_array,size_t size,char *errmsg)
-{
-	char *fptr;
-	int fp = -1;
-	int i,j,k;
-	fptr = (char *)filename;
-	RI_DATA io;
-	RI_DATA *pio = &io;
-	RI_DATA *curr_o_array2 = curr_o_array;
-	UCHAR id = 0xAA;
-
-//#ifdef NOTARGET
-	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-//#else
-//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
-//#endif
-	if(fp < 0)
-	{
-		strcpy(errmsg,strerror(errno));
-		close(fp);
-#ifdef MAKE_TARGET
-		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
-		return -2;
-	}
-
-	j = 0;
-//	printf("fp = %d\n",fp);
-//	printf("seek=%lu\n",lseek(fp,0,SEEK_SET));
-	i = lseek(fp,0,SEEK_SET);
-	write(fp,&id,1);
-	for(i = 0;i < size/sizeof(RI_DATA);i++)
-	{
-//		memset(pio,0,sizeof(IO_DATA));
-		pio = curr_o_array2;
-		j += write(fp,(const void*)pio,sizeof(RI_DATA));
-		curr_o_array2++;
-	}
-
-	close(fp);
-	strcpy(errmsg,"Success\0");
-	return 0;
-}
-#endif
 /////////////////////////////////////////////////////////////////////////////
 int GetFileFormat(char *filename)
 {
@@ -895,14 +623,7 @@ int GetFileFormat(char *filename)
 	{
 		strcpy(errmsg,strerror(errno));
 		close(fp);
-#ifdef MAKE_TARGET
 		printf("%s  %s\n",errmsg,filename);
-#else
-#ifndef MAKE_SIM
-		mvprintw(LINES-2,20,"%s  %s   ",errmsg,filename);
-		refresh();
-#endif
-#endif
 		return -2;
 	}
 
