@@ -110,7 +110,7 @@ CMD_STRUCT cmd_array[68] =
 extern illist_t ill;
 extern ollist_t oll;
 
-UCHAR msg_buff[1000];
+UCHAR msg_buf[1000];
 
 int shutdown_all;
 int live_window_on;
@@ -143,6 +143,7 @@ UCHAR get_host_cmd_task(int test)
 	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
+	UCHAR _port,_onoff,_type,_time_delay;
 	int testx;
 	UCHAR rec_no;
 	struct dirent **namelist;
@@ -151,11 +152,11 @@ UCHAR get_host_cmd_task(int test)
 	int num;
 	UCHAR test_io_num = 0;
 	char tempx[100];
+	UCHAR tempy[30];
 	char temp_time[5];
-	static char *pch;
 	UCHAR utemp1;
 	UCHAR utemp2;
-	char *chp;
+	char *pch;
 	int fname_index;
 	UCHAR uch_fname_index;
 	UCHAR mask;
@@ -279,7 +280,7 @@ UCHAR get_host_cmd_task(int test)
 //		if(1)
 		{
 // 			rc = recv_tcp(&cmd,1,1);			  // blocking
-			memset(msg_buff,0,sizeof(msg_buff));
+			memset(msg_buf,0,sizeof(msg_buf));
 			msg_len = get_msg();
 			if(msg_len < 0)
 			{
@@ -287,8 +288,8 @@ UCHAR get_host_cmd_task(int test)
 				cmd = BAD_MSG;
 			}else
 			{
-				rc = recv_tcp(&msg_buff[0],msg_len,1);
-				cmd = msg_buff[0];
+				rc = recv_tcp(&msg_buf[0],msg_len,1);
+				cmd = msg_buf[0];
 			}
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
@@ -391,7 +392,7 @@ UCHAR get_host_cmd_task(int test)
 						rc = 0;
 						memset(tempx,0,50);
 //						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
-						memcpy((void *)&tempx[0],&msg_buff[0],12);
+						memcpy((void *)&tempx[0],&msg_buf[0],12);
 						myprintf2("read: ",rc);
 
 						send_serialother(NEW_PASSWORD2,tempx[0],
@@ -435,10 +436,10 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));
 						
 						for(i = 2;i < msg_len;i+=2)
-							memcpy((void*)&tempx[j++],(char*)&msg_buff[i],1);
-						msg_buff[msg_len/2] = 0;
-//							if(msg_buff[i] > 0x1f && msg_buff[i] < 0x7e)
-//								printf("%c",msg_buff[i]);
+							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
+						msg_buf[msg_len/2] = 0;
+//							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
+//								printf("%c",msg_buf[i]);
 //						printf("%s\r\n",tempx);
 						memset(temp_time,0,sizeof(temp_time));
 						i = 0;
@@ -557,10 +558,59 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SEND_ODATA:
-						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-						rc += recv_tcp((UCHAR *)&tempo1,sizeof(O_DATA),1);
-						ollist_insert_data(rec_no, &oll, &tempo1);
-						ollist_show(&oll);
+						j = 0;
+						memset(tempy,0,sizeof(tempy));
+						for(i = 2;i < msg_len+2;i+=2)
+						{
+							tempy[j++] = msg_buf[i];
+						}
+						pch = &tempy[0];
+						i = 0;
+						while(*pch != 0x7B)
+						{
+							pch++;
+							i++;
+						}
+						pch++;
+						memset(tempx,0,sizeof(tempx));
+						memcpy(tempx,tempy,i);
+						_port = (UCHAR)atoi(tempx);
+						i = 0;
+						while(*pch != 0x7C)
+						{
+							pch++;
+							i++;
+						}
+						pch++;
+						memset(tempx,0,sizeof(tempx));	
+						memcpy(tempx,pch-i-1,i);
+						_onoff = (UCHAR)atoi(tempx);
+						i = 0;
+						while(*pch != 0x7D)
+						{
+							pch++;
+							i++;
+						}
+						pch++;
+						memset(tempx,0,sizeof(tempx));	
+						memcpy(tempx,pch-i-1,i);
+						_type = (UCHAR)atoi(tempx);
+						memset(tempx,0,sizeof(tempx));	
+						memcpy(tempx,pch,4);
+						_time_delay = (UCHAR)atoi(tempx);
+						ollist_find_data(_port,&otp,&oll);
+						otp->onoff = _onoff;
+						otp->type = _type;
+						otp->time_delay = _time_delay;
+						ollist_insert_data(_port,&oll,otp);
+/*
+						for(i = STARTER;i < TESTOUTPUT24;i++)
+						{
+							ollist_find_data(i,otpp,&oll);
+							printf("%d %d %d %d %s\r\n",otp->port,otp->onoff, otp->type,
+								otp->time_delay,otp->label);
+						}
+*/
 						break;
 
 					// send all the data to the laptop
@@ -645,13 +695,13 @@ UCHAR get_host_cmd_task(int test)
 							memset(tempx,0,sizeof(tempx));
 							strcpy(tempx,dir->d_name);
 //							printf("%s\r\n",tempx);
-							chp = tempx;
+							pch = tempx;
 							j = 0;
 
-							while(*chp++ != '.' && j < DAT_NAME_STR_LEN)
+							while(*pch++ != '.' && j < DAT_NAME_STR_LEN)
 								j++;
 
-							strncpy(tempx,chp,j+1);
+							strncpy(tempx,pch,j+1);
 
 							if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
 //							if(dir->d_type == DT_REG)
@@ -683,10 +733,12 @@ UCHAR get_host_cmd_task(int test)
 
 					// save what's currenly in the databases to the disk on the IO box
 					case SAVE_TO_DISK:
+//						printf("saving to disk...\r\n");
 						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
 							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
+//						printf("done\r\n");	
 						break;
 
 					// adjust the 2x20 LCD screen on the IO box

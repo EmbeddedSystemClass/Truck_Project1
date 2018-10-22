@@ -452,19 +452,19 @@ namespace EpServerEngineSampleClient
         }
         private void btn_XML_Click(object sender, EventArgs e)
         {
-            try
-            {
-                XmlReader xmlFile;
-                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
-                //xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
-                ds.ReadXml(xmlFile);
-                dataGridView1.DataSource = ds.Tables[0];
-                bindingSource1.DataSource = ds.Tables[0];
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
+//            try
+//            {
+//                XmlReader xmlFile;
+////                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
+//                xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
+//                ds.ReadXml(xmlFile);
+//                dataGridView1.DataSource = ds.Tables[0];
+//                bindingSource1.DataSource = ds.Tables[0];
+//            }
+//            catch (Exception ex)
+//            {
+//                MessageBox.Show(ex.ToString());
+//            }
         }
         private void btn_Show_Click(object sender, EventArgs e)
         {
@@ -668,6 +668,9 @@ namespace EpServerEngineSampleClient
                         sendcmd = (int)Server_cmds.ON_RUNNING_LIGHTS;
                     else sendcmd = (int)Server_cmds.OFF_RUNNING_LIGHTS;
                     break;
+                case "SAVE_TO_DISK":
+                    sendcmd = (int)Server_cmds.SAVE_TO_DISK;
+                    break;
                 default:
                     return;
             }
@@ -765,15 +768,23 @@ namespace EpServerEngineSampleClient
         {
             int i;
             i = cbSelectRecord.SelectedIndex;
-            //DataGridViewCellCollection cell = new DataGridViewCellCollection(dataGridView1.Rows[i]);
-            //MessageBox.Show(dataGridView1.Rows[i].Cells[2].Value.ToString());
+            int port = (int)dataGridView1.Rows[i].Cells[1].Value;
             int onoff = (int)dataGridView1.Rows[i].Cells[2].Value;
+            if (onoff > 0)
+                onoff = 1;
             int type = (int)dataGridView1.Rows[i].Cells[4].Value;
+            if (type > 5)
+            {
+                AddMsg("type cannot be > 5");
+                type = 0;
+            }
             int time_delay = (int)dataGridView1.Rows[i].Cells[5].Value;
-            //MessageBox.Show(onoff.ToString() + " " + type.ToString() + " " + time_delay.ToString());
-            string sendstr = i.ToString() + " " + onoff.ToString() + " " + type.ToString() + " " + time_delay.ToString();
+            string sendstr = port.ToString() + '{' +  onoff.ToString() + '|' + type.ToString() + '}' + time_delay.ToString() + '~';
             byte[] bytes = BytesFromString(sendstr);
-            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+            byte[] bytes2 = new byte[bytes.Count() + 2];
+            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
+            bytes2[0] = (byte)Server_cmds.SEND_ODATA;
+            Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
         }
         private void btn_ClrScr_Click(object sender, EventArgs e)
@@ -928,6 +939,14 @@ namespace EpServerEngineSampleClient
             bytes2[0] = (byte)Server_cmds.SET_TIME;
             Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
+
+        }
+
+        private void Btn_SaveTargetDB_Click(object sender, EventArgs e)
+        {
+            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SAVE_TO_DISK);
+            Send_Cmd(cmd, 0);
+//            AddMsg(cmd);
         }
     }
 }

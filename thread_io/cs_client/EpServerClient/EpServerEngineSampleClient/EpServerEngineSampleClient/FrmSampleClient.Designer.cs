@@ -77,6 +77,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.btnSwitchTable = new System.Windows.Forms.Button();
             this.btnDeleteO_DATA = new System.Windows.Forms.Button();
+            this.Btn_SaveDB = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ds)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
@@ -537,11 +538,22 @@
             this.btnDeleteO_DATA.UseVisualStyleBackColor = true;
             this.btnDeleteO_DATA.Click += new System.EventHandler(this.DeleteO_DATA_Click);
             // 
+            // Btn_SaveDB
+            // 
+            this.Btn_SaveDB.Location = new System.Drawing.Point(744, 62);
+            this.Btn_SaveDB.Name = "Btn_SaveDB";
+            this.Btn_SaveDB.Size = new System.Drawing.Size(131, 23);
+            this.Btn_SaveDB.TabIndex = 25;
+            this.Btn_SaveDB.Text = "Save DB on Target";
+            this.Btn_SaveDB.UseVisualStyleBackColor = true;
+            this.Btn_SaveDB.Click += new System.EventHandler(this.Btn_SaveTargetDB_Click);
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 617);
+            this.Controls.Add(this.Btn_SaveDB);
             this.Controls.Add(this.btnDeleteO_DATA);
             this.Controls.Add(this.btnSwitchTable);
             this.Controls.Add(this.label7);
@@ -607,15 +619,15 @@
         // desktop
         //string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         // laptop
-
+/*
         string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\Documents\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-/*
+*/
         string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
-*/
+
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btn_SendData;
         private System.Windows.Forms.TextBox tbConnected;
@@ -652,6 +664,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnSwitchTable;
         private System.Windows.Forms.Button btnDeleteO_DATA;
+        private System.Windows.Forms.Button Btn_SaveDB;
     }
 }
 
