@@ -41,8 +41,6 @@
             this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.table = new System.Data.DataTable();
             this.btnShow = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
-            this.btn_SendData = new System.Windows.Forms.Button();
             this.tbConnected = new System.Windows.Forms.TextBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -64,20 +62,18 @@
             this.label3 = new System.Windows.Forms.Label();
             this.tbConnectionString = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.cbSelectRecord = new System.Windows.Forms.ComboBox();
-            this.label5 = new System.Windows.Forms.Label();
             this.cblistCommon = new System.Windows.Forms.CheckedListBox();
             this.btn_SetTime = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.tbServerTime = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
             this.btn_CloseDB = new System.Windows.Forms.Button();
             this.tbCurrentTable = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.btnSwitchTable = new System.Windows.Forms.Button();
             this.btnDeleteO_DATA = new System.Windows.Forms.Button();
             this.Btn_SaveDB = new System.Windows.Forms.Button();
+            this.btn_NewTable = new System.Windows.Forms.Button();
+            this.btn_SendSelectedRecords = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ds)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
@@ -91,12 +87,12 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbReceived.Location = new System.Drawing.Point(16, 324);
+            this.tbReceived.Location = new System.Drawing.Point(16, 271);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(332, 281);
+            this.tbReceived.Size = new System.Drawing.Size(332, 334);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -146,11 +142,11 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(93, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.149";
+            this.tbHostname.Text = "192.168.42.146";
             // 
             // btnXML
             // 
-            this.btnXML.Location = new System.Drawing.Point(445, 33);
+            this.btnXML.Location = new System.Drawing.Point(361, 33);
             this.btnXML.Name = "btnXML";
             this.btnXML.Size = new System.Drawing.Size(75, 23);
             this.btnXML.TabIndex = 5;
@@ -162,11 +158,13 @@
             // 
             this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(368, 94);
+            this.dataGridView1.Location = new System.Drawing.Point(368, 63);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(787, 511);
+            this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dataGridView1.Size = new System.Drawing.Size(787, 542);
             this.dataGridView1.TabIndex = 15;
             this.dataGridView1.TabStop = false;
+            this.dataGridView1.SelectionChanged += new System.EventHandler(this.CellSelectChanged);
             // 
             // ds
             // 
@@ -174,7 +172,7 @@
             // 
             // btnShow
             // 
-            this.btnShow.Location = new System.Drawing.Point(531, 32);
+            this.btnShow.Location = new System.Drawing.Point(442, 33);
             this.btnShow.Name = "btnShow";
             this.btnShow.Size = new System.Drawing.Size(75, 23);
             this.btnShow.TabIndex = 6;
@@ -182,29 +180,9 @@
             this.btnShow.UseVisualStyleBackColor = true;
             this.btnShow.Click += new System.EventHandler(this.btn_Show_Click);
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(617, 32);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "Update";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.btn_Update_Click);
-            // 
-            // btn_SendData
-            // 
-            this.btn_SendData.Location = new System.Drawing.Point(359, 34);
-            this.btn_SendData.Name = "btn_SendData";
-            this.btn_SendData.Size = new System.Drawing.Size(75, 23);
-            this.btn_SendData.TabIndex = 4;
-            this.btn_SendData.Text = "Send Data";
-            this.btn_SendData.UseVisualStyleBackColor = true;
-            this.btn_SendData.Click += new System.EventHandler(this.Btn_SendData_Click);
-            // 
             // tbConnected
             // 
-            this.tbConnected.Location = new System.Drawing.Point(617, 6);
+            this.tbConnected.Location = new System.Drawing.Point(617, 4);
             this.tbConnected.Name = "tbConnected";
             this.tbConnected.ReadOnly = true;
             this.tbConnected.Size = new System.Drawing.Size(84, 20);
@@ -325,7 +303,7 @@
             this.sendDataToolStripMenuItem.Name = "sendDataToolStripMenuItem";
             this.sendDataToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             this.sendDataToolStripMenuItem.Text = "Send Data";
-            this.sendDataToolStripMenuItem.Click += new System.EventHandler(this.sendData);
+//            this.sendDataToolStripMenuItem.Click += new System.EventHandler(this.sendData);
             // 
             // shutdownServerToolStripMenuItem
             // 
@@ -351,7 +329,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(563, 8);
+            this.label3.Location = new System.Drawing.Point(573, 7);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 13);
             this.label3.TabIndex = 7;
@@ -359,7 +337,7 @@
             // 
             // tbConnectionString
             // 
-            this.tbConnectionString.Location = new System.Drawing.Point(440, 4);
+            this.tbConnectionString.Location = new System.Drawing.Point(439, 4);
             this.tbConnectionString.Name = "tbConnectionString";
             this.tbConnectionString.ReadOnly = true;
             this.tbConnectionString.Size = new System.Drawing.Size(111, 20);
@@ -374,52 +352,6 @@
             this.label4.Size = new System.Drawing.Size(60, 13);
             this.label4.TabIndex = 5;
             this.label4.Text = "connection";
-            // 
-            // cbSelectRecord
-            // 
-            this.cbSelectRecord.FormattingEnabled = true;
-            this.cbSelectRecord.Items.AddRange(new object[] {
-            "STARTER",
-            "ACCON",
-            "FUELPUMP",
-            "COOLINGFAN",
-            "LHEADLAMPS",
-            "LBRIGHTS",
-            "RHEADLAMP",
-            "RBRIGHTS",
-            "LEFTBLINKER",
-            "RIGHTBLINKER",
-            "RUNNINGLIGHTS",
-            "RBRAKELIGHT",
-            "LBRAKELIGHT",
-            "BATTERYCHARGERRELAY",
-            "DASHHEATER",
-            "BATTERTCOMPHEATER",
-            "CRANKCASEHEATER",
-            "ESTOPSWITCH",
-            "TRAILERBRAKES",
-            "TRAILERLEFTBLINKER",
-            "TRAILERRIGHTBLINKER",
-            "INTRUDERALARM",
-            "LIGHTBAR",
-            "BLINKINDICATOR",
-            "ALARMSPEAKER",
-            "BACKUPLIGHTS"});
-            this.cbSelectRecord.Location = new System.Drawing.Point(933, 34);
-            this.cbSelectRecord.Name = "cbSelectRecord";
-            this.cbSelectRecord.Size = new System.Drawing.Size(222, 21);
-            this.cbSelectRecord.TabIndex = 10;
-            this.cbSelectRecord.TabStop = false;
-            this.cbSelectRecord.SelectedIndexChanged += new System.EventHandler(this.cbSelectRecordChanged);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(815, 37);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(112, 13);
-            this.label5.TabIndex = 17;
-            this.label5.Text = "Update Single Record";
             // 
             // cblistCommon
             // 
@@ -473,27 +405,9 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // tbServerTime
-            // 
-            this.tbServerTime.Location = new System.Drawing.Point(1055, 0);
-            this.tbServerTime.Name = "tbServerTime";
-            this.tbServerTime.ReadOnly = true;
-            this.tbServerTime.Size = new System.Drawing.Size(100, 20);
-            this.tbServerTime.TabIndex = 19;
-            this.tbServerTime.TabStop = false;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(988, 1);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(61, 13);
-            this.label6.TabIndex = 20;
-            this.label6.Text = "server time:";
-            // 
             // btn_CloseDB
             // 
-            this.btn_CloseDB.Location = new System.Drawing.Point(698, 32);
+            this.btn_CloseDB.Location = new System.Drawing.Point(523, 34);
             this.btn_CloseDB.Name = "btn_CloseDB";
             this.btn_CloseDB.Size = new System.Drawing.Size(94, 23);
             this.btn_CloseDB.TabIndex = 8;
@@ -503,7 +417,7 @@
             // 
             // tbCurrentTable
             // 
-            this.tbCurrentTable.Location = new System.Drawing.Point(469, 62);
+            this.tbCurrentTable.Location = new System.Drawing.Point(793, 3);
             this.tbCurrentTable.Name = "tbCurrentTable";
             this.tbCurrentTable.Size = new System.Drawing.Size(69, 20);
             this.tbCurrentTable.TabIndex = 21;
@@ -512,7 +426,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(394, 65);
+            this.label7.Location = new System.Drawing.Point(718, 7);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(69, 13);
             this.label7.TabIndex = 22;
@@ -520,9 +434,9 @@
             // 
             // btnSwitchTable
             // 
-            this.btnSwitchTable.Location = new System.Drawing.Point(554, 62);
+            this.btnSwitchTable.Location = new System.Drawing.Point(761, 34);
             this.btnSwitchTable.Name = "btnSwitchTable";
-            this.btnSwitchTable.Size = new System.Drawing.Size(75, 23);
+            this.btnSwitchTable.Size = new System.Drawing.Size(96, 23);
             this.btnSwitchTable.TabIndex = 23;
             this.btnSwitchTable.Text = "Switch Table";
             this.btnSwitchTable.UseVisualStyleBackColor = true;
@@ -530,7 +444,7 @@
             // 
             // btnDeleteO_DATA
             // 
-            this.btnDeleteO_DATA.Location = new System.Drawing.Point(648, 62);
+            this.btnDeleteO_DATA.Location = new System.Drawing.Point(1081, 34);
             this.btnDeleteO_DATA.Name = "btnDeleteO_DATA";
             this.btnDeleteO_DATA.Size = new System.Drawing.Size(75, 23);
             this.btnDeleteO_DATA.TabIndex = 24;
@@ -540,7 +454,7 @@
             // 
             // Btn_SaveDB
             // 
-            this.Btn_SaveDB.Location = new System.Drawing.Point(744, 62);
+            this.Btn_SaveDB.Location = new System.Drawing.Point(944, 34);
             this.Btn_SaveDB.Name = "Btn_SaveDB";
             this.Btn_SaveDB.Size = new System.Drawing.Size(131, 23);
             this.Btn_SaveDB.TabIndex = 25;
@@ -548,31 +462,47 @@
             this.Btn_SaveDB.UseVisualStyleBackColor = true;
             this.Btn_SaveDB.Click += new System.EventHandler(this.Btn_SaveTargetDB_Click);
             // 
+            // btn_NewTable
+            // 
+            this.btn_NewTable.Location = new System.Drawing.Point(863, 34);
+            this.btn_NewTable.Name = "btn_NewTable";
+            this.btn_NewTable.Size = new System.Drawing.Size(75, 23);
+            this.btn_NewTable.TabIndex = 26;
+            this.btn_NewTable.Text = "new table";
+            this.btn_NewTable.UseVisualStyleBackColor = true;
+            this.btn_NewTable.Click += new System.EventHandler(this.Btn_NewTable_Click);
+            // 
+            // btn_SendSelectedRecords
+            // 
+            this.btn_SendSelectedRecords.Location = new System.Drawing.Point(623, 34);
+            this.btn_SendSelectedRecords.Name = "btn_SendSelectedRecords";
+            this.btn_SendSelectedRecords.Size = new System.Drawing.Size(129, 23);
+            this.btn_SendSelectedRecords.TabIndex = 27;
+            this.btn_SendSelectedRecords.Text = "Send Selected Records";
+            this.btn_SendSelectedRecords.UseVisualStyleBackColor = true;
+            this.btn_SendSelectedRecords.Click += new System.EventHandler(this.SendSelectedRecords);
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 617);
+            this.Controls.Add(this.btn_SendSelectedRecords);
+            this.Controls.Add(this.btn_NewTable);
             this.Controls.Add(this.Btn_SaveDB);
             this.Controls.Add(this.btnDeleteO_DATA);
             this.Controls.Add(this.btnSwitchTable);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.tbCurrentTable);
             this.Controls.Add(this.btn_CloseDB);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.tbServerTime);
             this.Controls.Add(this.btn_SetTime);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.cblistCommon);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.cbSelectRecord);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.tbConnectionString);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.tbConnected);
-            this.Controls.Add(this.btn_SendData);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnShow);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnXML);
@@ -619,17 +549,10 @@
         // desktop
         //string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         // laptop
-/*
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\Documents\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-*/
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
 
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button btn_SendData;
+        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
+        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
+        string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
         private System.Windows.Forms.TextBox tbConnected;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
@@ -646,8 +569,6 @@
         private System.Windows.Forms.ToolStripMenuItem clearDataSetToolStripMenuItem;
         private System.Windows.Forms.TextBox tbConnectionString;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.ComboBox cbSelectRecord;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.CheckedListBox cblistCommon;
         private System.Windows.Forms.ToolStripMenuItem openDBToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openXMLToolStripMenuItem;
@@ -657,14 +578,14 @@
         private System.Windows.Forms.Button btn_SetTime;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.TextBox tbServerTime;
-        private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button btn_CloseDB;
         private System.Windows.Forms.TextBox tbCurrentTable;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnSwitchTable;
         private System.Windows.Forms.Button btnDeleteO_DATA;
         private System.Windows.Forms.Button Btn_SaveDB;
+        private System.Windows.Forms.Button btn_NewTable;
+        private System.Windows.Forms.Button btn_SendSelectedRecords;
     }
 }
 

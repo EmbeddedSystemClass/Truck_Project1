@@ -24,13 +24,12 @@
 #define FALSE   0
 #endif
 
-#define OLABELSIZE 30
-
 typedef struct o_data
 {
 	char label[OLABELSIZE];
 	UCHAR port;
 	UCHAR onoff;			// current state: 1 if on; 0 if off
+	UCHAR input_port;		// input port which affects this output (if not set to 0xFF)
 	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
 							// 1 - on input turns output off; off input turns output on
 	UCHAR type;				// see below
@@ -72,6 +71,8 @@ int ollist_insert_data (int index, ollist_t *llistp,O_DATA *datap);
 int ollist_remove_data(int index, O_DATA **datapp, ollist_t *llistp);
 int ollist_removeall_data(ollist_t *llistp);
 int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp);
+int ollist_find_data_ip(int index, O_DATA **datapp, ollist_t *llistp);
+int ollist_find_data_op(int index, int port, O_DATA **datapp, ollist_t *llistp);
 int ollist_toggle_output(int index, ollist_t *llistp);
 int ollist_change_output(int index, ollist_t *llistp, int onoff);
 int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp);

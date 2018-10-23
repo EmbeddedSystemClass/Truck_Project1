@@ -28,6 +28,7 @@ static char space = 0x21;
 // CONFIG_FILE is the define used for compiling the list_db and init_db programs
 // so (i/ol)(Load/Write)Config is used by sched/tasks etc
 #ifndef CONFIG_FILE
+#if 0
 int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg)
 {
 	char *fptr;
@@ -98,7 +99,7 @@ int ilLoadConfig(char *filename, illist_t *ill, size_t size, char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 {
@@ -138,6 +139,7 @@ int olLoadConfig(char *filename, ollist_t *oll, size_t size,char *errmsg)
 	return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
+#if 0
 int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 {
 	char *fptr;
@@ -175,7 +177,7 @@ int ilWriteConfig(char *filename, illist_t *ill, size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 {
@@ -217,6 +219,7 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 }
 #endif
 /////////////////////////////////////////////////////////////////////////////
+#if 0
 int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 {
 	char *fptr;
@@ -256,7 +259,7 @@ int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 {
@@ -293,6 +296,7 @@ int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 ///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
+#if 0
 int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 {
 	char *fptr;
@@ -331,7 +335,7 @@ int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 {
@@ -375,6 +379,7 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
+#if 0
 int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg)
 {
 	char *fptr;
@@ -486,7 +491,7 @@ int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errms
 	strcpy(errmsg,"Success\0");
 	return 0;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 {
@@ -497,7 +502,7 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 	O_DATA io;
 	O_DATA *pio = &io;
 	O_DATA *curr_o_array2 = curr_o_array;
-	char labels[10][20] = {"O_DATA","label","port","onoff",
+	char labels[11][20] = {"O_DATA","label","port","onoff","input_port",
 			"polarity","type","time_delay","time_left","pulse_time","reset"};
 	char temp[5];
 	char tempx[30];
@@ -538,7 +543,7 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 		write(fp,(const void*)&close_br,1);
 		write(fp,(const void*)&nl,1);
 
-		for(j = 1;j < 10;j++)
+		for(j = 1;j < 11;j++)
 		{
 			write(fp,(const void*)&tabx,1);
 			write(fp,(const void*)&tabx,1);
@@ -561,26 +566,30 @@ int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errms
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 4:
-				sprintf(temp,"%d",pio->polarity);
+				sprintf(temp,"%d",pio->input_port);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 5:
-				sprintf(temp,"%d",pio->type);
+				sprintf(temp,"%d",pio->polarity);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 6:
-				sprintf(temp,"%d",pio->time_delay);
+				sprintf(temp,"%d",pio->type);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 7:
-				sprintf(temp,"%d",pio->time_left);
+				sprintf(temp,"%d",pio->time_delay);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 8:
-				sprintf(temp,"%d",pio->pulse_time);
+				sprintf(temp,"%d",pio->time_left);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
 				case 9:
+				sprintf(temp,"%d",pio->pulse_time);
+				write(fp,(const void*)&temp[0],strlen(temp));
+				break;
+				case 10:
 				sprintf(temp,"%d",pio->reset);
 				write(fp,(const void*)&temp[0],strlen(temp));
 				break;
@@ -630,10 +639,8 @@ int GetFileFormat(char *filename)
 	i = lseek(fp,0,SEEK_SET);
 	i = 0;
 	read(fp,&id,1);
-//	printf("%x\n",id);
-	if(id == 0x55)		// this means it's an input file
-		return 0;
-	else if(id == 0xAA)	// output file
+//	printf("%x %s\n",id,filename);
+	if(id == 0xAA)	// output file
 		return 1;
 	else return -1;
 	close(fp);

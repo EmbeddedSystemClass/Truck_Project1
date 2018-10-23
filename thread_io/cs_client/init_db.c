@@ -1,6 +1,6 @@
-// create odata.dat and idata.dat files - 1st and 2nd param are names of dat files to create
+// create odata.dat file - 1st and 2nd param are names of dat files to create
 // any param as a 3rd will create the xml file
-// the data put into idata.dat & odata.dat files are read from the files: idata.csv and odata.csv
+// the data put into odata.dat file is read from the files: odata.csv
 // the format for the odata.dat file is:
 /*
 0,0,0,2,10,0,0,0,STARTER
@@ -14,21 +14,7 @@
 // the labels can be any text string and the 1st column must be in consecutive order with a total
 // of 40 starting at 0, going to 39, no more or no less
 //
-// the same for the idata.dat files, except:
-// the 2nd column is the output port that is affected by the input (column 0)
-// if any of the others are less than 41 then that is just an additional output
-// port that is affected by a change of the input
-// e.g. the brake lights have 2 different ports but can only be activated by one brake switch
-// don't ask why I need a relay for each brake light
-/*
-0,0,41,41,41,41,41,41,41,41,41,STARTER
-1,1,41,41,41,41,41,41,41,41,41,ACCON
-2,2,41,41,41,41,41,41,41,41,41,FUELPUMP
-3,3,41,41,41,41,41,41,41,41,41,COOLINGFAN
-...
-38,38,41,41,41,41,41,41,41,41,41,TESTINPUT36
-39,38,41,41,41,41,41,41,41,41,41,NULL
-*/
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,18 +25,14 @@
 #include <ctype.h>
 #include <assert.h>
 #include <ctype.h>
-#include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
 #include "config_file.h"
 
 extern int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
-extern int iWriteConfigXML(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
-extern int iWriteConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
-extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
-int copy_labels(char *filename, void *array, int which);
+int copy_labels(char *filename, O_DATA *curr_o_data);
 
 static char buf[3000];
 static char label_array[40][30];
@@ -59,135 +41,43 @@ static char int_array[40][10];
 /***********************************************************************************/
 int main(int argc, char *argv[])
 {
-	I_DATA *curr_i_array;
-	I_DATA *pid;
 	O_DATA *curr_o_array;
 	O_DATA *pod;
 	int i,j,k;
-	size_t isize;
 	size_t osize;
 	char errmsg[60];
 	int ret;
 	int do_xml = 0;
 	char filename[30];
-	char org_idata[30];
 	char org_odata[30];
 
 	if(argc < 2)
 	{
-		printf("usage: %s [idata filename][odata filename]\n",argv[0]);
-		printf("or add 3rd param to create xml format file\n");
+		printf("usage: %s[odata filename]\n",argv[0]);
+		printf("or add 2nd param to create xml format file\n");
 		return 1;
 	}
-	else if(argc < 3)
-	{
-		printf("usage: %s %s [odata filename]\n",argv[0],argv[1]);
-		printf("or add 3rd param to create xml format file\n");
-		return 1;
-	}
-	strcpy(org_idata,argv[1]);
-	strcpy(org_odata,argv[2]);
-	printf("%s\n",org_idata);
+	strcpy(org_odata,argv[1]);
 	printf("%s\n",org_odata);
 
-	if(argc > 3)
+	if(argc > 2)
 	{
 		printf("creating XML file\n");
 		do_xml = 1;
 	}
 
+	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
 	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
-	isize = sizeof(I_DATA);
-	isize *= i;
-//	printf("total size: of i_data %lu\n",isize);
-
-//	printf("\nsizeof O_DATA: %lu\n",sizeof(O_DATA));
-	i = NUM_PORT_BITS;
-//	printf("NUM_PORT_BITS: %d\n",i);
+	printf("NUM_PORT_BITS: %d\n",i);
 	osize = sizeof(O_DATA);
 	osize *= i;
-//	printf("total size of o_data: %lu\n",osize);
-
-	curr_i_array = (I_DATA *)malloc(isize);
-	memset((void *)curr_i_array,0,isize);
-
-	pid = curr_i_array;
-
-	// inputs
-
-	if(copy_labels(org_idata, curr_i_array, 1) != 0)
-	{
-		printf("error in copy_labels\n");
-		exit(0);
-	}
-	for(i = 0;i < 40;i++)
-	{
-		if(int_array[i][0] != i)
-		{
-			printf("bad index at: %d for I_DATA\n",i);
-			printf("should be %d but is %d\n",i,int_array[i][0]);
-			printf("all port no. must be in consecutive order starting at zero!\n");
-			return 1;
-		}
-	}
-	for(i = 0;i < isize/sizeof(I_DATA);i++)
-	{
-		pid->port = i;
-		pid->affected_output[0] = int_array[i][1];
-		for(j = 1;j < 10;j++)
-			pid->affected_output[j] = int_array[i][j+1];
-		pid++;
-	}
-//	exit(0);
-	pid = curr_i_array;
-/*
-	for(i = 0;i < 40;i++)
-	{
-//		printf("%d,%d,%s\n",pid->port,pid->affected_output[0],pid->label);
-		printf("%d,",pid->port);
-		for(j = 0;j < 10;j++)
-			printf("%d,",pid->affected_output[j]);
-		printf("%s\n",pid->label);
-		pid++;
-	}
-	pid = curr_i_array;
-*/
-	printf("filename: %s\n",org_idata);
-
-	if(do_xml == 0)
-	{
-		ret = iWriteConfig(org_idata,curr_i_array,isize,errmsg);
-		if(ret < 0)
-			printf("iWriteConfig: %s\n",errmsg);
-	}else  iWriteConfigXML(org_idata,curr_i_array,isize,errmsg);
-
-/*
-	memset((void *)curr_i_array,0,isize);
-
-	ret = iLoadConfig(fptr1,curr_i_array,isize,errmsg);
-	if(ret < 0)
-		printf("iLoadConfig: %s\n",errmsg);
-
-	pid = curr_i_array;
-*/
-	if(do_xml == 0)
-	{
-		printf("%s %s has %lu records \n",errmsg,org_idata,isize/sizeof(I_DATA));
-		for(i = 0;i < isize/sizeof(I_DATA);i++)
-		{
-			printf("%d\t%s\n",pid->port,pid->label);
-			pid++;
-		}
-	}
-	// outputs
-
+	printf("total size of o_data: %lu\n",osize);
 	curr_o_array = (O_DATA *)malloc(osize);
 	memset((void *)curr_o_array,0,osize);
 
 	pod = curr_o_array;
 
-	if(copy_labels(org_odata, curr_o_array, 0) != 0)
+	if(copy_labels(org_odata, curr_o_array) != 0)
 	{
 		printf("error in copy_labels\n");
 		exit(0);
@@ -202,19 +92,22 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
+
 	pod = curr_o_array;
 	for(i = 0;i < osize/sizeof(O_DATA);i++)
 	{
 		pod->port = i;
 		pod->onoff = int_array[i][1];
-		pod->polarity = int_array[i][2];
-		pod->type = int_array[i][3];
-		pod->time_delay = int_array[i][4];
-		pod->time_left = int_array[i][5];
-		pod->pulse_time = int_array[i][6];
-		pod->reset = int_array[i][7];
+		pod->input_port = int_array[i][2];
+		pod->polarity = int_array[i][3];
+		pod->type = int_array[i][4];
+		pod->time_delay = int_array[i][5];
+		pod->time_left = int_array[i][6];
+		pod->pulse_time = int_array[i][7];
+		pod->reset = int_array[i][8];
 		pod++;
 	}
+
 	if(do_xml == 1)
 		ret = oWriteConfigXML(org_odata,curr_o_array,osize,errmsg);
 	else
@@ -226,21 +119,21 @@ int main(int argc, char *argv[])
 	pod = curr_o_array;
 	if(do_xml == 0)
 	{
+		printf("port\tonoff\tinput_port\tpolarity\ttype\ttime_delay\ttime_left\tpulse_time\treset\tlabel\n\n");
 		for(i = 0;i < osize/sizeof(O_DATA);i++)
 		{
-			printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n",pod->port,pod->onoff,pod->polarity,pod->type,
-					pod->time_delay,pod->time_left, pod->pulse_time,pod->reset,pod->label);
+			printf("%d\t%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t\t%d\t%s\n",pod->port,pod->onoff,pod->input_port, 
+					pod->polarity,pod->type,pod->time_delay,pod->time_left, 
+					pod->pulse_time,pod->reset,pod->label);
 			pod++;
 		}
-		printf("sizeof: %ld %ld\n",sizeof(I_DATA),sizeof(O_DATA));
+		printf("sizeof: %ld\n",sizeof(O_DATA));
 	}
-
-	free(curr_i_array);
 	free(curr_o_array);
 }
 
 /***********************************************************************************/
-int copy_labels(char *filename2, void *array, int which)
+int copy_labels(char *filename2, O_DATA *curr_o_data)
 {
 	char *fptr3;
 	int i,j,k,m,n,p;
@@ -250,25 +143,12 @@ int copy_labels(char *filename2, void *array, int which)
 	char *pch2;
 	int fp;
 	off_t fsize;
-	I_DATA *curr_i_array;
-	I_DATA *pid;
-	O_DATA *curr_o_array;
 	O_DATA *pod;
 	char errmsg[60];
 	char filename[30];
 
-	if(which == 1)
-	{
-		curr_i_array = (I_DATA *)array;
-		pid = curr_i_array;
-	}
-	else
-	{
-		curr_o_array = (O_DATA *)array;
-		pod = curr_o_array;
-	}
-
 	strcpy(filename,filename2);
+	printf("filename: %s\n",filename);
 	pch = &filename[0];
 	i = 0;
 	while(*pch != '.' && i < 30)
@@ -363,22 +243,12 @@ int copy_labels(char *filename2, void *array, int which)
 	}
 //	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
 
-	if(which == 1)
-		pid = curr_i_array;
-	else pod = curr_o_array;
+	pod = curr_o_data;
 
 	for(i = 0;i < 40;i++)
 	{
-		if(which == 1)
-		{
-			strcpy(pid->label,label_array[i]);
-//			printf("%s\n",pid->label);
-			pid++;
-		}else
-		{
-			strcpy(pod->label,label_array[i]);
-			pod++;
-		}
+		strcpy(pod->label,label_array[i]);
+		pod++;
 	}
 	return 0;
 }

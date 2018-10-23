@@ -12,76 +12,67 @@ using System.Globalization;
 using EpLibrary.cs;
 using System.IO;
 
-
-
 namespace EpServerEngineSampleClient
 {
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
         enum Server_cmds
         {
-            ENABLE_START = 1,
-            STARTER_OFF,
-            ON_ACC,
-            OFF_ACC,
-            ON_FUEL_PUMP,
-            OFF_FUEL_PUMP,
-            ON_FAN,
-            OFF_FAN,
-            ON_LIGHTS,
-            OFF_LIGHTS,
-            ON_BRIGHTS,
-            OFF_BRIGHTS,
-            ON_BRAKES,
-            OFF_BRAKES,
-            ON_RUNNING_LIGHTS,
-            OFF_RUNNING_LIGHTS,
-            START_SEQ,
-            SHUTDOWN,
-            SHUTDOWN_IOBOX,
-            TEMP,
-            REBOOT_IOBOX,
-            SEND_IDATA,
-            SEND_ODATA,
-            EDIT_IDATA,
-            EDIT_ODATA,
-            EDIT_IDATA2,
-            EDIT_ODATA2,
-            SEND_ALL_IDATA,
-            SEND_ALL_ODATA,
-            RECV_ALL_IDATA,
-            RECV_ALL_ODATA,
-            SHOW_IDATA,
-            SHOW_ODATA,
-            SEND_SERIAL,
-            CLOSE_SOCKET,
-            CLEAR_SCREEN,
-            SAVE_TO_DISK,
-            TOGGLE_OUTPUTS,
-            GET_DIR,
-            LCD_SHIFT_RIGHT,
-            LCD_SHIFT_LEFT,
-            SCROLL_UP,
-            SCROLL_DOWN,
-            ENABLE_LCD,
-            SET_TIME,
-            GET_TIME,
-            TOTAL_UP_TIME,
-            UPLOAD_NEW,
-            GET_DEBUG_INFO,
-            GET_DEBUG_INFO2,
-            NEW_PASSWORD1,
-            SET_SERIAL_RECV_ON,
-            SET_SERIAL_RECV_OFF,
-            TEST_ALL_IO,
-            TEST_LEFT_BLINKER,
-            TEST_RIGHT_BLINKER,
-            RE_ENTER_PASSWORD,
-            CLOSE_DB,
-            OPEN_DB,
-            BAD_MSG,
-            EXIT_PROGRAM
-
+			ENABLE_START = 1,
+			STARTER_OFF,
+			ON_ACC,
+			OFF_ACC,
+			ON_FUEL_PUMP,
+			OFF_FUEL_PUMP,
+			ON_FAN,
+			OFF_FAN,
+			ON_LIGHTS,
+			OFF_LIGHTS,
+			ON_BRIGHTS,
+			OFF_BRIGHTS,
+			ON_BRAKES,
+			OFF_BRAKES,
+			ON_RUNNING_LIGHTS,
+			OFF_RUNNING_LIGHTS,
+			START_SEQ,
+			SHUTDOWN,
+			SHUTDOWN_IOBOX,
+			TEMP,
+			REBOOT_IOBOX,
+			SEND_ODATA,
+			EDIT_ODATA,
+			EDIT_ODATA2,
+			SEND_ALL_ODATA,
+			RECV_ALL_ODATA,
+			SHOW_ODATA,
+			SEND_SERIAL,
+			CLOSE_SOCKET,
+			CLEAR_SCREEN,
+			SAVE_TO_DISK,
+			TOGGLE_OUTPUTS,
+			GET_DIR,
+			LCD_SHIFT_RIGHT,
+			LCD_SHIFT_LEFT,
+			SCROLL_UP,
+			SCROLL_DOWN,
+			ENABLE_LCD,
+			SET_TIME,
+			GET_TIME,
+			TOTAL_UP_TIME,
+			UPLOAD_NEW,
+			GET_DEBUG_INFO,
+			GET_DEBUG_INFO2,
+			NEW_PASSWORD1,
+			SET_SERIAL_RECV_ON,
+			SET_SERIAL_RECV_OFF,
+			TEST_ALL_IO,
+			TEST_LEFT_BLINKER,
+			TEST_RIGHT_BLINKER,
+			RE_ENTER_PASSWORD,
+			CLOSE_DB,
+			OPEN_DB,
+			BAD_MSG,
+			EXIT_PROGRAM
         }
         public class CommonControls : IEquatable<CommonControls>
         {
@@ -129,10 +120,10 @@ namespace EpServerEngineSampleClient
             tbHostname.Enabled = true;
             tbPort.Enabled = true;
             cblistCommon.Enabled = false;
-            btn_SendData.Enabled = false;
             btn_CloseDB.Enabled = false;
             button3.Enabled = false;
             button2.Enabled = false;
+            btn_SendSelectedRecords.Enabled = false;
             tbConnected.Text = "not connected";
             target_db_closed = false;
             Load_Grid(currentconnectionString);
@@ -166,12 +157,10 @@ namespace EpServerEngineSampleClient
         {
             tbConnected.Text = "connected";
             cblistCommon.Enabled = true;
-            btn_SendData.Enabled = true;
             btn_CloseDB.Enabled = true;
             btnConnect.Text = "Disconnect";
             button3.Enabled = true;
             button2.Enabled = true;
-            cbSelectRecord.Enabled = true;
         }
         public void OnDisconnect(INetworkClient client)
         {
@@ -180,12 +169,10 @@ namespace EpServerEngineSampleClient
             tbPort.Enabled = true;
             cblistCommon.Enabled = false;
             btnConnect.Text = "Connect";
-            btn_SendData.Enabled = false;
             btn_CloseDB.Enabled = false;
             tbConnected.Text = "not connected";
             button3.Enabled = false;
             button2.Enabled = false;
-            cbSelectRecord.Enabled = false;
             for (i = 0; i < ctls.Count; i++)
             {
                 ctls[i].CtlSet = 0;
@@ -342,21 +329,23 @@ namespace EpServerEngineSampleClient
             {
                 DataTable table;
                 DataRow row;
-                Delete_O_DATA();
+                //Delete_O_DATA();
                 table = MakeNamesTable();
                 sqlCnn.Open();
                 //              MessageBox.Show(ds2.DataSetName);
                 for (i = 0; i < 40; i++)
                 {
                     row = table.NewRow();
-                    row["label"] = "asdf";
-                    row["onoff"] = i + 6;
-                    row["polarity"] = i + 5;
-                    row["type"] = i + 4;
-                    row["time_delay"] = i + 3;
-                    row["time_left"] = i + 2;
-                    row["pulse_time"] = i + 1;
-                    row["reset"] = i;
+                    row["label"] = dataGridView1.Rows[i].Cells[0].Value.ToString();
+                    row["port"] = dataGridView1.Rows[i].Cells[1].Value;
+                    row["onoff"] = dataGridView1.Rows[i].Cells[2].Value;
+                    row["input_port"] = dataGridView1.Rows[i].Cells[3].Value;
+                    row["polarity"] = dataGridView1.Rows[i].Cells[4].Value;
+                    row["type"] = dataGridView1.Rows[i].Cells[5].Value;
+                    row["time_delay"] = dataGridView1.Rows[i].Cells[6].Value;
+                    row["time_left"] = dataGridView1.Rows[i].Cells[7].Value;
+                    row["pulse_time"] = dataGridView1.Rows[i].Cells[8].Value;
+                    row["reset"] = dataGridView1.Rows[i].Cells[9].Value;
                     table.Rows.Add(row);
                 }
                 dataGridView1.DataSource = bindingSource1;
@@ -452,19 +441,19 @@ namespace EpServerEngineSampleClient
         }
         private void btn_XML_Click(object sender, EventArgs e)
         {
-//            try
-//            {
-//                XmlReader xmlFile;
-////                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
-//                xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
-//                ds.ReadXml(xmlFile);
-//                dataGridView1.DataSource = ds.Tables[0];
-//                bindingSource1.DataSource = ds.Tables[0];
-//            }
-//            catch (Exception ex)
-//            {
-//                MessageBox.Show(ex.ToString());
-//            }
+            try
+            {
+                XmlReader xmlFile;
+                //                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
+                xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
+                ds.ReadXml(xmlFile);
+                dataGridView1.DataSource = ds.Tables[0];
+                bindingSource1.DataSource = ds.Tables[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
         private void btn_Show_Click(object sender, EventArgs e)
         {
@@ -483,7 +472,7 @@ namespace EpServerEngineSampleClient
                 sqlCnn.Open();
                 sqlCmd = new SqlCommand(sql, sqlCnn);
                 adapter.SelectCommand = sqlCmd;
-                adapter.Fill(ds2);
+                adapter.Fill(ds2);  // fill dataset with records
 
                 //MessageBox.Show(ds2.DataSetName);
                 dataGridView1.DataSource = ds2.Tables[0];
@@ -500,22 +489,6 @@ namespace EpServerEngineSampleClient
                 MessageBox.Show(ex.Message);
             }
         }
-        private void btn_Update_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                this.Validate();
-                bindingSource1.EndEdit();
-                //Delete_O_DATA();
-                //                da.Update((DataTable)bindingSource1.DataSource);
-                //AddMsg(da.Container.Components.Count.ToString());
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-        }
         private void Load_Grid(string connection_string)
         {
             SqlConnection sqlCnn;
@@ -523,9 +496,11 @@ namespace EpServerEngineSampleClient
             int i = 0;
             string sql = null;
             if (use_main_odata)
-                sql = "Select label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA";
+                //                sql = "Select label, port, onoff, input_port, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA";
+                sql = "Select label, port, onoff, input_port, type, time_delay from O_DATA";
             else
-                sql = "Select label, port, onoff, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA2";
+                //                sql = "Select label, port, onoff, input_port, polarity, type, time_delay, time_left, pulse_time, reset from O_DATA2";
+                sql = "Select label, port, onoff, input_port, type, time_delay from O_DATA2";
 
             sqlCnn = new SqlConnection(connection_string);
             try
@@ -553,13 +528,17 @@ namespace EpServerEngineSampleClient
                 dataGridView1.Columns["label"].Width = 150;
                 dataGridView1.Columns["port"].Width = 50;
                 dataGridView1.Columns["onoff"].Width = 50;
-                dataGridView1.Columns["polarity"].Width = 50;
+                dataGridView1.Columns["input_port"].Width = 50;
+                //                dataGridView1.Columns["polarity"].Width = 50;
+                dataGridView1.Columns["polarity"].Visible = false;
                 dataGridView1.Columns["type"].Width = 50;
                 dataGridView1.Columns["time_delay"].Width = 50;
-                dataGridView1.Columns["time_left"].Width = 50;
-                dataGridView1.Columns["pulse_time"].Width = 50;
-                dataGridView1.Columns["reset"].Width = 50;
-
+                //dataGridView1.Columns["time_left"].Width = 50;
+                //dataGridView1.Columns["pulse_time"].Width = 50;
+                //dataGridView1.Columns["reset"].Width = 50;
+                dataGridView1.Columns["time_left"].Visible = false;
+                dataGridView1.Columns["pulse_time"].Visible = false;
+                dataGridView1.Columns["reset"].Visible = false;
                 sqlCnn.Close();
             }
             catch (Exception ex)
@@ -568,30 +547,7 @@ namespace EpServerEngineSampleClient
             }
 
         }
-        private void Btn_SendData_Click(object sender, EventArgs e)
-        {
-            int i, j, k;
-            String str;
 
-            //            da.Fill(ds);
-
-            for (i = 0; i < 40; i++)
-            {
-                str = ds.Tables[0].Rows[i].ItemArray[0].ToString();
-                byte[] bytes = BytesFromString(str);
-                Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-                m_client.Send(packet);
-
-                for (j = 1; j < 9; j++)
-                {
-                    str = ds.Tables[0].Rows[i].ItemArray[j].ToString();
-                    //MessageBox.Show(str);
-                    bytes = BytesFromString(str);
-                    packet = new Packet(bytes, 0, bytes.Count(), false);
-                    m_client.Send(packet);
-                }
-            }
-        }
         private void Send_Cmd(string cmd, int onoff)
         {
             string test = " ";
@@ -702,6 +658,11 @@ namespace EpServerEngineSampleClient
             onoffColumn.ColumnName = "onoff";
             namesTable.Columns.Add(onoffColumn);
 
+            DataColumn input_portColumn = new DataColumn();
+            input_portColumn.DataType = System.Type.GetType("System.Int32");
+            input_portColumn.ColumnName = "input_port";
+            namesTable.Columns.Add(input_portColumn);
+
             DataColumn polarityColumn = new DataColumn();
             polarityColumn.DataType = System.Type.GetType("System.Int32");
             polarityColumn.ColumnName = "polarity";
@@ -763,30 +724,6 @@ namespace EpServerEngineSampleClient
                 MessageBox.Show(ex.Message);
             }
         }
-        // send a single record just consisting of port, onoff, type & time_delay
-        private void cbSelectRecordChanged(object sender, EventArgs e)
-        {
-            int i;
-            i = cbSelectRecord.SelectedIndex;
-            int port = (int)dataGridView1.Rows[i].Cells[1].Value;
-            int onoff = (int)dataGridView1.Rows[i].Cells[2].Value;
-            if (onoff > 0)
-                onoff = 1;
-            int type = (int)dataGridView1.Rows[i].Cells[4].Value;
-            if (type > 5)
-            {
-                AddMsg("type cannot be > 5");
-                type = 0;
-            }
-            int time_delay = (int)dataGridView1.Rows[i].Cells[5].Value;
-            string sendstr = port.ToString() + '{' +  onoff.ToString() + '|' + type.ToString() + '}' + time_delay.ToString() + '~';
-            byte[] bytes = BytesFromString(sendstr);
-            byte[] bytes2 = new byte[bytes.Count() + 2];
-            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
-            bytes2[0] = (byte)Server_cmds.SEND_ODATA;
-            Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
-            m_client.Send(packet);
-        }
         private void btn_ClrScr_Click(object sender, EventArgs e)
         {
             tbReceived.Clear();
@@ -815,11 +752,6 @@ namespace EpServerEngineSampleClient
         }
         private void Update(object sender, EventArgs e)
         {
-            btn_Update_Click(sender, e);
-        }
-        private void sendData(object sender, EventArgs e)
-        {
-            Btn_SendData_Click(sender, e);
         }
         private void restoreMainDBToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -947,6 +879,75 @@ namespace EpServerEngineSampleClient
             string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SAVE_TO_DISK);
             Send_Cmd(cmd, 0);
 //            AddMsg(cmd);
+        }
+
+        private void Btn_NewTable_Click(object sender, EventArgs e)
+        {
+            Update_Table(0, "");
+        }
+
+        private void SendSelectedRecords(object sender, EventArgs e)
+        {
+            int cell = 0;
+            int port, onoff, type, time_delay, input_port;
+            Int32 selectedCellCount =
+             dataGridView1.GetCellCount(DataGridViewElementStates.Selected);
+            if (selectedCellCount > 0)
+            {
+                if (dataGridView1.AreAllCellsSelected(true))
+                {
+                    MessageBox.Show("All cells are selected", "Selected Cells");
+                    btn_SendSelectedRecords.Enabled = false;
+                }
+                else
+                {
+                    tbReceived.Clear();
+                    Int32 selectedRowCount =
+                        dataGridView1.Rows.GetRowCount(DataGridViewElementStates.Selected);
+                    if (selectedRowCount > 0)
+                    {
+                        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                        for (int i = 0; i < selectedRowCount; i++)
+                        {
+                            //                            sb.Append("Row: ");
+                            //                            sb.Append(dataGridView1.SelectedRows[i].Cells[0].Value.ToString());
+                            cell = dataGridView1.SelectedCells[i].RowIndex;
+                            dataGridView1.SelectedCells[i].Selected = false;
+                            //MessageBox.Show(i.ToString() + " " + cell.ToString());
+                            port = (int)dataGridView1.Rows[cell].Cells[1].Value;
+                            onoff = (int)dataGridView1.Rows[cell].Cells[2].Value;
+                            if (onoff > 0)
+                                onoff = 1;
+                            input_port = (int)dataGridView1.Rows[cell].Cells[3].Value;
+                            type = (int)dataGridView1.Rows[cell].Cells[4].Value;
+                            if (type > 5)
+                            {
+                                AddMsg("type cannot be > 5");
+                                type = 0;
+                            }
+                            time_delay = (int)dataGridView1.Rows[cell].Cells[5].Value;
+                            string sendstr = port.ToString() + '{' + onoff.ToString() + '|' + type.ToString() + '}' + time_delay.ToString() + '~' + input_port.ToString() + 'z';
+                                                        sb.Append("port: " + port.ToString() + " onoff: " + onoff.ToString() + " type: " + type.ToString() + " td: " + time_delay.ToString() + " input: " + input_port.ToString());
+                                                        sb.Append(Environment.NewLine);
+                            //MessageBox.Show(sb.ToString());
+                            byte[] bytes = BytesFromString(sendstr);
+                            byte[] bytes2 = new byte[bytes.Count() + 2];
+                            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
+                            bytes2[0] = (byte)Server_cmds.SEND_ODATA;
+                            Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+                            m_client.Send(packet);
+                        }
+                        AddMsg(sb.ToString());
+                        sb.Clear();
+                        btn_SendSelectedRecords.Enabled = false;
+                    }
+                }
+            }
+        }
+
+        private void CellSelectChanged(object sender, EventArgs e)
+        {
+            btn_SendSelectedRecords.Enabled = true;
         }
     }
 }

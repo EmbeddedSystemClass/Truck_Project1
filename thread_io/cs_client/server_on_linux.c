@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	tv.tv_usec = 50000;
 	int s;
 	int i,j,k,l;
-	char tempx[100];
+	char tempx[500];
 	char tempx2[10];
 	int rc;
 	int option = 1;
@@ -133,53 +133,64 @@ int main(int argc, char *argv[])
 //#if 0
 //	for(j = 0;j < 3;j++)
 	ret = 0;
-	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, 
-						S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, 
+//						S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
 //	fp = open((const char *)fptr, O_RDWR | O_CREAT);
+/*
 	if(fp < 0)
 	{
 		close(fp);
-		printf("error\n");
+		printf("file error\n");
 		return -2;
 	}
 	j = 0;
 	i = lseek(fp,0,SEEK_SET);
-
+*/
 	k = 0;
-	for(i = 0;i < 20;i++)
+	for(i = 0;i < 4;i++)
 	{
 		memset(buf,0,BUF_SIZE);
-//			memset(buf2,0,BUF_SIZE);
 		ret = recv(socket_fd,(void*)&buf[0],8,MSG_WAITALL);
-//		for(l = 0;l < 8;l++)
-//			printf("%02x ",buf[l]);
+		for(l = 0;l < 8;l++)
+			printf("%02x ",buf[l]);
+		printf("\n");	
 		ret = recv(socket_fd,(void*)&msg_size,2,MSG_WAITALL);
 		printf("\nmsg size: %d\n",msg_size);
 		recv(socket_fd,&buf[0],6,MSG_WAITALL);	// read (6) 0's
-//		for(l = 0;l < 6;l++)
-//			printf("%02x ",buf[l]);
+		for(l = 0;l < 6;l++)
+			printf("%02x ",buf[l]);
 
-//			if(msg_size > 20000)
-//				msg_size = 20000;
+		printf("\n");	
+
+		if(msg_size > 20000)
+			msg_size = 20000;
 		recv(socket_fd,(void*)&buf[0],(size_t)msg_size,MSG_WAITALL);
 //		usleep(1000);
-		j = write(fp,(const void*)&buf[0],msg_size);
-		k += j;
-		printf("\n%d %d\n",j,k);
-		j = 0;
+		
+		k = 0;
+		for(j = 0;j < msg_size;j+=2)
+		{
+			tempx[k++] = buf[j];			
+			printf("%02x ",buf[j]);
+		}
+		tempx[k] = 0;
+		printf("\n");
+	
+//		j = write(fp,(const void*)&buf[0],msg_size);
+//		printf("\n%s\n",tempx);
 	}
+	close(socket_fd);
+	exit(0);
 	memset(buf,0,BUF_SIZE);
-//		memset(buf2,0,BUF_SIZE);
 	ret = recv(socket_fd,(void*)&buf[0],8,MSG_WAITALL);
 	ret = recv(socket_fd,(void*)&msg_size,2,MSG_WAITALL);
 	printf("\nmsg size: %d\n",msg_size);
 	recv(socket_fd,(void*)&buf,6,MSG_WAITALL);	// read (6) 0's
 	recv(socket_fd,(void*)&buf[0],msg_size,MSG_WAITALL);
 //	usleep(1000);
-	j = write(fp,(const void*)buf,msg_size);
-
+//	j = write(fp,(const void*)buf,msg_size);
 	close(socket_fd);
-	close(fp);
+//	close(fp);
 	exit(0);
 }

@@ -27,6 +27,15 @@ typedef struct
 	char cmd_str[30];
 } CMD_STRUCT;
 
+#define OLABELSIZE 30
+
+typedef struct _ip
+{
+	int port;
+	int input;
+	char label[OLABELSIZE];
+}IP;
+
 enum cmd_types
 {
 	ENABLE_START = 1,
@@ -50,17 +59,11 @@ enum cmd_types
 	SHUTDOWN_IOBOX,
 	TEMP,
 	REBOOT_IOBOX,
-	SEND_IDATA,
 	SEND_ODATA,
-	EDIT_IDATA,
 	EDIT_ODATA,
-	EDIT_IDATA2,
 	EDIT_ODATA2,
-	SEND_ALL_IDATA,
 	SEND_ALL_ODATA,
-	RECV_ALL_IDATA,
 	RECV_ALL_ODATA,
-	SHOW_IDATA,
 	SHOW_ODATA,
 	SEND_SERIAL,
 	CLOSE_SOCKET,
@@ -75,13 +78,6 @@ enum cmd_types
 	ENABLE_LCD,
 	SET_TIME,
 	GET_TIME,
-/*
-	TCP_WINDOW_ON,
-	TCP_WINDOW_OFF,
-	LIVE_WINDOW_ON,
-	LIVE_WINDOW_OFF,
-	TEST_WRITE_FILE,
-*/
 	TOTAL_UP_TIME,
 	UPLOAD_NEW,
 	GET_DEBUG_INFO,

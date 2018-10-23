@@ -46,7 +46,6 @@ extern void close_mem(void);
 extern void *work_routine(void *arg);
 
 char oFileName[20];
-char iFileName[20];
 
 UCHAR reboot_on_exit;
 
@@ -78,18 +77,12 @@ int main(int argc, char **argv)
 
 	if(argc < 2)
 	{
-		strcpy(iFileName,"idata.dat\0");
 		strcpy(oFileName,"odata.dat\0");
 	}
 	else if(argc == 2)
 	{
 		strcpy(oFileName,argv[1]);
 		strcpy(oFileName,"odata.dat\0");
-	}
-	else
-	{
-		strcpy(iFileName,argv[1]);
-		strcpy(oFileName,argv[2]);
 	}
 
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));

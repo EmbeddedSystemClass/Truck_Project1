@@ -163,6 +163,67 @@ int ollist_find_data(int index, O_DATA **datapp, ollist_t *llistp)
 }
 
 /******************************************************************************/
+int ollist_find_data_ip(int index, O_DATA **datapp, ollist_t *llistp)
+{
+	ollist_node_t *cur, *prev;
+	int status = -1;
+
+	/* Initialize to "not found" */
+	*datapp = (O_DATA *)NULL;
+
+	pthread_rdwr_rlock_np(&(llistp->rwlock));
+
+	/* Look through index for our entry */
+	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
+	{
+		if (cur->index == index)
+		{
+			*datapp = cur->datap;
+			if(cur->datap->input_port != 0xFF)
+			{
+//				printf("find: %d %d %d %d %s\r\n", index, cur->datap->onoff, cur->datap->port, 
+//					cur->datap->input_port, cur->datap->label);
+				status = cur->datap->input_port;		
+				break;
+			}
+		}
+		else if (cur->index > index)
+		{
+			break;
+		}
+	}
+	pthread_rdwr_runlock_np(&(llistp->rwlock));
+	return status;
+}
+/******************************************************************************/
+int ollist_find_data_op(int index, int port, O_DATA **datapp, ollist_t *llistp)
+{
+	ollist_node_t *cur, *prev;
+	int status = -1;
+
+	/* Initialize to "not found" */
+	*datapp = (O_DATA *)NULL;
+
+	pthread_rdwr_rlock_np(&(llistp->rwlock));
+
+	/* Look through index for our entry */
+	for (cur=prev=llistp->first; cur != NULL; prev=cur, cur=cur->nextp)
+	{
+		*datapp = cur->datap;
+		if (cur->datap->input_port != 0xFF && cur->datap->port == port && cur->datap->input_port == index)
+		{
+//			printf("find: input: %d port: %d %s\r\n", index, cur->datap->port, cur->datap->label);
+			status = cur->datap->port;
+			break;
+		}
+//		else if(cur->datap->input_port != 0xff)
+//			break;
+	}
+	pthread_rdwr_runlock_np(&(llistp->rwlock));
+	return status;
+}
+
+/******************************************************************************/
 int ollist_toggle_output(int index, ollist_t *llistp)
 {
 	ollist_node_t *cur, *prev;
@@ -257,7 +318,6 @@ int ollist_change_data(int index, O_DATA *datap, ollist_t *llistp)
 }
 
 /******************************************************************************/
-#ifdef MAKE_TARGET
 int ollist_show(ollist_t *llistp)
 {
 //	char list_buf[100];
@@ -293,8 +353,8 @@ int ollist_show(ollist_t *llistp)
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
 */
-			send_tcp((UCHAR *)&list_buf[0],100);
-//			printf("iptr: %d\r\n",iptr);
+//			send_tcp((UCHAR *)&list_buf[0],100);
+			printf("iptr: %d\r\n",iptr);
 //			printString2(list_buf);
 
 		}
@@ -302,8 +362,6 @@ int ollist_show(ollist_t *llistp)
 	pthread_rdwr_runlock_np(&(llistp->rwlock));
 	return 0;
 }
-
-#endif
 
 int ollist_printfile(int fp, ollist_t *llistp)
 {

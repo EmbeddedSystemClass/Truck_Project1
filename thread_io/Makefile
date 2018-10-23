@@ -129,14 +129,14 @@ ioports.o: ioports.c ioports.h
 tasks.o: tasks.c tasks.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c tasks.c
 
-read_sd.o: read_sd.c ../mytypes.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c read_sd.c
+#read_sd.o: read_sd.c ../mytypes.h
+#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c read_sd.c
 
 serial_io.o: serial_io.c serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
 
-illist_threads_rw.o: queue/illist_threads_rw.c queue/illist_threads_rw.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/illist_threads_rw.c
+#illist_threads_rw.o: queue/illist_threads_rw.c queue/illist_threads_rw.h
+#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/illist_threads_rw.c
 
 ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/ollist_threads_rw.c
@@ -162,13 +162,13 @@ test_dio1.o: test_dio1.c lcd_func.c lcd_func.h serial_io.c serial_io.h
 test_dio1: test_dio1.o lcd_func.o serial_io.o
 
 #sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
-sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o cmd_tasks.o
+sched: sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o cmd_tasks.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o cmd_tasks.o -o sched
+	${CC} -static -pthread sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o cmd_tasks.o -o sched
 #	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o #rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 
-read_sd: read_sd.o
-	${CC} read_sd.o -o read_sd
+#read_sd: read_sd.o
+#	${CC} read_sd.o -o read_sd
 
 #lcd: lcd_func.o
 #	${CC} lcd_func.o -o lcd

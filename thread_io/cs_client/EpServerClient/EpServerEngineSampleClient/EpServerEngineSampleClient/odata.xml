@@ -58,7 +58,7 @@
 	<O_DATA>
 		<label>LBRIGHTS</label>
 		<port>5</port>
-		<onoff>0</onoff>
+		<onoff>0</onoff>2
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>

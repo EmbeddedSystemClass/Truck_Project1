@@ -23,7 +23,7 @@
 #include "../mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
-#include "queue/illist_threads_rw.h"
+//#include "queue/illist_threads_rw.h"
 #include "queue/ollist_threads_rw.h"
 //#include "queue/rt_llist_threads_rw.h"
 #include "tasks.h"
@@ -49,12 +49,12 @@ pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
 
-illist_t ill;
+//illist_t ill;
 ollist_t oll;
 
 //rt_llist_t roll;
 
-extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
+//extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
 #define SERIAL_BUFF_SIZE  20
@@ -71,18 +71,61 @@ static int mask2int(UCHAR mask);
 extern int shutdown_all;
 extern int time_set;
 extern int live_window_on;
+int max_ips;
+IP ip[40];
+
 //static double program_start_time;
 
 #define ON 1
 #define OFF 0
 
 /****************************************************************************************************/
-
 static double curtime(void)
 {
 	struct timeval tv;
 	gettimeofday (&tv, NULL);
 	return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
+/****************************************************************************************************/
+void init_ips(void)
+{
+	int i,j,k;
+	O_DATA *otp;
+	O_DATA **otpp = &otp;
+
+	for(i = 0;i < 40;i++)
+	{
+		ip[i].port = -1;
+		ip[i].input = 0;
+		memset(ip[i].label,0,OLABELSIZE);
+	}
+
+	j = 0;
+	// find all the inputs that have outputs assigned
+	// to them and make a list to go in ip struct array
+	for(i = 0;i < 40;i++)
+	{
+		for(k = 0;k < 40;k++)
+		{
+			if(ollist_find_data_op(i,k,&otp,&oll) > -1)
+			{
+				ip[j].port = k;
+				ip[j].input = i;
+				strcpy(ip[j++].label,otp->label);
+			}
+		}
+	}
+	printf("\n");
+
+	max_ips = 0;
+	for(i = 0;i < 40;i++)
+	{
+		if(ip[i].port > -1)
+			printf("%d: \tport: %d\t\t input: %d\t\t %s \n",i,ip[i].port,ip[i].input,ip[i].label);
+		else
+			max_ips++;
+	}
 }
 
 /****************************************************************************************************/
@@ -101,8 +144,8 @@ void send_live_code(UCHAR cmd)
 	status_line[3] = running_hours;
 //	send_tcp((UCHAR*)status_line,10);
 */
-	strcpy(status_line,"test xyz\0");
-	send_msg(strlen(status_line),(UCHAR*)status_line);
+	strcpy((char *)status_line,"test xyz\0");
+	send_msg(strlen((char*)status_line),(UCHAR*)status_line);
 }
 
 /*********************************************************************/
@@ -272,8 +315,8 @@ void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR da
 // and record the event in llist - each input can be assigned any output
 UCHAR monitor_input_task(int test)
 {
-	I_DATA *itp;
-	I_DATA **itpp = &itp;
+//	I_DATA *itp;
+//	I_DATA **itpp = &itp;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
 
@@ -281,6 +324,7 @@ UCHAR monitor_input_task(int test)
 	int bank, index;
 	UCHAR result,result2, mask, onoff;
 	int i, rc, flag;
+	int input_port;
 	
 
 //	TODO: what if more than 1 button is pushed in same bank or diff bank at same time?
@@ -335,11 +379,19 @@ UCHAR monitor_input_task(int test)
 						index = real_banks[i].i;
 					}
 				}
+				for(i = 0;i < max_ips;i++)
+				{
+					if(ip[i].input == index)
+					{
+						ollist_find_data_op(index,ip[i].port,&otp,&oll);
+						set_output(otp, onoff);
+					}
+				}
 				// itpp is a pointer to itp
-				illist_find_data(index,itpp,&ill);
+//				illist_find_data(index,itpp,&ill);
 
 				// find the input assigned to the output(s)
-
+/*
 				for(i = 0;i < 10;i++)
 				{
 					if(itp->affected_output[i] < 40)
@@ -349,7 +401,7 @@ UCHAR monitor_input_task(int test)
 //						printf("port: %d\r\n",otp->port);
 					}
 				}
-
+*/
 				inportstatus[bank] = result;
 //				printf("leave 1: %02x\r\n\r\n",inportstatus[bank]);
 			}
@@ -394,8 +446,8 @@ int change_input(int index, int onoff)
 // set by change_inputs()
 UCHAR monitor_fake_input_task(int test)
 {
-	I_DATA *itp;
-	I_DATA **itpp = &itp;
+//	I_DATA *itp;
+//	I_DATA **itpp = &itp;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
 
@@ -450,6 +502,16 @@ UCHAR monitor_fake_input_task(int test)
 						index = real_banks[i].i;
 					}
 				}
+
+				for(i = 0;i < max_ips;i++)
+				{
+					if(ip[i].input == index)
+					{
+						ollist_find_data(ip[i].port,&otp,&oll);
+						set_output(otp, onoff);
+					}
+				}
+/*
 				illist_find_data(index,itpp,&ill);
 
 				for(i = 0;i < 10;i++)
@@ -461,7 +523,7 @@ UCHAR monitor_fake_input_task(int test)
 //						printf("port: %d\r\n",otp->port);
 					}
 				}
-
+*/
  				fake_inportstatus1[bank] = fake_inportstatus2[bank];
 
 //				printf("leave 2: %02x %02x\r\n\r\n",fake_inportstatus1[bank],fake_inportstatus2[bank]);

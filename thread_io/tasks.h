@@ -53,6 +53,7 @@ int recv_tcp(UCHAR *str, int strlen,int block);
 void close_tcp(void);
 int test_sd(int test);
 int test_sock(void);
+void init_ips(void);
 
 typedef struct
 {

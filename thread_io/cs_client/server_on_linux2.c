@@ -14,12 +14,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
-#include "../queue/illist_threads_rw.h"
 #include "../queue/ollist_threads_rw.h"
 #include "../ioports.h"
 #include "setiodata.h"
 
-extern int iLoadConfig(char *filename, I_DATA *curr_i_array,size_t size,char *errmsg);
 extern int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg);
 extern int GetFileFormat(char *filename);
 
@@ -249,8 +247,6 @@ static int test_data(void)
 	char temp[100];
 	int tempx[100];
 
-	I_DATA *curr_i_array;
-	I_DATA *pid;
 	O_DATA *curr_o_array;
 	O_DATA *pod;
 	size_t isize;
@@ -261,11 +257,6 @@ static int test_data(void)
 	int temp_int2;
 
 	i = NUM_PORT_BITS;
-
-	isize = sizeof(I_DATA);
-	isize *= i;
-//	printf("\nsizeof I_DATA: %lu\n",sizeof(I_DATA));
-//	printf("sizeof size_t: %lu\n",sizeof(size_t));
 
 	osize = sizeof(O_DATA);
 	osize *= i;

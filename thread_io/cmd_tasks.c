@@ -22,7 +22,7 @@
 #include "../mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
-#include "queue/illist_threads_rw.h"
+//#include "queue/illist_threads_rw.h"
 #include "queue/ollist_threads_rw.h"
 //#include "queue/rt_llist_threads_rw.h"
 #include "tasks.h"
@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[68] =
+CMD_STRUCT cmd_array[55] =
 {
 //	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -58,17 +58,11 @@ CMD_STRUCT cmd_array[68] =
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{		TEMP,"TEMP\0" },
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
-	{   	SEND_IDATA,"SEND_IDATA\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
-	{   	EDIT_IDATA,"EDIT_IDATA\0" },
 	{   	EDIT_ODATA,"EDIT_ODATA\0" },
-	{   	EDIT_IDATA2,"EDIT_IDATA2\0" },
 	{   	EDIT_ODATA2,"EDIT_ODATA2\0" },
-	{   	SEND_ALL_IDATA,"SEND_ALL_IDATA\0" },
 	{   	SEND_ALL_ODATA,"SEND_ALL_ODATA\0" },
-	{   	RECV_ALL_IDATA,"RECV_ALL_IDATA\0" },
 	{   	RECV_ALL_ODATA,"RECV_ALL_ODATA\0" },
-	{   	SHOW_IDATA,"SHOW_IDATA\0" },
 	{   	SHOW_ODATA,"SHOW_ODATA\0" },
 	{   	SEND_SERIAL,"SEND_SERIAL\0" },
 	{   	CLOSE_SOCKET,"CLOSE_SOCKET\0" },
@@ -83,13 +77,6 @@ CMD_STRUCT cmd_array[68] =
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
 	{   	GET_TIME,"GET_TIME\0" },
-/*
-	{   	TCP_WINDOW_ON,"TCP_WINDOW_ON\0" },
-	{   	TCP_WINDOW_OFF,"TCP_WINDOW_OFF\0" },
-	{   	LIVE_WINDOW_ON,"LIVE_WINDOW_ON\0" },
-	{   	LIVE_WINDOW_OFF,"LIVE_WINDOW_OFF\0" },
-	{		TEST_WRITE_FILE,"TEST_WRITE_FILE\0" },
-*/
 	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		GET_DEBUG_INFO,"GET_DEBUG_INFO\0" },
@@ -107,7 +94,7 @@ CMD_STRUCT cmd_array[68] =
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
-extern illist_t ill;
+//extern illist_t ill;
 extern ollist_t oll;
 
 UCHAR msg_buf[1000];
@@ -120,14 +107,17 @@ static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 //int serial_recv_on;
 int time_set;
 
+// array of structs to list all the inputs that have outputs assigned
+// to them 
+
 /*********************************************************************/
 // task to get commands from the host
 UCHAR get_host_cmd_task(int test)
 {
-	I_DATA tempi1;
+//	I_DATA tempi1;
 	O_DATA tempo1;
 //	RI_DATA tempr1;
-	I_DATA *itp;
+//	I_DATA *itp;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
 	int rc = 0;
@@ -138,12 +128,13 @@ UCHAR get_host_cmd_task(int test)
 	char filename[15];
 	size_t size;
 	int i;
-	int j = 0;
+	int j;
+	int k;
 	size_t isize;
 	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
-	UCHAR _port,_onoff,_type,_time_delay;
+	UCHAR _port,_onoff,_type,_time_delay,_input;
 	int testx;
 	UCHAR rec_no;
 	struct dirent **namelist;
@@ -198,10 +189,11 @@ UCHAR get_host_cmd_task(int test)
 	} 
 	memset(dat_names,0,sizeof(dat_names));
 
+/*
 	i = NUM_PORT_BITS;
 	isize = sizeof(I_DATA);
 	isize *= i;
-
+*/
 	i = NUM_PORT_BITS;
 	osize = sizeof(O_DATA);
 	osize *= i;
@@ -212,19 +204,6 @@ UCHAR get_host_cmd_task(int test)
 	
 //	program_start_time = curtime();
 
-	illist_init(&ill);
-	if(access(iFileName,F_OK) != -1)
-	{
-		rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
-		if(rc > 0)
-		{
-			myprintf1(errmsg);
-//			return 1;
-		}
-	}else										  // oh-boy! create a new file!
-	{
-
-	}
 	ollist_init(&oll);
 	if(access(oFileName,F_OK) != -1)
 	{
@@ -233,14 +212,9 @@ UCHAR get_host_cmd_task(int test)
 		{
 			myprintf1(errmsg);
 		}
-	}else										  // oh-boy! create a new file!
-	{
-
 	}
+	init_ips();
 
-//	rt_llist_init (&roll);		// make new list for rt data every time this program
-								// runs - copy the old one to the sd card and rename it
-//	rtp = &tempr1;
 	same_msg = 0;
 	lcd_init();
 
@@ -539,10 +513,11 @@ UCHAR get_host_cmd_task(int test)
 						myprintf1(tempx);
 						break;
 						
+/*
 					case SHOW_IDATA:
 						illist_show(&ill);
 						break;
-
+*/
 					case SHOW_ODATA:
 //						myprintf1("show O_DATA (tcp_win)\0");
 						ollist_show(&oll);
@@ -550,13 +525,14 @@ UCHAR get_host_cmd_task(int test)
 
 					// send the data currently in the input/output database to the
 					// same databases in the laptop for a certain port
+/*
 					case SEND_IDATA:
 						rc += recv_tcp((UCHAR *)&rec_no,1,1);
 						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
 						illist_insert_data(rec_no, &ill, &tempi1);
 						illist_show(&ill);
 						break;
-
+*/
 					case SEND_ODATA:
 						j = 0;
 						memset(tempy,0,sizeof(tempy));
@@ -575,6 +551,7 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,tempy,i);
 						_port = (UCHAR)atoi(tempx);
+						printf("port: %d\r\n",_port);
 						i = 0;
 						while(*pch != 0x7C)
 						{
@@ -585,6 +562,7 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));	
 						memcpy(tempx,pch-i-1,i);
 						_onoff = (UCHAR)atoi(tempx);
+						printf("onoff: %d\r\n",_onoff);
 						i = 0;
 						while(*pch != 0x7D)
 						{
@@ -595,13 +573,30 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));	
 						memcpy(tempx,pch-i-1,i);
 						_type = (UCHAR)atoi(tempx);
+						printf("type: %d\r\n",_type);
+
+						i = 0;						
+						while(*pch != 0x7E)
+						{
+							pch++;
+							i++;
+						}
+						pch++;
 						memset(tempx,0,sizeof(tempx));	
-						memcpy(tempx,pch,4);
+						memcpy(tempx,pch-i-1,i);
 						_time_delay = (UCHAR)atoi(tempx);
+						printf("time_delay: %d\r\n",_time_delay);
+						
+						memset(tempx,0,sizeof(tempx));
+						memcpy(tempx,pch,4);
+						_input = atoi(tempx);
+						printf("input: %d\r\n",_input);
+						
 						ollist_find_data(_port,&otp,&oll);
 						otp->onoff = _onoff;
 						otp->type = _type;
 						otp->time_delay = _time_delay;
+						otp->input_port = _input;
 						ollist_insert_data(_port,&oll,otp);
 /*
 						for(i = STARTER;i < TESTOUTPUT24;i++)
@@ -614,6 +609,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					// send all the data to the laptop
+/*
 					case SEND_ALL_IDATA:
 						rc = 0;
 						itp = &tempi1;
@@ -623,7 +619,7 @@ UCHAR get_host_cmd_task(int test)
 							illist_insert_data(i,&ill,itp);
 						}
 						break;
-
+*/
 					case SEND_ALL_ODATA:
 						rc = 0;
 						otp = &tempo1;
@@ -636,6 +632,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					// get all the data from the laptop
+/*
 					case RECV_ALL_IDATA:
 						rc = 0;
 						itp = &tempi1;
@@ -653,7 +650,7 @@ UCHAR get_host_cmd_task(int test)
 						}
 //						myprintf1("done\0");
 						break;
-
+*/
 					case RECV_ALL_ODATA:
 						rc = 0;
 						otp = &tempo1;
@@ -733,9 +730,13 @@ UCHAR get_host_cmd_task(int test)
 
 					// save what's currenly in the databases to the disk on the IO box
 					case SAVE_TO_DISK:
-//						printf("saving to disk...\r\n");
-						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
-							myprintf1(errmsg);
+/*
+						for(i = 0;i < 20;i++)
+						{
+							ollist_find_data(i,otpp,&oll);
+							printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->type);
+						}
+*/
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
 //						printf("done\r\n");	
@@ -764,25 +765,12 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case CLOSE_DB:
-//						printf("closing: %s %s\r\n",iFileName,oFileName);
-						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
-							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						printf("db's closed\r\n");	
+						printf("db's closed\r\n");	
 						break;
 
 					case OPEN_DB:
-//						printf("opening: %s %s\r\n",iFileName,oFileName);
-						if(access(iFileName,F_OK) != -1)
-						{
-							rc = ilLoadConfig(iFileName,&ill,isize,errmsg);
-							if(rc > 0)
-							{
-								myprintf1(errmsg);
-					//			return 1;
-							}
-						}
 						if(access(oFileName,F_OK) != -1)
 						{
 							rc = olLoadConfig(oFileName,&oll,osize,errmsg);
@@ -927,8 +915,6 @@ exit_program:
 							ollist_insert_data(i,&oll,otp);
 						}
 
-						if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
-							myprintf1(errmsg);
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
 
