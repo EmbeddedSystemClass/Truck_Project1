@@ -122,10 +122,12 @@ void init_ips(void)
 	for(i = 0;i < 40;i++)
 	{
 		if(ip[i].port > -1)
-			printf("%d: \tport: %d\t\t input: %d\t\t %s \n",i,ip[i].port,ip[i].input,ip[i].label);
-		else
+		{
+//			printf("%d: \tport: %d input: %d %s \n",i,ip[i].port,ip[i].input,ip[i].label);
 			max_ips++;
+		}
 	}
+//	printf("max_ips: %d\r\n",max_ips);
 }
 
 /****************************************************************************************************/
@@ -238,6 +240,7 @@ static void set_output(O_DATA *otp, int onoff)
 			break;
 		case 2:
 		case 3:
+//			printf("type %d port: %d onoff: %d reset: %d\r\n",otp->type, otp->port, otp->onoff, otp->reset);
 			if(otp->reset == 0)
 			{
 				otp->reset = 1;
@@ -247,14 +250,12 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 1;
 				change_output(otp->port,1);
 				ollist_insert_data(otp->port,&oll,otp);
-//				printf("type %d port: %d onoff: %d reset: %d pol: %d\r\n",otp->type, otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
 			}
 			break;
 		case 4:
 			if(otp->reset == 0)
 			{
-//				printf("type 1 port: %d onoff: %d\r\n", otp->port, otp->onoff);
+//				printf("type 4 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 				otp->reset = 1;
 //				if(otp->polarity == 0)
 //				TOGGLE_OTP;
@@ -271,7 +272,7 @@ static void set_output(O_DATA *otp, int onoff)
 //				if(otp->polarity == 1)
 //					TOGGLE_OTP;
 				otp->reset = 3;
-//				printf("type 4b port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
+//				printf("type 4 port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
 			}
 			break;
@@ -285,7 +286,7 @@ static void set_output(O_DATA *otp, int onoff)
 /*********************************************************************/
 void send_serial(int port, int onoff)
 {
-//return;
+return;
 // send what just changed to the PIC24/AVR to dispaly on screen
 	pthread_mutex_lock( &serial_write_lock);
 	
@@ -381,9 +382,10 @@ UCHAR monitor_input_task(int test)
 				}
 				for(i = 0;i < max_ips;i++)
 				{
+//					printf("%d %d %d\r\n",ip[i].port,ip[i].input,index);
 					if(ip[i].input == index)
 					{
-						ollist_find_data_op(index,ip[i].port,&otp,&oll);
+						ollist_find_data(ip[i].port,&otp,&oll);
 						set_output(otp, onoff);
 					}
 				}
@@ -1184,22 +1186,36 @@ void basic_controls(UCHAR cmd)
 	char errmsg[50];
 
 //	myprintf2("basic ctls: ",cmd);
+/*
+	HEADLAMP_INPUT,				// 0
+	RUNNING_LIGHTS_INPUT,		// 1
+	LEFTBLINKER_INPUT,			// 2
+	RIGHTBLINKER_INPUT,			// 3
+	BRIGHTS_INPUT,				// 4
+	STARTER_INPUT,				// 5
+	COOLINGFAN_INPUT,			// 6
+	ESTOP_INPUT					// 7
+*/
+
 	switch(cmd)
 	{
 		case ENABLE_START:
-			index = STARTER;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("on: %s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(STARTER,1);
+//			index = STARTER;
+//			rc = ollist_find_data(index,otpp,&oll);
+//			otp->onoff = 1;
+//			ollist_insert_data(index,&oll,otp);
+			change_input(STARTER_INPUT,1);
 			engine_running = 1;
 			send_live_code(cmd);
 			break;
 
-		case STARTER_OFF:
-			index = STARTER;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("off: %s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(STARTER,0);
+		case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
+							// so turning it "off" will just start the timer again
+//			index = STARTER;
+//			rc = ollist_find_data(index,otpp,&oll);
+//			otp->onoff = 0;
+//			ollist_insert_data(index,&oll,otp);
+			change_input(STARTER_INPUT,0);
 			send_live_code(cmd);
 			break;
 
@@ -1208,7 +1224,7 @@ void basic_controls(UCHAR cmd)
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 1;
-//			ollist_insert_data(index,&oll,otp);
+			ollist_insert_data(index,&oll,otp);
 //			change_input(ACCON, 1);
 			if(otp->reset == 0)
 				change_output(ACCON, 1);
@@ -1220,7 +1236,7 @@ void basic_controls(UCHAR cmd)
 			rc = ollist_find_data(index,otpp,&oll);
 //			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
 //			otp->onoff = 0;
-//			ollist_insert_data(index,&oll,otp);
+			ollist_insert_data(index,&oll,otp);
 //			change_input(ACCON, 0);
 			if(otp->reset == 0)
 				change_output(ACCON, 0);
@@ -1257,128 +1273,51 @@ void basic_controls(UCHAR cmd)
 			break;
 
 		case ON_FAN:
-			index = COOLINGFAN;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(COOLINGFAN, 1);
+			change_input(COOLINGFAN_INPUT, 1);
 			send_live_code(cmd);
 			break;
 
 		case OFF_FAN:
-			index = COOLINGFAN;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(COOLINGFAN, 0);
+			change_input(COOLINGFAN_INPUT, 0);
 			send_live_code(cmd);
 			break;
 
 		case ON_LIGHTS:
-			index = LHEADLAMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LHEADLAMP, 1);
-
-			usleep(100000);
-			index = RHEADLAMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RHEADLAMP, 1);
+			change_input(HEADLAMP_INPUT, 1);
 			break;
 
 		case OFF_LIGHTS:
-			index = LHEADLAMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LHEADLAMP, 0);
-
-			usleep(100000);
-			index = RHEADLAMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RHEADLAMP, 0);
-
+			change_input(HEADLAMP_INPUT, 0);
 			break;
 
 		case ON_RUNNING_LIGHTS:
-			index = RUNNINGLIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RUNNINGLIGHTS, 1);
+			change_input(RUNNING_LIGHTS_INPUT, 1);
 			break;
 
 		case OFF_RUNNING_LIGHTS:
-			index = RUNNINGLIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RUNNINGLIGHTS, 0);
+			change_input(RUNNING_LIGHTS_INPUT, 0);
 			break;
 
 		case ON_BRIGHTS:
-			index = LBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRIGHTS, 1);
-
-			usleep(100000);
-
-			index = RBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RBRIGHTS, 1);
+			change_input(BRIGHTS_INPUT, 1);
 			break;
 
 		case OFF_BRIGHTS:
-			index = LBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRIGHTS, 0);
-
-			usleep(100000);
-
-			index = RBRIGHTS;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RBRIGHTS, 0);
+			change_input(BRIGHTS_INPUT, 0);
 			break;
 
 		case TEST_LEFT_BLINKER:
-			index = LEFTBLINKER;
-			rc = ollist_find_data(index,otpp,&oll);
-			change_input(LEFTBLINKER,1);
+			change_input(LEFTBLINKER_INPUT,1);
 		break;
 
 		case TEST_RIGHT_BLINKER:
-			index = RIGHTBLINKER;
-			rc = ollist_find_data(index,otpp,&oll);
-			change_input(RIGHTBLINKER,1);
+			change_input(RIGHTBLINKER_INPUT,1);
 		break;
 
 		case ON_BRAKES:
-			index = LBRAKELIGHT;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRAKELIGHT, 1);
-/*
-			usleep(100000);
-			index = RBRAKELIGHT;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RBRAKELIGHT, 1);
-*/
 		break;
 
 		case OFF_BRAKES:
-			index = LBRAKELIGHT;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(LBRAKELIGHT, 0);
-/*
-			usleep(100000);
-			index = RBRAKELIGHT;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d\r\n",otp->label,otp->port,otp->onoff);
-			change_input(RBRAKELIGHT, 0);
-*/
 		break;
 
 		case START_SEQ:
@@ -1389,7 +1328,7 @@ void basic_controls(UCHAR cmd)
 //			printf("%d %s\r\n",otp->port,otp->label);
 //			change_output(otp->port,otp->onoff);
 			change_output(ACCON,1);
-			usleep(100000);
+			usleep(10000);
 			ollist_insert_data(otp->port,&oll,otp);
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 1;
@@ -1397,20 +1336,29 @@ void basic_controls(UCHAR cmd)
 //			printf("%d %s\r\n",otp->port,otp->label);
 //			change_output(otp->port,otp->onoff);
 			change_output(FUELPUMP,1);
-			usleep(100000);
+			usleep(10000);
 			ollist_insert_data(otp->port,&oll,otp);
-			change_input(STARTER, 1);
+
+			index = STARTER;
+			rc = ollist_find_data(index,otpp,&oll);
+//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
+//			otp->onoff = 0;
+//			otp->reset = 0;
+//			TOGGLE_OTP;
+//			ollist_insert_data(index,&oll,otp);
+			change_input(STARTER_INPUT, 0);
+			usleep(10000);
+			change_input(STARTER_INPUT, 1);
+//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 			send_live_code(ENABLE_START);
 			break;
 
 		case SHUTDOWN:
-			myprintf1("shutdown\0");
+			myprintf1("shutdown engine\0");
 			running_seconds = running_minutes = running_hours = 0;
 			engine_running = 0;
-			change_input(STARTER, 0);
-			usleep(100000);
 			change_output(ACCON, 0);
-			usleep(100000);
+			usleep(10000);
 			ollist_find_data(ACCON,&otp,&oll);
 			otp->onoff = 0;
 			ollist_insert_data(otp->port,&oll,otp);
@@ -1418,6 +1366,17 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 0;
 			ollist_insert_data(otp->port,&oll,otp);
+
+//			index = STARTER;
+//			rc = ollist_find_data(index,otpp,&oll);
+//			change_input(STARTER_INPUT,0);
+//			otp->onoff = 0;
+//			otp->reset = 0;
+//			otp->time_left = 0;
+//			ollist_insert_data(index,&oll,otp);
+//			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
+//			set_output(STARTER,0);
+//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 			send_live_code(SHUTDOWN);
 			break;
 

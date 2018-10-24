@@ -325,19 +325,22 @@ int ollist_show(ollist_t *llistp)
 	int iptr;
 	ollist_node_t *cur;
 	char list_buf[100];
+	int i = 0;
+
+//	printf("showing O_DATA\r\n");
 
 	pthread_rdwr_rlock_np(&(llistp->rwlock));
+
+	printf("port\tonoff\tinput_port\ttype\ttime_delay\tlabel\r\n");
 
 	for (cur=llistp->first; cur != NULL; cur=cur->nextp)
 	{
 		if(cur->datap->label[0] != 0)
 		{
+			printf("%2d\t%2d\t%2d\t\t%2d\t%2d\t%s\r\n",
+				(int)cur->datap->port, (int)cur->datap->onoff, (int)cur->datap->input_port, 
+				 cur->datap->type, cur->datap->time_delay, cur->datap->label);
 /*
-			printf("%2d\t%2d\t%2d\t%2d\t%2d\t%2d\t%2d\t%s\r\n",
-				(int)cur->datap->port, (int)cur->datap->onoff, cur->datap->polarity,
-					 cur->datap->type, cur->datap->time_delay, cur->datap->pulse_time,
-						cur->datap->reset, cur->datap->label);
-*/
 			memset(list_buf,0,100);
 			sprintf(list_buf,"%2d  %2d  %2d  %2d  %2d  %2d  %2d  %2d   %s",(int)cur->datap->port,\
 			 (int)cur->datap->onoff, (int)cur->datap->polarity, (int)cur->datap->type,
@@ -346,17 +349,17 @@ int ollist_show(ollist_t *llistp)
 			 	  cur->datap->label);
 			 ptr = list_buf;
 			 iptr = 0;
-/*
+
 			 do
 			 {
 			 	iptr++;
 			 }while(*(ptr++) != 0);
 			send_tcp((UCHAR *)list_buf,iptr);
-*/
+
 //			send_tcp((UCHAR *)&list_buf[0],100);
 			printf("iptr: %d\r\n",iptr);
 //			printString2(list_buf);
-
+*/
 		}
 	}
 	pthread_rdwr_runlock_np(&(llistp->rwlock));

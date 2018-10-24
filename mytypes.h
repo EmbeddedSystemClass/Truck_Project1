@@ -92,6 +92,7 @@ enum cmd_types
 	CLOSE_DB,
 	OPEN_DB,
 	BAD_MSG,
+	SEND_NL,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -140,6 +141,18 @@ enum downstream_msg
 
 // also need to insert signals for fuelpump and ignition interrupt relays
 // controlled by the FPGA in series with primary fuelpump and ignition relays (1 & 2)
+enum input_types
+{
+	HEADLAMP_INPUT,				// 0
+	RUNNING_LIGHTS_INPUT,		// 1
+	LEFTBLINKER_INPUT,			// 2
+	RIGHTBLINKER_INPUT,			// 3
+	BRIGHTS_INPUT,				// 4
+	STARTER_INPUT,				// 5
+	COOLINGFAN_INPUT,			// 6
+	ESTOP_INPUT					// 7
+}INPUT_TYPES;
+	
 enum output_types
 {
 	STARTER,

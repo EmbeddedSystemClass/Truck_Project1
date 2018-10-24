@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[55] =
+CMD_STRUCT cmd_array[57] =
 {
 //	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -91,6 +91,7 @@ CMD_STRUCT cmd_array[55] =
 	{		CLOSE_DB,"CLOSE_DB\0" },
 	{		OPEN_DB,"OPEN_DB\0" },
 	{		BAD_MSG,"BAD_MSG\0" },
+	{		SEND_NL,"SEND_NL\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -214,7 +215,14 @@ UCHAR get_host_cmd_task(int test)
 		}
 	}
 	init_ips();
-
+/*
+	for(i = 0;i < 20;i++)
+	{
+		ollist_find_data(i,&otp,&oll);
+		printf("%d %d %d %d %d %s\r\n",otp->port, otp->onoff, otp->input_port, 
+				otp->type, otp->time_delay, otp->label);
+	}
+*/
 	same_msg = 0;
 	lcd_init();
 
@@ -268,8 +276,6 @@ UCHAR get_host_cmd_task(int test)
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
-//					 && cmd != LIVE_WINDOW_ON 
-//						&& cmd != LIVE_WINDOW_OFF)
 				myprintf2(cmd_array[cmd-1].cmd_str,cmd-1);
 
 //			if(cmd > 0)
@@ -511,6 +517,7 @@ UCHAR get_host_cmd_task(int test)
 						curtime2 = mtv.tv_sec;
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
+//						printf("%s\r\n",tempx);
 						break;
 						
 /*
@@ -520,7 +527,8 @@ UCHAR get_host_cmd_task(int test)
 */
 					case SHOW_ODATA:
 //						myprintf1("show O_DATA (tcp_win)\0");
-						ollist_show(&oll);
+//						printf("showing O_DATA\r\n");
+//						ollist_show(&oll);
 						break;
 
 					// send the data currently in the input/output database to the
@@ -540,7 +548,7 @@ UCHAR get_host_cmd_task(int test)
 						{
 							tempy[j++] = msg_buf[i];
 						}
-						pch = &tempy[0];
+						pch = (char*)&tempy[0];
 						i = 0;
 						while(*pch != 0x7B)
 						{
@@ -551,7 +559,7 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,tempy,i);
 						_port = (UCHAR)atoi(tempx);
-						printf("port: %d\r\n",_port);
+//						printf("port: %d\r\n",_port);
 						i = 0;
 						while(*pch != 0x7C)
 						{
@@ -562,7 +570,7 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));	
 						memcpy(tempx,pch-i-1,i);
 						_onoff = (UCHAR)atoi(tempx);
-						printf("onoff: %d\r\n",_onoff);
+//						printf("onoff: %d\r\n",_onoff);
 						i = 0;
 						while(*pch != 0x7D)
 						{
@@ -573,7 +581,7 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));	
 						memcpy(tempx,pch-i-1,i);
 						_type = (UCHAR)atoi(tempx);
-						printf("type: %d\r\n",_type);
+//						printf("type: %d\r\n",_type);
 
 						i = 0;						
 						while(*pch != 0x7E)
@@ -585,12 +593,12 @@ UCHAR get_host_cmd_task(int test)
 						memset(tempx,0,sizeof(tempx));	
 						memcpy(tempx,pch-i-1,i);
 						_time_delay = (UCHAR)atoi(tempx);
-						printf("time_delay: %d\r\n",_time_delay);
+//						printf("time_delay: %d\r\n",_time_delay);
 						
 						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,pch,4);
 						_input = atoi(tempx);
-						printf("input: %d\r\n",_input);
+//						printf("input: %d\r\n",_input);
 						
 						ollist_find_data(_port,&otp,&oll);
 						otp->onoff = _onoff;
@@ -767,7 +775,7 @@ UCHAR get_host_cmd_task(int test)
 					case CLOSE_DB:
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-						printf("db's closed\r\n");	
+//						printf("db's closed\r\n");	
 						break;
 
 					case OPEN_DB:

@@ -59,6 +59,8 @@
             this.shutdownServerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rebootServerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setServerTimeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sendNLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.getServerTimeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label3 = new System.Windows.Forms.Label();
             this.tbConnectionString = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -74,6 +76,9 @@
             this.Btn_SaveDB = new System.Windows.Forms.Button();
             this.btn_NewTable = new System.Windows.Forms.Button();
             this.btn_SendSelectedRecords = new System.Windows.Forms.Button();
+            this.btn_laptop = new System.Windows.Forms.Button();
+            this.btn_ClearScreen = new System.Windows.Forms.Button();
+            this.showODATAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ds)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
@@ -142,7 +147,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(93, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.146";
+            this.tbHostname.Text = "192.168.42.149";
             // 
             // btnXML
             // 
@@ -279,7 +284,10 @@
             this.sendDataToolStripMenuItem,
             this.shutdownServerToolStripMenuItem,
             this.rebootServerToolStripMenuItem,
-            this.setServerTimeToolStripMenuItem});
+            this.setServerTimeToolStripMenuItem,
+            this.sendNLToolStripMenuItem,
+            this.getServerTimeToolStripMenuItem,
+            this.showODATAToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
@@ -303,7 +311,6 @@
             this.sendDataToolStripMenuItem.Name = "sendDataToolStripMenuItem";
             this.sendDataToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             this.sendDataToolStripMenuItem.Text = "Send Data";
-//            this.sendDataToolStripMenuItem.Click += new System.EventHandler(this.sendData);
             // 
             // shutdownServerToolStripMenuItem
             // 
@@ -325,6 +332,20 @@
             this.setServerTimeToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             this.setServerTimeToolStripMenuItem.Text = "Set Server Time";
             this.setServerTimeToolStripMenuItem.Click += new System.EventHandler(this.setServerTimeToolStripMenuItem_Click);
+            // 
+            // sendNLToolStripMenuItem
+            // 
+            this.sendNLToolStripMenuItem.Name = "sendNLToolStripMenuItem";
+            this.sendNLToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.sendNLToolStripMenuItem.Text = "Send NL";
+            this.sendNLToolStripMenuItem.Click += new System.EventHandler(this.sendNLToolStripMenuItem_Click);
+            // 
+            // getServerTimeToolStripMenuItem
+            // 
+            this.getServerTimeToolStripMenuItem.Name = "getServerTimeToolStripMenuItem";
+            this.getServerTimeToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.getServerTimeToolStripMenuItem.Text = "Get Server Time";
+            this.getServerTimeToolStripMenuItem.Click += new System.EventHandler(this.getServerTimeToolStripMenuItem_Click);
             // 
             // label3
             // 
@@ -482,11 +503,40 @@
             this.btn_SendSelectedRecords.UseVisualStyleBackColor = true;
             this.btn_SendSelectedRecords.Click += new System.EventHandler(this.SendSelectedRecords);
             // 
+            // btn_laptop
+            // 
+            this.btn_laptop.Location = new System.Drawing.Point(878, 2);
+            this.btn_laptop.Name = "btn_laptop";
+            this.btn_laptop.Size = new System.Drawing.Size(75, 23);
+            this.btn_laptop.TabIndex = 28;
+            this.btn_laptop.Text = "Desktop";
+            this.btn_laptop.UseVisualStyleBackColor = true;
+            this.btn_laptop.Click += new System.EventHandler(this.btn_Laptop_Click);
+            // 
+            // btn_ClearScreen
+            // 
+            this.btn_ClearScreen.Location = new System.Drawing.Point(205, 242);
+            this.btn_ClearScreen.Name = "btn_ClearScreen";
+            this.btn_ClearScreen.Size = new System.Drawing.Size(143, 23);
+            this.btn_ClearScreen.TabIndex = 29;
+            this.btn_ClearScreen.Text = "Clear Screen";
+            this.btn_ClearScreen.UseVisualStyleBackColor = true;
+            this.btn_ClearScreen.Click += new System.EventHandler(this.ClearScreen_Click);
+            // 
+            // showODATAToolStripMenuItem
+            // 
+            this.showODATAToolStripMenuItem.Name = "showODATAToolStripMenuItem";
+            this.showODATAToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.showODATAToolStripMenuItem.Text = "Show O_DATA";
+            this.showODATAToolStripMenuItem.Click += new System.EventHandler(this.showODATAToolStripMenuItem_Click);
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 617);
+            this.Controls.Add(this.btn_ClearScreen);
+            this.Controls.Add(this.btn_laptop);
             this.Controls.Add(this.btn_SendSelectedRecords);
             this.Controls.Add(this.btn_NewTable);
             this.Controls.Add(this.Btn_SaveDB);
@@ -553,6 +603,9 @@
         string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
+
+        string connectionStringlt = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+
         private System.Windows.Forms.TextBox tbConnected;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
@@ -586,6 +639,11 @@
         private System.Windows.Forms.Button Btn_SaveDB;
         private System.Windows.Forms.Button btn_NewTable;
         private System.Windows.Forms.Button btn_SendSelectedRecords;
+        private System.Windows.Forms.ToolStripMenuItem sendNLToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem getServerTimeToolStripMenuItem;
+        private System.Windows.Forms.Button btn_laptop;
+        private System.Windows.Forms.Button btn_ClearScreen;
+        private System.Windows.Forms.ToolStripMenuItem showODATAToolStripMenuItem;
     }
 }
 

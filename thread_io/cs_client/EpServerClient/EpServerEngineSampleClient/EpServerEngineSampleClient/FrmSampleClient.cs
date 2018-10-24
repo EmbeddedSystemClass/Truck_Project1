@@ -72,6 +72,7 @@ namespace EpServerEngineSampleClient
 			CLOSE_DB,
 			OPEN_DB,
 			BAD_MSG,
+            SEND_NL,
 			EXIT_PROGRAM
         }
         public class CommonControls : IEquatable<CommonControls>
@@ -107,6 +108,7 @@ namespace EpServerEngineSampleClient
         private System.Collections.Generic.List<CommonControls> ctls;
         private bool target_db_closed;
         private bool use_main_odata;
+        private bool use_laptop;
         public FrmSampleClient()
         {
             InitializeComponent();
@@ -126,7 +128,11 @@ namespace EpServerEngineSampleClient
             btn_SendSelectedRecords.Enabled = false;
             tbConnected.Text = "not connected";
             target_db_closed = false;
+            use_laptop = true;
+            currentconnectionString = connectionStringlt;
             Load_Grid(currentconnectionString);
+      
+            tbReceived.Clear();
         }
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -444,8 +450,10 @@ namespace EpServerEngineSampleClient
             try
             {
                 XmlReader xmlFile;
-                //                xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
-                xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
+                if(use_laptop == true)
+                    xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
+                else
+                    xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
                 ds.ReadXml(xmlFile);
                 dataGridView1.DataSource = ds.Tables[0];
                 bindingSource1.DataSource = ds.Tables[0];
@@ -523,29 +531,28 @@ namespace EpServerEngineSampleClient
                 adapter.UpdateCommand = builder.GetUpdateCommand();
                 //                da.InsertCommand = builder.GetInsertCommand();
                 dataGridView1.DataSource = table;
-                dataGridView1.Columns["port"].ReadOnly = true;
-                //                dataGridView1.Columns["label"].MinimumWidth = 150;
-                dataGridView1.Columns["label"].Width = 150;
-                dataGridView1.Columns["port"].Width = 50;
-                dataGridView1.Columns["onoff"].Width = 50;
-                dataGridView1.Columns["input_port"].Width = 50;
-                //                dataGridView1.Columns["polarity"].Width = 50;
-                dataGridView1.Columns["polarity"].Visible = false;
-                dataGridView1.Columns["type"].Width = 50;
-                dataGridView1.Columns["time_delay"].Width = 50;
-                //dataGridView1.Columns["time_left"].Width = 50;
-                //dataGridView1.Columns["pulse_time"].Width = 50;
-                //dataGridView1.Columns["reset"].Width = 50;
-                dataGridView1.Columns["time_left"].Visible = false;
-                dataGridView1.Columns["pulse_time"].Visible = false;
-                dataGridView1.Columns["reset"].Visible = false;
+                
                 sqlCnn.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
+            //dataGridView1.Columns["port"].ReadOnly = true;
+            //dataGridView1.Columns["label"].Width = 100;
+            //dataGridView1.Columns["port"].Width = 50;
+            //dataGridView1.Columns["onoff"].Width = 50;
+            //dataGridView1.Columns["input_port"].Width = 50;
+            ////                dataGridView1.Columns["polarity"].Width = 50;
+            //dataGridView1.Columns["polarity"].Visible = false;
+            //dataGridView1.Columns["type"].Width = 50;
+            //dataGridView1.Columns["time_delay"].Width = 50;
+            ////dataGridView1.Columns["time_left"].Width = 50;
+            ////dataGridView1.Columns["pulse_time"].Width = 50;
+            ////dataGridView1.Columns["reset"].Width = 50;
+            //dataGridView1.Columns["time_left"].Visible = false;
+            //dataGridView1.Columns["pulse_time"].Visible = false;
+            //dataGridView1.Columns["reset"].Visible = false;
         }
 
         private void Send_Cmd(string cmd, int onoff)
@@ -561,6 +568,7 @@ namespace EpServerEngineSampleClient
                     if (onoff == 1)
                         sendcmd = (int)Server_cmds.ENABLE_START;
                     else sendcmd = (int)Server_cmds.STARTER_OFF;
+//                    cblistCommon.SetSelected(0, false);
                     break;
                 case "IGNITION":
                     if (onoff == 1)
@@ -626,6 +634,15 @@ namespace EpServerEngineSampleClient
                     break;
                 case "SAVE_TO_DISK":
                     sendcmd = (int)Server_cmds.SAVE_TO_DISK;
+                    break;
+                case "SEND_NL":
+                    sendcmd = (int)Server_cmds.SEND_NL;
+                    break;
+                case "GET_TIME":
+                    sendcmd = (int)Server_cmds.GET_TIME;
+                    break;
+                case "SHOW_ODATA":
+                    sendcmd = (int)Server_cmds.SHOW_ODATA;
                     break;
                 default:
                     return;
@@ -890,6 +907,22 @@ namespace EpServerEngineSampleClient
         {
             int cell = 0;
             int port, onoff, type, time_delay, input_port;
+            dataGridView1.Columns["port"].ReadOnly = true;
+            dataGridView1.Columns["label"].Width = 100;
+            dataGridView1.Columns["port"].Width = 50;
+            dataGridView1.Columns["onoff"].Width = 50;
+            dataGridView1.Columns["input_port"].Width = 50;
+            //                dataGridView1.Columns["polarity"].Width = 50;
+            dataGridView1.Columns["polarity"].Visible = false;
+            dataGridView1.Columns["type"].Width = 50;
+            dataGridView1.Columns["time_delay"].Width = 50;
+            //dataGridView1.Columns["time_left"].Width = 50;
+            //dataGridView1.Columns["pulse_time"].Width = 50;
+            //dataGridView1.Columns["reset"].Width = 50;
+            dataGridView1.Columns["time_left"].Visible = false;
+            dataGridView1.Columns["pulse_time"].Visible = false;
+            dataGridView1.Columns["reset"].Visible = false;
+
             Int32 selectedCellCount =
              dataGridView1.GetCellCount(DataGridViewElementStates.Selected);
             if (selectedCellCount > 0)
@@ -919,13 +952,13 @@ namespace EpServerEngineSampleClient
                             if (onoff > 0)
                                 onoff = 1;
                             input_port = (int)dataGridView1.Rows[cell].Cells[3].Value;
-                            type = (int)dataGridView1.Rows[cell].Cells[4].Value;
+                            type = (int)dataGridView1.Rows[cell].Cells[5].Value;
                             if (type > 5)
                             {
                                 AddMsg("type cannot be > 5");
                                 type = 0;
                             }
-                            time_delay = (int)dataGridView1.Rows[cell].Cells[5].Value;
+                            time_delay = (int)dataGridView1.Rows[cell].Cells[6].Value;
                             string sendstr = port.ToString() + '{' + onoff.ToString() + '|' + type.ToString() + '}' + time_delay.ToString() + '~' + input_port.ToString() + 'z';
                                                         sb.Append("port: " + port.ToString() + " onoff: " + onoff.ToString() + " type: " + type.ToString() + " td: " + time_delay.ToString() + " input: " + input_port.ToString());
                                                         sb.Append(Environment.NewLine);
@@ -948,6 +981,44 @@ namespace EpServerEngineSampleClient
         private void CellSelectChanged(object sender, EventArgs e)
         {
             btn_SendSelectedRecords.Enabled = true;
+        }
+
+        private void sendNLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void getServerTimeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.GET_TIME);
+            Send_Cmd(cmd, 0);
+        }
+
+        private void btn_Laptop_Click(object sender, EventArgs e)
+        {
+            if (use_laptop == false)
+            {
+                use_laptop = true;
+                btn_laptop.Text = "Desktop";
+                currentconnectionString = connectionStringlt;
+            }
+            else
+            {
+                use_laptop = false;
+                btn_laptop.Text = "Laptop";
+                currentconnectionString = connectionString;
+            }
+        }
+
+        private void ClearScreen_Click(object sender, EventArgs e)
+        {
+            tbReceived.Clear();
+        }
+
+        private void showODATAToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SHOW_ODATA);
+            Send_Cmd(cmd, 0);
         }
     }
 }
