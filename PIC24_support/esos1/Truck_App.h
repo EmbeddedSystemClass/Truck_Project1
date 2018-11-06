@@ -106,17 +106,6 @@ enum rt_values_offsets
 	TRIP
 } RT_VALUES_OFFSETS_TYPES;
 
-/*
-enum menu_values_offsets
-{
-	ENABLE_STARTER,
-	IGNITION,
-	FUEL_PUMP,
-	COOLING_FAN,
-	RUNNING_LIGHTS,
-	HEADLIGHTS
-} MENU_VALUES_OFFSETS_TYPES;
-*/
 enum key_types
 {
 	KP_1 = 0xE0, // '1'		- E0
@@ -242,6 +231,7 @@ static UINT curr_num_entry_row;
 static UINT curr_num_entry_col;
 static void init_menu_labels(void);
 static void init_rt_labels(void);
+static int lights_on;
 
 typedef enum
 {
@@ -266,7 +256,6 @@ ESOS_USER_TASK(menu_task)
 	static int screen_dim;
 	static UCHAR screen_dim_array[9];
 	static int screen_dim_ptr;
-	static int lights;
 	
     ESOS_TASK_BEGIN();
 
@@ -286,7 +275,7 @@ ESOS_USER_TASK(menu_task)
 	screen_dim_array[7] =  PWM_25DC_PARAM;
 	screen_dim_array[8] =  PWM_12DC_PARAM;
 	screen_dim_ptr = 0;
-	lights = 0;
+	lights_on = -1;
 
 	while (TRUE)
 	{
@@ -295,7 +284,13 @@ ESOS_USER_TASK(menu_task)
 		while(ESOS_TASK_IVE_GOT_MAIL())
 		{
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
+/*
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = 1;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = data1 - KP_1;
+			AVR_CALL();
+*/
 			switch(data1)
 			{
 				case 	KP_1:
@@ -303,7 +298,10 @@ ESOS_USER_TASK(menu_task)
 					{
 						case 0:
 							if(engine_on == 0)
-								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ENABLE_START);
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
+								engine_on = 1;
+							}
 						break;
 						case 1:
 						break;
@@ -316,8 +314,8 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
-							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,START_SEQ);
-							engine_on = 1;
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
+							engine_on = 0;
 						break;
 						case 1:
 						break;
@@ -330,8 +328,8 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
-							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
-							engine_on = 0;
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
+							lights_on = -1;
 						break;
 						case 1:
 						break;
@@ -395,10 +393,16 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:	// toggle lights
-							if(lights == 0)
+							if(lights_on < 10)
+							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_LIGHTS);
-							else __esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
-							lights = (lights == 1?0:1);
+								lights_on = 10;
+							}
+							else
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
+								lights_on = -1;
+							}
 						break;
 						case 1:
 						break;
@@ -1063,8 +1067,16 @@ ESOS_USER_TASK(key_timer_task)
 		if(engine_on == 1)
 			engine_run_time++;
 		else
-			engine_run_time = 0;	
-
+		{
+			engine_run_time = 0;
+			if(lights_on > 0)
+				lights_on--;
+			if(lights_on == 0)
+			{
+				__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
+				lights_on--;
+			}
+		}
 /*
 		avr_buffer[0] = EEPROM_STR;
 		avr_buffer[1] = 1;	// row 1
@@ -1074,7 +1086,7 @@ ESOS_USER_TASK(key_timer_task)
 		AVR_CALL();
 */
 		avr_buffer[0] = SEND_INT_RT_VALUES;
-		avr_buffer[1] = 15;
+		avr_buffer[1] = 14;
 		avr_buffer[2] = 35;
 		avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
 		avr_buffer[4] = (UCHAR)engine_run_time;

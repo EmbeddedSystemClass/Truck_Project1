@@ -56,7 +56,6 @@ CMD_STRUCT cmd_array[57] =
 	{   	START_SEQ,"START_SEQ\0" },
 	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
-	{		TEMP,"TEMP\0" },
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
 	{   	EDIT_ODATA,"EDIT_ODATA\0" },
@@ -64,11 +63,7 @@ CMD_STRUCT cmd_array[57] =
 	{   	SEND_ALL_ODATA,"SEND_ALL_ODATA\0" },
 	{   	RECV_ALL_ODATA,"RECV_ALL_ODATA\0" },
 	{   	SHOW_ODATA,"SHOW_ODATA\0" },
-	{   	SEND_SERIAL,"SEND_SERIAL\0" },
-	{   	CLOSE_SOCKET,"CLOSE_SOCKET\0" },
-	{   	CLEAR_SCREEN,"CLEAR_SCREEN\0" },
 	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
-	{   	TOGGLE_OUTPUTS,"TOGGLE_OUTPUTS\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
@@ -77,21 +72,17 @@ CMD_STRUCT cmd_array[57] =
 	{   	ENABLE_LCD,"ENABLE_LCD\0" },
 	{   	SET_TIME,"SET_TIME\0" },
 	{   	GET_TIME,"GET_TIME\0" },
-	{   	TOTAL_UP_TIME,"TOTAL_UP_TIME\0" },
 	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
-	{		GET_DEBUG_INFO,"GET_DEBUG_INFO\0" },
-	{		GET_DEBUG_INFO2,"GET_DEBUG_INFO2\0" },
 	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
-	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
 	{		TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
 	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{		CLOSE_DB,"CLOSE_DB\0" },
 	{		OPEN_DB,"OPEN_DB\0" },
 	{		BAD_MSG,"BAD_MSG\0" },
-	{		SEND_NL,"SEND_NL\0" },
+	{		CURRENT_TIME,"CURRENT_TIME\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -199,7 +190,6 @@ UCHAR get_host_cmd_task(int test)
 	osize = sizeof(O_DATA);
 	osize *= i;
 
-	engine_running = 0;
 	running_hours = running_minutes = running_seconds = 0;
 	trunning_hours = trunning_minutes = trunning_seconds = 0;
 	
@@ -246,7 +236,7 @@ UCHAR get_host_cmd_task(int test)
 
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.19\0");
+	myprintf1("sched v1.20\0");
 //	printf("sched v1.19\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	rt_fd_ptr = 0;
@@ -286,38 +276,6 @@ UCHAR get_host_cmd_task(int test)
 				rc = 0;
  				switch(cmd)
 				{
-					case TEST_ALL_IO:	// test all lights except blinkers
-//						printf("turning all IO on\r\n");
-#if 0
-						for(i = LHEADLAMP;i < LEFTBLINKER;i++)
-						{
-							change_input(i,1);
-//							printf("%d\r\n",i);
-							usleep(100000);
-						}
-						for(i = RUNNINGLIGHTS;i < BATTERYCHARGER;i++)
-						{
-							change_input(i,1);
-//							printf("%d\r\n",i);
-							usleep(100000);
-						}
-
-//						printf("turning all IO off\r\n");
-						for(i = LHEADLAMP;i < LEFTBLINKER;i++)
-						{
-							change_input(i,0);
-//							printf("%d\r\n",i);
-							usleep(100000);
-						}
-						for(i = RUNNINGLIGHTS;i < BATTERYCHARGER;i++)
-						{
-							change_input(i,0);
-//							printf("%d\r\n",i);
-							usleep(100000);
-						}
-#endif
-					break;
-
 					// ENABLE_START closes a relay for so many seconds so a button
 					// on the dash can close the ckt to the starter solinoid
 					case ENABLE_START:
@@ -346,6 +304,7 @@ UCHAR get_host_cmd_task(int test)
 					case ON_RUNNING_LIGHTS:
 					case OFF_RUNNING_LIGHTS:
 						basic_controls(cmd);
+						send_live_code(cmd,1);
 						break;
 
 					// the next 2 turns on or off the serial port to the PIC24 (monster box)
@@ -387,23 +346,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					// clear the lcd screen and redraw the menus and rt labels
-					case CLEAR_SCREEN:
-//						lcd_cls();
-						send_serialother(CLEAR_SCREEN1,0,0,0,0);
-						break;
-
-					case GET_DEBUG_INFO:
-						send_serialother(GET_DEBUG_INFOA,(UCHAR)engine_running,
-							(UCHAR)running_seconds,(UCHAR)running_minutes,(UCHAR)running_hours);
-						break;
-						
-					// this must be sent in 2 diff msg's because we can only send 5 bytes
-					// at a time
-					case GET_DEBUG_INFO2:
-						send_serialother(GET_DEBUG_INFO2A,(UCHAR)(rpm >> 8),
-							(UCHAR)rpm, (UCHAR)(mph >> 8),(UCHAR)mph);
-						break;
-						
 					// signal to monster box that the password must be re-entered in case of
 					// getting out of vehicle (hijack prevention)
 					case RE_ENTER_PASSWORD:
@@ -767,11 +709,6 @@ UCHAR get_host_cmd_task(int test)
 						scroll_down();
 						break;
 
-					case CLOSE_SOCKET:
-//						printf("close socket\r\n");
-						close_tcp();
-						break;
-
 					case CLOSE_DB:
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
@@ -1005,23 +942,26 @@ int get_msg(void)
 }
 	
 /*********************************************************************/
-void send_msg(int msg_len, UCHAR *msg)
+void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type)
 {
 	int len;
 	int ret;
 	int i;
-	return;
-	
+
 	ret = send_tcp(&pre_preamble[0],8);
+	msg_len++;
 	send_tcp((UCHAR *)&msg_len,1);
 	ret = 0;
 	send_tcp((UCHAR *)&ret,1);
 
 	for(i = 0;i < 6;i++)
 		send_tcp((UCHAR *)&ret,1);
-	ret = 2;
-	send_tcp((UCHAR *)&ret,1);
+
+	send_tcp((UCHAR *)&msg_type,1);
+
 	ret = 0;
+	send_tcp((UCHAR *)&ret,1);
+
 	for(i = 0;i < msg_len;i++)
 	{
 		send_tcp((UCHAR *)&msg[i],1);

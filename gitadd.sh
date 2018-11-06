@@ -8,7 +8,6 @@ git add mytypes.h
 git add gitstatus.sh
 git add engine_startup_notes.txt
 git add alot_of_work.txt
-git add backup_client.sh
 git add append_br.c
 git add replace_tabs.c
 
@@ -88,12 +87,8 @@ git add thread_io/lcd_func.c
 git add thread_io/lcd_func.h
 git add thread_io/queue/rdwr.h
 git add thread_io/queue/rdwr.c
-git add thread_io/queue/illist_threads_rw.h
-git add thread_io/queue/illist_threads_rw.c
 git add thread_io/queue/ollist_threads_rw.h
 git add thread_io/queue/ollist_threads_rw.c
-git add thread_io/queue/rt_llist_threads_rw.h
-git add thread_io/queue/rt_llist_threads_rw.c
 git add thread_io/linux_make
 git add thread_io/make_db
 git add thread_io/serial_io.c
@@ -121,8 +116,9 @@ git add thread_io/cs_client/server_on_linux2.c
 git add thread_io/cs_client/new_client.txt
 git add thread_io/cs_client/init_db.c
 git add thread_io/cs_client/list_db.c
-git add thread_io/cs_client/conv_db.c
+git add thread_io/cs_client/list_db2.c
 git add thread_io/cs_client/make_db
+git add thread_io/cs_client/make_db2
 git add thread_io/cs_client/config_file.c
 git add thread_io/cs_client/config_file.h
 

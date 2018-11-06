@@ -61,6 +61,7 @@
             this.setServerTimeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendNLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getServerTimeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showODATAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label3 = new System.Windows.Forms.Label();
             this.tbConnectionString = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -78,7 +79,8 @@
             this.btn_SendSelectedRecords = new System.Windows.Forms.Button();
             this.btn_laptop = new System.Windows.Forms.Button();
             this.btn_ClearScreen = new System.Windows.Forms.Button();
-            this.showODATAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tbServerTime = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ds)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
@@ -92,12 +94,12 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbReceived.Location = new System.Drawing.Point(16, 271);
+            this.tbReceived.Location = new System.Drawing.Point(16, 243);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(332, 334);
+            this.tbReceived.Size = new System.Drawing.Size(332, 362);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -147,7 +149,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(93, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.149";
+            this.tbHostname.Text = "192.168.42.146";
             // 
             // btnXML
             // 
@@ -347,6 +349,13 @@
             this.getServerTimeToolStripMenuItem.Text = "Get Server Time";
             this.getServerTimeToolStripMenuItem.Click += new System.EventHandler(this.getServerTimeToolStripMenuItem_Click);
             // 
+            // showODATAToolStripMenuItem
+            // 
+            this.showODATAToolStripMenuItem.Name = "showODATAToolStripMenuItem";
+            this.showODATAToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.showODATAToolStripMenuItem.Text = "Show O_DATA";
+            this.showODATAToolStripMenuItem.Click += new System.EventHandler(this.showODATAToolStripMenuItem_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -390,7 +399,7 @@
             "TEST_RIGHT_BLINKER",
             "BRAKES",
             "RUNNING_LIGHTS"});
-            this.cblistCommon.Location = new System.Drawing.Point(16, 91);
+            this.cblistCommon.Location = new System.Drawing.Point(15, 63);
             this.cblistCommon.Name = "cblistCommon";
             this.cblistCommon.Size = new System.Drawing.Size(183, 174);
             this.cblistCommon.TabIndex = 9;
@@ -515,7 +524,7 @@
             // 
             // btn_ClearScreen
             // 
-            this.btn_ClearScreen.Location = new System.Drawing.Point(205, 242);
+            this.btn_ClearScreen.Location = new System.Drawing.Point(204, 214);
             this.btn_ClearScreen.Name = "btn_ClearScreen";
             this.btn_ClearScreen.Size = new System.Drawing.Size(143, 23);
             this.btn_ClearScreen.TabIndex = 29;
@@ -523,18 +532,29 @@
             this.btn_ClearScreen.UseVisualStyleBackColor = true;
             this.btn_ClearScreen.Click += new System.EventHandler(this.ClearScreen_Click);
             // 
-            // showODATAToolStripMenuItem
+            // tbServerTime
             // 
-            this.showODATAToolStripMenuItem.Name = "showODATAToolStripMenuItem";
-            this.showODATAToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.showODATAToolStripMenuItem.Text = "Show O_DATA";
-            this.showODATAToolStripMenuItem.Click += new System.EventHandler(this.showODATAToolStripMenuItem_Click);
+            this.tbServerTime.Location = new System.Drawing.Point(1098, 3);
+            this.tbServerTime.Name = "tbServerTime";
+            this.tbServerTime.Size = new System.Drawing.Size(57, 20);
+            this.tbServerTime.TabIndex = 30;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(1021, 6);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(71, 13);
+            this.label5.TabIndex = 31;
+            this.label5.Text = "connect time:";
             // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 617);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.tbServerTime);
             this.Controls.Add(this.btn_ClearScreen);
             this.Controls.Add(this.btn_laptop);
             this.Controls.Add(this.btn_SendSelectedRecords);
@@ -644,6 +664,8 @@
         private System.Windows.Forms.Button btn_laptop;
         private System.Windows.Forms.Button btn_ClearScreen;
         private System.Windows.Forms.ToolStripMenuItem showODATAToolStripMenuItem;
+        private System.Windows.Forms.TextBox tbServerTime;
+        private System.Windows.Forms.Label label5;
     }
 }
 

@@ -23,9 +23,7 @@
 #include "../mytypes.h"
 #include "ioports.h"
 #include "serial_io.h"
-//#include "queue/illist_threads_rw.h"
 #include "queue/ollist_threads_rw.h"
-//#include "queue/rt_llist_threads_rw.h"
 #include "tasks.h"
 #include "cs_client/config_file.h"
 #include "lcd_func.h"
@@ -49,12 +47,8 @@ pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
 
-//illist_t ill;
 ollist_t oll;
 
-//rt_llist_t roll;
-
-//extern int ilLoadConfig(char *filename, illist_t *ill ,size_t size, char *errmsg);
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
 #define SERIAL_BUFF_SIZE  20
@@ -63,6 +57,7 @@ extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg
 //static int no_serial_buff;
 
 static int serial_rec;
+static int engine_running;
 static void set_output(O_DATA *otp, int onoff);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -94,6 +89,8 @@ void init_ips(void)
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
 
+	live_window_on = 0;
+	engine_running = 0;
 	for(i = 0;i < 40;i++)
 	{
 		ip[i].port = -1;
@@ -132,22 +129,21 @@ void init_ips(void)
 
 /****************************************************************************************************/
 
-void send_live_code(UCHAR cmd)
+void send_live_code(UCHAR cmd, UCHAR msg_type)
 {
-//	if(live_window_on == 0)
+	if(live_window_on == 0)
  		return;
 
-	UCHAR status_line[10];
-/*
-	memset(status_line,0,10);
-	status_line[0] = cmd;
-	status_line[1] = running_seconds;
-	status_line[2] = running_minutes;
-	status_line[3] = running_hours;
-//	send_tcp((UCHAR*)status_line,10);
-*/
-	strcpy((char *)status_line,"test xyz\0");
-	send_msg(strlen((char*)status_line),(UCHAR*)status_line);
+	UCHAR status_line[30];
+
+	memset(status_line,0,30);
+
+	if(cmd == CURRENT_TIME)
+		sprintf(status_line,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
+	else
+		sprintf(status_line,"%d %d %d %d ",cmd,running_seconds,running_minutes,running_hours);
+
+	send_msg(strlen((char*)status_line)*2,(UCHAR*)status_line,msg_type);
 }
 
 /*********************************************************************/
@@ -299,7 +295,7 @@ return;
 /*********************************************************************/
 void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
 {
-//return;
+return;
 	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
@@ -389,21 +385,6 @@ UCHAR monitor_input_task(int test)
 						set_output(otp, onoff);
 					}
 				}
-				// itpp is a pointer to itp
-//				illist_find_data(index,itpp,&ill);
-
-				// find the input assigned to the output(s)
-/*
-				for(i = 0;i < 10;i++)
-				{
-					if(itp->affected_output[i] < 40)
-					{
-						ollist_find_data(itp->affected_output[i],otpp,&oll);
-						set_output(otp,  onoff);
-//						printf("port: %d\r\n",otp->port);
-					}
-				}
-*/
 				inportstatus[bank] = result;
 //				printf("leave 1: %02x\r\n\r\n",inportstatus[bank]);
 			}
@@ -513,19 +494,6 @@ UCHAR monitor_fake_input_task(int test)
 						set_output(otp, onoff);
 					}
 				}
-/*
-				illist_find_data(index,itpp,&ill);
-
-				for(i = 0;i < 10;i++)
-				{
-					if(itp->affected_output[i] < 40)
-					{
-						ollist_find_data(itp->affected_output[i],otpp,&oll);
-						set_output(otp,  onoff);
-//						printf("port: %d\r\n",otp->port);
-					}
-				}
-*/
  				fake_inportstatus1[bank] = fake_inportstatus2[bank];
 
 //				printf("leave 2: %02x %02x\r\n\r\n",fake_inportstatus1[bank],fake_inportstatus2[bank]);
@@ -644,7 +612,6 @@ UCHAR timer_task(int test)
 {
 	int i;
 	UCHAR time_buffer[20];
-	UCHAR s_buffer[5];
 	char tempx[20];
 	int index = 0;
 	int bank = 0;
@@ -688,10 +655,10 @@ UCHAR timer_task(int test)
 // if driver seat switch goes low the tell monster box to start re-enter password sequence
 //		send_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
 
-		if(engine_running > 0)
+		if(engine_running == 1)
 		{
-			if(rpm > 5000)
-				rpm = 500;
+
+//printf("%d %d\r\n",running_seconds,running_minutes);
 
 			if(++running_seconds > 59)
 			{
@@ -703,21 +670,11 @@ UCHAR timer_task(int test)
 						running_hours = 0;
 				}
 			}
-		}
+		}else running_seconds = running_minutes = running_hours = 0;
 
 		odometer++;
 		if(odometer % 2 == 0)
 			trip++;
-
-		s_buffer[0] = TOTAL_UP_TIME;
-		s_buffer[1] = trunning_seconds;
-		s_buffer[2] = trunning_minutes;
-		s_buffer[3] = trunning_hours;
-
-//		buffer[4] = rt_data[0];		// ADC data
-//		buffer[5] = rt_data[1];
-//		buffer[6] = rt_data[2];
-//		buffer[7] = rt_data[3];
 
 		if(++trunning_seconds > 59)
 		{
@@ -725,19 +682,7 @@ UCHAR timer_task(int test)
 			if(++trunning_minutes > 59)
 				trunning_minutes = 0;
 		}
-
-		if(live_window_on)
-		{
-//				pthread_mutex_lock( &serial_read_lock);
-
-/*
-			buffer[8] = (UCHAR)(rpm >> 8);
-			buffer[9] = (UCHAR)rpm;
-			buffer[10] = (UCHAR)(mph >> 8);
-			buffer[11] = (UCHAR)mph;
-*/
-			send_tcp((UCHAR *)&s_buffer[0],4);
-		}
+		send_live_code(CURRENT_TIME,2);
 
 		// check if one of the outputs is set to type 2 (time_delay)
 //		for(i = 0;i < NUM_PORTS;i++)
@@ -920,7 +865,8 @@ UCHAR serial_recv_task(int test)
 	
 	while(TRUE)
 	{
-		if(serial_recv_on == 1)
+//		if(serial_recv_on == 1)
+		if(1)
 		{
 			pthread_mutex_lock( &serial_read_lock);
 			ch = read_serial(errmsg);
@@ -936,8 +882,10 @@ UCHAR serial_recv_task(int test)
 
 			if(ch >= ENABLE_START && ch <= REBOOT_IOBOX)
 			{
-				myprintf2("test: ",ch);			
+//				myprintf2("test: ",ch);			
 				basic_controls(ch);
+				send_live_code(ch,1);
+
 /*
 				if(ch == REBOOT_IOBOX || ch == SHUTDOWN_IOBOX)
 				{
@@ -1205,8 +1153,6 @@ void basic_controls(UCHAR cmd)
 //			otp->onoff = 1;
 //			ollist_insert_data(index,&oll,otp);
 			change_input(STARTER_INPUT,1);
-			engine_running = 1;
-			send_live_code(cmd);
 			break;
 
 		case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
@@ -1216,7 +1162,6 @@ void basic_controls(UCHAR cmd)
 //			otp->onoff = 0;
 //			ollist_insert_data(index,&oll,otp);
 			change_input(STARTER_INPUT,0);
-			send_live_code(cmd);
 			break;
 
 		case ON_ACC:
@@ -1228,7 +1173,6 @@ void basic_controls(UCHAR cmd)
 //			change_input(ACCON, 1);
 			if(otp->reset == 0)
 				change_output(ACCON, 1);
-			send_live_code(cmd);
 			break;
 
 		case OFF_ACC:
@@ -1240,7 +1184,6 @@ void basic_controls(UCHAR cmd)
 //			change_input(ACCON, 0);
 			if(otp->reset == 0)
 				change_output(ACCON, 0);
-			send_live_code(cmd);
 			break;
 
 		case ON_FUEL_PUMP:
@@ -1254,7 +1197,6 @@ void basic_controls(UCHAR cmd)
 			if(otp->reset == 0)
 				change_output(FUELPUMP, 1);
 
-			send_live_code(cmd);
 			break;
 
 		case OFF_FUEL_PUMP:
@@ -1269,17 +1211,14 @@ void basic_controls(UCHAR cmd)
 
 			if(otp->reset == 0)
 				change_output(FUELPUMP, 0);
-			send_live_code(cmd);
 			break;
 
 		case ON_FAN:
 			change_input(COOLINGFAN_INPUT, 1);
-			send_live_code(cmd);
 			break;
 
 		case OFF_FAN:
 			change_input(COOLINGFAN_INPUT, 0);
-			send_live_code(cmd);
 			break;
 
 		case ON_LIGHTS:
@@ -1350,13 +1289,15 @@ void basic_controls(UCHAR cmd)
 			usleep(10000);
 			change_input(STARTER_INPUT, 1);
 //			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-			send_live_code(ENABLE_START);
+			engine_running = 1;
+//			printf("engine_running: %d\r\n",engine_running);
 			break;
 
 		case SHUTDOWN:
 			myprintf1("shutdown engine\0");
 			running_seconds = running_minutes = running_hours = 0;
 			engine_running = 0;
+//			printf("engine_running: %d\r\n",engine_running);
 			change_output(ACCON, 0);
 			usleep(10000);
 			ollist_find_data(ACCON,&otp,&oll);
@@ -1377,7 +1318,6 @@ void basic_controls(UCHAR cmd)
 //			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
 //			set_output(STARTER,0);
 //			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-			send_live_code(SHUTDOWN);
 			break;
 
 		case SHUTDOWN_IOBOX:
@@ -1431,7 +1371,7 @@ void basic_controls(UCHAR cmd)
 			shutdown_all = 1;
 			break;		
 	}
-//	send_serial(index,0);
+	send_serial(index,0);
 }
 /*
 					rt_file_data[rt_fd_ptr++] = otp->port;				// 0

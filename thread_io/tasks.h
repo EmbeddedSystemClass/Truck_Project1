@@ -45,7 +45,7 @@ int uSleep(time_t sec, long nanosec);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 int get_msg(void);
-void send_msg(int msg_len, UCHAR *msg);
+void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type);
 
 void *work_routine(void *arg);
 int send_tcp(UCHAR *str,int len);
@@ -63,7 +63,6 @@ typedef struct
 }REAL_BANKS;
 
 int tcp_window_on;
-static int engine_running;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
 static UINT rpm, mph;		// just sample data

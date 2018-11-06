@@ -129,25 +129,16 @@ ioports.o: ioports.c ioports.h
 tasks.o: tasks.c tasks.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c tasks.c
 
-#read_sd.o: read_sd.c ../mytypes.h
-#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c read_sd.c
-
 serial_io.o: serial_io.c serial_io.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
-
-#illist_threads_rw.o: queue/illist_threads_rw.c queue/illist_threads_rw.h
-#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/illist_threads_rw.c
 
 ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/ollist_threads_rw.c
 
-#rt_llist_threads_rw.o: queue/rt_llist_threads_rw.c queue/rt_llist_threads_rw.h
-#	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rt_llist_threads_rw.c
-
 rdwr.o: queue/rdwr.c queue/rdwr.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/rdwr.c
 
-config_file.o: cs_client/config_file.c queue/illist_threads_rw.h queue/ollist_threads_rw.h
+config_file.o: cs_client/config_file.c  queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/config_file.c
 
 lcd_func.o: lcd_func.c lcd_func.h

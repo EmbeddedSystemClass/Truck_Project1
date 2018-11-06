@@ -32,7 +32,6 @@
 #include "ioports.h"
 #include "serial_io.h"
 #include "tasks.h"
-#include "queue/illist_threads_rw.h"
 #include "queue/ollist_threads_rw.h"
 
 extern void init_mem(void);

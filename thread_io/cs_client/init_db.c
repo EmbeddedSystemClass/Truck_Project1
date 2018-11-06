@@ -1,19 +1,40 @@
 // create odata.dat file - 1st and 2nd param are names of dat files to create
-// any param as a 3rd will create the xml file
+// any param as a 3rd will create the xml file (2nd param should be <filename>.xml)
 // the data put into odata.dat file is read from the files: odata.csv
 // the format for the odata.dat file is:
 /*
-0,0,0,2,10,0,0,0,STARTER
-1,0,0,4,0,0,0,0,ACCON
-2,0,0,4,0,0,0,0,FUELPUMP
-3,0,0,0,0,0,0,0,COOLINGFAN
+typedef struct o_data (from 
+{
+	char label[OLABELSIZE];
+	UCHAR port;
+	UCHAR onoff;			// current state: 1 if on; 0 if off
+	UCHAR input_port;		// input port which affects this output (if not set to 0xFF)
+	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
+							// 1 - on input turns output off; off input turns output on
+	UCHAR type;				// see below
+	UINT time_delay;		// when type 2-4 this is used as the time delay
+	UINT time_left;			// gets set to time_delay and then counts down
+	UCHAR pulse_time;		// not used
+	UCHAR reset;			// used to make 2nd pass
+} O_DATA;
+
+0,0,5,0,2,10,0,0,0,STARTER
+1,0,7,0,4,0,0,0,0,ACCON
+2,0,7,0,4,0,0,0,0,FUELPUMP
+3,0,6,0,0,0,0,0,0,COOLINGFAN
+4,0,0,0,0,0,0,0,0,LHEADLAMP
 ...
-38,0,0,0,0,0,0,0,TESTOUTPUT36
-39,0,0,0,0,0,0,0,NULL
+36,0,-1,0,0,0,0,0,0,TESTOUTPUT34
+37,0,-1,0,0,0,0,0,0,TESTOUTPUT35
+38,0,-1,0,0,0,0,0,0,TESTOUTPUT36
+39,0,-1,0,0,0,0,0,0,NULL
+(see mytypes.h for input/output defines)
+
+the labels can be any text string and the 1st column must be in consecutive order with a total
+ of 40 starting at 0, going to 39, no more or no less
 */
-// the labels can be any text string and the 1st column must be in consecutive order with a total
-// of 40 starting at 0, going to 39, no more or no less
-//
+
+// TODO: if no csv file exists then just create a bare-bones dat file
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -173,6 +194,7 @@ int copy_labels(char *filename2, O_DATA *curr_o_data)
 		strcpy(errmsg,strerror(errno));
 		close(fp);
 		printf("%s  %s\n",errmsg,filename);
+		printf("no csv file found!\n");
 		return 1;
 	}
 	fsize = lseek(fp,0,SEEK_END);
@@ -192,8 +214,6 @@ int copy_labels(char *filename2, O_DATA *curr_o_data)
 		j++;
 	}
 		
-//	pch++;
-
 	memset(int_array,0,sizeof(int_array));
 	pch2 = pch;
 	

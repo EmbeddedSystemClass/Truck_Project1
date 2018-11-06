@@ -18,62 +18,53 @@ namespace EpServerEngineSampleClient
     {
         enum Server_cmds
         {
-			ENABLE_START = 1,
-			STARTER_OFF,
-			ON_ACC,
-			OFF_ACC,
-			ON_FUEL_PUMP,
-			OFF_FUEL_PUMP,
-			ON_FAN,
-			OFF_FAN,
-			ON_LIGHTS,
-			OFF_LIGHTS,
-			ON_BRIGHTS,
-			OFF_BRIGHTS,
-			ON_BRAKES,
-			OFF_BRAKES,
-			ON_RUNNING_LIGHTS,
-			OFF_RUNNING_LIGHTS,
-			START_SEQ,
-			SHUTDOWN,
-			SHUTDOWN_IOBOX,
-			TEMP,
-			REBOOT_IOBOX,
-			SEND_ODATA,
-			EDIT_ODATA,
-			EDIT_ODATA2,
-			SEND_ALL_ODATA,
-			RECV_ALL_ODATA,
-			SHOW_ODATA,
-			SEND_SERIAL,
-			CLOSE_SOCKET,
-			CLEAR_SCREEN,
-			SAVE_TO_DISK,
-			TOGGLE_OUTPUTS,
-			GET_DIR,
-			LCD_SHIFT_RIGHT,
-			LCD_SHIFT_LEFT,
-			SCROLL_UP,
-			SCROLL_DOWN,
-			ENABLE_LCD,
-			SET_TIME,
-			GET_TIME,
-			TOTAL_UP_TIME,
-			UPLOAD_NEW,
-			GET_DEBUG_INFO,
-			GET_DEBUG_INFO2,
-			NEW_PASSWORD1,
-			SET_SERIAL_RECV_ON,
-			SET_SERIAL_RECV_OFF,
-			TEST_ALL_IO,
-			TEST_LEFT_BLINKER,
-			TEST_RIGHT_BLINKER,
-			RE_ENTER_PASSWORD,
-			CLOSE_DB,
-			OPEN_DB,
-			BAD_MSG,
-            SEND_NL,
-			EXIT_PROGRAM
+            ENABLE_START = 1,
+            STARTER_OFF,
+            ON_ACC,
+            OFF_ACC,
+            ON_FUEL_PUMP,
+            OFF_FUEL_PUMP,
+            ON_FAN,
+            OFF_FAN,
+            ON_LIGHTS,
+            OFF_LIGHTS,
+            ON_BRIGHTS,
+            OFF_BRIGHTS,
+            ON_BRAKES,
+            OFF_BRAKES,
+            ON_RUNNING_LIGHTS,
+            OFF_RUNNING_LIGHTS,
+            START_SEQ,              // 17
+            SHUTDOWN,
+            SHUTDOWN_IOBOX,
+            REBOOT_IOBOX,
+            SEND_ODATA,
+            EDIT_ODATA,
+            EDIT_ODATA2,
+            SEND_ALL_ODATA,
+            RECV_ALL_ODATA,
+            SHOW_ODATA,
+            SAVE_TO_DISK,
+            GET_DIR,
+            LCD_SHIFT_RIGHT,
+            LCD_SHIFT_LEFT,
+            SCROLL_UP,
+            SCROLL_DOWN,
+            ENABLE_LCD,
+            SET_TIME,
+            GET_TIME,
+            UPLOAD_NEW,
+            NEW_PASSWORD1,
+            SET_SERIAL_RECV_ON,
+            SET_SERIAL_RECV_OFF,
+            TEST_LEFT_BLINKER,
+            TEST_RIGHT_BLINKER,
+            RE_ENTER_PASSWORD,
+            CLOSE_DB,
+            OPEN_DB,
+            BAD_MSG,
+            CURRENT_TIME,
+            EXIT_PROGRAM
         }
         public class CommonControls : IEquatable<CommonControls>
         {
@@ -128,7 +119,8 @@ namespace EpServerEngineSampleClient
             btn_SendSelectedRecords.Enabled = false;
             tbConnected.Text = "not connected";
             target_db_closed = false;
-            use_laptop = true;
+            //            use_laptop = true;
+            use_laptop = false;
             currentconnectionString = connectionStringlt;
             Load_Grid(currentconnectionString);
       
@@ -195,71 +187,95 @@ namespace EpServerEngineSampleClient
         }
         private void Process_Msg(byte[] bytes)
         {
-            int recno;
             int type_msg;
             string ret = null;
+            int sec = 0;
+            int mins = 0;
+            int hours = 0;
+            int cmd = 0;
+            int i = 0;
             char[] chars = new char[bytes.Length / sizeof(char) + 2];
             char[] chars2 = new char[bytes.Length / sizeof(char)];
             // src srcoffset dest destoffset len
             System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            recno = (int)chars[0];
-            type_msg = (int)chars[1];
-            string str_recno = recno.ToString();
-            //            AddMsg(recno.ToString() + " " + type_msg.ToString());
-            System.Buffer.BlockCopy(bytes, 4, chars2, 0, bytes.Length - 4);
+            type_msg = (int)chars[0];
+            System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
             ret = new string(chars2);
-            //            MessageBox.Show(ret);
-            //            AddMsg(ret + "\r\n");
-            MessageBox.Show(bytes.Length.ToString() + " " + type_msg.ToString());
-            //            if (type_msg == 1)  // sent single record (port, onoff, type, time_delay)
+
+            string[] words = ret.Split(' ');
+            foreach (var word in words)
+            {
+                //                    temp = int.Parse(word);
+                switch (i)
+                {
+                    case 0:
+                        cmd = int.Parse(word);
+                        break;
+                    case 1:
+                        sec = int.Parse(word);
+                        break;
+                    case 2:
+                        mins = int.Parse(word);
+                        break;
+                    case 3:
+                        hours = int.Parse(word);
+                        break;
+                    case 4:
+                        break;
+                    default:
+                        break;
+                }
+                i++;
+            }
+
             switch (type_msg)
             {
                 case 0:
-                    int i = 0;
-                    int port = 0;
-                    int onoff = 0;
-                    int type = 0;
-                    int time_delay = 0;
-                    string label = "";
-                    string[] words = ret.Split(' ');
-                    foreach (var word in words)
-                    {
-                        //                    temp = int.Parse(word);
-                        switch (i)
-                        {
-                            case 0:
-                                label = (string)word;
-                                break;
-                            case 1:
-                                port = int.Parse(word);
-                                break;
-                            case 2:
-                                onoff = int.Parse(word);
-                                break;
-                            case 3:
-                                type = int.Parse(word);
-                                break;
-                            case 4:
-                                time_delay = int.Parse(word);
-                                Update_Record(port, label, onoff, type, time_delay);
-                                break;
-                            default:
-                                break;
-                        }
-                        i++;
-                    }
+                    //int i = 0;
+                    //int port = 0;
+                    //int onoff = 0;
+                    //int type = 0;
+                    //int time_delay = 0;
+                    //string label = "";
+                    //string[] words = ret.Split(' ');
+                    //foreach (var word in words)
+                    //{
+                    //    //                    temp = int.Parse(word);
+                    //    switch (i)
+                    //    {
+                    //        case 0:
+                    //            label = (string)word;
+                    //            break;
+                    //        case 1:
+                    //            port = int.Parse(word);
+                    //            break;
+                    //        case 2:
+                    //            onoff = int.Parse(word);
+                    //            break;
+                    //        case 3:
+                    //            type = int.Parse(word);
+                    //            break;
+                    //        case 4:
+                    //            time_delay = int.Parse(word);
+                    //            Update_Record(port, label, onoff, type, time_delay);
+                    //            break;
+                    //        default:
+                    //            break;
+                    //    }
+                    //    i++;
+                    //}
                     break;
                 case 1:
-                    AddMsg("msg 1");
+                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + Enum.GetName(typeof(Server_cmds), cmd));
                     break;
                 case 2:
-                    AddMsg("msg 2");
+                    tbServerTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
                     break;
                 case 3:
-                    AddMsg("msg 3");
+                    AddMsg("msg 3 " + sec.ToString() + " " + mins.ToString());
                     break;
                 case 4:
-                    AddMsg("msg 4");
+                    AddMsg("msg 4 " + sec.ToString());
                     break;
                 default:
                     break;
@@ -636,7 +652,7 @@ namespace EpServerEngineSampleClient
                     sendcmd = (int)Server_cmds.SAVE_TO_DISK;
                     break;
                 case "SEND_NL":
-                    sendcmd = (int)Server_cmds.SEND_NL;
+                    sendcmd = (int)Server_cmds.CURRENT_TIME;
                     break;
                 case "GET_TIME":
                     sendcmd = (int)Server_cmds.GET_TIME;
@@ -648,7 +664,7 @@ namespace EpServerEngineSampleClient
                     return;
             }
             bytes.SetValue((byte)sendcmd, 0);
-            AddMsg(Enum.GetName(typeof(Server_cmds), sendcmd));
+//            AddMsg(Enum.GetName(typeof(Server_cmds), sendcmd));
             //MessageBox.Show(send_cmd.ToString());
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);

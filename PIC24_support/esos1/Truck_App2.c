@@ -349,14 +349,15 @@ ESOS_USER_TASK(send_comm1)
 			else ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
 */
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
+//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-
+/*
 			avr_buffer[0] = SEND_BYTE_RT_VALUES;
 			avr_buffer[1] = 0;
 			avr_buffer[2] = 0;
 			avr_buffer[3] = data1;
 			AVR_CALL();
-
+*/
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -528,60 +529,6 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = PASSWORD_MODE;
 			avr_buffer[1] = (UCHAR)strlen(correct_password);
 			AVR_CALL();
-
-		}else if(data1 == GET_DEBUG_INFO)
-		{
-			avr_buffer[0] = LCD_CLRSCR2;
-			// srow, scol, erow, ecol
-			avr_buffer[1] = 5;
-			avr_buffer[2] = 5;
-			avr_buffer[3] = 10;
-			avr_buffer[4] = 30;
-			AVR_CALL();
-
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 20;
-			avr_buffer[3] = data2;
-			AVR_CALL();
-
-			avr_buffer[1] = 2;
-			avr_buffer[2] = 20;
-			avr_buffer[3] = data3;
-			AVR_CALL();
-
-			avr_buffer[1] = 3;
-			avr_buffer[2] = 20;
-			avr_buffer[3] = data4;
-			AVR_CALL();
-
-			avr_buffer[1] = 4;
-			avr_buffer[2] = 20;
-			avr_buffer[3] = data5;
-			AVR_CALL();
-
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 5;
-			avr_buffer[2] = 20;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data2 + 0x20;
-			AVR_CALL();
-		}else if(data1 == GET_DEBUG_INFO2)
-		{
-			avr_buffer[0] = SEND_INT_RT_VALUES;
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 25;
-			avr_buffer[3] = data2;
-			avr_buffer[4] = data3;
-			AVR_CALL();
-			avr_buffer[0] = SEND_INT_RT_VALUES;
-			avr_buffer[1] = 2;
-			avr_buffer[2] = 25;
-			avr_buffer[3] = data4;
-			avr_buffer[4] = data5;
-			AVR_CALL();
 		}else if(data1 == OUTPUT_MSG && key_mode == NORMAL)
 		{
 #if 0
@@ -711,6 +658,12 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = data5;
 			AVR_CALL();
+		}else if(data1 == LIGHTS_OFF)
+		{
+			lights_on = -1;
+		}else if(data1 == LIGHTS_ON)
+		{
+			lights_on = 10;
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -913,7 +866,7 @@ ESOS_USER_TASK(main_proc)
 */
 	init_rt_labels();
 	init_menu_labels();
-	ignore_comm1 = 0;
+//	ignore_comm1 = 0;
 
 	while(TRUE)
 	{
