@@ -276,13 +276,13 @@ static void set_output(O_DATA *otp, int onoff)
 			break;
 	}
 	// send message to monster box telling which port was toggled
-	send_serial(otp->port, otp->onoff);
+//	send_serial(otp->port, otp->onoff);
 	
 }
 /*********************************************************************/
 void send_serial(int port, int onoff)
 {
-return;
+//return;
 // send what just changed to the PIC24/AVR to dispaly on screen
 	pthread_mutex_lock( &serial_write_lock);
 	
@@ -295,7 +295,7 @@ return;
 /*********************************************************************/
 void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
 {
-return;
+//return;
 	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
@@ -683,6 +683,7 @@ UCHAR timer_task(int test)
 				trunning_minutes = 0;
 		}
 		send_live_code(CURRENT_TIME,2);
+		send_live_code(0,3);
 
 		// check if one of the outputs is set to type 2 (time_delay)
 //		for(i = 0;i < NUM_PORTS;i++)
@@ -735,7 +736,7 @@ UCHAR timer_task(int test)
 
 					fake_inportstatus1[bank] &= ~mask;
 					fake_inportstatus2[bank] &= ~mask;
-					send_serial(otp->port,otp->onoff);
+//					send_serial(otp->port,otp->onoff);
 /*
 					if(otp->onoff)
 						fake_inportstatus1[bank] |= mask;
@@ -1033,7 +1034,7 @@ UCHAR tcp_monitor_task(int test)
 			tcp_connected_time = 0;
 			if(shutdown_all)
 			{
-				printf("tcp task closing\r\n");
+//				printf("tcp task closing\r\n");
 				return 0;
 			}
 /*
@@ -1291,6 +1292,7 @@ void basic_controls(UCHAR cmd)
 //			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 			engine_running = 1;
 //			printf("engine_running: %d\r\n",engine_running);
+			send_serialother(ENGINE_ON,0,0,0,0);
 			break;
 
 		case SHUTDOWN:
@@ -1307,6 +1309,7 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 0;
 			ollist_insert_data(otp->port,&oll,otp);
+			send_serialother(ENGINE_OFF,0,0,0,0);
 
 //			index = STARTER;
 //			rc = ollist_find_data(index,otpp,&oll);
@@ -1371,7 +1374,7 @@ void basic_controls(UCHAR cmd)
 			shutdown_all = 1;
 			break;		
 	}
-	send_serial(index,0);
+//	send_serial(index,0);
 }
 /*
 					rt_file_data[rt_fd_ptr++] = otp->port;				// 0

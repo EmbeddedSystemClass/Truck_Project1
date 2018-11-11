@@ -562,6 +562,7 @@ ESOS_USER_TASK(recv_comm1)
 				avr_buffer[1] = (UCHAR)strlen(correct_password);
 				AVR_CALL();
 				key_mode = PASSWORD;
+				engine_on = 0;
 			}
 /*
 			avr_buffer[0] = SEND_BYTE_RT_VALUES;
@@ -664,7 +665,14 @@ ESOS_USER_TASK(recv_comm1)
 		}else if(data1 == LIGHTS_ON)
 		{
 			lights_on = 10;
-		}
+		}else if(data1 == ENGINE_ON)
+		{
+			engine_on = 1;
+		}else if(data1 == ENGINE_OFF)
+		{
+			engine_on = 0;
+		}else if(data1 == STOP_SERIAL_RECV)
+			ESOS_TASK_SLEEP();
     } // endof while()
     ESOS_TASK_END();
 }
@@ -767,6 +775,7 @@ ESOS_USER_TASK(main_proc)
 	engine_on = 0;
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
+	recv_handle = esos_GetTaskHandle(recv_comm1);
 
 	i = 0;
 	j = 0;

@@ -11,8 +11,8 @@
 #include "../mytypes.h"
 #include "serial_io.h"
 
-//#define BAUDRATE B19200
-#define BAUDRATE B115200
+#define BAUDRATE B19200
+//#define BAUDRATE B115200
 #ifdef MAKE_SIM
 #define MODEMDEVICE "/dev/ttyS0"
 #else

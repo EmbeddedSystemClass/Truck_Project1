@@ -76,6 +76,7 @@ ESOS_USER_TASK(display_rtvalues);
 static UCHAR avr_buffer[15];
 static ESOS_TASK_HANDLE avr_handle;
 static ESOS_TASK_HANDLE fpga_handle;
+static ESOS_TASK_HANDLE recv_handle;
 
 #define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &avr_buffer[0], 6);
 
@@ -464,6 +465,8 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
+							if(ESOS_IS_TASK_SLEEPING(recv_handle))
+								ESOS_WAKE_TASK(recv_handle);
 						break;
 						case 1:
 						break;
@@ -485,7 +488,6 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_A:		// change menu
-
 					if(menu_ptr > NO_MENUS)
 						menu_ptr = 0;
 					menu_ptr++;	

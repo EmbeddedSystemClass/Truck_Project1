@@ -34,9 +34,8 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[57] =
+CMD_STRUCT cmd_array[49] =
 {
-//	{		TEST_START_OF_CMDS,"TEST_START_OF_CMDS\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_ACC,"ON_ACC\0" },
@@ -79,6 +78,8 @@ CMD_STRUCT cmd_array[57] =
 	{		TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
 	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
+	{		DISCONNECT,"DISCONNECT\0" },
+	{		STOP_MBOX_RECV,"STOP_MBOX_RECV\0" },
 	{		CLOSE_DB,"CLOSE_DB\0" },
 	{		OPEN_DB,"OPEN_DB\0" },
 	{		BAD_MSG,"BAD_MSG\0" },
@@ -165,7 +166,7 @@ UCHAR get_host_cmd_task(int test)
 	// the check_inputs & change_outputs functions
 	// use the array to adjust from index to bank
 	// since there are only 4 bits in banks 3 & 5
-	
+
 	for(i = 0;i < 20;i++)
 	{
 		real_banks[i].i = i;
@@ -178,7 +179,7 @@ UCHAR get_host_cmd_task(int test)
 		real_banks[i].i = i;
 		real_banks[i].bank = (i+4)/8;
 		real_banks[i].index = i - (real_banks[i].bank*8)+4;
-	} 
+	}
 	memset(dat_names,0,sizeof(dat_names));
 
 /*
@@ -192,7 +193,7 @@ UCHAR get_host_cmd_task(int test)
 
 	running_hours = running_minutes = running_seconds = 0;
 	trunning_hours = trunning_minutes = trunning_seconds = 0;
-	
+
 //	program_start_time = curtime();
 
 	ollist_init(&oll);
@@ -356,7 +357,7 @@ UCHAR get_host_cmd_task(int test)
 						curtime2 = 0L;
 						j = 0;
 						memset(tempx,0,sizeof(tempx));
-						
+
 						for(i = 2;i < msg_len;i+=2)
 							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
 						msg_buf[msg_len/2] = 0;
@@ -461,7 +462,7 @@ UCHAR get_host_cmd_task(int test)
 						myprintf1(tempx);
 //						printf("%s\r\n",tempx);
 						break;
-						
+
 /*
 					case SHOW_IDATA:
 						illist_show(&ill);
@@ -509,7 +510,7 @@ UCHAR get_host_cmd_task(int test)
 							i++;
 						}
 						pch++;
-						memset(tempx,0,sizeof(tempx));	
+						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,pch-i-1,i);
 						_onoff = (UCHAR)atoi(tempx);
 //						printf("onoff: %d\r\n",_onoff);
@@ -520,28 +521,28 @@ UCHAR get_host_cmd_task(int test)
 							i++;
 						}
 						pch++;
-						memset(tempx,0,sizeof(tempx));	
+						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,pch-i-1,i);
 						_type = (UCHAR)atoi(tempx);
 //						printf("type: %d\r\n",_type);
 
-						i = 0;						
+						i = 0;
 						while(*pch != 0x7E)
 						{
 							pch++;
 							i++;
 						}
 						pch++;
-						memset(tempx,0,sizeof(tempx));	
+						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,pch-i-1,i);
 						_time_delay = (UCHAR)atoi(tempx);
 //						printf("time_delay: %d\r\n",_time_delay);
-						
+
 						memset(tempx,0,sizeof(tempx));
 						memcpy(tempx,pch,4);
 						_input = atoi(tempx);
 //						printf("input: %d\r\n",_input);
-						
+
 						ollist_find_data(_port,&otp,&oll);
 						otp->onoff = _onoff;
 						otp->type = _type;
@@ -689,7 +690,7 @@ UCHAR get_host_cmd_task(int test)
 */
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						printf("done\r\n");	
+//						printf("done\r\n");
 						break;
 
 					// adjust the 2x20 LCD screen on the IO box
@@ -712,7 +713,6 @@ UCHAR get_host_cmd_task(int test)
 					case CLOSE_DB:
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-//						printf("db's closed\r\n");	
 						break;
 
 					case OPEN_DB:
@@ -736,6 +736,20 @@ UCHAR get_host_cmd_task(int test)
 					// update the sched.log file with current log of events
 					case BAD_MSG:
 						shutdown_all = 1;
+						break;
+
+					case DISCONNECT:
+						if(test_sock() > 0)
+						{
+							close_tcp();
+//							printf("disconnected from socket\r\n");
+							live_window_on = 0;
+							tcp_connected_time = 0;
+						}
+						break;
+
+					case STOP_MBOX_RECV:
+						send_serialother(STOP_SERIAL_RECV,0,0,0,0);
 						break;
 
 /*
@@ -797,6 +811,7 @@ exit_program:
 						else
 						{
 //							printf("exit program\r\n");
+							send_serialother(STOP_SERIAL_RECV,0,0,0,0);
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do
@@ -804,7 +819,7 @@ exit_program:
 							{
 								myprintf1("exit to shell\0");
 //								printf("exit to shell\r\n");
-							}	
+							}
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("rebooting...\0");
@@ -928,7 +943,7 @@ int get_msg(void)
 	int len;
 	int ret;
 	int i;
-	
+
 	UCHAR preamble[20];
 	ret = recv_tcp(preamble,16,1);
 //	for(i = 0;i < 15;i++)
@@ -940,7 +955,7 @@ int get_msg(void)
 //	printf("len: %d\n",len);
 	return len;
 }
-	
+
 /*********************************************************************/
 void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type)
 {
@@ -965,7 +980,7 @@ void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type)
 	for(i = 0;i < msg_len;i++)
 	{
 		send_tcp((UCHAR *)&msg[i],1);
-		send_tcp((UCHAR *)&ret,1);	
+		send_tcp((UCHAR *)&ret,1);
 	}
 }
 /*********************************************************************/
