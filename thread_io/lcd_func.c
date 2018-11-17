@@ -309,7 +309,6 @@ volatile UINT *portfd;
 	setdioddr(7,1);									// set last one to output
 }
 
-
 /**********************************************************************************************************/
 static UINT lcd_wait(void)
 {
@@ -350,7 +349,6 @@ static UINT lcd_wait(void)
 	return dat;
 }
 
-
 /**********************************************************************************************************/
 static void lcd_cmd(UINT cmd)
 {
@@ -384,7 +382,6 @@ static void lcd_cmd(UINT cmd)
 	i = HOLD;
 	COUNTDOWN(i);
 }
-
 
 /**********************************************************************************************************/
 static void lcd_write(UCHAR *dat)
@@ -446,19 +443,16 @@ static int setbiobit(UCHAR *ptr,int n,int v)
 	return(v);
 }
 
-
 static UCHAR dio_get_ddr(void)
 {
 	return(*dio_ddr);
 }
-
 
 static UCHAR dio_set_ddr(UCHAR b)
 {
 	*dio_ddr=b;
 	return(b);
 }
-
 
 //#if 0
 int getdioline(int n)
@@ -469,7 +463,6 @@ int getdioline(int n)
 	if (n==8) return(((*portfb)>>1)&1);
 	return((*dio_addr>>n)&1);
 }
-
 
 /* setdioline(n,v) set DIO Line n to value v
  *                 return v, or -1 on error.
@@ -505,7 +498,6 @@ int setdioline(int n,int v)
 	return(v);
 }
 
-
 /* getdioddr(n)  read the DDR of the DIO Line n
  *                return 0 or 1, or -1 on error
  */
@@ -518,7 +510,6 @@ static int getdioddr(int n)
 	if (n==8) return((*portfd>>1)&1);
 	return((dio_get_ddr()>>n)&1);
 }
-
 
 /* setdioddr(n,v) set DDR for line n to value v
  *                 return v, or -1 on error.
@@ -543,7 +534,6 @@ static int setdioddr(int n,int v)
 	}
 	return(v);
 }
-
 
 //#endif
 

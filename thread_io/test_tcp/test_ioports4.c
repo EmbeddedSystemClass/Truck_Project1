@@ -72,9 +72,11 @@ it is necessary to write the following values to the registers specified:
 #define			OUTPORTE_OFFSET		4
 #define			OUTPORTF_OFFSET		5
 
-
 #define			CARD1	0x280
 #define			CARD2	0x300
+
+//#define			CARD2	0x280	switch cards
+//#define			CARD1	0x300
 
 #define			ROC_1	CARD1			// relay output control registers
 #define			ROC_2	CARD1 + 1
@@ -215,6 +217,182 @@ int main(int argc, char **argv)
 		perror("error calling lseek on card\n");
 		exit(1);
 	}
+
+/*
+	printf("doing 1st card at 0x280\n");
+	OutPortA(1,0);
+	mydelay(50);
+	OutPortA(1,1);
+	mydelay(50);
+	OutPortA(1,2);
+	mydelay(50);
+	OutPortA(1,3);
+	mydelay(50);
+	OutPortA(1,4);
+	mydelay(50);
+	OutPortA(1,5);
+	mydelay(50);
+	OutPortA(1,6);
+	mydelay(50);
+	OutPortA(1,7);
+	mydelay(50);
+
+	OutPortB(1,0);
+	mydelay(50);
+	OutPortB(1,1);
+	mydelay(50);
+	OutPortB(1,2);
+	mydelay(50);
+	OutPortB(1,3);
+	mydelay(50);
+	OutPortB(1,4);
+	mydelay(50);
+	OutPortB(1,5);
+	mydelay(50);
+	OutPortB(1,6);
+	mydelay(50);
+	OutPortB(1,7);
+	mydelay(50);
+
+	OutPortC(1,0);
+	mydelay(50);
+	OutPortC(1,1);
+	mydelay(50);
+	OutPortC(1,2);
+	mydelay(50);
+	OutPortC(1,3);
+
+	OutPortA(0,0);
+	mydelay(50);
+	OutPortA(0,1);
+	mydelay(50);
+	OutPortA(0,2);
+	mydelay(50);
+	OutPortA(0,3);
+	mydelay(50);
+	OutPortA(0,4);
+	mydelay(50);
+	OutPortA(0,6);
+	mydelay(50);
+	OutPortA(0,7);
+	mydelay(50);
+
+	OutPortB(0,0);
+	mydelay(50);
+	OutPortB(0,1);
+	mydelay(50);
+	OutPortB(0,2);
+	mydelay(50);
+	OutPortB(0,3);
+	mydelay(50);
+	OutPortB(0,4);
+	mydelay(50);
+	OutPortB(0,5);
+	mydelay(50);
+	OutPortB(0,6);
+	mydelay(50);
+	OutPortB(0,7);
+	mydelay(50);
+
+	OutPortC(0,0);
+	mydelay(50);
+	OutPortC(0,1);
+	mydelay(50);
+	OutPortC(0,2);
+	mydelay(50);
+	OutPortC(0,3);
+	mydelay(50);
+
+	printf("doing 2nd card at 0x300\n");
+	mydelay(1000);
+
+	OutPortD(1,0);
+	mydelay(50);
+	OutPortD(1,1);
+	mydelay(50);
+	OutPortD(1,2);
+	mydelay(50);
+	OutPortD(1,3);
+	mydelay(50);
+	OutPortD(1,4);
+	mydelay(50);
+	OutPortD(1,5);
+	mydelay(50);
+	OutPortD(1,6);
+	mydelay(50);
+	OutPortD(1,7);
+	mydelay(50);
+
+	OutPortE(1,0);
+	mydelay(50);
+	OutPortE(1,1);
+	mydelay(50);
+	OutPortE(1,2);
+	mydelay(50);
+	OutPortE(1,3);
+	mydelay(50);
+	OutPortE(1,4);
+	mydelay(50);
+	OutPortE(1,5);
+	mydelay(50);
+	OutPortE(1,6);
+	mydelay(50);
+	OutPortE(1,7);
+	mydelay(50);
+
+	OutPortF(1,0);
+	mydelay(50);
+	OutPortF(1,1);
+	mydelay(50);
+	OutPortF(1,2);
+	mydelay(50);
+	OutPortF(1,3);
+
+	OutPortD(0,0);
+	mydelay(50);
+	OutPortD(0,1);
+	mydelay(50);
+	OutPortD(0,2);
+	mydelay(50);
+	OutPortD(0,3);
+	mydelay(50);
+	OutPortD(0,4);
+	mydelay(50);
+	OutPortD(0,6);
+	mydelay(50);
+	OutPortD(0,7);
+	mydelay(50);
+
+	OutPortE(0,0);
+	mydelay(50);
+	OutPortE(0,1);
+	mydelay(50);
+	OutPortE(0,2);
+	mydelay(50);
+	OutPortE(0,3);
+	mydelay(50);
+	OutPortE(0,4);
+	mydelay(50);
+	OutPortE(0,5);
+	mydelay(50);
+	OutPortE(0,6);
+	mydelay(50);
+	OutPortE(0,7);
+	mydelay(50);
+
+	OutPortF(0,0);
+	mydelay(50);
+	OutPortF(0,1);
+	mydelay(50);
+	OutPortF(0,2);
+	mydelay(50);
+	OutPortF(0,3);
+	mydelay(50);
+
+	if(munmap((void *)card_ports,card_pagesize) == -1)
+		perror("error un-mapping card_ports file\n");
+	exit(0);
+*/
 
 	fptr = filename;
 	strcpy(filename,"iostate.bin\0");
