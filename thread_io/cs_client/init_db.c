@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
 	pod = curr_o_array;
 	if(do_xml == 0)
 	{
-		printf("port\tonoff\tinput_port\tpolarity\ttype\ttime_delay\ttime_left\tpulse_time\treset\tlabel\n\n");
+//		printf("port\tonoff\tinput_port\tpolarity\ttype\ttime_delay\ttime_left\tpulse_time\treset\tlabel\n\n");
 		for(i = 0;i < osize/sizeof(O_DATA);i++)
 		{
-			printf("%d\t%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t\t%d\t%s\n",pod->port,pod->onoff,pod->input_port, 
+			printf("%d %d %d %d %d %d %d %d %d %s\n",pod->port,pod->onoff,pod->input_port, 
 					pod->polarity,pod->type,pod->time_delay,pod->time_left, 
 					pod->pulse_time,pod->reset,pod->label);
 			pod++;
