@@ -38,7 +38,8 @@ typedef struct _ip
 
 enum cmd_types
 {
-	ENABLE_START = 1,
+	NON_CMD,
+	ENABLE_START,
 	STARTER_OFF,
 	ON_ACC,
 	OFF_ACC,
@@ -148,7 +149,8 @@ enum input_types
 	BRIGHTS_INPUT,				// 4
 	STARTER_INPUT,				// 5
 	COOLINGFAN_INPUT,			// 6
-	ESTOP_INPUT					// 7
+	ESTOP_INPUT,				// 7
+	BRAKE_INPUT					// 8
 }INPUT_TYPES;
 	
 enum output_types

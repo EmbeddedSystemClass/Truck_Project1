@@ -115,7 +115,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(94, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.149";
+            this.tbHostname.Text = "192.168.42.146";
             // 
             // tbConnected
             // 

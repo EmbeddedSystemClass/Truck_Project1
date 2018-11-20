@@ -93,7 +93,7 @@ void init_ips(void)
 	engine_running = 0;
 	for(i = 0;i < 40;i++)
 	{
-		ip[i].port = -1;
+		ip[i].port = 99;
 		ip[i].input = 0;
 		memset(ip[i].label,0,OLABELSIZE);
 	}
@@ -109,7 +109,9 @@ void init_ips(void)
 			{
 				ip[j].port = k;
 				ip[j].input = i;
+//				printf("%d %d ",ip[j].port,ip[j].input);
 				strcpy(ip[j++].label,otp->label);
+//				printf("%s\r\n",ip[j-1].label);
 			}
 		}
 	}
@@ -118,7 +120,7 @@ void init_ips(void)
 	max_ips = 0;
 	for(i = 0;i < 40;i++)
 	{
-		if(ip[i].port > -1)
+		if(ip[i].port < 40)
 		{
 //			printf("%d: \tport: %d input: %d %s \n",i,ip[i].port,ip[i].input,ip[i].label);
 			max_ips++;
@@ -131,6 +133,7 @@ void init_ips(void)
 
 void send_live_code(UCHAR cmd, UCHAR msg_type)
 {
+//return;
 	if(live_window_on == 0)
  		return;
 
@@ -414,6 +417,8 @@ int change_input(int index, int onoff)
 	index = real_banks[index].index;
 
 	mask <<= index;
+
+//printf("%d %d\r\n",index,onoff);
 
 	if(onoff)
 	{
@@ -720,8 +725,7 @@ UCHAR timer_task(int test)
 					otp->reset = 0;
 					ollist_insert_data(otp->port,&oll,otp);
 
-//					printf("time up: port: %d onoff: %d reset: %d pol: %d\r\n", otp->port,
-//							otp->onoff, otp->reset, otp->polarity);
+//					printf("time up: port: %d onoff: %d\r\n", otp->port, otp->onoff);
 
 					// if this is a result of a fake input, we turn it 
 					// off here but the fake input has know way of
@@ -1255,9 +1259,11 @@ void basic_controls(UCHAR cmd)
 		break;
 
 		case ON_BRAKES:
+			change_input(BRAKE_INPUT,1);
 		break;
 
 		case OFF_BRAKES:
+			change_input(BRAKE_INPUT,0);
 		break;
 
 		case START_SEQ:

@@ -34,8 +34,9 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[49] =
+CMD_STRUCT cmd_array[50] =
 {
+	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
 	{   	STARTER_OFF,"STARTER_OFF\0" },
 	{   	ON_ACC,"ON_ACC\0" },
@@ -127,7 +128,8 @@ UCHAR get_host_cmd_task(int test)
 	size_t osize;
 	UCHAR bank;
 	UCHAR test2;
-	UCHAR _port,_onoff,_type,_time_delay,_input;
+	UCHAR _port,_onoff,_type,_time_delay;
+	int _input;
 	int testx;
 	UCHAR rec_no;
 	struct dirent **namelist;
@@ -267,10 +269,10 @@ UCHAR get_host_cmd_task(int test)
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
-				myprintf2(cmd_array[cmd-1].cmd_str,cmd-1);
+				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
 //			if(cmd > 0)
-//				printf("cmd: %d %s\r\n",cmd-1,cmd_array[cmd-1].cmd_str);
+//				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 
 			if(rc > 0 && cmd > 0)
 			{
@@ -486,6 +488,8 @@ UCHAR get_host_cmd_task(int test)
 */
 					case SEND_ODATA:
 						j = 0;
+						k = 0;
+//						printf("\r\nmsg_len: %d\r\n",msg_len);
 						memset(tempy,0,sizeof(tempy));
 						for(i = 2;i < msg_len+2;i+=2)
 						{
@@ -493,7 +497,7 @@ UCHAR get_host_cmd_task(int test)
 						}
 						pch = (char*)&tempy[0];
 						i = 0;
-						while(*pch != 0x7B)
+						while(*pch != 0x7B)				// open bracket
 						{
 							pch++;
 							i++;
@@ -504,7 +508,7 @@ UCHAR get_host_cmd_task(int test)
 						_port = (UCHAR)atoi(tempx);
 //						printf("port: %d\r\n",_port);
 						i = 0;
-						while(*pch != 0x7C)
+						while(*pch != 0x7C)				// bar
 						{
 							pch++;
 							i++;
@@ -515,7 +519,7 @@ UCHAR get_host_cmd_task(int test)
 						_onoff = (UCHAR)atoi(tempx);
 //						printf("onoff: %d\r\n",_onoff);
 						i = 0;
-						while(*pch != 0x7D)
+						while(*pch != 0x7D)				// close bracket
 						{
 							pch++;
 							i++;
@@ -527,7 +531,7 @@ UCHAR get_host_cmd_task(int test)
 //						printf("type: %d\r\n",_type);
 
 						i = 0;
-						while(*pch != 0x7E)
+						while(*pch != 0x7E)				// tilde
 						{
 							pch++;
 							i++;
@@ -537,17 +541,32 @@ UCHAR get_host_cmd_task(int test)
 						memcpy(tempx,pch-i-1,i);
 						_time_delay = (UCHAR)atoi(tempx);
 //						printf("time_delay: %d\r\n",_time_delay);
-
+						
+						i = 0;
+						while(*pch != 0x7A)				// 'z'
+						{
+							pch++;
+							i++;
+						}
+						pch++;
 						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch,4);
+						memcpy(tempx,pch-i-1,i);
 						_input = atoi(tempx);
 //						printf("input: %d\r\n",_input);
+
+						i = 0;
+					
+						memset(tempx,0,sizeof(tempx));
+						memcpy(tempx,pch,34);
+//						printf("label: %s\r\n",tempx);
 
 						ollist_find_data(_port,&otp,&oll);
 						otp->onoff = _onoff;
 						otp->type = _type;
 						otp->time_delay = _time_delay;
-						otp->input_port = _input;
+						otp->input_port = (UCHAR)_input;
+						strcpy(otp->label,tempx);
+//						printf("%s\r\n",otp->label);
 						ollist_insert_data(_port,&oll,otp);
 /*
 						for(i = STARTER;i < TESTOUTPUT24;i++)

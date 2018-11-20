@@ -44,13 +44,13 @@
             this.table = new System.Data.DataTable();
             this.tbCurrentTable = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.btn_Laptop = new System.Windows.Forms.Button();
             this.labelDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.portDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.onoffDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.inputportDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.typeDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.timedelayDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.btn_Laptop = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.oDATABindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._Client_SQL_DB2DataSet)).BeginInit();
@@ -71,8 +71,11 @@
             this.dataGridView1.DataSource = this.oDATABindingSource;
             this.dataGridView1.Location = new System.Drawing.Point(15, 70);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(573, 388);
+            this.dataGridView1.Size = new System.Drawing.Size(573, 532);
             this.dataGridView1.TabIndex = 2;
+            this.dataGridView1.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.CellValueChanged);
+            this.dataGridView1.RowStateChanged += new System.Windows.Forms.DataGridViewRowStateChangedEventHandler(this.RowStateChanged);
+            this.dataGridView1.SelectionChanged += new System.EventHandler(this.SelectionChanged);
             // 
             // oDATABindingSource
             // 
@@ -184,11 +187,21 @@
             this.label7.TabIndex = 38;
             this.label7.Text = "current table:";
             // 
+            // btn_Laptop
+            // 
+            this.btn_Laptop.Location = new System.Drawing.Point(112, 41);
+            this.btn_Laptop.Name = "btn_Laptop";
+            this.btn_Laptop.Size = new System.Drawing.Size(75, 23);
+            this.btn_Laptop.TabIndex = 39;
+            this.btn_Laptop.Text = "Laptop";
+            this.btn_Laptop.UseVisualStyleBackColor = true;
+            this.btn_Laptop.Click += new System.EventHandler(this.UseLaptop_Click);
+            // 
             // labelDataGridViewTextBoxColumn
             // 
             this.labelDataGridViewTextBoxColumn.DataPropertyName = "label";
             this.labelDataGridViewTextBoxColumn.HeaderText = "label";
-            this.labelDataGridViewTextBoxColumn.MaxInputLength = 30;
+            this.labelDataGridViewTextBoxColumn.MaxInputLength = 31;
             this.labelDataGridViewTextBoxColumn.Name = "labelDataGridViewTextBoxColumn";
             this.labelDataGridViewTextBoxColumn.Width = 200;
             // 
@@ -196,16 +209,17 @@
             // 
             this.portDataGridViewTextBoxColumn.DataPropertyName = "port";
             this.portDataGridViewTextBoxColumn.HeaderText = "port";
-            this.portDataGridViewTextBoxColumn.MaxInputLength = 5;
+            this.portDataGridViewTextBoxColumn.MaxInputLength = 2;
             this.portDataGridViewTextBoxColumn.Name = "portDataGridViewTextBoxColumn";
             this.portDataGridViewTextBoxColumn.ReadOnly = true;
+            this.portDataGridViewTextBoxColumn.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.portDataGridViewTextBoxColumn.Width = 60;
             // 
             // onoffDataGridViewTextBoxColumn
             // 
             this.onoffDataGridViewTextBoxColumn.DataPropertyName = "onoff";
             this.onoffDataGridViewTextBoxColumn.HeaderText = "onoff";
-            this.onoffDataGridViewTextBoxColumn.MaxInputLength = 5;
+            this.onoffDataGridViewTextBoxColumn.MaxInputLength = 1;
             this.onoffDataGridViewTextBoxColumn.Name = "onoffDataGridViewTextBoxColumn";
             this.onoffDataGridViewTextBoxColumn.Width = 60;
             // 
@@ -213,7 +227,7 @@
             // 
             this.inputportDataGridViewTextBoxColumn.DataPropertyName = "input_port";
             this.inputportDataGridViewTextBoxColumn.HeaderText = "input_port";
-            this.inputportDataGridViewTextBoxColumn.MaxInputLength = 5;
+            this.inputportDataGridViewTextBoxColumn.MaxInputLength = 2;
             this.inputportDataGridViewTextBoxColumn.Name = "inputportDataGridViewTextBoxColumn";
             this.inputportDataGridViewTextBoxColumn.Width = 60;
             // 
@@ -233,21 +247,11 @@
             this.timedelayDataGridViewTextBoxColumn.Name = "timedelayDataGridViewTextBoxColumn";
             this.timedelayDataGridViewTextBoxColumn.Width = 90;
             // 
-            // btn_Laptop
-            // 
-            this.btn_Laptop.Location = new System.Drawing.Point(112, 41);
-            this.btn_Laptop.Name = "btn_Laptop";
-            this.btn_Laptop.Size = new System.Drawing.Size(75, 23);
-            this.btn_Laptop.TabIndex = 39;
-            this.btn_Laptop.Text = "Laptop";
-            this.btn_Laptop.UseVisualStyleBackColor = true;
-            this.btn_Laptop.Click += new System.EventHandler(this.UseLaptop_Click);
-            // 
             // DlgForm1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(609, 474);
+            this.ClientSize = new System.Drawing.Size(609, 614);
             this.Controls.Add(this.btn_Laptop);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.tbCurrentTable);
@@ -288,12 +292,12 @@
         private System.Data.DataTable table;
         private System.Windows.Forms.TextBox tbCurrentTable;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button btn_Laptop;
         private System.Windows.Forms.DataGridViewTextBoxColumn labelDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn portDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn onoffDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn inputportDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn timedelayDataGridViewTextBoxColumn;
-        private System.Windows.Forms.Button btn_Laptop;
     }
 }
