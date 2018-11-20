@@ -30,31 +30,28 @@
         {
             this.components = new System.ComponentModel.Container();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.oDATABindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this._Client_SQL_DB2DataSet = new EpServerEngineSampleClient._Client_SQL_DB2DataSet();
-            this.o_DATATableAdapter = new EpServerEngineSampleClient._Client_SQL_DB2DataSetTableAdapters.O_DATATableAdapter();
             this.btn_SendSelectedRecords = new System.Windows.Forms.Button();
             this.btn_NewTable = new System.Windows.Forms.Button();
             this.Btn_SaveDB = new System.Windows.Forms.Button();
             this.btnDeleteO_DATA = new System.Windows.Forms.Button();
-            this.btnSwitchTable = new System.Windows.Forms.Button();
-            this.btn_CloseDB = new System.Windows.Forms.Button();
+            this.btn_ListDB = new System.Windows.Forms.Button();
             this.btnShow = new System.Windows.Forms.Button();
             this.btnXML = new System.Windows.Forms.Button();
             this.table = new System.Data.DataTable();
-            this.tbCurrentTable = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.btn_Laptop = new System.Windows.Forms.Button();
             this.labelDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.portDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.onoffDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.inputportDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.typeDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.timedelayDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.oDATABindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this._Client_SQL_DB2DataSet = new EpServerEngineSampleClient._Client_SQL_DB2DataSet();
+            this.o_DATATableAdapter = new EpServerEngineSampleClient._Client_SQL_DB2DataSetTableAdapters.O_DATATableAdapter();
+            this.btnListTables = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.oDATABindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._Client_SQL_DB2DataSet)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridView1
@@ -73,27 +70,11 @@
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.Size = new System.Drawing.Size(573, 532);
             this.dataGridView1.TabIndex = 2;
-            this.dataGridView1.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.CellValueChanged);
-            this.dataGridView1.RowStateChanged += new System.Windows.Forms.DataGridViewRowStateChangedEventHandler(this.RowStateChanged);
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.SelectionChanged);
-            // 
-            // oDATABindingSource
-            // 
-            this.oDATABindingSource.DataMember = "O_DATA";
-            this.oDATABindingSource.DataSource = this._Client_SQL_DB2DataSet;
-            // 
-            // _Client_SQL_DB2DataSet
-            // 
-            this._Client_SQL_DB2DataSet.DataSetName = "_Client_SQL_DB2DataSet";
-            this._Client_SQL_DB2DataSet.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
-            // 
-            // o_DATATableAdapter
-            // 
-            this.o_DATATableAdapter.ClearBeforeFill = true;
             // 
             // btn_SendSelectedRecords
             // 
-            this.btn_SendSelectedRecords.Location = new System.Drawing.Point(459, 12);
+            this.btn_SendSelectedRecords.Location = new System.Drawing.Point(13, 41);
             this.btn_SendSelectedRecords.Name = "btn_SendSelectedRecords";
             this.btn_SendSelectedRecords.Size = new System.Drawing.Size(129, 23);
             this.btn_SendSelectedRecords.TabIndex = 35;
@@ -103,7 +84,7 @@
             // 
             // btn_NewTable
             // 
-            this.btn_NewTable.Location = new System.Drawing.Point(193, 41);
+            this.btn_NewTable.Location = new System.Drawing.Point(433, 12);
             this.btn_NewTable.Name = "btn_NewTable";
             this.btn_NewTable.Size = new System.Drawing.Size(75, 23);
             this.btn_NewTable.TabIndex = 34;
@@ -113,7 +94,7 @@
             // 
             // Btn_SaveDB
             // 
-            this.Btn_SaveDB.Location = new System.Drawing.Point(274, 41);
+            this.Btn_SaveDB.Location = new System.Drawing.Point(148, 41);
             this.Btn_SaveDB.Name = "Btn_SaveDB";
             this.Btn_SaveDB.Size = new System.Drawing.Size(131, 23);
             this.Btn_SaveDB.TabIndex = 33;
@@ -123,7 +104,7 @@
             // 
             // btnDeleteO_DATA
             // 
-            this.btnDeleteO_DATA.Location = new System.Drawing.Point(411, 41);
+            this.btnDeleteO_DATA.Location = new System.Drawing.Point(352, 12);
             this.btnDeleteO_DATA.Name = "btnDeleteO_DATA";
             this.btnDeleteO_DATA.Size = new System.Drawing.Size(75, 23);
             this.btnDeleteO_DATA.TabIndex = 32;
@@ -131,29 +112,19 @@
             this.btnDeleteO_DATA.UseVisualStyleBackColor = true;
             this.btnDeleteO_DATA.Click += new System.EventHandler(this.btnDeleteO_DATA_Click);
             // 
-            // btnSwitchTable
+            // btn_ListDB
             // 
-            this.btnSwitchTable.Location = new System.Drawing.Point(492, 41);
-            this.btnSwitchTable.Name = "btnSwitchTable";
-            this.btnSwitchTable.Size = new System.Drawing.Size(96, 23);
-            this.btnSwitchTable.TabIndex = 31;
-            this.btnSwitchTable.Text = "Switch Table";
-            this.btnSwitchTable.UseVisualStyleBackColor = true;
-            this.btnSwitchTable.Click += new System.EventHandler(this.btnSwitchTable_Click);
-            // 
-            // btn_CloseDB
-            // 
-            this.btn_CloseDB.Location = new System.Drawing.Point(355, 12);
-            this.btn_CloseDB.Name = "btn_CloseDB";
-            this.btn_CloseDB.Size = new System.Drawing.Size(94, 23);
-            this.btn_CloseDB.TabIndex = 30;
-            this.btn_CloseDB.Text = "Close Target DB";
-            this.btn_CloseDB.UseVisualStyleBackColor = true;
-            this.btn_CloseDB.Click += new System.EventHandler(this.btn_CloseDB_Click);
+            this.btn_ListDB.Location = new System.Drawing.Point(94, 12);
+            this.btn_ListDB.Name = "btn_ListDB";
+            this.btn_ListDB.Size = new System.Drawing.Size(94, 23);
+            this.btn_ListDB.TabIndex = 30;
+            this.btn_ListDB.Text = "List DB\'s";
+            this.btn_ListDB.UseVisualStyleBackColor = true;
+            this.btn_ListDB.Click += new System.EventHandler(this.btn_ListDB_Click);
             // 
             // btnShow
             // 
-            this.btnShow.Location = new System.Drawing.Point(274, 11);
+            this.btnShow.Location = new System.Drawing.Point(13, 12);
             this.btnShow.Name = "btnShow";
             this.btnShow.Size = new System.Drawing.Size(75, 23);
             this.btnShow.TabIndex = 29;
@@ -163,39 +134,13 @@
             // 
             // btnXML
             // 
-            this.btnXML.Location = new System.Drawing.Point(193, 11);
+            this.btnXML.Location = new System.Drawing.Point(272, 12);
             this.btnXML.Name = "btnXML";
             this.btnXML.Size = new System.Drawing.Size(75, 23);
             this.btnXML.TabIndex = 28;
             this.btnXML.Text = "Read XML";
             this.btnXML.UseVisualStyleBackColor = true;
             this.btnXML.Click += new System.EventHandler(this.btmXML_Click);
-            // 
-            // tbCurrentTable
-            // 
-            this.tbCurrentTable.Location = new System.Drawing.Point(72, 14);
-            this.tbCurrentTable.Name = "tbCurrentTable";
-            this.tbCurrentTable.Size = new System.Drawing.Size(115, 20);
-            this.tbCurrentTable.TabIndex = 36;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(12, 17);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(69, 13);
-            this.label7.TabIndex = 38;
-            this.label7.Text = "current table:";
-            // 
-            // btn_Laptop
-            // 
-            this.btn_Laptop.Location = new System.Drawing.Point(112, 41);
-            this.btn_Laptop.Name = "btn_Laptop";
-            this.btn_Laptop.Size = new System.Drawing.Size(75, 23);
-            this.btn_Laptop.TabIndex = 39;
-            this.btn_Laptop.Text = "Laptop";
-            this.btn_Laptop.UseVisualStyleBackColor = true;
-            this.btn_Laptop.Click += new System.EventHandler(this.UseLaptop_Click);
             // 
             // labelDataGridViewTextBoxColumn
             // 
@@ -247,20 +192,41 @@
             this.timedelayDataGridViewTextBoxColumn.Name = "timedelayDataGridViewTextBoxColumn";
             this.timedelayDataGridViewTextBoxColumn.Width = 90;
             // 
+            // oDATABindingSource
+            // 
+            this.oDATABindingSource.DataMember = "O_DATA";
+            this.oDATABindingSource.DataSource = this._Client_SQL_DB2DataSet;
+            // 
+            // _Client_SQL_DB2DataSet
+            // 
+            this._Client_SQL_DB2DataSet.DataSetName = "_Client_SQL_DB2DataSet";
+            this._Client_SQL_DB2DataSet.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // o_DATATableAdapter
+            // 
+            this.o_DATATableAdapter.ClearBeforeFill = true;
+            // 
+            // btnListTables
+            // 
+            this.btnListTables.Location = new System.Drawing.Point(192, 12);
+            this.btnListTables.Name = "btnListTables";
+            this.btnListTables.Size = new System.Drawing.Size(75, 23);
+            this.btnListTables.TabIndex = 40;
+            this.btnListTables.Text = "List Tables";
+            this.btnListTables.UseVisualStyleBackColor = true;
+            this.btnListTables.Click += new System.EventHandler(this.btnListTables_Click);
+            // 
             // DlgForm1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(609, 614);
-            this.Controls.Add(this.btn_Laptop);
-            this.Controls.Add(this.label7);
-            this.Controls.Add(this.tbCurrentTable);
+            this.Controls.Add(this.btnListTables);
             this.Controls.Add(this.btn_SendSelectedRecords);
             this.Controls.Add(this.btn_NewTable);
             this.Controls.Add(this.Btn_SaveDB);
             this.Controls.Add(this.btnDeleteO_DATA);
-            this.Controls.Add(this.btnSwitchTable);
-            this.Controls.Add(this.btn_CloseDB);
+            this.Controls.Add(this.btn_ListDB);
             this.Controls.Add(this.btnShow);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnXML);
@@ -268,11 +234,10 @@
             this.Text = "DlgForm1";
             this.Load += new System.EventHandler(this.DlgForm1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.oDATABindingSource)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._Client_SQL_DB2DataSet)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -285,19 +250,16 @@
         private System.Windows.Forms.Button btn_NewTable;
         private System.Windows.Forms.Button Btn_SaveDB;
         private System.Windows.Forms.Button btnDeleteO_DATA;
-        private System.Windows.Forms.Button btnSwitchTable;
-        private System.Windows.Forms.Button btn_CloseDB;
+        private System.Windows.Forms.Button btn_ListDB;
         private System.Windows.Forms.Button btnShow;
         private System.Windows.Forms.Button btnXML;
         private System.Data.DataTable table;
-        private System.Windows.Forms.TextBox tbCurrentTable;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Button btn_Laptop;
         private System.Windows.Forms.DataGridViewTextBoxColumn labelDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn portDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn onoffDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn inputportDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn timedelayDataGridViewTextBoxColumn;
+        private System.Windows.Forms.Button btnListTables;
     }
 }

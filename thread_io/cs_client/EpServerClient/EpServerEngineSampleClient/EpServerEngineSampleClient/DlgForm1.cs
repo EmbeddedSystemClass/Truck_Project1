@@ -21,6 +21,9 @@ namespace EpServerEngineSampleClient
         string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionStringlt = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        string connstr_prefix = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=";
+        string connstr_suffix = ";Integrated Security = True; Connect Timeout = 30";
+
         private bool use_main_odata;
         private bool use_laptop = false;
         private INetworkClient m_client;
@@ -30,8 +33,6 @@ namespace EpServerEngineSampleClient
         {
             InitializeComponent();
             use_main_odata = true;
-            btn_CloseDB.Enabled = false;
-//            btn_SendSelectedRecords.Enabled = false;	
             btn_SendSelectedRecords.Enabled = true;
             bindingSource1 = new BindingSource();
             currentconnectionString = connectionString;
@@ -51,7 +52,30 @@ namespace EpServerEngineSampleClient
             m_client = client;
             svrcmd.SetClient(m_client);
         }
-
+        private void btn_ListDB_Click(object sender, EventArgs e)
+        {
+            ChangeDB testDialog = new ChangeDB(currentconnectionString);
+            // Show testDialog as a modal dialog and determine if DialogResult = OK.
+            if (testDialog.ShowDialog(this) == DialogResult.OK)
+            {
+                string str = testDialog.returnStr;
+                currentconnectionString = connstr_prefix + str + connstr_suffix;
+            }
+            else
+            {
+                currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
+            }
+//            MessageBox.Show(currentconnectionString);
+            testDialog.Dispose();
+        }
+        private void btnListTables_Click(object sender, EventArgs e)
+        {
+            SwitchTable swtables = new SwitchTable(currentconnectionString);
+            if(swtables.ShowDialog(this) == DialogResult.OK)
+            {
+                LoadDb(swtables.returnStr);
+            }
+        }
         private void DlgForm1_Load(object sender, EventArgs e)
         {
 //            this.o_DATATableAdapter1.Fill(this._Client_SQL_DBDataSet.O_DATA);		// comment this out when running on desktop
@@ -147,17 +171,14 @@ namespace EpServerEngineSampleClient
                 MessageBox.Show(ex.Message);
             }
         }
-        private void btnShow_Click(object sender, EventArgs e)
+        private void LoadDb(string str_table)
         {
             SqlConnection sqlCnn;
             SqlCommand sqlCmd;
             SqlDataAdapter adapter = new SqlDataAdapter();
             DataSet ds2 = new DataSet();
             string sql = null;
-            if (use_main_odata)
-                sql = "Select * from O_DATA";
-            else
-                sql = "Select * from O_DATA2";
+            sql = "Select * from " + str_table;
             sqlCnn = new SqlConnection(currentconnectionString);
             try
             {
@@ -165,8 +186,6 @@ namespace EpServerEngineSampleClient
                 sqlCmd = new SqlCommand(sql, sqlCnn);
                 adapter.SelectCommand = sqlCmd;
                 adapter.Fill(ds2);  // fill dataset with records
-
-                //MessageBox.Show(ds2.DataSetName);
                 dataGridView1.DataSource = ds2.Tables[0];
                 //for (i = 0; i <= ds2.Tables[0].Rows.Count - 1; i++)
                 //{
@@ -180,6 +199,42 @@ namespace EpServerEngineSampleClient
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void btnShow_Click(object sender, EventArgs e)
+        {
+            LoadDb("O_DATA");
+            //SqlConnection sqlCnn;
+            //SqlCommand sqlCmd;
+            //SqlDataAdapter adapter = new SqlDataAdapter();
+            //DataSet ds2 = new DataSet();
+            //string sql = null;
+            //if (use_main_odata)
+            //    sql = "Select * from O_DATA";
+            //else
+            //    sql = "Select * from O_DATA2";
+            //sqlCnn = new SqlConnection(currentconnectionString);
+            //try
+            //{
+            //    sqlCnn.Open();
+            //    sqlCmd = new SqlCommand(sql, sqlCnn);
+            //    adapter.SelectCommand = sqlCmd;
+            //    adapter.Fill(ds2);  // fill dataset with records
+
+            //    //MessageBox.Show(ds2.DataSetName);
+            //    dataGridView1.DataSource = ds2.Tables[1];
+            //    //for (i = 0; i <= ds2.Tables[0].Rows.Count - 1; i++)
+            //    //{
+            //    //    MessageBox.Show(ds2.Tables[0].Rows[i].ItemArray[0] + " " + ds2.Tables[0].Rows[i].ItemArray[1]);
+            //    //}
+            //    adapter.Dispose();
+            //    sqlCmd.Dispose();
+            //    sqlCnn.Close();
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show(ex.Message);
+            //}
         }
         private DataTable MakeNamesTable()
         {
@@ -274,10 +329,35 @@ namespace EpServerEngineSampleClient
             {
                 XmlReader xmlFile = null;
                 DataSet ds2 = new DataSet();
-                if (use_laptop == true)
-                    xmlFile = XmlReader.Create("C:\\Users\\Dan_Laptop\\dev\\odata.xml", new XmlReaderSettings());
-                else
-                    xmlFile = XmlReader.Create("C:\\Users\\Daniel\\dev\\odata.xml", new XmlReaderSettings());
+
+                var fileContent = string.Empty;
+                var filePath = string.Empty;
+
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.InitialDirectory = "c:\\users\\daniel\\dev";
+//                    openFileDialog.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
+                    openFileDialog.Filter = "xml files (*.xml)|*.xml";
+                    openFileDialog.FilterIndex = 2;
+                    openFileDialog.RestoreDirectory = true;
+
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        //Get the path of specified file
+                        filePath = openFileDialog.FileName;
+
+                        //Read the contents of the file into a stream
+                        //var fileStream = openFileDialog.OpenFile();
+
+                        //using (StreamReader reader = new StreamReader(fileStream))
+                        //{
+                        //    fileContent = reader.ReadToEnd();
+                        //}
+                    }
+                }
+                //                MessageBox.Show(filePath.ToString());
+
+                xmlFile = XmlReader.Create(filePath, new XmlReaderSettings());
                 ds2.ReadXml(xmlFile);
                 dataGridView1.DataSource = ds2.Tables[0];
             }
@@ -374,20 +454,6 @@ namespace EpServerEngineSampleClient
                 }
             }
         }
-        private void btnSwitchTable_Click(object sender, EventArgs e)
-        {
-            if (use_main_odata)
-            {
-                use_main_odata = false;
-                tbCurrentTable.Text = "O_DATA2";
-            }
-            else
-            {
-                use_main_odata = true;
-                tbCurrentTable.Text = "O_DATA";
-            }
-
-        }
         private void btn_NewTable_Click(object sender, EventArgs e)
         {
             Update_Table(0, "");
@@ -404,36 +470,9 @@ namespace EpServerEngineSampleClient
         {
             Delete_O_DATA();
         }
-
-        private void UseLaptop_Click(object sender, EventArgs e)
-        {
-            if (use_laptop == false)
-            {
-                use_laptop = true;
-                btn_Laptop.Text = "Desktop";
-                currentconnectionString = connectionStringlt;
-            }
-            else
-            {
-                use_laptop = false;
-                btn_Laptop.Text = "Laptop";
-                currentconnectionString = connectionString;
-            }
-        }
-
-        private void CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-//            btn_SendSelectedRecords.Enabled = true;
-        }
-
         private void SelectionChanged(object sender, EventArgs e)
         {
             btn_SendSelectedRecords.Enabled = true;
-        }
-
-        private void RowStateChanged(object sender, DataGridViewRowStateChangedEventArgs e)
-        {
-            //btn_SendSelectedRecords.Enabled = true;
         }
     }
 }

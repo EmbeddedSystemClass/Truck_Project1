@@ -4,8 +4,8 @@
 		<label>STARTER</label>
 		<port>0</port>
 		<onoff>0</onoff>
-		<input_port>5</input_port>
-		<polarity>0</polarity>
+		<input_port>6</input_port>
+		<polarity>1</polarity>
 		<type>2</type>
 		<time_delay>10</time_delay>
 		<time_left>0</time_left>
@@ -16,7 +16,7 @@
 		<label>ACCON</label>
 		<port>1</port>
 		<onoff>0</onoff>
-		<input_port>6</input_port>
+		<input_port>7</input_port>
 		<polarity>0</polarity>
 		<type>4</type>
 		<time_delay>0</time_delay>
@@ -40,7 +40,7 @@
 		<label>COOLINGFAN</label>
 		<port>3</port>
 		<onoff>0</onoff>
-		<input_port>8</input_port>
+		<input_port>6</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -136,7 +136,7 @@
 		<label>RBRAKELIGHT</label>
 		<port>11</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>8</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -148,7 +148,7 @@
 		<label>LBRAKELIGHT</label>
 		<port>12</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>8</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -160,10 +160,10 @@
 		<label>XLBLINKER</label>
 		<port>13</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>2</input_port>
 		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
+		<type>2</type>
+		<time_delay>15</time_delay>
 		<time_left>0</time_left>
 		<pulse_time>0</pulse_time>
 		<reset>0</reset>
@@ -172,10 +172,10 @@
 		<label>XRBLINKER</label>
 		<port>14</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>3</input_port>
 		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
+		<type>2</type>
+		<time_delay>15</time_delay>
 		<time_left>0</time_left>
 		<pulse_time>0</pulse_time>
 		<reset>0</reset>
@@ -184,7 +184,7 @@
 		<label>BATTERYCOMPHEATER</label>
 		<port>15</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -196,7 +196,7 @@
 		<label>CRANKCASEHEATER</label>
 		<port>16</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -208,7 +208,7 @@
 		<label>ESTOPSWITCH</label>
 		<port>17</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -220,7 +220,7 @@
 		<label>BATTERYHEATER</label>
 		<port>18</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -232,7 +232,7 @@
 		<label>TRLEFTBLINKER</label>
 		<port>19</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -244,7 +244,7 @@
 		<label>TRRIGHTBLINKER</label>
 		<port>20</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -256,7 +256,7 @@
 		<label>INTRUDERALARM</label>
 		<port>21</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -268,7 +268,7 @@
 		<label>LIGHTBAR</label>
 		<port>22</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -280,7 +280,7 @@
 		<label>BLINKINDICATE</label>
 		<port>23</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -292,7 +292,7 @@
 		<label>ALARMSPEAKER</label>
 		<port>24</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -304,7 +304,7 @@
 		<label>BACKUPLIGHTS</label>
 		<port>25</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -316,7 +316,7 @@
 		<label>TESTOUTPUT24</label>
 		<port>26</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -328,7 +328,7 @@
 		<label>TESTOUTPUT25</label>
 		<port>27</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -340,7 +340,7 @@
 		<label>TESTOUTPUT26</label>
 		<port>28</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -352,7 +352,7 @@
 		<label>TESTOUTPUT27</label>
 		<port>29</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -364,7 +364,7 @@
 		<label>TESTOUTPUT28</label>
 		<port>30</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -376,7 +376,7 @@
 		<label>TESTOUTPUT29</label>
 		<port>31</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -388,7 +388,7 @@
 		<label>TESTOUTPUT30</label>
 		<port>32</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -400,7 +400,7 @@
 		<label>TESTOUTPUT31</label>
 		<port>33</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -412,7 +412,7 @@
 		<label>TESTOUTPUT32</label>
 		<port>34</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -424,7 +424,7 @@
 		<label>TESTOUTPUT33</label>
 		<port>35</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -436,7 +436,7 @@
 		<label>TESTOUTPUT34</label>
 		<port>36</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -448,7 +448,7 @@
 		<label>TESTOUTPUT35</label>
 		<port>37</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -460,7 +460,7 @@
 		<label>TESTOUTPUT36</label>
 		<port>38</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -472,7 +472,7 @@
 		<label>NULL</label>
 		<port>39</port>
 		<onoff>0</onoff>
-		<input_port>255</input_port>
+		<input_port>41</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>

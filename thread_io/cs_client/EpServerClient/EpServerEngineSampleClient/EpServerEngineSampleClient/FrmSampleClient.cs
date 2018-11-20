@@ -249,16 +249,6 @@ namespace EpServerEngineSampleClient
             System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
-        void ProcessByteArr(byte[] bytes)
-        {
-            char[] chars = new char[bytes.Length / sizeof(char)];
-            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            if (chars[0] == 0xAA)
-                MessageBox.Show("AA");
-            else if (chars[0] == 0x55)
-                MessageBox.Show("55");
-            else MessageBox.Show(chars[0].ToString());
-        }
         public void OnSent(INetworkClient client, SendStatus status, Packet sentPacket)
         {
             switch (status)
@@ -299,23 +289,9 @@ namespace EpServerEngineSampleClient
             System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
             return new string(chars);
         }
-        private void btn_ClrScr_Click(object sender, EventArgs e)
-        {
-            tbReceived.Clear();
-        }
-        private void connect(object sender, EventArgs e)
+         private void connect(object sender, EventArgs e)
         {
             btnConnect_Click(sender, e);
-        }
-        private void shutdownServerToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
-        private void rebootServerToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
-        private void setServerTimeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
         }
         // start engine
         private void button2_Click(object sender, EventArgs e)
@@ -346,37 +322,6 @@ namespace EpServerEngineSampleClient
             Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
 
-        }
-        private void CellSelectChanged(object sender, EventArgs e)
-        {
-//            btn_SendSelectedRecords.Enabled = true;
-        }
-        private void sendNLToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-        private void getServerTimeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.GET_TIME);
-            string cmd = "GET_TIME";
-            svrcmd.Send_Cmd(cmd, 0);
-        }
-        private void ClearScreen_Click(object sender, EventArgs e)
-        {
-            tbReceived.Clear();
-        }
-        private void showODATAToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SHOW_ODATA);
-            string cmd = "SHOW_DATA";
-            svrcmd.Send_Cmd(cmd, 0);
-        }
-        private void stopMBoxRecvToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
-        private void testDlgToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //            int promptValue = Prompt.ShowDialog("Test", "123");
         }
         public void ShowMyDialogBox()
         {

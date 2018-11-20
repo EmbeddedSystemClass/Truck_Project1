@@ -5,42 +5,105 @@ relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 
 even worse, 12v you can screw up the cards inside the box - this cost me a day or so of trouble-
 shooting and rewiring the io box)
 
-typedef struct i_data
-{
-	char label[ILABELSIZE];
-	UCHAR port;
-	UCHAR affected_output;
-	UINT temp;
-} I_DATA;
-
 typedef struct o_data
 {
 	char label[OLABELSIZE];
-	UCHAR port;				// io port 0->39 (20 on each card)
-	UCHAR onoff;			// current state: 1 of on; 0 if off
+	UCHAR port;
+	UCHAR onoff;			// current state: 1 if on; 0 if off
+	UCHAR input_port;		// input port which affects this output (if not set to 41)
 	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
 							// 1 - on input turns output off; off input turns output on
 	UCHAR type;				// see below
 	UINT time_delay;		// when type 2-4 this is used as the time delay
 	UINT time_left;			// gets set to time_delay and then counts down
-	UCHAR pulse_time;		// not implemented
+	UCHAR pulse_time;		// not used
 	UCHAR reset;			// used to make 2nd pass
 } O_DATA;
 
-
+/*
 type:
 0) regular - on/off state responds to assigned input (affected_output)
-1) goes on/off and stays that way until some other event occurs
-	this is useful for a lock-out condition (use reset field)
+1) goes on/off and stays that way until another on/off
 2) on for time_delay seconds and then it goes back off
 3) goes on/off every second until time_delay is up
-4) goes on/off at pulse_time rate for time_delay seconds and then back off (not implemented)
+4) if on, turn off and wait for msg (serial or tcp) to turn back on
+6) goes on/off at pulse_time rate in 10ths of a second then
+	goes off when time_delay is up
+7) goes on/off at pulse_rate in 10ths of a second if onoff is 
+	active only (not implemented yet)
+
+type 6 & 7 not implemented yet
 
 reset is used when type is 1 and 2: when type 1 it sets reset on the 1st pass
 and then on 2nd pass it will change the output - 2 for time delay - there is
 a loop in the timer task which checks all the output records for type 2 and
 counts down using the time_left field.
 
+When input_port field is set to anything less than 40, then this refers to the
+input port which triggers the output - e.g. port 0 turns on/off the headlights,
+so both LHEADLAMP and RHEADLAMP are activated by a switch going to port 0.
+
+input_types
+
+	HEADLAMP_INPUT,				// 0
+	RUNNING_LIGHTS_INPUT,		// 1
+	LEFTBLINKER_INPUT,			// 2
+	RIGHTBLINKER_INPUT,			// 3
+	BRIGHTS_INPUT,				// 4
+	STARTER_INPUT,				// 5
+	COOLINGFAN_INPUT,			// 6
+	ESTOP_INPUT,				// 7
+	BRAKE_INPUT					// 8
+
+filename: odata.dat 
+
+port	onoff	input_port	type	time_delay	label
+
+0		0		5			2		10			STARTER
+1		0		7			4		0			ACCON
+2		0		7			4		0			FUELPUMP
+3		0		6			0		0			COOLINGFAN
+4		0		0			0		0			LHEADLAMP
+5		0		4			0		0			LBRIGHTS
+6		0		0			0		0			RHEADLAMP
+7		0		4			0		0			RBRIGHTS
+	
+8		0		2			3		15			LEFTBLINKER
+9		0		3			3		15			RIGHTBLINKER
+10		0		1			0		0			RUNNINGLIGHTS
+11		0		8			0		0			RBRAKELIGHT
+12		0		8			0		0			LBRAKELIGHT
+13		0		2			2		15			XLBLINKER
+14		0		3			2		15			XRBLINKER
+15		0		41			0		0			BATTERYCOMPHEATER
+
+16		0		41			0		0			CRANKCASEHEATER
+17		0		41			0		0			ESTOPSWITCH		// don't think I need this
+18		0		41			0		0			BATTERYHEATER
+19		0		41			0		0			TRLEFTBLINKER
+20		0		41			0		0			TRRIGHTBLINKER
+21		0		41			0		0			INTRUDERALARM
+22		0		41			0		0			LIGHTBAR
+23		0		41			0		0			BLINKINDICATE
+	
+24		0		41			0		0			ALARMSPEAKER
+25		0		41			0		0			BACKUPLIGHTS
+26		0		41			0		0			HTRBLOWERLOW
+27		0		41			0		0			HTRBLOWERMED
+28		0		41			0		0			HTRBLOWERHIGH
+29		0		41			0		0			TESTOUTPUT27	// these not used yet
+30		0		41			0		0			TESTOUTPUT28
+31		0		41			0		0			TESTOUTPUT29
+
+32		0		41			0		0			TESTOUTPUT30
+33		0		41			0		0			TESTOUTPUT31
+34		0		41			0		0			TESTOUTPUT32
+35		0		41			0		0			TESTOUTPUT33
+36		0		41			0		0			TESTOUTPUT34
+37		0		41			0		0			TESTOUTPUT35
+38		0		41			0		0			TESTOUTPUT36
+39		0		41			0		0			NULL
+	
 monitor_input_task scans all the outputs using ollist_find_data and if type != 0 && onoff == 1 then
 read last_time_state_changed (UINT) in current O_DATA and check against current time using localtime
 in this case onoff == 1 means its active 
@@ -167,54 +230,6 @@ monitor_input_task ~? - something flakey about card 146 - 149 works ok
 8/13/18 - thread_io was causing segment fault crash because when live window was up there was some
 un received tcp messages so I set the get_sock call in tcp_win2 to non-blocking and that seemed to 
 fix it.
-
-don't name anything in sched directory with ext of "*.dat" except the [i|o]data?.dat files
-it makes havic with the GET_DIR command
-
-10/16/17
-made separate make files (make_db) to compile init_db & list_db on both host and target side
-/thread_io (target) - sched
-/thread_io/ncurses (host) - client
-
-current menus in the ncurses program:
-
-1) Host
-	("Open"),						  // 0
-	("Save File"),					  // 1
-	("Edit idata"),					  // 2
-	("Edit odata"),					  // 3
-	("goto to sh"),					  // 4
-	("Reboot"),						  // 5
-	("Shutdown"),					  // 6
-	("Shift Left"),					  // 7
-	("Shift Right"),				  // 8
-	("Scroll Up"),					  // 9
-	("Scroll Down"),				  // 10
-	("Exit"),						  // 11
-
-2) Target
-	("Open"),						  // 0
-	("Save File"),					  // 1
-	("Save As"),					  // 2
-	("Delete"),						  // 3
-	("Recv idata"),					  // 4	- recv all idata from target and store in host
-	("Recv odata"),					  // 5	- recv all odata from target and store in host
-	("Send idata"),					  // 6	- send all idata from host to target
-	("Send odata"),					  // 7	- send all odata from host to target
-	("Show idata"),					  // 8	- show what's currently in idata db
-	("Show odata"),					  // 9	- show what's currently in odata db
-
-3) Tool
-	("Connect"),					// 0
-	("Disconnect"),					// 1
-	("Set Time"),					// 2
-	("Get Time"),					// 3
-	("TCP Window"),					// 4
-	("Live Window"),				// 5
-	("FPGA Window"),				// 6
-	("Upload New"),					// 7	- send new sched exe to target's sched directory and reboot
-	("Test Write"),					// 8	- save all output events triggered by inputs to sched.log file
-
 
 9-14-18 - added a new type to O_DATA (type 4) to be used as a lockout relay. The E-Stop switch is connected
 to port 19 and affects outputs 1 & 2 (ignition and fuel pump). The types for 1 & 2 are set to type 4
