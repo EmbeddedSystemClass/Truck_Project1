@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[50] =
+CMD_STRUCT cmd_array[54] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -49,20 +49,24 @@ CMD_STRUCT cmd_array[50] =
 	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
 	{   	ON_BRIGHTS,"ON_BRIGHTS\0" },
 	{   	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{   	ON_LLIGHTS,"ON_LLIGHTS\0" },
+	{   	OFF_LLIGHTS,"OFF_LLIGHTS\0" },
+	{   	ON_LBRIGHTS,"ON_LBRIGHTS\0" },
+	{   	OFF_LBRIGHTS,"OFF_LBRIGHTS\0" },
+	{   	ON_RLIGHTS,"ON_RLIGHTS\0" },
+	{   	OFF_RLIGHTS,"OFF_RLIGHTS\0" },
+	{   	ON_RBRIGHTS,"ON_RBRIGHTS\0" },
+	{   	OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
 	{		ON_BRAKES,"ON_BRAKES\0" },
 	{		OFF_BRAKES,"OFF_BRAKES\0" },
 	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
 	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
+	{   	SPECIAL_CMD,"SPECIAL_CMD\0" },
 	{   	START_SEQ,"START_SEQ\0" },
 	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
-	{   	EDIT_ODATA,"EDIT_ODATA\0" },
-	{   	EDIT_ODATA2,"EDIT_ODATA2\0" },
-	{   	SEND_ALL_ODATA,"SEND_ALL_ODATA\0" },
-	{   	RECV_ALL_ODATA,"RECV_ALL_ODATA\0" },
-	{   	SHOW_ODATA,"SHOW_ODATA\0" },
 	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
@@ -271,8 +275,8 @@ UCHAR get_host_cmd_task(int test)
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
-//			if(cmd > 0)
-//				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
+			if(cmd > 0)
+				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 
 			if(rc > 0 && cmd > 0)
 			{
@@ -304,17 +308,28 @@ UCHAR get_host_cmd_task(int test)
 					case OFF_BRIGHTS:
 					case ON_BRAKES:
 					case OFF_BRAKES:
+					case ON_LLIGHTS:
+					case OFF_LLIGHTS:
+					case ON_LBRIGHTS:
+					case OFF_LBRIGHTS:
+					case ON_RLIGHTS:
+					case OFF_RLIGHTS:
+					case ON_RBRIGHTS:
+					case OFF_RBRIGHTS:
 					case ON_RUNNING_LIGHTS:
 					case OFF_RUNNING_LIGHTS:
+					case SPECIAL_CMD:
 						basic_controls(cmd);
-						send_live_code(cmd,1);
+						strcpy(tempx,cmd_array[cmd].cmd_str);
+//						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 						break;
 
 					// the next 2 turns on or off the serial port to the PIC24 (monster box)
 					// so if the monster box is switched off for maintenance, the IO box
 					// won't get false signals to turn on or off ports
 					case SET_SERIAL_RECV_ON:
-						send_live_code(cmd);
+//						send_live_code("cmd);
 						if(fd = init_serial() < 0)
 						{
 							myprintf1("can't open comm port 1\0");
@@ -324,7 +339,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SET_SERIAL_RECV_OFF:
-						send_live_code(cmd);
+//						send_live_code(cmd);
 						close_serial();
 						serial_recv_on = 0;
 						break;
@@ -462,30 +477,10 @@ UCHAR get_host_cmd_task(int test)
 						curtime2 = mtv.tv_sec;
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
-//						printf("%s\r\n",tempx);
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME2);
+						printf("%s\r\n",tempx);
 						break;
 
-/*
-					case SHOW_IDATA:
-						illist_show(&ill);
-						break;
-*/
-					case SHOW_ODATA:
-//						myprintf1("show O_DATA (tcp_win)\0");
-//						printf("showing O_DATA\r\n");
-//						ollist_show(&oll);
-						break;
-
-					// send the data currently in the input/output database to the
-					// same databases in the laptop for a certain port
-/*
-					case SEND_IDATA:
-						rc += recv_tcp((UCHAR *)&rec_no,1,1);
-						rc += recv_tcp((UCHAR *)&tempi1,sizeof(I_DATA),1);
-						illist_insert_data(rec_no, &ill, &tempi1);
-						illist_show(&ill);
-						break;
-*/
 					case SEND_ODATA:
 						j = 0;
 						k = 0;
@@ -580,16 +575,6 @@ UCHAR get_host_cmd_task(int test)
 
 					// send all the data to the laptop
 /*
-					case SEND_ALL_IDATA:
-						rc = 0;
-						itp = &tempi1;
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							rc += recv_tcp((UCHAR *)itp,sizeof(I_DATA),1);
-							illist_insert_data(i,&ill,itp);
-						}
-						break;
-*/
 					case SEND_ALL_ODATA:
 						rc = 0;
 						otp = &tempo1;
@@ -602,25 +587,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					// get all the data from the laptop
-/*
-					case RECV_ALL_IDATA:
-						rc = 0;
-						itp = &tempi1;
-						recv_tcp((UCHAR*)&uch_fname_index,1,1);
-						if(uch_fname_index > 0 && uch_fname_index < NUM_DAT_NAMES)
-						{
-							uch_fname_index--;
-							fname_index = (int)uch_fname_index;
-							ilLoadConfig(dat_names[fname_index],&ill,isize,errmsg);
-						}
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							illist_find_data(i,&itp,&ill);
-							rc += send_tcp((UCHAR *)itp,sizeof(I_DATA));
-						}
-//						myprintf1("done\0");
-						break;
-*/
 					case RECV_ALL_ODATA:
 						rc = 0;
 						otp = &tempo1;
@@ -638,7 +604,7 @@ UCHAR get_host_cmd_task(int test)
 							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
 						}
 						break;
-
+*/
 					// get the names and time/datestamps of only the dat files
 					// on the IO box and send to the laptop
 					case GET_DIR:

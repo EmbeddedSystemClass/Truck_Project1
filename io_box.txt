@@ -296,4 +296,6 @@ what happens if you press on the brakes and the blinkers at the same time? There
 for each tail-light, blinker and brake. When the brakes are on the blinker is supposed to
 flash the bright while the other brake stays on. So make the inputs to the blinkers reference
 an additional ouput which goes to a coil which shuts off the brake light relay so the blinker
-can flash it. 
+can flash it. This entails using 3 relays for each tail-light.
+
+The software option would be to have another field which port to override if it is on.

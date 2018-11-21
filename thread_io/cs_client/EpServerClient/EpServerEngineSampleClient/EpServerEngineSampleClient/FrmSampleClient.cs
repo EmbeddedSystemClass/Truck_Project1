@@ -14,12 +14,19 @@ using System.IO;
 
 namespace EpServerEngineSampleClient
 {
+    enum msg_types
+    {
+        SEND_MSG = 60,
+        CURRENT_TIME,
+        ENGINE_RUNTIME,
+        SERVER_UPTIME,
+        GET_TIME
+    }
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
         public class CommonControls : IEquatable<CommonControls>
         {
             public string CtlName { get; set; }
-
             public int CtlSet { get; set; }
             public int Changed { get; set; }
 
@@ -52,7 +59,9 @@ namespace EpServerEngineSampleClient
             InitializeComponent();
             ctls = new List<CommonControls>();
             foreach (object item in cblistCommon.Items)
+            {
                 ctls.Add(new CommonControls() { CtlName = item.ToString(), CtlSet = 0, Changed = 0 });
+            }
             //            use_main_odata = true;
             this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
@@ -60,9 +69,13 @@ namespace EpServerEngineSampleClient
 
             cblistCommon.Enabled = false;
             tbHostname.Enabled = true;
+            tbReceived.Enabled = true;
             tbPort.Enabled = true;
             button3.Enabled = false;
             button2.Enabled = false;
+            btnShutdown.Enabled = false;
+            btnReboot.Enabled = false;
+            btnStopSerial.Enabled = false;
             tbConnected.Text = "not connected";
 //            target_db_closed = false;
             //            use_laptop = true;
@@ -78,8 +91,13 @@ namespace EpServerEngineSampleClient
                 tbPort.Enabled = false;
                 //tbSend.Enabled = true;
                 btnConnect.Text = "Disconnect";
+                btnShutdown.Enabled = true;
+                btnReboot.Enabled = true;
+                btnStopSerial.Enabled = true;
                 ClientOps ops = new ClientOps(this, hostname, port);
                 m_client.Connect(ops);
+
+//                MessageBox.Show(svrcmd.GetCount().ToString());
             }
             else
             {
@@ -88,6 +106,9 @@ namespace EpServerEngineSampleClient
                 tbHostname.Enabled = true;
                 tbPort.Enabled = true;
                 btnConnect.Text = "Connect";
+                btnShutdown.Enabled = false;
+                btnReboot.Enabled = false;
+                btnStopSerial.Enabled = false;
                 if (m_client.IsConnectionAlive)
                     m_client.Disconnect();
                 //                string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.CLOSE_SOCKET);
@@ -144,80 +165,63 @@ namespace EpServerEngineSampleClient
             System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
             ret = new string(chars2);
 
-            string[] words = ret.Split(' ');
-            foreach (var word in words)
-            {
-                //                    temp = int.Parse(word);
-                switch (i)
-                {
-                    case 0:
-                        cmd = int.Parse(word);
-                        break;
-                    case 1:
-                        sec = int.Parse(word);
-                        break;
-                    case 2:
-                        mins = int.Parse(word);
-                        break;
-                    case 3:
-                        hours = int.Parse(word);
-                        break;
-                    case 4:
-                        break;
-                    default:
-                        break;
-                }
-                i++;
-            }
+            /*
+            SEND_MSG,
+            CURRENT_TIME,
+            ENGINE_RUNTIME,
+            TEST,
+            GET_TIME
+            */
 
-            switch (type_msg)
+            string str = Enum.GetName(typeof(msg_types), type_msg);
+//            int type = (int)Enum.Parse(typeof(msg_types), str);
+            //if (type_msg != 4)
+            //{ 
+            //    string[] words = ret.Split(' ');
+            //    foreach (var word in words)
+            //    {
+            //        //                    temp = int.Parse(word);
+            //        switch (i)
+            //        {
+            //            case 0:
+            //                cmd = int.Parse(word);
+            //                break;
+            //            case 1:
+            //                sec = int.Parse(word);
+            //                break;
+            //            case 2:
+            //                mins = int.Parse(word);
+            //                break;
+            //            case 3:
+            //                hours = int.Parse(word);
+            //                break;
+            //             case 4:
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //        i++;
+            //    }
+            //}
+            switch (str)
             {
-                case 0:
-                    //int i = 0;
-                    //int port = 0;
-                    //int onoff = 0;
-                    //int type = 0;
-                    //int time_delay = 0;
-                    //string label = "";
-                    //string[] words = ret.Split(' ');
-                    //foreach (var word in words)
-                    //{
-                    //    //                    temp = int.Parse(word);
-                    //    switch (i)
-                    //    {
-                    //        case 0:
-                    //            label = (string)word;
-                    //            break;
-                    //        case 1:
-                    //            port = int.Parse(word);
-                    //            break;
-                    //        case 2:
-                    //            onoff = int.Parse(word);
-                    //            break;
-                    //        case 3:
-                    //            type = int.Parse(word);
-                    //            break;
-                    //        case 4:
-                    //            time_delay = int.Parse(word);
-                    //            Update_Record(port, label, onoff, type, time_delay);
-                    //            break;
-                    //        default:
-                    //            break;
-                    //    }
-                    //    i++;
-                    //}
+                case "SEND_MSG":
+                    AddMsg(ret);
                     break;
-                case 1:
-//                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + svrcmd.GetName(cmd));
+                case "CURRENT_TIME":
+//                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + "curr" + " " + svrcmd.GetName(cmd));
+                    //                    AddMsg(mins.ToString() + " " + sec.ToString());
                     break;
-                case 2:
-                    tbServerTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
+                case "SERVER_UPTIME":
+                    //                    tbServerTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
+                    tbServerTime.Text = ret;
                     break;
-                case 3:
-                    tbEngRunTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
+                case "ENGINE_RUNTIME":
+                    //    tbEngRunTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
+                    tbEngRunTime.Text = ret;
                     break;
-                case 4:
-//                    AddMsg("msg 4 " + sec.ToString());
+                case "GET_TIME":
+                    AddMsg(ret);
                     break;
                 default:
                     break;
@@ -270,19 +274,19 @@ namespace EpServerEngineSampleClient
                     break;
             }
         }
-//        delegate void AddMsg_Involk(string message);
-        //public void AddMsg(string message)
-        //{
-        //    if (tbReceived.InvokeRequired)
-        //    {
-        //        AddMsg_Involk CI = new AddMsg_Involk(AddMsg);
-        //        tbReceived.Invoke(CI, message);
-        //    }
-        //    else
-        //    {
-        //        tbReceived.Text += message + "\r\n";
-        //    }
-        //}
+        delegate void AddMsg_Involk(string message);
+        public void AddMsg(string message)
+        {
+            if (tbReceived.InvokeRequired)
+            {
+                AddMsg_Involk CI = new AddMsg_Involk(AddMsg);
+                tbReceived.Invoke(CI, message);
+            }
+            else
+            {
+                tbReceived.Text += message + "\r\n";
+            }
+        }
         String StringFromByteArr(byte[] bytes)
         {
             char[] chars = new char[bytes.Length / sizeof(char)];
@@ -297,7 +301,7 @@ namespace EpServerEngineSampleClient
         private void button2_Click(object sender, EventArgs e)
         {
             string cmd = "START_SEQ";
-            //            AddMsg("start seq: " + cmd);
+            AddMsg("start seq: " + cmd);
             svrcmd.Send_Cmd(cmd, 0);
         }
         // shutdown engine
@@ -311,13 +315,12 @@ namespace EpServerEngineSampleClient
             DateTime localDate = DateTime.Now;
             String cultureName = "en-US";
             var culture = new CultureInfo(cultureName);
-//            AddMsg(localDate.ToString(culture));
+            AddMsg(localDate.ToString(culture));
 
             byte[] bytes = BytesFromString(localDate.ToString(culture));
             byte[] bytes2 = new byte[bytes.Count() + 2];
             System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
             string set_time = "SET_TIME";
-            //            bytes2[0] = (byte)Server_cmds.SET_TIME;
             bytes2[0] = svrcmd.GetCmdIndexB(set_time);
             Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
@@ -364,6 +367,14 @@ namespace EpServerEngineSampleClient
                     ctls[i].Changed = 0;
 //                    Send_Cmd(ctls[i].CtlName.ToString(), ctls[i].CtlSet);
                     svrcmd.Send_Cmd(ctls[i].CtlName.ToString(), ctls[i].CtlSet);
+//                    AddMsg(ctls[i].CtlName);
+                    if (ctls[i].CtlName == "STARTER" || ctls[i].CtlName == "TEST_LEFT_BLINKER"
+                            || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD")
+                    {
+                        ctls[i].CtlSet = 0;
+                        cblistCommon.SetItemChecked(i, false);
+                    }
+                    
 //                    MessageBox.Show(ctls[i].CtlName.ToString()+ " " + i.ToString());
                 }
             }
@@ -393,6 +404,17 @@ namespace EpServerEngineSampleClient
         private void DBMgmt(object sender, EventArgs e)
         {
             ShowMyDialogBox();
+        }
+
+        private void ClearScreen(object sender, EventArgs e)
+        {
+            tbReceived.Clear();
+        }
+
+        private void GetTime(object sender, EventArgs e)
+        {
+            string cmd = "GET_TIME";
+            svrcmd.Send_Cmd(cmd, 0);
         }
     }
 }

@@ -63,6 +63,8 @@ static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus2[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static int mask2int(UCHAR mask);
+static int test_lblinkers;
+static int test_rblinkers;
 extern int shutdown_all;
 extern int time_set;
 extern int live_window_on;
@@ -91,6 +93,8 @@ void init_ips(void)
 
 	live_window_on = 0;
 	engine_running = 0;
+	test_lblinkers = 0;
+	test_rblinkers = 0;
 	for(i = 0;i < 40;i++)
 	{
 		ip[i].port = 99;
@@ -131,22 +135,13 @@ void init_ips(void)
 
 /****************************************************************************************************/
 
-void send_live_code(UCHAR cmd, UCHAR msg_type)
+void send_live_code(char str, UCHAR msg_type)
 {
 //return;
 	if(live_window_on == 0)
  		return;
 
-	UCHAR status_line[30];
-
-	memset(status_line,0,30);
-
-	if(cmd == CURRENT_TIME)
-		sprintf(status_line,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
-	else
-		sprintf(status_line,"%d %d %d %d ",cmd,running_seconds,running_minutes,running_hours);
-
-	send_msg(strlen((char*)status_line)*2,(UCHAR*)status_line,msg_type);
+	send_msg(strlen((char*)str)*2,(UCHAR*)str,msg_type);
 }
 
 /*********************************************************************/
@@ -675,6 +670,10 @@ UCHAR timer_task(int test)
 						running_hours = 0;
 				}
 			}
+		sprintf(tempx,"%d %d %d ",running_seconds,running_minutes,running_hours);
+		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
+//		send_live_code(tempx,ENGINE_RUNTIME);
+
 		}else running_seconds = running_minutes = running_hours = 0;
 
 		odometer++;
@@ -687,8 +686,37 @@ UCHAR timer_task(int test)
 			if(++trunning_minutes > 59)
 				trunning_minutes = 0;
 		}
-		send_live_code(CURRENT_TIME,2);
-		send_live_code(0,3);
+		sprintf(tempx,"%d %d %d ",trunning_seconds,trunning_minutes,trunning_hours);
+//		send_live_code(tempx,SERVER_UPTIME);
+		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
+
+/*
+	SEND_MSG,
+	CURRENT_TIME,
+	ENGINE_RUNTIME,
+	SERVER_UPTIME,
+	GET_TIME
+*/
+		if(test_lblinkers > 0)
+		{
+			if(test_lblinkers == 1)
+				test_lblinkers++;
+			if(test_lblinkers == 2)
+			{
+				test_lblinkers = 0;
+				change_input(LEFTBLINKER_INPUT,0);
+			}
+		}
+		if(test_rblinkers > 0)
+		{
+			if(test_rblinkers == 1)
+				test_rblinkers++;
+			if(test_rblinkers == 2)
+			{
+				test_rblinkers = 0;
+				change_input(RIGHTBLINKER_INPUT,0);
+			}
+		}
 
 		// check if one of the outputs is set to type 2 (time_delay)
 //		for(i = 0;i < NUM_PORTS;i++)
@@ -889,7 +917,7 @@ UCHAR serial_recv_task(int test)
 			{
 //				myprintf2("test: ",ch);			
 				basic_controls(ch);
-				send_live_code(ch,1);
+//				send_live_code(ch,1);
 
 /*
 				if(ch == REBOOT_IOBOX || ch == SHUTDOWN_IOBOX)
@@ -1234,12 +1262,71 @@ void basic_controls(UCHAR cmd)
 			change_input(HEADLAMP_INPUT, 0);
 			break;
 
+		case ON_LLIGHTS:
+			index = LHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			break;
+
+		case OFF_LLIGHTS:
+			index = LHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			break;
+
+		case ON_RLIGHTS:
+			index = RHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			break;
+
+		case OFF_RLIGHTS:
+			index = RHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			break;
+
 		case ON_RUNNING_LIGHTS:
 			change_input(RUNNING_LIGHTS_INPUT, 1);
 			break;
 
 		case OFF_RUNNING_LIGHTS:
 			change_input(RUNNING_LIGHTS_INPUT, 0);
+			break;
+		
+		case SPECIAL_CMD:	
+			index = LHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			usleep(100000);
+			index = LBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			usleep(100000);
+			index = RHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			usleep(100000);
+			index = RBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			usleep(100000);
+			index = LBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = LHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = RBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = RHEADLAMP;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
 			break;
 
 		case ON_BRIGHTS:
@@ -1250,12 +1337,38 @@ void basic_controls(UCHAR cmd)
 			change_input(BRIGHTS_INPUT, 0);
 			break;
 
+		case ON_RBRIGHTS:
+			index = RBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			break;
+
+		case OFF_RBRIGHTS:
+			index = RBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			break;
+
+		case ON_LBRIGHTS:
+			index = LBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+			break;
+
+		case OFF_LBRIGHTS:
+			index = LBRIGHTS;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			break;
+
 		case TEST_LEFT_BLINKER:
 			change_input(LEFTBLINKER_INPUT,1);
+			test_lblinkers = 1;
 		break;
 
 		case TEST_RIGHT_BLINKER:
 			change_input(RIGHTBLINKER_INPUT,1);
+			test_rblinkers = 1;
 		break;
 
 		case ON_BRAKES:

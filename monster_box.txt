@@ -344,8 +344,8 @@ d 3rd from left bottom SPI (SS)
 	and call it pwm_lcd signal so pin 7 is now gnd
 8)	50 unassigned
 9)	35 reserved for SS(1) (extra slave select)
-10)	40 unassigned
-11)	42 unassigned
+10)	40 transmit for DS1620*
+11)	42 receive for DS1620
 12)	47 unassigned
 13)	49 unassigned
 14)	55 unassigned
@@ -386,6 +386,14 @@ AVSS	13	15	11	9	7	5	3	1
 3) MAP
 4) Oil Temp
 5) O2
+
+*pins 40 & 42 are 5v to RS-232 conv for DS1620 (AVR) module:
+can either send a command for which of 4 temp sensors to
+activate or just wait for data sent every so many seconds or so.
+the temp data is then sent with the rpm/mph data to the PIC24.
+since there are 4 DS1620 sensors on the AVR module, 1 or 2 can
+be engine temp (one mounted on the input pipe to the heater core)
+and the other 2 can be indoor/outdoor temp.
 
 need extra handshacking between PIC24 and FPGA
 

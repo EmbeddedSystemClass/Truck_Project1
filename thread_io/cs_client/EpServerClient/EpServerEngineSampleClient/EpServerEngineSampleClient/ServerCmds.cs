@@ -13,56 +13,60 @@ namespace EpServerEngineSampleClient
         enum Server_cmds
         {
             NON_CMD,
-			ENABLE_START,
-			STARTER_OFF,
-			ON_ACC,
-			OFF_ACC,
-			ON_FUEL_PUMP,
-			OFF_FUEL_PUMP,
-			ON_FAN,
-			OFF_FAN,
-			ON_LIGHTS,
-			OFF_LIGHTS,
-			ON_BRIGHTS,
-			OFF_BRIGHTS,
-			ON_BRAKES,
-			OFF_BRAKES,
-			ON_RUNNING_LIGHTS,
-			OFF_RUNNING_LIGHTS,
-			START_SEQ,				// 17
-			SHUTDOWN,
-			SHUTDOWN_IOBOX,
-			REBOOT_IOBOX,
-			SEND_ODATA,
-			EDIT_ODATA,
-			EDIT_ODATA2,
-			SEND_ALL_ODATA,
-			RECV_ALL_ODATA,
-			SHOW_ODATA,
-			SAVE_TO_DISK,
-			GET_DIR,
-			LCD_SHIFT_RIGHT,
-			LCD_SHIFT_LEFT,
-			SCROLL_UP,
-			SCROLL_DOWN,
-			ENABLE_LCD,
-			SET_TIME,
-			GET_TIME,
-			UPLOAD_NEW,
-			NEW_PASSWORD1,
-			SET_SERIAL_RECV_ON,
-			SET_SERIAL_RECV_OFF,
-			TEST_LEFT_BLINKER,
-			TEST_RIGHT_BLINKER,
-			RE_ENTER_PASSWORD,
-			DISCONNECT,
-			STOP_MBOX_RECV,
-			CLOSE_DB,
-			OPEN_DB,
-			BAD_MSG,
-			CURRENT_TIME,
-			EXIT_PROGRAM
-		}
+            ENABLE_START,
+            STARTER_OFF,
+            ON_ACC,
+            OFF_ACC,
+            ON_FUEL_PUMP,
+            OFF_FUEL_PUMP,
+            ON_FAN,
+            OFF_FAN,
+            ON_LIGHTS,
+            OFF_LIGHTS,
+            ON_BRIGHTS,
+            OFF_BRIGHTS,
+            ON_LLIGHTS,
+            OFF_LLIGHTS,
+            ON_LBRIGHTS,
+            OFF_LBRIGHTS,
+            ON_RLIGHTS,
+            OFF_RLIGHTS,
+            ON_RBRIGHTS,
+            OFF_RBRIGHTS,
+            ON_BRAKES,
+            OFF_BRAKES,
+            ON_RUNNING_LIGHTS,
+            OFF_RUNNING_LIGHTS,
+            SPECIAL_CMD,
+            START_SEQ,              // 17
+            SHUTDOWN,
+            SHUTDOWN_IOBOX,
+            REBOOT_IOBOX,
+            SEND_ODATA,
+            SAVE_TO_DISK,
+            GET_DIR,
+            LCD_SHIFT_RIGHT,
+            LCD_SHIFT_LEFT,
+            SCROLL_UP,
+            SCROLL_DOWN,
+            ENABLE_LCD,
+            SET_TIME,
+            GET_TIME,
+            UPLOAD_NEW,
+            NEW_PASSWORD1,
+            SET_SERIAL_RECV_ON,
+            SET_SERIAL_RECV_OFF,
+            TEST_LEFT_BLINKER,
+            TEST_RIGHT_BLINKER,
+            RE_ENTER_PASSWORD,
+            DISCONNECT,
+            STOP_MBOX_RECV,
+            CLOSE_DB,
+            OPEN_DB,
+            BAD_MSG,
+            CURRENT_TIME,
+            EXIT_PROGRAM
+        }
 
         public ServerCmds()
         {
@@ -105,9 +109,22 @@ namespace EpServerEngineSampleClient
             i--;
             return i;
         }
+        //public int GetCount()
+        //{
+        //    Array n = Enum.GetValues(typeof(ServerCmds));
+        //    return n.Length;
+        //}
         public string GetName(int cmd)
         {
-            return Enum.GetName(typeof(ServerCmds), cmd);
+            string cmd2 = "";
+            cmd++;
+            int i = 0;
+            do
+            {
+                cmd2 = Enum.GetName(typeof(Server_cmds), i);
+                i++;
+            } while (i != cmd);
+            return cmd2;
         }
         public void Send_Cmd(string cmd, int onoff)
         {
@@ -147,6 +164,26 @@ namespace EpServerEngineSampleClient
                     if (onoff == 1)
                         sendcmd = (int)Server_cmds.ON_BRIGHTS;
                     else sendcmd = (int)Server_cmds.OFF_BRIGHTS;
+                    break;
+                case "LEFT_LIGHTS":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_LLIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_LLIGHTS;
+                    break;
+                case "LEFT_BRIGHTS":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_LBRIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_LBRIGHTS;
+                    break;
+                case "RIGHT_LIGHTS":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_RLIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_RLIGHTS;
+                    break;
+                case "RIGHT_BRIGHTS":
+                    if (onoff == 1)
+                        sendcmd = (int)Server_cmds.ON_RBRIGHTS;
+                    else sendcmd = (int)Server_cmds.OFF_RBRIGHTS;
                     break;
                 case "START_SEQ":
                     sendcmd = (int)Server_cmds.START_SEQ;
@@ -194,8 +231,8 @@ namespace EpServerEngineSampleClient
                 case "GET_TIME":
                     sendcmd = (int)Server_cmds.GET_TIME;
                     break;
-                case "SHOW_ODATA":
-                    sendcmd = (int)Server_cmds.SHOW_ODATA;
+                case "SET_TIME":
+                    sendcmd = (int)Server_cmds.SET_TIME;
                     break;
                 case "DISCONNECT":
                     sendcmd = (int)Server_cmds.DISCONNECT;
@@ -203,12 +240,16 @@ namespace EpServerEngineSampleClient
                 case "STOP_MBOX_RECV":
                     sendcmd = (int)Server_cmds.STOP_MBOX_RECV;
                     break;
+                case "SPECIAL_CMD":
+                    sendcmd = (int)Server_cmds.SPECIAL_CMD;
+                    break;
                 default:
-                    return;
+                    sendcmd = (int)Server_cmds.NON_CMD;
+                    break;
             }
             bytes.SetValue((byte)sendcmd, 0);
             //            AddMsg(Enum.GetName(typeof(Server_cmds), sendcmd));
-            //MessageBox.Show(send_cmd.ToString());
+            
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);
         }
