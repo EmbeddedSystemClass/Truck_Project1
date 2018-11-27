@@ -36,14 +36,16 @@ entity multi_byte is
 		data_ready : in std_logic;
 		cmd_param : in std_logic;
 		data_sent : out std_logic;
+		rx_ds1620 : in std_logic;
+		ref_signal : out std_logic;
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
 
 architecture truck_arch of multi_byte is
 
-	-- send_uart1
-	type state_uart1 is (idle10, idle1, start, start_a, start_b, start_c, start_d, delay);
+	type state_uart1 is (xmit_idle, xmit_start, xmit_check_FF,
+	xmit_check_FF2, xmit_presend, xmit_send, xmit_wait, xmit_inc, xmit_delay);
 	signal state_tx1_reg, state_tx1_next: state_uart1;
 
 	-- recv_uart
@@ -66,8 +68,12 @@ architecture truck_arch of multi_byte is
 	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
 	signal drive_pwm_reg, drive_pwm_next: state_pwm;
 	
+	type state_ref is (idle_ref, start_ref, done_ref);
+	signal state_ref_reg, state_ref_next: state_ref;
+
 	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
+	signal time_delay_reg3, time_delay_next3: unsigned(25 downto 0);	-- ref signal
 
 	signal rpm_db, mph_db: std_logic;
 	signal cmd_rpm: std_logic_vector(7 downto 0);
@@ -120,6 +126,15 @@ architecture truck_arch of multi_byte is
 	signal test_rpm_rev_limits: std_logic;
 	signal start_calc: std_logic;
 	signal shutdown_rpm, shutdown_mph: std_logic;
+	signal temp_data1, temp_data2, temp_data3, temp_data4: std_logic_vector(15 downto 0);
+		constant NO_ELEMS:  integer:=  16;
+	type xmit_array_type is array(0 to NO_ELEMS-1) of std_logic_vector(7 downto 0);
+	signal xmit_array: xmit_array_type:=(others=>(others=>'0'));
+	signal xmit_uindex: unsigned(3 downto 0);
+	signal skip: std_logic;
+	signal skip2: std_logic;
+	signal xmit_stdlv: std_logic_vector(7 downto 0);
+
 	
 begin
 
@@ -195,6 +210,14 @@ dtmf_unit: entity work.dtmf
 		dtmf_signal_2=>pwm_spk2,
 		start=>start_dtmf,
 		done=>dtmf_done1);
+
+wrapper_DS1620_unit: entity work.poll_DS1620
+	port map(clk=>clk, reset=>reset,
+		rx_ds1620=>rx_ds1620,
+		temp_data1=>temp_data1,
+		temp_data2=>temp_data2,
+		temp_data3=>temp_data3,
+		temp_data4=>temp_data4);
 		
 -- ********************************************************************************
 mon_fp: process(clk, reset, state_reg_fp)
@@ -280,88 +303,115 @@ end process;
 -- send rpm & mph results rpm first, high_byte first
 -- could also send it in bcd form
 send_uart1: process(clk, reset, state_tx1_reg)
-variable temp_uart: integer range 0 to 255:= 33;
 begin
 	if reset = '0' then
-		state_tx1_reg <= idle10;
+		state_tx1_reg <= xmit_idle;
+		state_tx1_next <= xmit_idle;
 		data_tx <= (others=>'0');
-		start_tx <= '0';
---		skip <= '0';
 		time_delay_reg <= (others=>'0');
 		time_delay_next <= (others=>'0');
-		low_byte <= X"00";
-		high_byte <= X"00";
-		bcdc <= X"0201";
+		xmit_array <= (others=>(others=>'0'));
+		xmit_array(0) <= X"FF";
+		xmit_uindex <= "0000";
+--		pstart_tx <= '0';
+		start_tx <= '0';
+		led1 <= "1111";
+		skip <= '1';
+		skip2 <= '1';
+		xmit_stdlv <= (others=>'0');
 
 	else if clk'event and clk = '1' then
 		case state_tx1_reg is
-			when idle10 =>
+			when xmit_idle =>
 				start_tx <= '0';
 				-- never goes faster than this delay
- 				if time_delay_reg > TIME_DELAY9 then
+ 				if time_delay_reg > TIME_DELAY5 then
 					time_delay_next <= (others=>'0');
-					state_tx1_next <= idle1;
+					state_tx1_next <= xmit_start;
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;	
-			when idle1 =>
-				low_byte <= rpm_result(7 downto 0);
-				high_byte <= rpm_result(15 downto 8);
-				data_tx <= X"FF";
+
+			when xmit_start =>
+				xmit_uindex <= "0001";
+				led1 <= "1110";
+				xmit_array(0) <= X"FF";
+				-- send high_byte first because this is byte reversed in DS1620.vhd
+				xmit_array(1) <= temp_data1(7 downto 0);
+				xmit_array(2) <= temp_data1(15 downto 8);
+				xmit_array(3) <= temp_data2(7 downto 0);
+				xmit_array(4) <= temp_data2(15 downto 8);
+				xmit_array(5) <= temp_data3(7 downto 0);
+				xmit_array(6) <= temp_data3(15 downto 8);
+				xmit_array(7) <= temp_data4(7 downto 0);
+				xmit_array(8) <= temp_data4(15 downto 8);
+				xmit_array(9) <= rpm_result(7 downto 0);
+				xmit_array(10) <= rpm_result(15 downto 8);
+				xmit_array(11) <= mph_result(7 downto 0);
+				xmit_array(12) <= mph_result(15 downto 8);
+				xmit_array(13) <= X"05";
+				xmit_array(14) <= X"06";
+				xmit_array(15) <= X"07";
+				state_tx1_next <= xmit_check_FF;
+--				state_tx1_next <= xmit_presend;
+
+			when xmit_check_FF =>
+				led1 <= "1101";
+				xmit_stdlv <= xmit_array(conv_integer(xmit_uindex));
+				state_tx1_next <= xmit_check_FF2;
+				
+			when xmit_check_FF2 =>
+				led1 <= "1011";
+				skip <= not skip;
+				if skip = '1' then
+					if xmit_stdlv = X"FF" then
+						xmit_array(conv_integer(xmit_uindex)) <= X"FE";
+					end if;
+					if xmit_uindex < NO_ELEMS - 1 then
+						xmit_uindex <= xmit_uindex + 1;
+						state_tx1_next <= xmit_check_FF;
+					else
+--						xmit_uindex <= "00001";
+						state_tx1_next <= xmit_presend;
+					end if;
+				end if;
+
+			when xmit_presend =>
+				led1 <= "1110";
+				xmit_uindex <= "0000";
+				state_tx1_next <= xmit_send;
+				
+			when xmit_send =>
+				led1 <= "1101";
+				data_tx <= xmit_array(conv_integer(xmit_uindex));
 				start_tx <= '1';
-				state_tx1_next <= start;
-			when start =>
-				start_tx <= '0';
+				state_tx1_next <= xmit_wait;
+					
+			when xmit_wait =>
+				led1 <= "1011";
 				if done_tx = '1' then
-					if low_byte = X"FF" then
-						low_byte <= X"FE";
+					start_tx <= '0';
+					state_tx1_next <= xmit_inc;
+				end if;
+
+			when xmit_inc =>	
+				skip2 <= not skip2;
+				if skip2 = '1' then
+					if xmit_uindex < NO_ELEMS - 1 then
+						xmit_uindex <= xmit_uindex + 1;
+						state_tx1_next <= xmit_send;
+					else
+						state_tx1_next <= xmit_delay;
 					end if;
---						data_tx <= bcd_rpm(15 downto 8);
-					data_tx <= high_byte;
-					start_tx <= '1';
-					state_tx1_next <= start_a;
 				end if;
-			when start_a =>
-				start_tx <= '0';
-				if done_tx = '1' then
---					data_tx <= bcd_rpm(7 downto 0);
-					data_tx <= low_byte;
-					start_tx <= '1';
-					low_byte <= mph_result(7 downto 0);
-					high_byte <= mph_result(15 downto 8);
-					state_tx1_next <= start_b;
-				end if;
-			when start_b =>
-				start_tx <= '0';
-				if done_tx = '1' then
-					data_tx <= high_byte;
-					start_tx <= '1';
-					state_tx1_next <= start_c;
-				end if;
-			when start_c =>
-				start_tx <= '0';
-				if done_tx = '1' then
-					if low_byte = X"FF" then
-						low_byte <= X"FE";
-					end if;
-					data_tx <= low_byte;
-					start_tx <= '1';
-					state_tx1_next <= start_d;
-				end if;
-			when start_d =>	
-				start_tx <= '0';
-				if done_tx = '1' then
---					data_tx <= stlv_temp5;
-					start_tx <= '1';
-					state_tx1_next <= delay;
---					state_tx1_next <= idle10;
-				end if;
-			when delay =>
-				start_tx <= '0';
-				if time_delay_reg > unsigned(stdlv_transmit_update_rate) - 1 then
--- 				if time_delay_reg > TIME_DELAY5a then
+				
+			when xmit_delay =>
+				led1 <= "0111";
+--				if time_delay_reg > TIME_DELAY9/1000 then
+				if time_delay_reg > TIME_DELAY5 then
 					time_delay_next <= (others=>'0');
-					state_tx1_next <= idle1;
+					state_tx1_next <= xmit_start;
+--					state_tx1_next <= xmit_presend;
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;	
@@ -525,7 +575,7 @@ begin
 		start_rpm_wrapper <= '1';
 		start_mph_wrapper <= '1';
 		mph_or_not <= '0';
-		led1 <= "1111";
+--		led1 <= "1111";
 
 -- if mcmd is one of the special commands other than
 -- the normal SEND_CHAR_CMD then we must stop the wrapper
@@ -664,5 +714,46 @@ begin
 		time_delay_reg2 <= time_delay_next2;
 	end if;
 end process;		
+
+-- ********************************************************************************
+-- slow on/off pulse on pin 11 to use as a reference using voltmeter
+ref_delay: process(clk, reset, state_ref_reg)
+begin
+	if reset = '0' then
+		time_delay_reg3 <= (others=>'0');
+		time_delay_next3 <= (others=>'0');
+		state_ref_reg <= idle_ref;
+		state_ref_next <= idle_ref;
+		ref_signal <= '0';
+
+	else if clk'event and clk = '1' then
+		case state_ref_reg is
+			when idle_ref =>
+ 				if time_delay_reg3 > TIME_DELAY3 then
+					time_delay_next3 <= (others=>'0');
+					state_ref_next <= start_ref;
+					ref_signal <= '1';
+				else
+					time_delay_next3 <= time_delay_reg3 + 1;
+				end if;	
+
+			when start_ref =>
+ 				if time_delay_reg3 > TIME_DELAY9 then
+					time_delay_next3 <= (others=>'0');
+					state_ref_next <= done_ref;
+					ref_signal <= '0';
+				else
+					time_delay_next3 <= time_delay_reg3 + 1;
+				end if;	
+
+			when done_ref =>
+				state_ref_next <= idle_ref;
+
+		end case;
+		time_delay_reg3 <= time_delay_next3;
+		state_ref_reg <= state_ref_next;
+		end if;
+	end if;
+end process;
 
 end truck_arch;

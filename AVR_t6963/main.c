@@ -21,6 +21,7 @@
 
 #define EEPROM_SIZE 0x400
 #define STR_LEN 30
+#define NUM_STR 46
 char eepromString[EEPROM_SIZE] EEMEM;
 volatile UCHAR xbyte;
 volatile UCHAR high_delay;
@@ -35,6 +36,7 @@ static char eeprom[EEPROM_SIZE];
 volatile UINT xrow, xcol;
 volatile UCHAR buff[LEN];
 static char *eeprom_str_lookup(int index, char *str);
+static float convert_to_T_F(int raw_data);
 // use timer to keep track of things like:
 // - seconds before re-enter password
 // - how long to wait before shutting down screen
@@ -62,7 +64,7 @@ int main(void)
 	int chptr;
 	UCHAR key;
 	UCHAR mode, type;
-	UCHAR byte_val;
+	UCHAR byte_val, bval2;
 	UINT int_val;
 	UINT row, col;
 	UCHAR srow, scol, erow, ecol;
@@ -233,7 +235,7 @@ int main(void)
 					index = buff[3];
 					blanks = buff[4];
 
-					if(index >= 0 && index < 52)
+					if(index >= 0 && index < NUM_STR)
 					{
 
 						strcpy(str,eeprom_str_lookup(index, str));
@@ -272,7 +274,7 @@ int main(void)
 				case SEND_INT_RT_VALUES:
 				// 1st param is row
 				// 2nd param is col
-				// 3rd/4th is int value up to 65635
+				// 3rd/4th is int value up to 65635 (high byte 1st)
 					int_val = (UINT)buff[3];
 					int_val <<= 8;
 					int_val |= (UINT)buff[4];
@@ -311,6 +313,16 @@ int main(void)
 					num_entry_ptr = 0;
 				break;
 
+				case DISPLAY_FLOAT:
+					byte_val = buff[3];
+					bval2 = buff[4];
+					int_val = (UINT)byte_val;
+					int_val <<= 8;
+					int_val |= (UINT)bval2;
+
+					sprintf(str,"%0.2f ",(double)convert_to_T_F((int)int_val));
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
+				break;
 				default:
 				break;
 			}
@@ -351,12 +363,22 @@ static char *eeprom_str_lookup(int index, char *str)
 	return str;
 }
 
-
-#if 0
-ISR(SPI_STC_vect)
+static float convert_to_T_F(int raw_data)
 {
-	loop_until_bit_is_set(SPSR, SPIF);			  /* wait until done */
-	spi_ret = SPDR;
-	transmitByte(spi_ret);
+	float T_F, T_celcius;
+	
+	if ((raw_data & 0x100) != 0)
+	{
+		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */   
+	}
+	T_celcius = raw_data * 0.5;
+	if(T_celcius > 125 || T_celcius < -54)
+	{
+//		printf("OOR ");		// out of range error
+		return 0;
+	}
+	T_F = (T_celcius * 1.8) + 32;
+	return(T_F);	// returns 257 -> -67		(F)
+//	return(T_celcius);	// returns 125 -> -55	(C)
 }
-#endif
+

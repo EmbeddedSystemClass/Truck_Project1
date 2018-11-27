@@ -70,6 +70,10 @@ enum cmd_types
 	REBOOT_IOBOX,
 	SEND_ODATA,
 	SAVE_TO_DISK,
+	BLOWER_OFF,
+	BLOWER1,
+	BLOWER2,
+	BLOWER3,
 	GET_DIR,
 	LCD_SHIFT_RIGHT,
 	LCD_SHIFT_LEFT,
@@ -194,9 +198,9 @@ enum output_types
 	BLINKINDICATE,
 	ALARMSPEAKER,
 	BACKUPLIGHTS,
-	TESTOUTPUT24,
-	TESTOUTPUT25,
-	TESTOUTPUT26,
+	HTRBLOWERLOW,
+	HTRBLOWERMED,
+	HTRBLOWERHIGH,
 	TESTOUTPUT27,
 	TESTOUTPUT28,
 	TESTOUTPUT29,
@@ -236,20 +240,21 @@ enum output_types
 #define DISPLAY_MENU_LABELS		16
 #define DISPLAY_RT_LABELS		17
 #define SET_NUM_ENTRY_MODE		18
+#define DISPLAY_FLOAT			19
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
 #define MENU_VALUES_OFFSET 23
-#define VARIOUS_MSG_OFFSET 12
+#define VARIOUS_MSG_OFFSET 14
 #define NO_MENUS 2
 
 // start positions on screen
-#define START_RT_VALUE_ROW 10
+#define START_RT_VALUE_ROW 8
 #define START_MENU_VALUE_ROW 1
 #define START_RT_VALUE_COL 2
 #define START_MENU_VALUE_COL 2
 #define NUM_MENU_LABELS 12
-#define NUM_RT_LABELS 11
+#define NUM_RT_LABELS 13
 /*
 8) set time/date		(num entry)
 *) time till off eng	(num entry)

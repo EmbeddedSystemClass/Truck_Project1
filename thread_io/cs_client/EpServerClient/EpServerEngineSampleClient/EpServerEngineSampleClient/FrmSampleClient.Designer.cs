@@ -67,7 +67,7 @@
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(201, 259);
+            this.tbReceived.Size = new System.Drawing.Size(201, 328);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -158,10 +158,14 @@
             "TEST_RIGHT_BLINKER",
             "BRAKES",
             "RUNNING_LIGHTS",
-            "SPECIAL_CMD"});
+            "SPECIAL_CMD",
+            "BLOWER1_ON",
+            "BLOWER2_ON",
+            "BLOWER3_ON",
+            "BLOWER_OFF"});
             this.cblistCommon.Location = new System.Drawing.Point(13, 191);
             this.cblistCommon.Name = "cblistCommon";
-            this.cblistCommon.Size = new System.Drawing.Size(202, 259);
+            this.cblistCommon.Size = new System.Drawing.Size(202, 327);
             this.cblistCommon.TabIndex = 9;
             this.cblistCommon.SelectedValueChanged += new System.EventHandler(this.cblist_SelValueChanged);
             // 
@@ -310,7 +314,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 465);
+            this.ClientSize = new System.Drawing.Size(460, 534);
             this.Controls.Add(this.btnGetTime);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.btnDBMgmt);
@@ -351,11 +355,8 @@
         //string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         // laptop
 
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
-
-        string connectionStringlt = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
 
         private System.Windows.Forms.TextBox tbConnected;
         private System.Windows.Forms.Label label3;

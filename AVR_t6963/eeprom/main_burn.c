@@ -15,7 +15,7 @@
 
 
 // values start at line 20 so its easy to calculate the offset
-#define NUM_STR 53
+#define NUM_STR 46
 char menu_labels[NUM_STR][24] = {
 	{"RPM"},			// rt values
 	{"MPH"},
@@ -28,6 +28,8 @@ char menu_labels[NUM_STR][24] = {
 	{"ODOM"},
 	{"TRIP"},
 	{"RUN TIME"},  
+	{"OUTDOOR TEMP"},
+	{"INDOOR TEMP"},
 	{"enter password:"},	// various message string	(VARIOUS_MSG_OFFSET)
 	{"bad password"},
 	{"start engine"},
@@ -61,8 +63,6 @@ char menu_labels[NUM_STR][24] = {
 	{"blk ht off temp"},		// 8
 	{"batt ht on temp"},		// 9
 	{"batt ht off temp"},		// 0
-	{"unused 1"},				// *
-	{"unused 2"}				// #
 };
 
 #define STRING_LEN 0x400

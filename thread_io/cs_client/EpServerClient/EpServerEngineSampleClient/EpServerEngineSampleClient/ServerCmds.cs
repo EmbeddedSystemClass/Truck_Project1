@@ -12,60 +12,64 @@ namespace EpServerEngineSampleClient
     {
         enum Server_cmds
         {
-            NON_CMD,
-            ENABLE_START,
-            STARTER_OFF,
-            ON_ACC,
-            OFF_ACC,
-            ON_FUEL_PUMP,
-            OFF_FUEL_PUMP,
-            ON_FAN,
-            OFF_FAN,
-            ON_LIGHTS,
-            OFF_LIGHTS,
-            ON_BRIGHTS,
-            OFF_BRIGHTS,
-            ON_LLIGHTS,
-            OFF_LLIGHTS,
-            ON_LBRIGHTS,
-            OFF_LBRIGHTS,
-            ON_RLIGHTS,
-            OFF_RLIGHTS,
-            ON_RBRIGHTS,
-            OFF_RBRIGHTS,
-            ON_BRAKES,
-            OFF_BRAKES,
-            ON_RUNNING_LIGHTS,
-            OFF_RUNNING_LIGHTS,
-            SPECIAL_CMD,
-            START_SEQ,              // 17
-            SHUTDOWN,
-            SHUTDOWN_IOBOX,
-            REBOOT_IOBOX,
-            SEND_ODATA,
-            SAVE_TO_DISK,
-            GET_DIR,
-            LCD_SHIFT_RIGHT,
-            LCD_SHIFT_LEFT,
-            SCROLL_UP,
-            SCROLL_DOWN,
-            ENABLE_LCD,
-            SET_TIME,
-            GET_TIME,
-            UPLOAD_NEW,
-            NEW_PASSWORD1,
-            SET_SERIAL_RECV_ON,
-            SET_SERIAL_RECV_OFF,
-            TEST_LEFT_BLINKER,
-            TEST_RIGHT_BLINKER,
-            RE_ENTER_PASSWORD,
-            DISCONNECT,
-            STOP_MBOX_RECV,
-            CLOSE_DB,
-            OPEN_DB,
-            BAD_MSG,
-            CURRENT_TIME,
-            EXIT_PROGRAM
+			NON_CMD,
+			ENABLE_START,
+			STARTER_OFF,
+			ON_ACC,
+			OFF_ACC,
+			ON_FUEL_PUMP,
+			OFF_FUEL_PUMP,
+			ON_FAN,
+			OFF_FAN,
+			ON_LIGHTS,
+			OFF_LIGHTS,
+			ON_BRIGHTS,
+			OFF_BRIGHTS,
+			ON_LLIGHTS,
+			OFF_LLIGHTS,
+			ON_LBRIGHTS,
+			OFF_LBRIGHTS,
+			ON_RLIGHTS,
+			OFF_RLIGHTS,
+			ON_RBRIGHTS,
+			OFF_RBRIGHTS,
+			ON_BRAKES,
+			OFF_BRAKES,
+			ON_RUNNING_LIGHTS,
+			OFF_RUNNING_LIGHTS,
+			SPECIAL_CMD,
+			START_SEQ,
+			SHUTDOWN,
+			SHUTDOWN_IOBOX,
+			REBOOT_IOBOX,
+			SEND_ODATA,
+			SAVE_TO_DISK,
+            BLOWER_OFF,
+			BLOWER1,
+			BLOWER2,
+			BLOWER3,
+			GET_DIR,
+			LCD_SHIFT_RIGHT,
+			LCD_SHIFT_LEFT,
+			SCROLL_UP,
+			SCROLL_DOWN,
+			ENABLE_LCD,
+			SET_TIME,
+			GET_TIME,
+			UPLOAD_NEW,
+			NEW_PASSWORD1,
+			SET_SERIAL_RECV_ON,
+			SET_SERIAL_RECV_OFF,
+			TEST_LEFT_BLINKER,
+			TEST_RIGHT_BLINKER,
+			RE_ENTER_PASSWORD,
+			DISCONNECT,
+			STOP_MBOX_RECV,
+			CLOSE_DB,
+			OPEN_DB,
+			BAD_MSG,
+			CURRENT_TIME,
+			EXIT_PROGRAM
         }
 
         public ServerCmds()
@@ -243,13 +247,23 @@ namespace EpServerEngineSampleClient
                 case "SPECIAL_CMD":
                     sendcmd = (int)Server_cmds.SPECIAL_CMD;
                     break;
+                case "BLOWER1_ON":
+                    sendcmd = (int)Server_cmds.BLOWER1;
+                    break;
+                case "BLOWER2_ON":
+                    sendcmd = (int)Server_cmds.BLOWER2;
+                    break;
+                case "BLOWER3_ON":
+                    sendcmd = (int)Server_cmds.BLOWER3;
+                    break;
+                case "BLOWER_OFF":
+                    sendcmd = (int)Server_cmds.BLOWER_OFF;
+                    break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;
                     break;
             }
             bytes.SetValue((byte)sendcmd, 0);
-            //            AddMsg(Enum.GetName(typeof(Server_cmds), sendcmd));
-            
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);
         }

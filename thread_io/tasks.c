@@ -46,7 +46,7 @@ int threads_ready_count=0;
 pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
-
+extern CMD_STRUCT cmd_array[58];
 ollist_t oll;
 
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
@@ -198,8 +198,6 @@ static void set_output(O_DATA *otp, int onoff)
 {
 	O_DATA **otpp = &otp;
 
-//	myprintf2("port: ",otp->port);	
-//	myprintf2("onoff: ",otp->onoff);	
 	switch(otp->type)
 	{
 		case 0:
@@ -720,7 +718,7 @@ UCHAR timer_task(int test)
 
 		// check if one of the outputs is set to type 2 (time_delay)
 //		for(i = 0;i < NUM_PORTS;i++)
-		for(i = STARTER;i < TESTOUTPUT24;i++)
+		for(i = STARTER;i < TESTOUTPUT27;i++)
 		{
 			ollist_find_data(i,otpp,&oll);
 //			printf("%d ",otp->port);
@@ -784,26 +782,6 @@ UCHAR timer_task(int test)
 		}
 
 		// write to the sched.log file if buffer gets near full
-		if(rt_fd_ptr > 950)
-		{
-			strcpy(tempx,"sched.log\0");
-//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
-			fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
-				S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-			if(fp < 0)
-			{
-				printf("can't create sched.log\n");
-			}else
-			{
-//							printf("writing to sched.log\r\n");
-				write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
-				rt_fd_ptr = 0;
-//							rt_llist_printfile(fp, &roll);
-				close(fp);
-//							printf("rc: %d\r\n",rc);
-//							rt_llist_removeall_data(&roll);
-			}
-		}
 		
 		if(shutdown_all)
 		{
@@ -885,6 +863,7 @@ UCHAR serial_recv_task(int test)
 	UCHAR ch;
 	int fd;
 	char errmsg[20];
+	char tempx[30];
 
 //	memset(serial_buff,0,SERIAL_BUFF_SIZE);
 //	no_serial_buff = 0;
@@ -913,10 +892,13 @@ UCHAR serial_recv_task(int test)
 */
 			pthread_mutex_unlock(&serial_read_lock);
 
-			if(ch >= ENABLE_START && ch <= REBOOT_IOBOX)
+			if(ch >= ENABLE_START && ch <= BLOWER3)
 			{
 //				myprintf2("test: ",ch);			
 				basic_controls(ch);
+				strcpy(tempx,cmd_array[ch].cmd_str);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+				
 //				send_live_code(ch,1);
 
 /*
@@ -1379,6 +1361,65 @@ void basic_controls(UCHAR cmd)
 			change_input(BRAKE_INPUT,0);
 		break;
 
+		// turn off all the others first then turn on
+		// the one relay according to the command
+		case BLOWER1:
+			index = HTRBLOWERMED;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERHIGH;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERLOW;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+		break;
+
+		case BLOWER2:
+			index = HTRBLOWERHIGH;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERLOW;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERMED;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+		break;
+
+		case BLOWER3:
+			index = HTRBLOWERMED;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERLOW;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERHIGH;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,1);
+		break;
+
+		// turn all off
+		case BLOWER_OFF:
+			index = HTRBLOWERMED;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERHIGH;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+			usleep(100000);
+			index = HTRBLOWERLOW;
+			ollist_find_data(index,otpp,&oll);
+			set_output(otp,0);
+		break;		
+
 		case START_SEQ:
 			myprintf1("start seq\0");
 			ollist_find_data(ACCON,&otp,&oll);
@@ -1495,28 +1536,4 @@ void basic_controls(UCHAR cmd)
 	}
 //	send_serial(index,0);
 }
-/*
-					rt_file_data[rt_fd_ptr++] = otp->port;				// 0
-					rt_file_data[rt_fd_ptr++] = otp->onoff;				// 1
-					rt_file_data[rt_fd_ptr++] = otp->type;				// 2
-					rt_file_data[rt_fd_ptr++] = otp->time_delay;		// 3
-					rt_file_data[rt_fd_ptr++] = otp->time_left;			// 4
-					rt_file_data[rt_fd_ptr++] = otp->reset;				// 5
-					rt_file_data[rt_fd_ptr++] = otp->polarity;			// 6
-					rt_file_data[rt_fd_ptr++] = trunning_hours;			// 7
-					rt_file_data[rt_fd_ptr++] = trunning_minutes;		// 8
-					rt_file_data[rt_fd_ptr++] = trunning_seconds;		// 9
-*/
-//					printf("fd: %d\r\n",rt_fd_ptr);
-/*
-					rtp->port = otp->port;
-					rtp->onoff = otp->onoff;
-					rtp->hours = trunning_hours;
-					rtp->minutes = trunning_minutes;
-					rtp->seconds = trunning_seconds;
-
-					rt_llist_insert_data(&roll,rtp);
-					printf("%d %d\r\n",rtp->port,rtp->onoff);
-*/
-
 

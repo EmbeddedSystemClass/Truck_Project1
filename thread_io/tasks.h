@@ -71,7 +71,6 @@ REAL_BANKS real_banks[40];
 
 static UCHAR rt_data[30];
 static UCHAR rt_file_data[1000];
-static int rt_fd_ptr;
 static int odometer;
 static int trip;
 static int tcp_connected_time;

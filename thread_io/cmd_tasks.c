@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[54] =
+CMD_STRUCT cmd_array[58] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -68,6 +68,10 @@ CMD_STRUCT cmd_array[54] =
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
 	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
+	{		BLOWER_OFF,"BLOWER_OFF\0" },
+	{		BLOWER1,"BLOWER1\0" },
+	{		BLOWER2,"BLOWER2\0" },
+	{		BLOWER3,"BLOWER3\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
@@ -246,7 +250,6 @@ UCHAR get_host_cmd_task(int test)
 	myprintf1("sched v1.20\0");
 //	printf("sched v1.19\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
-	rt_fd_ptr = 0;
 	odometer = 0;
 	trip = 0;
 	tcp_connected_time = 0;
@@ -275,8 +278,8 @@ UCHAR get_host_cmd_task(int test)
 					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
-			if(cmd > 0)
-				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
+//			if(cmd > 0)
+//				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 
 			if(rc > 0 && cmd > 0)
 			{
@@ -319,6 +322,10 @@ UCHAR get_host_cmd_task(int test)
 					case ON_RUNNING_LIGHTS:
 					case OFF_RUNNING_LIGHTS:
 					case SPECIAL_CMD:
+					case BLOWER_OFF:
+					case BLOWER1:
+					case BLOWER2:
+					case BLOWER3:
 						basic_controls(cmd);
 						strcpy(tempx,cmd_array[cmd].cmd_str);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
@@ -478,7 +485,6 @@ UCHAR get_host_cmd_task(int test)
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME2);
-						printf("%s\r\n",tempx);
 						break;
 
 					case SEND_ODATA:
@@ -737,27 +743,6 @@ UCHAR get_host_cmd_task(int test)
 						send_serialother(STOP_SERIAL_RECV,0,0,0,0);
 						break;
 
-/*
-					case TEST_WRITE_FILE:
-						strcpy(tempx,"sched.log\0");
-//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
-						fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
-							S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-						if(fp < 0)
-						{
-							myprintf1("can't create sched.log\0");
-						}else
-						{
-//							printf("writing to sched.log\r\n");
-							rc = write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
-							rt_fd_ptr = 0;
-//							rt_llist_printfile(fp, &roll);
-							close(fp);
-//							printf("rc: %d\r\n",rc);
-//							rt_llist_removeall_data(&roll);
-						}
-						break;
-*/
 					// upload this program and then goto reboot so it comes up using the
 					// newly uploaded program (see try_sched.sh in /home/dan/dev/sched)
 					case UPLOAD_NEW:
@@ -818,22 +803,6 @@ exit_program:
 						}
 
 						// save the current list of events
-						if(rt_fd_ptr > 0)
-						{
-							strcpy(tempx,"sched.log\0");
-	//						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
-							fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,
-								S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-							if(fp < 0)
-							{
-								printf("can't create sched.log\n");
-							}else
-							{
-//								printf("writing to sched.log\r\n");
-								rc = write(fp,(const void *)rt_file_data,(size_t)rt_fd_ptr);
-								close(fp);
-							}
-						}
 						strcpy(tempx,"odometer.txt\0");
 						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
 					//	fp = open((const char *)&tempx[0], O_RDWR | O_APPEND,

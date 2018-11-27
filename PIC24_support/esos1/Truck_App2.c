@@ -41,7 +41,6 @@ ESOS_USER_TASK(display_rtvalues)
 
     ESOS_TASK_BEGIN();
 
-
 	data1 = 0x21;
 //	comm1_handle = esos_GetTaskHandle(send_comm1);
 
@@ -49,7 +48,9 @@ ESOS_USER_TASK(display_rtvalues)
 	{
 		if(key_mode == NORMAL)
 		{
-			for(i = ENG_TEMP;i < O2+1;i++)
+			// engine temp doesn't come from ADC anymore
+			// 
+			for(i = ENG_TEMP + 1;i < O2+1;i++)
 			{
 				avr_buffer[0] = SEND_BYTE_RT_VALUES;
 				avr_buffer[1] = rtlabel_str[i].row;
@@ -179,17 +180,38 @@ ESOS_USER_TASK(send_fpga)
 // recv data from FPGA
 // this waits for serial input from FPGA which happens at a freq determinted by setting
 // the update rate - for now just sends the current rpm/mph preceded by '0xFF'
+// FPGA sends
+// 0 - 0xFF
+// 1 - low byte of temperature data1
+// 2 - high byte of temperature data1
+// 3 - low byte of temperature data2
+// 4 - high byte of temperature data2
+// 5 - low byte of temperature data3
+// 6 - high byte of temperature data3
+// 7 - low byte of temperature data4
+// 8 - high byte of temperature data4
+// 9 - low byte of rpm
+// 10 - high byte of mph
+// 11 - low byte of mph
+// 12 - high byte of mph
+// 13 - should be a '5'	(not used)
+// 14 - should be a '6'		"
+// 15 - should be a '7'		"
 ESOS_USER_TASK(recv_fpga)
 {
     static UCHAR data2;
-	static int i;
-	static UCHAR temp[10];
+	static int i,j;
+	static UCHAR temp[20];
+	static UINT ttemp;
+	static UCHAR ttemp2;
 	
     ESOS_TASK_BEGIN();
 
 	data2 = 0x21;
 	gl_rpm = gl_mph = 0;
-	
+	gl_engine_temp = gl_indoor_temp = gl_outdoor_temp = gl_temp4 = 0;
+	i = 30;
+	j = 0;
     while (1)
     {
 		if(key_mode == NORMAL)
@@ -201,49 +223,172 @@ ESOS_USER_TASK(recv_fpga)
 			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM3();
 			ESOS_TASK_WAIT_ON_GET_UINT83(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM3();
-/*
-	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
-			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-*/
-			// FPGA sends
-			// 1 - 0xFF
-			// 2 - high byte of rpm
-			// 3 - low byte of rpm
-			// 4 - high byte of mph
-			// 5 - low byte of mph
 
 			if(data2 == 0xFF)
+			{
 				i = 0;
-			else{
-				temp[i] = data2;
-				i++;
+//		 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//				ESOS_TASK_WAIT_ON_SEND_UINT8(0xFF);
+//				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+				memset(temp,0,sizeof(temp));
 			}
+			else
+			{
+				
+//		 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+//				ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
+//				ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+				temp[i++] = data2;
+				if(i == 15)
+				{
+					gl_engine_temp = (UINT)temp[0];
+					gl_engine_temp <<= 8;
+					gl_engine_temp |= (UINT)temp[1];
 
-			if(i == 3)
-			{							
-				gl_rpm = (UINT)temp[0];
-				gl_rpm <<= 8;
-				gl_rpm |= (UINT)temp[1];
-				gl_mph = (UINT)temp[2];
-				gl_mph <<= 8;
-				gl_mph |= (UINT)temp[3];
-				i = 0;
+					gl_indoor_temp = (UINT)temp[2];
+					gl_indoor_temp <<= 8;
+					gl_indoor_temp |= (UINT)temp[3];
 
-				// display the values
-				avr_buffer[0] = SEND_INT_RT_VALUES;
+					gl_outdoor_temp = (UINT)temp[4];
+					gl_outdoor_temp <<= 8;
+					gl_outdoor_temp |= (UINT)temp[5];
 
-				avr_buffer[1] = rtlabel_str[RPM].row;
-				avr_buffer[2] = rtlabel_str[RPM].data_col;
-				avr_buffer[3] = temp[0];
-				avr_buffer[4] = temp[1];
-				AVR_CALL();
+					gl_temp4 = (UINT)temp[6];
+					gl_temp4 <<= 8;
+					gl_temp4 |= (UINT)temp[7];
+					
+					avr_buffer[0] = SEND_INT_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 0;
+					avr_buffer[3] = temp[0];
+					avr_buffer[4] = temp[1];
+					AVR_CALL();
 
-				avr_buffer[1] = rtlabel_str[MPH].row;
-				avr_buffer[2] = rtlabel_str[MPH].data_col;
-				avr_buffer[3] = temp[2];
-				avr_buffer[4] = temp[3];
-				AVR_CALL();
+					avr_buffer[0] = SEND_INT_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 8;
+					avr_buffer[3] = temp[2];
+					avr_buffer[4] = temp[3];
+					AVR_CALL();
+/*
+					avr_buffer[0] = SEND_INT_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 16;
+					avr_buffer[3] = temp[4];
+					avr_buffer[4] = temp[5];
+					AVR_CALL();
+					
+					avr_buffer[0] = DISPLAY_FLOAT;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 0;
+					avr_buffer[3] = temp[0];
+					avr_buffer[4] = temp[1];
+					AVR_CALL();
+
+					avr_buffer[0] = DISPLAY_FLOAT;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 8;
+					avr_buffer[3] = temp[2];
+					avr_buffer[4] = temp[3];
+					AVR_CALL();
+*/
+					i = 0;
+#if 0
+					break;
+					case 3:
+						gl_indoor_temp = (UINT)temp[i];
+					break;
+					case 4:
+						ttemp = (UINT)temp[i];
+						ttemp <<= 8;
+						gl_indoor_temp |= ttemp;
+					break;
+					case 5:
+						gl_outdoor_temp = (UINT)temp[i];
+					break;
+					case 6:
+						ttemp = (UINT)temp[i];
+						ttemp <<= 8;
+						gl_outdoor_temp |= ttemp;
+					break;
+					case 7:
+						gl_temp4 = (UINT)temp[i];
+						ttemp2 = temp[i];
+					break;
+					case 8:
+						ttemp = (UINT)temp[i];
+	/*
+				 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
+						ESOS_TASK_WAIT_ON_SEND_UINT8(ttemp2);
+						ESOS_TASK_WAIT_ON_SEND_UINT8(ttemp);
+						ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
+	*/
+						ttemp <<= 8;
+						gl_temp4 |= ttemp;
+
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 0;
+						avr_buffer[3] = ttemp2;
+						AVR_CALL();
+
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 4;
+						avr_buffer[3] = ttemp;
+						AVR_CALL();
+
+	/*
+						avr_buffer[0] = SEND_INT_RT_VALUES;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 10;
+						avr_buffer[3] = ttemp2;
+						avr_buffer[4] = temp[i];
+						AVR_CALL();
+	*/
+					break;
+					case 9:
+						gl_rpm = (UINT)temp[i];
+						ttemp2 = temp[i];
+					break;
+					case 10:
+						avr_buffer[0] = SEND_INT_RT_VALUES;
+						avr_buffer[1] = rtlabel_str[RPM].row;
+						avr_buffer[2] = rtlabel_str[RPM].data_col;
+						avr_buffer[3] = ttemp2;
+						avr_buffer[4] = temp[i];
+						AVR_CALL();
+						ttemp = (UINT)temp[i];
+						ttemp <<= 8;
+						gl_rpm |= ttemp;
+
+					break;
+					case 11:
+						gl_mph = (UINT)temp[i];
+						ttemp2 = temp[i];
+					break;
+					case 12:
+						avr_buffer[0] = SEND_INT_RT_VALUES;
+						avr_buffer[1] = rtlabel_str[MPH].row;
+						avr_buffer[2] = rtlabel_str[MPH].data_col;
+						avr_buffer[3] = ttemp2;
+						avr_buffer[4] = temp[i];
+						AVR_CALL();
+						ttemp = (UINT)temp[i];
+						ttemp <<= 8;
+						gl_mph |= ttemp;
+					break;
+					case 13:
+					break;
+					case 14:
+					break;
+					case 15:
+					break;
+					default:
+					break;
+				
+#endif
+				}
 			}
 		}
 		ESOS_TASK_WAIT_TICKS(1);
@@ -296,6 +441,7 @@ ESOS_USER_TASK(display_rtlabels)
 
 		while(ESOS_TASK_IVE_GOT_MAIL())
 		{
+			// data2 doesn't do anything
 			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
 			avr_buffer[0] = EEPROM_STR;
 
@@ -992,6 +1138,7 @@ void user_init(void)
 	esos_RegisterTask(display_menu);
 	esos_RegisterTask(display_rtlabels);
 	esos_RegisterTask(key_timer_task);
+	esos_RegisterTask(temp_monitor_task);
 	esos_RegisterTask(display_rtvalues);
 } // end user_init()
 

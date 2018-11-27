@@ -58,6 +58,8 @@ git add Truck_App1/spi_slave.vhd
 git add Truck_App1/spi_master.vhd
 git add Truck_App1/dtmf.vhd
 #git add Truck_App1/dtmf.wcfg
+git add Truck_App1/poll_DS1620.vhd
+git add Truck_App1/DS1620.vhd
 git add Truck_App1/lcd_pwm.vhd
 #git add Truck_App1/fifo.vhd
 git add Truck_App1/test_outputs.zip
@@ -109,6 +111,7 @@ git add thread_io/how2formatSDCardExt.png
 git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
+git add thread_io/list.txt
 git add thread_io/IO_card_layout.png
 git add thread_io/cs_client/EpServerClient/*
 git add thread_io/cs_client/server_on_linux.c

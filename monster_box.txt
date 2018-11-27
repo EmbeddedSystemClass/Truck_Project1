@@ -267,39 +267,6 @@ connections to FPGA:
 
 (24, 30 & 28 have wires soldered to the top of the FPGA for handshaking - see below)
 
-starting from left outside going up
-77) tx	|	UART1
-75) rx	|
-
-69) tx	|	UART2
-64) rx	|
-
-62) rpm_signal input
-60) mph_signal input
-
-50) tx_rpm (output to LED)
-48) tx_mph (output to LED)
-45) pwm signal to LCD
-
-starting from left inside going up
-82) MOSI
-76) MISO
-74) SCLK
-65) SS 1
-63) SS 2
-
-61 - 47) 4 test signals
-42) pwm signal to speaker 1
-40)  "     "    "   "     2
-
-42) pwm signal for speaker
-
-
-42) pwm output to LCD
-
-
-82) rev limiter
-
 connections to outside:
 
 monitor for PIC24*
@@ -344,8 +311,8 @@ d 3rd from left bottom SPI (SS)
 	and call it pwm_lcd signal so pin 7 is now gnd
 8)	50 unassigned
 9)	35 reserved for SS(1) (extra slave select)
-10)	40 transmit for DS1620*
-11)	42 receive for DS1620
+10)	40 receive for DS1620
+11)	42 reference signal - goes on/off slow enough to read on volt meter
 12)	47 unassigned
 13)	49 unassigned
 14)	55 unassigned
@@ -372,9 +339,9 @@ x		x		SS		MOSI	MISO
 39 - SS(0)
 35 - SS(1)
 
-looking at 20-pin cable coming from bottom of monster box
+looking at hole side of 20-pin cable coming from behind ADC cable with cable on top
 10		<->		1
-20		<->		11
+20		<->		11 (pin 11 is reference signal)
 
 cable coming from ADC conn. looking at pin side with cable to top:
 AVDD	14	12	10	8	6	4	2	0	(14 & 13 are used by knobs on front of panel)
@@ -442,6 +409,23 @@ from either the laptop or the monster box interface.
 
 There should be either a signal or message sent to the FPGA telling
 it to over-ride the fp_shutoff on startup.
+
+There are (4) temperature sensors on a remote AVR which send
+data in 8 bytes (4 ints) along with the rpm/mph data to the PIC24.
+The FPGA should check the one designated for engine temp
+(the others are indoor/outdoor temps) and do an engine shutdown
+if temp gets too high and at the same time send a warning message
+to the PIC24 that its about to shutdown and another that it is
+now shutting down (pull over to a safe place first)
+
+integer format for temp/rpm/mph data:
+(low byte first after 0xFF frame marker)
+1) engine temp
+2) indoor temp
+3) outdoor temp
+4) 4th temp sensor (not used)
+5) rpm data
+6) mph data
 
 RJ-11 socket going to rpm/mph box:
 black: mph

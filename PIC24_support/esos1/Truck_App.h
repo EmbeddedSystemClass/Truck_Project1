@@ -71,6 +71,7 @@ ESOS_USER_TASK(numentry_task);
 ESOS_USER_TASK(display_menu);
 ESOS_USER_TASK(display_rtlabels);
 ESOS_USER_TASK(key_timer_task);
+ESOS_USER_TASK(temp_monitor_task);
 ESOS_USER_TASK(display_rtvalues);
 
 static UCHAR avr_buffer[15];
@@ -220,6 +221,7 @@ static int password_retries;
 static int dim_screen;
 static int silent_key;
 static UINT gl_rpm, gl_mph;
+static UINT gl_engine_temp, gl_indoor_temp, gl_outdoor_temp, gl_temp4;
 static int engine_run_time;
 static int engine_on;
 static int engine_shutdown;
@@ -233,6 +235,9 @@ static UINT curr_num_entry_col;
 static void init_menu_labels(void);
 static void init_rt_labels(void);
 static int lights_on;
+static int fan_on;
+static int blower_on;
+//static float convert_to_T_F(int raw_data);
 
 typedef enum
 {
@@ -277,6 +282,8 @@ ESOS_USER_TASK(menu_task)
 	screen_dim_array[8] =  PWM_12DC_PARAM;
 	screen_dim_ptr = 0;
 	lights_on = -1;
+	fan_on = 0;
+	blower_on = 0;
 
 	while (TRUE)
 	{
@@ -343,7 +350,16 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
-							silent_key = (silent_key == 1?0:1);
+							if(fan_on == 0)
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
+								fan_on = 1;
+							}
+							else
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FAN);
+								fan_on = 0;
+							}
 						break;
 						case 1:
 						break;
@@ -356,6 +372,16 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
+							if(blower_on == 1)
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
+								blower_on = 0;
+							}else
+							{
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
+								blower_on = 1;
+							}
+/*
 							data4 = LCD_PWM;
 							data4 <<= 8;
 							data4 &= 0xFF00;
@@ -363,6 +389,7 @@ ESOS_USER_TASK(menu_task)
 							__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
 							if(++screen_dim_ptr > 9)
 								screen_dim_ptr = 0;
+*/
 						break;
 						case 1:
 						break;
@@ -397,11 +424,12 @@ ESOS_USER_TASK(menu_task)
 							if(lights_on < 10)
 							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_LIGHTS);
-								lights_on = 10;
+								lights_on = 30;
 							}
 							else
 							{
-								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
+									OFF_LIGHTS);
 								lights_on = -1;
 							}
 						break;
@@ -530,14 +558,14 @@ ESOS_TASK_HANDLE password_task_handle;
 ESOS_USER_TASK(password_task)
 {
 	static UCHAR data1, temp;
-	static ESOS_TASK_HANDLE comm1_handle;
+//	static ESOS_TASK_HANDLE comm1_handle;
     static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 
     ESOS_TASK_BEGIN();
 
     password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
-	comm1_handle = esos_GetTaskHandle(send_comm1);
+//	comm1_handle = esos_GetTaskHandle(send_comm1);
 	menu_handle = esos_GetTaskHandle(display_menu);
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
     
@@ -1086,14 +1114,14 @@ ESOS_USER_TASK(key_timer_task)
 		avr_buffer[3] = VARIOUS_MSG_OFFSET + 8;	//  engine run time msg
 		avr_buffer[4] = 10;
 		AVR_CALL();
-*/
+
 		avr_buffer[0] = SEND_INT_RT_VALUES;
-		avr_buffer[1] = 14;
-		avr_buffer[2] = 35;
+		avr_buffer[1] = 10;
+		avr_buffer[2] = 34;
 		avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
 		avr_buffer[4] = (UCHAR)engine_run_time;
 		AVR_CALL();
-
+*/
 		if(engine_shutdown == 29)
 		{
 			data3 = SPECIAL_TONE_ON;
@@ -1283,6 +1311,122 @@ ESOS_USER_TASK(key_timer_task)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
+//*********************************** temp_monitor_task ************************************//
+//******************************************************************************************//
+ESOS_USER_TASK(temp_monitor_task)
+{
+	static ESOS_TASK_HANDLE comm1_handle;
+	static int fan_ok;		// heater fan ok to run if engine temp high enough
+	static int lfan_on;
+	static int lengine_fan;
+
+    ESOS_TASK_BEGIN();
+	comm1_handle = esos_GetTaskHandle(send_comm1);
+
+	lfan_on = 0;
+	lengine_fan = 0;
+	while (TRUE)
+	{
+		ESOS_TASK_WAIT_TICKS(2100);
+		if(gl_engine_temp > 132) 	// 150F
+//		if(gl_engine_temp > 48) 	// for testing (using space heater)
+		{
+			// turn fan on
+			if(lengine_fan == 0)
+			{
+				__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
+				lengine_fan = 1;
+			}
+		}
+
+		if(gl_engine_temp < 40)		// 68F
+		{
+		// turn fan off
+			if(fan_on == 0)
+			{
+				if(lengine_fan == 1)
+				{
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FAN);
+					lengine_fan = 0;
+				}
+			}
+		}
+		
+//		if(gl_indoor_temp > )
+
+		// 54 = 80F
+		// 43 = 70F
+		// 32 = 60F
+		if(blower_on == 0)
+		{
+			if(gl_indoor_temp > 54)
+			{
+				if(lfan_on != 0)
+				{
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
+					lfan_on = 0;
+	/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 37;
+					avr_buffer[3] = 0;
+					AVR_CALL();
+	*/
+				}
+			}
+
+			if(gl_indoor_temp > 43 && gl_indoor_temp < 54)
+			{
+				if(lfan_on != 1)
+				{
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER1);
+					lfan_on = 1;
+	/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 37;
+					avr_buffer[3] = 1;
+					AVR_CALL();
+	*/
+				}
+			}
+		
+			if(gl_indoor_temp > 32 && gl_indoor_temp < 43)
+			{
+				if(lfan_on != 2)
+				{
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER2);
+					lfan_on = 2;
+	/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 37;
+					avr_buffer[3] = 2;
+					AVR_CALL();
+	*/
+				}
+			}
+
+			if(gl_indoor_temp < 32 && gl_engine_temp > 100)
+			{
+				if(lfan_on != 3)
+				{
+					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
+					lfan_on = 3;
+	/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 1;
+					avr_buffer[2] = 37;
+					avr_buffer[3] = 3;
+					AVR_CALL();
+	*/
+				}
+			}
+		}
+ 	}
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
 //************************************** poll_keypad ***************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(poll_keypad)
@@ -1425,3 +1569,25 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
+/*********************************************************************************/
+// for temp conversion from raw data to F or C
+// 0x0001 -> 0x00FA is valid +F and 0x0193 -> 0x01ff is valid for -F readings
+#if 0
+static float convert_to_T_F(int raw_data)
+	{
+	float T_F, T_celcius;
+	if ((raw_data & 0x100) != 0)
+	{
+		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */   
+	}
+	T_celcius = raw_data * 0.5;
+	if(T_celcius > 125 || T_celcius < -54)
+	{
+//		printf("OOR ");		// out of range error
+		return 0;
+	}
+	T_F = (T_celcius * 1.8) + 32;
+	return(T_F);	// returns 257 -> -67		(F)
+//	return(T_celcius);	// returns 125 -> -55	(C)
+}
+#endif

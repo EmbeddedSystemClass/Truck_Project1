@@ -395,7 +395,6 @@ package CommonPckg is
 	type i_keys is array(0 to 11) of std_logic_vector(7 downto 0);
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);
-	signal stlv_data_ptr : std_logic_vector(7 downto 0);
 
 	impure function average(a : in my_array3) return std_logic_vector;
 	impure function shift_avg(a : in my_array3; b : in std_logic_vector) return my_array3;

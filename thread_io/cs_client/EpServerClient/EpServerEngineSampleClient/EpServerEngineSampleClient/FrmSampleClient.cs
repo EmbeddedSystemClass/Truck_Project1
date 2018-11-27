@@ -369,7 +369,9 @@ namespace EpServerEngineSampleClient
                     svrcmd.Send_Cmd(ctls[i].CtlName.ToString(), ctls[i].CtlSet);
 //                    AddMsg(ctls[i].CtlName);
                     if (ctls[i].CtlName == "STARTER" || ctls[i].CtlName == "TEST_LEFT_BLINKER"
-                            || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD")
+                             || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD" ||
+                                 ctls[i].CtlName == "BLOWER1_ON" || ctls[i].CtlName == "BLOWER2_ON" || 
+                                     ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || ctls[i].CtlName == "BLOWER_OFF")
                     {
                         ctls[i].CtlSet = 0;
                         cblistCommon.SetItemChecked(i, false);
@@ -382,21 +384,18 @@ namespace EpServerEngineSampleClient
 
         private void ShutdownServer(object sender, EventArgs e)
         {
-            //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SHUTDOWN_IOBOX);
             string cmd = "SHUTDOWN_IOBOX";
             svrcmd.Send_Cmd(cmd, 0);
         }
 
         private void RebootServer(object sender, EventArgs e)
         {
-            //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.REBOOT_IOBOX);
             string cmd = "REBOOT_IOBOX";
             svrcmd.Send_Cmd(cmd, 0);
         }
 
         private void StopMbox(object sender, EventArgs e)
         {
-            //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.STOP_MBOX_RECV);
             string cmd = "STOP_MBOX_RECV";
             svrcmd.Send_Cmd(cmd, 0);
         }

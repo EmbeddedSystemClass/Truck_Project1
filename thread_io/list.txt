@@ -1,0 +1,93 @@
+typedef struct o_data
+{
+	char label[OLABELSIZE];
+	UCHAR port;
+	UCHAR onoff;			// current state: 1 if on; 0 if off
+	UCHAR input_port;		// input port which affects this output (if not set to 41)
+	UCHAR polarity;			// 0 - on input turns output on; off input turns output off
+							// 1 - on input turns output off; off input turns output on
+	UCHAR type;				// see below
+	UINT time_delay;		// when type 2-4 this is used as the time delay
+	UINT time_left;			// gets set to time_delay and then counts down
+	UCHAR pulse_time;		// not used
+	UCHAR reset;			// used to make 2nd pass
+} O_DATA;
+
+/*
+type:
+0) regular - on/off state responds to assigned input (affected_output)
+1) goes on/off and stays that way until another on/off
+2) on for time_delay seconds and then it goes back off
+3) goes on/off every second until time_delay is up
+4) if on, turn off and wait for msg (serial or tcp) to turn back on
+6) goes on/off at pulse_time rate in 10ths of a second then
+	goes off when time_delay is up
+7) goes on/off at pulse_rate in 10ths of a second if onoff is 
+	active only (not implemented yet)
+
+type 6 & 7 not implemented yet
+
+input_types
+
+	HEADLAMP_INPUT,				// 0
+	RUNNING_LIGHTS_INPUT,		// 1
+	LEFTBLINKER_INPUT,			// 2
+	RIGHTBLINKER_INPUT,			// 3
+	BRIGHTS_INPUT,				// 4
+	STARTER_INPUT,				// 5
+	COOLINGFAN_INPUT,			// 6
+	ESTOP_INPUT,				// 7
+	BRAKE_INPUT					// 8
+
+filename: odata.dat 
+
+port	onoff	input_port	type	time_delay	label
+
+0	0	5		2	10		STARTER
+1	0	7		4	0		ACCON
+2	0	7		4	0		FUELPUMP
+3	0	6		0	0		COOLINGFAN
+4	0	0		0	0		LHEADLAMP
+5	0	4		0	0		LBRIGHTS
+6	0	0		0	0		RHEADLAMP
+7	0	4		0	0		RBRIGHTS
+
+8	0	2		3	15		LEFTBLINKER
+9	0	3		3	15		RIGHTBLINKER
+10	0	1		0	0		RUNNINGLIGHTS
+11	0	8		0	0		RBRAKELIGHT
+12	0	8		0	0		LBRAKELIGHT
+13	0	2		2	15		XLBLINKER
+14	0	3		2	15		XRBLINKER
+15	0	41		0	0		BATTERYCOMPHEATER
+
+16	0	41		0	0		CRANKCASEHEATER
+17	0	41		0	0		ESTOPSWITCH
+18	0	41		0	0		BATTERYHEATER
+19	0	41		0	0		TRLEFTBLINKER
+20	0	41		0	0		TRRIGHTBLINKER
+21	0	41		0	0		INTRUDERALARM
+22	0	41		0	0		LIGHTBAR
+23	0	41		0	0		BLINKINDICATE
+
+24	0	41		0	0		ALARMSPEAKER
+25	0	41		0	0		BACKUPLIGHTS
+26	0	41		0	0		HTRBLOWERLOW
+27	0	41		0	0		HTRBLOWERMED
+28	0	41		0	0		HTRBLOWERHIGH
+29	0	41		0	0		TESTOUTPUT27
+30	0	41		0	0		TESTOUTPUT28
+31	0	41		0	0		TESTOUTPUT29
+
+32	0	41		0	0		TESTOUTPUT30
+33	0	41		0	0		TESTOUTPUT31
+34	0	41		0	0		TESTOUTPUT32
+35	0	41		0	0		TESTOUTPUT33
+36	0	41		0	0		TESTOUTPUT34
+37	0	41		0	0		TESTOUTPUT35
+38	0	41		0	0		TESTOUTPUT36
+39	0	41		0	0		NULL
+num valid records: 40
+
+
+sizeof: 48 
