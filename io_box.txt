@@ -256,13 +256,21 @@ todo: (x) = done
 - get rpm/mph data sent to comm3 of PIC24 (x)
 - thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
 - setup spare AVR to generate sample rpm/mph signals to test LEDs
-- fix problem with client - host open, edit and save file
+- fix problem with client - host open, edit and save file (x)
 - only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
 	then polarity feature could be implemented but the current IO settings would have to be set
 	initially after loading the db and the db would have to be save on exit
 - wired 1st 2 relays as left br/dim and right br/dim (nc = dim) and 3rd & 4th relays as
 	left & right headlamps - common of 1st 2 comes from no of next 2 - dim is nc on 1st 2 so make
 	changes accordingly in the O_DATA.
+- make another sql db for client which sets all the params for all 3 processors:
+	temp/rpm/mph update rate
+	high rev limit
+	low rev limit
+	lights off time
+	engine fan on/off temps
+	blower1/2/3 on/off temps
+	password change
 	
 Wiring colors:
 	Front:	(going threw terminal block on pass-side fender well
@@ -297,5 +305,10 @@ for each tail-light, blinker and brake. When the brakes are on the blinker is su
 flash the bright while the other brake stays on. So make the inputs to the blinkers reference
 an additional ouput which goes to a coil which shuts off the brake light relay so the blinker
 can flash it. This entails using 3 relays for each tail-light.
-
 The software option would be to have another field which port to override if it is on.
+But now the problem is that we need a sep. relay for the front blinker or else when the brakes
+are on the front as well as the rear blinker (or high bulb stay on) because I was using the
+same left and right relays for the front and rear blinkers.
+
+
+

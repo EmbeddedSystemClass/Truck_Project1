@@ -1148,6 +1148,25 @@ void basic_controls(UCHAR cmd)
 	size_t osize;
 	char errmsg[50];
 
+	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
+	{LHEADLAMP,1},
+	{LBRIGHTS,1},
+	{RHEADLAMP,1},
+	{RBRIGHTS,1},
+	{LBRIGHTS,0},
+	{LHEADLAMP,0},
+	{RBRIGHTS,0},
+	{RHEADLAMP,0},
+	{RHEADLAMP,1},
+	{RBRIGHTS,1},
+	{LHEADLAMP,1},
+	{LBRIGHTS,1},
+	{LBRIGHTS,0},
+	{LHEADLAMP,0},
+	{RBRIGHTS,0},
+	{RHEADLAMP,0}};
+
+
 //	myprintf2("basic ctls: ",cmd);
 /*
 	HEADLAMP_INPUT,				// 0
@@ -1276,7 +1295,15 @@ void basic_controls(UCHAR cmd)
 			change_input(RUNNING_LIGHTS_INPUT, 0);
 			break;
 		
-		case SPECIAL_CMD:	
+		case SPECIAL_CMD:
+			for(i = 0;i < 16;i++)
+			{
+				index = sp_cmd_arr[i].index;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,sp_cmd_arr[i].onoff);
+				usleep(100000);
+			}
+/*
 			index = LHEADLAMP;
 			ollist_find_data(index,otpp,&oll);
 			set_output(otp,1);
@@ -1309,6 +1336,7 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(index,otpp,&oll);
 			set_output(otp,0);
 			usleep(100000);
+*/
 			break;
 
 		case ON_BRIGHTS:

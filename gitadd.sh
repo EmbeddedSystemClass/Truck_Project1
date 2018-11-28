@@ -96,7 +96,6 @@ git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
 git add thread_io/read_sd.c
-git add thread_io/idata.csv
 git add thread_io/odata.csv
 git add thread_io/thread_io_notes.txt
 git add thread_io/mingetty/*

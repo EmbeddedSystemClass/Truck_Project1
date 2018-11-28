@@ -215,7 +215,9 @@ enum output_types
 }OUTPUT_TYPES;
 
 
-#define LEN 200
+#define LEN 30
+#define AVR_BUF_LEN 15
+#define NUM_STR 46	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -238,9 +240,9 @@ enum output_types
 #define SHOW_EEPROM				14
 #define PASSWORD_MODE			15
 #define DISPLAY_MENU_LABELS		16
-#define DISPLAY_RT_LABELS		17
-#define SET_NUM_ENTRY_MODE		18
-#define DISPLAY_FLOAT			19
+#define SET_NUM_ENTRY_MODE		17
+#define DISPLAY_STR				18
+#define DISPLAY_RTLABELS		19
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1

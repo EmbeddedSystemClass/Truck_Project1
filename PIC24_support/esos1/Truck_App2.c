@@ -71,7 +71,7 @@ ESOS_USER_TASK(display_rtvalues)
 		}
 */
 		}
-		ESOS_TASK_WAIT_TICKS(500);
+		ESOS_TASK_WAIT_TICKS(2000);
 	}
     ESOS_TASK_END();
 }
@@ -204,6 +204,7 @@ ESOS_USER_TASK(recv_fpga)
 	static UCHAR temp[20];
 	static UINT ttemp;
 	static UCHAR ttemp2;
+	static char str[20];
 	
     ESOS_TASK_BEGIN();
 
@@ -241,6 +242,7 @@ ESOS_USER_TASK(recv_fpga)
 				temp[i++] = data2;
 				if(i == 15)
 				{
+
 					gl_engine_temp = (UINT)temp[0];
 					gl_engine_temp <<= 8;
 					gl_engine_temp |= (UINT)temp[1];
@@ -248,7 +250,15 @@ ESOS_USER_TASK(recv_fpga)
 					gl_indoor_temp = (UINT)temp[2];
 					gl_indoor_temp <<= 8;
 					gl_indoor_temp |= (UINT)temp[3];
+/*
+					gl_engine_temp++;
+					if(gl_engine_temp > 0x4a)
+						gl_engine_temp = 0;
 
+					gl_indoor_temp++;
+					if(gl_indoor_temp > 0x4a)
+						gl_indoor_temp = 0;
+*/
 					gl_outdoor_temp = (UINT)temp[4];
 					gl_outdoor_temp <<= 8;
 					gl_outdoor_temp |= (UINT)temp[5];
@@ -256,7 +266,29 @@ ESOS_USER_TASK(recv_fpga)
 					gl_temp4 = (UINT)temp[6];
 					gl_temp4 <<= 8;
 					gl_temp4 |= (UINT)temp[7];
-					
+
+					strcpy(str,temp_lookup(gl_engine_temp));
+
+					avr_buffer[0] = DISPLAY_STR;
+					avr_buffer[1] = 10;
+					avr_buffer[2] = START_MENU_VALUE_COL + 10;
+					strncpy((char *)&avr_buffer[3],str,9);
+					AVR_CALL();
+
+					strcpy(str,temp_lookup(gl_indoor_temp));
+					avr_buffer[0] = DISPLAY_STR;
+					avr_buffer[1] = 12;
+					avr_buffer[2] = START_MENU_VALUE_COL + 31;
+					strncpy((char *)&avr_buffer[3],str,9);
+					AVR_CALL();
+
+					strcpy(str,temp_lookup(gl_outdoor_temp));
+					avr_buffer[0] = DISPLAY_STR;
+					avr_buffer[1] = 11;
+					avr_buffer[2] = START_MENU_VALUE_COL + 31;
+					strncpy((char *)&avr_buffer[3],str,9);
+					AVR_CALL();
+
 					avr_buffer[0] = SEND_INT_RT_VALUES;
 					avr_buffer[1] = 0;
 					avr_buffer[2] = 0;
@@ -443,6 +475,9 @@ ESOS_USER_TASK(display_rtlabels)
 		{
 			// data2 doesn't do anything
 			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+			avr_buffer[0] = DISPLAY_RTLABELS;
+			AVR_CALL();
+/*
 			avr_buffer[0] = EEPROM_STR;
 
 			for(i = 0;i < NUM_RT_LABELS;i++)
@@ -450,10 +485,11 @@ ESOS_USER_TASK(display_rtlabels)
 				avr_buffer[1] = rtlabel_str[i].row;
 				avr_buffer[2] = rtlabel_str[i].col;
 				avr_buffer[3] = rtlabel_str[i].str;
-				avr_buffer[4] = 5;
+				avr_buffer[4] = 1;
 
 				AVR_CALL();
 			}
+*/
 		}
 	}
     ESOS_TASK_END();
@@ -770,7 +806,7 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = data4;
 			AVR_CALL();
-
+ 
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = data5;
 			AVR_CALL();
@@ -845,12 +881,14 @@ ESOS_USER_TASK(recv_lcd)
 		{
 			ESOS_SIGNAL_SEMAPHORE(lcd_sem,1);
 		}
+/*
 		else
 		{
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data2);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
 		}
+*/
     } // endof while()
     ESOS_TASK_END();
 }
@@ -860,7 +898,7 @@ ESOS_USER_TASK(recv_lcd)
 ESOS_USER_TASK(AVR_cmd)
 {
 
-    static UCHAR buff[11];
+    static UCHAR buff[AVR_BUF_LEN+5];
     static UCHAR data1;
     static int i;
 
@@ -875,7 +913,7 @@ ESOS_USER_TASK(AVR_cmd)
 
         while(ESOS_TASK_IVE_GOT_MAIL())
         {
-			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,6);
+			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer,buff,AVR_BUF_LEN);
 
 //	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
 //			for(i = 0;i < 5;i++)
@@ -890,7 +928,7 @@ ESOS_USER_TASK(AVR_cmd)
 
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM2();
 
-			for(i = 0;i < 6;i++)
+			for(i = 0;i < AVR_BUF_LEN;i++)
 			{
 				if(buff[i] == 0xFE)
 					buff[i]--;
@@ -911,6 +949,8 @@ ESOS_USER_TASK(main_proc)
 {
 	static UCHAR data2 = 0x55;
 	static UINT data3;
+	static UCHAR data1;
+//	static ESOS_TASK_HANDLE rt_handle;
 
 	static int i,j,k;
 //	static int row, col, str;
@@ -919,9 +959,12 @@ ESOS_USER_TASK(main_proc)
 	ESOS_TASK_BEGIN();
 
 	engine_on = 0;
+	// these are global
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 	recv_handle = esos_GetTaskHandle(recv_comm1);
+	// this is local
+//	rt_handle = esos_GetTaskHandle(display_rtlabels);
 
 	i = 0;
 	j = 0;
@@ -1020,8 +1063,9 @@ ESOS_USER_TASK(main_proc)
 	AVR_CALL();
 */
 	init_rt_labels();
-	init_menu_labels();
+//	init_menu_labels();
 //	ignore_comm1 = 0;
+//	__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
 
 	while(TRUE)
 	{
@@ -1094,7 +1138,7 @@ static void init_rt_labels(void)
 	static int col, row,str;
 	
 	col = START_RT_VALUE_COL;
-	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
+ 	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
 	{
 		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
 		rtlabel_str[str].row = row;

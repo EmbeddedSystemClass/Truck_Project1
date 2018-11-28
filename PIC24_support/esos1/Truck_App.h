@@ -53,6 +53,7 @@ it causes strange side-effects
 #include <string.h>
 #include <stdlib.h>
 #include "../../mytypes.h"
+#include "raw_data.h"
 
 ESOS_SEMAPHORE(key_sem);
 ESOS_SEMAPHORE(lcd_sem);
@@ -74,12 +75,12 @@ ESOS_USER_TASK(key_timer_task);
 ESOS_USER_TASK(temp_monitor_task);
 ESOS_USER_TASK(display_rtvalues);
 
-static UCHAR avr_buffer[15];
+static UCHAR avr_buffer[20];
 static ESOS_TASK_HANDLE avr_handle;
 static ESOS_TASK_HANDLE fpga_handle;
 static ESOS_TASK_HANDLE recv_handle;
 
-#define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &avr_buffer[0], 6);
+#define AVR_CALL() __esos_CB_WriteUINT8Buffer(avr_handle->pst_Mailbox->pst_CBuffer, &avr_buffer[0], AVR_BUF_LEN);
 
 #define MY_ESOS1
 
@@ -197,7 +198,6 @@ volatile UCHAR menu_ptr;
 #define TEST_RPM_LIMIT 				0x28
 #define TEST_COMM					0x29
 
-
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on
 #define PWM_80DC_PARAM					0x1A // duty_cycle = 80%
@@ -234,10 +234,12 @@ static UINT curr_num_entry_row;
 static UINT curr_num_entry_col;
 static void init_menu_labels(void);
 static void init_rt_labels(void);
+static char *temp_lookup(int raw);
 static int lights_on;
+static int brights_on;
 static int fan_on;
 static int blower_on;
-//static float convert_to_T_F(int raw_data);
+//static int convertF(int raw_data);
 
 typedef enum
 {
@@ -256,16 +258,18 @@ ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
 	static UINT data4;
-    static ESOS_TASK_HANDLE menu_handle;
+//    static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 	static ESOS_TASK_HANDLE comm1_handle;
 	static int screen_dim;
 	static UCHAR screen_dim_array[9];
 	static int screen_dim_ptr;
+	static int i;
+	static char raw_str[10];
 	
     ESOS_TASK_BEGIN();
 
-	menu_handle = esos_GetTaskHandle(display_menu);
+//	menu_handle = esos_GetTaskHandle(display_menu);
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
 
 	comm1_handle = esos_GetTaskHandle(send_comm1);
@@ -284,6 +288,7 @@ ESOS_USER_TASK(menu_task)
 	lights_on = -1;
 	fan_on = 0;
 	blower_on = 0;
+	brights_on = 0;
 
 	while (TRUE)
 	{
@@ -301,7 +306,7 @@ ESOS_USER_TASK(menu_task)
 */
 			switch(data1)
 			{
-				case 	KP_1:
+				case 	KP_1:	// start engine
 					switch(menu_ptr)
 					{
 						case 0:
@@ -318,7 +323,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case 	KP_2:
+				case 	KP_2:	// shutoff engine
 					switch(menu_ptr)
 					{
 						case 0:
@@ -332,12 +337,23 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_3:
+				case	KP_3:	// toggle brights
 					switch(menu_ptr)
 					{
 						case 0:
-							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
-							lights_on = -1;
+							if(lights_on > 0)
+							{
+								if(brights_on == 0)
+								{
+									__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_BRIGHTS);
+									brights_on = 1;
+								}
+								else
+								{
+									__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_BRIGHTS);
+									brights_on = 0;
+								}
+							}
 						break;
 						case 1:
 						break;
@@ -346,7 +362,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_4:
+				case	KP_4:	// toggle cooling fan
 					switch(menu_ptr)
 					{
 						case 0:
@@ -368,7 +384,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_5:
+				case	KP_5:	// turn heater blower on
 					switch(menu_ptr)
 					{
 						case 0:
@@ -417,7 +433,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_7:
+				case	KP_7:		// toggle lights
 					switch(menu_ptr)
 					{
 						case 0:	// toggle lights
@@ -442,6 +458,27 @@ ESOS_USER_TASK(menu_task)
 
 				case	KP_8:
 /*
+					avr_buffer[4] = 0x41;
+					avr_buffer[5] = 0x42;
+					avr_buffer[6] = 0x43;
+					avr_buffer[7] = 0x44;
+					avr_buffer[8] = 0;
+
+					strncpy((char *)&avr_buffer[3],raw_str,9);
+					AVR_CALL();
+
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 3;
+					avr_buffer[2] = 15;
+					avr_buffer[3] = (UCHAR)(test << 8);
+					AVR_CALL();
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 4;
+					avr_buffer[2] = 15;
+					avr_buffer[3] = (UCHAR)test;
+					AVR_CALL();
+*/
+
 					switch(menu_ptr)
 					{
 
@@ -461,13 +498,14 @@ ESOS_USER_TASK(menu_task)
 						default:
 						break;
 					}
-*/
+
 				break;
 
 				case	KP_9:
 					switch(menu_ptr)
 					{
 						case 0:
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SPECIAL_CMD);
 						break;
 						case 1:
 						break;
@@ -519,7 +557,7 @@ ESOS_USER_TASK(menu_task)
 					if(menu_ptr > NO_MENUS)
 						menu_ptr = 0;
 					menu_ptr++;	
-					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,menu_ptr*NUM_MENU_LABELS);
+//					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,menu_ptr*NUM_MENU_LABELS);
 				break;
 
 				case	KP_B:		// toggle screen brightness
@@ -1327,7 +1365,8 @@ ESOS_USER_TASK(temp_monitor_task)
 	lengine_fan = 0;
 	while (TRUE)
 	{
-		ESOS_TASK_WAIT_TICKS(2100);
+		ESOS_TASK_WAIT_TICKS(1000);
+		// turn cooling fan on if temp > 132
 		if(gl_engine_temp > 132) 	// 150F
 //		if(gl_engine_temp > 48) 	// for testing (using space heater)
 		{
@@ -1339,6 +1378,7 @@ ESOS_USER_TASK(temp_monitor_task)
 			}
 		}
 
+		// turn cooling fan off if temp < 68F
 		if(gl_engine_temp < 40)		// 68F
 		{
 		// turn fan off
@@ -1359,67 +1399,71 @@ ESOS_USER_TASK(temp_monitor_task)
 		// 32 = 60F
 		if(blower_on == 0)
 		{
-			if(gl_indoor_temp > 54)
+			// if engine temp > 65F then we can mess with the blower fan
+			if(gl_engine_temp > 65)
 			{
-				if(lfan_on != 0)
+				if(gl_indoor_temp > 54)
 				{
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
-					lfan_on = 0;
-	/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 37;
-					avr_buffer[3] = 0;
-					AVR_CALL();
-	*/
+					if(lfan_on != 0)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
+						lfan_on = 0;
+		/*
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 37;
+						avr_buffer[3] = 0;
+						AVR_CALL();
+		*/
+					}
 				}
-			}
 
-			if(gl_indoor_temp > 43 && gl_indoor_temp < 54)
-			{
-				if(lfan_on != 1)
+				if(gl_indoor_temp > 43 && gl_indoor_temp < 54)
 				{
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER1);
-					lfan_on = 1;
-	/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 37;
-					avr_buffer[3] = 1;
-					AVR_CALL();
-	*/
+					if(lfan_on != 1)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER1);
+						lfan_on = 1;
+		/*
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 37;
+						avr_buffer[3] = 1;
+						AVR_CALL();
+		*/
+					}
 				}
-			}
 		
-			if(gl_indoor_temp > 32 && gl_indoor_temp < 43)
-			{
-				if(lfan_on != 2)
+				if(gl_indoor_temp > 32 && gl_indoor_temp < 43)
 				{
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER2);
-					lfan_on = 2;
-	/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 37;
-					avr_buffer[3] = 2;
-					AVR_CALL();
-	*/
+					if(lfan_on != 2)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER2);
+						lfan_on = 2;
+		/*
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 37;
+						avr_buffer[3] = 2;
+						AVR_CALL();
+		*/
+					}
 				}
-			}
 
-			if(gl_indoor_temp < 32 && gl_engine_temp > 100)
-			{
-				if(lfan_on != 3)
+				if(gl_indoor_temp < 32)
 				{
-					__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
-					lfan_on = 3;
-	/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 37;
-					avr_buffer[3] = 3;
-					AVR_CALL();
-	*/
+					if(lfan_on != 3)
+					{
+						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
+						lfan_on = 3;
+		/*
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 1;
+						avr_buffer[2] = 37;
+						avr_buffer[3] = 3;
+						AVR_CALL();
+		*/
+					}
 				}
 			}
 		}
@@ -1569,25 +1613,21 @@ void _ISR _ADC1Interrupt (void)
 	u8_waiting = 0;  // signal main() that data is ready
 	_AD1IF = 0;   //clear the interrupt flag
 }
-/*********************************************************************************/
-// for temp conversion from raw data to F or C
-// 0x0001 -> 0x00FA is valid +F and 0x0193 -> 0x01ff is valid for -F readings
-#if 0
-static float convert_to_T_F(int raw_data)
-	{
-	float T_F, T_celcius;
-	if ((raw_data & 0x100) != 0)
-	{
-		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */   
-	}
-	T_celcius = raw_data * 0.5;
-	if(T_celcius > 125 || T_celcius < -54)
-	{
-//		printf("OOR ");		// out of range error
-		return 0;
-	}
-	T_F = (T_celcius * 1.8) + 32;
-	return(T_F);	// returns 257 -> -67		(F)
-//	return(T_celcius);	// returns 125 -> -55	(C)
+
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+static char *temp_lookup(int raw)
+{
+	char ret[10];
+	int j = 0;
+	
+	do{
+		j++;
+	}while(raw != raw_data[j].raw && j < 360);
+	if(j > 350)
+		strcpy(ret,"OOR\0");
+	else
+		strcpy(ret,raw_data[j].str);	
+	return ret;
 }
-#endif

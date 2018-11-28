@@ -62,6 +62,12 @@ typedef struct
 	int index;
 }REAL_BANKS;
 
+typedef struct
+{
+	int index;
+	int onoff;
+}SPECIAL_CMD_ARR;
+
 int tcp_window_on;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;

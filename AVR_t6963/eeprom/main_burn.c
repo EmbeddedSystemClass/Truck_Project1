@@ -9,13 +9,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "../../mytypes.h"
 
 
 
 
 // values start at line 20 so its easy to calculate the offset
-#define NUM_STR 46
+
 char menu_labels[NUM_STR][24] = {
 	{"RPM"},			// rt values
 	{"MPH"},
