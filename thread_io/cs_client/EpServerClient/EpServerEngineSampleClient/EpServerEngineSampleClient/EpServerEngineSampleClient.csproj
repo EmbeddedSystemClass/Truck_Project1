@@ -60,6 +60,12 @@
     <Compile Include="DlgForm1.Designer.cs">
       <DependentUpon>DlgForm1.cs</DependentUpon>
     </Compile>
+    <Compile Include="DlgSetParams.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DlgSetParams.Designer.cs">
+      <DependentUpon>DlgSetParams.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmSampleClient.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -85,6 +91,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DlgForm1.resx">
       <DependentUpon>DlgForm1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DlgSetParams.resx">
+      <DependentUpon>DlgSetParams.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSampleClient.resx">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>

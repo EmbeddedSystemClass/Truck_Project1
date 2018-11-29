@@ -44,7 +44,7 @@ namespace EpServerEngineSampleClient
 			REBOOT_IOBOX,
 			SEND_ODATA,
 			SAVE_TO_DISK,
-            BLOWER_OFF,
+			BLOWER_OFF,
 			BLOWER1,
 			BLOWER2,
 			BLOWER3,
@@ -69,8 +69,9 @@ namespace EpServerEngineSampleClient
 			OPEN_DB,
 			BAD_MSG,
 			CURRENT_TIME,
+			SET_PARAMS,
 			EXIT_PROGRAM
-        }
+		}
 
         public ServerCmds()
         {
@@ -258,6 +259,9 @@ namespace EpServerEngineSampleClient
                     break;
                 case "BLOWER_OFF":
                     sendcmd = (int)Server_cmds.BLOWER_OFF;
+                    break;
+                case "SET_PARAMS":
+                    sendcmd = (int)Server_cmds.SET_PARAMS;
                     break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;

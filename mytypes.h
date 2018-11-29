@@ -36,6 +36,7 @@ typedef struct _ip
 	char label[OLABELSIZE];
 }IP;
 
+// msg's sent from client to TS-7200
 enum cmd_types
 {
 	NON_CMD,
@@ -95,6 +96,7 @@ enum cmd_types
 	OPEN_DB,
 	BAD_MSG,
 	CURRENT_TIME,
+	SET_PARAMS,
 	EXIT_PROGRAM
 }CMD_TYPES;
 
@@ -127,23 +129,22 @@ enum upstream_msg
 // using send_PIC_serialother()
 enum downstream_msg
 {
-	START_DS_MSG = 0xD0,
-	RE_ENTER_PASSWORD1,
-	GET_DEBUG_INFOA,
-	GET_DEBUG_INFO2A,
-	OUTPUT_MSG,
-	TIME_DATA1,
-	TIME_DATA2,
-	TIME_DATA3,
-	NEW_PASSWORD2,
-	NEW_PASSWORD3,
-	NEW_PASSWORD4,
-	CLEAR_SCREEN1,
-	LIGHTS_ON,
-	LIGHTS_OFF,
-	STOP_SERIAL_RECV,
-	ENGINE_ON,
-	ENGINE_OFF,
+	START_DS_MSG = 0xD0,		// 208
+	OUTPUT_MSG,					// 209
+	TIME_DATA1,					// 210
+	TIME_DATA2,					// 211
+	TIME_DATA3,					// 212
+	NEW_PASSWORD2,				// 213
+	NEW_PASSWORD3,				// 214
+	NEW_PASSWORD4,				// 215
+	CLEAR_SCREEN1,				// 216
+	LIGHTS_ON,					// 217
+	LIGHTS_OFF,					// 218
+	STOP_SERIAL_RECV,			// 219
+	ENGINE_ON,					// 220
+	ENGINE_OFF,					// 221
+	SEND_PARAMS,				// 222
+	ESTOP_SIGNAL,				// 223
 	END_DS_MSG
 } DOWNSTREAM_MSG;
 

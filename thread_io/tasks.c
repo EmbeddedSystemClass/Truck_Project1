@@ -197,6 +197,7 @@ static int mask2int(UCHAR mask)
 static void set_output(O_DATA *otp, int onoff)
 {
 	O_DATA **otpp = &otp;
+	UCHAR buff[1];
 
 	switch(otp->type)
 	{
@@ -254,8 +255,8 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				send_serial(ESTOPSWITCH,0);
-
+				send_serial(ESTOP_SIGNAL);
+				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
 			}	
@@ -276,29 +277,27 @@ static void set_output(O_DATA *otp, int onoff)
 	
 }
 /*********************************************************************/
-void send_serial(int port, int onoff)
+void send_serial(UCHAR cmd)
 {
-//return;
+
 // send what just changed to the PIC24/AVR to dispaly on screen
 	pthread_mutex_lock( &serial_write_lock);
 	
-	write_serial(OUTPUT_MSG);
-	write_serial((UCHAR)port);
- 	write_serial((UCHAR)onoff);
+ 	write_serial(cmd);
 
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
-void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4)  
+void send_serialother(UCHAR cmd, UCHAR *buf, int len)
 {
 //return;
 	pthread_mutex_lock( &serial_write_lock);
-
+	int i;
 	write_serial(cmd);
-	write_serial(data1);
-	write_serial(data2);
-	write_serial(data3);
-	write_serial(data4);
+	for(i = 0;i < len;i++)
+	{
+		write_serial(buf[i]);
+	}
 
 	pthread_mutex_unlock(&serial_write_lock);
 }
@@ -564,7 +563,7 @@ UCHAR timer2_task(int test)
 	UCHAR mask;
 	static int led_counter;
 	static int led_onoff;
-	static int seconds_counter;
+//	static int seconds_counter;
 
 /*
 	static I_DATA *itp2;
@@ -627,10 +626,6 @@ UCHAR timer_task(int test)
 	{
 		uSleep(1,0);
 
-		gettimeofday(&mtv, NULL);
-		curtime2 = mtv.tv_sec;
-		strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
-
 		// send only date, month, minutes
 		// 0,1 - month
 		// 3,4 - date
@@ -638,10 +633,15 @@ UCHAR timer_task(int test)
 		// 11,12 - hour
 		// 14,15 - minute
 		// 17,18 - seconds
-
 /*
 		if(time_set)
 		{
+			gettimeofday(&mtv, NULL);
+			curtime2 = mtv.tv_sec;
+			strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
+
+//			printf("%s\r\n",time_buffer);
+
 			send_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],
 				time_buffer[4]);
 			send_serialother(TIME_DATA2,time_buffer[8],time_buffer[9],
@@ -689,11 +689,11 @@ UCHAR timer_task(int test)
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
 
 /*
-	SEND_MSG,
-	CURRENT_TIME,
+	SEND_MSG = 60,
+	CURRENT_TIME2,
 	ENGINE_RUNTIME,
 	SERVER_UPTIME,
-	GET_TIME
+	GET_TIME2,
 */
 		if(test_lblinkers > 0)
 		{
@@ -1147,6 +1147,7 @@ void basic_controls(UCHAR cmd)
 	size_t isize;
 	size_t osize;
 	char errmsg[50];
+	UCHAR tempx[1];
 
 	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
 	{LHEADLAMP,1},
@@ -1480,7 +1481,7 @@ void basic_controls(UCHAR cmd)
 //			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 			engine_running = 1;
 //			printf("engine_running: %d\r\n",engine_running);
-			send_serialother(ENGINE_ON,0,0,0,0);
+			send_serial(ENGINE_ON);
 			break;
 
 		case SHUTDOWN:
@@ -1497,7 +1498,7 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 0;
 			ollist_insert_data(otp->port,&oll,otp);
-			send_serialother(ENGINE_OFF,0,0,0,0);
+			send_serial(ENGINE_OFF);
 
 //			index = STARTER;
 //			rc = ollist_find_data(index,otpp,&oll);
@@ -1512,17 +1513,39 @@ void basic_controls(UCHAR cmd)
 			break;
 
 		case SHUTDOWN_IOBOX:
-		case REBOOT_IOBOX:
-			for(i = 0;i < 20;i++)
+			for(i = 0;i < 30;i++)
 			{
 				setdioline(7,0);
-				uSleep(0,TIME_DELAY/30);
+				uSleep(0,TIME_DELAY/20);
 				setdioline(7,1);
-				uSleep(0,TIME_DELAY/30);
+				uSleep(0,TIME_DELAY/20);
 			}
 			setdioline(7,0);
 			uSleep(2,0);
 			setdioline(7,1);
+			reboot_on_exit = 3;
+			myprintf1("shutdown iobox\0");
+//			printf("shutdown iobox\0");
+			shutdown_all = 1;
+			break;
+
+		case REBOOT_IOBOX:
+			for(i = 0;i < 30;i++)
+			{
+				setdioline(7,0);
+				uSleep(0,TIME_DELAY/20);
+				setdioline(7,1);
+				uSleep(0,TIME_DELAY/20);
+			}
+			setdioline(7,0);
+			uSleep(2,0);
+			setdioline(7,1);
+			reboot_on_exit = 2;
+			myprintf1("reboot iobox\0");
+//			printf("reboot iobox\0");
+			shutdown_all = 1;
+			break;			
+
 //			printf("shutdown iobox\r\n");
 #if 0
 			i = NUM_PORT_BITS;
@@ -1546,22 +1569,23 @@ void basic_controls(UCHAR cmd)
 				myprintf1(errmsg);
 #endif
 
-			if(cmd == SHUTDOWN_IOBOX)
-			{
-				reboot_on_exit = 3;
-				myprintf1("shutdown iobox\0");
-//				printf("shutdown iobox\0");
-			}	
-			else 
-			{
-				reboot_on_exit = 2;
-				myprintf1("reboot iobox\0");
-//				printf("reboot iobox\0");
-			}
-//			printf("reboot on exit: %d\r\n",reboot_on_exit);
-			shutdown_all = 1;
-			break;		
-	}
+			default:
+			printf("wtf?\r\n");
+			break;
+
+	}	// end of switch
 //	send_serial(index,0);
 }
 
+/*
+			for(i = 0;i < 30;i++)
+			{
+				setdioline(7,0);
+				uSleep(0,TIME_DELAY/20);
+				setdioline(7,1);
+				uSleep(0,TIME_DELAY/20);
+			}
+			setdioline(7,0);
+			uSleep(2,0);
+			setdioline(7,1);
+*/

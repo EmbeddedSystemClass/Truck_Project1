@@ -1,9 +1,35 @@
-io_box.txt - notes on the box with the TS-7200 card and the (2) 20 port IO cards
+io_box.txt - notes to self on the box with the TS-7200 card and the (2) 20 port IO cards
+
+procedure for testing/debugging io box:
+
+1) recompile the sched program in thread_io so that the serial port is at 115200.
+	(see serial_io.c - MODEMDEVICE)
+2) uncomment or add any printf statements in either tasks.c or cmd_tasks.c
+	(usually the printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str); in cmd_tasks.c
+		just before the main tcp loop)
+3) recompile and upload to the io box using the correct ip address.
+4) unplug the serial cable from the io box and using a gender changer, plug the output
+	of the io box to a tty running on windows or linux.
+5) reboot the io box (turn it off and back on) and be ready to hit 'Ctl-C' when it 
+	starts coming up. (start hitting 'Ctl-C' several times)
+6) when it says "Redboot" type in "fis load vmlinux" and hit return.
+7) then type in "exec -c "S console=ttyAM0,115200 root=/dev/mtdblock" and hit return
+8) it will reboot and when it comes up to shell and asks for a login, type "root" and
+	hit enter.
+9) then change to directory /home/dan/dev/sched and rename try_sched.sh to anything
+	(usually just "ls -ltr")
+10) then type in "reboot" and it will reboot and execute the try_sched.sh script.
+11) you can then check for the new sched program which should be in /root and execute
+	it by typing "do1.sh" which will move /root/sched to the /home/dan/dev/sched
+		directory, change the permissions and execute it. (do2.sh will execute 
+			the sched program in the sched directory)
 
 Relays on IO cards are 5A so use 5v power from separate DC-DC converter as coil voltage for 10A 
 relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 5v to gnd or
 even worse, 12v you can screw up the cards inside the box - this cost me a day or so of trouble-
 shooting and rewiring the io box)
+
+format of O_DATA in thread_io/queue/ollist_thread_rw.h
 
 typedef struct o_data
 {
@@ -20,7 +46,6 @@ typedef struct o_data
 	UCHAR reset;			// used to make 2nd pass
 } O_DATA;
 
-/*
 type:
 0) regular - on/off state responds to assigned input (affected_output)
 1) goes on/off and stays that way until another on/off
@@ -264,13 +289,36 @@ todo: (x) = done
 	left & right headlamps - common of 1st 2 comes from no of next 2 - dim is nc on 1st 2 so make
 	changes accordingly in the O_DATA.
 - make another sql db for client which sets all the params for all 3 processors:
-	temp/rpm/mph update rate
-	high rev limit
-	low rev limit
-	lights off time
-	engine fan on/off temps
-	blower1/2/3 on/off temps
-	password change
+(no, just have a dlg box that allows user to set/send each individual param and save to config file)
+	temp/rpm/mph update rate (for FPGA)
+	high rev limit (for FPGA)
+	low rev limit (for FPGA)
+	lights off time (for PIC24)
+	engine fan on/off temps (for PIC24) 
+	blower1/2/3 on/off temps (for PIC24)
+	password change (for PIC24)
+- would be nice to have it upload the current params to use to set what comes up in the dialog	
+
+- if either the TS-7200 has been up for just 15 seconds or so, or the client sends a SEND_PARAMS
+msg to the TS-7200 it sends a SET_PARAMS msg to the PIC24 after getting the current config file 
+saved on disk.
+
+functions in TS-7200:
+get_params() - load config file data from disk and does send_serial_other w/ SEND_PARAMS cmd
+
+set_params() - save the current config file data to disk and does send_serial_other w/ SEND_PARAMS cmd
+
+function in PIC24:
+update_params() -  sets its own new config data and updates the FPGA with its new data
+				(send_serial_other with SEND_PARAMS cmd)
+
+TS-7200 (startup) - calls get_params()
+
+client -> TS-7200:
+SET_PARAMS - client sends new config data to TS-7200 which calls set_params()
+
+TS-7200 -> PIC24:
+SEND_PARAMS - msg to PIC24 to call update_params()
 	
 Wiring colors:
 	Front:	(going threw terminal block on pass-side fender well
@@ -309,6 +357,4 @@ The software option would be to have another field which port to override if it 
 But now the problem is that we need a sep. relay for the front blinker or else when the brakes
 are on the front as well as the rear blinker (or high bulb stay on) because I was using the
 same left and right relays for the front and rear blinkers.
-
-
 

@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[58] =
+CMD_STRUCT cmd_array[60] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -93,6 +93,7 @@ CMD_STRUCT cmd_array[58] =
 	{		OPEN_DB,"OPEN_DB\0" },
 	{		BAD_MSG,"BAD_MSG\0" },
 	{		CURRENT_TIME,"CURRENT_TIME\0" },
+	{		SET_PARAMS,"SET_PARAMS\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
 };
 
@@ -358,23 +359,35 @@ UCHAR get_host_cmd_task(int test)
 //						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
 						memcpy((void *)&tempx[0],&msg_buf[0],12);
 						myprintf2("read: ",rc);
-
-						send_serialother(NEW_PASSWORD2,tempx[0],
-							tempx[1],tempx[2],tempx[3]);
-						send_serialother(NEW_PASSWORD3,tempx[4],
-							tempx[5],tempx[6],tempx[7]);
-						send_serialother(NEW_PASSWORD4,tempx[8],
-							tempx[9],tempx[10],tempx[11]);
-//						for(i = 0;i < 12;i++)
-//							myprintf2("tempx: ",tempx[i]);
-//						myprintf1("done");
 						break;
 
 					// clear the lcd screen and redraw the menus and rt labels
 					// signal to monster box that the password must be re-entered in case of
 					// getting out of vehicle (hijack prevention)
 					case RE_ENTER_PASSWORD:
-						send_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
+						break;
+
+					// this gets a cmd from the client with extra data that sets the params
+					// TODO: first send the current params that are used by the server and
+					// have been saved to disk in a config file
+					case SET_PARAMS:
+						memset(tempx,0,sizeof(tempx));
+//						printf("msg len: %d\r\n",msg_len/2-2);
+//						printf("\r\n");
+
+						j = 0;
+						for(i = 2;i < msg_len;i+=2)
+						{
+							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
+//							msg_buf[msg_len/2] = 0;
+
+//							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
+						}
+//						for(i = 0;i < msg_len;i++)
+//							printf("%02x ",msg_buf[i]);
+//						printf("\r\n");
+//						printf("%s\r\n",tempx);
+						send_serialother(SEND_PARAMS,tempx,20);
 						break;
 
 					case SET_TIME:
@@ -485,6 +498,18 @@ UCHAR get_host_cmd_task(int test)
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME2);
+/*
+						gettimeofday(&mtv, NULL);
+						curtime2 = mtv.tv_sec;
+						strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
+
+						send_serialother(TIME_DATA1,tempx[0],tempx[1],tempx[3],	tempx[4],0);
+						usleep(10000);
+						send_serialother(TIME_DATA2,tempx[8],tempx[9],tempx[11],tempx[12],0);
+						usleep(10000);
+						send_serialother(TIME_DATA3,tempx[14],tempx[15],tempx[17],tempx[18],0);
+						usleep(10000);
+*/
 						break;
 
 					case SEND_ODATA:
@@ -740,7 +765,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_RECV:
-						send_serialother(STOP_SERIAL_RECV,0,0,0,0);
+						send_serial(STOP_SERIAL_RECV);
 						break;
 
 					// upload this program and then goto reboot so it comes up using the
@@ -781,7 +806,7 @@ exit_program:
 						else
 						{
 //							printf("exit program\r\n");
-							send_serialother(STOP_SERIAL_RECV,0,0,0,0);
+							send_serial(STOP_SERIAL_RECV);
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do
@@ -793,12 +818,12 @@ exit_program:
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("rebooting...\0");
-//								printf("rebooting...\r\n");
+								printf("rebooting...\r\n");
 							}
 							else if(reboot_on_exit == 3)
 							{
 								myprintf1("shutting down...\0");
-//								printf("shutting down...\r\n");
+								printf("shutting down...\r\n");
 							}
 						}
 
@@ -889,6 +914,14 @@ exit_program:
 	return test + 1;
 }
 /*********************************************************************/
+void set_params()
+{
+}
+/*********************************************************************/
+void get_params()
+{
+}
+/*********************************************************************/
 // get preamble & msg len from client
 // preamble is: {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00,
 //	 msg_len(lowbyte),msg_len(highbyte),0x00,0x00,0x00,0x00,0x00,0x00}
@@ -917,24 +950,27 @@ void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type)
 	int ret;
 	int i;
 
-	ret = send_tcp(&pre_preamble[0],8);
-	msg_len++;
-	send_tcp((UCHAR *)&msg_len,1);
-	ret = 0;
-	send_tcp((UCHAR *)&ret,1);
-
-	for(i = 0;i < 6;i++)
-		send_tcp((UCHAR *)&ret,1);
-
-	send_tcp((UCHAR *)&msg_type,1);
-
-	ret = 0;
-	send_tcp((UCHAR *)&ret,1);
-
-	for(i = 0;i < msg_len;i++)
+	if(test_sock())
 	{
-		send_tcp((UCHAR *)&msg[i],1);
+		ret = send_tcp(&pre_preamble[0],8);
+		msg_len++;
+		send_tcp((UCHAR *)&msg_len,1);
+		ret = 0;
 		send_tcp((UCHAR *)&ret,1);
+
+		for(i = 0;i < 6;i++)
+			send_tcp((UCHAR *)&ret,1);
+
+		send_tcp((UCHAR *)&msg_type,1);
+
+		ret = 0;
+		send_tcp((UCHAR *)&ret,1);
+
+		for(i = 0;i < msg_len;i++)
+		{
+			send_tcp((UCHAR *)&msg[i],1);
+			send_tcp((UCHAR *)&ret,1);
+		}
 	}
 }
 /*********************************************************************/

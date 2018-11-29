@@ -288,7 +288,7 @@ ESOS_USER_TASK(recv_fpga)
 					avr_buffer[2] = START_MENU_VALUE_COL + 31;
 					strncpy((char *)&avr_buffer[3],str,9);
 					AVR_CALL();
-
+/*
 					avr_buffer[0] = SEND_INT_RT_VALUES;
 					avr_buffer[1] = 0;
 					avr_buffer[2] = 0;
@@ -302,7 +302,7 @@ ESOS_USER_TASK(recv_fpga)
 					avr_buffer[3] = temp[2];
 					avr_buffer[4] = temp[3];
 					AVR_CALL();
-/*
+
 					avr_buffer[0] = SEND_INT_RT_VALUES;
 					avr_buffer[1] = 0;
 					avr_buffer[2] = 16;
@@ -550,12 +550,14 @@ ESOS_USER_TASK(send_comm1)
 // recv data from TS-7200
 ESOS_USER_TASK(recv_comm1)
 {
-	static UCHAR data1, data2, data3, data4, data5;
+//	static UCHAR data1, data2, data3, data4, data5, data6;
+	static UCHAR buffer[20];
 	static int i;
 	static UCHAR temp;
 	static ESOS_TASK_HANDLE menu_handle;
 	static ESOS_TASK_HANDLE rt_handle;
 	static ESOS_TASK_HANDLE fpga_handle;
+	static int len;
 //	static int row, col, str;
 
 	ESOS_TASK_BEGIN();
@@ -569,45 +571,85 @@ ESOS_USER_TASK(recv_comm1)
     while (1)
     {
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
-		if(data1 > START_DS_MSG && data1 < END_DS_MSG)
-		{
-			ESOS_TASK_WAIT_ON_GET_UINT8(data2);
-			ESOS_TASK_WAIT_ON_GET_UINT8(data3);
-			ESOS_TASK_WAIT_ON_GET_UINT8(data4);
-			ESOS_TASK_WAIT_ON_GET_UINT8(data5);
-		}
+//		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
+		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],21);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+
+//		len  = GET_ESOS_COMM_IN_DATA_LEN();
+		if(buffer[0] >= START_DS_MSG && buffer[0] < END_DS_MSG)
+//if(1)
+		{
 /*
-		avr_buffer[0] = SEND_BYTE_RT_VALUES;
-		avr_buffer[1] = 0;
-		avr_buffer[2] = 0;
-		avr_buffer[3] = data1;
-		AVR_CALL();
+			avr_buffer[0] = DISPLAY_STR;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 0;
+			strncpy((char *)&avr_buffer[3],(const char*)&buffer[1],10);
+			AVR_CALL();
 
-		avr_buffer[1] = 0;
-		avr_buffer[2] = 4;
-		avr_buffer[3] = data2;
-		AVR_CALL();
+			avr_buffer[0] = SEND_INT_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = (UCHAR)(len >> 8);
+			avr_buffer[4] = (UCHAR)len;
+			AVR_CALL();
 
-		avr_buffer[1] = 0;
-		avr_buffer[2] = 8;
-		avr_buffer[3] = data3;
-		AVR_CALL();
-		avr_buffer[1] = 1;
-		avr_buffer[2] = 0;
-		avr_buffer[3] = data3;
-		AVR_CALL();
-		avr_buffer[1] = 1;
-		avr_buffer[2] = 4;
-		avr_buffer[3] = data4;
-		AVR_CALL();
-		avr_buffer[1] = 1;
-		avr_buffer[2] = 8;
-		avr_buffer[3] = data5;
-		AVR_CALL();
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = buffer[1];
+			AVR_CALL();
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 4;
+			avr_buffer[3] = buffer[2];
+			AVR_CALL();
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 8;
+			avr_buffer[3] = buffer[3];
+			AVR_CALL();
+
+			avr_buffer[1] = 1;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = buffer[4];
+			AVR_CALL();
+			avr_buffer[1] = 1;
+			avr_buffer[2] = 4;
+			avr_buffer[3] = buffer[5];
+			AVR_CALL();
+			avr_buffer[1] = 1;
+			avr_buffer[2] = 8;
+			avr_buffer[3] = buffer[6];
+			AVR_CALL();
+
+			avr_buffer[1] = 2;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = buffer[7];
+			AVR_CALL();
+			avr_buffer[1] = 2;
+			avr_buffer[2] = 4;
+			avr_buffer[3] = buffer[8];
+			AVR_CALL();
+			avr_buffer[1] = 2;
+			avr_buffer[2] = 8;
+			avr_buffer[3] = buffer[9];
+			AVR_CALL();
+
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 0;
+			avr_buffer[3] = buffer[18];
+			AVR_CALL();
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 4;
+			avr_buffer[3] = buffer[19];
+			AVR_CALL();
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 8;
+			avr_buffer[3] = buffer[20];
+			AVR_CALL();
 */
-		if(data1 == CLEAR_SCREEN1)
+		}
+		if(buffer[1] == CLEAR_SCREEN1)
 		{
 	
 /*
@@ -647,11 +689,11 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = LCD_CLRSCR;
 			avr_buffer[1] = 0;
 			AVR_CALL();
+	
+//			__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
 
-			__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
-
-			__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
-
+//			__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
+#if 0
 		}else if(data1 == NEW_PASSWORD2)
 		{
 			memset(correct_password,0,PASSWORD_SIZE);
@@ -700,6 +742,7 @@ ESOS_USER_TASK(recv_comm1)
 					avr_buffer[1] = correct_password[i];
 				AVR_CALL();
 			}
+#if 0
 		}else if(data1 == RE_ENTER_PASSWORD1)
 		{
 			key_mode = PASSWORD;
@@ -711,9 +754,9 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = PASSWORD_MODE;
 			avr_buffer[1] = (UCHAR)strlen(correct_password);
 			AVR_CALL();
+#endif
 		}else if(data1 == OUTPUT_MSG && key_mode == NORMAL)
 		{
-#if 0
 			avr_buffer[0] = EEPROM_STR;
 			avr_buffer[1] = 1;
 			avr_buffer[2] = 20;
@@ -733,9 +776,8 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[3] = temp;
 			avr_buffer[4] = 1;
 			AVR_CALL();
-#endif
 			// if the port was the E-Stop switch then we must go back to password mode
-			if(data2 == ESTOPSWITCH)
+			if(data1 == ESTOP_SIGNAL)
 			{
 				password_valid = 0;
 	 			memset(password,0,PASSWORD_SIZE);
@@ -755,7 +797,6 @@ ESOS_USER_TASK(recv_comm1)
 */
  		}else if(data1 == TIME_DATA1 && key_mode == NORMAL)
 		{
-//#if 0
 			avr_buffer[0] = GOTO_CMD;
 			avr_buffer[1] = 0;
 			avr_buffer[2] = 23;
@@ -814,7 +855,6 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = ':';
 			AVR_CALL();
-//#endif
 		}else if(data1 == TIME_DATA3 && key_mode == NORMAL)
 		{
 			avr_buffer[0] = GOTO_CMD;
@@ -841,20 +881,25 @@ ESOS_USER_TASK(recv_comm1)
 			avr_buffer[0] = CHAR_CMD;
 			avr_buffer[1] = data5;
 			AVR_CALL();
-		}else if(data1 == LIGHTS_OFF)
+#endif
+		}else if(buffer[1] == LIGHTS_OFF)
 		{
 			lights_on = -1;
-		}else if(data1 == LIGHTS_ON)
+		}else if(buffer[1] == LIGHTS_ON)
 		{
 			lights_on = 10;
-		}else if(data1 == ENGINE_ON)
+		}else if(buffer[1] == ENGINE_ON)
 		{
 			engine_on = 1;
-		}else if(data1 == ENGINE_OFF)
+		}else if(buffer[1] == ENGINE_OFF)
 		{
 			engine_on = 0;
-		}else if(data1 == STOP_SERIAL_RECV)
+		}else if(buffer[1] == STOP_SERIAL_RECV)
 			ESOS_TASK_SLEEP();
+
+		memset(buffer,0,sizeof(buffer));
+
+		FLUSH_ESOS_COMM_IN_DATA();	
     } // endof while()
     ESOS_TASK_END();
 }

@@ -52,6 +52,7 @@
             this.btnDBMgmt = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.btnGetTime = new System.Windows.Forms.Button();
+            this.btnSetParams = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -62,12 +63,12 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbReceived.Location = new System.Drawing.Point(237, 191);
+            this.tbReceived.Location = new System.Drawing.Point(237, 205);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(201, 328);
+            this.tbReceived.Size = new System.Drawing.Size(201, 329);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -163,7 +164,7 @@
             "BLOWER2_ON",
             "BLOWER3_ON",
             "BLOWER_OFF"});
-            this.cblistCommon.Location = new System.Drawing.Point(13, 191);
+            this.cblistCommon.Location = new System.Drawing.Point(13, 205);
             this.cblistCommon.Name = "cblistCommon";
             this.cblistCommon.Size = new System.Drawing.Size(202, 327);
             this.cblistCommon.TabIndex = 9;
@@ -245,7 +246,7 @@
             this.groupBox1.Controls.Add(this.tbPort);
             this.groupBox1.Location = new System.Drawing.Point(237, 16);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(201, 169);
+            this.groupBox1.Size = new System.Drawing.Size(201, 179);
             this.groupBox1.TabIndex = 34;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Status";
@@ -310,11 +311,22 @@
             this.btnGetTime.UseVisualStyleBackColor = true;
             this.btnGetTime.Click += new System.EventHandler(this.GetTime);
             // 
+            // btnSetParams
+            // 
+            this.btnSetParams.Location = new System.Drawing.Point(13, 172);
+            this.btnSetParams.Name = "btnSetParams";
+            this.btnSetParams.Size = new System.Drawing.Size(119, 23);
+            this.btnSetParams.TabIndex = 34;
+            this.btnSetParams.Text = "Set Svr Params";
+            this.btnSetParams.UseVisualStyleBackColor = true;
+            this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 534);
+            this.ClientSize = new System.Drawing.Size(460, 549);
+            this.Controls.Add(this.btnSetParams);
             this.Controls.Add(this.btnGetTime);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.btnDBMgmt);
@@ -375,6 +387,7 @@
         private System.Windows.Forms.Button btnDBMgmt;
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Button btnGetTime;
+        private System.Windows.Forms.Button btnSetParams;
     }
 }
 

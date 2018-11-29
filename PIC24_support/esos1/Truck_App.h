@@ -1209,12 +1209,12 @@ ESOS_USER_TASK(key_timer_task)
 		if(engine_shutdown > 1 && engine_shutdown < 30)
 		{
 //			avr_buffer[0] = SEND_INT_RT_VALUES;
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 23;
-			avr_buffer[3] = (UCHAR)engine_shutdown;
+//			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+//			avr_buffer[1] = 0;
+//			avr_buffer[2] = 23;
+//			avr_buffer[3] = (UCHAR)engine_shutdown;
 //			avr_buffer[4] = (UCHAR)(engine_shutdown);
-			AVR_CALL();
+//			AVR_CALL();
 		}
 		if(engine_shutdown == 5)
 		{

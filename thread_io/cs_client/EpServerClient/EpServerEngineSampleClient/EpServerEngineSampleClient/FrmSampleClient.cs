@@ -53,7 +53,7 @@ namespace EpServerEngineSampleClient
         }
         ServerCmds svrcmd = new ServerCmds();
         INetworkClient m_client = new IocpTcpClient();
-          private System.Collections.Generic.List<CommonControls> ctls;
+        private System.Collections.Generic.List<CommonControls> ctls;
         public FrmSampleClient()
         {
             InitializeComponent();
@@ -414,6 +414,31 @@ namespace EpServerEngineSampleClient
         {
             string cmd = "GET_TIME";
             svrcmd.Send_Cmd(cmd, 0);
+        }
+
+        private void SetParamsClick(object sender, EventArgs e)
+        {
+            //MessageBox.Show(bytes2.Count().ToString());
+
+            DlgSetParams testDialog = new DlgSetParams();
+            testDialog.SetClient(m_client);
+            // Show testDialog as a modal dialog and determine if DialogResult = OK.
+            if (testDialog.ShowDialog(this) == DialogResult.OK)
+            {
+                string str = "BCDEFGHIJKLMNOPQRSTUVW\0";  // last byte never gets sent for some reason
+                byte[] bytes = BytesFromString(str);
+                byte[] bytes2 = new byte[bytes.Count() + 2];
+                System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
+                string set_time = "SET_PARAMS";
+                bytes2[0] = svrcmd.GetCmdIndexB(set_time);
+                Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+                m_client.Send(packet);
+            }
+            else
+            {
+                //                this.txtResult.Text = "Cancelled";
+            }
+            testDialog.Dispose();
         }
     }
 }
