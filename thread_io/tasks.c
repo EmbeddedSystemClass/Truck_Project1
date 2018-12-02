@@ -48,6 +48,7 @@ pthread_mutex_t   threads_ready_lock=PTHREAD_MUTEX_INITIALIZER;
 static UCHAR check_inputs(int index, int test);
 extern CMD_STRUCT cmd_array[58];
 ollist_t oll;
+PARAM_STRUCT ps;
 
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
@@ -90,6 +91,7 @@ void init_ips(void)
 	int i,j,k;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
+	char errmsg[20];
 
 	live_window_on = 0;
 	engine_running = 0;
@@ -131,17 +133,27 @@ void init_ips(void)
 		}
 	}
 //	printf("max_ips: %d\r\n",max_ips);
-}
-
-/****************************************************************************************************/
-
-void send_live_code(char str, UCHAR msg_type)
-{
-//return;
-	if(live_window_on == 0)
- 		return;
-
-	send_msg(strlen((char*)str)*2,(UCHAR*)str,msg_type);
+	i = LoadParams("param.conf",&ps,errmsg);
+	if(i < 0)
+	{
+		printf("%s\r\n",errmsg);
+		myprintf1(errmsg);
+	}
+/*
+	else
+	{
+		printf("%d\r\n",ps.rpm_update_rate);
+		printf("%d\r\n",ps.mph_update_rate);
+		printf("%d\r\n",ps.high_rev_limit);
+		printf("%d\r\n",ps.low_rev_limit);
+		printf("%d\r\n",ps.cooling_fan_on);
+		printf("%d\r\n",ps.cooling_fan_off);
+		printf("%d\r\n",ps.blower_enabled);
+		printf("%d\r\n",ps.blower1_on);
+		printf("%d\r\n",ps.blower2_on);
+		printf("%d\r\n",ps.blower3_on);
+	}
+*/
 }
 
 /*********************************************************************/
@@ -670,7 +682,6 @@ UCHAR timer_task(int test)
 			}
 		sprintf(tempx,"%d %d %d ",running_seconds,running_minutes,running_hours);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
-//		send_live_code(tempx,ENGINE_RUNTIME);
 
 		}else running_seconds = running_minutes = running_hours = 0;
 
@@ -685,7 +696,6 @@ UCHAR timer_task(int test)
 				trunning_minutes = 0;
 		}
 		sprintf(tempx,"%d %d %d ",trunning_seconds,trunning_minutes,trunning_hours);
-//		send_live_code(tempx,SERVER_UPTIME);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
 
 /*
@@ -882,40 +892,13 @@ UCHAR serial_recv_task(int test)
 		{
 			pthread_mutex_lock( &serial_read_lock);
 			ch = read_serial(errmsg);
-/*			
-			if(ch == RT_DATA)
-			{
-				// number of ADC channels + 2 bytes for the rpm
-				for(i = 0;i < NUM_ADC_CHANNELS;i++)
-					rt_data[i] = read_serial(errmsg);
-			}
-*/
 			pthread_mutex_unlock(&serial_read_lock);
 
 			if(ch >= ENABLE_START && ch <= BLOWER3)
 			{
-//				myprintf2("test: ",ch);			
 				basic_controls(ch);
 				strcpy(tempx,cmd_array[ch].cmd_str);
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
-				
-//				send_live_code(ch,1);
-
-/*
-				if(ch == REBOOT_IOBOX || ch == SHUTDOWN_IOBOX)
-				{
-					for(i = 0;i < 20;i++)
-					{
-						setdioline(7,0);
-						uSleep(0,TIME_DELAY/30);
-						setdioline(7,1);
-						uSleep(0,TIME_DELAY/30);
-					}
-					setdioline(7,0);
-					uSleep(2,0);
-					setdioline(7,1);
-				}
-*/
 			}
 		}
 						
@@ -959,6 +942,7 @@ UCHAR tcp_monitor_task(int test)
 	sock_open = 0;
 	tv.tv_sec = 2;
 	tv.tv_usec = 50000;
+	UCHAR tempx[40];
 	int s;
 
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
@@ -980,7 +964,7 @@ UCHAR tcp_monitor_task(int test)
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
 		myprintf1("cannot map tcp to protocol number\0");
-		printf("cannot map tcp to protocol number\r\n");
+//		printf("cannot map tcp to protocol number\r\n");
 //			exit (1);
 	}
 	listen_sd = socket (PF_INET, SOCK_STREAM, ptrp->p_proto);
@@ -993,7 +977,7 @@ UCHAR tcp_monitor_task(int test)
 	if (listen_sd < 0)
 	{
 		myprintf1("socket creation failed\0");
-		printf("socket creation failed\r\n");
+//		printf("socket creation failed\r\n");
 //			exit(1);
 	}
 
@@ -1001,7 +985,7 @@ UCHAR tcp_monitor_task(int test)
 	if (bind(listen_sd, (struct sockaddr *)&sad, sizeof (sad)) < 0)
 	{
 		myprintf1("bind failed\0");
-		printf("bind failed\r\n");
+//		printf("bind failed\r\n");
 //		exit(1);
 	}
 
@@ -1009,7 +993,7 @@ UCHAR tcp_monitor_task(int test)
 	if (listen(listen_sd, QLEN) < 0)
 	{
 		myprintf1("listen failed\0");
-		printf("listen failed\r\n");
+//		printf("listen failed\r\n");
 //			exit(1);
 	}
 
@@ -1046,12 +1030,15 @@ UCHAR tcp_monitor_task(int test)
 //			printf("connected to socket: \r\n");
 			live_window_on = 1;
 			tcp_connected_time = 0;
+			
+			 send_param_msg();
+/*
 			if(shutdown_all)
 			{
 //				printf("tcp task closing\r\n");
 				return 0;
 			}
-/*
+
 		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -2;
 		if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
@@ -1112,27 +1099,10 @@ void *work_routine(void *arg)
 
 	while(not_done)
 	{
-//			pthread_mutex_lock( &io_mem_lock);
-//			test_mem(pattern++);
-//			pthread_mutex_unlock(&io_mem_lock);
-//		}
-
 		(*fptr[*my_id])(i);
 		i--;
 		not_done--;
-//		printf("not done: %d\r\n",not_done);
-//		printf("arg: %d\r\n",*my_id);
-//		pthread_mutex_lock(&total_count_lock);
-//		if (total_count < TOTAL_END_COUNT)
-//			total_count+=LOOP_COUNT;
-//		else
-//			not_done=0;
-
-//		pthread_mutex_unlock(&total_count_lock);
-
 	}
-//	printf("\nworkroutine()\tthread %d\tI'm done\n", *my_id);
-//	myprintf2("thread done:\0",*my_id);
 	return(NULL);
 }
 /*********************************************************************/
@@ -1149,36 +1119,39 @@ void basic_controls(UCHAR cmd)
 	char errmsg[50];
 	UCHAR tempx[1];
 
-	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
+	static SPECIAL_CMD_ARR sp_cmd_arr[32] = {
 	{LHEADLAMP,1},
+	{LEFTFBLINKER,1},
 	{LBRIGHTS,1},
+	{LEFTFBLINKER,0},
 	{RHEADLAMP,1},
+	{RIGHTFBLINKER,1},
 	{RBRIGHTS,1},
+	{RIGHTFBLINKER,0},
 	{LBRIGHTS,0},
+	{LEFTFBLINKER,1},
 	{LHEADLAMP,0},
+	{LEFTFBLINKER,0},
 	{RBRIGHTS,0},
+	{RIGHTFBLINKER,1},
 	{RHEADLAMP,0},
+	{RIGHTFBLINKER,0},
 	{RHEADLAMP,1},
+	{LEFTFBLINKER,1},
 	{RBRIGHTS,1},
+	{LEFTFBLINKER,0},
 	{LHEADLAMP,1},
+	{RIGHTFBLINKER,1},
 	{LBRIGHTS,1},
+	{RIGHTFBLINKER,0},
 	{LBRIGHTS,0},
+	{LEFTFBLINKER,1},
 	{LHEADLAMP,0},
+	{LEFTFBLINKER,0},
 	{RBRIGHTS,0},
-	{RHEADLAMP,0}};
-
-
-//	myprintf2("basic ctls: ",cmd);
-/*
-	HEADLAMP_INPUT,				// 0
-	RUNNING_LIGHTS_INPUT,		// 1
-	LEFTBLINKER_INPUT,			// 2
-	RIGHTBLINKER_INPUT,			// 3
-	BRIGHTS_INPUT,				// 4
-	STARTER_INPUT,				// 5
-	COOLINGFAN_INPUT,			// 6
-	ESTOP_INPUT					// 7
-*/
+	{RIGHTFBLINKER,1},
+	{RHEADLAMP,0},
+	{RIGHTFBLINKER,0}};
 
 	switch(cmd)
 	{
@@ -1304,40 +1277,6 @@ void basic_controls(UCHAR cmd)
 				set_output(otp,sp_cmd_arr[i].onoff);
 				usleep(100000);
 			}
-/*
-			index = LHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			usleep(100000);
-			index = LBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			usleep(100000);
-			index = RHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			usleep(100000);
-			index = RBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			usleep(100000);
-			index = LBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = LHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = RBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = RHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-*/
 			break;
 
 		case ON_BRIGHTS:
@@ -1448,6 +1387,21 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(index,otpp,&oll);
 			set_output(otp,0);
 		break;		
+
+		case TEST_ALL_IO:
+
+			for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
+			{
+				ollist_find_data(i,otpp,&oll);
+				set_output(otp,1);
+				myprintf2("test: ",i);
+				printf("\r\n %d \r\n");
+				usleep(1000000);
+				set_output(otp,0);
+				usleep(100000);
+//				printf("%d\r\n",i);
+			}
+		break;
 
 		case START_SEQ:
 			myprintf1("start seq\0");

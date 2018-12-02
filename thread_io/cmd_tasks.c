@@ -66,6 +66,7 @@ CMD_STRUCT cmd_array[60] =
 	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
+	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
 	{   	SEND_ODATA,"SEND_ODATA\0" },
 	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
 	{		BLOWER_OFF,"BLOWER_OFF\0" },
@@ -100,11 +101,13 @@ CMD_STRUCT cmd_array[60] =
 //extern illist_t ill;
 extern ollist_t oll;
 
-UCHAR msg_buf[1000];
+UCHAR msg_buf[200];
+extern PARAM_STRUCT ps;
 
 int shutdown_all;
 int live_window_on;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
+static void format_param_msg(void);
 
 //extern int tcp_window_on;
 //int serial_recv_on;
@@ -306,6 +309,7 @@ UCHAR get_host_cmd_task(int test)
 					case SHUTDOWN:
 					case SHUTDOWN_IOBOX:
 					case REBOOT_IOBOX:
+					case TEST_ALL_IO:
 					case TEST_LEFT_BLINKER:
 					case TEST_RIGHT_BLINKER:
 					case ON_BRIGHTS:
@@ -337,7 +341,6 @@ UCHAR get_host_cmd_task(int test)
 					// so if the monster box is switched off for maintenance, the IO box
 					// won't get false signals to turn on or off ports
 					case SET_SERIAL_RECV_ON:
-//						send_live_code("cmd);
 						if(fd = init_serial() < 0)
 						{
 							myprintf1("can't open comm port 1\0");
@@ -347,7 +350,6 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case SET_SERIAL_RECV_OFF:
-//						send_live_code(cmd);
 						close_serial();
 						serial_recv_on = 0;
 						break;
@@ -383,11 +385,34 @@ UCHAR get_host_cmd_task(int test)
 
 //							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
 						}
-//						for(i = 0;i < msg_len;i++)
-//							printf("%02x ",msg_buf[i]);
-//						printf("\r\n");
-//						printf("%s\r\n",tempx);
-						send_serialother(SEND_PARAMS,tempx,20);
+/*
+						for(i = 2;i < msg_len;i++)
+						{
+							printf("%d ",msg_buf[i]);
+						}
+*/
+						format_param_msg();
+/*
+						printf("\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
+						printf("mph_update: %d\r\n",ps.mph_update_rate);
+						printf("fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
+						printf("high_rev_limit: %d\r\n",ps.high_rev_limit);
+						printf("low_rev_limit: %d\r\n",ps.low_rev_limit);
+						printf("cooling fan: %d\r\n",ps.cooling_fan_on);
+						printf("fan off: %d\r\n",ps.cooling_fan_off);
+						printf("blwer en: %d\r\n",ps.blower_enabled);
+						printf("blower1: %d\r\n",ps.blower1_on);
+						printf("blower2: %d\r\n",ps.blower2_on);
+						printf("blower3: %d\r\n",ps.blower3_on);
+						printf("test_bank: %d\r\n",ps.test_bank);
+*/
+						send_serialother(SEND_PARAMS,&msg_buf[2],22);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+						}
 						break;
 
 					case SET_TIME:
@@ -857,6 +882,24 @@ exit_program:
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
 
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+						}
+/*
+						printf("%d\r\n",ps.rpm_update_rate);
+						printf("%d\r\n",ps.mph_update_rate);
+						printf("%d\r\n",ps.high_rev_limit);
+						printf("%d\r\n",ps.low_rev_limit);
+						printf("%d\r\n",ps.cooling_fan_on);
+						printf("%d\r\n",ps.cooling_fan_off);
+						printf("%d\r\n",ps.blower_enabled);
+						printf("%d\r\n",ps.blower1_on);
+						printf("%d\r\n",ps.blower2_on);
+						printf("%d\r\n",ps.blower3_on);
+*/
 //						close_tcp();
 
 //						strcpy(tempx,"sched.log\0");
@@ -912,14 +955,6 @@ exit_program:
 		}
 	}
 	return test + 1;
-}
-/*********************************************************************/
-void set_params()
-{
-}
-/*********************************************************************/
-void get_params()
-{
 }
 /*********************************************************************/
 // get preamble & msg len from client
@@ -1066,3 +1101,85 @@ int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 	return rc;
 }
 
+/*********************************************************************/
+static void format_param_msg(void)
+{
+	int temp_conv;
+
+	temp_conv = (int)msg_buf[2];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[3];
+	ps.cooling_fan_on = temp_conv;
+
+	temp_conv = (int)msg_buf[4];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[5];
+	ps.cooling_fan_off = temp_conv;
+
+	temp_conv = (int)msg_buf[6];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[7];
+	ps.blower_enabled = temp_conv;
+
+	temp_conv = (int)msg_buf[8];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[9];
+	ps.blower3_on = temp_conv;
+
+	temp_conv = (int)msg_buf[10];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[11];
+	ps.blower2_on = temp_conv;
+
+	temp_conv = (int)msg_buf[12];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[13];
+	ps.blower1_on = temp_conv;
+
+	temp_conv = (int)msg_buf[14];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[15];
+	ps.high_rev_limit = temp_conv;
+
+	temp_conv = (int)msg_buf[16];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[17];
+	ps.low_rev_limit = temp_conv;
+
+	temp_conv = (int)msg_buf[18];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[19];
+	ps.rpm_update_rate = temp_conv;
+
+	temp_conv = (int)msg_buf[20];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[21];
+	ps.mph_update_rate = temp_conv;
+	
+	temp_conv = (int)msg_buf[22];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[23];
+	ps.fpga_xmit_rate = temp_conv;
+	
+	ps.test_bank = msg_buf[24];
+}
+/*********************************************************************/
+void send_param_msg(void)
+{
+	char tempx[40];
+
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d ",ps.rpm_update_rate,
+														ps.mph_update_rate,
+														ps.fpga_xmit_rate,
+														ps.high_rev_limit,
+														ps.low_rev_limit,
+														ps.cooling_fan_on,
+														ps.cooling_fan_off,
+														ps.blower_enabled,
+														ps.blower1_on,
+														ps.blower2_on,
+														ps.blower3_on,
+														ps.test_bank);
+
+	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
+}

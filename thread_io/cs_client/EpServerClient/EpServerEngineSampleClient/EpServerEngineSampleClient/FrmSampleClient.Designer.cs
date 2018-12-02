@@ -68,7 +68,7 @@
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(201, 329);
+            this.tbReceived.Size = new System.Drawing.Size(201, 350);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -118,7 +118,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(94, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.146";
+            this.tbHostname.Text = "192.168.42.149";
             // 
             // tbConnected
             // 
@@ -163,10 +163,11 @@
             "BLOWER1_ON",
             "BLOWER2_ON",
             "BLOWER3_ON",
-            "BLOWER_OFF"});
+            "BLOWER_OFF",
+            "TEST_ALL_IO"});
             this.cblistCommon.Location = new System.Drawing.Point(13, 205);
             this.cblistCommon.Name = "cblistCommon";
-            this.cblistCommon.Size = new System.Drawing.Size(202, 327);
+            this.cblistCommon.Size = new System.Drawing.Size(202, 344);
             this.cblistCommon.TabIndex = 9;
             this.cblistCommon.SelectedValueChanged += new System.EventHandler(this.cblist_SelValueChanged);
             // 
@@ -325,7 +326,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 549);
+            this.ClientSize = new System.Drawing.Size(460, 570);
             this.Controls.Add(this.btnSetParams);
             this.Controls.Add(this.btnGetTime);
             this.Controls.Add(this.btnClear);

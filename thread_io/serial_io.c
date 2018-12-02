@@ -28,7 +28,6 @@
 #define _POSIX_SOURCE 1							  /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-#define LEN 200
 
 static int set_interface_attribs (int fd, int speed, int parity);
 static void set_blocking (int fd, int should_block);
@@ -102,7 +101,6 @@ static void set_blocking (int fd, int should_block)
 /************************************************************************************/
 int init_serial(void)
 {
-	char buf[LEN];
 	UCHAR test = 0x21;
 	global_handle = -1;
 
@@ -128,16 +126,6 @@ int init_serial(void)
 // and then the sched program won't quit	
 //	set_blocking (global_handle, 1);	 // blocking
 	set_blocking (global_handle, 0);	// non-blocking
-/*
-	for(i = 0;i < LEN;i++)
-	{
-		buf[i] = test;
-		if(++test > 0x7e)
-			test = 0x21;
-	}
-	for(i = 0;i < LEN;i++)
-		write(fd,&buf[i],1);
-*/
 	return global_handle;
 }
 
@@ -184,7 +172,6 @@ void close_serial(void)
 /************************************************************************************/
 int init_serial2(void)
 {
-	char buf[LEN];
 	UCHAR test = 0x21;
 	global_handle2 = -1;
 

@@ -74,8 +74,8 @@ git add PIC24_support/PIC24_board_pinout.txt
 git add PIC24_support/esos1/copy.sh
 git add PIC24_support/esos1/extract.sh
 git add PIC24_support/esos1/make_avr
-git add PIC24_support/esos1/sim_read2.c
-git add PIC24_support/esos1/ESOS1.X/nbproject/*
+git add PIC24_support/esos1/raw_data.h
+#git add PIC24_support/esos1/ESOS1.X/nbproject/*
 git add PIC24_support/pinout2a.jpg
 
 git add thread_io/ioports.c

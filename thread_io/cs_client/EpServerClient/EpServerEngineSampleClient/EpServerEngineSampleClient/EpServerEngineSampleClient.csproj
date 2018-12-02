@@ -54,6 +54,7 @@
     <Compile Include="ChangeDB.Designer.cs">
       <DependentUpon>ChangeDB.cs</DependentUpon>
     </Compile>
+    <Compile Include="ConfigParams.cs" />
     <Compile Include="DlgForm1.cs">
       <SubType>Form</SubType>
     </Compile>

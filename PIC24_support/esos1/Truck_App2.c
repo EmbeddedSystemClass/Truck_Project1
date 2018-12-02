@@ -550,7 +550,7 @@ ESOS_USER_TASK(send_comm1)
 // recv data from TS-7200
 ESOS_USER_TASK(recv_comm1)
 {
-//	static UCHAR data1, data2, data3, data4, data5, data6;
+	static UCHAR cmd;
 	static UCHAR buffer[20];
 	static int i;
 	static UCHAR temp;
@@ -571,334 +571,66 @@ ESOS_USER_TASK(recv_comm1)
     while (1)
     {
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-//		ESOS_TASK_WAIT_ON_GET_UINT8(data1);
-		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],21);
+		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],13);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+		cmd = buffer[0];
 
-//		len  = GET_ESOS_COMM_IN_DATA_LEN();
-		if(buffer[0] >= START_DS_MSG && buffer[0] < END_DS_MSG)
-//if(1)
+		avr_buffer[0] = SEND_BYTE_RT_VALUES;
+		avr_buffer[1] = 0;
+		avr_buffer[2] = 0;
+		avr_buffer[3] = cmd;
+		AVR_CALL();
+
+		if(cmd >= START_DS_MSG && cmd < END_DS_MSG)
 		{
-/*
-			avr_buffer[0] = DISPLAY_STR;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			strncpy((char *)&avr_buffer[3],(const char*)&buffer[1],10);
-			AVR_CALL();
-
-			avr_buffer[0] = SEND_INT_RT_VALUES;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = (UCHAR)(len >> 8);
-			avr_buffer[4] = (UCHAR)len;
-			AVR_CALL();
-
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = buffer[1];
-			AVR_CALL();
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 4;
-			avr_buffer[3] = buffer[2];
-			AVR_CALL();
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 8;
-			avr_buffer[3] = buffer[3];
-			AVR_CALL();
-
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = buffer[4];
-			AVR_CALL();
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 4;
-			avr_buffer[3] = buffer[5];
-			AVR_CALL();
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 8;
-			avr_buffer[3] = buffer[6];
-			AVR_CALL();
-
-			avr_buffer[1] = 2;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = buffer[7];
-			AVR_CALL();
-			avr_buffer[1] = 2;
-			avr_buffer[2] = 4;
-			avr_buffer[3] = buffer[8];
-			AVR_CALL();
-			avr_buffer[1] = 2;
-			avr_buffer[2] = 8;
-			avr_buffer[3] = buffer[9];
-			AVR_CALL();
-
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = buffer[18];
-			AVR_CALL();
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 4;
-			avr_buffer[3] = buffer[19];
-			AVR_CALL();
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 8;
-			avr_buffer[3] = buffer[20];
-			AVR_CALL();
-*/
-		}
-		if(buffer[1] == CLEAR_SCREEN1)
-		{
-	
-/*
-			col = START_RT_VALUE_COL;
-			for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
+			if(cmd == SEND_PARAMS)
 			{
-				rtlabel_str[str].str = str + RT_VALUES_OFFSET;
-				rtlabel_str[str].row = row;
-				rtlabel_str[str].col = col;
-				rtlabel_str[str].data_col = col+10;
-				rtlabel_str[str].onoff = 0;
+				temp = buffer[1];
+				temp <<= 8;
+				gl_fan_on = (UINT)buffer[2];
+				gl_fan_on |= (UINT)temp;
 
-				if(row == 15)
-				{
-					row = START_RT_VALUE_ROW-1;
-					col += 17;
-				}
-			}
+				temp = buffer[3];
+				temp <<= 8;
+				gl_fan_off = (UINT)buffer[4];
+				gl_fan_off |= (UINT)temp;
 
-			// use menu_values_offsets to index menu_str array
-			for(str = 0,row = START_MENU_VALUE_ROW,col = START_MENU_VALUE_COL;
-						str < NUM_MENU_LABELS;str++,row++)
+				temp = buffer[5];
+				temp <<= 8;
+				gl_blower_en = (UINT)buffer[6];
+				gl_blower_en |= (UINT)temp;
+
+				temp = buffer[7];
+				temp <<= 8;				
+				gl_blower3_on = (UINT)buffer[8];
+				gl_blower3_on |= (UINT)temp;
+
+				temp = buffer[9];
+				temp <<= 8;
+				gl_blower2_on = (UINT)buffer[10];
+				gl_blower2_on |= (UINT)temp;
+
+				temp = buffer[11];
+				temp <<= 8;
+				gl_blower1_on = (UINT)buffer[12];
+				gl_blower1_on |= (UINT)temp;
+
+			}else if(cmd == LIGHTS_OFF)
 			{
-				menu_str[str].str = str + MENU_VALUES_OFFSET;
-				menu_str[str].row = row;
-				menu_str[str].col = col;
-				menu_str[str].data_col = col+10;
-				menu_str[str].onoff = 0;
-
-				if(row == 7)
-				{
-					row = START_MENU_VALUE_ROW-1;
-					col += 19;
-				}
-			}
-*/
-			avr_buffer[0] = LCD_CLRSCR;
-			avr_buffer[1] = 0;
-			AVR_CALL();
-	
-//			__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
-
-//			__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
-#if 0
-		}else if(data1 == NEW_PASSWORD2)
-		{
-			memset(correct_password,0,PASSWORD_SIZE);
-			memset(password,0,PASSWORD_SIZE);
-			correct_password[0] = data2;
-			correct_password[1] = data3;
-			correct_password[2] = data4;
-			correct_password[3] = data5;
-
-		}else if(data1 == NEW_PASSWORD3)
-		{
-			correct_password[4] = data2;
-			correct_password[5] = data3;
-			correct_password[6] = data4;
-			correct_password[7] = data5;
-		}else if(data1 == NEW_PASSWORD4)
-		{
-			correct_password[8] = data2;
-			correct_password[9] = data3;
-			correct_password[10] = data4;
-			correct_password[11] = data5;
-
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 14;
-			avr_buffer[2] = 27;
-			AVR_CALL();
-			for(i = 0;i < PASSWORD_SIZE;i++)
+				lights_on = -1;
+			}else if(cmd == LIGHTS_ON)
 			{
-				avr_buffer[0] = CHAR_CMD;
-				if(password[i] == 0)
-					avr_buffer[1] = 'x';
-				else	
-					avr_buffer[1] = password[i];
-				AVR_CALL();
-			}
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 15;
-			avr_buffer[2] = 27;
-			AVR_CALL();
-			for(i = 0;i < PASSWORD_SIZE;i++)
+				lights_on = 10;
+			}else if(cmd == ENGINE_ON)
 			{
-				avr_buffer[0] = CHAR_CMD;
-				if(correct_password[i] == 0)
-					avr_buffer[1] = 'x';
-				else	
-					avr_buffer[1] = correct_password[i];
-				AVR_CALL();
-			}
-#if 0
-		}else if(data1 == RE_ENTER_PASSWORD1)
-		{
-			key_mode = PASSWORD;
-			password_valid = 0;
- 			memset(password,0,PASSWORD_SIZE);
-			password_ptr = 0;
-//			password_retries = 0;
-
-			avr_buffer[0] = PASSWORD_MODE;
-			avr_buffer[1] = (UCHAR)strlen(correct_password);
-			AVR_CALL();
-#endif
-		}else if(data1 == OUTPUT_MSG && key_mode == NORMAL)
-		{
-			avr_buffer[0] = EEPROM_STR;
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 20;
-			avr_buffer[3] = data2 + RT_VALUES_OFFSET + 10;	// offset in eeprom starting at "STARTER"
-			avr_buffer[4] = 15;
-			AVR_CALL();
-
-			avr_buffer[0] = EEPROM_STR;
-			avr_buffer[1] = 1;
-			avr_buffer[2] = 37;
-
-			if(data3 == 1)
-				temp = VARIOUS_MSG_OFFSET + 4;		// offset of ON str in eeprom
-			else if(data3 == 0) 	
-				temp = VARIOUS_MSG_OFFSET + 5;		// offset of OFF str in eeprom
-
-			avr_buffer[3] = temp;
-			avr_buffer[4] = 1;
-			AVR_CALL();
-			// if the port was the E-Stop switch then we must go back to password mode
-			if(data1 == ESTOP_SIGNAL)
+				engine_on = 1;
+			}else if(cmd == ENGINE_OFF)
 			{
-				password_valid = 0;
-	 			memset(password,0,PASSWORD_SIZE);
-				password_ptr = 0;
-				avr_buffer[0] = PASSWORD_MODE;
-				avr_buffer[1] = (UCHAR)strlen(correct_password);
-				AVR_CALL();
-				key_mode = PASSWORD;
 				engine_on = 0;
-			}
-/*
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = data2;
-			AVR_CALL();
-*/
- 		}else if(data1 == TIME_DATA1 && key_mode == NORMAL)
-		{
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 23;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data2;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data3;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = '-';
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data4;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data5;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = '-';
-			AVR_CALL();
-		}else if(data1 == TIME_DATA2 && key_mode == NORMAL)
-		{
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 29;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data2;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data3;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = ' ';
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data4;
-			AVR_CALL();
- 
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data5;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = ':';
-			AVR_CALL();
-		}else if(data1 == TIME_DATA3 && key_mode == NORMAL)
-		{
-			avr_buffer[0] = GOTO_CMD;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 35;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data2;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data3;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = ':';
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data4;
-			AVR_CALL();
-
-			avr_buffer[0] = CHAR_CMD;
-			avr_buffer[1] = data5;
-			AVR_CALL();
-#endif
-		}else if(buffer[1] == LIGHTS_OFF)
-		{
-			lights_on = -1;
-		}else if(buffer[1] == LIGHTS_ON)
-		{
-			lights_on = 10;
-		}else if(buffer[1] == ENGINE_ON)
-		{
-			engine_on = 1;
-		}else if(buffer[1] == ENGINE_OFF)
-		{
-			engine_on = 0;
-		}else if(buffer[1] == STOP_SERIAL_RECV)
-			ESOS_TASK_SLEEP();
-
+			}else if(cmd == STOP_SERIAL_RECV)
+				ESOS_TASK_SLEEP();
+		}
 		memset(buffer,0,sizeof(buffer));
-
 		FLUSH_ESOS_COMM_IN_DATA();	
     } // endof while()
     ESOS_TASK_END();
@@ -1230,4 +962,5 @@ void user_init(void)
 	esos_RegisterTask(temp_monitor_task);
 	esos_RegisterTask(display_rtvalues);
 } // end user_init()
+
 

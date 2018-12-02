@@ -222,6 +222,7 @@ static int dim_screen;
 static int silent_key;
 static UINT gl_rpm, gl_mph;
 static UINT gl_engine_temp, gl_indoor_temp, gl_outdoor_temp, gl_temp4;
+static UINT gl_blower_en, gl_fan_on, gl_fan_off, gl_blower1_on, gl_blower2_on, gl_blower3_on;
 static int engine_run_time;
 static int engine_on;
 static int engine_shutdown;
@@ -519,6 +520,47 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 0;
+							avr_buffer[2] = 0;
+							avr_buffer[3] = (UCHAR)(gl_fan_on >> 8);
+							avr_buffer[4] = (UCHAR)gl_fan_on;
+							AVR_CALL();
+
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 0;
+							avr_buffer[2] = 6;
+							avr_buffer[3] = (UCHAR)(gl_fan_off >> 8);
+							avr_buffer[4] = (UCHAR)gl_fan_off;
+							AVR_CALL();
+
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 0;
+							avr_buffer[2] = 12;
+							avr_buffer[3] = (UCHAR)(gl_blower_en >> 8);
+							avr_buffer[4] = (UCHAR)gl_blower_en;
+							AVR_CALL();
+
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 1;
+							avr_buffer[2] = 0;
+							avr_buffer[3] = (UCHAR)(gl_blower1_on >> 8);
+							avr_buffer[4] = (UCHAR)gl_blower1_on;
+							AVR_CALL();
+
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 1;
+							avr_buffer[2] = 6;
+							avr_buffer[3] = (UCHAR)(gl_blower2_on >> 8);
+							avr_buffer[4] = (UCHAR)gl_blower2_on;
+							AVR_CALL();
+
+							avr_buffer[0] = SEND_INT_RT_VALUES;
+							avr_buffer[1] = 0;
+							avr_buffer[2] = 12;
+							avr_buffer[3] = (UCHAR)(gl_blower3_on >> 8);
+							avr_buffer[4] = (UCHAR)gl_blower3_on;
+							AVR_CALL();
 						break;
 						case 1:
 						break;
@@ -577,6 +619,9 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_D:
+					avr_buffer[0] = LCD_CLRSCR;
+					avr_buffer[1] = 0;
+					AVR_CALL();
 				break;
 
 
@@ -1363,11 +1408,22 @@ ESOS_USER_TASK(temp_monitor_task)
 
 	lfan_on = 0;
 	lengine_fan = 0;
+
+	// init global vars which are later set by SET_PARAMS msg from TS-7200
+	// engine temps
+	gl_blower_en = 100;		// enable blower only if engine temp > 100F
+	gl_fan_on = 150;		// turn engine cooling fan on if engine temp > 150F
+	gl_fan_off = 60;		// turn engine cooling fan off if engine temp < 60F
+	// indoor air temps
+	gl_blower1_on = 60;		// turn blower1 on if indoor temp > 60F
+	gl_blower2_on = 50;		// turn blower1 on if indoor temp > 50F
+	gl_blower3_on = 40;		// turn blower1 on if indoor temp > 40F
+
 	while (TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(1000);
-		// turn cooling fan on if temp > 132
-		if(gl_engine_temp > 132) 	// 150F
+		// turn cooling fan on if temp > gl_fan_on
+		if(gl_engine_temp > gl_fan_on)
 //		if(gl_engine_temp > 48) 	// for testing (using space heater)
 		{
 			// turn fan on
@@ -1378,8 +1434,8 @@ ESOS_USER_TASK(temp_monitor_task)
 			}
 		}
 
-		// turn cooling fan off if temp < 68F
-		if(gl_engine_temp < 40)		// 68F
+		// turn cooling fan off if temp < gl_fan_off
+		if(gl_engine_temp < gl_fan_off)
 		{
 		// turn fan off
 			if(fan_on == 0)
@@ -1392,77 +1448,49 @@ ESOS_USER_TASK(temp_monitor_task)
 			}
 		}
 		
-//		if(gl_indoor_temp > )
+// gl_blower3_on is the temp at which the blower 3 goes on i.e. the lowest temp
+// gl_blower2_on is the middle temperature where the blower runs at medium speed
+// gl_blower1_on sets the blower to the lowest speed where the indoor temp is almost
+// warm enough - then if the indoor temp goes above the gl_blower1_on temp, it shuts off
 
-		// 54 = 80F
-		// 43 = 70F
-		// 32 = 60F
 		if(blower_on == 0)
 		{
-			// if engine temp > 65F then we can mess with the blower fan
-			if(gl_engine_temp > 65)
+			// if engine temp > gl_blower_on then we can mess with the blower fan
+			if(gl_engine_temp > gl_blower_en)
 			{
-				if(gl_indoor_temp > 54)
+				if(gl_indoor_temp > gl_blower1_on)
 				{
 					if(lfan_on != 0)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
 						lfan_on = 0;
-		/*
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 37;
-						avr_buffer[3] = 0;
-						AVR_CALL();
-		*/
 					}
 				}
 
-				if(gl_indoor_temp > 43 && gl_indoor_temp < 54)
+				if(gl_indoor_temp > gl_blower2_on && gl_indoor_temp < gl_blower1_on)
 				{
 					if(lfan_on != 1)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER1);
 						lfan_on = 1;
-		/*
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 37;
-						avr_buffer[3] = 1;
-						AVR_CALL();
-		*/
 					}
 				}
 		
-				if(gl_indoor_temp > 32 && gl_indoor_temp < 43)
+				if(gl_indoor_temp > gl_blower3_on && gl_indoor_temp < gl_blower2_on)
 				{
 					if(lfan_on != 2)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER2);
 						lfan_on = 2;
-		/*
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 37;
-						avr_buffer[3] = 2;
-						AVR_CALL();
-		*/
 					}
 				}
 
-				if(gl_indoor_temp < 32)
+				if(gl_indoor_temp < gl_blower3_on)
 				{
 					if(lfan_on != 3)
 					{
 						__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
 						lfan_on = 3;
-		/*
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 37;
-						avr_buffer[3] = 3;
-						AVR_CALL();
-		*/
 					}
 				}
 			}

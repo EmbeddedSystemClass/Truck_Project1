@@ -104,7 +104,7 @@ BULD_TARGET = $(PROJECT)
 
 #all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4 lcd_func2
 #all :  test_inports test_ioports2 test_ioports4
-all : test_ioports4
+all : test_ioports4 show_params make_params
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
@@ -166,8 +166,20 @@ test_ioports4.o: test_ioports4.c
 test_ioports4: test_ioports4.o
 	${CC} test_ioports4.o -o test_ioports4
 
+show_params.o: show_params.c
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c show_params.c
+
+show_params: show_params.o
+	${CC} show_params.o -o show_params
+
+make_params.o: make_params.c
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c make_params.c
+
+make_params: make_params.o
+	${CC} make_params.o -o make_params
+
 clean :
 	rm -f *.o *~ *# core client server client2 server2 test_write \
-	test_read test_inports test_ioports2 test_ioports4 lcd_func2
+	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params
 #	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core server2

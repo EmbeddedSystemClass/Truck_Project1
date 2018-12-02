@@ -105,7 +105,6 @@ int olWriteConfig(char *filename,  ollist_t *oll, size_t size,char *errmsg)
 }
 #endif
 /////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
 int oLoadConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 {
 	char *fptr;
@@ -177,6 +176,61 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 		j += write(fp,(const void*)pio,sizeof(O_DATA));
 		curr_o_array2++;
 	}
+
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return 0;
+}
+/////////////////////////////////////////////////////////////////////////////
+int LoadParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i = 0;
+	fptr = (char *)filename;
+
+	fp = open((const char *)fptr, O_RDWR);
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+		printf("%s  %s\n",errmsg,filename);
+		return -2;
+	}
+
+	i = lseek(fp,0,SEEK_SET);
+	i = 0;
+	i = read(fp,(void*)ps,sizeof(PARAM_STRUCT));
+//	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return 0;
+}
+///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+int WriteParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i,j,k;
+	fptr = (char *)filename;
+
+//#ifdef NOTARGET
+	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+		printf("%s  %s\n",errmsg,filename);
+		return -2;
+	}
+
+	j = 0;
+	write(fp,(const void*)ps,sizeof(PARAM_STRUCT));
 
 	close(fp);
 	strcpy(errmsg,"Success\0");

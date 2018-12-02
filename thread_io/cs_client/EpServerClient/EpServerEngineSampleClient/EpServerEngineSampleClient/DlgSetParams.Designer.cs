@@ -30,40 +30,36 @@
         {
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.UpDwnFanOnTemp = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnEnableBlrTemp = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnFanOffTemp = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.UpDwnBlr3On = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnBlr2On = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnBlr1On = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.UpDwnHighRev = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnLowRev = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnFPGAXmitRate = new System.Windows.Forms.NumericUpDown();
-            this.UpDwnLightOn = new System.Windows.Forms.NumericUpDown();
+            this.cbBlower1 = new System.Windows.Forms.ComboBox();
+            this.cbBlower2 = new System.Windows.Forms.ComboBox();
+            this.cbBlower3 = new System.Windows.Forms.ComboBox();
+            this.cbBlowerEnabled = new System.Windows.Forms.ComboBox();
+            this.cbFanOff = new System.Windows.Forms.ComboBox();
+            this.cbFanOn = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFanOnTemp)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnEnableBlrTemp)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFanOffTemp)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr3On)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr2On)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr1On)).BeginInit();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.cbHighRevLimit = new System.Windows.Forms.ComboBox();
+            this.cbLowRevLimit = new System.Windows.Forms.ComboBox();
+            this.cbLightsOnDelay = new System.Windows.Forms.ComboBox();
+            this.cbFPGAXmitRate = new System.Windows.Forms.ComboBox();
+            this.cbRPMUpdateRate = new System.Windows.Forms.ComboBox();
+            this.cbMPHUpdateRate = new System.Windows.Forms.ComboBox();
+            this.cbTestBank = new System.Windows.Forms.ComboBox();
+            this.label15 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnHighRev)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnLowRev)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFPGAXmitRate)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnLightOn)).BeginInit();
             this.SuspendLayout();
             // 
             // btnOK
@@ -88,34 +84,10 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.CancelClick);
             // 
-            // UpDwnFanOnTemp
-            // 
-            this.UpDwnFanOnTemp.Location = new System.Drawing.Point(149, 28);
-            this.UpDwnFanOnTemp.Name = "UpDwnFanOnTemp";
-            this.UpDwnFanOnTemp.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnFanOnTemp.TabIndex = 2;
-            this.UpDwnFanOnTemp.ValueChanged += new System.EventHandler(this.FanOnValueChanged);
-            // 
-            // UpDwnEnableBlrTemp
-            // 
-            this.UpDwnEnableBlrTemp.Location = new System.Drawing.Point(149, 80);
-            this.UpDwnEnableBlrTemp.Name = "UpDwnEnableBlrTemp";
-            this.UpDwnEnableBlrTemp.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnEnableBlrTemp.TabIndex = 3;
-            this.UpDwnEnableBlrTemp.ValueChanged += new System.EventHandler(this.UpDwnEnableBlrTemp_ValueChanged);
-            // 
-            // UpDwnFanOffTemp
-            // 
-            this.UpDwnFanOffTemp.Location = new System.Drawing.Point(149, 54);
-            this.UpDwnFanOffTemp.Name = "UpDwnFanOffTemp";
-            this.UpDwnFanOffTemp.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnFanOffTemp.TabIndex = 4;
-            this.UpDwnFanOffTemp.ValueChanged += new System.EventHandler(this.FanOffValueChanged);
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(28, 32);
+            this.label1.Location = new System.Drawing.Point(28, 30);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(72, 13);
             this.label1.TabIndex = 5;
@@ -133,40 +105,16 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(25, 83);
+            this.label3.Location = new System.Drawing.Point(25, 84);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(120, 13);
             this.label3.TabIndex = 7;
             this.label3.Text = "Engine Temp for Blower";
             // 
-            // UpDwnBlr3On
-            // 
-            this.UpDwnBlr3On.Location = new System.Drawing.Point(149, 106);
-            this.UpDwnBlr3On.Name = "UpDwnBlr3On";
-            this.UpDwnBlr3On.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnBlr3On.TabIndex = 8;
-            this.UpDwnBlr3On.ValueChanged += new System.EventHandler(this.UpDwnBlr3On_ValueChanged);
-            // 
-            // UpDwnBlr2On
-            // 
-            this.UpDwnBlr2On.Location = new System.Drawing.Point(149, 132);
-            this.UpDwnBlr2On.Name = "UpDwnBlr2On";
-            this.UpDwnBlr2On.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnBlr2On.TabIndex = 9;
-            this.UpDwnBlr2On.ValueChanged += new System.EventHandler(this.UpDwnBlr2On_ValueChanged);
-            // 
-            // UpDwnBlr1On
-            // 
-            this.UpDwnBlr1On.Location = new System.Drawing.Point(149, 158);
-            this.UpDwnBlr1On.Name = "UpDwnBlr1On";
-            this.UpDwnBlr1On.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnBlr1On.TabIndex = 10;
-            this.UpDwnBlr1On.ValueChanged += new System.EventHandler(this.UpDwnBlr1On_ValueChanged);
-            // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(25, 110);
+            this.label4.Location = new System.Drawing.Point(25, 111);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(95, 13);
             this.label4.TabIndex = 11;
@@ -175,7 +123,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(26, 135);
+            this.label5.Location = new System.Drawing.Point(26, 138);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(95, 13);
             this.label5.TabIndex = 12;
@@ -184,7 +132,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(25, 161);
+            this.label6.Location = new System.Drawing.Point(25, 164);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(95, 13);
             this.label6.TabIndex = 13;
@@ -192,56 +140,78 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.cbBlower1);
+            this.groupBox1.Controls.Add(this.cbBlower2);
+            this.groupBox1.Controls.Add(this.cbBlower3);
+            this.groupBox1.Controls.Add(this.cbBlowerEnabled);
+            this.groupBox1.Controls.Add(this.cbFanOff);
+            this.groupBox1.Controls.Add(this.cbFanOn);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.UpDwnFanOnTemp);
             this.groupBox1.Controls.Add(this.label5);
-            this.groupBox1.Controls.Add(this.UpDwnEnableBlrTemp);
             this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Controls.Add(this.UpDwnFanOffTemp);
-            this.groupBox1.Controls.Add(this.UpDwnBlr1On);
             this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Controls.Add(this.UpDwnBlr2On);
             this.groupBox1.Controls.Add(this.label2);
-            this.groupBox1.Controls.Add(this.UpDwnBlr3On);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(252, 199);
+            this.groupBox1.Size = new System.Drawing.Size(252, 282);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Temperatures";
             // 
-            // UpDwnHighRev
+            // cbBlower1
             // 
-            this.UpDwnHighRev.Location = new System.Drawing.Point(457, 40);
-            this.UpDwnHighRev.Name = "UpDwnHighRev";
-            this.UpDwnHighRev.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnHighRev.TabIndex = 15;
-            this.UpDwnHighRev.ValueChanged += new System.EventHandler(this.UpDwnHighRev_ValueChanged);
+            this.cbBlower1.FormattingEnabled = true;
+            this.cbBlower1.Location = new System.Drawing.Point(159, 161);
+            this.cbBlower1.Name = "cbBlower1";
+            this.cbBlower1.Size = new System.Drawing.Size(76, 21);
+            this.cbBlower1.TabIndex = 31;
+            this.cbBlower1.SelectedIndexChanged += new System.EventHandler(this.cbBlower1_SelectedIndexChanged);
             // 
-            // UpDwnLowRev
+            // cbBlower2
             // 
-            this.UpDwnLowRev.Location = new System.Drawing.Point(457, 69);
-            this.UpDwnLowRev.Name = "UpDwnLowRev";
-            this.UpDwnLowRev.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnLowRev.TabIndex = 16;
-            this.UpDwnLowRev.ValueChanged += new System.EventHandler(this.UpDwnLowRev_ValueChanged);
+            this.cbBlower2.FormattingEnabled = true;
+            this.cbBlower2.Location = new System.Drawing.Point(159, 134);
+            this.cbBlower2.Name = "cbBlower2";
+            this.cbBlower2.Size = new System.Drawing.Size(76, 21);
+            this.cbBlower2.TabIndex = 31;
+            this.cbBlower2.SelectedIndexChanged += new System.EventHandler(this.cbBlower2_SelectedIndexChanged);
             // 
-            // UpDwnFPGAXmitRate
+            // cbBlower3
             // 
-            this.UpDwnFPGAXmitRate.Location = new System.Drawing.Point(457, 124);
-            this.UpDwnFPGAXmitRate.Name = "UpDwnFPGAXmitRate";
-            this.UpDwnFPGAXmitRate.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnFPGAXmitRate.TabIndex = 18;
-            this.UpDwnFPGAXmitRate.ValueChanged += new System.EventHandler(this.UpDwnFPGAXmitRate_ValueChanged);
+            this.cbBlower3.FormattingEnabled = true;
+            this.cbBlower3.Location = new System.Drawing.Point(159, 107);
+            this.cbBlower3.Name = "cbBlower3";
+            this.cbBlower3.Size = new System.Drawing.Size(76, 21);
+            this.cbBlower3.TabIndex = 31;
+            this.cbBlower3.SelectedIndexChanged += new System.EventHandler(this.cbBlower3_SelectedIndexChanged);
             // 
-            // UpDwnLightOn
+            // cbBlowerEnabled
             // 
-            this.UpDwnLightOn.Location = new System.Drawing.Point(457, 95);
-            this.UpDwnLightOn.Name = "UpDwnLightOn";
-            this.UpDwnLightOn.Size = new System.Drawing.Size(76, 20);
-            this.UpDwnLightOn.TabIndex = 17;
-            this.UpDwnLightOn.ValueChanged += new System.EventHandler(this.UpDwnLightOn_ValueChanged);
+            this.cbBlowerEnabled.FormattingEnabled = true;
+            this.cbBlowerEnabled.Location = new System.Drawing.Point(159, 80);
+            this.cbBlowerEnabled.Name = "cbBlowerEnabled";
+            this.cbBlowerEnabled.Size = new System.Drawing.Size(76, 21);
+            this.cbBlowerEnabled.TabIndex = 31;
+            this.cbBlowerEnabled.SelectedIndexChanged += new System.EventHandler(this.cbBlowerEnabled_SelectedIndexChanged);
+            // 
+            // cbFanOff
+            // 
+            this.cbFanOff.FormattingEnabled = true;
+            this.cbFanOff.Location = new System.Drawing.Point(159, 53);
+            this.cbFanOff.Name = "cbFanOff";
+            this.cbFanOff.Size = new System.Drawing.Size(76, 21);
+            this.cbFanOff.TabIndex = 31;
+            this.cbFanOff.SelectedIndexChanged += new System.EventHandler(this.cbFanOff_SelectedIndexChanged);
+            // 
+            // cbFanOn
+            // 
+            this.cbFanOn.FormattingEnabled = true;
+            this.cbFanOn.Location = new System.Drawing.Point(159, 26);
+            this.cbFanOn.Name = "cbFanOn";
+            this.cbFanOn.Size = new System.Drawing.Size(76, 21);
+            this.cbFanOn.TabIndex = 30;
+            this.cbFanOn.SelectedIndexChanged += new System.EventHandler(this.cbFanOn_SelectedIndexChanged);
             // 
             // label7
             // 
@@ -289,44 +259,185 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(345, 128);
+            this.label12.Location = new System.Drawing.Point(345, 129);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(104, 13);
             this.label12.TabIndex = 24;
             this.label12.Text = "FPGA Transmit Rate";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(345, 155);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(95, 13);
+            this.label13.TabIndex = 27;
+            this.label13.Text = "RPM Update Rate";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(345, 182);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(100, 13);
+            this.label14.TabIndex = 28;
+            this.label14.Text = "MPH Transmit Rate";
+            // 
+            // cbHighRevLimit
+            // 
+            this.cbHighRevLimit.FormattingEnabled = true;
+            this.cbHighRevLimit.Items.AddRange(new object[] {
+            "6000",
+            "5800",
+            "5600",
+            "5400",
+            "5200",
+            "5000",
+            "4800",
+            "4600",
+            "4200",
+            "4000"});
+            this.cbHighRevLimit.Location = new System.Drawing.Point(475, 39);
+            this.cbHighRevLimit.Name = "cbHighRevLimit";
+            this.cbHighRevLimit.Size = new System.Drawing.Size(76, 21);
+            this.cbHighRevLimit.TabIndex = 31;
+            this.cbHighRevLimit.SelectedIndexChanged += new System.EventHandler(this.cbHighRevLimit_SelectedIndexChanged);
+            // 
+            // cbLowRevLimit
+            // 
+            this.cbLowRevLimit.FormattingEnabled = true;
+            this.cbLowRevLimit.Items.AddRange(new object[] {
+            "4500",
+            "4400",
+            "4300",
+            "4200",
+            "4100",
+            "4000",
+            "3900",
+            "3800",
+            "3700"});
+            this.cbLowRevLimit.Location = new System.Drawing.Point(475, 69);
+            this.cbLowRevLimit.Name = "cbLowRevLimit";
+            this.cbLowRevLimit.Size = new System.Drawing.Size(76, 21);
+            this.cbLowRevLimit.TabIndex = 32;
+            this.cbLowRevLimit.SelectedIndexChanged += new System.EventHandler(this.cbLowRevLimit_SelectedIndexChanged);
+            // 
+            // cbLightsOnDelay
+            // 
+            this.cbLightsOnDelay.FormattingEnabled = true;
+            this.cbLightsOnDelay.Items.AddRange(new object[] {
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"});
+            this.cbLightsOnDelay.Location = new System.Drawing.Point(475, 95);
+            this.cbLightsOnDelay.Name = "cbLightsOnDelay";
+            this.cbLightsOnDelay.Size = new System.Drawing.Size(76, 21);
+            this.cbLightsOnDelay.TabIndex = 33;
+            this.cbLightsOnDelay.SelectedIndexChanged += new System.EventHandler(this.cbLightsOnDelay_SelectedIndexChanged);
+            // 
+            // cbFPGAXmitRate
+            // 
+            this.cbFPGAXmitRate.FormattingEnabled = true;
+            this.cbFPGAXmitRate.Items.AddRange(new object[] {
+            "1000",
+            "2000",
+            "3000"});
+            this.cbFPGAXmitRate.Location = new System.Drawing.Point(475, 124);
+            this.cbFPGAXmitRate.Name = "cbFPGAXmitRate";
+            this.cbFPGAXmitRate.Size = new System.Drawing.Size(76, 21);
+            this.cbFPGAXmitRate.TabIndex = 34;
+            this.cbFPGAXmitRate.SelectedIndexChanged += new System.EventHandler(this.cbFPGAXmitRate_SelectedIndexChanged);
+            // 
+            // cbRPMUpdateRate
+            // 
+            this.cbRPMUpdateRate.FormattingEnabled = true;
+            this.cbRPMUpdateRate.Items.AddRange(new object[] {
+            "1000",
+            "2000",
+            "3000"});
+            this.cbRPMUpdateRate.Location = new System.Drawing.Point(475, 151);
+            this.cbRPMUpdateRate.Name = "cbRPMUpdateRate";
+            this.cbRPMUpdateRate.Size = new System.Drawing.Size(76, 21);
+            this.cbRPMUpdateRate.TabIndex = 35;
+            this.cbRPMUpdateRate.SelectedIndexChanged += new System.EventHandler(this.cbRPMUpdateRate_SelectedIndexChanged);
+            // 
+            // cbMPHUpdateRate
+            // 
+            this.cbMPHUpdateRate.FormattingEnabled = true;
+            this.cbMPHUpdateRate.Items.AddRange(new object[] {
+            "1000",
+            "2000",
+            "3000"});
+            this.cbMPHUpdateRate.Location = new System.Drawing.Point(475, 180);
+            this.cbMPHUpdateRate.Name = "cbMPHUpdateRate";
+            this.cbMPHUpdateRate.Size = new System.Drawing.Size(76, 21);
+            this.cbMPHUpdateRate.TabIndex = 36;
+            this.cbMPHUpdateRate.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
+            // 
+            // cbTestBank
+            // 
+            this.cbTestBank.FormattingEnabled = true;
+            this.cbTestBank.Items.AddRange(new object[] {
+            "Bank 0",
+            "Bank 1",
+            "Bank 2",
+            "Bank 3",
+            "Bank 4"});
+            this.cbTestBank.Location = new System.Drawing.Point(475, 209);
+            this.cbTestBank.Name = "cbTestBank";
+            this.cbTestBank.Size = new System.Drawing.Size(76, 21);
+            this.cbTestBank.TabIndex = 37;
+            this.cbTestBank.SelectedIndexChanged += new System.EventHandler(this.cbTestBank_SelectedIndexChanged);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(345, 212);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(56, 13);
+            this.label15.TabIndex = 38;
+            this.label15.Text = "Test Bank";
             // 
             // DlgSetParams
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(585, 435);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.cbTestBank);
+            this.Controls.Add(this.cbMPHUpdateRate);
+            this.Controls.Add(this.cbRPMUpdateRate);
+            this.Controls.Add(this.cbFPGAXmitRate);
+            this.Controls.Add(this.cbLightsOnDelay);
+            this.Controls.Add(this.cbLowRevLimit);
+            this.Controls.Add(this.cbHighRevLimit);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.label13);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
-            this.Controls.Add(this.UpDwnFPGAXmitRate);
-            this.Controls.Add(this.UpDwnLightOn);
-            this.Controls.Add(this.UpDwnLowRev);
-            this.Controls.Add(this.UpDwnHighRev);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Name = "DlgSetParams";
             this.Text = "DlgSetParams";
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFanOnTemp)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnEnableBlrTemp)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFanOffTemp)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr3On)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr2On)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnBlr1On)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnHighRev)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnLowRev)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnFPGAXmitRate)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UpDwnLightOn)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -336,28 +447,34 @@
 
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.NumericUpDown UpDwnFanOnTemp;
-        private System.Windows.Forms.NumericUpDown UpDwnEnableBlrTemp;
-        private System.Windows.Forms.NumericUpDown UpDwnFanOffTemp;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown UpDwnBlr3On;
-        private System.Windows.Forms.NumericUpDown UpDwnBlr2On;
-        private System.Windows.Forms.NumericUpDown UpDwnBlr1On;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.NumericUpDown UpDwnHighRev;
-        private System.Windows.Forms.NumericUpDown UpDwnLowRev;
-        private System.Windows.Forms.NumericUpDown UpDwnFPGAXmitRate;
-        private System.Windows.Forms.NumericUpDown UpDwnLightOn;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.ComboBox cbFanOn;
+        private System.Windows.Forms.ComboBox cbBlower1;
+        private System.Windows.Forms.ComboBox cbBlower2;
+        private System.Windows.Forms.ComboBox cbBlower3;
+        private System.Windows.Forms.ComboBox cbBlowerEnabled;
+        private System.Windows.Forms.ComboBox cbFanOff;
+        private System.Windows.Forms.ComboBox cbHighRevLimit;
+        private System.Windows.Forms.ComboBox cbLowRevLimit;
+        private System.Windows.Forms.ComboBox cbLightsOnDelay;
+        private System.Windows.Forms.ComboBox cbFPGAXmitRate;
+        private System.Windows.Forms.ComboBox cbRPMUpdateRate;
+        private System.Windows.Forms.ComboBox cbMPHUpdateRate;
+        private System.Windows.Forms.ComboBox cbTestBank;
+        private System.Windows.Forms.Label label15;
     }
 }

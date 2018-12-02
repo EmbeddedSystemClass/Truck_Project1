@@ -42,6 +42,7 @@ namespace EpServerEngineSampleClient
 			SHUTDOWN,
 			SHUTDOWN_IOBOX,
 			REBOOT_IOBOX,
+            TEST_ALL_IO,
 			SEND_ODATA,
 			SAVE_TO_DISK,
 			BLOWER_OFF,
@@ -262,6 +263,9 @@ namespace EpServerEngineSampleClient
                     break;
                 case "SET_PARAMS":
                     sendcmd = (int)Server_cmds.SET_PARAMS;
+                    break;
+                case "TEST_ALL_IO":
+                    sendcmd = (int)Server_cmds.TEST_ALL_IO;
                     break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;

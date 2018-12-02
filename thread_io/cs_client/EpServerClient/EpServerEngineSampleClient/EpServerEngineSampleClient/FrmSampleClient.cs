@@ -20,6 +20,7 @@ namespace EpServerEngineSampleClient
         CURRENT_TIME,
         ENGINE_RUNTIME,
         SERVER_UPTIME,
+        SEND_CONFIG,
         GET_TIME
     }
     public partial class FrmSampleClient : Form, INetworkClientCallback
@@ -51,6 +52,7 @@ namespace EpServerEngineSampleClient
                 return (this.CtlSet.Equals(other.CtlSet));
             }
         }
+        ConfigParams cfg_params = new ConfigParams();
         ServerCmds svrcmd = new ServerCmds();
         INetworkClient m_client = new IocpTcpClient();
         private System.Collections.Generic.List<CommonControls> ctls;
@@ -76,6 +78,7 @@ namespace EpServerEngineSampleClient
             btnShutdown.Enabled = false;
             btnReboot.Enabled = false;
             btnStopSerial.Enabled = false;
+//            btnSetParams.Enabled = false;
             tbConnected.Text = "not connected";
 //            target_db_closed = false;
             //            use_laptop = true;
@@ -123,6 +126,7 @@ namespace EpServerEngineSampleClient
             btnConnect.Text = "Disconnect";
             button3.Enabled = true;
             button2.Enabled = true;
+            btnSetParams.Enabled = true;
         }
         public void OnDisconnect(INetworkClient client)
         {
@@ -134,6 +138,7 @@ namespace EpServerEngineSampleClient
             tbConnected.Text = "not connected";
             button3.Enabled = false;
             button2.Enabled = false;
+            btnSetParams.Enabled = false;
             for (i = 0; i < ctls.Count; i++)
             {
                 ctls[i].CtlSet = 0;
@@ -164,15 +169,14 @@ namespace EpServerEngineSampleClient
             type_msg = (int)chars[0];
             System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
             ret = new string(chars2);
-
-            /*
-            SEND_MSG,
-            CURRENT_TIME,
-            ENGINE_RUNTIME,
-            TEST,
-            GET_TIME
-            */
-
+/*
+    SEND_MSG,
+    CURRENT_TIME,
+    ENGINE_RUNTIME,
+    SERVER_UPTIME,
+    SEND_CONFIG,
+    GET_TIME
+*/
             string str = Enum.GetName(typeof(msg_types), type_msg);
 //            int type = (int)Enum.Parse(typeof(msg_types), str);
             //if (type_msg != 4)
@@ -219,6 +223,71 @@ namespace EpServerEngineSampleClient
                 case "ENGINE_RUNTIME":
                     //    tbEngRunTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
                     tbEngRunTime.Text = ret;
+                    break;
+                case "SEND_CONFIG":
+                    string[] words = ret.Split(' ');
+                    i = 0;
+                    foreach (var word in words)
+                    {
+                        //                    temp = int.Parse(word);
+                        switch (i)
+                        {
+                            case 0:
+                                cfg_params.rpm_update_rate = int.Parse(word);
+                                break;
+                            case 1:
+                                cfg_params.mph_update_rate = int.Parse(word);
+                                break;
+                            case 2:
+                                cfg_params.FPGAXmitRate = int.Parse(word);
+                                break;
+                            case 3:
+                                cfg_params.high_rev_limit = int.Parse(word);
+                                break;
+                            case 4:
+                                cfg_params.low_rev_limit = int.Parse(word);
+                                break;
+                            case 5:
+                                cfg_params.fan_on = int.Parse(word);
+                                break;
+                            case 6:
+                                cfg_params.fan_off = int.Parse(word);
+                                break;
+                            case 7:
+                                cfg_params.blower_enabled  = int.Parse(word);
+                                break;
+                            case 8:
+                                cfg_params.blower1_on = int.Parse(word);
+                                break;
+                            case 9:
+                                cfg_params.blower2_on = int.Parse(word);
+                                break;
+                            case 10:
+                                cfg_params.blower3_on = int.Parse(word);
+                                break;
+                            case 11:
+                                cfg_params.test_bank = int.Parse(word);
+                                break;
+                            default:
+                                break;
+                        }
+//                        MessageBox.Show(int.Parse(word).ToString());
+                        i++;
+                    }
+                    /*
+                                        rpm_update_rate,
+                                        mph_update_rate,
+                                        fpga_xmit_rate
+                                        high_rev_limit,
+                                        low_rev_limit,
+                                        cooling_fan_on,
+                                        cooling_fan_off,
+                                        blower_enabled,
+                                        blower1_on,
+                                        blower2_on,
+                                        blower3_on,
+                                        test_bank
+                    */
                     break;
                 case "GET_TIME":
                     AddMsg(ret);
@@ -371,7 +440,8 @@ namespace EpServerEngineSampleClient
                     if (ctls[i].CtlName == "STARTER" || ctls[i].CtlName == "TEST_LEFT_BLINKER"
                              || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD" ||
                                  ctls[i].CtlName == "BLOWER1_ON" || ctls[i].CtlName == "BLOWER2_ON" || 
-                                     ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || ctls[i].CtlName == "BLOWER_OFF")
+                                     ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || 
+                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO")
                     {
                         ctls[i].CtlSet = 0;
                         cblistCommon.SetItemChecked(i, false);
@@ -381,58 +451,42 @@ namespace EpServerEngineSampleClient
                 }
             }
         }
-
         private void ShutdownServer(object sender, EventArgs e)
         {
             string cmd = "SHUTDOWN_IOBOX";
             svrcmd.Send_Cmd(cmd, 0);
         }
-
         private void RebootServer(object sender, EventArgs e)
         {
             string cmd = "REBOOT_IOBOX";
             svrcmd.Send_Cmd(cmd, 0);
         }
-
         private void StopMbox(object sender, EventArgs e)
         {
             string cmd = "STOP_MBOX_RECV";
             svrcmd.Send_Cmd(cmd, 0);
         }
-
         private void DBMgmt(object sender, EventArgs e)
         {
             ShowMyDialogBox();
         }
-
         private void ClearScreen(object sender, EventArgs e)
         {
             tbReceived.Clear();
         }
-
         private void GetTime(object sender, EventArgs e)
         {
             string cmd = "GET_TIME";
             svrcmd.Send_Cmd(cmd, 0);
         }
-
         private void SetParamsClick(object sender, EventArgs e)
         {
-            //MessageBox.Show(bytes2.Count().ToString());
-
-            DlgSetParams testDialog = new DlgSetParams();
+            DlgSetParams testDialog = new DlgSetParams(cfg_params);
             testDialog.SetClient(m_client);
             // Show testDialog as a modal dialog and determine if DialogResult = OK.
             if (testDialog.ShowDialog(this) == DialogResult.OK)
             {
-                string str = "BCDEFGHIJKLMNOPQRSTUVW\0";  // last byte never gets sent for some reason
-                byte[] bytes = BytesFromString(str);
-                byte[] bytes2 = new byte[bytes.Count() + 2];
-                System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
-                string set_time = "SET_PARAMS";
-                bytes2[0] = svrcmd.GetCmdIndexB(set_time);
-                Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
-                m_client.Send(packet);
+                cfg_params = testDialog.GetParams();
             }
             else
             {

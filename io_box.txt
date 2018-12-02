@@ -2,27 +2,37 @@ io_box.txt - notes to self on the box with the TS-7200 card and the (2) 20 port 
 
 procedure for testing/debugging io box:
 
-1) recompile the sched program in thread_io so that the serial port is at 115200.
+1)  recompile the sched program in thread_io so that the serial port is at 115200.
 	(see serial_io.c - MODEMDEVICE)
-2) uncomment or add any printf statements in either tasks.c or cmd_tasks.c
+	
+2)  uncomment (or add) any printf statements in either tasks.c or cmd_tasks.c
 	(usually the printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str); in cmd_tasks.c
-		just before the main tcp loop)
-3) recompile and upload to the io box using the correct ip address.
-4) unplug the serial cable from the io box and using a gender changer, plug the output
-	of the io box to a tty running on windows or linux.
-5) reboot the io box (turn it off and back on) and be ready to hit 'Ctl-C' when it 
+	just before the main tcp loop)
+	
+3)  recompile and upload to the io box using the correct ip address.
+
+4)  plug the DB-9 serial output of the io box to a terminal program running on windows or linux.
+
+5)  reboot the io box (turn it off and back on) and be ready to hit 'Ctl-C' when it 
 	starts coming up. (start hitting 'Ctl-C' several times)
-6) when it says "Redboot" type in "fis load vmlinux" and hit return.
-7) then type in "exec -c "S console=ttyAM0,115200 root=/dev/mtdblock" and hit return
-8) it will reboot and when it comes up to shell and asks for a login, type "root" and
+	
+6)  when it says "<Redboot>" type in "fis load vmlinux" and hit return.
+
+7)  then type in: exec -c "S console=ttyAM0,115200 root=/dev/mtdblock" and hit return
+
+8)  it will reboot and when it comes up to shell and asks for a login, type "root" and
 	hit enter.
-9) then change to directory /home/dan/dev/sched and rename try_sched.sh to anything
+
+9)  then change to directory /home/dan/dev/sched and rename try_sched.sh to anything
 	(usually just "ls -ltr")
-10) then type in "reboot" and it will reboot and execute the try_sched.sh script.
+
+10) then issue the command: "reboot" and it will reboot and execute the try_sched.sh script.
+
 11) you can then check for the new sched program which should be in /root and execute
-	it by typing "do1.sh" which will move /root/sched to the /home/dan/dev/sched
-		directory, change the permissions and execute it. (do2.sh will execute 
-			the sched program in the sched directory)
+	it by changing to the sched directory and typing "do1.sh" which will move /root/sched 
+	to the /home/dan/dev/sched directory, change the permissions and execute it. 
+	(do2.sh will execute the sched program already in the sched directory)
+
 
 Relays on IO cards are 5A so use 5v power from separate DC-DC converter as coil voltage for 10A 
 relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 5v to gnd or
@@ -84,60 +94,56 @@ filename: odata.dat
 
 port	onoff	input_port	type	time_delay	label
 
-0		0		5			2		10			STARTER
-1		0		7			4		0			ACCON
-2		0		7			4		0			FUELPUMP
-3		0		6			0		0			COOLINGFAN
-4		0		0			0		0			LHEADLAMP
-5		0		4			0		0			LBRIGHTS
-6		0		0			0		0			RHEADLAMP
-7		0		4			0		0			RBRIGHTS
+0		0		5			2		10		STARTER
+1		0		7			4		0		ACCON
+2		0		7			4		0		FUELPUMP
+3		0		6			0		0		COOLINGFAN
+4		0		0			0		0		LHEADLAMP
+5		0		0			0		0		RHEADLAMP
+6		0		1			0		0		RUNNINGLIGHTS
+7		0		41			0		0		LIGHTBAR
+		
+8		0		2			3		15		LEFTRBLINKER
+9		0		3			3		15		RIGHTRBLINKER
+10		0		2			3		15		LEFTFBLINKER
+11		0		3			3		15		RIGHTFBLINKER
+12		0		8			0		0		LBRAKELIGHT
+13		0		8			0		0		RBRAKELIGHT
+14		0		2			2		15		XLBLINKER
+15		0		3			2		15		XRBLINKER
 	
-8		0		2			3		15			LEFTBLINKER
-9		0		3			3		15			RIGHTBLINKER
-10		0		1			0		0			RUNNINGLIGHTS
-11		0		8			0		0			RBRAKELIGHT
-12		0		8			0		0			LBRAKELIGHT
-13		0		2			2		15			XLBLINKER
-14		0		3			2		15			XRBLINKER
-15		0		41			0		0			BATTERYCOMPHEATER
+16		0		4			0		0		LBRIGHTS
+17		0		4			0		0		RBRIGHTS
+18		0		41			0		0		HTRBLOWERLOW
+19		0		41			0		0		HTRBLOWERMED
+20		0		41			0		0		HTRBLOWERHIGH
+21		0		41			0		0		CRANKCASEHEATER
+22		0		41			0		0		BATTERYHEATER
+23		0		41			0		0		TRLEFTBLINKER
 
-16		0		41			0		0			CRANKCASEHEATER
-17		0		41			0		0			ESTOPSWITCH		// don't think I need this
-18		0		41			0		0			BATTERYHEATER
-19		0		41			0		0			TRLEFTBLINKER
-20		0		41			0		0			TRRIGHTBLINKER
-21		0		41			0		0			INTRUDERALARM
-22		0		41			0		0			LIGHTBAR
-23		0		41			0		0			BLINKINDICATE
+24		0		41			0		0		TRRIGHTBLINKER
+25		0		41			0		0		INTRUDERALARM
+26		0		41			0		0		BLINKINDICATE
+27		0		41			0		0		BATTERYCOMPHEATER
+28		0		41			0		0		ALARMSPEAKER
+29		0		41			0		0		BACKUPLIGHTS
+30		0		41			0		0		TESTOUTPUT27
+31		0		41			0		0		TESTOUTPUT28
+		
+32		0		41			0		0		TESTOUTPUT29
+33		0		41			0		0		TESTOUTPUT30
+34		0		41			0		0		TESTOUTPUT31
+35		0		41			0		0		TESTOUTPUT32
+36		0		41			0		0		TESTOUTPUT33
+37		0		41			0		0		TESTOUTPUT34
+38		0		41			0		0		TESTOUTPUT35
+39		0		41			0		0		NULL2
 	
-24		0		41			0		0			ALARMSPEAKER
-25		0		41			0		0			BACKUPLIGHTS
-26		0		41			0		0			HTRBLOWERLOW
-27		0		41			0		0			HTRBLOWERMED
-28		0		41			0		0			HTRBLOWERHIGH
-29		0		41			0		0			TESTOUTPUT27	// these not used yet
-30		0		41			0		0			TESTOUTPUT28
-31		0		41			0		0			TESTOUTPUT29
+monitor_input_task() does the scanning of the actual input ports and changes the outputs to
+whatever the physical switch is set to, depending on the type.
 
-32		0		41			0		0			TESTOUTPUT30
-33		0		41			0		0			TESTOUTPUT31
-34		0		41			0		0			TESTOUTPUT32
-35		0		41			0		0			TESTOUTPUT33
-36		0		41			0		0			TESTOUTPUT34
-37		0		41			0		0			TESTOUTPUT35
-38		0		41			0		0			TESTOUTPUT36
-39		0		41			0		0			NULL
-	
-monitor_input_task scans all the outputs using ollist_find_data and if type != 0 && onoff == 1 then
-read last_time_state_changed (UINT) in current O_DATA and check against current time using localtime
-in this case onoff == 1 means its active 
-
-monitor_input_task does the scanning of the actual input ports and changes the outputs accordingly
-
-monitor_fake_input_task scans an array called fake_inportstatus1 & 2 set by change_inputs()
-so the outputs can be set implicitly.
-
+monitor_fake_input_task() scans an array called fake_inportstatus1 & 2 set by change_inputs()
+so the outputs can be set programatically
 
 config jumpers for io card:
 base address		JP1		JP2
@@ -197,19 +203,6 @@ CC_FLAGS = -static -g -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
 #CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 
-the client program (in ncurses directory) takes the ip address as the 1st param
-the 2nd & 3rd params are optional idata & odata files.
-
- "192.168.42.146"	TS-7200
- "192.168.42.148"		"
- "192.168.42.149"		"	<- using this one in IO box
- "192.168.42.145"	TS-7250
- "192.168.42.124"	TS-7250
-
-if using the make file for the simulator: thread_io/linux_make, 
-use the ip address for the linux box as 1st param for client
-of the linux box that the sched simulator is running on
-
 perf board for flashing light and 2 buttons:
 
 pins at bottom:
@@ -243,11 +236,6 @@ to left (port 39)
 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0		-> front of IO box
 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20
 
-need a way to save the odometer reading to disk.
-Use the llist type database files to add another type to record the real-time data:
-time from engine start or total time (trunning_hours/minutes/seconds)
-no - just create a file called odometer.txt and write an int to it.
-
 8/8/18 - getting intermittent segment fault when doing change_output() - seems to
 happen more often when doing using tcp command but never does it from within
 monitor_input_task ~? - something flakey about card 146 - 149 works ok
@@ -278,48 +266,29 @@ in the PIC24
 
 todo: (x) = done
 
-- get rpm/mph data sent to comm3 of PIC24 (x)
-- thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
-- setup spare AVR to generate sample rpm/mph signals to test LEDs
-- fix problem with client - host open, edit and save file (x)
-- only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
+-  need a way to save the odometer reading to disk.
+
+-  get rpm/mph data sent to comm3 of PIC24 (x)
+-  thread_io just sends current time once a minute or 30 minutes - PIC24 keeps track of time with timer_task
+-  setup spare AVR to generate sample rpm/mph signals to test LEDs
+-  fix problem with client - host open, edit and save file (x)
+-  only I_DATA type that explicitly turns on and off is type 2 & 3 (time delay). If set to toggle
 	then polarity feature could be implemented but the current IO settings would have to be set
 	initially after loading the db and the db would have to be save on exit
-- wired 1st 2 relays as left br/dim and right br/dim (nc = dim) and 3rd & 4th relays as
+-  wired 1st 2 relays as left br/dim and right br/dim (nc = dim) and 3rd & 4th relays as
 	left & right headlamps - common of 1st 2 comes from no of next 2 - dim is nc on 1st 2 so make
 	changes accordingly in the O_DATA.
-- make another sql db for client which sets all the params for all 3 processors:
-(no, just have a dlg box that allows user to set/send each individual param and save to config file)
-	temp/rpm/mph update rate (for FPGA)
-	high rev limit (for FPGA)
-	low rev limit (for FPGA)
-	lights off time (for PIC24)
-	engine fan on/off temps (for PIC24) 
-	blower1/2/3 on/off temps (for PIC24)
-	password change (for PIC24)
-- would be nice to have it upload the current params to use to set what comes up in the dialog	
+-  instead of using hard-coded output/input types in mytypes.h as indexes into llist functions, 
+	have some way to read what's in the odata.dat file incase it changes, otherwise, the sched has
+	to be recompiled whenever the database changes. (basic_controls function in tasks.c is the
+	only place that has that problem)	
 
-- if either the TS-7200 has been up for just 15 seconds or so, or the client sends a SEND_PARAMS
-msg to the TS-7200 it sends a SET_PARAMS msg to the PIC24 after getting the current config file 
-saved on disk.
+TS-7200 has a config file called param.conf that it loads on startup. As soon as the client logs in,
+the TS-7200 sends the current config data and the client can edit it and send it back. When the
+client closes the dialog to edit the config data, it sends a SET_PARAMS message which saves the
+data to disk and also sends a message to the PIC24 (SEND_PARAMS) with the config data which 
+pertains to it - temp settings for cooling fan and blower fan.
 
-functions in TS-7200:
-get_params() - load config file data from disk and does send_serial_other w/ SEND_PARAMS cmd
-
-set_params() - save the current config file data to disk and does send_serial_other w/ SEND_PARAMS cmd
-
-function in PIC24:
-update_params() -  sets its own new config data and updates the FPGA with its new data
-				(send_serial_other with SEND_PARAMS cmd)
-
-TS-7200 (startup) - calls get_params()
-
-client -> TS-7200:
-SET_PARAMS - client sends new config data to TS-7200 which calls set_params()
-
-TS-7200 -> PIC24:
-SEND_PARAMS - msg to PIC24 to call update_params()
-	
 Wiring colors:
 	Front:	(going threw terminal block on pass-side fender well
 	Orange	-	LBRIGHTS
@@ -352,9 +321,12 @@ what happens if you press on the brakes and the blinkers at the same time? There
 for each tail-light, blinker and brake. When the brakes are on the blinker is supposed to
 flash the bright while the other brake stays on. So make the inputs to the blinkers reference
 an additional ouput which goes to a coil which shuts off the brake light relay so the blinker
-can flash it. This entails using 3 relays for each tail-light.
-The software option would be to have another field which port to override if it is on.
+can flash it. This entails using 3 relays for each tail-light. (see blinker_ctl.jpg)
+The database solution would be to have another field which port to override if it is on.
+This could have easily been hard-coded in the software but I wanted to avoid as much
+"if-then-else" spagetti code as possible.
 But now the problem is that we need a sep. relay for the front blinker or else when the brakes
 are on the front as well as the rear blinker (or high bulb stay on) because I was using the
-same left and right relays for the front and rear blinkers.
+same left and right relays for the front and rear blinkers. So I ended up using 3 relays for
+the rear blinker/brakelight and another for the front blinker. (ports 8->15)
 
