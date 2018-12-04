@@ -69,7 +69,6 @@ ESOS_USER_TASK(recv_comm1);
 ESOS_USER_TASK(menu_task);
 ESOS_USER_TASK(password_task);
 ESOS_USER_TASK(numentry_task);
-ESOS_USER_TASK(display_menu);
 ESOS_USER_TASK(display_rtlabels);
 ESOS_USER_TASK(key_timer_task);
 ESOS_USER_TASK(temp_monitor_task);
@@ -135,12 +134,29 @@ typedef struct
 	UCHAR col;
 	UCHAR data_col;
 	UCHAR str;
-	UCHAR onoff;
 } FORMAT_STR;
+
+typedef struct
+{
+	UCHAR code;
+	UCHAR row;
+}STATUS_SCROLL;
+#define STAT_SCROLL_NUM 8
+static int stat_scroll_ptr;
+static STATUS_SCROLL stat_scroll[STAT_SCROLL_NUM] = 
+{{0,0},
+{0,1},
+{0,2},
+{0,3},
+{0,4},
+{0,5},
+{0,6},
+{0,7}};
 
 static FORMAT_STR menu_str[NUM_MENU_LABELS*NO_MENUS];
 
 static FORMAT_STR rtlabel_str[NUM_RT_LABELS];
+static FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 
 volatile UCHAR menu_ptr;
 
@@ -233,7 +249,7 @@ static int num_entry_limit;
 static int num_entry_type;
 static UINT curr_num_entry_row;
 static UINT curr_num_entry_col;
-static void init_menu_labels(void);
+//static void init_menu_labels(void);
 static void init_rt_labels(void);
 static char *temp_lookup(int raw);
 static int lights_on;
@@ -259,7 +275,6 @@ ESOS_USER_TASK(menu_task)
 {
 	static UCHAR data1;
 	static UINT data4;
-//    static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 	static ESOS_TASK_HANDLE comm1_handle;
 	static int screen_dim;
@@ -270,21 +285,20 @@ ESOS_USER_TASK(menu_task)
 	
     ESOS_TASK_BEGIN();
 
-//	menu_handle = esos_GetTaskHandle(display_menu);
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
 
 	comm1_handle = esos_GetTaskHandle(send_comm1);
 	screen_dim = 0;
 
-	screen_dim_array[0] =  PWM_OFF_PARAM;
-	screen_dim_array[1] =  PWM_ON_PARAM;
-	screen_dim_array[2] =  PWM_80DC_PARAM;
-	screen_dim_array[3] =  PWM_75DC_PARAM;
-	screen_dim_array[4] =  PWM_60DC_PARAM;
-	screen_dim_array[5] =  PWM_50DC_PARAM;
-	screen_dim_array[6] =  PWM_30DC_PARAM;
-	screen_dim_array[7] =  PWM_25DC_PARAM;
-	screen_dim_array[8] =  PWM_12DC_PARAM;
+	screen_dim_array[0] =  PWM_ON_PARAM;
+	screen_dim_array[1] =  PWM_80DC_PARAM;
+	screen_dim_array[2] =  PWM_75DC_PARAM;
+	screen_dim_array[3] =  PWM_60DC_PARAM;
+	screen_dim_array[4] =  PWM_50DC_PARAM;
+	screen_dim_array[5] =  PWM_30DC_PARAM;
+	screen_dim_array[6] =  PWM_25DC_PARAM;
+	screen_dim_array[7] =  PWM_12DC_PARAM;
+	screen_dim_array[8] =  PWM_OFF_PARAM;
 	screen_dim_ptr = 0;
 	lights_on = -1;
 	fan_on = 0;
@@ -398,15 +412,6 @@ ESOS_USER_TASK(menu_task)
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
 								blower_on = 1;
 							}
-/*
-							data4 = LCD_PWM;
-							data4 <<= 8;
-							data4 &= 0xFF00;
-							data4 |= screen_dim_array[screen_dim_ptr];
-							__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-							if(++screen_dim_ptr > 9)
-								screen_dim_ptr = 0;
-*/
 						break;
 						case 1:
 						break;
@@ -415,7 +420,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_6:
+				case	KP_6:		// dim the screen
 					switch(menu_ptr)
 					{
 						case 0:
@@ -424,8 +429,8 @@ ESOS_USER_TASK(menu_task)
 							data4 &= 0xFF00;
 							data4 |= screen_dim_array[screen_dim_ptr];
 							__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
-							if(--screen_dim_ptr < 0)
-								screen_dim_ptr = 9;
+							if(++screen_dim_ptr > 8)
+								screen_dim_ptr = 0;
 						break;
 						case 1:
 						break;
@@ -441,13 +446,19 @@ ESOS_USER_TASK(menu_task)
 							if(lights_on < 10)
 							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_LIGHTS);
-								lights_on = 30;
+								lights_on = 120;
 							}
 							else
 							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
 									OFF_LIGHTS);
 								lights_on = -1;
+								if(brights_on == 1)
+								{
+									__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_BRIGHTS);
+									brights_on = 0;
+								}
+
 							}
 						break;
 						case 1:
@@ -457,7 +468,7 @@ ESOS_USER_TASK(menu_task)
 					}
 				break;
 
-				case	KP_8:
+				case	KP_8:		// numeric entry
 /*
 					avr_buffer[4] = 0x41;
 					avr_buffer[5] = 0x42;
@@ -484,6 +495,7 @@ ESOS_USER_TASK(menu_task)
 					{
 
 						case 0:	// set time & date - use numentry and enter as: MMDDYYHHMM
+/*
 							curr_num_entry_row = 7;
 							curr_num_entry_col = 0;
 							avr_buffer[0] = GOTO_CMD;
@@ -493,6 +505,7 @@ ESOS_USER_TASK(menu_task)
 							key_mode = NUMENTRY;
 							num_entry_type = TIME_DATE;
 							num_entry_limit = 1;
+*/
 						break;
 						case 1:
 						break;
@@ -520,6 +533,7 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
+/*
 							avr_buffer[0] = SEND_INT_RT_VALUES;
 							avr_buffer[1] = 0;
 							avr_buffer[2] = 0;
@@ -561,6 +575,7 @@ ESOS_USER_TASK(menu_task)
 							avr_buffer[3] = (UCHAR)(gl_blower3_on >> 8);
 							avr_buffer[4] = (UCHAR)gl_blower3_on;
 							AVR_CALL();
+*/
 						break;
 						case 1:
 						break;
@@ -596,13 +611,10 @@ ESOS_USER_TASK(menu_task)
 				break;
 
 				case	KP_A:		// change menu
-					if(menu_ptr > NO_MENUS)
-						menu_ptr = 0;
-					menu_ptr++;	
-//					__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,menu_ptr*NUM_MENU_LABELS);
 				break;
 
 				case	KP_B:		// toggle screen brightness
+/*
 					data4 = LCD_PWM;
 					data4 <<= 8;
 					data4 &= 0xFF00;
@@ -611,7 +623,7 @@ ESOS_USER_TASK(menu_task)
 					else data4 |= PWM_ON_PARAM;
 					__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data4);
 					screen_dim = (screen_dim == 1?0:1);
-
+*/
 				break;
 
 				case	KP_C:		// toggle keypress tones
@@ -622,6 +634,7 @@ ESOS_USER_TASK(menu_task)
 					avr_buffer[0] = LCD_CLRSCR;
 					avr_buffer[1] = 0;
 					AVR_CALL();
+					__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
 				break;
 
 
@@ -642,14 +655,12 @@ ESOS_USER_TASK(password_task)
 {
 	static UCHAR data1, temp;
 //	static ESOS_TASK_HANDLE comm1_handle;
-    static ESOS_TASK_HANDLE menu_handle;
     static ESOS_TASK_HANDLE rt_handle;
 
     ESOS_TASK_BEGIN();
 
     password_task_handle = ESOS_TASK_GET_TASK_HANDLE();
 //	comm1_handle = esos_GetTaskHandle(send_comm1);
-	menu_handle = esos_GetTaskHandle(display_menu);
 	rt_handle = esos_GetTaskHandle(display_rtlabels);
     
 	ESOS_TASK_WAIT_TICKS(100);
@@ -754,8 +765,6 @@ ESOS_USER_TASK(password_task)
 				avr_buffer[0] = LCD_CLRSCR;
 				avr_buffer[1] = 0;
 				AVR_CALL();
-
-//				__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data1);
 
 				__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
 				key_mode = NORMAL;
@@ -1197,14 +1206,17 @@ ESOS_USER_TASK(key_timer_task)
 		avr_buffer[3] = VARIOUS_MSG_OFFSET + 8;	//  engine run time msg
 		avr_buffer[4] = 10;
 		AVR_CALL();
-
-		avr_buffer[0] = SEND_INT_RT_VALUES;
-		avr_buffer[1] = 10;
-		avr_buffer[2] = 34;
-		avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
-		avr_buffer[4] = (UCHAR)engine_run_time;
-		AVR_CALL();
 */
+		if(key_mode == NORMAL)
+		{
+			avr_buffer[0] = SEND_INT_RT_VALUES;
+			avr_buffer[1] = 10;
+			avr_buffer[2] = 33;
+			avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
+			avr_buffer[4] = (UCHAR)engine_run_time;
+			AVR_CALL();
+		}
+
 		if(engine_shutdown == 29)
 		{
 			data3 = SPECIAL_TONE_ON;
@@ -1563,10 +1575,8 @@ ESOS_USER_TASK(convADC)
 //	static uint16_t u16_adcVal1, u16_adcVal2;
 	static uint8_t i;
 	static float fres;
-//	static ESOS_TASK_HANDLE comm1_handle;
 
     ESOS_TASK_BEGIN();
-//	comm1_handle = esos_GetTaskHandle(send_comm1);
 
 	CONFIG_RB0_AS_ANALOG();		// 2nd knob on monster box
 	CONFIG_RB1_AS_ANALOG();		// 1st knob on monster box
@@ -1620,7 +1630,6 @@ ESOS_USER_TASK(convADC)
 				u8_pot[i] = (UCHAR)fres;
 			}
 			// this sends the ADC data to the TS-7200
-//			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,RT_DATA);
 		}
 		ESOS_TASK_WAIT_TICKS(500);
 	}
@@ -1653,9 +1662,18 @@ static char *temp_lookup(int raw)
 	do{
 		j++;
 	}while(raw != raw_data[j].raw && j < 360);
-	if(j > 350)
-		strcpy(ret,"OOR\0");
+	if(j > 348)
+		strcpy(ret,"OOR  \0");
 	else
 		strcpy(ret,raw_data[j].str);	
 	return ret;
 }
+//******************************************************************************************//
+//******************************************************************************************//
+//******************************************************************************************//
+/*
+UCHAR cycle_display(void)
+{
+	static int ptr;
+}	
+*/

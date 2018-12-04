@@ -267,7 +267,7 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				send_serial(ESTOP_SIGNAL);
+				send_serial(ESTOP_SIGNAL,0);
 				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
@@ -289,14 +289,19 @@ static void set_output(O_DATA *otp, int onoff)
 	
 }
 /*********************************************************************/
-void send_serial(UCHAR cmd)
+void send_serial(UCHAR cmd, UCHAR code)
 {
-
+	int i;
+	UCHAR buffer[21];
 // send what just changed to the PIC24/AVR to dispaly on screen
+	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
-	
- 	write_serial(cmd);
 
+	buffer[0] = cmd;
+	buffer[1] = code;	
+ 	for(i = 0;i < 20;i++)
+ 		write_serial(buffer[i]);
+//	write_serial(0xFF);
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
@@ -306,11 +311,12 @@ void send_serialother(UCHAR cmd, UCHAR *buf, int len)
 	pthread_mutex_lock( &serial_write_lock);
 	int i;
 	write_serial(cmd);
-	for(i = 0;i < len;i++)
+
+//	for(i = 0;i < len;i++)
+	for(i = 0;i < 19;i++)
 	{
 		write_serial(buf[i]);
 	}
-
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
@@ -676,11 +682,10 @@ UCHAR timer_task(int test)
 				if(++running_minutes > 59)
 				{
 					running_minutes = 0;
-					if(++running_hours > 24)
-						running_hours = 0;
+					running_hours++;
 				}
 			}
-		sprintf(tempx,"%d %d %d ",running_seconds,running_minutes,running_hours);
+		sprintf(tempx,"%d %d %d ",running_hours, running_minutes, running_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
 		}else running_seconds = running_minutes = running_hours = 0;
@@ -693,9 +698,13 @@ UCHAR timer_task(int test)
 		{
 			trunning_seconds = 0;
 			if(++trunning_minutes > 59)
+			{
 				trunning_minutes = 0;
+				trunning_hours++;
+			}
+				
 		}
-		sprintf(tempx,"%d %d %d ",trunning_seconds,trunning_minutes,trunning_hours);
+		sprintf(tempx,"%d %d %d ",trunning_hours, trunning_minutes, trunning_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
 
 /*
@@ -917,9 +926,6 @@ UCHAR serial_recv_task(int test)
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor
 
-pthread_mutex_t  mut;
-static int visits =  0;						  /* counts client connections     */
-
 static struct  sockaddr_in sad;				  /* structure to hold server's address  */
 static int sock_open;
 
@@ -1108,7 +1114,7 @@ void *work_routine(void *arg)
 /*********************************************************************/
 void basic_controls(UCHAR cmd)
 {
-	int i;
+	int i,j;
 	UCHAR onoff;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
@@ -1117,41 +1123,48 @@ void basic_controls(UCHAR cmd)
 	size_t isize;
 	size_t osize;
 	char errmsg[50];
-	UCHAR tempx[1];
 
-	static SPECIAL_CMD_ARR sp_cmd_arr[32] = {
+	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
 	{LHEADLAMP,1},
-	{LEFTFBLINKER,1},
 	{LBRIGHTS,1},
-	{LEFTFBLINKER,0},
 	{RHEADLAMP,1},
-	{RIGHTFBLINKER,1},
 	{RBRIGHTS,1},
-	{RIGHTFBLINKER,0},
 	{LBRIGHTS,0},
-	{LEFTFBLINKER,1},
 	{LHEADLAMP,0},
-	{LEFTFBLINKER,0},
 	{RBRIGHTS,0},
-	{RIGHTFBLINKER,1},
 	{RHEADLAMP,0},
-	{RIGHTFBLINKER,0},
 	{RHEADLAMP,1},
-	{LEFTFBLINKER,1},
 	{RBRIGHTS,1},
-	{LEFTFBLINKER,0},
 	{LHEADLAMP,1},
-	{RIGHTFBLINKER,1},
 	{LBRIGHTS,1},
-	{RIGHTFBLINKER,0},
 	{LBRIGHTS,0},
-	{LEFTFBLINKER,1},
 	{LHEADLAMP,0},
-	{LEFTFBLINKER,0},
 	{RBRIGHTS,0},
-	{RIGHTFBLINKER,1},
-	{RHEADLAMP,0},
-	{RIGHTFBLINKER,0}};
+	{RHEADLAMP,0}};
+
+	switch(cmd)
+	{
+		case START_SEQ:
+		case SHUTDOWN:
+		case BLOWER_OFF:
+		case BLOWER1:
+		case BLOWER2:
+		case BLOWER3:
+		case ON_FAN:
+		case OFF_FAN:
+		case ON_LIGHTS:
+		case OFF_LIGHTS:
+		case ON_RUNNING_LIGHTS:
+		case OFF_RUNNING_LIGHTS:
+		case ON_BRIGHTS:
+		case OFF_BRIGHTS:
+		case ON_BRAKES:
+		case OFF_BRAKES:
+			send_serial(GENERIC_CMD,cmd);
+		break;
+		default:
+		break;
+	}
 
 	switch(cmd)
 	{
@@ -1270,13 +1283,14 @@ void basic_controls(UCHAR cmd)
 			break;
 		
 		case SPECIAL_CMD:
-			for(i = 0;i < 16;i++)
-			{
-				index = sp_cmd_arr[i].index;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,sp_cmd_arr[i].onoff);
-				usleep(100000);
-			}
+			for(j = 0;j < 2;j++)
+				for(i = 0;i < 16;i++)
+				{
+					index = sp_cmd_arr[i].index;
+					ollist_find_data(index,otpp,&oll);
+					set_output(otp,sp_cmd_arr[i].onoff);
+					usleep(100000);
+				}
 			break;
 
 		case ON_BRIGHTS:
@@ -1411,7 +1425,7 @@ void basic_controls(UCHAR cmd)
 //			printf("%d %s\r\n",otp->port,otp->label);
 //			change_output(otp->port,otp->onoff);
 			change_output(ACCON,1);
-			usleep(10000);
+			usleep(100000);
 			ollist_insert_data(otp->port,&oll,otp);
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 1;
@@ -1419,7 +1433,7 @@ void basic_controls(UCHAR cmd)
 //			printf("%d %s\r\n",otp->port,otp->label);
 //			change_output(otp->port,otp->onoff);
 			change_output(FUELPUMP,1);
-			usleep(10000);
+			usleep(100000);
 			ollist_insert_data(otp->port,&oll,otp);
 
 			index = STARTER;
@@ -1435,7 +1449,6 @@ void basic_controls(UCHAR cmd)
 //			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 			engine_running = 1;
 //			printf("engine_running: %d\r\n",engine_running);
-			send_serial(ENGINE_ON);
 			break;
 
 		case SHUTDOWN:
@@ -1452,7 +1465,6 @@ void basic_controls(UCHAR cmd)
 			ollist_find_data(FUELPUMP,&otp,&oll);
 			otp->onoff = 0;
 			ollist_insert_data(otp->port,&oll,otp);
-			send_serial(ENGINE_OFF);
 
 //			index = STARTER;
 //			rc = ollist_find_data(index,otpp,&oll);
@@ -1484,6 +1496,22 @@ void basic_controls(UCHAR cmd)
 			break;
 
 		case REBOOT_IOBOX:
+			for(i = 0;i < 10;i++)
+			{
+				red_led(1);
+				usleep(30000);
+				red_led(0);
+				green_led(1);
+				usleep(30000);
+				green_led(0);
+				red_led(1);
+				usleep(30000);
+				red_led(0);
+				green_led(1);
+				usleep(30000);
+				green_led(0);
+			}
+
 			for(i = 0;i < 30;i++)
 			{
 				setdioline(7,0);
@@ -1499,47 +1527,7 @@ void basic_controls(UCHAR cmd)
 //			printf("reboot iobox\0");
 			shutdown_all = 1;
 			break;			
-
-//			printf("shutdown iobox\r\n");
-#if 0
-			i = NUM_PORT_BITS;
-			isize = sizeof(I_DATA);
-			isize *= i;
-
-			i = NUM_PORT_BITS;
-			osize = sizeof(O_DATA);
-			osize *= i;
-			for(i = 0;i < NUM_PORT_BITS;i++)
-			{
-				ollist_find_data(i,otpp,&oll);
-//				printf("%d %d\r\n",otp->port,otp->onoff);
-				usleep(1000);
-				ollist_insert_data(i,&oll,otp);
-			}
-
-			if(ilWriteConfig(iFileName,&ill,isize,errmsg) < 0)
-				myprintf1(errmsg);
-			if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
-				myprintf1(errmsg);
-#endif
-
 			default:
-			printf("wtf?\r\n");
 			break;
-
 	}	// end of switch
-//	send_serial(index,0);
 }
-
-/*
-			for(i = 0;i < 30;i++)
-			{
-				setdioline(7,0);
-				uSleep(0,TIME_DELAY/20);
-				setdioline(7,1);
-				uSleep(0,TIME_DELAY/20);
-			}
-			setdioline(7,0);
-			uSleep(2,0);
-			setdioline(7,1);
-*/

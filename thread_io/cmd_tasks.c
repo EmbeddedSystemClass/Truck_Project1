@@ -49,6 +49,13 @@ CMD_STRUCT cmd_array[60] =
 	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
 	{   	ON_BRIGHTS,"ON_BRIGHTS\0" },
 	{   	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{		ON_BRAKES,"ON_BRAKES\0" },
+	{		OFF_BRAKES,"OFF_BRAKES\0" },
+	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
+	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
+	{   	SPECIAL_CMD,"SPECIAL_CMD\0" },
+	{   	START_SEQ,"START_SEQ\0" },
+	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	ON_LLIGHTS,"ON_LLIGHTS\0" },
 	{   	OFF_LLIGHTS,"OFF_LLIGHTS\0" },
 	{   	ON_LBRIGHTS,"ON_LBRIGHTS\0" },
@@ -57,13 +64,6 @@ CMD_STRUCT cmd_array[60] =
 	{   	OFF_RLIGHTS,"OFF_RLIGHTS\0" },
 	{   	ON_RBRIGHTS,"ON_RBRIGHTS\0" },
 	{   	OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
-	{		ON_BRAKES,"ON_BRAKES\0" },
-	{		OFF_BRAKES,"OFF_BRAKES\0" },
-	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
-	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
-	{   	SPECIAL_CMD,"SPECIAL_CMD\0" },
-	{   	START_SEQ,"START_SEQ\0" },
-	{   	SHUTDOWN,"SHUTDOWN\0" },
 	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
@@ -278,8 +278,9 @@ UCHAR get_host_cmd_task(int test)
 				cmd = msg_buf[0];
 			}
 			tcp_connected_time = 0;
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && cmd != SCROLL_UP
-					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
+			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && 
+				cmd != SCROLL_UP && cmd > 0)
+//					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
 //			if(cmd > 0)
@@ -406,7 +407,7 @@ UCHAR get_host_cmd_task(int test)
 						printf("blower3: %d\r\n",ps.blower3_on);
 						printf("test_bank: %d\r\n",ps.test_bank);
 */
-						send_serialother(SEND_PARAMS,&msg_buf[2],22);
+						send_serialother(SEND_PARAMS,&msg_buf[2],12);
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -790,7 +791,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_RECV:
-						send_serial(STOP_SERIAL_RECV);
+						send_serial(STOP_SERIAL_RECV,0);
 						break;
 
 					// upload this program and then goto reboot so it comes up using the
@@ -831,7 +832,7 @@ exit_program:
 						else
 						{
 //							printf("exit program\r\n");
-							send_serial(STOP_SERIAL_RECV);
+							send_serial(STOP_SERIAL_RECV,0);
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do

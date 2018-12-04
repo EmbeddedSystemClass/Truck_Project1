@@ -465,23 +465,35 @@ seconds until engine is shutdown and password must be re-entered.
 (so I can leave it running while stopping at the store in the
 winter)
 
+screen auto dims if no keys pressed after:
+3 1/3 minutes: 80%
+6 2/3 minutes: 75%
+~13 - 50%
+~26 - 25%
+~52 - 12%
+1 hr & 46minutes - off
+
+currently, lights go off after 30 seconds if engine is not
+running (see lights_on global var in Truck_App.h)
+
 Do switch/case statements in menu_task depending on what the menu_ptr
 is when you pick the menus with the A->D buttons. With every menu
 change, the menu list will show the choices.
 
 menu 1:
-1) enable starter
-2) start sequence
-3) shutdown
-4) key silent
-5) dim screen
-6) bright screen
+1) start engine (turn on fp & ign and enable starter push-button)
+2) stop engine
+3) toggle brights (if lights are on)
+4) toggle cooling fan
+5) cycle threw heater blower settings (off-low-med-high-auto)
+	auto will automatically adjust according to indoor temp
+6) cycle threw screen dim settings
 7) toggle lights
 8) set time/date		(num entry)
-9) shutdown io box
-0) reboot io box
-*) time till off eng	(num entry)
-#) fpga send rate		(num entry)
+9) special command (headlamps/brights)
+0) 
+*) re-enable COMM1 receive
+#) 
 
 menu 2: - screen dim	(num entry)
 1) rpm/mph update rate	(num entry)

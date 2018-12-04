@@ -35,14 +35,12 @@ it causes strange side-effects
 //******************************************************************************************//
 ESOS_USER_TASK(display_rtvalues)
 {
-//	static ESOS_TASK_HANDLE comm1_handle;
     static int i;
     static UCHAR data1;
 
     ESOS_TASK_BEGIN();
 
 	data1 = 0x21;
-//	comm1_handle = esos_GetTaskHandle(send_comm1);
 
 	while(1)
 	{
@@ -267,159 +265,41 @@ ESOS_USER_TASK(recv_fpga)
 					gl_temp4 <<= 8;
 					gl_temp4 |= (UINT)temp[7];
 
+					gl_rpm = (UINT)temp[8];			// not displaying these yet
+					gl_rpm <<= 8;
+					gl_rpm |= (UINT)temp[9];
+
+					gl_mph = (UINT)temp[10];
+					gl_mph <<= 8;
+					gl_mph |= (UINT)temp[11];
+
 					strcpy(str,temp_lookup(gl_engine_temp));
 
 					avr_buffer[0] = DISPLAY_STR;
 					avr_buffer[1] = 10;
 					avr_buffer[2] = START_MENU_VALUE_COL + 10;
+					str[5] = 0;
 					strncpy((char *)&avr_buffer[3],str,9);
 					AVR_CALL();
 
 					strcpy(str,temp_lookup(gl_indoor_temp));
+
 					avr_buffer[0] = DISPLAY_STR;
 					avr_buffer[1] = 12;
 					avr_buffer[2] = START_MENU_VALUE_COL + 31;
+					str[5] = 0;
 					strncpy((char *)&avr_buffer[3],str,9);
 					AVR_CALL();
 
 					strcpy(str,temp_lookup(gl_outdoor_temp));
+
 					avr_buffer[0] = DISPLAY_STR;
 					avr_buffer[1] = 11;
 					avr_buffer[2] = START_MENU_VALUE_COL + 31;
+					str[5] = 0;
 					strncpy((char *)&avr_buffer[3],str,9);
 					AVR_CALL();
-/*
-					avr_buffer[0] = SEND_INT_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 0;
-					avr_buffer[3] = temp[0];
-					avr_buffer[4] = temp[1];
-					AVR_CALL();
-
-					avr_buffer[0] = SEND_INT_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 8;
-					avr_buffer[3] = temp[2];
-					avr_buffer[4] = temp[3];
-					AVR_CALL();
-
-					avr_buffer[0] = SEND_INT_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 16;
-					avr_buffer[3] = temp[4];
-					avr_buffer[4] = temp[5];
-					AVR_CALL();
-					
-					avr_buffer[0] = DISPLAY_FLOAT;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 0;
-					avr_buffer[3] = temp[0];
-					avr_buffer[4] = temp[1];
-					AVR_CALL();
-
-					avr_buffer[0] = DISPLAY_FLOAT;
-					avr_buffer[1] = 1;
-					avr_buffer[2] = 8;
-					avr_buffer[3] = temp[2];
-					avr_buffer[4] = temp[3];
-					AVR_CALL();
-*/
 					i = 0;
-#if 0
-					break;
-					case 3:
-						gl_indoor_temp = (UINT)temp[i];
-					break;
-					case 4:
-						ttemp = (UINT)temp[i];
-						ttemp <<= 8;
-						gl_indoor_temp |= ttemp;
-					break;
-					case 5:
-						gl_outdoor_temp = (UINT)temp[i];
-					break;
-					case 6:
-						ttemp = (UINT)temp[i];
-						ttemp <<= 8;
-						gl_outdoor_temp |= ttemp;
-					break;
-					case 7:
-						gl_temp4 = (UINT)temp[i];
-						ttemp2 = temp[i];
-					break;
-					case 8:
-						ttemp = (UINT)temp[i];
-	/*
-				 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-						ESOS_TASK_WAIT_ON_SEND_UINT8(ttemp2);
-						ESOS_TASK_WAIT_ON_SEND_UINT8(ttemp);
-						ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-	*/
-						ttemp <<= 8;
-						gl_temp4 |= ttemp;
-
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 0;
-						avr_buffer[3] = ttemp2;
-						AVR_CALL();
-
-						avr_buffer[0] = SEND_BYTE_RT_VALUES;
-						avr_buffer[1] = 1;
-						avr_buffer[2] = 4;
-						avr_buffer[3] = ttemp;
-						AVR_CALL();
-
-	/*
-						avr_buffer[0] = SEND_INT_RT_VALUES;
-						avr_buffer[1] = 0;
-						avr_buffer[2] = 10;
-						avr_buffer[3] = ttemp2;
-						avr_buffer[4] = temp[i];
-						AVR_CALL();
-	*/
-					break;
-					case 9:
-						gl_rpm = (UINT)temp[i];
-						ttemp2 = temp[i];
-					break;
-					case 10:
-						avr_buffer[0] = SEND_INT_RT_VALUES;
-						avr_buffer[1] = rtlabel_str[RPM].row;
-						avr_buffer[2] = rtlabel_str[RPM].data_col;
-						avr_buffer[3] = ttemp2;
-						avr_buffer[4] = temp[i];
-						AVR_CALL();
-						ttemp = (UINT)temp[i];
-						ttemp <<= 8;
-						gl_rpm |= ttemp;
-
-					break;
-					case 11:
-						gl_mph = (UINT)temp[i];
-						ttemp2 = temp[i];
-					break;
-					case 12:
-						avr_buffer[0] = SEND_INT_RT_VALUES;
-						avr_buffer[1] = rtlabel_str[MPH].row;
-						avr_buffer[2] = rtlabel_str[MPH].data_col;
-						avr_buffer[3] = ttemp2;
-						avr_buffer[4] = temp[i];
-						AVR_CALL();
-						ttemp = (UINT)temp[i];
-						ttemp <<= 8;
-						gl_mph |= ttemp;
-					break;
-					case 13:
-					break;
-					case 14:
-					break;
-					case 15:
-					break;
-					default:
-					break;
-				
-#endif
 				}
 			}
 		}
@@ -428,45 +308,33 @@ ESOS_USER_TASK(recv_fpga)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//************************************* display_menu ***************************************//
-//******************************************************************************************//
-ESOS_USER_TASK(display_menu)
-{
-	static UCHAR i;
-	static UCHAR data2;
-
-	ESOS_TASK_BEGIN();
-	while (1)
-	{
-        ESOS_TASK_WAIT_FOR_MAIL();
-
-		while(ESOS_TASK_IVE_GOT_MAIL())
-		{
-			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-			avr_buffer[0] = EEPROM_STR;
-
-			for(i = 0;i < NUM_MENU_LABELS;i++)
-			{
-				avr_buffer[1] = menu_str[i].row;
-				avr_buffer[2] = menu_str[i].col;
-				avr_buffer[3] = menu_str[i].str + data2;	// data2 is the offset into the 
-															// menu labels
-				avr_buffer[4] = 1;
-
-				AVR_CALL();
-			}
-		}
-	}
-    ESOS_TASK_END();
-}
-//******************************************************************************************//
 //********************************** display_rtlabels **************************************//
 //******************************************************************************************//
 ESOS_USER_TASK(display_rtlabels)
 {
-	static UCHAR data2, i;
+	static UCHAR data2, i, onoff, code;
+
+	static int off_status[7] = {
+			SHUTDOWN,
+			BLOWER_OFF,
+			OFF_FAN,
+			OFF_LIGHTS,
+			OFF_RUNNING_LIGHTS,
+			OFF_BRIGHTS,
+			OFF_BRAKES };
 
 	ESOS_TASK_BEGIN();
+
+	onoff = 1;
+	for(i = 0;i < 7;i++)		// start off with all the status labels at 'OFF'
+	{
+		code = off_status[i];
+		avr_buffer[0] = EEPROM_STR2;
+		avr_buffer[1] = code;
+		avr_buffer[2] = onoff;
+		AVR_CALL();
+	}
+
 	while (1)
 	{
         ESOS_TASK_WAIT_FOR_MAIL();
@@ -477,19 +345,8 @@ ESOS_USER_TASK(display_rtlabels)
 			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
 			avr_buffer[0] = DISPLAY_RTLABELS;
 			AVR_CALL();
-/*
-			avr_buffer[0] = EEPROM_STR;
-
-			for(i = 0;i < NUM_RT_LABELS;i++)
-			{
-				avr_buffer[1] = rtlabel_str[i].row;
-				avr_buffer[2] = rtlabel_str[i].col;
-				avr_buffer[3] = rtlabel_str[i].str;
-				avr_buffer[4] = 1;
-
-				AVR_CALL();
-			}
-*/
+			avr_buffer[0] = DISPLAY_STATUSLABELS;
+			AVR_CALL();
 		}
 	}
     ESOS_TASK_END();
@@ -503,6 +360,7 @@ ESOS_USER_TASK(send_comm1)
     static UCHAR data1;
     static UCHAR test;
     static int i;
+    static char str[15];
 	
     ESOS_TASK_BEGIN();
     i = 0;
@@ -515,31 +373,9 @@ ESOS_USER_TASK(send_comm1)
         while(ESOS_TASK_IVE_GOT_MAIL())
         {
 			data1 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
-
 	 		ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM();
-
-/*
-			if(data1 == RT_DATA)
-			{
-				ESOS_TASK_WAIT_ON_SEND_UINT8(RT_DATA);
-
-				for(i = 0;i < NUM_ADC_CHANNELS;i++)
-				{
-					ESOS_TASK_WAIT_ON_SEND_UINT8(u8_pot[i]);
-				}
-			}
-			else ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-*/
 			ESOS_TASK_WAIT_ON_SEND_UINT8(data1);
-//			ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING(data1);
 			ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM();
-/*
-			avr_buffer[0] = SEND_BYTE_RT_VALUES;
-			avr_buffer[1] = 0;
-			avr_buffer[2] = 0;
-			avr_buffer[3] = data1;
-			AVR_CALL();
-*/
 		}
     } // endof while()
     ESOS_TASK_END();
@@ -551,88 +387,165 @@ ESOS_USER_TASK(send_comm1)
 ESOS_USER_TASK(recv_comm1)
 {
 	static UCHAR cmd;
-	static UCHAR buffer[20];
-	static int i;
+	static UCHAR code;
+	static UCHAR buffer[25];
+	static char str[25];
+	static int stat_scroll_ptr;
 	static UCHAR temp;
-	static ESOS_TASK_HANDLE menu_handle;
-	static ESOS_TASK_HANDLE rt_handle;
+	static UCHAR onoff;
 	static ESOS_TASK_HANDLE fpga_handle;
 	static int len;
-//	static int row, col, str;
+	static int i;
 
 	ESOS_TASK_BEGIN();
 
-	menu_handle = esos_GetTaskHandle(display_menu);
-	rt_handle = esos_GetTaskHandle(display_rtlabels);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 
-    i = 0;
+	stat_scroll_ptr = 0;
 
     while (1)
     {
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],13);
+		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],20);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
 		cmd = buffer[0];
-
+		code = buffer[1];
+/*
 		avr_buffer[0] = SEND_BYTE_RT_VALUES;
 		avr_buffer[1] = 0;
-		avr_buffer[2] = 0;
+		avr_buffer[2] = 25;
 		avr_buffer[3] = cmd;
 		AVR_CALL();
 
-		if(cmd >= START_DS_MSG && cmd < END_DS_MSG)
+		avr_buffer[0] = SEND_BYTE_RT_VALUES;
+		avr_buffer[1] = 0;
+		avr_buffer[2] = 35;
+		avr_buffer[3] = code;
+		AVR_CALL();
+*/
+		if(cmd > START_DS_MSG && cmd < END_DS_MSG)
 		{
-			if(cmd == SEND_PARAMS)
+			switch(cmd)
 			{
-				temp = buffer[1];
-				temp <<= 8;
-				gl_fan_on = (UINT)buffer[2];
-				gl_fan_on |= (UINT)temp;
+				case SEND_PARAMS:
+					temp = buffer[1];
+					temp <<= 8;
+					gl_fan_on = (UINT)buffer[2];
+					gl_fan_on |= (UINT)temp;
 
-				temp = buffer[3];
-				temp <<= 8;
-				gl_fan_off = (UINT)buffer[4];
-				gl_fan_off |= (UINT)temp;
+					temp = buffer[3];
+					temp <<= 8;
+					gl_fan_off = (UINT)buffer[4];
+					gl_fan_off |= (UINT)temp;
 
-				temp = buffer[5];
-				temp <<= 8;
-				gl_blower_en = (UINT)buffer[6];
-				gl_blower_en |= (UINT)temp;
+					temp = buffer[5];
+					temp <<= 8;
+					gl_blower_en = (UINT)buffer[6];
+					gl_blower_en |= (UINT)temp;
 
-				temp = buffer[7];
-				temp <<= 8;				
-				gl_blower3_on = (UINT)buffer[8];
-				gl_blower3_on |= (UINT)temp;
+					temp = buffer[7];
+					temp <<= 8;				
+					gl_blower3_on = (UINT)buffer[8];
+					gl_blower3_on |= (UINT)temp;
 
-				temp = buffer[9];
-				temp <<= 8;
-				gl_blower2_on = (UINT)buffer[10];
-				gl_blower2_on |= (UINT)temp;
+					temp = buffer[9];
+					temp <<= 8;
+					gl_blower2_on = (UINT)buffer[10];
+					gl_blower2_on |= (UINT)temp;
 
-				temp = buffer[11];
-				temp <<= 8;
-				gl_blower1_on = (UINT)buffer[12];
-				gl_blower1_on |= (UINT)temp;
+					temp = buffer[11];
+					temp <<= 8;
+					gl_blower1_on = (UINT)buffer[12];
+					gl_blower1_on |= (UINT)temp;
+					break;
 
-			}else if(cmd == LIGHTS_OFF)
-			{
-				lights_on = -1;
-			}else if(cmd == LIGHTS_ON)
-			{
-				lights_on = 10;
-			}else if(cmd == ENGINE_ON)
-			{
-				engine_on = 1;
-			}else if(cmd == ENGINE_OFF)
-			{
-				engine_on = 0;
-			}else if(cmd == STOP_SERIAL_RECV)
-				ESOS_TASK_SLEEP();
+				case STOP_SERIAL_RECV:
+					ESOS_TASK_SLEEP();
+					break;
+
+				case ESTOP_SIGNAL:
+					key_mode = PASSWORD;
+
+					memset(correct_password,0,sizeof(correct_password));
+					strcpy(correct_password,"2354795\0");
+					memset(password,0,PASSWORD_SIZE);
+
+					avr_buffer[0] = PASSWORD_MODE;
+				//	avr_buffer[1] = (UCHAR)strlen(correct_password);
+					avr_buffer[1] = 0;
+					AVR_CALL();
+					break;
+
+				case GENERIC_CMD:
+					switch(code)
+					{
+						case START_SEQ:
+							onoff = 0;
+							engine_on = 1;
+							break;
+						case SHUTDOWN:
+							onoff = 1;
+							engine_on = 0;
+							break;
+						case BLOWER_OFF:
+							onoff = 1;
+							break;
+						case BLOWER1:
+							onoff = 2;
+							break;
+						case BLOWER2:
+							onoff = 3;
+							break;
+						case BLOWER3:
+							onoff = 4;
+							break;
+						case ON_FAN:
+							onoff = 0;
+							break;
+						case OFF_FAN:
+							onoff = 1;
+							break;
+						case ON_LIGHTS:
+							onoff = 0;
+							lights_on = 10;
+							break;
+						case OFF_LIGHTS:
+							onoff = 1;
+							lights_on = -1;
+							break;
+						case ON_RUNNING_LIGHTS:
+							onoff = 0;
+							break;
+						case OFF_RUNNING_LIGHTS:
+							onoff = 1;
+							break;
+						case ON_BRIGHTS:
+							onoff = 0;
+							break;
+						case OFF_BRIGHTS:
+							onoff = 1;
+							break;
+						case ON_BRAKES:
+							onoff = 0;
+							break;
+						case OFF_BRAKES:
+							onoff = 1;
+							break;
+					}
+					avr_buffer[0] = EEPROM_STR2;
+					avr_buffer[1] = code;
+					avr_buffer[2] = onoff;
+					AVR_CALL();
+			}	// end of switch(cmd)
+		}else
+		{
+			memset(buffer,0,sizeof(buffer));
+			FLUSH_ESOS_COMM_IN_DATA();
 		}
-		memset(buffer,0,sizeof(buffer));
-		FLUSH_ESOS_COMM_IN_DATA();	
-    } // endof while()
+			
+	
+//#endif
+	} // endof while()
     ESOS_TASK_END();
 }
 //******************************************************************************************//
@@ -727,11 +640,8 @@ ESOS_USER_TASK(main_proc)
 	static UCHAR data2 = 0x55;
 	static UINT data3;
 	static UCHAR data1;
-//	static ESOS_TASK_HANDLE rt_handle;
 
 	static int i,j,k;
-//	static int row, col, str;
-//	static int retry_counter;
 
 	ESOS_TASK_BEGIN();
 
@@ -740,8 +650,6 @@ ESOS_USER_TASK(main_proc)
 	avr_handle = esos_GetTaskHandle(AVR_cmd);
 	fpga_handle = esos_GetTaskHandle(send_fpga);
 	recv_handle = esos_GetTaskHandle(recv_comm1);
-	// this is local
-//	rt_handle = esos_GetTaskHandle(display_rtlabels);
 
 	i = 0;
 	j = 0;
@@ -775,21 +683,7 @@ ESOS_USER_TASK(main_proc)
 	avr_buffer[0] = LCD_CLRSCR;
 	avr_buffer[1] = 0;
 	AVR_CALL();
-/*
-	avr_buffer[0] = EEPROM_STR;
-	avr_buffer[1] = 0;	// row 0
-	avr_buffer[2] = 0;	// col 0
-	avr_buffer[3] = VARIOUS_MSG_OFFSET+3;
-	avr_buffer[4] = 2;
-	AVR_CALL();
 
-	avr_buffer[0] = EEPROM_STR;
-	avr_buffer[1] = 1;	// row 0
-	avr_buffer[2] = 0;	// col 0
-	avr_buffer[3] = VARIOUS_MSG_OFFSET+2;
-	avr_buffer[4] = 2;
-	AVR_CALL();
-*/
 	menu_ptr = 0;
     password_valid = 0;
     password_ptr = 0;
@@ -815,9 +709,6 @@ ESOS_USER_TASK(main_proc)
 	ESOS_TASK_WAIT_TICKS(100);
 	data2 = 0x30;
 
-//	__esos_CB_WriteUINT8(menu_handle->pst_Mailbox->pst_CBuffer,data2);
-//	__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data2);
-
 	data3 = DTMF_TONE_ON;
 	data3 <<= 8;
 	data3 &= 0xFF00;
@@ -831,32 +722,11 @@ ESOS_USER_TASK(main_proc)
 	data3 <<= 8;
 	data3 &= 0xFF00;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
-/*
-	avr_buffer[0] = EEPROM_STR;
-	avr_buffer[1] = 6;	// row 6
-	avr_buffer[2] = 0;	// col 0
-	avr_buffer[3] = VARIOUS_MSG_OFFSET;	//  ("enter password")
-	avr_buffer[4] = 10;
-	AVR_CALL();
-*/
 	init_rt_labels();
-//	init_menu_labels();
-//	ignore_comm1 = 0;
-//	__esos_CB_WriteUINT8(rt_handle->pst_Mailbox->pst_CBuffer,data1);
 
 	while(TRUE)
 	{
 		ESOS_TASK_WAIT_TICKS(500);
-/*
-		data3 = TEST_COMM;	// used for testing serial connection to FPGA - changes the 4 leds on the FPGA
-		data3 <<= 8;
-		data3 &= 0xFF00;
-		data3 |= data2;
-		__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
-
-		if(++data2 > 0x7e)
-			data2 = 0x21;
-*/
 /*
 		if(password_valid == 0)
 		{
@@ -886,42 +756,23 @@ ESOS_USER_TASK(main_proc)
 	}
     ESOS_TASK_END();
 }
-
-
-
-// use menu_values_offsets to index menu_str array
-static void init_menu_labels(void)
-{
-	static int col, row,str;
-	for(str = 0,row = START_MENU_VALUE_ROW,col = START_MENU_VALUE_COL;
-				str < NUM_MENU_LABELS*NO_MENUS;str++,row++)
-	{
-		menu_str[str].str = str + MENU_VALUES_OFFSET;
-		menu_str[str].row = row;
-		menu_str[str].col = col;
-		menu_str[str].data_col = col+10;
-		menu_str[str].onoff = 0;
-
-		if(row == 7)
-		{
-			row = START_MENU_VALUE_ROW-1;
-			col += 19;
-		}
-	}
-}
-// use enum rt_values_offsets to index rtlabels_str array
+//******************************************************************************************//
+//*********************************** init_rt_labels  **************************************//
+//******************************************************************************************//
 static void init_rt_labels(void)
 {
 	static int col, row,str;
+	int i;
 	
 	col = START_RT_VALUE_COL;
+	
+	// rt labels at bottom of screen
  	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
 	{
 		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
 		rtlabel_str[str].row = row;
 		rtlabel_str[str].col = col;
 		rtlabel_str[str].data_col = col+10;
-		rtlabel_str[str].onoff = 0;
 
 		if(row == 15)
 		{
@@ -929,6 +780,17 @@ static void init_rt_labels(void)
 			col += 17;
 		}
 	}
+	row = col = 0;
+
+	// init labels for status above rt labels
+ 	for(str = 0;str < NUM_STATUS_LABELS+1;str++,row++)
+	{
+		status_label_str[str].str = str + STATUS_VALUES_OFFSET;
+		status_label_str[str].row = row;
+		status_label_str[str].col = col;
+		status_label_str[str].data_col = col+10;
+	}
+	
 }
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
@@ -956,7 +818,6 @@ void user_init(void)
 	esos_RegisterTask(menu_task);
 	esos_RegisterTask(password_task);
 	esos_RegisterTask(numentry_task);
-	esos_RegisterTask(display_menu);
 	esos_RegisterTask(display_rtlabels);
 	esos_RegisterTask(key_timer_task);
 	esos_RegisterTask(temp_monitor_task);

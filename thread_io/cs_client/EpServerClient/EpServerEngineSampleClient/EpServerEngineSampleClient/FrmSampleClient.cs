@@ -78,7 +78,9 @@ namespace EpServerEngineSampleClient
             btnShutdown.Enabled = false;
             btnReboot.Enabled = false;
             btnStopSerial.Enabled = false;
-//            btnSetParams.Enabled = false;
+            btn_SetTime.Enabled = false;
+            btnGetTime.Enabled = false;
+            //            btnSetParams.Enabled = false;
             tbConnected.Text = "not connected";
 //            target_db_closed = false;
             //            use_laptop = true;
@@ -97,6 +99,10 @@ namespace EpServerEngineSampleClient
                 btnShutdown.Enabled = true;
                 btnReboot.Enabled = true;
                 btnStopSerial.Enabled = true;
+                tbServerTime.Text = "";
+                tbEngRunTime.Text = "";
+                btn_SetTime.Enabled = true;
+                btnGetTime.Enabled = true;
                 ClientOps ops = new ClientOps(this, hostname, port);
                 m_client.Connect(ops);
 
@@ -112,6 +118,10 @@ namespace EpServerEngineSampleClient
                 btnShutdown.Enabled = false;
                 btnReboot.Enabled = false;
                 btnStopSerial.Enabled = false;
+                btn_SetTime.Enabled = false;
+                btnGetTime.Enabled = false;
+                tbEngRunTime.Text = "";
+                tbServerTime.Text = "";
                 if (m_client.IsConnectionAlive)
                     m_client.Disconnect();
                 //                string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.CLOSE_SOCKET);
@@ -211,6 +221,8 @@ namespace EpServerEngineSampleClient
             {
                 case "SEND_MSG":
                     AddMsg(ret);
+                    if (ret == "SHUTDOWN")
+                        tbEngRunTime.Text = "";
                     break;
                 case "CURRENT_TIME":
 //                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + "curr" + " " + svrcmd.GetName(cmd));

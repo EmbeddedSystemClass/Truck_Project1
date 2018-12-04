@@ -68,7 +68,6 @@ int main(void)
 	UINT int_val;
 	UINT row, col;
 	UCHAR srow, scol, erow, ecol;
-//	UCHAR str_len;
 	UCHAR index;
 //	UCHAR no_rt_values;
 	UCHAR blanks;
@@ -76,7 +75,7 @@ int main(void)
 //	UCHAR tspi_ret;
 	int num_entry_ptr = 0;
 	num_entry_mode = 0;
-	char disp_str[20];
+	char disp_str[STR_LEN];
 
 	GDispInit();
 //	GDispInitPort();
@@ -143,7 +142,7 @@ int main(void)
 	eeprom_read_block((void *)eeprom,(const void *)eepromString,EEPROM_SIZE);
 
 	row = col = 0;
-	
+
     while (1)
     {
 		key = receiveByte();
@@ -253,6 +252,69 @@ int main(void)
 					}
 				break;
 
+				case EEPROM_STR2:
+					blanks = 6;
+					col = 15;
+					switch(buff[1])
+					{
+						case START_SEQ:
+						case SHUTDOWN:
+							row =  STATUS_ENGINE;
+							break;
+						case ON_FAN:
+						case OFF_FAN:
+							row = STATUS_COOLING_FAN;
+							break;
+						case ON_LIGHTS:
+						case OFF_LIGHTS:
+							row = STATUS_HEAD_LIGHTS;
+							break;
+						case ON_BRIGHTS:
+						case OFF_BRIGHTS:
+							row = STATUS_BRIGHTS;
+							break;
+						case BLOWER_OFF:
+						case BLOWER1:
+						case BLOWER2:
+						case BLOWER3:
+							row = STATUS_BLOWER;
+							break;
+						case ON_RUNNING_LIGHTS:
+						case OFF_RUNNING_LIGHTS:
+							row = STATUS_RUNNING_LIGHTS;
+							break;
+						case ON_BRAKES:
+						case OFF_BRAKES:
+							row = STATUS_BRAKES;
+							break;
+					}
+					GDispGoto(row,col);
+					_delay_ms(2);
+					for(i = 0;i < blanks;i++)
+						GDispChar(0x20);
+
+					if(buff[2] == 2)	// blower 1
+					{
+						strcpy(str,"ONE\0");
+						GDispStringAt(row,col,str);
+					}
+					else if(buff[2] == 3)	// blower 2
+					{
+						strcpy(str,"TWO\0");
+						GDispStringAt(row,col,str);
+					}
+					else if(buff[2] == 4)	// blower 3
+					{
+						strcpy(str,"THREE\0");
+						GDispStringAt(row,col,str);
+					}else
+					{
+						strcpy(str,eeprom_str_lookup((buff[2] == 0?STATUS_ON:STATUS_OFF), str));
+						GDispStringAt(row,col,str);
+					}
+					GDispGoto(0,0);
+				break;
+
 				case DISPLAY_RTLABELS:
 					index = RT_VALUES_OFFSET;
 					blanks = 6;
@@ -273,6 +335,23 @@ int main(void)
 						GDispStringAt(row,col,str);
 					}
 				break;
+
+				case DISPLAY_STATUSLABELS:
+					index = STATUS_VALUES_OFFSET;
+					blanks = 10;
+					col = 0;
+
+					for(row = 0;index < NUM_STATUS_LABELS+STATUS_VALUES_OFFSET;index++,row++)
+					{
+						strcpy(str,eeprom_str_lookup(index, str));
+						GDispGoto(row,col);
+						for(i = 0;i < blanks;i++)
+ 							GDispChar(0x20);
+ 							
+						GDispStringAt(row,col,str);
+					}
+				break;
+
 				case SEND_BYTE_RT_VALUES:
 				// 1st param is row
 				// 2nd param is col
@@ -317,14 +396,6 @@ int main(void)
 					GDispSetCursor (TEXT_ON | CURSOR_BLINK_ON, 7, 0, LINE_2_CURSOR);
 				break;
 
-				case DISPLAY_MENU_LABELS:
-					for(i = 0;i < NUM_MENU_LABELS;i++)
-					{
-						strcpy(str,eeprom_str_lookup(1, str));
-						GDispStringAt(6,0,str);
-					}						
-				break;
-
 				case SET_NUM_ENTRY_MODE:
 					num_entry_mode = buff[1];
 					num_entry_ptr = 0;
@@ -336,7 +407,7 @@ int main(void)
 					do{
 						disp_str[i] = buff[i+3];
 						i++;
-					}while(i < 13 && buff[i] != 0);
+					}while(i < STR_LEN && buff[i] != 0);
 
 //					strncpy(disp_str,(char *)&buff[4],disp_str_len);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],disp_str);

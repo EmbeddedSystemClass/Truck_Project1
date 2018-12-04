@@ -30,6 +30,8 @@ git add AVR_t6963/t6963.c
 git add AVR_t6963/USART.h
 git add AVR_t6963/test_gdisp.cx
 git add AVR_t6963/eeprom/main_burn.c
+git add AVR_t6963/eeprom/t6963.c
+git add AVR_t6963/eeprom/t6963.h
 git add AVR_t6963/eeprom/test.cx
 
 git add Truck_App1/Multi-Byte.vhd

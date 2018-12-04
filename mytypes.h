@@ -40,18 +40,25 @@ typedef struct _ip
 enum cmd_types
 {
 	NON_CMD,
-	ENABLE_START,
-	STARTER_OFF,
-	ON_ACC,
-	OFF_ACC,
-	ON_FUEL_PUMP,
-	OFF_FUEL_PUMP,
-	ON_FAN,
-	OFF_FAN,
-	ON_LIGHTS,
-	OFF_LIGHTS,
-	ON_BRIGHTS,
-	OFF_BRIGHTS,
+	ENABLE_START,		// 1
+	STARTER_OFF,		// 2
+	ON_ACC,				// 3
+	OFF_ACC,			// 4
+	ON_FUEL_PUMP,		// 5
+	OFF_FUEL_PUMP,		// 6
+	ON_FAN,				// 7
+	OFF_FAN,			// 8
+	ON_LIGHTS,			// 9
+	OFF_LIGHTS,			// 10
+	ON_BRIGHTS,			// 11
+	OFF_BRIGHTS,		// 12
+	ON_BRAKES,
+	OFF_BRAKES,
+	ON_RUNNING_LIGHTS,
+	OFF_RUNNING_LIGHTS,
+	SPECIAL_CMD,
+	START_SEQ,
+	SHUTDOWN,
 	ON_LLIGHTS,
 	OFF_LLIGHTS,
 	ON_LBRIGHTS,
@@ -60,13 +67,6 @@ enum cmd_types
 	OFF_RLIGHTS,
 	ON_RBRIGHTS,
 	OFF_RBRIGHTS,
-	ON_BRAKES,
-	OFF_BRAKES,
-	ON_RUNNING_LIGHTS,
-	OFF_RUNNING_LIGHTS,
-	SPECIAL_CMD,
-	START_SEQ,
-	SHUTDOWN,
 	SHUTDOWN_IOBOX,
 	REBOOT_IOBOX,
 	TEST_ALL_IO,
@@ -132,21 +132,10 @@ enum upstream_msg
 enum downstream_msg
 {
 	START_DS_MSG = 0xD0,		// 208
-	OUTPUT_MSG,					// 209
-	TIME_DATA1,					// 210
-	TIME_DATA2,					// 211
-	TIME_DATA3,					// 212
-	NEW_PASSWORD2,				// 213
-	NEW_PASSWORD3,				// 214
-	NEW_PASSWORD4,				// 215
-	CLEAR_SCREEN1,				// 216
-	LIGHTS_ON,					// 217
-	LIGHTS_OFF,					// 218
-	STOP_SERIAL_RECV,			// 219
-	ENGINE_ON,					// 220
-	ENGINE_OFF,					// 221
-	SEND_PARAMS,				// 222
-	ESTOP_SIGNAL,				// 223
+	STOP_SERIAL_RECV,			// 209
+	SEND_PARAMS,				// 210
+	ESTOP_SIGNAL,				// 211
+	GENERIC_CMD,				// 212
 	END_DS_MSG
 } DOWNSTREAM_MSG;
 
@@ -220,7 +209,7 @@ enum output_types
 
 #define LEN 30
 #define AVR_BUF_LEN 15
-#define NUM_STR 46	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
+#define NUM_STR 33	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -236,21 +225,34 @@ enum output_types
 #define BURN_EEPROM				7	// these are used by the eeprom/burn_main.c program
 #define READ_EEPROM				8
 #define EEPROM_STR				9
-#define SEND_BYTE_RT_VALUES		10
-#define SEND_BYTE_HEX_VALUES	11
-#define SEND_INT_RT_VALUES		12
-#define LCD_CLRSCR2				13
-#define SHOW_EEPROM				14
-#define PASSWORD_MODE			15
-#define DISPLAY_MENU_LABELS		16
+#define EEPROM_STR2				10
+#define SEND_BYTE_RT_VALUES		11
+#define SEND_BYTE_HEX_VALUES	12
+#define SEND_INT_RT_VALUES		13
+#define LCD_CLRSCR2				14
+#define SHOW_EEPROM				15
+#define PASSWORD_MODE			16
 #define SET_NUM_ENTRY_MODE		17
 #define DISPLAY_STR				18
 #define DISPLAY_RTLABELS		19
+#define DISPLAY_STATUSLABELS	20
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
-#define MENU_VALUES_OFFSET 23
-#define VARIOUS_MSG_OFFSET 14
+#define STATUS_VALUES_OFFSET 14
+
+#define START_ROW_STATUS 0
+#define STATUS_ENGINE START_ROW_STATUS
+#define STATUS_COOLING_FAN STATUS_ENGINE+1
+#define STATUS_HEAD_LIGHTS STATUS_ENGINE+2
+#define STATUS_BRIGHTS STATUS_ENGINE+3
+#define STATUS_BRAKES STATUS_ENGINE+4
+#define STATUS_RUNNING_LIGHTS STATUS_ENGINE+5
+#define STATUS_BLOWER STATUS_ENGINE+6
+
+#define VARIOUS_MSG_OFFSET 21
+#define STATUS_ON VARIOUS_MSG_OFFSET+4
+#define STATUS_OFF VARIOUS_MSG_OFFSET+5
 #define NO_MENUS 2
 
 // start positions on screen
@@ -260,6 +262,7 @@ enum output_types
 #define START_MENU_VALUE_COL 2
 #define NUM_MENU_LABELS 12
 #define NUM_RT_LABELS 13
+#define NUM_STATUS_LABELS 7
 /*
 8) set time/date		(num entry)
 *) time till off eng	(num entry)

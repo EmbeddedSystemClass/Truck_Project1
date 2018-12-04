@@ -33,6 +33,7 @@ procedure for testing/debugging io box:
 	to the /home/dan/dev/sched directory, change the permissions and execute it. 
 	(do2.sh will execute the sched program already in the sched directory)
 
+	****************************** DESCRIPTION ***********************************
 
 Relays on IO cards are 5A so use 5v power from separate DC-DC converter as coil voltage for 10A 
 relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 5v to gnd or
@@ -288,6 +289,79 @@ the TS-7200 sends the current config data and the client can edit it and send it
 client closes the dialog to edit the config data, it sends a SET_PARAMS message which saves the
 data to disk and also sends a message to the PIC24 (SEND_PARAMS) with the config data which 
 pertains to it - temp settings for cooling fan and blower fan.
+
+these show in the client dialog as all the F temps possible
+for the DS1620 to read - -66F -> 257F
+each reading returns the DS1620 int value for that temp (these need to be trimmed down by the UI)
+
+rpm_update_rate		// how fast the RPM LED display updates
+mph_update_rate		// how fast the MPH LED display updates
+fpga_xmit_rate		// how fast the temp/rpm/mph data is sent back to the PIC24
+high_rev_limit		// rpm high limit to shut off ignition
+low_rev_limit		// rpm to turn ign back on
+cooling_fan_on		// engine temp to turn cooling fan on (should be higher than fan_off)
+cooling_fan_off		// engine temp to turn the cooling fan off
+blower_enabled		// engine temp at which the blower can operate
+blower1_on			// minimum indoor temp to turn on lowest heater blower fan speed *
+blower2_on			//    "      "     "        "     medium   "      "     "    "
+blower3_on			//    "      "     "        "     high     "      "     "    "
+test_bank			// the selects which test bank 0->4 when doing a TEST_ALL_IO from the client
+(lights on delay not yet in the config file)
+
+* the UI should check to make sure the temp setting for the blower1 is higher that blower2 and
+	the settings for blower2 is higher than blower3
+
+(these are 'set in stone' by the client UI but could be changed anywhere else programatically)
+possible settings for high rev limit
+6000
+5800
+5600
+5400
+5200
+5000
+4800
+4600
+4200
+4000
+
+possible settings for low rev limit
+4500
+4400
+4300
+4200
+4100
+4000
+3900
+3800
+3700
+
+possible settings for lights on delay
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+
+FPGA Transmit Rate
+RPM/MPH Update Rate
+all set to 1000/2000/3000 (just for now)
+
+Test Bank
+Bank 0
+Bank 1
+Bank 2
+Bank 3
+Bank 4
 
 Wiring colors:
 	Front:	(going threw terminal block on pass-side fender well
