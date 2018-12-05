@@ -134,8 +134,9 @@ enum downstream_msg
 	START_DS_MSG = 0xD0,		// 208
 	STOP_SERIAL_RECV,			// 209
 	SEND_PARAMS,				// 210
-	ESTOP_SIGNAL,				// 211
-	GENERIC_CMD,				// 212
+	OTHER_DATA,					// 211
+	ESTOP_SIGNAL,				// 212
+	GENERIC_CMD,				// 213
 	END_DS_MSG
 } DOWNSTREAM_MSG;
 

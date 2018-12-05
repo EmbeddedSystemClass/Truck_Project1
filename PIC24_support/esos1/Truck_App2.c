@@ -401,45 +401,115 @@ ESOS_USER_TASK(send_comm1)
 // recv data from TS-7200
 ESOS_USER_TASK(recv_comm1)
 {
-	static UCHAR cmd;
-	static UCHAR code;
-	static UCHAR buffer[25];
-	static char str[25];
-	static int stat_scroll_ptr;
-	static UCHAR temp;
-	static UCHAR onoff;
-	static ESOS_TASK_HANDLE fpga_handle;
-	static int len;
+	static UCHAR cmd, code;
+	static UINT data1, data2;
 	static int i;
+	static UCHAR buffer[33];
+	static ESOS_TASK_HANDLE process_comm1_handle;
+	static ESOS_TASK_HANDLE process_comm1_buffer_handle;
 
 	ESOS_TASK_BEGIN();
 
-	fpga_handle = esos_GetTaskHandle(send_fpga);
-
-	stat_scroll_ptr = 0;
+	process_comm1_handle = esos_GetTaskHandle(process_comm1);
+	process_comm1_buffer_handle = esos_GetTaskHandle(process_comm1_buffer);
 
     while (1)
     {
 		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_U8BUFFER(&buffer[0],20);
+		ESOS_TASK_WAIT_ON_GET_UINT16(data1);
 		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-		cmd = buffer[0];
-		code = buffer[1];
-/*
-		avr_buffer[0] = SEND_BYTE_RT_VALUES;
-		avr_buffer[1] = 0;
-		avr_buffer[2] = 25;
-		avr_buffer[3] = cmd;
-		AVR_CALL();
 
-		avr_buffer[0] = SEND_BYTE_RT_VALUES;
-		avr_buffer[1] = 0;
-		avr_buffer[2] = 35;
-		avr_buffer[3] = code;
-		AVR_CALL();
-*/
+		cmd = (UCHAR)data1;
+		data1 >>= 8;
+		code = (UCHAR)data1;
+
+		// if the cmd != GENERIC_CMD then it's one of the others
+		// in which case code is actually the length of the data to send
+		// otherwise its only 2 bytes
 		if(cmd > START_DS_MSG && cmd < END_DS_MSG)
 		{
+			if(cmd != GENERIC_CMD)
+			{
+				buffer[0] = cmd;
+				gl_comm1_buf_len = code;
+/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 10;
+					avr_buffer[3] = cmd;
+					AVR_CALL();
+
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 0;
+					avr_buffer[2] = 20;
+					avr_buffer[3] = code;
+					AVR_CALL();
+*/
+				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
+				for(i = 2;i < code;i++)
+				{
+					ESOS_TASK_WAIT_ON_GET_UINT8(buffer[i]);
+	/*
+					avr_buffer[0] = SEND_BYTE_RT_VALUES;
+					avr_buffer[1] = 15;
+					avr_buffer[2] = (i-3)*3;
+					avr_buffer[3] = buffer[i];
+					AVR_CALL();
+	*/
+				}
+				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+				__esos_CB_WriteUINT8Buffer(process_comm1_buffer_handle->pst_Mailbox->pst_CBuffer, 
+						&buffer[0], gl_comm1_buf_len);
+			}else
+				__esos_CB_WriteUINT8(process_comm1_handle->pst_Mailbox->pst_CBuffer,code);
+		}
+		memset(buffer,0,sizeof(buffer));
+		FLUSH_ESOS_COMM_IN_DATA();
+	} // endof while()
+    ESOS_TASK_END();
+}
+
+//******************************************************************************************//
+//********************************* process_comm1_buffer ***********************************//
+//******************************************************************************************//
+ESOS_USER_TASK(process_comm1_buffer)
+{
+	static UCHAR buffer[33];
+	static UCHAR data1;
+	static UCHAR cmd, temp;
+	static int i;
+
+	ESOS_TASK_BEGIN();
+
+    while (1)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			__esos_CB_ReadUINT8Buffer(__pstSelf->pst_Mailbox->pst_CBuffer, &buffer[0], gl_comm1_buf_len);
+
+/*
+			for(i = 1;i < 10;i++)
+			{
+				avr_buffer[0] = SEND_BYTE_RT_VALUES;
+				avr_buffer[1] = 14;
+				avr_buffer[2] = (i-1)*3;
+				avr_buffer[3] = buffer[i];
+				AVR_CALL();
+			}
+
+			for(i = 25;i < 30;i++)
+			{
+				avr_buffer[0] = SEND_BYTE_RT_VALUES;
+				avr_buffer[1] = 15;
+				avr_buffer[2] = (i-25)*3;
+				avr_buffer[3] = buffer[i];
+				AVR_CALL();
+			}
+*/
+			cmd = buffer[0];
+			
 			switch(cmd)
 			{
 				case SEND_PARAMS:
@@ -490,76 +560,109 @@ ESOS_USER_TASK(recv_comm1)
 					avr_buffer[1] = 0;
 					AVR_CALL();
 					break;
-
-				case GENERIC_CMD:
-					switch(code)
-					{
-						case START_SEQ:
-							onoff = 0;
-							engine_on = 1;
-							break;
-						case SHUTDOWN:
-							onoff = 1;
-							engine_on = 0;
-							break;
-						case BLOWER_OFF:
-							onoff = 1;
-							break;
-						case BLOWER1:
-							onoff = 2;
-							break;
-						case BLOWER2:
-							onoff = 3;
-							break;
-						case BLOWER3:
-							onoff = 4;
-							break;
-						case ON_FAN:
-							onoff = 0;
-							break;
-						case OFF_FAN:
-							onoff = 1;
-							break;
-						case ON_LIGHTS:
-							onoff = 0;
-							lights_on = 10;
-							break;
-						case OFF_LIGHTS:
-							onoff = 1;
-							lights_on = -1;
-							break;
-						case ON_RUNNING_LIGHTS:
-							onoff = 0;
-							break;
-						case OFF_RUNNING_LIGHTS:
-							onoff = 1;
-							break;
-						case ON_BRIGHTS:
-							onoff = 0;
-							break;
-						case OFF_BRIGHTS:
-							onoff = 1;
-							break;
-						case ON_BRAKES:
-							onoff = 0;
-							break;
-						case OFF_BRAKES:
-							onoff = 1;
-							break;
-					}
-					avr_buffer[0] = EEPROM_STR2;
-					avr_buffer[1] = code;
-					avr_buffer[2] = onoff;
-					AVR_CALL();
-			}	// end of switch(cmd)
-		}else
-		{
-			memset(buffer,0,sizeof(buffer));
-			FLUSH_ESOS_COMM_IN_DATA();
+			}
 		}
-			
-	
-//#endif
+	} // endof while()
+    ESOS_TASK_END();
+}
+//******************************************************************************************//
+//************************************ process_comm1 ***************************************//
+//******************************************************************************************//
+// recv data from TS-7200
+ESOS_USER_TASK(process_comm1)
+{
+	static UCHAR code;
+	static UCHAR onoff;
+
+	ESOS_TASK_BEGIN();
+
+    while (1)
+    {
+        ESOS_TASK_WAIT_FOR_MAIL();
+
+        while(ESOS_TASK_IVE_GOT_MAIL())
+        {
+			code = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
+/*
+			avr_buffer[0] = SEND_INT_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 10;
+			avr_buffer[3] = (UCHAR)(data1 >> 8);
+			avr_buffer[4] = (UCHAR)data1;
+			AVR_CALL();
+
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 25;
+			avr_buffer[3] = cmd;
+			AVR_CALL();
+
+			avr_buffer[0] = SEND_BYTE_RT_VALUES;
+			avr_buffer[1] = 0;
+			avr_buffer[2] = 35;
+			avr_buffer[3] = code;
+			AVR_CALL();
+*/
+			switch(code)
+			{
+				case START_SEQ:
+					onoff = 0;
+					engine_on = 1;
+					break;
+				case SHUTDOWN:
+					onoff = 1;
+					engine_on = 0;
+					break;
+				case BLOWER_OFF:
+					onoff = 1;
+					break;
+				case BLOWER1:
+					onoff = 2;
+					break;
+				case BLOWER2:
+					onoff = 3;
+					break;
+				case BLOWER3:
+					onoff = 4;
+					break;
+				case ON_FAN:
+					onoff = 0;
+					break;
+				case OFF_FAN:
+					onoff = 1;
+					break;
+				case ON_LIGHTS:
+					onoff = 0;
+					lights_on = 10;
+					break;
+				case OFF_LIGHTS:
+					onoff = 1;
+					lights_on = -1;
+					break;
+				case ON_RUNNING_LIGHTS:
+					onoff = 0;
+					break;
+				case OFF_RUNNING_LIGHTS:
+					onoff = 1;
+					break;
+				case ON_BRIGHTS:
+					onoff = 0;
+					break;
+				case OFF_BRIGHTS:
+					onoff = 1;
+					break;
+				case ON_BRAKES:
+					onoff = 0;
+					break;
+				case OFF_BRAKES:
+					onoff = 1;
+					break;
+			}	// end of switch(cmd)
+			avr_buffer[0] = EEPROM_STR2;
+			avr_buffer[1] = code;
+			avr_buffer[2] = onoff;
+			AVR_CALL();
+		} // end of got mail	
 	} // endof while()
     ESOS_TASK_END();
 }
@@ -831,6 +934,7 @@ void user_init(void)
 	esos_RegisterTask(send_comm1);
 	esos_RegisterTask(recv_comm1);
 	esos_RegisterTask(process_comm1);
+	esos_RegisterTask(process_comm1_buffer);
 	esos_RegisterTask(menu_task);
 	esos_RegisterTask(password_task);
 	esos_RegisterTask(numentry_task);

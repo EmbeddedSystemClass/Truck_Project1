@@ -292,15 +292,18 @@ static void set_output(O_DATA *otp, int onoff)
 void send_serial(UCHAR cmd, UCHAR code)
 {
 	int i;
-	UCHAR buffer[21];
+//	UCHAR buffer[21];
 // send what just changed to the PIC24/AVR to dispaly on screen
-	memset(buffer,0,sizeof(buffer));
+//	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
-
+	write_serial(cmd);
+	write_serial(code);
+/*
 	buffer[0] = cmd;
 	buffer[1] = code;	
  	for(i = 0;i < 20;i++)
  		write_serial(buffer[i]);
+*/
 //	write_serial(0xFF);
 	pthread_mutex_unlock(&serial_write_lock);
 }
@@ -310,10 +313,10 @@ void send_serialother(UCHAR cmd, UCHAR *buf, int len)
 //return;
 	pthread_mutex_lock( &serial_write_lock);
 	int i;
-	write_serial(cmd);
+	buf[0] = cmd;
+	buf[1] = (UCHAR)len;
 
-//	for(i = 0;i < len;i++)
-	for(i = 0;i < 19;i++)
+	for(i = 0;i < len;i++)
 	{
 		write_serial(buf[i]);
 	}
@@ -643,33 +646,6 @@ UCHAR timer_task(int test)
 	while(TRUE)
 	{
 		uSleep(1,0);
-
-		// send only date, month, minutes
-		// 0,1 - month
-		// 3,4 - date
-		// 8,9 - year
-		// 11,12 - hour
-		// 14,15 - minute
-		// 17,18 - seconds
-/*
-		if(time_set)
-		{
-			gettimeofday(&mtv, NULL);
-			curtime2 = mtv.tv_sec;
-			strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
-
-//			printf("%s\r\n",time_buffer);
-
-			send_serialother(TIME_DATA1,time_buffer[0],time_buffer[1],time_buffer[3],
-				time_buffer[4]);
-			send_serialother(TIME_DATA2,time_buffer[8],time_buffer[9],
-				time_buffer[11],time_buffer[12]);
-			send_serialother(TIME_DATA3,time_buffer[14],time_buffer[15],
-				time_buffer[17],time_buffer[18]);
-		}
-*/
-// if driver seat switch goes low the tell monster box to start re-enter password sequence
-//		send_serialother(RE_ENTER_PASSWORD1,0,0,0,0);
 
 		if(engine_running == 1)
 		{
@@ -1124,6 +1100,9 @@ void basic_controls(UCHAR cmd)
 	size_t osize;
 	char errmsg[50];
 
+//	static UCHAR buffer[30] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
+//				17,18,19,20,21,22,23,24,25,26,27,28,29};
+
 	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
 	{LHEADLAMP,1},
 	{LBRIGHTS,1},
@@ -1144,16 +1123,16 @@ void basic_controls(UCHAR cmd)
 
 	switch(cmd)
 	{
+		case ON_FAN:
+		case OFF_FAN:
+		case ON_LIGHTS:
+		case OFF_LIGHTS:
 		case START_SEQ:
 		case SHUTDOWN:
 		case BLOWER_OFF:
 		case BLOWER1:
 		case BLOWER2:
 		case BLOWER3:
-		case ON_FAN:
-		case OFF_FAN:
-		case ON_LIGHTS:
-		case OFF_LIGHTS:
 		case ON_RUNNING_LIGHTS:
 		case OFF_RUNNING_LIGHTS:
 		case ON_BRIGHTS:
