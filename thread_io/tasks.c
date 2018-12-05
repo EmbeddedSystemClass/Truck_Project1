@@ -685,7 +685,7 @@ UCHAR timer_task(int test)
 					running_hours++;
 				}
 			}
-		sprintf(tempx,"%d %d %d ",running_hours, running_minutes, running_seconds);
+		sprintf(tempx,"%dh %dm %ds ",running_hours, running_minutes, running_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
 		}else running_seconds = running_minutes = running_hours = 0;
@@ -704,7 +704,7 @@ UCHAR timer_task(int test)
 			}
 				
 		}
-		sprintf(tempx,"%d %d %d ",trunning_hours, trunning_minutes, trunning_seconds);
+		sprintf(tempx,"%dh %dm %ds ",trunning_hours, trunning_minutes, trunning_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
 
 /*

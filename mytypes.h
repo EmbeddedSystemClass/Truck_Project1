@@ -236,6 +236,7 @@ enum output_types
 #define DISPLAY_STR				18
 #define DISPLAY_RTLABELS		19
 #define DISPLAY_STATUSLABELS	20
+#define DISPLAY_ELAPSED_TIME	21
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
@@ -256,13 +257,15 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define START_RT_VALUE_ROW 8
-#define START_MENU_VALUE_ROW 1
-#define START_RT_VALUE_COL 2
-#define START_MENU_VALUE_COL 2
-#define NUM_MENU_LABELS 12
 #define NUM_RT_LABELS 13
+#define START_RT_VALUE_ROW 8
+#define START_RT_VALUE_COL 1
+#define ENDING_RT_VALUE_ROW 15
+#define RT_VALUE_COL_WIDTH 15
+
 #define NUM_STATUS_LABELS 7
+#define START_STATUS_VALUE_ROW 1
+#define START_STATUS_VALUE_COL 2
 /*
 8) set time/date		(num entry)
 *) time till off eng	(num entry)

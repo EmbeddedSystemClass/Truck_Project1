@@ -66,6 +66,7 @@ ESOS_USER_TASK(send_fpga);
 ESOS_USER_TASK(recv_lcd);
 ESOS_USER_TASK(send_comm1);
 ESOS_USER_TASK(recv_comm1);
+ESOS_USER_TASK(process_comm1);
 ESOS_USER_TASK(menu_task);
 ESOS_USER_TASK(password_task);
 ESOS_USER_TASK(numentry_task);
@@ -96,16 +97,19 @@ static ESOS_TASK_HANDLE recv_handle;
 
 enum rt_values_offsets
 {
-	RPM,
-	MPH,
-	ENG_TEMP,
 	OIL_PRES,
 	AIR_TEMP,
 	MAP,
 	OIL_TEMP,
 	O2,
 	ODOM,
-	TRIP
+	TRIP,
+	RPM,
+	MPH,
+	RUN_TIME,
+	ENG_TEMP,
+	OUTDOOR_TEMP,
+	INDOOR_TEMP
 } RT_VALUES_OFFSETS_TYPES;
 
 enum key_types
@@ -135,25 +139,6 @@ typedef struct
 	UCHAR data_col;
 	UCHAR str;
 } FORMAT_STR;
-
-typedef struct
-{
-	UCHAR code;
-	UCHAR row;
-}STATUS_SCROLL;
-#define STAT_SCROLL_NUM 8
-static int stat_scroll_ptr;
-static STATUS_SCROLL stat_scroll[STAT_SCROLL_NUM] = 
-{{0,0},
-{0,1},
-{0,2},
-{0,3},
-{0,4},
-{0,5},
-{0,6},
-{0,7}};
-
-static FORMAT_STR menu_str[NUM_MENU_LABELS*NO_MENUS];
 
 static FORMAT_STR rtlabel_str[NUM_RT_LABELS];
 static FORMAT_STR status_label_str[NUM_STATUS_LABELS];
@@ -250,7 +235,7 @@ static int num_entry_type;
 static UINT curr_num_entry_row;
 static UINT curr_num_entry_col;
 //static void init_menu_labels(void);
-static void init_rt_labels(void);
+static void init_rtlabels(void);
 static char *temp_lookup(int raw);
 static int lights_on;
 static int brights_on;
@@ -1209,9 +1194,17 @@ ESOS_USER_TASK(key_timer_task)
 */
 		if(key_mode == NORMAL)
 		{
+/*
 			avr_buffer[0] = SEND_INT_RT_VALUES;
 			avr_buffer[1] = 10;
 			avr_buffer[2] = 33;
+			avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
+			avr_buffer[4] = (UCHAR)engine_run_time;
+			AVR_CALL();
+*/
+			avr_buffer[0] = DISPLAY_ELAPSED_TIME;
+			avr_buffer[1] = rtlabel_str[RUN_TIME].row;
+			avr_buffer[2] = rtlabel_str[RUN_TIME].data_col;
 			avr_buffer[3] = (UCHAR)(engine_run_time >> 8);
 			avr_buffer[4] = (UCHAR)engine_run_time;
 			AVR_CALL();
@@ -1656,24 +1649,16 @@ void _ISR _ADC1Interrupt (void)
 //******************************************************************************************//
 static char *temp_lookup(int raw)
 {
-	char ret[10];
-	int j = 0;
+	static char ret[10];
+	int j = -1;
 	
 	do{
 		j++;
-	}while(raw != raw_data[j].raw && j < 360);
+	}while(raw != raw_data[j].raw && j < 350);
 	if(j > 348)
-		strcpy(ret,"OOR  \0");
+		strcpy(ret,"OOR\0");
 	else
 		strcpy(ret,raw_data[j].str);	
 	return ret;
 }
-//******************************************************************************************//
-//******************************************************************************************//
-//******************************************************************************************//
-/*
-UCHAR cycle_display(void)
-{
-	static int ptr;
-}	
-*/
+

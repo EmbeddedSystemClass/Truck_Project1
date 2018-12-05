@@ -48,7 +48,7 @@ ESOS_USER_TASK(display_rtvalues)
 		{
 			// engine temp doesn't come from ADC anymore
 			// 
-			for(i = ENG_TEMP + 1;i < O2+1;i++)
+			for(i = OIL_PRES ;i <= O2+1;i++)
 			{
 				avr_buffer[0] = SEND_BYTE_RT_VALUES;
 				avr_buffer[1] = rtlabel_str[i].row;
@@ -276,28 +276,31 @@ ESOS_USER_TASK(recv_fpga)
 					strcpy(str,temp_lookup(gl_engine_temp));
 
 					avr_buffer[0] = DISPLAY_STR;
-					avr_buffer[1] = 10;
-					avr_buffer[2] = START_MENU_VALUE_COL + 10;
-					str[5] = 0;
-					strncpy((char *)&avr_buffer[3],str,9);
+					avr_buffer[1] = rtlabel_str[ENG_TEMP].row;
+					avr_buffer[2] = rtlabel_str[ENG_TEMP].data_col;
+//					str[5] = 0;
+					strncpy((char *)&avr_buffer[3],str,strlen(str));
+//					avr_buffer[4] = 6;
 					AVR_CALL();
 
 					strcpy(str,temp_lookup(gl_indoor_temp));
 
 					avr_buffer[0] = DISPLAY_STR;
-					avr_buffer[1] = 12;
-					avr_buffer[2] = START_MENU_VALUE_COL + 31;
-					str[5] = 0;
-					strncpy((char *)&avr_buffer[3],str,9);
+					avr_buffer[1] = rtlabel_str[INDOOR_TEMP].row;
+					avr_buffer[2] = rtlabel_str[INDOOR_TEMP].data_col;
+//					str[5] = 0;
+					strncpy((char *)&avr_buffer[3],str,strlen(str));
+//					avr_buffer[4] = 6;
 					AVR_CALL();
 
 					strcpy(str,temp_lookup(gl_outdoor_temp));
 
 					avr_buffer[0] = DISPLAY_STR;
-					avr_buffer[1] = 11;
-					avr_buffer[2] = START_MENU_VALUE_COL + 31;
-					str[5] = 0;
-					strncpy((char *)&avr_buffer[3],str,9);
+					avr_buffer[1] = rtlabel_str[OUTDOOR_TEMP].row;
+					avr_buffer[2] = rtlabel_str[OUTDOOR_TEMP].data_col;
+//					str[5] = 0;
+					strncpy((char *)&avr_buffer[3],str,strlen(str));
+//					avr_buffer[4] = 6;
 					AVR_CALL();
 					i = 0;
 				}
@@ -313,7 +316,7 @@ ESOS_USER_TASK(recv_fpga)
 ESOS_USER_TASK(display_rtlabels)
 {
 	static UCHAR data2, i, onoff, code;
-
+/*
 	static int off_status[7] = {
 			SHUTDOWN,
 			BLOWER_OFF,
@@ -322,9 +325,9 @@ ESOS_USER_TASK(display_rtlabels)
 			OFF_RUNNING_LIGHTS,
 			OFF_BRIGHTS,
 			OFF_BRAKES };
-
+*/
 	ESOS_TASK_BEGIN();
-
+/*
 	onoff = 1;
 	for(i = 0;i < 7;i++)		// start off with all the status labels at 'OFF'
 	{
@@ -334,7 +337,8 @@ ESOS_USER_TASK(display_rtlabels)
 		avr_buffer[2] = onoff;
 		AVR_CALL();
 	}
-
+*/
+	init_rtlabels();
 	while (1)
 	{
         ESOS_TASK_WAIT_FOR_MAIL();
@@ -344,7 +348,18 @@ ESOS_USER_TASK(display_rtlabels)
 			// data2 doesn't do anything
 			data2 = __esos_CB_ReadUINT8(__pstSelf->pst_Mailbox->pst_CBuffer);
 			avr_buffer[0] = DISPLAY_RTLABELS;
+			// starting row
+			avr_buffer[1] = START_RT_VALUE_ROW;
+			// starting col
+			avr_buffer[2] = START_RT_VALUE_COL;
+			// ending row
+			avr_buffer[3] = ENDING_RT_VALUE_ROW;
+			// col width
+			avr_buffer[4] = RT_VALUE_COL_WIDTH;
+			// num lables
+			avr_buffer[5] = NUM_RT_LABELS;
 			AVR_CALL();
+
 			avr_buffer[0] = DISPLAY_STATUSLABELS;
 			AVR_CALL();
 		}
@@ -722,7 +737,6 @@ ESOS_USER_TASK(main_proc)
 	data3 <<= 8;
 	data3 &= 0xFF00;
 	__esos_CB_WriteUINT16(fpga_handle->pst_Mailbox->pst_CBuffer,data3);
-	init_rt_labels();
 
 	while(TRUE)
 	{
@@ -757,14 +771,15 @@ ESOS_USER_TASK(main_proc)
     ESOS_TASK_END();
 }
 //******************************************************************************************//
-//*********************************** init_rt_labels  **************************************//
+//*********************************** init_rtlabels  **************************************//
 //******************************************************************************************//
-static void init_rt_labels(void)
+static void init_rtlabels(void)
 {
-	static int col, row,str;
+	static UCHAR col, data_col, row, str;
 	int i;
 	
 	col = START_RT_VALUE_COL;
+	data_col = col + 9;
 	
 	// rt labels at bottom of screen
  	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS+1;str++,row++)
@@ -772,15 +787,17 @@ static void init_rt_labels(void)
 		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
 		rtlabel_str[str].row = row;
 		rtlabel_str[str].col = col;
-		rtlabel_str[str].data_col = col+10;
+		rtlabel_str[str].data_col = data_col;
 
-		if(row == 15)
+		if(row == ENDING_RT_VALUE_ROW)
 		{
-			row = START_RT_VALUE_ROW-1;
-			col += 17;
+			row = START_RT_VALUE_ROW;
+			col += RT_VALUE_COL_WIDTH;
+			data_col = col + 15;
 		}
 	}
 	row = col = 0;
+	data_col = 10;
 
 	// init labels for status above rt labels
  	for(str = 0;str < NUM_STATUS_LABELS+1;str++,row++)
@@ -788,9 +805,8 @@ static void init_rt_labels(void)
 		status_label_str[str].str = str + STATUS_VALUES_OFFSET;
 		status_label_str[str].row = row;
 		status_label_str[str].col = col;
-		status_label_str[str].data_col = col+10;
+		status_label_str[str].data_col = data_col;
 	}
-	
 }
 //******************************************************************************************//
 //*************************************** user_init  ***************************************//
@@ -808,13 +824,13 @@ void user_init(void)
 	esos_RegisterTask(poll_keypad);
 	esos_RegisterTask(AVR_cmd);
 	esos_RegisterTask(send_fpga);
-
 	esos_RegisterTask(recv_fpga);
 	esos_RegisterTask(recv_lcd);
 	esos_RegisterTask(convADC);
 	esos_RegisterTask(main_proc);
 	esos_RegisterTask(send_comm1);
 	esos_RegisterTask(recv_comm1);
+	esos_RegisterTask(process_comm1);
 	esos_RegisterTask(menu_task);
 	esos_RegisterTask(password_task);
 	esos_RegisterTask(numentry_task);

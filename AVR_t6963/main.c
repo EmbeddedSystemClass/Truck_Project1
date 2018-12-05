@@ -59,7 +59,8 @@ ISR(TIMER1_OVF_vect)
 
 int main(void)
 {
-	int i;
+	int i,j;
+	int hr,min,sec;
 	UCHAR ch;
 	int chptr;
 	UCHAR key;
@@ -67,7 +68,8 @@ int main(void)
 	UCHAR byte_val;
 	UINT int_val;
 	UINT row, col;
-	UCHAR srow, scol, erow, ecol;
+//	UCHAR srow, scol, erow, ecol;
+	UINT starting_row, starting_col, col_width, ending_row, num_labels;
 	UCHAR index;
 //	UCHAR no_rt_values;
 	UCHAR blanks;
@@ -75,7 +77,7 @@ int main(void)
 //	UCHAR tspi_ret;
 	int num_entry_ptr = 0;
 	num_entry_mode = 0;
-	char disp_str[STR_LEN];
+///	char disp_str[STR_LEN];
 
 	GDispInit();
 //	GDispInitPort();
@@ -92,7 +94,8 @@ int main(void)
 	_delay_us(10);
 	GDispClrTxt();
 	GDispStringAt(7,15,"LCD is on!");
-	
+	_delay_us(100);
+
 
 //	initSPImaster();
 //******************************************************************************************//
@@ -118,7 +121,7 @@ int main(void)
 	xcol = 35;
 
 /*
-	for(i = 0;i < 100;i++)
+	for(i = 0;i < 2;i++)
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
@@ -132,8 +135,6 @@ int main(void)
 		}
 	}
 */
-	_delay_ms(1);
-
 	GDispClrTxt();
 
 	memset((void *)curr_num,0,SIZE_NUM);
@@ -146,29 +147,11 @@ int main(void)
     while (1)
     {
 		key = receiveByte();
-/*
-		if(++dc2 % 2 == 0)
-			_SB(PORTB,PORTB1);
-		else
-			_CB(PORTB,PORTB1);
-*/
 		buff[chptr] = key;
 		chptr++;
-//#if 0
+
 		if(key == 0xfe)
 		{
-
-//			for(i = 0;i < 5;i++)
-//				transmitByte(buff[i]);
-/*
-			printHexByte(buff[0]);
-			printHexByte(buff[1]);
-			printHexByte(buff[2]);
-			printHexByte(buff[3]);
-			printHexByte(buff[4]);
-*/
-//			GDispCharAt(0,0,buff[0]+0x30);
-
 			switch(buff[0])
 			{
 				case CHAR_CMD:
@@ -186,7 +169,6 @@ int main(void)
 						if(num_entry_mode == 1)
 							if(num_entry_ptr < SIZE_NUM)
 								curr_num[num_entry_ptr++] = ch;
-						
 					}
 					break;
 
@@ -208,15 +190,19 @@ int main(void)
 				// cols & rows so for now it just clears a predetermined section in the upper right
 				// of the screen
 				case LCD_CLRSCR2:
+/*
 					srow = buff[1];
 					scol = buff[2];
 					erow = buff[3];
 					ecol = buff[4];	
 					GDispClrSection(srow, scol, erow, ecol);
+					GDispGoto(0,0);
+*/
 				break;
 
 				case LCD_CLRSCR:
 					GDispClrTxt();
+					GDispGoto(0,0);
 				break;
 
 				// not used
@@ -316,21 +302,26 @@ int main(void)
 				break;
 
 				case DISPLAY_RTLABELS:
-					index = RT_VALUES_OFFSET;
+					index = 1;
 					blanks = 6;
-					col = START_RT_VALUE_COL;
+//					col = START_RT_VALUE_COL;
+					starting_row = (UINT)buff[1];
+					col = (UINT)buff[2];
+					ending_row = (UINT)buff[3];
+					col_width = (UINT)buff[4];
+					num_labels = (UINT)buff[5];
 
-					for(row = START_RT_VALUE_ROW;index < NUM_RT_LABELS+1;index++,row++)
+					for(row = starting_row;index < num_labels+1;index++,row++)
 					{
 						strcpy(str,eeprom_str_lookup(index, str));
 						GDispGoto(row,col);
 						for(i = 0;i < blanks;i++)
  							GDispChar(0x20);
- 							
-						if(row == 16)
+
+						if(row == ending_row)
 						{
-							row = START_RT_VALUE_ROW;
-							col += 17;
+							row = starting_row;
+							col += col_width;
 						}
 						GDispStringAt(row,col,str);
 					}
@@ -347,7 +338,7 @@ int main(void)
 						GDispGoto(row,col);
 						for(i = 0;i < blanks;i++)
  							GDispChar(0x20);
- 							
+
 						GDispStringAt(row,col,str);
 					}
 				break;
@@ -383,7 +374,7 @@ int main(void)
 
 				case SHOW_EEPROM:
 				break;
-				
+
 				case PASSWORD_MODE:
 					GDispClrTxt();
 					row = 7;
@@ -401,17 +392,35 @@ int main(void)
 					num_entry_ptr = 0;
 				break;
 
+				// display string at x,y
 				case DISPLAY_STR:
-					memset(disp_str,0,sizeof(disp_str));
+//					memset(disp_str,0,sizeof(disp_str));
+//					j = (int)buff[4];
+//					GDispGoto((UINT)buff[1],(UINT)buff[2]);
+//					for(i = 0;i < j;i++)
+//						GDispChar(0x20);
 					i = 0;
 					do{
-						disp_str[i] = buff[i+3];
+						str[i] = buff[i+3];
 						i++;
 					}while(i < STR_LEN && buff[i] != 0);
 
 //					strncpy(disp_str,(char *)&buff[4],disp_str_len);
-					GDispStringAt((UINT)buff[1],(UINT)buff[2],disp_str);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
+
+				// display int as hr:min:sec at x,y
+				case DISPLAY_ELAPSED_TIME:
+					int_val = (UINT)buff[3];
+					int_val <<= 8;
+					int_val |= (UINT)buff[4];
+					hr = (int_val/3600); 
+					min = (int_val -(3600*hr))/60;
+					sec = (int_val -(3600*hr)-(min*60));
+					sprintf(str,"%02d:%02d:%02d",hr,min,sec);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
+				break;
+
 				default:
 				break;
 			}
@@ -421,7 +430,6 @@ int main(void)
 //			printHexByte(buff[5]+0x30);
 //			printString(" ");
 		}
-//#endif
 	}
     return (0);		// this should never happen
 }
@@ -438,15 +446,12 @@ static char *eeprom_str_lookup(int index, char *str)
 			i++;
  			k = j;
 		}
-//		printf("%c",eeprom[j]);
-
 	}while(i < index);
 
 	do{
 		k--;
 	}while(eeprom[k] != 0);
 
-//	printf("\ni: %d j: %d k: %d\n",i,j,k);
 	memset(str,0,STR_LEN);
 	memcpy(str,&eeprom[k+1],j-k);
 	return str;

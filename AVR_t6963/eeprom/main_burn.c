@@ -17,9 +17,6 @@ static char *eeprom_str_lookup(int index, char *str);
 // values start at line 20 so its easy to calculate the offset
 
 char menu_labels[NUM_STR][24] = {
-	{"RPM"},			// rt values
-	{"MPH"},
-	{"ENG TEMP"},
 	{"OIL PRES"},
 	{"AIR TEMP"},
 	{"MAP"},
@@ -27,7 +24,10 @@ char menu_labels[NUM_STR][24] = {
 	{"O2"},
 	{"ODOM"},
 	{"TRIP"},
+	{"RPM"},
+	{"MPH"},
 	{"RUN TIME"},  
+	{"ENG TEMP"},
 	{"OUTDOOR TEMP"},
 	{"INDOOR TEMP"},
 	{"ENGINE"},				// status values (STATUS_VALUES_OFFSET)
@@ -59,7 +59,6 @@ UCHAR temp[STRING_LEN/2];
 
 int main(void)
 {
-	char ramString[STRING_LEN];
 	int i,j;
 	char str[30];
 	i = 0;
@@ -88,14 +87,14 @@ int main(void)
 
 	col = 0;
 	i = 1;		// lookup has to start at 1
-	for(row = 0;row < 15;row++)
+	for(row = 0;row < 16;row++)
 	{
 		strcpy(str,eeprom_str_lookup(i++, str));
 		GDispGoto(row,col);
 		GDispStringAt(row,col,str);
 	}
 	col = 20;
-	for(row = 0;row < 15;row++)
+	for(row = 0;row < 16;row++)
 	{
 		strcpy(str,eeprom_str_lookup(i++, str));
 		GDispGoto(row,col);
