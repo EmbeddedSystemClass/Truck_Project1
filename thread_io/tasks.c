@@ -37,10 +37,12 @@ pthread_mutex_t     serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_write_lock2=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t     msg_queue_lock=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, 
-monitor_fake_input_task, timer_task, timer2_task, read_button_inputs, serial_recv_task, tcp_monitor_task};
+monitor_fake_input_task, timer_task, timer2_task, read_button_inputs, 
+serial_recv_task, tcp_monitor_task, basic_controls_task};
 
 int threads_ready_count=0;
 pthread_cond_t    threads_ready=PTHREAD_COND_INITIALIZER;
@@ -71,6 +73,9 @@ extern int time_set;
 extern int live_window_on;
 int max_ips;
 IP ip[40];
+static UCHAR msg_queue[MSG_QUEUE_SIZE];
+static int msg_queue_ptr;
+
 
 //static double program_start_time;
 
@@ -881,7 +886,8 @@ UCHAR serial_recv_task(int test)
 
 			if(ch >= ENABLE_START && ch <= BLOWER3)
 			{
-				basic_controls(ch);
+//				basic_controls(ch);
+				add_msg_queue(ch);
 				strcpy(tempx,cmd_array[ch].cmd_str);
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 			}
@@ -1088,7 +1094,35 @@ void *work_routine(void *arg)
 	return(NULL);
 }
 /*********************************************************************/
-void basic_controls(UCHAR cmd)
+void add_msg_queue(UCHAR cmd)
+{
+//	while(msg_queue_ptr >= MSG_QUEUE_SIZE);
+	pthread_mutex_lock(&msg_queue_lock);
+	if(msg_queue_ptr < MSG_QUEUE_SIZE)
+	{
+		msg_queue_ptr++;
+		msg_queue[msg_queue_ptr] = cmd;
+	}
+	pthread_mutex_unlock(&msg_queue_lock);
+//	printf("add: %d %x\r\n",msg_queue_ptr,cmd);
+}
+/*********************************************************************/
+UCHAR get_msg_queue(void)
+{
+	UCHAR cmd;
+	pthread_mutex_lock(&msg_queue_lock);
+	if(msg_queue_ptr > 0)
+	{
+		cmd = msg_queue[msg_queue_ptr];
+		msg_queue_ptr--;
+	}else cmd = 0;
+	pthread_mutex_unlock(&msg_queue_lock);
+//	if(cmd != 0)
+//		printf("get: %d %x\r\n",msg_queue_ptr,cmd);
+	return cmd;
+}
+/*********************************************************************/
+UCHAR basic_controls_task(int test)
 {
 	int i,j;
 	UCHAR onoff;
@@ -1099,6 +1133,7 @@ void basic_controls(UCHAR cmd)
 	size_t isize;
 	size_t osize;
 	char errmsg[50];
+	UCHAR cmd;
 
 //	static UCHAR buffer[30] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
 //				17,18,19,20,21,22,23,24,25,26,27,28,29};
@@ -1121,392 +1156,412 @@ void basic_controls(UCHAR cmd)
 	{RBRIGHTS,0},
 	{RHEADLAMP,0}};
 
-	switch(cmd)
+	memset(msg_queue,0,sizeof(msg_queue));
+	msg_queue_ptr = 0;
+
+	while(TRUE)
 	{
-		case ON_FAN:
-		case OFF_FAN:
-		case ON_LIGHTS:
-		case OFF_LIGHTS:
-		case START_SEQ:
-		case SHUTDOWN:
-		case BLOWER_OFF:
-		case BLOWER1:
-		case BLOWER2:
-		case BLOWER3:
-		case ON_RUNNING_LIGHTS:
-		case OFF_RUNNING_LIGHTS:
-		case ON_BRIGHTS:
-		case OFF_BRIGHTS:
-		case ON_BRAKES:
-		case OFF_BRAKES:
-			send_serial(GENERIC_CMD,cmd);
-		break;
-		default:
-		break;
-	}
+		do{
+			cmd = get_msg_queue();
+			usleep(5000);
+		}while(cmd == 0 && shutdown_all == 0);
 
-	switch(cmd)
-	{
-		case ENABLE_START:
-//			index = STARTER;
-//			rc = ollist_find_data(index,otpp,&oll);
-//			otp->onoff = 1;
-//			ollist_insert_data(index,&oll,otp);
-			change_input(STARTER_INPUT,1);
+		usleep(5000);
+
+		switch(cmd)
+		{
+			case ON_FAN:
+			case OFF_FAN:
+			case ON_LIGHTS:
+			case OFF_LIGHTS:
+			case START_SEQ:
+			case SHUTDOWN:
+			case BLOWER_OFF:
+			case BLOWER1:
+			case BLOWER2:
+			case BLOWER3:
+			case ON_RUNNING_LIGHTS:
+			case OFF_RUNNING_LIGHTS:
+			case ON_BRIGHTS:
+			case OFF_BRIGHTS:
+			case ON_BRAKES:
+			case OFF_BRAKES:
+				send_serial(GENERIC_CMD,cmd);
 			break;
-
-		case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
-							// so turning it "off" will just start the timer again
-//			index = STARTER;
-//			rc = ollist_find_data(index,otpp,&oll);
-//			otp->onoff = 0;
-//			ollist_insert_data(index,&oll,otp);
-			change_input(STARTER_INPUT,0);
+			default:
 			break;
+		}
 
-		case ON_ACC:
-			index = ACCON;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-//			otp->onoff = 1;
-			ollist_insert_data(index,&oll,otp);
-//			change_input(ACCON, 1);
-			if(otp->reset == 0)
-				change_output(ACCON, 1);
-			break;
+		switch(cmd)
+		{
+			case ENABLE_START:
+	//			index = STARTER;
+	//			rc = ollist_find_data(index,otpp,&oll);
+	//			otp->onoff = 1;
+	//			ollist_insert_data(index,&oll,otp);
+				change_input(STARTER_INPUT,1);
+				break;
 
-		case OFF_ACC:
-			index = ACCON;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-//			otp->onoff = 0;
-			ollist_insert_data(index,&oll,otp);
-//			change_input(ACCON, 0);
-			if(otp->reset == 0)
-				change_output(ACCON, 0);
-			break;
+			case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
+								// so turning it "off" will just start the timer again
+	//			index = STARTER;
+	//			rc = ollist_find_data(index,otpp,&oll);
+	//			otp->onoff = 0;
+	//			ollist_insert_data(index,&oll,otp);
+				change_input(STARTER_INPUT,0);
+				break;
 
-		case ON_FUEL_PUMP:
+			case ON_ACC:
+				index = ACCON;
+				rc = ollist_find_data(index,otpp,&oll);
+	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+	//			otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
+	//			change_input(ACCON, 1);
+				if(otp->reset == 0)
+					change_output(ACCON, 1);
+				break;
 
-			index = FUELPUMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-//			otp->onoff = 1;
-//			otp->reset = 0;
-//			ollist_insert_data(index,&oll,otp);
-			if(otp->reset == 0)
-				change_output(FUELPUMP, 1);
+			case OFF_ACC:
+				index = ACCON;
+				rc = ollist_find_data(index,otpp,&oll);
+	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+	//			otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
+	//			change_input(ACCON, 0);
+				if(otp->reset == 0)
+					change_output(ACCON, 0);
+				break;
 
-			break;
+			case ON_FUEL_PUMP:
 
-		case OFF_FUEL_PUMP:
+				index = FUELPUMP;
+				rc = ollist_find_data(index,otpp,&oll);
+	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+	//			otp->onoff = 1;
+	//			otp->reset = 0;
+	//			ollist_insert_data(index,&oll,otp);
+				if(otp->reset == 0)
+					change_output(FUELPUMP, 1);
 
-			index = FUELPUMP;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-//			otp->onoff = 0;
-//			otp->reset = 0;
-//			change_input(FUELPUMP, 0);
-//			ollist_insert_data(index,&oll,otp);
+				break;
 
-			if(otp->reset == 0)
-				change_output(FUELPUMP, 0);
-			break;
+			case OFF_FUEL_PUMP:
 
-		case ON_FAN:
-			change_input(COOLINGFAN_INPUT, 1);
-			break;
+				index = FUELPUMP;
+				rc = ollist_find_data(index,otpp,&oll);
+	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
+	//			otp->onoff = 0;
+	//			otp->reset = 0;
+	//			change_input(FUELPUMP, 0);
+	//			ollist_insert_data(index,&oll,otp);
 
-		case OFF_FAN:
-			change_input(COOLINGFAN_INPUT, 0);
-			break;
+				if(otp->reset == 0)
+					change_output(FUELPUMP, 0);
+				break;
 
-		case ON_LIGHTS:
-			change_input(HEADLAMP_INPUT, 1);
-			break;
+			case ON_FAN:
+				change_input(COOLINGFAN_INPUT, 1);
+				break;
 
-		case OFF_LIGHTS:
-			change_input(HEADLAMP_INPUT, 0);
-			break;
+			case OFF_FAN:
+				change_input(COOLINGFAN_INPUT, 0);
+				break;
 
-		case ON_LLIGHTS:
-			index = LHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			break;
+			case ON_LIGHTS:
+				change_input(HEADLAMP_INPUT, 1);
+				break;
 
-		case OFF_LLIGHTS:
-			index = LHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			break;
+			case OFF_LIGHTS:
+				change_input(HEADLAMP_INPUT, 0);
+				break;
 
-		case ON_RLIGHTS:
-			index = RHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			break;
+			case ON_LLIGHTS:
+				index = LHEADLAMP;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+				break;
 
-		case OFF_RLIGHTS:
-			index = RHEADLAMP;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			break;
+			case OFF_LLIGHTS:
+				index = LHEADLAMP;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				break;
 
-		case ON_RUNNING_LIGHTS:
-			change_input(RUNNING_LIGHTS_INPUT, 1);
-			break;
+			case ON_RLIGHTS:
+				index = RHEADLAMP;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+				break;
 
-		case OFF_RUNNING_LIGHTS:
-			change_input(RUNNING_LIGHTS_INPUT, 0);
-			break;
+			case OFF_RLIGHTS:
+				index = RHEADLAMP;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				break;
+
+			case ON_RUNNING_LIGHTS:
+				change_input(RUNNING_LIGHTS_INPUT, 1);
+				break;
+
+			case OFF_RUNNING_LIGHTS:
+				change_input(RUNNING_LIGHTS_INPUT, 0);
+				break;
 		
-		case SPECIAL_CMD:
-			for(j = 0;j < 2;j++)
-				for(i = 0;i < 16;i++)
+			case SPECIAL_CMD:
+				for(j = 0;j < 2;j++)
+					for(i = 0;i < 16;i++)
+					{
+						index = sp_cmd_arr[i].index;
+						ollist_find_data(index,otpp,&oll);
+						set_output(otp,sp_cmd_arr[i].onoff);
+						usleep(100000);
+					}
+				break;
+
+			case ON_BRIGHTS:
+				change_input(BRIGHTS_INPUT, 1);
+				break;
+
+			case OFF_BRIGHTS:
+				change_input(BRIGHTS_INPUT, 0);
+				break;
+
+			case ON_RBRIGHTS:
+				index = RBRIGHTS;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+				break;
+
+			case OFF_RBRIGHTS:
+				index = RBRIGHTS;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				break;
+
+			case ON_LBRIGHTS:
+				index = LBRIGHTS;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+				break;
+
+			case OFF_LBRIGHTS:
+				index = LBRIGHTS;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				break;
+
+			case TEST_LEFT_BLINKER:
+				change_input(LEFTBLINKER_INPUT,1);
+				test_lblinkers = 1;
+			break;
+
+			case TEST_RIGHT_BLINKER:
+				change_input(RIGHTBLINKER_INPUT,1);
+				test_rblinkers = 1;
+			break;
+
+			case ON_BRAKES:
+				change_input(BRAKE_INPUT,1);
+			break;
+
+			case OFF_BRAKES:
+				change_input(BRAKE_INPUT,0);
+			break;
+
+			// turn off all the others first then turn on
+			// the one relay according to the command
+			case BLOWER1:
+				index = HTRBLOWERMED;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERHIGH;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERLOW;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;
+
+			case BLOWER2:
+				index = HTRBLOWERHIGH;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERLOW;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERMED;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;
+
+			case BLOWER3:
+				index = HTRBLOWERMED;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERLOW;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERHIGH;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;
+
+			// turn all off
+			case BLOWER_OFF:
+				index = HTRBLOWERMED;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERHIGH;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERLOW;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+			break;		
+
+			case TEST_ALL_IO:
+
+				for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
 				{
-					index = sp_cmd_arr[i].index;
-					ollist_find_data(index,otpp,&oll);
-					set_output(otp,sp_cmd_arr[i].onoff);
+					ollist_find_data(i,otpp,&oll);
+					set_output(otp,1);
+					myprintf2("test: ",i);
+					printf("\r\n %d \r\n");
+					usleep(1000000);
+					set_output(otp,0);
 					usleep(100000);
+	//				printf("%d\r\n",i);
 				}
 			break;
 
-		case ON_BRIGHTS:
-			change_input(BRIGHTS_INPUT, 1);
-			break;
-
-		case OFF_BRIGHTS:
-			change_input(BRIGHTS_INPUT, 0);
-			break;
-
-		case ON_RBRIGHTS:
-			index = RBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			break;
-
-		case OFF_RBRIGHTS:
-			index = RBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			break;
-
-		case ON_LBRIGHTS:
-			index = LBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-			break;
-
-		case OFF_LBRIGHTS:
-			index = LBRIGHTS;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			break;
-
-		case TEST_LEFT_BLINKER:
-			change_input(LEFTBLINKER_INPUT,1);
-			test_lblinkers = 1;
-		break;
-
-		case TEST_RIGHT_BLINKER:
-			change_input(RIGHTBLINKER_INPUT,1);
-			test_rblinkers = 1;
-		break;
-
-		case ON_BRAKES:
-			change_input(BRAKE_INPUT,1);
-		break;
-
-		case OFF_BRAKES:
-			change_input(BRAKE_INPUT,0);
-		break;
-
-		// turn off all the others first then turn on
-		// the one relay according to the command
-		case BLOWER1:
-			index = HTRBLOWERMED;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERHIGH;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERLOW;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-		break;
-
-		case BLOWER2:
-			index = HTRBLOWERHIGH;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERLOW;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERMED;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-		break;
-
-		case BLOWER3:
-			index = HTRBLOWERMED;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERLOW;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERHIGH;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,1);
-		break;
-
-		// turn all off
-		case BLOWER_OFF:
-			index = HTRBLOWERMED;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERHIGH;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-			usleep(100000);
-			index = HTRBLOWERLOW;
-			ollist_find_data(index,otpp,&oll);
-			set_output(otp,0);
-		break;		
-
-		case TEST_ALL_IO:
-
-			for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
-			{
-				ollist_find_data(i,otpp,&oll);
-				set_output(otp,1);
-				myprintf2("test: ",i);
-				printf("\r\n %d \r\n");
-				usleep(1000000);
-				set_output(otp,0);
+			case START_SEQ:
+				myprintf1("start seq\0");
+				ollist_find_data(ACCON,&otp,&oll);
+				otp->onoff = 1;
+				otp->reset = 0;
+	//			printf("%d %s\r\n",otp->port,otp->label);
+	//			change_output(otp->port,otp->onoff);
+				change_output(ACCON,1);
 				usleep(100000);
-//				printf("%d\r\n",i);
-			}
-		break;
+				ollist_insert_data(otp->port,&oll,otp);
+				ollist_find_data(FUELPUMP,&otp,&oll);
+				otp->onoff = 1;
+				otp->reset = 0;
+	//			printf("%d %s\r\n",otp->port,otp->label);
+	//			change_output(otp->port,otp->onoff);
+				change_output(FUELPUMP,1);
+				usleep(100000);
+				ollist_insert_data(otp->port,&oll,otp);
 
-		case START_SEQ:
-			myprintf1("start seq\0");
-			ollist_find_data(ACCON,&otp,&oll);
-			otp->onoff = 1;
-			otp->reset = 0;
-//			printf("%d %s\r\n",otp->port,otp->label);
-//			change_output(otp->port,otp->onoff);
-			change_output(ACCON,1);
-			usleep(100000);
-			ollist_insert_data(otp->port,&oll,otp);
-			ollist_find_data(FUELPUMP,&otp,&oll);
-			otp->onoff = 1;
-			otp->reset = 0;
-//			printf("%d %s\r\n",otp->port,otp->label);
-//			change_output(otp->port,otp->onoff);
-			change_output(FUELPUMP,1);
-			usleep(100000);
-			ollist_insert_data(otp->port,&oll,otp);
+				index = STARTER;
+				rc = ollist_find_data(index,otpp,&oll);
+	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
+	//			otp->onoff = 0;
+	//			otp->reset = 0;
+	//			TOGGLE_OTP;
+	//			ollist_insert_data(index,&oll,otp);
+				change_input(STARTER_INPUT, 0);
+				usleep(10000);
+				change_input(STARTER_INPUT, 1);
+	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
+				engine_running = 1;
+	//			printf("engine_running: %d\r\n",engine_running);
+				break;
 
-			index = STARTER;
-			rc = ollist_find_data(index,otpp,&oll);
-//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-//			otp->onoff = 0;
-//			otp->reset = 0;
-//			TOGGLE_OTP;
-//			ollist_insert_data(index,&oll,otp);
-			change_input(STARTER_INPUT, 0);
-			usleep(10000);
-			change_input(STARTER_INPUT, 1);
-//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-			engine_running = 1;
-//			printf("engine_running: %d\r\n",engine_running);
-			break;
+			case SHUTDOWN:
+				myprintf1("shutdown engine\0");
+				running_seconds = running_minutes = running_hours = 0;
+				engine_running = 0;
+	//			printf("engine_running: %d\r\n",engine_running);
+				change_output(ACCON, 0);
+				usleep(10000);
+				ollist_find_data(ACCON,&otp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(otp->port,&oll,otp);
+				change_output(FUELPUMP, 0);
+				ollist_find_data(FUELPUMP,&otp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(otp->port,&oll,otp);
 
-		case SHUTDOWN:
-			myprintf1("shutdown engine\0");
-			running_seconds = running_minutes = running_hours = 0;
-			engine_running = 0;
-//			printf("engine_running: %d\r\n",engine_running);
-			change_output(ACCON, 0);
-			usleep(10000);
-			ollist_find_data(ACCON,&otp,&oll);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
-			change_output(FUELPUMP, 0);
-			ollist_find_data(FUELPUMP,&otp,&oll);
-			otp->onoff = 0;
-			ollist_insert_data(otp->port,&oll,otp);
+	//			index = STARTER;
+	//			rc = ollist_find_data(index,otpp,&oll);
+	//			change_input(STARTER_INPUT,0);
+	//			otp->onoff = 0;
+	//			otp->reset = 0;
+	//			otp->time_left = 0;
+	//			ollist_insert_data(index,&oll,otp);
+	//			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
+	//			set_output(STARTER,0);
+	//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
+				break;
 
-//			index = STARTER;
-//			rc = ollist_find_data(index,otpp,&oll);
-//			change_input(STARTER_INPUT,0);
-//			otp->onoff = 0;
-//			otp->reset = 0;
-//			otp->time_left = 0;
-//			ollist_insert_data(index,&oll,otp);
-//			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
-//			set_output(STARTER,0);
-//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-			break;
-
-		case SHUTDOWN_IOBOX:
-			for(i = 0;i < 30;i++)
-			{
+			case SHUTDOWN_IOBOX:
+				for(i = 0;i < 30;i++)
+				{
+					setdioline(7,0);
+					uSleep(0,TIME_DELAY/20);
+					setdioline(7,1);
+					uSleep(0,TIME_DELAY/20);
+				}
 				setdioline(7,0);
-				uSleep(0,TIME_DELAY/20);
+				uSleep(2,0);
 				setdioline(7,1);
-				uSleep(0,TIME_DELAY/20);
-			}
-			setdioline(7,0);
-			uSleep(2,0);
-			setdioline(7,1);
-			reboot_on_exit = 3;
-			myprintf1("shutdown iobox\0");
-//			printf("shutdown iobox\0");
-			shutdown_all = 1;
-			break;
+				reboot_on_exit = 3;
+				myprintf1("shutdown iobox\0");
+	//			printf("shutdown iobox\0");
+				shutdown_all = 1;
+				break;
 
-		case REBOOT_IOBOX:
-			for(i = 0;i < 10;i++)
-			{
-				red_led(1);
-				usleep(30000);
-				red_led(0);
-				green_led(1);
-				usleep(30000);
-				green_led(0);
-				red_led(1);
-				usleep(30000);
-				red_led(0);
-				green_led(1);
-				usleep(30000);
-				green_led(0);
-			}
+			case REBOOT_IOBOX:
+				for(i = 0;i < 10;i++)
+				{
+					red_led(1);
+					usleep(30000);
+					red_led(0);
+					green_led(1);
+					usleep(30000);
+					green_led(0);
+					red_led(1);
+					usleep(30000);
+					red_led(0);
+					green_led(1);
+					usleep(30000);
+					green_led(0);
+				}
 
-			for(i = 0;i < 30;i++)
-			{
+				for(i = 0;i < 30;i++)
+				{
+					setdioline(7,0);
+					uSleep(0,TIME_DELAY/20);
+					setdioline(7,1);
+					uSleep(0,TIME_DELAY/20);
+				}
 				setdioline(7,0);
-				uSleep(0,TIME_DELAY/20);
+				uSleep(2,0);
 				setdioline(7,1);
-				uSleep(0,TIME_DELAY/20);
-			}
-			setdioline(7,0);
-			uSleep(2,0);
-			setdioline(7,1);
-			reboot_on_exit = 2;
-			myprintf1("reboot iobox\0");
-//			printf("reboot iobox\0");
-			shutdown_all = 1;
-			break;			
-			default:
-			break;
-	}	// end of switch
+				reboot_on_exit = 2;
+				myprintf1("reboot iobox\0");
+	//			printf("reboot iobox\0");
+				shutdown_all = 1;
+				break;			
+				default:
+				break;
+		}	// end of switch
+		if(shutdown_all)
+		{
+			myprintf1("done basic task");
+			printf("done basic task\r\n");
+			return 0;
+		}
+	}
+	return 1;
 }

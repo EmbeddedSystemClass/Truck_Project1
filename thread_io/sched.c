@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 	_threads[SERIAL_RECV].sched = TIME_SLICE;
 //	_threads[SERIAL_RECV2].sched = TIME_SLICE;
 	_threads[TCP_MONITOR].sched = TIME_SLICE;
+	_threads[BASIC_CONTROLS].sched = TIME_SLICE;
 
 	strcpy(_threads[GET_HOST_CMD].label,"GET_HOST_CMD\0");
 	strcpy(_threads[MONITOR_INPUTS].label,"MONITOR_INPUTS\0");
@@ -118,6 +119,7 @@ int main(int argc, char **argv)
 	strcpy(_threads[SERIAL_RECV].label,"SERIAL_RECV\0");
 //	strcpy(_threads[SERIAL_RECV2].label,"SERIAL_RECV2\0");
 	strcpy(_threads[TCP_MONITOR].label,"TCP_MONITOR\0");
+	strcpy(_threads[BASIC_CONTROLS].label,"MSG_QUEUE\0");
 
 /* spawn the threads */
 	for (i = 0; i < NUM_TASKS; i++)

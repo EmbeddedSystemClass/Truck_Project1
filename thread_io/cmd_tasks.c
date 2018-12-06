@@ -332,7 +332,8 @@ UCHAR get_host_cmd_task(int test)
 					case BLOWER1:
 					case BLOWER2:
 					case BLOWER3:
-						basic_controls(cmd);
+//						basic_controls(cmd);
+						add_msg_queue(cmd);
 						strcpy(tempx,cmd_array[cmd].cmd_str);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
@@ -341,6 +342,12 @@ UCHAR get_host_cmd_task(int test)
 					// the next 2 turns on or off the serial port to the PIC24 (monster box)
 					// so if the monster box is switched off for maintenance, the IO box
 					// won't get false signals to turn on or off ports
+/*
+					case SPECIAL_CMD:
+						for(i = 1;i < 20;i++)
+							add_msg_queue(i);
+						break;
+*/
 					case SET_SERIAL_RECV_ON:
 						if(fd = init_serial() < 0)
 						{
