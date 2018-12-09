@@ -415,56 +415,60 @@ ESOS_USER_TASK(recv_comm1)
 
     while (1)
     {
-		ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-		ESOS_TASK_WAIT_ON_GET_UINT16(data1);
-		ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-
-		cmd = (UCHAR)data1;
-		data1 >>= 8;
-		code = (UCHAR)data1;
-
-		// if the cmd != GENERIC_CMD then it's one of the others
-		// in which case code is actually the length of the data to send
-		// otherwise its only 2 bytes
-		if(cmd > START_DS_MSG && cmd < END_DS_MSG)
+		if(key_mode == NORMAL)
 		{
-			if(cmd != GENERIC_CMD)
-			{
-				buffer[0] = cmd;
-				gl_comm1_buf_len = code;
-/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 10;
-					avr_buffer[3] = cmd;
-					AVR_CALL();
+			ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
+			ESOS_TASK_WAIT_ON_GET_UINT16(data1);
+			ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
 
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 0;
-					avr_buffer[2] = 20;
-					avr_buffer[3] = code;
-					AVR_CALL();
-*/
-				ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
-				for(i = 2;i < code;i++)
+			cmd = (UCHAR)data1;
+			data1 >>= 8;
+			code = (UCHAR)data1;
+
+			// if the cmd != GENERIC_CMD then it's one of the others
+			// in which case code is actually the length of the data to send
+			// otherwise its only 2 bytes
+			if(cmd > START_DS_MSG && cmd < END_DS_MSG)
+			{
+				if(cmd != GENERIC_CMD)
 				{
-					ESOS_TASK_WAIT_ON_GET_UINT8(buffer[i]);
+					buffer[0] = cmd;
+					gl_comm1_buf_len = code;
 	/*
-					avr_buffer[0] = SEND_BYTE_RT_VALUES;
-					avr_buffer[1] = 15;
-					avr_buffer[2] = (i-3)*3;
-					avr_buffer[3] = buffer[i];
-					AVR_CALL();
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 10;
+						avr_buffer[3] = cmd;
+						AVR_CALL();
+
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 0;
+						avr_buffer[2] = 20;
+						avr_buffer[3] = code;
+						AVR_CALL();
 	*/
-				}
-				ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
-				__esos_CB_WriteUINT8Buffer(process_comm1_buffer_handle->pst_Mailbox->pst_CBuffer, 
-						&buffer[0], gl_comm1_buf_len);
-			}else
-				__esos_CB_WriteUINT8(process_comm1_handle->pst_Mailbox->pst_CBuffer,code);
-		}
-		memset(buffer,0,sizeof(buffer));
-		FLUSH_ESOS_COMM_IN_DATA();
+					ESOS_TASK_WAIT_ON_AVAILABLE_IN_COMM();
+					for(i = 2;i < code;i++)
+					{
+						ESOS_TASK_WAIT_ON_GET_UINT8(buffer[i]);
+		/*
+						avr_buffer[0] = SEND_BYTE_RT_VALUES;
+						avr_buffer[1] = 15;
+						avr_buffer[2] = (i-3)*3;
+						avr_buffer[3] = buffer[i];
+						AVR_CALL();
+		*/
+					}
+					ESOS_TASK_SIGNAL_AVAILABLE_IN_COMM();
+					__esos_CB_WriteUINT8Buffer(process_comm1_buffer_handle->pst_Mailbox->pst_CBuffer, 
+							&buffer[0], gl_comm1_buf_len);
+				}else
+					__esos_CB_WriteUINT8(process_comm1_handle->pst_Mailbox->pst_CBuffer,code);
+			}
+			memset(buffer,0,sizeof(buffer));
+			FLUSH_ESOS_COMM_IN_DATA();
+
+		}else ESOS_TASK_WAIT_TICKS(500);
 	} // endof while()
     ESOS_TASK_END();
 }
@@ -545,7 +549,6 @@ ESOS_USER_TASK(process_comm1_buffer)
 					break;
 
 				case STOP_SERIAL_RECV:
-					ESOS_TASK_SLEEP();
 					break;
 
 				case ESTOP_SIGNAL:
@@ -633,11 +636,11 @@ ESOS_USER_TASK(process_comm1)
 					break;
 				case ON_LIGHTS:
 					onoff = 0;
-					lights_on = 10;
+					lights_on = 1;
 					break;
 				case OFF_LIGHTS:
 					onoff = 1;
-					lights_on = -1;
+					lights_on = 0;
 					break;
 				case ON_RUNNING_LIGHTS:
 					onoff = 0;
@@ -940,7 +943,7 @@ void user_init(void)
 	esos_RegisterTask(numentry_task);
 	esos_RegisterTask(display_rtlabels);
 	esos_RegisterTask(key_timer_task);
-	esos_RegisterTask(temp_monitor_task);
+//	esos_RegisterTask(temp_monitor_task);
 	esos_RegisterTask(display_rtvalues);
 } // end user_init()
 

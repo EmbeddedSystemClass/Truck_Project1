@@ -287,7 +287,7 @@ ESOS_USER_TASK(menu_task)
 	screen_dim_array[7] =  PWM_12DC_PARAM;
 	screen_dim_array[8] =  PWM_OFF_PARAM;
 	screen_dim_ptr = 0;
-	lights_on = -1;
+	lights_on = 0;
 	fan_on = 0;
 	blower_on = 0;
 	brights_on = 0;
@@ -330,7 +330,9 @@ ESOS_USER_TASK(menu_task)
 					{
 						case 0:
 							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,SHUTDOWN);
+							__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_FAN);
 							engine_on = 0;
+							fan_on = 0;
 						break;
 						case 1:
 						break;
@@ -343,7 +345,7 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
-							if(lights_on > 0)
+							if(lights_on == 1)
 							{
 								if(brights_on == 0)
 								{
@@ -390,15 +392,25 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:
-							if(blower_on == 1)
+							switch(blower_on)
 							{
+								case 0:	
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER_OFF);
-								blower_on = 0;
-							}else
-							{
+								break;
+								case 1:
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER1);
+								break;
+								case 2:
+								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER2);
+								break;
+								case 3:
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,BLOWER3);
-								blower_on = 1;
+								break;
+								default:
+								blower_on = 0;
 							}
+							if(++blower_on > 3)
+								blower_on = 0;
 						break;
 						case 1:
 						break;
@@ -430,16 +442,16 @@ ESOS_USER_TASK(menu_task)
 					switch(menu_ptr)
 					{
 						case 0:	// toggle lights
-							if(lights_on < 10)
+							if(lights_on == 0)
 							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_LIGHTS);
-								lights_on = 120;
+								lights_on = 1;
 							}
 							else
 							{
 								__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,
 									OFF_LIGHTS);
-								lights_on = -1;
+								lights_on = 0;
 								if(brights_on == 1)
 								{
 									__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_BRIGHTS);
@@ -1178,6 +1190,7 @@ ESOS_USER_TASK(key_timer_task)
 		else
 		{
 			engine_run_time = 0;
+/*
 			if(lights_on > 0)
 				lights_on--;
 			if(lights_on == 0)
@@ -1185,6 +1198,12 @@ ESOS_USER_TASK(key_timer_task)
 				__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,OFF_LIGHTS);
 				lights_on--;
 			}
+*/
+		}
+		if(fan_on == 0 && engine_run_time == 60)
+		{
+			__esos_CB_WriteUINT8(comm1_handle->pst_Mailbox->pst_CBuffer,ON_FAN);
+			fan_on = 1;
 		}
 /*
 		avr_buffer[0] = EEPROM_STR;
