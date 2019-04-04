@@ -1,6 +1,6 @@
 git add README.md
 git add Truck_Project1_notes.txt
-git add monster_box.txt
+git add main_box.txt
 git add io_box.txt
 git add gitadd.sh
 git add .gitignore
@@ -10,6 +10,8 @@ git add engine_startup_notes.txt
 git add alot_of_work.txt
 git add append_br.c
 git add replace_tabs.c
+
+git add STM32/test.c
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh
@@ -66,20 +68,6 @@ git add Truck_App1/lcd_pwm.vhd
 #git add Truck_App1/fifo.vhd
 git add Truck_App1/test_outputs.zip
 git add Truck_App1/lib/Common.vhd
-
-git add PIC24_support/lib/*
-git add PIC24_support/esos/*
-git add PIC24_support/esos1/Truck_App2.c
-git add PIC24_support/esos1/Truck_App.h
-git add PIC24_support/PIC24FJ_pinlist.ods
-git add PIC24_support/PIC24_board_pinout.txt
-git add PIC24_support/esos1/copy.sh
-git add PIC24_support/esos1/extract.sh
-git add PIC24_support/esos1/make_avr
-git add PIC24_support/esos1/raw_data.h
-#git add PIC24_support/esos1/ESOS1.X/nbproject/*
-git add PIC24_support/esos1/ESOS1.X/nbproject/Makefile-genesis.properties
-git add PIC24_support/pinout2a.jpg
 
 git add thread_io/ioports.c
 git add thread_io/Makefile
