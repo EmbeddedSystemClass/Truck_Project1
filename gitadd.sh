@@ -11,7 +11,14 @@ git add alot_of_work.txt
 git add append_br.c
 git add replace_tabs.c
 
-git add STM32/test.c
+git add STM32/main.c
+git add STM32/FreeRTOSConfig.h
+git add STM32/startup_stm32f0xx.s
+git add STM32/stm32f0xx_it.h
+git add STM32/tiny_printf.c
+git add STM32/stm32f0xx_conf.h
+git add STM32/system_stm32f0xx.c
+git add STM32/stm32f0xx_it.c
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh

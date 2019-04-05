@@ -61,10 +61,8 @@ keypad:
 row 0-3
 col 0-3
 
+external connectors for Main Box:
 
-
-
-
-
-
+UART1: standard DB-9
+UART3: 5-pin connector
 
