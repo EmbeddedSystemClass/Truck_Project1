@@ -1435,7 +1435,7 @@ UCHAR basic_controls_task(int test)
 					ollist_find_data(i,otpp,&oll);
 					set_output(otp,1);
 					myprintf2("test: ",i);
-					printf("\r\n %d \r\n");
+//					printf("\r\n %d \r\n");
 					usleep(1000000);
 					set_output(otp,0);
 					usleep(100000);
@@ -1559,7 +1559,7 @@ UCHAR basic_controls_task(int test)
 		if(shutdown_all)
 		{
 			myprintf1("done basic task");
-			printf("done basic task\r\n");
+//			printf("done basic task\r\n");
 			return 0;
 		}
 	}
