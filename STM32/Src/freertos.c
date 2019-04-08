@@ -61,7 +61,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define mainQUEUE_SEND_FREQUENCY_MS			( 500 / portTICK_PERIOD_MS )
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -80,6 +80,7 @@ extern UART_HandleTypeDef huart1;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId Task02Handle;
+osThreadId Task03Handle;
 osMessageQId Queue01Handle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,6 +90,7 @@ osMessageQId Queue01Handle;
 
 void StartDefaultTask(void const * argument);
 void StartTask02(void const * argument);
+void StartTask03(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -123,6 +125,10 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(Task02, StartTask02, osPriorityIdle, 0, 128);
   Task02Handle = osThreadCreate(osThread(Task02), NULL);
 
+  /* definition and creation of Task03 */
+  osThreadDef(Task03, StartTask03, osPriorityIdle, 0, 128);
+  Task03Handle = osThreadCreate(osThread(Task03), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -146,6 +152,8 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
+
+  /* USER CODE BEGIN StartDefaultTask */
 	UCHAR xchar = 0x22;
 //	UCHAR xchar = 0x7e;
 	UCHAR buff[100];
@@ -161,9 +169,6 @@ void StartDefaultTask(void const * argument)
 			xchar = 0x21;
  	}
 	i = 0x21;
-
-
-  /* USER CODE BEGIN StartDefaultTask */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -185,25 +190,60 @@ void StartDefaultTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
+	unsigned long ulReceivedValue;
   /* Infinite loop */
-	static int onoff = 0;
+ 	static int onoff = 0;
 	for(;;)
 	{
-		osDelay(1);
+		xQueueReceive( Queue01Handle, &ulReceivedValue, portMAX_DELAY );
 		if(onoff == 0)
 		{
 			HAL_GPIO_WritePin(LED_PORT_GPIO_Port, LED_PORT_Pin, GPIO_PIN_RESET);
 
 			onoff = 1;
-			vTaskDelay(500);
+//			vTaskDelay(500);
 		}else
 		{
 			HAL_GPIO_WritePin(LED_PORT_GPIO_Port, LED_PORT_Pin, GPIO_PIN_SET);
 			onoff = 0;
-			vTaskDelay(500);
+//			vTaskDelay(500);
 		}
 	}
+
   /* USER CODE END StartTask02 */
+}
+
+/* USER CODE BEGIN Header_StartTask03 */
+/**
+* @brief Function implementing the Task03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask03 */
+void StartTask03(void const * argument)
+{
+  /* USER CODE BEGIN StartTask03 */
+	const unsigned long ulValueToSend = 500UL;
+	TickType_t xNextWakeTime;
+  /* Infinite loop */
+	for(;;)
+	{
+		vTaskDelayUntil( &xNextWakeTime, mainQUEUE_SEND_FREQUENCY_MS );
+//		vTaskDelay(500);
+		xQueueSend( Queue01Handle, &ulValueToSend, 0 );
+
+/* 		if(onoff == 0)
+		{
+			HAL_GPIO_WritePin(LED_PORT_GPIO_Port, LED_PORT_Pin, GPIO_PIN_RESET);
+
+			onoff = 1;
+		}else
+		{
+			HAL_GPIO_WritePin(LED_PORT_GPIO_Port, LED_PORT_Pin, GPIO_PIN_SET);
+			onoff = 0;
+		}
+ */	}
+  /* USER CODE END StartTask03 */
 }
 
 /* Private application code --------------------------------------------------*/
