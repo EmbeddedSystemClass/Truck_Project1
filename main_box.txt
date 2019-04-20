@@ -58,11 +58,29 @@ DATA7	B1
 
 keypad:
 
-row 0-3
-col 0-3
+columns:	GPIOC
+
+col0 GPIO_0
+col1 GPIO_1
+col2 GPIO_2
+col3 GPIO_3
+
+rows:		GPIOB
+
+row3 GPIO_12
+row2 GPIO_13
+row1 GPIO_14
+row0 GPIO_15
+
+Usr1_GPIO_Port GPIOA  GPIO_0
+
+
 
 external connectors for Main Box:
 
 UART1: standard DB-9
+RX PA10 - goes to RX on DB-9 converter
+TX PA9  - goes to TX on DB-9 converter
+
 UART3: 5-pin connector
 

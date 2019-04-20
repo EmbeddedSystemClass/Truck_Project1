@@ -444,6 +444,7 @@ void StartTask03(void const * argument)
 				engine_on = 0;
 				fan_on = 0;
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
 			break;
 			case KP_3:
@@ -535,7 +536,7 @@ void StartTask03(void const * argument)
 					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					lights_on = 1;
 					sendval = 4;
-					xQueueSend(FlashQueueHandle, &sendval, 0);
+//					xQueueSend(FlashQueueHandle, &sendval, 0);
 				}
 				else
 				{
@@ -544,7 +545,7 @@ void StartTask03(void const * argument)
 					sendval = (unsigned long)cmd;
 					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					sendval = 2;
-					xQueueSend(FlashQueueHandle, &sendval, 0);
+//					xQueueSend(FlashQueueHandle, &sendval, 0);
 					if(brights_on == 1)
 					{
 						cmd = OFF_BRIGHTS;
@@ -561,7 +562,8 @@ void StartTask03(void const * argument)
 				xQueueSend(Send7200QueueHandle, &sendval, 0);
 */
 				sendval = 8;
-				xQueueSend(FlashQueueHandle, &sendval, 0);
+//				xQueueSend(FlashQueueHandle, &sendval, 0);
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
 			break;
 			case KP_9:
@@ -571,7 +573,8 @@ void StartTask03(void const * argument)
 				xQueueSend(Send7200QueueHandle, &sendval, 0);
 */
 				sendval = 4;
-				xQueueSend(FlashQueueHandle, &sendval, 0);
+//				xQueueSend(FlashQueueHandle, &sendval, 0);
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
 
 			break;
 		}
@@ -728,8 +731,16 @@ void StartTask06(void const * argument)
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 			vTaskDelay(50);
 		}
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		// restore lights to original state
+		if(engine_on == 0)
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		else
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+
+		if(fan_on == 0)
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		else
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 	}
   /* USER CODE END StartTask06 */
 }

@@ -1191,7 +1191,7 @@ UCHAR basic_controls_task(int test)
 			default:
 			break;
 		}
-
+		myprintf1(cmd_array[cmd].cmd_str);
 		switch(cmd)
 		{
 			case ENABLE_START:
