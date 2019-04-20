@@ -2,9 +2,9 @@
 FREERTOS.FootprintOK=true
 FREERTOS.INCLUDE_vTaskDelayUntil=1
 FREERTOS.IPParameters=Tasks01,INCLUDE_vTaskDelayUntil,FootprintOK,configTOTAL_HEAP_SIZE,Queues01
-FREERTOS.Queues01=keypressedQueue,16,uint16_t,0,Dynamic,NULL,NULL
-FREERTOS.Tasks01=defaultTask,0,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;Task02,-3,128,StartTask02,Default,NULL,Dynamic,NULL,NULL;Task03,-3,128,StartTask03,Default,NULL,Dynamic,NULL,NULL;Task04,-3,128,StartTask04,Default,NULL,Dynamic,NULL,NULL;KeyPressed,-3,128,StartKeyPressed,Default,NULL,Dynamic,NULL,NULL
-FREERTOS.configTOTAL_HEAP_SIZE=4000
+FREERTOS.Queues01=keypressedQueue,16,uint16_t,0,Dynamic,NULL,NULL;Send7200Queue,16,uint16_t,0,Dynamic,NULL,NULL;FlashQueue,16,uint16_t,0,Dynamic,NULL,NULL
+FREERTOS.Tasks01=defaultTask,0,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;Task02,-3,128,StartTask02,Default,NULL,Dynamic,NULL,NULL;Task03,-3,128,StartTask03,Default,NULL,Dynamic,NULL,NULL;Task04,-3,128,StartTask04,Default,NULL,Dynamic,NULL,NULL;KeyPressed,-3,128,StartKeyPressed,Default,NULL,Dynamic,NULL,NULL;FlashTask,-3,128,StartTask06,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.configTOTAL_HEAP_SIZE=5000
 File.Version=6
 KeepUserPlacement=true
 Mcu.Family=STM32F1

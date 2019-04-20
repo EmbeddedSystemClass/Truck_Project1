@@ -37,6 +37,7 @@ static int brights_on;
 static int blower_on;
 static int fan_on;
 static int engine_on;
+static int running_lights_on;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -259,7 +260,10 @@ osThreadId Task02Handle;
 osThreadId Task03Handle;
 osThreadId Task04Handle;
 osThreadId KeyPressedHandle;
+osThreadId FlashTaskHandle;
 osMessageQId keypressedQueueHandle;
+osMessageQId Send7200QueueHandle;
+osMessageQId FlashQueueHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -271,6 +275,7 @@ void StartTask02(void const * argument);
 void StartTask03(void const * argument);
 void StartTask04(void const * argument);
 void StartKeyPressed(void const * argument);
+void StartTask06(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -301,6 +306,14 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(keypressedQueue, 16, uint16_t);
   keypressedQueueHandle = osMessageCreate(osMessageQ(keypressedQueue), NULL);
 
+  /* definition and creation of Send7200Queue */
+  osMessageQDef(Send7200Queue, 16, uint16_t);
+  Send7200QueueHandle = osMessageCreate(osMessageQ(Send7200Queue), NULL);
+
+  /* definition and creation of FlashQueue */
+  osMessageQDef(FlashQueue, 16, uint16_t);
+  FlashQueueHandle = osMessageCreate(osMessageQ(FlashQueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -323,8 +336,12 @@ void MX_FREERTOS_Init(void) {
   Task04Handle = osThreadCreate(osThread(Task04), NULL);
 
   /* definition and creation of KeyPressed */
-//  osThreadDef(KeyPressed, StartKeyPressed, osPriorityIdle, 0, 128);
-//  KeyPressedHandle = osThreadCreate(osThread(KeyPressed), NULL);
+  osThreadDef(KeyPressed, StartKeyPressed, osPriorityIdle, 0, 128);
+  KeyPressedHandle = osThreadCreate(osThread(KeyPressed), NULL);
+
+  /* definition and creation of FlashTask */
+  osThreadDef(FlashTask, StartTask06, osPriorityIdle, 0, 128);
+  FlashTaskHandle = osThreadCreate(osThread(FlashTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -363,12 +380,16 @@ void StartDefaultTask(void const * argument)
 void StartTask02(void const * argument)
 {
   /* USER CODE BEGIN StartTask02 */
-//  unsigned long ulReceivedValue;
+	unsigned long ulReceivedValue;
+	UCHAR cmd;
   /* Infinite loop */
-  for(;;)
-  {
-	vTaskDelay(1000);
-  }
+	for(;;)
+	{
+		xQueueReceive(Send7200QueueHandle, &ulReceivedValue, portMAX_DELAY);
+		cmd = (UCHAR)ulReceivedValue;
+		HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+		vTaskDelay(1);
+	}
   /* USER CODE END StartTask02 */
 }
 
@@ -385,26 +406,17 @@ void StartTask03(void const * argument)
 	UCHAR key;
 	UCHAR cmd;
 	unsigned long recval;
-	int i;
-	
+	unsigned long sendval;
+		
 	lights_on = 0;
 	brights_on = 0;
 	fan_on = 0;
 	blower_on = 0;
 	engine_on = 0;
 
-	for(i = 0;i < 20;i++)
-	{
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		vTaskDelay(50);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		vTaskDelay(50);
-	}
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-	
+	sendval = 8;
+	xQueueSend(FlashQueueHandle, &sendval, 0);	
+
   /* Infinite loop */
 	for(;;)
 	{
@@ -417,15 +429,18 @@ void StartTask03(void const * argument)
 				cmd = START_SEQ;
 				if(engine_on == 0)
 				{
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 				}
 			break;
 			case KP_2:
 				cmd = SHUTDOWN;
-				HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+				sendval = (unsigned long)cmd;
+				xQueueSend(Send7200QueueHandle, &sendval, 0);
 				cmd = OFF_FAN;
-				HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+				sendval = (unsigned long)cmd;
+				xQueueSend(Send7200QueueHandle, &sendval, 0);
 				engine_on = 0;
 				fan_on = 0;
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
@@ -437,13 +452,15 @@ void StartTask03(void const * argument)
 					if(brights_on == 0)
 					{
 						cmd = ON_BRIGHTS;
-						HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+						sendval = (unsigned long)cmd;
+						xQueueSend(Send7200QueueHandle, &sendval, 0);
 						brights_on = 1;
 					}
 					else
 					{
 						cmd = OFF_BRIGHTS;
-						HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+						sendval = (unsigned long)cmd;
+						xQueueSend(Send7200QueueHandle, &sendval, 0);
 						brights_on = 0;
 					}
 				}
@@ -452,14 +469,16 @@ void StartTask03(void const * argument)
 				if(fan_on == 0)
 				{
 					cmd = ON_FAN;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					fan_on = 1;
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 				}
 				else
 				{
 					cmd = OFF_FAN;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					fan_on = 0;
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 				}
@@ -469,19 +488,23 @@ void StartTask03(void const * argument)
 				{
 					case 0:	
 					cmd = BLOWER_OFF;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					break;
 					case 1:
 					cmd = BLOWER1;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					break;
 					case 2:
 					cmd = BLOWER2;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					break;
 					case 3:
 					cmd = BLOWER3;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					break;
 					default:
 					blower_on = 0;
@@ -490,32 +513,66 @@ void StartTask03(void const * argument)
 					blower_on = 0;
 			break;
 			case KP_6:
+				if(running_lights_on == 0)
+				{
+					running_lights_on = 1;
+					cmd = ON_RUNNING_LIGHTS;
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
+				}else
+				{
+					running_lights_on = 0;
+					cmd = OFF_RUNNING_LIGHTS;
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
+				}
 			break;
 			case KP_7:
 				if(lights_on == 0)
 				{
 					cmd = ON_LIGHTS;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
 					lights_on = 1;
+					sendval = 4;
+					xQueueSend(FlashQueueHandle, &sendval, 0);
 				}
 				else
 				{
 					cmd = OFF_LIGHTS;
 					lights_on = 0;
-					HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+					sendval = (unsigned long)cmd;
+					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					sendval = 2;
+					xQueueSend(FlashQueueHandle, &sendval, 0);
 					if(brights_on == 1)
 					{
 						cmd = OFF_BRIGHTS;
-						HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+						sendval = (unsigned long)cmd;
+						xQueueSend(Send7200QueueHandle, &sendval, 0);
 						brights_on = 0;
 					}
 				}
 			break;
 			case KP_8:
+/*				opps - this won't work - not part of basic commands
+				cmd = TEST_LEFT_BLINKER;	-- can only be sent via TCP
+				sendval = (unsigned long)cmd;
+				xQueueSend(Send7200QueueHandle, &sendval, 0);
+*/
+				sendval = 8;
+				xQueueSend(FlashQueueHandle, &sendval, 0);
+
 			break;
 			case KP_9:
-				cmd = SPECIAL_CMD;
-				HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+/*
+				cmd = TEST_RIGHT_BLINKER;
+				sendval = (unsigned long)cmd;
+				xQueueSend(Send7200QueueHandle, &sendval, 0);
+*/
+				sendval = 4;
+				xQueueSend(FlashQueueHandle, &sendval, 0);
+
 			break;
 		}
 		// send to USART1 for testing
@@ -568,7 +625,7 @@ void StartTask03(void const * argument)
 		vTaskDelay(10);
 	}
 
-    /* USER CODE END StartTask03 */
+  /* USER CODE END StartTask03 */
 }
 
 /* USER CODE BEGIN Header_StartTask04 */
@@ -612,7 +669,7 @@ void StartTask04(void const * argument)
 				}
 				break;
 			default:
-				HAL_UART_Transmit(&huart2, &e_isrState, 1, 100);
+//				HAL_UART_Transmit(&huart2, &e_isrState, 1, 100);
 				e_isrState = STATE_WAIT_FOR_PRESS;
 				break;
 		}
@@ -632,7 +689,7 @@ void StartTask04(void const * argument)
 /* USER CODE END Header_StartKeyPressed */
 void StartKeyPressed(void const * argument)
 {
-	/* USER CODE BEGIN StartKeyPressed */
+  /* USER CODE BEGIN StartKeyPressed */
 //	unsigned long ulReceivedValue;
 
 	/* Infinite loop */
@@ -641,6 +698,40 @@ void StartKeyPressed(void const * argument)
 		osDelay(1);
 	}
   /* USER CODE END StartKeyPressed */
+}
+
+/* USER CODE BEGIN Header_StartTask06 */
+/**
+* @brief Function implementing the FlashTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask06 */
+void StartTask06(void const * argument)
+{
+  /* USER CODE BEGIN StartTask06 */
+	int i;
+	unsigned long recval;
+	UCHAR cmd;
+  /* Infinite loop */
+	for(;;)
+	{
+		xQueueReceive(FlashQueueHandle, &recval, portMAX_DELAY);
+		cmd = (UCHAR)recval;
+
+		for(i = 0;i < cmd;i++)
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			vTaskDelay(50);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			vTaskDelay(50);
+		}
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+	}
+  /* USER CODE END StartTask06 */
 }
 
 /* Private application code --------------------------------------------------*/

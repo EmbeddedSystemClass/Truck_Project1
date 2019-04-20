@@ -91,7 +91,16 @@ git add thread_io/serial_io.h
 git add thread_io/read_sd.c
 git add thread_io/odata.csv
 git add thread_io/thread_io_notes.txt
-git add thread_io/mingetty/*
+git add thread_io/mingetty/mountcf.sh
+git add thread_io/mingetty/try_sched_7250.sh
+git add thread_io/mingetty/inittab
+git add thread_io/mingetty/mingetty
+git add thread_io/mingetty/my_startup.sh
+git add thread_io/mingetty/try_sched.sh
+git add thread_io/mingetty/inittab_TS-7200
+git add thread_io/mingetty/mingetty.c
+git add thread_io/mingetty/Makefile
+git add thread_io/mingetty/param.conf
 git add thread_io/test_tcp/*.c
 git add thread_io/test_tcp/*.h
 git add thread_io/test_tcp/iostate.bin
