@@ -18,7 +18,7 @@ Take your vehicle someplace where you can drive between 30 and 65 mph. Take vehi
 
 Also what I've learned:
 
-It's not good for the motor to run it the first time for less than 20 minutes or under 1800 rpm. You can lope the cam.
+It's not good for the motor to run it the first time for less than 20 minutes or under 1800 rpm. You can hurt the cam.
 I had to shut mine off several times because it was getting very hot: over 200F. I learned later from a forum that
 they will run hot when breaking in because of all the friction. Plus if the timing is too retarted it will run hot.
 My biggest heat problem, as I found out from the forum and a bit of googling, was that I was trying to pull air 
@@ -31,21 +31,17 @@ shot up out of the cap (which was off as I was going to top it off). I guess the
 engine up with with the T-stat out. Another thing I could have done was to run the heater because with my setup, 
 there is always water circulating through the heater core. 
 
-Just before starting it, I drained the oil into a clean Homer bucket, let it set and poured it into another bucket
-to see if there were any engine filings in the bottom of the bucket (since I had already ran the motor).
-I then put the oil back in the engine. 
-
-With my setup, I'm controlling the ingition, fuel pump and starter from the laptop. The starter has a feature where
-it only enables a relay the gets power to the starter solinoid relay for 8 seconds. Since the laptop was in the
-cab I couldn't climb under the hood in time to hand choke the carb and hit the remote start button. I already had
-the ign relay on because I wanted the electric choke to start opening since I didn't want too much gas into the
-engine on start up as it could wash the oil out of the cylinders. To circumvent this, place a jumper across the
-nc contacts of the secondary relay for the starter solinoid.
-
 Another thing is the timing marks are hard to
 see so mark them with chalk at 10,20 & 30 degrees BTDC.
 
+If using an electric fan behind the radiator, make sure it is pulling air towards the engine thru the radiator.
 
+(https://www.onallcylinders.com/2014/11/13/engine-break-guide-10-tips-help-properly-break-engine/)
 
-
+    Make five or six medium-throttle accelerations to about 4,500 rpm before letting off in gear and 
+    coasting back down to 20 miles-per-hour.
+    Run a couple hard throttle accelerations up to about 5,000 rpm and once again coast back down to 20 
+    miles-per-hour.
+    Let the engine cool, change the oil and filter, and check the coolant level.
+    Drive the next 500 miles normally, keeping the engine below 5,000 rpm and minimizing operation at idle.
 
