@@ -1,6 +1,10 @@
-Main Box to house STM32 chip, AVR, LCD screen and keypad
+Main Box to house STM32 chip and keypad 
+
+Screen Box has the AVR & LCD screen (in sep. panel to left above red & green buttons)
 
 This box replaces the old monster box which housed the screen, keypad, AVR, PIC24FJ and the FPGA boards.
+The main box connects to the screen box via an RS-232 cable using 3v3->5v & RS-232 converters
+There is also a PWM wire from the STM32 to the screen box (or use the PWM on from the FPGA)
 
 The AVR and screen work as before and are connected the same, but an STM32 Discovery board replaces the
 Microchip PIC24FJ.
@@ -11,7 +15,7 @@ same handshacking lines as before. (UART3)
 serial ports:
 
 UART1: monitor/TS-7200 (external)
-UART2: AVR (internal)
+UART2: AVR (external)
 UART3: FPGA (external with 2 handshaking lines)
 
 The STM32 has up to 16 ADC channels but the FPGA can be used to do the ADC using support chips.
@@ -41,12 +45,38 @@ pinout for LCD:
 2) VSS		signal gnd
 1) FG		frame ground (can go to pin 2)
 
+bottom view w/ reset button on right
+
+TX		RX		RESET*		gnd		PD2		PD3		PD4		PD5		PD6		PD7		PB0		PB1
+
+RAW		gnd		RESET*		VCC		PC3		PC2		PC1		PC0		PB5		PB4		PB3		PB2
+																	SCLK	MISO	MOSI	SS
+*either one goes to CS signal on programmer
+
+1)  gnd
+2)  +5V
+3)  VPU
+4)  CLK
+5)  CS
+ 6)  3.3V
+7)  ADC
+8)  AUX
+9)  MOSI
+10) MISO
+(all I'm using, currently are 1,4,5,9 & 10)
+
+ICD cable from programmer looking at hole side with cable up:
+
+1	2	3	4	5
+6	7	8	9	10
+
+
 AVR to t6963:
 WR		C0
 CE		C1
 RST		C2
 CD		C3
-RD		C4
+RD		C4*
 DATA0	D2
 DATA1	D3
 DATA2	D4
@@ -55,6 +85,18 @@ DATA4	D6
 DATA5	D7
 DATA6	B0
 DATA7	B1
+
+* this one is hidden behind PC3 & PC2 labeled as A2 & A3 on some chips
+or labeled as A4 behind reset button on non-pinout end
+
+use an IFR630N mosfet to dim the screen using a PWM signal:
+(looking at top of IFR630N)
+gate drain source
+gate - 3v3 or 5v signal
+drain - comes from gnd of LCD backlight (+LCD backlight is +5v always)
+source - goes to gnd
+for now use a toggle switch as signal (on/off)
+in the future, use a pwm signal from either FPGA or STM32
 
 keypad:
 
@@ -74,13 +116,18 @@ row0 GPIO_15
 
 Usr1_GPIO_Port GPIOA  GPIO_0
 
-
-
 external connectors for Main Box:
 
 UART1: standard DB-9
 RX PA10 - goes to RX on DB-9 converter
 TX PA9  - goes to TX on DB-9 converter
 
+UART2: standard DB-9
+
+
 UART3: 5-pin connector
 
+LED indicator lights:
+1) engine on
+2) fan on
+3) 

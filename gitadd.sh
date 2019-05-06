@@ -14,6 +14,7 @@ git add replace_tabs.c
 git add STM32/*
 git add STM32/.cproject
 git add STM32/.mxproject
+git add STM32/*.ioc
 
 git add AVR_t6963/atmega328p.conf
 git add AVR_t6963/do1.sh

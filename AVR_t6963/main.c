@@ -93,6 +93,7 @@ int main(void)
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
 	GDispClrTxt();
+	FONT_6X8();
 	GDispStringAt(7,15,"LCD is on!");
 	_delay_us(100);
 
@@ -136,7 +137,7 @@ int main(void)
 	}
 */
 	GDispClrTxt();
-
+	FONT_8X8();
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
 

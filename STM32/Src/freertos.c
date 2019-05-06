@@ -26,7 +26,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
+#include "dwt_stm32_delay.h"
 #include "mytypes.h"
+#include "ds1620.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -276,6 +278,7 @@ void StartTask03(void const * argument);
 void StartTask04(void const * argument);
 void StartKeyPressed(void const * argument);
 void StartTask06(void const * argument);
+void StartDS1620Task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -342,6 +345,9 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of FlashTask */
   osThreadDef(FlashTask, StartTask06, osPriorityIdle, 0, 128);
   FlashTaskHandle = osThreadCreate(osThread(FlashTask), NULL);
+
+  osThreadDef(DS1620Task, StartDS1620Task, osPriorityIdle, 0, 128);
+  DS1620TaskHandle = osThreadCreate(osThread(DS1620Task), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -743,6 +749,35 @@ void StartTask06(void const * argument)
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 	}
   /* USER CODE END StartTask06 */
+}
+
+/* USER CODE END Header_StartTask02 */
+void StartDS1620Task(void const * argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+	uint16_t utemp;
+	UCHAR temp;
+	int raw_data;
+
+	DWT_Delay_Init();
+//	gpio_set_direction(OUTPUT);
+  /* Infinite loop */
+	vTaskDelay(3000);
+	
+	for(;;)
+	{
+		vTaskDelay(1000);
+		HAL_GPIO_TogglePin(LED_PORT_GPIO_Port, LED_PORT_Pin);
+		writeByteTo1620(DS1620_CMD_STARTCONV);
+		raw_data = readTempFrom1620();
+		writeByteTo1620(DS1620_CMD_STOPCONV);
+		temp = (UCHAR)raw_data;
+//		printHexByte(temp);
+		raw_data >>= 8;
+		temp = (UCHAR)raw_data;
+//		printHexByte(temp);
+	}
+  /* USER CODE END StartTask02 */
 }
 
 /* Private application code --------------------------------------------------*/
