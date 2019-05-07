@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
+#include "ds1620.h"
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -99,7 +100,27 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
+void set_input(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
+	GPIO_InitStruct.Pin = DS1620_PIN_DQ;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+}
+void set_output(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = DS1620_PIN_DQ;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Mode = GPIO_NOPULL;
+	GPIO_InitStruct.Mode = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
 /* USER CODE END 2 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

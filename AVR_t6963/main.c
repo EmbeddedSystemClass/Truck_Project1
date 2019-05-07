@@ -94,9 +94,9 @@ int main(void)
 	_delay_us(10);
 	GDispClrTxt();
 	FONT_6X8();
-	GDispStringAt(7,15,"LCD is on!");
-	_delay_us(100);
-
+	GDispStringAt(7,7,"LCD is on!");
+	_delay_ms(1000);
+	FONT_8X8();
 
 //	initSPImaster();
 //******************************************************************************************//
@@ -120,9 +120,7 @@ int main(void)
 	spi_ret = 0x30;
 	xrow = 13;
 	xcol = 35;
-
 /*
-	for(i = 0;i < 2;i++)
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
@@ -138,6 +136,7 @@ int main(void)
 */
 	GDispClrTxt();
 	FONT_8X8();
+		
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
 

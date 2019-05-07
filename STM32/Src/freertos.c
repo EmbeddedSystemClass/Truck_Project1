@@ -27,7 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "dwt_stm32_delay.h"
-#include "mytypes.h"
+#include "../mytypes.h"
 #include "ds1620.h"
 /* USER CODE END Includes */
 
@@ -263,6 +263,8 @@ osThreadId Task03Handle;
 osThreadId Task04Handle;
 osThreadId KeyPressedHandle;
 osThreadId FlashTaskHandle;
+osThreadId DS1620TaskHandle;
+osThreadId TestTaskHandle;
 osMessageQId keypressedQueueHandle;
 osMessageQId Send7200QueueHandle;
 osMessageQId FlashQueueHandle;
@@ -279,6 +281,7 @@ void StartTask04(void const * argument);
 void StartKeyPressed(void const * argument);
 void StartTask06(void const * argument);
 void StartDS1620Task(void const * argument);
+void StartTestTask(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -343,11 +346,14 @@ void MX_FREERTOS_Init(void) {
   KeyPressedHandle = osThreadCreate(osThread(KeyPressed), NULL);
 
   /* definition and creation of FlashTask */
-  osThreadDef(FlashTask, StartTask06, osPriorityIdle, 0, 128);
-  FlashTaskHandle = osThreadCreate(osThread(FlashTask), NULL);
+//  osThreadDef(FlashTask, StartTask06, osPriorityIdle, 0, 128);
+//  FlashTaskHandle = osThreadCreate(osThread(FlashTask), NULL);
 
-  osThreadDef(DS1620Task, StartDS1620Task, osPriorityIdle, 0, 128);
-  DS1620TaskHandle = osThreadCreate(osThread(DS1620Task), NULL);
+//  osThreadDef(DS1620Task, StartDS1620Task, osPriorityIdle, 0, 128);
+//  DS1620TaskHandle = osThreadCreate(osThread(DS1620Task), NULL);
+
+  osThreadDef(TestTask, StartTestTask, osPriorityIdle, 0, 128);
+  TestTaskHandle = osThreadCreate(osThread(TestTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -767,7 +773,6 @@ void StartDS1620Task(void const * argument)
 	for(;;)
 	{
 		vTaskDelay(1000);
-		HAL_GPIO_TogglePin(LED_PORT_GPIO_Port, LED_PORT_Pin);
 		writeByteTo1620(DS1620_CMD_STARTCONV);
 		raw_data = readTempFrom1620();
 		writeByteTo1620(DS1620_CMD_STOPCONV);
@@ -778,6 +783,84 @@ void StartDS1620Task(void const * argument)
 //		printHexByte(temp);
 	}
   /* USER CODE END StartTask02 */
+}
+
+/* USER CODE END Header_StartTestTask */
+void StartTestTask(void const * argument)
+{
+	UCHAR key[6];
+	UCHAR rec_char;
+	UCHAR row, col;
+	UCHAR str;
+	UCHAR xbyte;
+	/* USER CODE BEGIN StartTask02 */
+
+	key[0] = CHAR_CMD;
+	xbyte = 0x21;
+	key[2] = 0xFE;
+	for(row = 0;row < ROWS;row++)
+		for(col = 0;col < COLUMN;col++)
+		{
+			key[1] = xbyte;
+			HAL_UART_Transmit(&huart2, key, 3, 100);
+			vTaskDelay(2);
+			if(++xbyte > 0x7e)
+				xbyte = 0x21;
+		}
+
+	row = col = 0;
+	str = 1;
+	key[0] = EEPROM_STR;
+	key[1] = row;
+	key[2] = col;
+	key[3] = str + 2;
+	key[4] = 4;
+	key[5] = 0xFE;
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+	
+	
+	for(;;)
+	{
+		vTaskDelay(200);
+		HAL_UART_Transmit(&huart2, key, 6, 100);
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+
+		do
+		{
+			HAL_UART_Receive(&huart2, &rec_char, 1, 100);
+			vTaskDelay(2);
+		}while(rec_char != 0xFD);
+
+		if(++row > 15)
+		{
+			row = 0;
+			col = 20;
+		}
+
+		if(++str > 30)
+		{
+			str = 1;
+			col = row = 0;
+			key[0] = LCD_CLRSCR;
+			key[1] = 0xFE;
+			HAL_UART_Transmit(&huart2, key, 2, 100);
+			row = col = 0;
+		}
+		vTaskDelay(200);
+
+		key[0] = EEPROM_STR;
+		key[1] = row;
+		key[2] = col;
+		key[3] = str;
+		key[4] = 3;
+		key[5] = 0xFE;
+
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+	}
+	/* USER CODE END StartTestTask */
 }
 
 /* Private application code --------------------------------------------------*/

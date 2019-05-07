@@ -275,3 +275,25 @@ thread_io/ncurses/list_parto.sh
 thread_io/ncurses/pcdat.tar
 thread_io/odata5.dat
 
+AVR_t6963/temp/
+Makefile-genesis.properties
+PIC24_support/esos1/comm1_extra.txt
+STM32/.code_review_properties
+screen.jpg
+thread_io/cs_client/odata.dat
+thread_io/cs_client/odata.tar
+thread_io/dmake4
+thread_io/gitadd.sh
+thread_io/odata.tar
+thread_io/odata.xml
+thread_io/odata2.xml
+thread_io/odata_blank.csv
+thread_io/send_serialother.txt
+thread_io/show_params
+thread_io/test_tcp/make_params
+thread_io/test_tcp/params.tar
+thread_io/test_tcp/show_params
+thread_io/test_tcp/test
+thread_io/test_tcp/test_ioports4
+wire_colors.txt
+

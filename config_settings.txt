@@ -1,0 +1,50 @@
+high rev limit
+6000
+5800
+5600
+5400
+5200
+5000
+4800
+4600
+4200
+4000
+
+low rev limit
+4500
+4400
+4300
+4200
+4100
+4000
+3900
+3800
+3700
+
+lights on delay
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+
+FPGA Transmit Rate
+RPM/MPH Update Rate
+all set to 1000/2000/3000
+
+Test Bank
+Bank 0
+Bank 1
+Bank 2
+Bank 3
+Bank 4
