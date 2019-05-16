@@ -17,104 +17,100 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+#if 1
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "string.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "dwt_stm32_delay.h"
 #include "../mytypes.h"
-#include "ds1620.h"
+#include "ds1620.h"	// not directly attached
+// for now just use the quad sensor via the serial port (UART3)
+#include "freertos_defs.h"
+#include "usart.h"
+//#include "adc.h"
+//#include "raw_data.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-//#define mainQUEUE_SEND_FREQUENCY_MS			( 3000 / portTICK_PERIOD_MS )
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+uint64_t pack64(UCHAR *buff);
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN Variables */
+
+#if 1
 static int lights_on;
 static int brights_on;
 static int blower_on;
 static int fan_on;
 static int engine_on;
+
 static int running_lights_on;
-/* USER CODE END PTD */
+static FORMAT_STR rtlabel_str[NUM_RT_LABELS];
+static FORMAT_STR status_label_str[NUM_STATUS_LABELS];
+static UCHAR menu_ptr;
+static KEY_MODE key_mode;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
+static int key_enter_time;
+static char password[PASSWORD_SIZE];
+static char correct_password[PASSWORD_SIZE];
+static UCHAR password_valid;
+static int password_ptr;
+static int password_retries;
+static int dim_screen;
+static int silent_key;
+static UINT gl_rpm, gl_mph;
+static UINT gl_engine_temp, gl_indoor_temp, gl_outdoor_temp, gl_temp4;
+static UINT gl_blower_en, gl_fan_on, gl_fan_off, gl_blower1_on, gl_blower2_on, gl_blower3_on;
+static UCHAR gl_comm1_buf_len;
+static int engine_run_time;
+static int engine_shutdown;
+static int engine_shuttingdown;
+static char num_entry_num[SIZE_NUM];
+static int num_entry_ptr;
+static int num_entry_limit;
+static int num_entry_type;
+static UINT curr_num_entry_row;
+static UINT curr_num_entry_col;
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-enum key_types
+static void clr_scr(void)
 {
- 	KP_1 = 0xE0, // '1'		- E0
-	KP_2, // '2'		- E1
-	KP_3, // '3'		- E2
-	KP_4, // '4'		- E3
-	KP_5, // '5'		- E4
-	KP_6, // '6'		- E5
-	KP_7, // '7'		- E6
-	KP_8, // '8'		- E7
-	KP_9, // '9'		- E8
-	KP_A, // 'A'		- E9
-	KP_B, // 'B'		- EA
-	KP_C, // 'C'		- EB
-	KP_D, // 'D'		- EC
-	KP_POUND,	// '#'	- ED
-	KP_AST, // '*'		- EE
-	KP_0 	// '0'		- EF
-} KEY_TYPES;
-/*	for testing
-	KP_0 = 0x30,
-	KP_1, // '1'		- E0
-	KP_2, // '2'		- E1
-	KP_3, // '3'		- E2
-	KP_4, // '4'		- E3
-	KP_5, // '5'		- E4
-	KP_6, // '6'		- E5
-	KP_7, // '7'		- E6
-	KP_8, // '8'		- E7
-	KP_9, // '9'		- E8
-	KP_A = 'A',
-	KP_B, // 'B'
-	KP_C, // 'C'
-	KP_D, // 'D'
-	KP_POUND = '#',
-	KP_AST = '*'
-} KEY_TYPES;
-*/
-#define col0 col0_Pin
-#define col1 col1_Pin
-#define col2 col2_Pin
-#define col3 col3_Pin
+	UCHAR key[2];
+	key[0] = LCD_CLRSCR;
+	key[1] = 0xFE;
+	HAL_UART_Transmit(&huart2, key, 2, 100);
+}
 
-#define row0 row0_Pin
-#define row1 row1_Pin
-#define row2 row2_Pin
-#define row3 row3_Pin
-
-#define NUM_ROWS 4
-#define NUM_COLS 4
-
-typedef enum
+static void goto_scr(UCHAR row, UCHAR col)
 {
-	STATE_WAIT_FOR_PRESS = 1,
-	STATE_WAIT_FOR_RELEASE
-} ISRSTATE;
+	UCHAR key[4];
+	key[0] = GOTO_CMD;
+	key[1] = row;
+	key[2] = col;
+	key[3] = 0xFE;
+	HAL_UART_Transmit(&huart2, key, 4, 100);
+}
 
-static ISRSTATE e_isrState;
-
-const uint8_t au8_keyTable[NUM_ROWS][NUM_COLS] =
-{
-	{KP_1, KP_2, KP_3, KP_A },
-	{KP_4, KP_5, KP_6, KP_B },
-	{KP_7, KP_8, KP_9, KP_C },
-	{KP_AST, KP_0, KP_POUND, KP_D}
-};
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
 static void setOneRowLow(uint8_t u8_x)
 {
 	switch (u8_x)
@@ -153,15 +149,7 @@ static void setOneRowLow(uint8_t u8_x)
 	}
 }
 
-/* static void drive_row_low(void)
-{
-	HAL_GPIO_WritePin(GPIOB, row0, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, row1, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, row2, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, row3, GPIO_PIN_RESET);
-}
-
- */static void drive_row_high(void)
+static void drive_row_high(void)
 {
 	HAL_GPIO_WritePin(GPIOB, row0, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOB, row1, GPIO_PIN_SET);
@@ -199,13 +187,6 @@ int key_is_released(void)
 	return 0;
 }
 
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN Variables */
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-
 UCHAR do_keyscan(void)
 {
 	uint8_t u8_row;
@@ -224,50 +205,88 @@ UCHAR do_keyscan(void)
 		{
 			key_pressed = (au8_keyTable[u8_row][0]);
 			return key_pressed;
-//			HAL_UART_Transmit(&huart2, &key_pressed, 1, 100);
-//				vTaskDelay(1);
 		}
 		state = HAL_GPIO_ReadPin(GPIOC,col1);
 		if(state == GPIO_PIN_RESET)
 		{
 			key_pressed = (au8_keyTable[u8_row][1]);
 			return key_pressed;
-//			HAL_UART_Transmit(&huart2, &key_pressed, 1, 100);
-//				vTaskDelay(1);
 		}
 		state = HAL_GPIO_ReadPin(GPIOC,col2);
 		if(state == GPIO_PIN_RESET)
 		{
 			key_pressed = (au8_keyTable[u8_row][2]);
 			return key_pressed;
-//			HAL_UART_Transmit(&huart2, &key_pressed, 1, 100);
-//				vTaskDelay(1);
 		}
 		state = HAL_GPIO_ReadPin(GPIOC,col3);
 		if(state == GPIO_PIN_RESET)
 		{
 			key_pressed = (au8_keyTable[u8_row][3]);
 			return key_pressed;
-//			HAL_UART_Transmit(&huart2, &key_pressed, 1, 100);
 		}
-//		vTaskDelay(1);
 	}
 	return 0;
 }
 
-
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
-osThreadId Task02Handle;
-osThreadId Task03Handle;
-osThreadId Task04Handle;
-osThreadId KeyPressedHandle;
-osThreadId FlashTaskHandle;
+uint32_t defaultTaskBuffer[ 70 ];
+osStaticThreadDef_t defaultTaskControlBlock;
+
+osThreadId BasicCmdTaskHandle;
+uint32_t myTask02Buffer[ 70 ];
+osStaticThreadDef_t myTask02ControlBlock;
+
+osThreadId KeyStateTaskHandle;
+uint32_t myTask03Buffer[ 70 ];
+osStaticThreadDef_t myTask03ControlBlock;
+
 osThreadId DS1620TaskHandle;
-osThreadId TestTaskHandle;
+uint32_t myTask04Buffer[ 70 ];
+osStaticThreadDef_t myTask04ControlBlock;
+
+osThreadId Task7200Handle;
+uint32_t myTask05Buffer[ 70 ];
+osStaticThreadDef_t myTask05ControlBlock;
+
+osThreadId AVRTaskHandle;
+uint32_t myTask06Buffer[ 70 ];
+osStaticThreadDef_t myTask06ControlBlock;
+#if 0
+osThreadId myTask07Handle;
+uint32_t myTask07Buffer[ 70 ];
+osStaticThreadDef_t myTask07ControlBlock;
+
+osThreadId myTask08Handle;
+uint32_t myTask08Buffer[ 70 ];
+osStaticThreadDef_t myTask08ControlBlock;
+
+osThreadId myTask09Handle;
+uint32_t myTask09Buffer[ 70 ];
+osStaticThreadDef_t myTask09ControlBlock;
+
+osThreadId myTask10Handle;
+uint32_t myTask10Buffer[ 70 ];
+osStaticThreadDef_t myTask10ControlBlock;
+
+osThreadId myTask11Handle;
+uint32_t myTask11Buffer[ 70 ];
+osStaticThreadDef_t myTask11ControlBlock;
+#endif
 osMessageQId keypressedQueueHandle;
+uint8_t myQueue01Buffer[ 16 * sizeof( uint16_t ) ];
+osStaticMessageQDef_t myQueue01ControlBlock;
+
 osMessageQId Send7200QueueHandle;
-osMessageQId FlashQueueHandle;
+uint8_t myQueue02Buffer[ 16 * sizeof( uint16_t ) ];
+osStaticMessageQDef_t myQueue02ControlBlock;
+
+osMessageQId SendAVRQueueHandle;
+uint8_t myQueue03Buffer[ 5 * sizeof( uint64_t ) ];
+osStaticMessageQDef_t myQueue03ControlBlock;
+
+osTimerId myTimer01Handle;
+osStaticTimerDef_t myTimer01ControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -275,15 +294,52 @@ osMessageQId FlashQueueHandle;
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
-void StartTask02(void const * argument);
-void StartTask03(void const * argument);
-void StartTask04(void const * argument);
-void StartKeyPressed(void const * argument);
-void StartTask06(void const * argument);
+void StartBasicCmdTask(void const * argument);
+void StartKeyStateTask(void const * argument);
 void StartDS1620Task(void const * argument);
-void StartTestTask(void const * argument);
+void StartTask7200(void const * argument);
+void StartAVRTask(void const * argument);
+void StartTask07(void const * argument);
+void StartTask08(void const * argument);
+void StartTask09(void const * argument);
+void StartTask10(void const * argument);
+void StartTask11(void const * argument);
+void Callback01(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* GetIdleTaskMemory prototype (linked to static allocation support) */
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+
+/* GetTimerTaskMemory prototype (linked to static allocation support) */
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
+
+/* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
+static StaticTask_t xIdleTaskTCBBuffer;
+static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+  
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
+{
+  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  /* place for user code */
+}                   
+/* USER CODE END GET_IDLE_TASK_MEMORY */
+
+/* USER CODE BEGIN GET_TIMER_TASK_MEMORY */
+static StaticTask_t xTimerTaskTCBBuffer;
+static StackType_t xTimerStack[configTIMER_TASK_STACK_DEPTH];
+  
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize )  
+{
+  *ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
+  *ppxTimerTaskStackBuffer = &xTimerStack[0];
+  *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+  /* place for user code */
+}
+#endif
+/* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
   * @brief  FreeRTOS initialization
@@ -303,64 +359,89 @@ void MX_FREERTOS_Init(void) {
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of myTimer01 */
+  osTimerStaticDef(myTimer01, Callback01, &myTimer01ControlBlock);
+  myTimer01Handle = osTimerCreate(osTimer(myTimer01), osTimerPeriodic, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* definition and creation of keypressedQueue */
-  osMessageQDef(keypressedQueue, 16, uint16_t);
-  keypressedQueueHandle = osMessageCreate(osMessageQ(keypressedQueue), NULL);
-
-  /* definition and creation of Send7200Queue */
-  osMessageQDef(Send7200Queue, 16, uint16_t);
-  Send7200QueueHandle = osMessageCreate(osMessageQ(Send7200Queue), NULL);
-
-  /* definition and creation of FlashQueue */
-  osMessageQDef(FlashQueue, 16, uint16_t);
-  FlashQueueHandle = osMessageCreate(osMessageQ(FlashQueue), NULL);
-
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+
+	osMessageQStaticDef(myQueue01, 16, uint16_t, myQueue01Buffer, &myQueue01ControlBlock);
+	keypressedQueueHandle = osMessageCreate(osMessageQ(myQueue01), NULL);
+
+	/* definition and creation of myQueue02 */
+	osMessageQStaticDef(myQueue02, 16, uint16_t, myQueue02Buffer, &myQueue02ControlBlock);
+	Send7200QueueHandle = osMessageCreate(osMessageQ(myQueue02), NULL);
+
+	/* definition and creation of myQueue03 */
+	osMessageQStaticDef(myQueue03, 5, uint64_t, myQueue03Buffer, &myQueue03ControlBlock);
+	SendAVRQueueHandle = osMessageCreate(osMessageQ(myQueue03), NULL);
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 70, defaultTaskBuffer,
+		&defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of Task02 */
-  osThreadDef(Task02, StartTask02, osPriorityIdle, 0, 128);
-  Task02Handle = osThreadCreate(osThread(Task02), NULL);
+  /* definition and creation of myTask02 */
+  //StartBasicCmdTask
+  osThreadStaticDef(BasicCmdTask, StartBasicCmdTask, osPriorityIdle, 0, 70, myTask02Buffer, 
+         &myTask02ControlBlock);
+  BasicCmdTaskHandle = osThreadCreate(osThread(BasicCmdTask), NULL);
 
-  /* definition and creation of Task03 */
-  osThreadDef(Task03, StartTask03, osPriorityIdle, 0, 128);
-  Task03Handle = osThreadCreate(osThread(Task03), NULL);
+  /* definition and creation of myTask03 */
+  // StartKeyStateTask
+  osThreadStaticDef(myTask03, StartKeyStateTask, osPriorityIdle, 0, 70, myTask03Buffer, 
+		&myTask03ControlBlock);
+  KeyStateTaskHandle = osThreadCreate(osThread(myTask03), NULL);
 
-  /* definition and creation of Task04 */
-  osThreadDef(Task04, StartTask04, osPriorityIdle, 0, 128);
-  Task04Handle = osThreadCreate(osThread(Task04), NULL);
+  /* definition and creation of myTask04 */
+  osThreadStaticDef(myTask04, StartDS1620Task, osPriorityIdle, 0, 70, myTask04Buffer, 
+		&myTask04ControlBlock);
+  DS1620TaskHandle = osThreadCreate(osThread(myTask04), NULL);
 
-  /* definition and creation of KeyPressed */
-  osThreadDef(KeyPressed, StartKeyPressed, osPriorityIdle, 0, 128);
-  KeyPressedHandle = osThreadCreate(osThread(KeyPressed), NULL);
+  /* definition and creation of myTask05 */
+  osThreadStaticDef(myTask05, StartTask7200, osPriorityIdle, 0, 70, myTask05Buffer, &myTask05ControlBlock);
+  Task7200Handle = osThreadCreate(osThread(myTask05), NULL);
 
-  /* definition and creation of FlashTask */
-//  osThreadDef(FlashTask, StartTask06, osPriorityIdle, 0, 128);
-//  FlashTaskHandle = osThreadCreate(osThread(FlashTask), NULL);
+  /* definition and creation of myTask06 */
+  osThreadStaticDef(myTask06, StartAVRTask, osPriorityIdle, 0, 70, myTask06Buffer, &myTask06ControlBlock);
+  AVRTaskHandle = osThreadCreate(osThread(myTask06), NULL);
+#if 0
+  /* definition and creation of myTask07 */
+  osThreadStaticDef(myTask07, StartTask07, osPriorityIdle, 0, 70, myTask07Buffer, &myTask07ControlBlock);
+  myTask07Handle = osThreadCreate(osThread(myTask07), NULL);
 
-//  osThreadDef(DS1620Task, StartDS1620Task, osPriorityIdle, 0, 128);
-//  DS1620TaskHandle = osThreadCreate(osThread(DS1620Task), NULL);
+  /* definition and creation of myTask08 */
+  osThreadStaticDef(myTask08, StartTask08, osPriorityIdle, 0, 70, myTask08Buffer, &myTask08ControlBlock);
+  myTask08Handle = osThreadCreate(osThread(myTask08), NULL);
 
-  osThreadDef(TestTask, StartTestTask, osPriorityIdle, 0, 128);
-  TestTaskHandle = osThreadCreate(osThread(TestTask), NULL);
+// disable the last 2 tasks or it hangs - not enough memory, I guess
+  /* definition and creation of myTask09 */
+  osThreadStaticDef(myTask09, StartTask09, osPriorityIdle, 0, 70, myTask09Buffer, &myTask09ControlBlock);
+  myTask09Handle = osThreadCreate(osThread(myTask09), NULL);
 
+  /* definition and creation of myTask10 */
+  osThreadStaticDef(myTask10, StartTask10, osPriorityIdle, 0, 70, myTask10Buffer, &myTask10ControlBlock);
+  myTask10Handle = osThreadCreate(osThread(myTask10), NULL);
+
+  /* definition and creation of myTask11 */
+  osThreadStaticDef(myTask11, StartTask11, osPriorityIdle, 0, 70, myTask11Buffer, &myTask11ControlBlock);
+  myTask11Handle = osThreadCreate(osThread(myTask11), NULL);
+#endif
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
 }
-
+#endif
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
   * @brief  Function implementing the defaultTask thread.
@@ -370,55 +451,71 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-
+	int i;
+	UCHAR xbyte;
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-//		HAL_UART_Transmit(&huart1,buff,93,100);
-		vTaskDelay(2000);
+  	menu_ptr = 0;
+    password_valid = 0;
+    password_ptr = 0;
+	password_retries = 0;
 
-  }
-  /* USER CODE END StartDefaultTask */
+	key_mode = PASSWORD;
+//	key_mode = NORMAL;
+	DWT_Delay_Init();
+//	osTimerStart(myTimer01Handle,1000);
+
+#if 0
+	memset(correct_password,0,sizeof(correct_password));
+	strcpy(correct_password,"2354795\0");
+	memset(password,0,PASSWORD_SIZE);
+	osTimerStart(myTimer01Handle,1000);
+//	avr_buffer[0] = PASSWORD_MODE;
+#endif
+  /* Infinite loop */
+
+	xbyte = 0x21;
+	for(i = 0;i < 20;i++)
+	{
+  		if(menu_ptr == 0)
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+//			HAL_UART_Transmit(&huart1, &xbyte, 1, 100);
+//			if(++xbyte > 0x7e)
+//				xbyte = 0x21;
+			vTaskDelay(50);
+			menu_ptr = 1;
+		}else
+		{
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			vTaskDelay(50);
+			menu_ptr = 0;
+		}
+	}
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+
+	for(;;)
+	{
+		vTaskDelay(2000);
+	}
+	/* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
-* @brief Function implementing the Task02 thread.
+* @brief Function implementing the myTask02 thread.
 * @param argument: Not used
 * @retval None
 */
 /* USER CODE END Header_StartTask02 */
-void StartTask02(void const * argument)
+void StartBasicCmdTask(void const * argument)
 {
-  /* USER CODE BEGIN StartTask02 */
-	unsigned long ulReceivedValue;
-	UCHAR cmd;
-  /* Infinite loop */
-	for(;;)
-	{
-		xQueueReceive(Send7200QueueHandle, &ulReceivedValue, portMAX_DELAY);
-		cmd = (UCHAR)ulReceivedValue;
-		HAL_UART_Transmit(&huart1, &cmd, 1, 100);
-		vTaskDelay(1);
-	}
-  /* USER CODE END StartTask02 */
-}
-
-/* USER CODE BEGIN Header_StartTask03 */
-/**
-* @brief Function implementing the Task03 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask03 */
-void StartTask03(void const * argument)
-{
-  /* USER CODE BEGIN StartTask03 */
 	UCHAR key;
 	UCHAR cmd;
 	unsigned long recval;
-	unsigned long sendval;
+	unsigned long sendval; 
 		
 	lights_on = 0;
 	brights_on = 0;
@@ -427,7 +524,7 @@ void StartTask03(void const * argument)
 	engine_on = 0;
 
 	sendval = 8;
-	xQueueSend(FlashQueueHandle, &sendval, 0);	
+//	xQueueSend(FlashQueueHandle, &sendval, 0);	
 
   /* Infinite loop */
 	for(;;)
@@ -636,29 +733,25 @@ void StartTask03(void const * argument)
 				key = 'D';
 			break;
 		}
-		HAL_UART_Transmit(&huart2, &key, 1, 100);
 		vTaskDelay(10);
 	}
-
-  /* USER CODE END StartTask03 */
 }
 
-/* USER CODE BEGIN Header_StartTask04 */
+/* USER CODE BEGIN Header_StartTask03 */
 /**
-* @brief Function implementing the Task04 thread.
+* @brief Function implementing the myTask03 thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask04 */
-void StartTask04(void const * argument)
+/* USER CODE END Header_StartTask03 */
+void StartKeyStateTask(void const * argument)
 {
-  /* USER CODE BEGIN StartTask04 */
-	static UCHAR key;
+ 	static UCHAR key;
 	unsigned long sendval;
   
-  /* Infinite loop */
 	e_isrState = STATE_WAIT_FOR_PRESS;  
 
+	vTaskDelay(1000);
 	for(;;)
 	{
 		switch (e_isrState)
@@ -676,7 +769,6 @@ void StartTask04(void const * argument)
 				if(key_is_released() == 1)
 				{
 					e_isrState = STATE_WAIT_FOR_PRESS;
-//					HAL_UART_Transmit(&huart2, &key, 1, 100);
 					drive_row_high();
 					sendval = (unsigned long)key;
 					xQueueSend(keypressedQueueHandle, &sendval, 0);
@@ -684,196 +776,420 @@ void StartTask04(void const * argument)
 				}
 				break;
 			default:
-//				HAL_UART_Transmit(&huart2, &e_isrState, 1, 100);
 				e_isrState = STATE_WAIT_FOR_PRESS;
 				break;
 		}
-//		temp = e_isrState + 0x30;
-//		HAL_UART_Transmit(&huart2, &temp, 1, 100);
 		vTaskDelay(1);
 	}
-  /* USER CODE END StartTask04 */
 }
 
-/* USER CODE BEGIN Header_StartKeyPressed */
+/* USER CODE BEGIN Header_StartTask04 */
 /**
-* @brief Function implementing the KeyPressed thread.
+* @brief Function implementing the myTask04 thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartKeyPressed */
-void StartKeyPressed(void const * argument)
+/* USER CODE END Header_StartTask04 */
+void StartDS1620Task(void const * argument)
 {
-  /* USER CODE BEGIN StartKeyPressed */
-//	unsigned long ulReceivedValue;
+	UINT raw_data;
+	UCHAR row, col;
+	uint64_t avr_buffer[5];
+	UCHAR ucbuff[8];
+	UCHAR xbyte;
+	uint64_t temp;
 
-	/* Infinite loop */
+	initDS1620();
+	vTaskDelay(1000);
+
+	row = col = 0;
+	raw_data = 0;
+	memset(ucbuff, 0, 8);
+	xbyte = 0x21;
+
+	ucbuff[0] = CHAR_CMD;
+
+/*
+	for(row = 0;row < ROWS;row++)
+		for(col = 0;col < COLUMN;col++)
+		{
+			ucbuff[1] = xbyte;
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+			vTaskDelay(5);
+			if(++xbyte > 0x7e)
+				xbyte = 0x21;
+		}
+*/
+	clr_scr();
+
 	for(;;)
 	{
-		osDelay(1);
+		writeByteTo1620(DS1620_CMD_STARTCONV);
+		vTaskDelay(10);
+		raw_data = readTempFrom1620();
+		vTaskDelay(10);
+		writeByteTo1620(DS1620_CMD_STOPCONV);
+		vTaskDelay(100);
+
+		ucbuff[0] = DISPLAY_TEMP;
+		ucbuff[1] = row;
+		ucbuff[2] = col;
+		ucbuff[4] = (UCHAR)raw_data;
+		raw_data >>= 8;
+		ucbuff[3] = (UCHAR)raw_data;
+
+		avr_buffer[0] = pack64(ucbuff);
+/*	
+		ucbuff[0] = CHAR_CMD;
+		ucbuff[1] = xbyte;
+		avr_buffer[0] = pack64(ucbuff);
+*/
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		vTaskDelay(1000);
+		if(++xbyte > 0x7e)
+			xbyte = 0x21;
+	
+		if(++row > ROWS)
+		{
+			row = 0;
+			if((col += 8) > 37)
+			{
+				clr_scr();
+				col = 0;
+			}
+		}
 	}
-  /* USER CODE END StartKeyPressed */
+}
+
+/* USER CODE BEGIN Header_StartTask05 */
+/**
+* @brief Function implementing the myTask05 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask05 */
+void StartTask7200(void const * argument)
+{
+	unsigned long ulReceivedValue;
+	UCHAR cmd;
+
+	for(;;)
+	{
+		xQueueReceive(Send7200QueueHandle, &ulReceivedValue, portMAX_DELAY);
+		cmd = (UCHAR)ulReceivedValue;
+		HAL_UART_Transmit(&huart1, &cmd, 1, 100);
+		vTaskDelay(10);
+	}
 }
 
 /* USER CODE BEGIN Header_StartTask06 */
 /**
-* @brief Function implementing the FlashTask thread.
+* @brief Function implementing the myTask06 thread.
 * @param argument: Not used
 * @retval None
 */
 /* USER CODE END Header_StartTask06 */
-void StartTask06(void const * argument)
+void StartAVRTask(void const * argument)
 {
-  /* USER CODE BEGIN StartTask06 */
-	int i;
-	unsigned long recval;
-	UCHAR cmd;
-  /* Infinite loop */
+//	TickType_t delay = 200;
+	uint64_t avr_buffer[5];
+	UCHAR ucbuff[8];
+	UCHAR end_byte;
+	uint64_t temp;
+
 	for(;;)
 	{
-		xQueueReceive(FlashQueueHandle, &recval, portMAX_DELAY);
-		cmd = (UCHAR)recval;
+		xQueueReceive(SendAVRQueueHandle, avr_buffer, portMAX_DELAY);
 
-		for(i = 0;i < cmd;i++)
+		ucbuff[0] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[1] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[2] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[3] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[4] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[5] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[6] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		ucbuff[7] = (UCHAR)avr_buffer[0];
+		avr_buffer[0] >>= 8;
+
+		switch (ucbuff[0])
 		{
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			vTaskDelay(50);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			vTaskDelay(50);
+			case EEPROM_STR:
+			case DISPLAY_TEMP:
+			case SEND_INT_RT_VALUES:
+			case DISPLAY_ELAPSED_TIME:
+			case SET_MODE_CMD:
+				HAL_UART_Transmit(&huart2, ucbuff, 5, 100);
+				break;
+			case CHAR_CMD:
+			case SET_NUM_ENTRY_MODE:
+			case PASSWORD_MODE:
+				HAL_UART_Transmit(&huart2, ucbuff, 2, 100);
+				break;
+			case GOTO_CMD:
+				HAL_UART_Transmit(&huart2, ucbuff, 3, 100);
+				break;
+			case DISPLAY_RTLABELS:
+				HAL_UART_Transmit(&huart2, ucbuff, 6, 100);
+				break;
+			case SEND_BYTE_HEX_VALUES:
+			case SEND_BYTE_RT_VALUES:
+				HAL_UART_Transmit(&huart2, ucbuff, 4, 100);
+				break;
+			case LCD_CLRSCR:
+				HAL_UART_Transmit(&huart2, ucbuff, 1, 100);
+				break;
+			default:
+				break;
 		}
-		// restore lights to original state
-		if(engine_on == 0)
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		else
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-
-		if(fan_on == 0)
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		else
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		end_byte = 0xFE;
+		HAL_UART_Transmit(&huart2, &end_byte, 1, 100);
 	}
-  /* USER CODE END StartTask06 */
 }
 
-/* USER CODE END Header_StartTask02 */
-void StartDS1620Task(void const * argument)
-{
-  /* USER CODE BEGIN StartTask02 */
-	uint16_t utemp;
-	UCHAR temp;
-	int raw_data;
 
-	DWT_Delay_Init();
-//	gpio_set_direction(OUTPUT);
+#if 0
+/* USER CODE BEGIN Header_StartTask07 */
+/**
+* @brief Function implementing the myTask07 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask07 */
+void StartTask07(void const * argument)
+{
+  /* USER CODE BEGIN StartTask07 */
   /* Infinite loop */
-	vTaskDelay(3000);
-	
-	for(;;)
-	{
-		vTaskDelay(1000);
-		writeByteTo1620(DS1620_CMD_STARTCONV);
-		raw_data = readTempFrom1620();
-		writeByteTo1620(DS1620_CMD_STOPCONV);
-		temp = (UCHAR)raw_data;
-//		printHexByte(temp);
-		raw_data >>= 8;
-		temp = (UCHAR)raw_data;
-//		printHexByte(temp);
-	}
-  /* USER CODE END StartTask02 */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask07 */
 }
 
-/* USER CODE END Header_StartTestTask */
-void StartTestTask(void const * argument)
+/* USER CODE BEGIN Header_StartTask08 */
+/**
+* @brief Function implementing the myTask08 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask08 */
+void StartTask08(void const * argument)
 {
-	UCHAR key[6];
+  /* USER CODE BEGIN StartTask08 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask08 */
+}
+
+/* USER CODE BEGIN Header_StartTask09 */
+/**
+* @brief Function implementing the myTask09 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask09 */
+void StartTask09(void const * argument)
+{
+  /* USER CODE BEGIN StartTask09 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask09 */
+}
+
+/* USER CODE BEGIN Header_StartTask10 */
+/**
+* @brief Function implementing the myTask10 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask10 */
+void StartTask10(void const * argument)
+{
+  /* USER CODE BEGIN StartTask10 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask10 */
+}
+
+/* USER CODE BEGIN Header_StartTask11 */
+/**
+* @brief Function implementing the myTask11 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask11 */
+void StartTask11(void const * argument)
+{
 	UCHAR rec_char;
 	UCHAR row, col;
 	UCHAR str;
 	UCHAR xbyte;
-	/* USER CODE BEGIN StartTask02 */
+	int i, j;
+	uint64_t avr_buffer[5];
+	UCHAR ucbuff[8];
 
-	key[0] = CHAR_CMD;
+//	memset(avr_buffer,0,20);
+
+	vTaskDelay(10);
+
+	clr_scr();
+	vTaskDelay(10);
+
+	ucbuff[0] = CHAR_CMD;
 	xbyte = 0x21;
-	key[2] = 0xFE;
-	for(row = 0;row < ROWS;row++)
-		for(col = 0;col < COLUMN;col++)
-		{
-			key[1] = xbyte;
-			HAL_UART_Transmit(&huart2, key, 3, 100);
-			vTaskDelay(2);
-			if(++xbyte > 0x7e)
-				xbyte = 0x21;
-		}
+	ucbuff[2] = 0xFE;
+	goto_scr(0,0);
 
-	row = col = 0;
-	str = 1;
-	key[0] = EEPROM_STR;
-	key[1] = row;
-	key[2] = col;
-	key[3] = str + 2;
-	key[4] = 4;
-	key[5] = 0xFE;
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-	
-	
 	for(;;)
 	{
-		vTaskDelay(200);
-		HAL_UART_Transmit(&huart2, key, 6, 100);
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+	
+		for(row = 0;row < ROWS;row++)
+			for(col = 0;col < COLUMN;col++)
+			{
+				ucbuff[1] = xbyte;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+				vTaskDelay(5);
+				if(++xbyte > 0x7e)
+					xbyte = 0x21;
+			}
 
-		do
-		{
-			HAL_UART_Receive(&huart2, &rec_char, 1, 100);
-			vTaskDelay(2);
-		}while(rec_char != 0xFD);
+		vTaskDelay(1000);
+		clr_scr();
+	}
+#if 0
+	row = 1;
+	col = 0;
+	str = 0;
+
+	ucbuff[0] = EEPROM_STR;
+	ucbuff[4] = 15;
+	ucbuff[5] = 0xFE;
+
+	j = 0;
+	for(;;)
+	{
+		ucbuff[1] = row;
+		ucbuff[2] = col;
+		ucbuff[3] = str;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		vTaskDelay(500);
 
 		if(++row > 15)
 		{
-			row = 0;
+			row = 1;
 			col = 20;
 		}
 
-		if(++str > 30)
+		if(++str > 31)
 		{
-			str = 1;
-			col = row = 0;
-			key[0] = LCD_CLRSCR;
-			key[1] = 0xFE;
-			HAL_UART_Transmit(&huart2, key, 2, 100);
-			row = col = 0;
+//			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			vTaskDelay(1500);
+			str = 0;
+			col = 0;
+			row = 1;
+
+			clr_scr();
+			
+			goto_scr(0,0);
+/*
+			if(++j > 10)
+			{
+				j = 0;
+				avr_buffer[0] = CHAR_CMD;
+				xbyte = 0x21;
+				avr_buffer[2] = 0xFE;
+				goto_scr(0,0);
+				
+				for(row = 0;row < ROWS;row++)
+					for(col = 0;col < COLUMN;col++)
+					{
+						avr_buffer[1] = xbyte;
+						xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+						vTaskDelay(5);
+						if(++xbyte > 0x7e)
+							xbyte = 0x21;
+					}
+				avr_buffer[0] = EEPROM_STR;
+				avr_buffer[4] = 15;
+				avr_buffer[5] = 0xFE;
+
+			}
+*/
 		}
-		vTaskDelay(200);
-
-		key[0] = EEPROM_STR;
-		key[1] = row;
-		key[2] = col;
-		key[3] = str;
-		key[4] = 3;
-		key[5] = 0xFE;
-
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	}
-	/* USER CODE END StartTestTask */
+#endif
+}
+#endif
+
+/* Callback01 function */
+void Callback01(void const * argument)
+{
+#if 0
+	if(menu_ptr == 0)
+	{
+//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		menu_ptr = 1;
+	}else
+	{
+//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+		menu_ptr = 0;
+	}
+#endif
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+uint64_t pack64(UCHAR *buff)
 {
- 	UCHAR crow;
+	uint64_t var64;
+	UCHAR temp;
 
- 	crow = (UCHAR)GPIO_Pin;
-	crow += 0x30;
-	HAL_UART_Transmit(&huart2, &crow, 1, 100);
-
-}	
+	var64 = (uint64_t)buff[7];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[6];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[5];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[4];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[3];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[2];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[1];
+	var64 <<= 8;
+	var64 |= (uint64_t)buff[0];
+	return var64;
+}
+     
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

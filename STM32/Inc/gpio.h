@@ -38,7 +38,9 @@
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void init_DS1620(void);
+void set_input(void);
+void set_output(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

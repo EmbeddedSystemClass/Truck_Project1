@@ -10,6 +10,7 @@ git add engine_startup_notes.txt
 git add alot_of_work.txt
 git add append_br.c
 git add replace_tabs.c
+git add avr_cmds.txt
 
 git add STM32/*
 git add STM32/.cproject

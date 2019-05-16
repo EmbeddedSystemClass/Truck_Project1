@@ -238,6 +238,7 @@ enum output_types
 #define DISPLAY_RTLABELS		19
 #define DISPLAY_STATUSLABELS	20
 #define DISPLAY_ELAPSED_TIME	21
+#define DISPLAY_TEMP			22
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1

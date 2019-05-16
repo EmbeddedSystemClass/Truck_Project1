@@ -72,7 +72,7 @@ int main(void)
 		j++;
 		*(temp+j) = 0;
 	}
-	eeprom_update_block((const void*)temp,(void *)eepromString,j);
+	eeprom_write_block((const void*)temp,(void *)eepromString,j);
 
 	GDispInit();
 	_delay_ms(1);
@@ -81,6 +81,7 @@ int main(void)
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
 	GDispClrTxt();
+	FONT_8X8();
 	GDispStringAt(7,15,"LCD is on!");
 	_delay_ms(1000);
 	GDispClrTxt();

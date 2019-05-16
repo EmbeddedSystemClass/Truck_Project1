@@ -43,7 +43,10 @@ void MX_USART2_UART_Init(void);
 void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void printHexByte1(uint8_t byte);
+void printHexByte2(uint8_t byte);
+char nibbleToHexCharacter(uint8_t nibble);
+void printString(char myString[]);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

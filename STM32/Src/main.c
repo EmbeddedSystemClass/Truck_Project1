@@ -9,10 +9,10 @@
   * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -112,19 +112,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-/* 	  int button = HAL_GPIO_ReadPin(Usr1_GPIO_Port, Usr1_Pin);
-	  if (button != 0) {
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-	  HAL_Delay(500);
-	  HAL_GPIO_TogglePin(LD4_GPIO_Port,LD4_Pin);
-	  HAL_Delay(500);
-	  } else
-	  {
-		  HAL_GPIO_WritePin(LD4_GPIO_Port,LD4_Pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(LD4_GPIO_Port,LD4_Pin,GPIO_PIN_RESET);
-	  }
- */
-	vTaskDelay(1000);
   }
   /* USER CODE END 3 */
 }

@@ -10,10 +10,10 @@
   * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -39,7 +39,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 typedef unsigned char UCHAR;
 typedef unsigned int UINT;
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -62,18 +62,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define col0_Pin GPIO_PIN_0
 #define col0_GPIO_Port GPIOC
-#define col0_EXTI_IRQn EXTI0_IRQn
 #define col1_Pin GPIO_PIN_1
 #define col1_GPIO_Port GPIOC
-#define col1_EXTI_IRQn EXTI1_IRQn
 #define col2_Pin GPIO_PIN_2
 #define col2_GPIO_Port GPIOC
-#define col2_EXTI_IRQn EXTI2_IRQn
 #define col3_Pin GPIO_PIN_3
 #define col3_GPIO_Port GPIOC
-#define col3_EXTI_IRQn EXTI3_IRQn
-#define Usr1_Pin GPIO_PIN_0
-#define Usr1_GPIO_Port GPIOA
 #define row3_Pin GPIO_PIN_12
 #define row3_GPIO_Port GPIOB
 #define row2_Pin GPIO_PIN_13

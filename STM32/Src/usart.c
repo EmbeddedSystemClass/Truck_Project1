@@ -233,6 +233,64 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+void printHexByte1(uint8_t byte) 
+{
+	/* Prints a byte as its hexadecimal equivalent */
+	uint8_t nibble;
+	nibble = (byte & 0b11110000) >> 4;
+	nibble = nibbleToHexCharacter(nibble);
+	HAL_UART_Transmit(&huart1, &nibble,1,100);
+	nibble = byte & 0b00001111;
+	nibble = nibbleToHexCharacter(nibble);
+	HAL_UART_Transmit(&huart1, &nibble,1,100);
+	nibble = 0x20;
+	HAL_UART_Transmit(&huart1, &nibble,1,100);
+}
+
+void printHexByte2(uint8_t byte) 
+{
+	/* Prints a byte as its hexadecimal equivalent */
+	uint8_t nibble;
+	nibble = (byte & 0b11110000) >> 4;
+	nibble = nibbleToHexCharacter(nibble);
+	HAL_UART_Transmit(&huart2, &nibble,1,100);
+	nibble = byte & 0b00001111;
+	nibble = nibbleToHexCharacter(nibble);
+	HAL_UART_Transmit(&huart2, &nibble,1,100);
+	nibble = 0x20;
+	HAL_UART_Transmit(&huart2, &nibble,1,100);
+}
+
+char nibbleToHexCharacter(uint8_t nibble) 
+{
+	/* Converts 4 bits into hexadecimal */
+	if (nibble < 10) 
+	{
+		return ('0' + nibble);
+	}
+	else 
+	{
+		return ('A' + nibble - 10);
+	}
+}
+
+
+void printString(char myString[]) 
+{
+	uint8_t i = 0;
+	UCHAR temp;
+//	transmitByte(0x20);
+	temp = 0x20;
+	HAL_UART_Transmit(&huart1, &temp,1,100);
+	while (temp != 0) 
+	{
+//		transmitByte(myString[i]);
+		temp = (UCHAR)myString[i];
+		HAL_UART_Transmit(&huart1, &temp, 1, 100);
+		i++;
+	}
+//	transmitByte(0xFE);
+}
 
 /* USER CODE END 1 */
 
