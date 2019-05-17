@@ -84,6 +84,16 @@ void Error_Handler(void);
 #define TMS_SWDIO_GPIO_Port GPIOA
 #define TCK_SWCLK_Pin GPIO_PIN_14
 #define TCK_SWCLK_GPIO_Port GPIOA
+#define Wiper_Park_Switch_Pin GPIO_PIN_4
+#define Wiper_Park_Switch_GPIO_Port GPIOC
+#define Wiper_Park_Switch_EXTI_IRQn EXTI4_IRQn
+#define DataReady_Pin GPIO_PIN_4
+#define DataReady_GPIO_Port GPIOA
+#define CmdParam_Pin GPIO_PIN_5
+#define CmdParam_GPIO_Port GPIOA
+#define DataSent_Pin GPIO_PIN_6
+#define DataSent_GPIO_Port GPIOA
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

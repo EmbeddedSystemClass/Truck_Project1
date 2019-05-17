@@ -2,7 +2,6 @@
 #define  __TASKS_H
 
 #define NUM_TASKS           	9
-#define MSG_QUEUE_SIZE			100
 #define DEFAULT                 0
 #define TIME_SLICE              1
 #define FIFO                    2
@@ -41,13 +40,12 @@ UCHAR basic_controls_task(int test);
 int change_output(int index, int onoff);
 int change_input(int index, int onoff);
 void basic_controls(UCHAR code);
-void send_serial(UCHAR cmd, UCHAR code);
+void send_serial(UCHAR cmd);
+void send_serialother(UCHAR cmd, UCHAR *buf, int len);
 void send_param_msg(void);
 void add_msg_queue(UCHAR cmd);
 UCHAR get_msg_queue(void);
 
-//void send_serialother(UCHAR cmd, UCHAR data1, UCHAR data2, UCHAR data3, UCHAR data4, UCHAR data5);
-void send_serialother(UCHAR cmd, UCHAR *buf, int len);
 int uSleep(time_t sec, long nanosec);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);

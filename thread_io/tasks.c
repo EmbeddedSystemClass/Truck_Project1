@@ -272,7 +272,7 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				send_serial(ESTOP_SIGNAL,0);
+				send_serial(ESTOP_SIGNAL);
 				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
@@ -294,7 +294,7 @@ static void set_output(O_DATA *otp, int onoff)
 	
 }
 /*********************************************************************/
-void send_serial(UCHAR cmd, UCHAR code)
+void send_serial(UCHAR cmd)
 {
 	int i;
 //	UCHAR buffer[21];
@@ -302,7 +302,6 @@ void send_serial(UCHAR cmd, UCHAR code)
 //	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
 	write_serial(cmd);
-	write_serial(code);
 /*
 	buffer[0] = cmd;
 	buffer[1] = code;	
@@ -880,11 +879,12 @@ UCHAR serial_recv_task(int test)
 //		if(serial_recv_on == 1)
 		if(1)
 		{
-			pthread_mutex_lock( &serial_read_lock);
+			pthread_mutex_lock( &serial_read_lock); 
 			ch = read_serial(errmsg);
 			pthread_mutex_unlock(&serial_read_lock);
 
-			if(ch >= ENABLE_START && ch <= BLOWER3)
+			// msg's known by the tcp laptop
+			if(ch >= ENABLE_START && ch <= WIPER_OFF)
 			{
 //				basic_controls(ch);
 				add_msg_queue(ch);
@@ -1121,6 +1121,7 @@ UCHAR get_msg_queue(void)
 //		printf("get: %d %x\r\n",msg_queue_ptr,cmd);
 	return cmd;
 }
+
 /*********************************************************************/
 UCHAR basic_controls_task(int test)
 {
@@ -1161,6 +1162,7 @@ UCHAR basic_controls_task(int test)
 
 	while(TRUE)
 	{
+		// wait for a new cmd to arrive in the msg_queue
 		do{
 			cmd = get_msg_queue();
 			usleep(5000);
@@ -1186,7 +1188,10 @@ UCHAR basic_controls_task(int test)
 			case OFF_BRIGHTS:
 			case ON_BRAKES:
 			case OFF_BRAKES:
-				send_serial(GENERIC_CMD,cmd);
+			case WIPER1:
+			case WIPER2:
+			case WIPER_OFF:
+				send_serial(cmd);
 			break;
 			default:
 			break;
@@ -1412,6 +1417,36 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
 			break;
+
+			case WIPER1:
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;	
+
+			case WIPER2:
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;	
+
+			case WIPER_OFF:
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+			break;	
 
 			// turn all off
 			case BLOWER_OFF:

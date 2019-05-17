@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[60] =
+CMD_STRUCT cmd_array[63] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -73,6 +73,9 @@ CMD_STRUCT cmd_array[60] =
 	{		BLOWER1,"BLOWER1\0" },
 	{		BLOWER2,"BLOWER2\0" },
 	{		BLOWER3,"BLOWER3\0" },
+	{		WIPER1,"WIPER1\0" },
+	{		WIPER2,"WIPER2\0" },
+	{		WIPER_OFF,"WIPER_OFF\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
@@ -251,7 +254,7 @@ UCHAR get_host_cmd_task(int test)
 
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.20\0");
+	myprintf1("sched v1.21\0");
 //	printf("sched v1.19\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
@@ -798,7 +801,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_RECV:
-						send_serial(STOP_SERIAL_RECV,0);
+						send_serial(STOP_SERIAL_RECV);
 						break;
 
 					// upload this program and then goto reboot so it comes up using the
@@ -839,7 +842,7 @@ exit_program:
 						else
 						{
 //							printf("exit program\r\n");
-							send_serial(STOP_SERIAL_RECV,0);
+							send_serial(STOP_SERIAL_RECV);
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do

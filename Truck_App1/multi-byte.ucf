@@ -23,6 +23,9 @@ NET		"tx_mph"		LOC = "P64";
 NET		"pwm_spk1"		LOC = "P62";
 NET		"pwm_spk2"		LOC = "P61";
 
+NET		"pwm_signal_1"	LOC = "P35";
+NET		"pwm_signal_2"	LOC = "P39";
+
 # pwm for dimmer for LCD screen
 NET		"pwm_lcd"		LOC = "P60";
 NET		"fp_shutoff"	LOC = "P33";

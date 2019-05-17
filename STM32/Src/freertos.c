@@ -252,7 +252,7 @@ osStaticThreadDef_t myTask05ControlBlock;
 osThreadId AVRTaskHandle;
 uint32_t myTask06Buffer[ 70 ];
 osStaticThreadDef_t myTask06ControlBlock;
-#if 0
+
 osThreadId myTask07Handle;
 uint32_t myTask07Buffer[ 70 ];
 osStaticThreadDef_t myTask07ControlBlock;
@@ -272,7 +272,7 @@ osStaticThreadDef_t myTask10ControlBlock;
 osThreadId myTask11Handle;
 uint32_t myTask11Buffer[ 70 ];
 osStaticThreadDef_t myTask11ControlBlock;
-#endif
+
 osMessageQId keypressedQueueHandle;
 uint8_t myQueue01Buffer[ 16 * sizeof( uint16_t ) ];
 osStaticMessageQDef_t myQueue01ControlBlock;
@@ -284,6 +284,10 @@ osStaticMessageQDef_t myQueue02ControlBlock;
 osMessageQId SendAVRQueueHandle;
 uint8_t myQueue03Buffer[ 5 * sizeof( uint64_t ) ];
 osStaticMessageQDef_t myQueue03ControlBlock;
+
+osMessageQId SendFPGAQueueHandle;
+uint8_t myQueue04Buffer[ 16 * sizeof( uint16_t ) ];
+osStaticMessageQDef_t myQueue04ControlBlock;
 
 osTimerId myTimer01Handle;
 osStaticTimerDef_t myTimer01ControlBlock;
@@ -299,9 +303,9 @@ void StartKeyStateTask(void const * argument);
 void StartDS1620Task(void const * argument);
 void StartTask7200(void const * argument);
 void StartAVRTask(void const * argument);
-void StartTask07(void const * argument);
-void StartTask08(void const * argument);
-void StartTask09(void const * argument);
+void StartRecv7200(void const * argument);
+void StartSendFPGA(void const * argument);
+void StartRecvFPGA(void const * argument);
 void StartTask10(void const * argument);
 void StartTask11(void const * argument);
 void Callback01(void const * argument);
@@ -382,6 +386,9 @@ void MX_FREERTOS_Init(void) {
 	osMessageQStaticDef(myQueue03, 5, uint64_t, myQueue03Buffer, &myQueue03ControlBlock);
 	SendAVRQueueHandle = osMessageCreate(osMessageQ(myQueue03), NULL);
 
+	/* definition and creation of myQueue03 */
+	osMessageQStaticDef(myQueue04, 16, uint16_t, myQueue04Buffer, &myQueue04ControlBlock);
+	SendFPGAQueueHandle = osMessageCreate(osMessageQ(myQueue04), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -414,18 +421,18 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of myTask06 */
   osThreadStaticDef(myTask06, StartAVRTask, osPriorityIdle, 0, 70, myTask06Buffer, &myTask06ControlBlock);
   AVRTaskHandle = osThreadCreate(osThread(myTask06), NULL);
-#if 0
+
   /* definition and creation of myTask07 */
-  osThreadStaticDef(myTask07, StartTask07, osPriorityIdle, 0, 70, myTask07Buffer, &myTask07ControlBlock);
+  osThreadStaticDef(myTask07, StartRecv7200, osPriorityIdle, 0, 70, myTask07Buffer, &myTask07ControlBlock);
   myTask07Handle = osThreadCreate(osThread(myTask07), NULL);
 
   /* definition and creation of myTask08 */
-  osThreadStaticDef(myTask08, StartTask08, osPriorityIdle, 0, 70, myTask08Buffer, &myTask08ControlBlock);
+  osThreadStaticDef(myTask08, StartSendFPGA, osPriorityIdle, 0, 70, myTask08Buffer, &myTask08ControlBlock);
   myTask08Handle = osThreadCreate(osThread(myTask08), NULL);
 
 // disable the last 2 tasks or it hangs - not enough memory, I guess
   /* definition and creation of myTask09 */
-  osThreadStaticDef(myTask09, StartTask09, osPriorityIdle, 0, 70, myTask09Buffer, &myTask09ControlBlock);
+  osThreadStaticDef(myTask09, StartRecvFPGA, osPriorityIdle, 0, 70, myTask09Buffer, &myTask09ControlBlock);
   myTask09Handle = osThreadCreate(osThread(myTask09), NULL);
 
   /* definition and creation of myTask10 */
@@ -435,7 +442,7 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of myTask11 */
   osThreadStaticDef(myTask11, StartTask11, osPriorityIdle, 0, 70, myTask11Buffer, &myTask11ControlBlock);
   myTask11Handle = osThreadCreate(osThread(myTask11), NULL);
-#endif
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -468,7 +475,6 @@ void StartDefaultTask(void const * argument)
 	memset(correct_password,0,sizeof(correct_password));
 	strcpy(correct_password,"2354795\0");
 	memset(password,0,PASSWORD_SIZE);
-	osTimerStart(myTimer01Handle,1000);
 //	avr_buffer[0] = PASSWORD_MODE;
 #endif
   /* Infinite loop */
@@ -495,6 +501,7 @@ void StartDefaultTask(void const * argument)
 	}
 	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+	osTimerStart(myTimer01Handle,1000);
 
 	for(;;)
 	{
@@ -505,7 +512,7 @@ void StartDefaultTask(void const * argument)
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
-* @brief Function implementing the myTask02 thread.
+* @brief get keypresses and process - mostly sending msg to 7200 task
 * @param argument: Not used
 * @retval None
 */
@@ -739,7 +746,7 @@ void StartBasicCmdTask(void const * argument)
 
 /* USER CODE BEGIN Header_StartTask03 */
 /**
-* @brief Function implementing the myTask03 thread.
+* @brief state machine for keypad
 * @param argument: Not used
 * @retval None
 */
@@ -785,7 +792,7 @@ void StartKeyStateTask(void const * argument)
 
 /* USER CODE BEGIN Header_StartTask04 */
 /**
-* @brief Function implementing the myTask04 thread.
+* @brief read data from DS1620
 * @param argument: Not used
 * @retval None
 */
@@ -864,7 +871,7 @@ void StartDS1620Task(void const * argument)
 
 /* USER CODE BEGIN Header_StartTask05 */
 /**
-* @brief Function implementing the myTask05 thread.
+* @brief recv msg's for 7200 and send to USART 1
 * @param argument: Not used
 * @retval None
 */
@@ -885,7 +892,7 @@ void StartTask7200(void const * argument)
 
 /* USER CODE BEGIN Header_StartTask06 */
 /**
-* @brief Function implementing the myTask06 thread.
+* @brief get msg's to be sent to AVR (LCD screen)
 * @param argument: Not used
 * @retval None
 */
@@ -961,212 +968,256 @@ void StartAVRTask(void const * argument)
 	}
 }
 
-
-#if 0
-/* USER CODE BEGIN Header_StartTask07 */
+/* USER CODE BEGIN Header_StartRecv7200 */
 /**
-* @brief Function implementing the myTask07 thread.
+* @brief get cmd's from 7200 and process: mostly display on screen
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask07 */
-void StartTask07(void const * argument)
+/* USER CODE END Header_StartRecv7200 */
+void StartRecv7200(void const * argument)
 {
-  /* USER CODE BEGIN StartTask07 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask07 */
+	/* USER CODE BEGIN StartRecv7200 */
+	UCHAR rec_byte;
+	/* Infinite loop */
+	for(;;)
+	{
+		vTaskDelay(10);
+		HAL_UART_Receive(&huart1, &rec_byte, 1, 100);
+		switch(rec_byte)
+		{
+			case ON_FAN:
+			case OFF_FAN:
+			case ON_LIGHTS:
+			case OFF_LIGHTS:
+			case START_SEQ:
+			case SHUTDOWN:
+			case BLOWER_OFF:
+			case BLOWER1:
+			case BLOWER2:
+			case BLOWER3:
+			case ON_RUNNING_LIGHTS:
+			case OFF_RUNNING_LIGHTS:
+			case ON_BRIGHTS:
+			case OFF_BRIGHTS:
+			case ON_BRAKES:
+			case OFF_BRAKES:
+			case WIPER1:
+			case WIPER2:
+			case WIPER_OFF:
+			break;
+		}
+	}
+	/* USER CODE END StartRecv7200 */
 }
 
-/* USER CODE BEGIN Header_StartTask08 */
+/* USER CODE BEGIN Header_StartSendFPGA */
 /**
-* @brief Function implementing the myTask08 thread.
+* @brief send cmd's to FPGA over USART3
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask08 */
-void StartTask08(void const * argument)
+/* USER CODE END Header_StartSendFPGA */
+void StartSendFPGA(void const * argument)
 {
-  /* USER CODE BEGIN StartTask08 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask08 */
+	/* USER CODE BEGIN StartSendFPGA */
+	// send data to the FPGA and use handshaking lines DataReady & CmdParam
+	// 1) set CmdParam
+	// 2) set DataReady
+	// 3) send the cmd
+	// 4) set both lines low
+	// 5) set DataReady high
+	// 6) send the param
+	// 7) set DataReady low
+
+	UCHAR cmd, param;
+	uint16_t rec_val;
+	/* Infinite loop */
+	for(;;)
+	{
+		xQueueReceive(SendFPGAQueueHandle, &rec_val, portMAX_DELAY);
+		param = (UCHAR)rec_val;
+		rec_val >>= 8;
+		cmd = (UCHAR)rec_val;
+		HAL_GPIO_WritePin(CmdParam_GPIO_Port, CmdParam_Pin, GPIO_PIN_SET);
+		vTaskDelay(1);
+		HAL_GPIO_WritePin(DataReady_GPIO_Port, DataReady_Pin, GPIO_PIN_SET);
+		HAL_UART_Transmit(&huart3, &cmd, 1, 100);
+		HAL_GPIO_WritePin(CmdParam_GPIO_Port, CmdParam_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(DataReady_GPIO_Port, DataReady_Pin, GPIO_PIN_RESET);
+		vTaskDelay(1);
+		HAL_GPIO_WritePin(DataReady_GPIO_Port, DataReady_Pin, GPIO_PIN_SET);
+		HAL_UART_Transmit(&huart3, &param, 1, 100);
+		vTaskDelay(1);
+		HAL_GPIO_WritePin(DataReady_GPIO_Port, DataReady_Pin, GPIO_PIN_RESET);
+		vTaskDelay(1);
+	}
+	/* USER CODE END StartSendFPGA */
 }
 
-/* USER CODE BEGIN Header_StartTask09 */
+/* USER CODE BEGIN Header_StartRecvFPGA */
 /**
-* @brief Function implementing the myTask09 thread.
+* @brief recv data from FPGA
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask09 */
-void StartTask09(void const * argument)
+/* USER CODE END Header_StartRecvFPGA */
+void StartRecvFPGA(void const * argument)
 {
-  /* USER CODE BEGIN StartTask09 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask09 */
+	/* USER CODE BEGIN StartRecvFPGA */
+	// recv data from FPGA
+	// this waits for serial input from FPGA which happens at a freq determinted by setting
+	// the update rate - for now just sends the current rpm/mph preceded by '0xFF'
+	// FPGA sends
+	// 0 - 0xFF
+	// 1 - low byte of temperature data1
+	// 2 - high byte of temperature data1
+	// 3 - low byte of temperature data2
+	// 4 - high byte of temperature data2
+	// 5 - low byte of temperature data3
+	// 6 - high byte of temperature data3
+	// 7 - low byte of temperature data4
+	// 8 - high byte of temperature data4
+	// 9 - low byte of rpm
+	// 10 - high byte of mph
+	// 11 - low byte of mph
+	// 12 - high byte of mph
+	// 13 - should be a '5'	(not used)
+	// 14 - should be a '6'		"
+	// 15 - should be a '7'		"
+
+	/* Infinite loop */
+	vTaskDelay(3000);
+	for(;;)
+	{
+		vTaskDelay(500);
+	}
+	/* USER CODE END StartRecvFPGA */
 }
 
 /* USER CODE BEGIN Header_StartTask10 */
 /**
-* @brief Function implementing the myTask10 thread.
+* @brief (available)
 * @param argument: Not used
 * @retval None
 */
 /* USER CODE END Header_StartTask10 */
 void StartTask10(void const * argument)
 {
-  /* USER CODE BEGIN StartTask10 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTask10 */
+	/* USER CODE BEGIN StartTask10 */
+	uint16_t send_char;
+//	UCHAR duty_cycle = 0;
+//	UCHAR key = 0;
+	UCHAR dtmf_index = 0;
+//	UCHAR temp;
+	/* Infinite loop */
+	for(;;)
+	{
+		send_char = DTMF_TONE_ON;
+		send_char <<= 8;
+		send_char &= 0xFF00;
+		send_char |= dtmf_index;
+		if(++dtmf_index > 15)
+		{
+			dtmf_index = 0;
+			send_char = SPECIAL_TONE_ON;
+			send_char <<= 8;
+			send_char &= 0xFF00;
+			xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+			vTaskDelay(2000);
+
+			send_char = DTMF_TONE_OFF;
+			send_char <<= 8;
+			send_char &= 0xFF00;
+			xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+			vTaskDelay(10);
+
+			send_char = SPECIAL_TONE_ON;
+			send_char <<= 8;
+			send_char &= 0xFF00;
+			xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+			vTaskDelay(2000);
+
+			send_char = DTMF_TONE_ON;
+			send_char <<= 8;
+			send_char &= 0xFF00;
+			send_char |= dtmf_index;
+		}
+
+		xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+		vTaskDelay(100);
+
+		send_char = DTMF_TONE_OFF;
+		send_char <<= 8;
+		send_char &= 0xFF00;
+		xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+
+		vTaskDelay(20);
+/*
+		vTaskDelay(500);
+		send_char = TUNE_ON;
+		send_char <<= 8;
+		temp = key;
+		temp <<= 3;
+		temp |= duty_cycle;
+		send_char |= temp;
+	//	send_char |= PWM_12DC_PARAM;
+		xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+		vTaskDelay(3000);
+		send_char = TUNE_OFF;
+		send_char <<= 8;
+		send_char &= 0xFFFF;
+		send_char |= 0xFF;
+		xQueueSend(SendFPGAQueueHandle, &send_char, 0);
+		vTaskDelay(2500);
+		if((duty_cycle += 2) > 7)
+		{
+			duty_cycle = 0;
+			if(++key > 12)
+				key = 0;
+		}
+*/
+	}
+	/* USER CODE END StartTask10 */
 }
 
 /* USER CODE BEGIN Header_StartTask11 */
 /**
-* @brief Function implementing the myTask11 thread.
+* @brief  (available)
 * @param argument: Not used
 * @retval None
 */
 /* USER CODE END Header_StartTask11 */
 void StartTask11(void const * argument)
 {
-	UCHAR rec_char;
-	UCHAR row, col;
-	UCHAR str;
-	UCHAR xbyte;
-	int i, j;
-	uint64_t avr_buffer[5];
-	UCHAR ucbuff[8];
-
-//	memset(avr_buffer,0,20);
-
-	vTaskDelay(10);
-
-	clr_scr();
-	vTaskDelay(10);
-
-	ucbuff[0] = CHAR_CMD;
-	xbyte = 0x21;
-	ucbuff[2] = 0xFE;
-	goto_scr(0,0);
-
+	vTaskDelay(3000);
 	for(;;)
 	{
-	
-		for(row = 0;row < ROWS;row++)
-			for(col = 0;col < COLUMN;col++)
-			{
-				ucbuff[1] = xbyte;
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-				vTaskDelay(5);
-				if(++xbyte > 0x7e)
-					xbyte = 0x21;
-			}
-
-		vTaskDelay(1000);
-		clr_scr();
-	}
-#if 0
-	row = 1;
-	col = 0;
-	str = 0;
-
-	ucbuff[0] = EEPROM_STR;
-	ucbuff[4] = 15;
-	ucbuff[5] = 0xFE;
-
-	j = 0;
-	for(;;)
-	{
-		ucbuff[1] = row;
-		ucbuff[2] = col;
-		ucbuff[3] = str;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-		vTaskDelay(500);
-
-		if(++row > 15)
-		{
-			row = 1;
-			col = 20;
-		}
-
-		if(++str > 31)
-		{
-//			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			vTaskDelay(1500);
-			str = 0;
-			col = 0;
-			row = 1;
-
-			clr_scr();
-			
-			goto_scr(0,0);
-/*
-			if(++j > 10)
-			{
-				j = 0;
-				avr_buffer[0] = CHAR_CMD;
-				xbyte = 0x21;
-				avr_buffer[2] = 0xFE;
-				goto_scr(0,0);
-				
-				for(row = 0;row < ROWS;row++)
-					for(col = 0;col < COLUMN;col++)
-					{
-						avr_buffer[1] = xbyte;
-						xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-						vTaskDelay(5);
-						if(++xbyte > 0x7e)
-							xbyte = 0x21;
-					}
-				avr_buffer[0] = EEPROM_STR;
-				avr_buffer[4] = 15;
-				avr_buffer[5] = 0xFE;
-
-			}
-*/
-		}
-	}
-#endif
+		vTaskDelay(100);
+	}		
 }
-#endif
 
 /* Callback01 function */
 void Callback01(void const * argument)
 {
-#if 0
+//#if 0
 	if(menu_ptr == 0)
 	{
-//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 		menu_ptr = 1;
 	}else
 	{
-//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 		menu_ptr = 0;
 	}
-#endif
+//#endif
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
 uint64_t pack64(UCHAR *buff)
 {
 	uint64_t var64;
@@ -1190,6 +1241,15 @@ uint64_t pack64(UCHAR *buff)
 	return var64;
 }
      
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	uint16_t temp;
+	UCHAR uTemp;
+	temp = GPIO_Pin;
+	uTemp = (UCHAR)temp;
+	temp >>= 8;
+	uTemp = (UCHAR)temp;
+}
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

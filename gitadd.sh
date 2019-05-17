@@ -48,7 +48,7 @@ git add Truck_App1/period.vhd
 git add Truck_App1/mod_m.vhd
 git add Truck_App1/div.vhd
 #git add Truck_App1/pwm1.vhd
-#git add Truck_App1/pwm2.vhd
+git add Truck_App1/pwm2.vhd
 git add Truck_App1/bcd.vhd
 git add Truck_App1/debounce.vhd
 git add Truck_App1/3S500E_layout_bottom.txt

@@ -1,0 +1,73 @@
+LED3 - green
+LED4 - blue
+
+USART1 - 	PA9 TX		printHexByte1()	- 7200
+			PA10 RX
+			
+USART2 -	PA2 TX		printHexByte2()	- AVR (LCD)
+			PA3 RX
+			
+USART3 -	PB10 TX
+			PB11 RX
+			
+DS1620 pins: (PORTB)
+
+DS1620_PIN_DQ	GPIO_PIN_0
+DS1620_PIN_CLK	GPIO_PIN_1
+DS1620_PIN_RST	GPIO_PIN_2
+
+PA1 - ADC channel 1
+
+keypad:
+
+col0		PC0		(inputs)
+col1		PC1
+col2		PC2
+col3		PC3
+
+row0		PB15	(outputs)
+row1		PB14
+row2		PB13
+row3		PB12
+
+NET		"tx_uart"		LOC = "P34";
+NET		"rx_uart"		LOC = "P36";
+
+NET		"pwm_signal_1"	LOC = "P35";
+NET		"pwm_signal_2"	LOC = "P39";
+
+NET 	"data_ready"	LOC = "P24";
+NET 	"cmd_param"		LOC = "P30";
+NET 	"data_sent"		LOC = "P28";
+
+#define DataReady_Pin GPIO_PIN_4
+#define DataReady_GPIO_Port GPIOA
+
+#define CmdParam_Pin GPIO_PIN_5
+#define CmdParam_GPIO_Port GPIOA
+
+#define DataSent_Pin GPIO_PIN_6
+#define DataSent_GPIO_Port GPIOA
+
+
+StartAVRTask() waits for a SendAVRQueueHandle message.
+Any task sending a SendAVRQueueHandle message will
+pack an 8-bit UCHAR array into a uint64_t which is
+send to the queue handle. Use pack64() to byte shift
+the UCHAR array into the uint64_t. The first byte of
+the UCHAR array is the command which ends up in the
+lowest significant byte of the uint64_t.
+
+StartDefaultTask()		-	does basic setup
+StartBasicCmdTask()		-	get keypresses and process - mostly sending msg to 7200 task
+StartKeyStateTask()		-	state machine for keypad
+StartDS1620Task()		-	read data from DS1620
+StartTask7200()			-	recv msg's for 7200 and send to USART 1
+StartAVRTask()			-	get msg's to be sent to AVR (LCD screen)
+StartRecv7200()			-	get cmd's from 7200 and process: mostly display on screen
+StartSendFPGA()			-	send cmd's to FPGA over USART3
+StartRecvFPGA()			-	recv data from FPGA
+StartTask10()			-	available
+StartTask11()			-	available
+Callback01()			-	does 1 sec timing
+

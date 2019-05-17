@@ -124,10 +124,99 @@ TX PA9  - goes to TX on DB-9 converter
 
 UART2: standard DB-9
 
-
 UART3: 5-pin connector
 
 LED indicator lights:
 1) engine on
 2) fan on
-3) 
+3) blinks blue/green on start-up
+
+LED3 - green
+LED4 - blue
+
+USART1 - 	PA9 TX		printHexByte1()	- 7200
+			PA10 RX
+			
+USART2 -	PA2 TX		printHexByte2()	- AVR (LCD)
+			PA3 RX
+			
+USART3 -	PB10 TX
+			PB11 RX
+			
+DS1620 pins: (PORTB)
+
+DS1620_PIN_DQ	GPIO_PIN_0
+DS1620_PIN_CLK	GPIO_PIN_1
+DS1620_PIN_RST	GPIO_PIN_2
+
+PA1 - ADC channel 1
+
+keypad:
+
+col0		PC0
+col1		PC1
+col2		PC2
+col3		PC3
+
+row0		PB15
+row1		PB14
+row2		PB13
+row3		PB12
+
+StartAVRTask() waits for a SendAVRQueueHandle message.
+Any task sending a SendAVRQueueHandle message will
+pack an 8-bit UCHAR array into a uint64_t which is
+send to the queue handle. Use pack64() to byte shift
+the UCHAR array into the uint64_t. The first byte of
+the UCHAR array is the command which ends up in the
+lowest significant byte of the uint64_t.
+
+seperate processor to handle the windshield wiper motor:
+
+bk - common
+rd - park switch
+wt - low speed
+bl - high speed
+read ohms between bk & rd - when open, wipers are in park position
+when closed they are up, either going up or down
+
+monitor input for off/intermitent/low/high
+processor monitors the park input (closed when wipers reach park position)
+use AVR pro-mini to control wipers
+
+FPGA: (signals needed so far - some may need to be converted to 5v)
+
+# serial port
+tx_uart P34
+rx_uart P36
+
+# inputs from sensors
+rpm_signal P77
+mph_signal P75
+
+# 7-seg LED outputs
+tx_rpm P69
+tx_mph P64
+
+# speaker outputs
+pwm_spk1 P62
+pwm_spk2 P61
+
+# pwm for dimmer for LCD screen
+pwm_lcd P60
+fp_shutoff P33
+rev_limit P82
+
+#SPI master signals
+#MOSI_o P48
+#MISO_i P45
+#SCLK_o P41
+#SS_o P39
+
+data_ready P24
+cmd_param P30
+data_sent P28
+rx_ds1620 P40
+ref_signal P42
+
+

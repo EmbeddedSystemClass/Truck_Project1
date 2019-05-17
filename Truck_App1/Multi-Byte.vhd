@@ -38,6 +38,8 @@ entity multi_byte is
 		data_sent : out std_logic;
 		rx_ds1620 : in std_logic;
 		ref_signal : out std_logic;
+		pwm_signal_1 : out std_logic;
+		pwm_signal_2 : out std_logic;
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
@@ -65,15 +67,16 @@ architecture truck_arch of multi_byte is
 	type calc_type1 is (idle1a, do_mcmd, other_cmd);
 	signal main_reg1, main_next1: calc_type1;
 
-	type state_pwm is (pwm_idle, pwm_start, pwm_next1, pwm_next2, pwm_next3, pwm_done);
-	signal drive_pwm_reg, drive_pwm_next: state_pwm;
-	
 	type state_ref is (idle_ref, start_ref, done_ref);
 	signal state_ref_reg, state_ref_next: state_ref;
+
+	type state_pwm2 is (pwm_idle2, pwm_start2, pwm_next12, pwm_done2);
+	signal drive_pwm_reg2, drive_pwm_next2: state_pwm2;
 
 	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
 	signal time_delay_reg3, time_delay_next3: unsigned(25 downto 0);	-- ref signal
+	signal time_delay_reg8, time_delay_next8: unsigned(24 downto 0);
 
 	signal rpm_db, mph_db: std_logic;
 	signal cmd_rpm: std_logic_vector(7 downto 0);
@@ -133,8 +136,17 @@ architecture truck_arch of multi_byte is
 	signal xmit_uindex: unsigned(3 downto 0);
 	signal skip: std_logic;
 	signal skip2: std_logic;
+	signal skip4: std_logic;
 	signal xmit_stdlv: std_logic_vector(7 downto 0);
 
+	signal start_pwm: std_logic;
+	signal start_pwm2: std_logic;
+	signal pwm_done1: std_logic;
+	signal key_index: unsigned(7 downto 0);
+	signal key_len: signed(7 downto 0);
+	signal mykey: std_logic_vector(7 downto 0);
+	signal ikeys: key_array;
+	signal stlv_duty_cycle2: std_logic_vector(2 downto 0);
 	
 begin
 
@@ -194,6 +206,16 @@ db1_unit: entity work.db_fsm
 	port map(clk=>clk,reset=>reset,
 		sw=>mph_signal,
 		db=>mph_db);
+
+pwm2_unit: entity work.pwm2
+	port map(clk=>clk, reset=>reset,
+		pwm_signal_1=>pwm_signal_1,
+		pwm_signal_2=>pwm_signal_2,
+		start=>start_pwm2,
+		done=>pwm_done1,
+		len=>key_len,
+		duty_cycle=>stlv_duty_cycle2,
+		key=>mykey);
 
 pwm_unit: entity work.lcd_pwm
 	generic map(W2=>W2_SIZE)
@@ -302,6 +324,7 @@ end process;
 -- ********************************************************************************
 -- send rpm & mph results rpm first, high_byte first
 -- could also send it in bcd form
+
 send_uart1: process(clk, reset, state_tx1_reg)
 begin
 	if reset = '0' then
@@ -315,7 +338,7 @@ begin
 		xmit_uindex <= "0000";
 --		pstart_tx <= '0';
 		start_tx <= '0';
-		led1 <= "1111";
+--		led1 <= "1111";
 		skip <= '1';
 		skip2 <= '1';
 		xmit_stdlv <= (others=>'0');
@@ -334,7 +357,7 @@ begin
 
 			when xmit_start =>
 				xmit_uindex <= "0001";
-				led1 <= "1110";
+--				led1 <= "1110";
 				xmit_array(0) <= X"FF";
 				-- send high_byte first because this is byte reversed in DS1620.vhd
 				xmit_array(1) <= temp_data1(7 downto 0);
@@ -356,12 +379,12 @@ begin
 --				state_tx1_next <= xmit_presend;
 
 			when xmit_check_FF =>
-				led1 <= "1101";
+--				led1 <= "1101";
 				xmit_stdlv <= xmit_array(conv_integer(xmit_uindex));
 				state_tx1_next <= xmit_check_FF2;
 				
 			when xmit_check_FF2 =>
-				led1 <= "1011";
+--				led1 <= "1011";
 				skip <= not skip;
 				if skip = '1' then
 					if xmit_stdlv = X"FF" then
@@ -377,18 +400,18 @@ begin
 				end if;
 
 			when xmit_presend =>
-				led1 <= "1110";
+--				led1 <= "1110";
 				xmit_uindex <= "0000";
 				state_tx1_next <= xmit_send;
 				
 			when xmit_send =>
-				led1 <= "1101";
+--				led1 <= "1101";
 				data_tx <= xmit_array(conv_integer(xmit_uindex));
 				start_tx <= '1';
 				state_tx1_next <= xmit_wait;
 					
 			when xmit_wait =>
-				led1 <= "1011";
+--				led1 <= "1011";
 				if done_tx = '1' then
 					start_tx <= '0';
 					state_tx1_next <= xmit_inc;
@@ -406,7 +429,7 @@ begin
 				end if;
 				
 			when xmit_delay =>
-				led1 <= "0111";
+--				led1 <= "0111";
 --				if time_delay_reg > TIME_DELAY9/1000 then
 				if time_delay_reg > TIME_DELAY5 then
 					time_delay_next <= (others=>'0');
@@ -443,6 +466,7 @@ begin
 				state_uart_next2 <= idle2;
 			
 			when idle2 =>
+--				led1 <= "0111";
 				start_calc <= '0';
 				if data_ready = '1' then
 					start_rx <= '1';
@@ -450,6 +474,7 @@ begin
 				end if;
 
 			when next1 =>
+--				led1 <= "1011";
 				if done_rx = '1' then
 					start_rx <= '0';
 --					led1 <= data_rx(3 downto 0);
@@ -470,6 +495,7 @@ begin
 				if cmd_param = '0' then
 					start_calc <= '1';
 				end if;
+--				led1 <= "0101";
 				state_uart_next2 <= idle2;
 		end case;
 		state_uart_reg2 <= state_uart_next2;
@@ -479,6 +505,7 @@ end process;
 
 -- ********************************************************************************
 calc_proc1: process(clk,reset,main_reg1)
+variable temp: integer range 0 to 11:= 0;
 begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
@@ -487,6 +514,23 @@ begin
 		special <= '0';
 		dtmf_index <= (others=>'0');
 		stdlv_transmit_update_rate <=  X"1FFFFF";
+		stlv_duty_cycle <= (others=>'1');
+		start_pwm2 <= '0';
+		key_index <= (others=>'0');
+		ikeys(0) <= X"00";
+		ikeys(1) <= X"01";
+		ikeys(2) <= X"02";
+		ikeys(3) <= X"03";
+		ikeys(4) <= X"04";
+		ikeys(5) <= X"05";
+		ikeys(6) <= X"06";
+		ikeys(7) <= X"07";
+		ikeys(8) <= X"08";
+		ikeys(9) <= X"09";
+		ikeys(10) <= X"0A";
+		ikeys(11) <= X"0B";
+		mykey <= ikeys(0);
+		key_len <= X"0C";
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
 --		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
@@ -509,11 +553,13 @@ begin
 							stdlv_transmit_update_rate <= mparam & X"FFFF";
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_ON =>
+							led1 <= "1011";
 							dtmf_index <= mparam(4 downto 0);
 							special <= '0';
 							start_dtmf <= '1';
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_OFF =>
+							led1 <= "1101";
 							start_dtmf <= '0';
 							special <= '0';
 							main_next1 <= do_mcmd;
@@ -538,6 +584,15 @@ begin
 						when TEST_RPM_LIMIT =>
 							test_rpm_rev_limits <= mparam(0);
 							main_next1 <= do_mcmd;
+						when TUNE_ON =>
+							led1 <= "0111";
+							stlv_duty_cycle2 <= mparam(2 downto 0);
+							temp:= conv_integer("000" & mparam(7 downto 3));
+							mykey <= ikeys(temp);
+							start_pwm2 <= '1';
+						when TUNE_OFF =>
+							led1 <= "1110";
+							start_pwm2 <= '0';
 						when others =>
 --							main_next1 <= idle1a;
 							main_next1 <= other_cmd;

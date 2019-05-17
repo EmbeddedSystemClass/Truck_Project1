@@ -280,7 +280,6 @@ Makefile-genesis.properties
 PIC24_support/esos1/comm1_extra.txt
 STM32/.code_review_properties
 screen.jpg
-thread_io/cs_client/odata.dat
 thread_io/cs_client/odata.tar
 thread_io/dmake4
 thread_io/gitadd.sh

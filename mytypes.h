@@ -76,6 +76,9 @@ enum cmd_types
 	BLOWER1,
 	BLOWER2,
 	BLOWER3,
+	WIPER1,
+	WIPER2,
+	WIPER_OFF,
 	GET_DIR,
 	LCD_SHIFT_RIGHT,
 	LCD_SHIFT_LEFT,
@@ -136,7 +139,6 @@ enum downstream_msg
 	SEND_PARAMS,				// 210
 	OTHER_DATA,					// 211
 	ESTOP_SIGNAL,				// 212
-	GENERIC_CMD,				// 213
 	END_DS_MSG
 } DOWNSTREAM_MSG;
 
@@ -165,7 +167,7 @@ enum input_types
 	
 enum output_types
 {
-	STARTER,
+	STARTER,			// bank 0
 	ACCON,
 	FUELPUMP,
 	COOLINGFAN,
@@ -173,7 +175,8 @@ enum output_types
 	RHEADLAMP,
 	RUNNINGLIGHTS,
 	LIGHTBAR,
-	LEFTRBLINKER,
+
+	LEFTRBLINKER,		// bank 1
 	RIGHTRBLINKER,
 	LEFTFBLINKER,
 	RIGHTFBLINKER,
@@ -181,22 +184,25 @@ enum output_types
 	RBRAKELIGHT,
 	XLBLINKER,
 	XRBLINKER,
-	LBRIGHTS,
+
+	LBRIGHTS,			// bank 2
 	RBRIGHTS,
 	HTRBLOWERLOW,
 	HTRBLOWERMED,
 	HTRBLOWERHIGH,
-	CRANKCASEHEATER,
-	BATTERYHEATER,
+	WWIPER1,
+	WWIPER2,
 	TRLEFTBLINKER,
-	TRRIGHTBLINKER,
+
+	TRRIGHTBLINKER,		// bank 3
 	INTRUDERALARM,
 	BLINKINDICATE,
 	BATTERYCOMPHEATER,
 	ALARMSPEAKER,
 	BACKUPLIGHTS,
 	TESTOUTPUT27,
-	TESTOUTPUT28,
+
+	TESTOUTPUT28,		// bank 4
 	TESTOUTPUT29,
 	TESTOUTPUT30,
 	TESTOUTPUT31,
@@ -309,5 +315,45 @@ typedef struct params
 	UCHAR test_bank;
 
 }PARAM_STRUCT;
+
+// commands for RPM/MPH LED display
+#define RPM_SEND_CHAR_CMD 			0x01
+#define MPH_SEND_CHAR_CMD 			0x02
+
+#define RPM_OFF_CMD 				0x04
+#define RPM_SET_BRIGHTNESS_CMD 		0x05
+#define RPM_SET_CDECIMAL_CMD 		0x06
+#define RPM_SET_UPDATE_RATE_CMD 	0x07
+#define RPM_SET_FACTOR_CMD 			0x08
+#define RPM_SET_FACTORY_RESET		0x09
+
+#define MPH_OFF_CMD 				0x0A
+#define MPH_SET_BRIGHTNESS_CMD 		0x0C
+#define MPH_SET_CDECIMAL_CMD 		0x0D
+#define MPH_SET_UPDATE_RATE_CMD 	0x0E
+#define MPH_SET_FACTOR_CMD 			0x0F
+#define MPH_SET_FACTORY_RESET		0x10
+
+// other FPGA commands
+#define SET_FPGA_SEND_UPDATE_RATE 	0x20
+#define DTMF_TONE_ON 				0x21
+#define DTMF_TONE_OFF 				0x22
+#define SPECIAL_TONE_ON 			0x23
+#define LCD_PWM 					0x24
+#define FP_SHUTOFF_OVERRIDE 		0x25
+#define SET_MAX_REV_LIMITER 		0x26
+#define SET_MIN_REV_LIMITER 		0x27
+#define TEST_RPM_LIMIT 				0x28
+#define TEST_COMM					0x29
+
+#define PWM_OFF_PARAM					0x01 // off
+#define PWM_ON_PARAM					0x1F // on
+#define PWM_80DC_PARAM					0x1A // duty_cycle = 80%
+#define PWM_75DC_PARAM					0x16 // duty_cycle = 75%
+#define PWM_60DC_PARAM					0x12 // duty_cycle = 60%
+#define PWM_50DC_PARAM					0x0E // duty_cycle = square wave
+#define PWM_30DC_PARAM					0x0A // duty_cycle = 30%
+#define PWM_25DC_PARAM					0x06 // duty_cycle = 25%
+#define PWM_12DC_PARAM					0x02 // duty_cycle = 12%
 
 #endif

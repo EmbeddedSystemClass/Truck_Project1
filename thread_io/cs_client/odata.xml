@@ -61,20 +61,8 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>LBRIGHTS</label>
-		<port>5</port>
-		<onoff>0</onoff>
-		<input_port>4</input_port>
-		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
-		<time_left>0</time_left>
-		<pulse_time>0</pulse_time>
-		<reset>0</reset>
-	</O_DATA>
-	<O_DATA>
 		<label>RHEADLAMP</label>
-		<port>6</port>
+		<port>5</port>
 		<onoff>0</onoff>
 		<input_port>0</input_port>
 		<polarity>0</polarity>
@@ -85,10 +73,10 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>RBRIGHTS</label>
-		<port>7</port>
+		<label>RUNNINGLIGHTS</label>
+		<port>6</port>
 		<onoff>0</onoff>
-		<input_port>4</input_port>
+		<input_port>1</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -97,7 +85,19 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>LEFTBLINKER</label>
+		<label>LIGHTBAR</label>
+		<port>7</port>
+		<onoff>0</onoff>
+		<input_port>41</input_port>
+		<polarity>0</polarity>
+		<type>0</type>
+		<time_delay>0</time_delay>
+		<time_left>0</time_left>
+		<pulse_time>0</pulse_time>
+		<reset>0</reset>
+	</O_DATA>
+	<O_DATA>
+		<label>LEFTRBLINKER</label>
 		<port>8</port>
 		<onoff>0</onoff>
 		<input_port>2</input_port>
@@ -109,7 +109,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>RIGHTBLINKER</label>
+		<label>RIGHTRBLINKER</label>
 		<port>9</port>
 		<onoff>0</onoff>
 		<input_port>3</input_port>
@@ -121,25 +121,25 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>RUNNINGLIGHTS</label>
+		<label>LEFTFBLINKER</label>
 		<port>10</port>
 		<onoff>0</onoff>
-		<input_port>1</input_port>
+		<input_port>2</input_port>
 		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
+		<type>3</type>
+		<time_delay>15</time_delay>
 		<time_left>0</time_left>
 		<pulse_time>0</pulse_time>
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>RBRAKELIGHT</label>
+		<label>RIGHTFBLINKER</label>
 		<port>11</port>
 		<onoff>0</onoff>
-		<input_port>8</input_port>
+		<input_port>3</input_port>
 		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
+		<type>3</type>
+		<time_delay>15</time_delay>
 		<time_left>0</time_left>
 		<pulse_time>0</pulse_time>
 		<reset>0</reset>
@@ -157,8 +157,20 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>XLBLINKER</label>
+		<label>RBRAKELIGHT</label>
 		<port>13</port>
+		<onoff>0</onoff>
+		<input_port>8</input_port>
+		<polarity>0</polarity>
+		<type>0</type>
+		<time_delay>0</time_delay>
+		<time_left>0</time_left>
+		<pulse_time>0</pulse_time>
+		<reset>0</reset>
+	</O_DATA>
+	<O_DATA>
+		<label>XLBLINKER</label>
+		<port>14</port>
 		<onoff>0</onoff>
 		<input_port>2</input_port>
 		<polarity>0</polarity>
@@ -170,7 +182,7 @@
 	</O_DATA>
 	<O_DATA>
 		<label>XRBLINKER</label>
-		<port>14</port>
+		<port>15</port>
 		<onoff>0</onoff>
 		<input_port>3</input_port>
 		<polarity>0</polarity>
@@ -181,22 +193,10 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>BATTERYCOMPHEATER</label>
-		<port>15</port>
-		<onoff>0</onoff>
-		<input_port>41</input_port>
-		<polarity>0</polarity>
-		<type>0</type>
-		<time_delay>0</time_delay>
-		<time_left>0</time_left>
-		<pulse_time>0</pulse_time>
-		<reset>0</reset>
-	</O_DATA>
-	<O_DATA>
-		<label>CRANKCASEHEATER</label>
+		<label>LBRIGHTS</label>
 		<port>16</port>
 		<onoff>0</onoff>
-		<input_port>41</input_port>
+		<input_port>4</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -205,10 +205,10 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>ESTOPSWITCH</label>
+		<label>RBRIGHTS</label>
 		<port>17</port>
 		<onoff>0</onoff>
-		<input_port>41</input_port>
+		<input_port>4</input_port>
 		<polarity>0</polarity>
 		<type>0</type>
 		<time_delay>0</time_delay>
@@ -217,7 +217,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>BATTERYHEATER</label>
+		<label>HTRBLOWERLOW</label>
 		<port>18</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -229,7 +229,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TRLEFTBLINKER</label>
+		<label>HTRBLOWERMED</label>
 		<port>19</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -241,7 +241,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TRRIGHTBLINKER</label>
+		<label>HTRBLOWERHIGH</label>
 		<port>20</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -253,7 +253,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>INTRUDERALARM</label>
+		<label>WWIPER1</label>
 		<port>21</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -265,7 +265,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>LIGHTBAR</label>
+		<label>WWIPER2</label>
 		<port>22</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -277,7 +277,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>BLINKINDICATE</label>
+		<label>TRLEFTBLINKER</label>
 		<port>23</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -289,7 +289,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>ALARMSPEAKER</label>
+		<label>TRRIGHTBLINKER</label>
 		<port>24</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -301,7 +301,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>BACKUPLIGHTS</label>
+		<label>INTRUDERALARM</label>
 		<port>25</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -313,7 +313,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT24</label>
+		<label>BLINKINDICATE</label>
 		<port>26</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -325,7 +325,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT25</label>
+		<label>BATTERYCOMPHEATER</label>
 		<port>27</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -337,7 +337,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT26</label>
+		<label>ALARMSPEAKER</label>
 		<port>28</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -349,7 +349,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT27</label>
+		<label>BACKUPLIGHTS</label>
 		<port>29</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -361,7 +361,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT28</label>
+		<label>TESTOUTPUT27</label>
 		<port>30</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -373,7 +373,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT29</label>
+		<label>TESTOUTPUT28</label>
 		<port>31</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -385,7 +385,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT30</label>
+		<label>TESTOUTPUT29</label>
 		<port>32</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -397,7 +397,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT31</label>
+		<label>TESTOUTPUT30</label>
 		<port>33</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -409,7 +409,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT32</label>
+		<label>TESTOUTPUT31</label>
 		<port>34</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -421,7 +421,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT33</label>
+		<label>TESTOUTPUT32</label>
 		<port>35</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -433,7 +433,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT34</label>
+		<label>TESTOUTPUT33</label>
 		<port>36</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -445,7 +445,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT35</label>
+		<label>TESTOUTPUT34</label>
 		<port>37</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -457,7 +457,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>TESTOUTPUT36</label>
+		<label>TESTOUTPUT35</label>
 		<port>38</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
@@ -469,7 +469,7 @@
 		<reset>0</reset>
 	</O_DATA>
 	<O_DATA>
-		<label>NULL</label>
+		<label>NULL2</label>
 		<port>39</port>
 		<onoff>0</onoff>
 		<input_port>41</input_port>
