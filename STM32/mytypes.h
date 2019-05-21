@@ -347,6 +347,7 @@ typedef struct params
 #define TEST_COMM					0x29
 #define TUNE_ON						0x2A
 #define TUNE_OFF					0x2B
+#define LOAD_TUNE					0x2C
 
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on

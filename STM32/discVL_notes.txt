@@ -1,3 +1,5 @@
+discVL_notes.txt
+
 LED3 - green
 LED4 - blue
 
@@ -11,7 +13,6 @@ USART3 -	PB10 TX
 			PB11 RX
 			
 DS1620 pins: (PORTB)
-
 DS1620_PIN_DQ	GPIO_PIN_0
 DS1620_PIN_CLK	GPIO_PIN_1
 DS1620_PIN_RST	GPIO_PIN_2
@@ -19,7 +20,6 @@ DS1620_PIN_RST	GPIO_PIN_2
 PA1 - ADC channel 1
 
 keypad:
-
 col0		PC0		(inputs)
 col1		PC1
 col2		PC2
@@ -30,25 +30,26 @@ row1		PB14
 row2		PB13
 row3		PB12
 
-NET		"tx_uart"		LOC = "P34";
-NET		"rx_uart"		LOC = "P36";
+serial port connections on FPGA:
+tx_uart		P34
+rx_uart		P36
+data_ready	P24
+cmd_param	P30
+data_sent	P28
 
-NET		"pwm_signal_1"	LOC = "P35";
-NET		"pwm_signal_2"	LOC = "P39";
+serial port connections on STM32:
+PA4 DataReady
+PA5 CmdParam
+PA6 DataSent
+PB10 TX		(USART3)
+PB11 RX
 
-NET 	"data_ready"	LOC = "P24";
-NET 	"cmd_param"		LOC = "P30";
-NET 	"data_sent"		LOC = "P28";
-
-#define DataReady_Pin GPIO_PIN_4
-#define DataReady_GPIO_Port GPIOA
-
-#define CmdParam_Pin GPIO_PIN_5
-#define CmdParam_GPIO_Port GPIOA
-
-#define DataSent_Pin GPIO_PIN_6
-#define DataSent_GPIO_Port GPIOA
-
+STM32				FPGA
+PA4		-->			P24		- DataReady
+PA5		-->			P30		- CmdParam
+PA6		<--			P28		- DataSent
+PB10	-->			P36		- USART
+PB11	<--			P34		- USART
 
 StartAVRTask() waits for a SendAVRQueueHandle message.
 Any task sending a SendAVRQueueHandle message will
@@ -71,3 +72,16 @@ StartTask10()			-	available
 StartTask11()			-	available
 Callback01()			-	does 1 sec timing
 
+tune player:
+up to 7 different predefined tunes are in memory
+each tune is 2 different arrays of:
+1) channel 1 note
+2) channel 2 note
+
+other params are:
+duty cycle
+length of each note
+how many notes in the tune
+
+1,3,5,7	major
+1,3,5,-7 minor

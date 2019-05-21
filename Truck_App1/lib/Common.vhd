@@ -308,6 +308,7 @@ package CommonPckg is
 	constant RPM_MINIMUM: integer:= 3900;
 	constant MAX_TIME:  integer:=  131071;
 	constant SIZE_32: integer:= 32;
+	constant MAX_TUNE_LEN: integer:= 20;
 
 	-- commands for rpm/mph LED
 	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"01";
@@ -341,6 +342,8 @@ package CommonPckg is
 	constant TEST_COMM: std_logic_vector(7 downto 0):= X"29";
 	constant TUNE_ON: std_logic_vector(7 downto 0):= X"2A";
 	constant TUNE_OFF: std_logic_vector(7 downto 0):= X"2B";
+	constant LOAD_TUNE: std_logic_vector(7 downto 0):= X"2C";
+	constant SHOW_DOWNLOAD: std_logic_vector(7 downto 0):= X"2D";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";
@@ -389,12 +392,10 @@ package CommonPckg is
 
 	type my_array3 is array(0 to 15) of std_logic_vector(16 downto 0);
 	type notes_array is array(0 to 95) of std_logic_vector(19 downto 0);
-	type tune_array is array(0 to 11) of std_logic_vector(7 downto 0);
-	type tunes is array(0 to 7) of tune_array;
-	type key_array is array(0 to 41) of std_logic_vector(7 downto 0);
 --	type dkey_array is array(0 to 82) of std_logic_vector(7 downto 0);
-	type keys is array(0 to 11) of key_array;
-	type i_keys is array(0 to 11) of std_logic_vector(7 downto 0);
+	type tune_array is array(0 to MAX_TUNE_LEN-1, 0 to 2) of integer range 0 to 95;
+	type dl_array is array(0 to 255) of std_logic_vector(7 downto 0);
+	
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);
 
@@ -407,6 +408,9 @@ package CommonPckg is
 	impure function manage_queue(a : std_logic_vector; dq : data_queue; stlv_ptr : std_logic_vector; add : integer) return std_logic_vector;
 	impure function load_dtmf(a : integer) return dtmf_array;
 	impure function load_pwm_delay(a : integer) return std_logic_vector;
+	impure function load_notes_array(a : notes_array) return notes_array;
+	impure function load_tune_array(a : tune_array) return tune_array;
+--	impure function convert_dl_to_tune_array(a : dl_array) return tune_array;
 
 end package;
 
@@ -457,6 +461,275 @@ variable ptr: integer range 0 to 255:= 0;
 		-- dq1(ptr) := data_in;
 		-- return uptr;
 	-- end function;
+
+-- impure function convert_dl_to_tune_array(a : dl_array) return tune_array is
+	-- variable tune1: tune_array;
+	-- variable dl: dl_array;
+	-- begin
+		-- dl := a;
+		-- tune1(0,0) := conv_integer(dl(0));
+		-- tune1(0,1) := conv_integer(dl(1));
+		-- tune1(0,2) := conv_integer(dl(2));
+		-- tune1(1,0) := conv_integer(dl(3));
+		-- tune1(1,1) := conv_integer(dl(4));
+		-- tune1(1,2) := conv_integer(dl(5));
+		-- tune1(2,0) := conv_integer(dl(6));
+		-- tune1(2,1) := conv_integer(dl(7));
+		-- tune1(2,2) := conv_integer(dl(8));
+		-- tune1(3,0) := conv_integer(dl(9));
+		-- tune1(3,1) := conv_integer(dl(10));
+		-- tune1(3,2) := conv_integer(dl(11));
+		-- tune1(4,0) := conv_integer(dl(12));
+		-- tune1(4,1) := conv_integer(dl(13));
+		-- tune1(4,2) := conv_integer(dl(14));
+		-- tune1(5,0) := conv_integer(dl(15));
+		-- tune1(5,1) := conv_integer(dl(16));
+		-- tune1(5,2) := conv_integer(dl(17));
+		-- tune1(6,0) := conv_integer(dl(18));
+		-- tune1(6,1) := conv_integer(dl(19));
+		-- tune1(6,2) := conv_integer(dl(20));
+		-- tune1(7,0) := conv_integer(dl(21));
+		-- tune1(7,1) := conv_integer(dl(22));
+		-- tune1(7,2) := conv_integer(dl(23));
+		-- tune1(8,0) := conv_integer(dl(24));
+		-- tune1(8,1) := conv_integer(dl(25));
+		-- tune1(8,2) := conv_integer(dl(26));
+		-- tune1(9,0) := conv_integer(dl(27));
+		-- tune1(9,1) := conv_integer(dl(28));
+		-- tune1(9,2) := conv_integer(dl(29));
+		-- tune1(10,0) := conv_integer(dl(30));
+		-- tune1(10,1) := conv_integer(dl(31));
+		-- tune1(10,2) := conv_integer(dl(32));
+		-- tune1(11,0) := conv_integer(dl(33));
+		-- tune1(11,1) := conv_integer(dl(34));
+		-- tune1(11,2) := conv_integer(dl(35));
+		-- tune1(12,0) := conv_integer(dl(36));
+		-- tune1(12,1) := conv_integer(dl(37));
+		-- tune1(12,2) := conv_integer(dl(38));
+		-- tune1(13,0) := conv_integer(dl(39));
+		-- tune1(13,1) := conv_integer(dl(40));
+		-- tune1(13,2) := conv_integer(dl(41));
+		-- tune1(14,0) := conv_integer(dl(42));
+		-- tune1(14,1) := conv_integer(dl(43));
+		-- tune1(14,2) := conv_integer(dl(44));
+		-- tune1(15,0) := conv_integer(dl(45));
+		-- tune1(15,1) := conv_integer(dl(46));
+		-- tune1(15,2) := conv_integer(dl(47));
+		-- tune1(16,0) := conv_integer(dl(48));
+		-- tune1(16,1) := conv_integer(dl(49));
+		-- tune1(16,2) := conv_integer(dl(50));
+		-- tune1(17,0) := conv_integer(dl(51));
+		-- tune1(17,1) := conv_integer(dl(52));
+		-- tune1(17,2) := conv_integer(dl(53));
+		-- tune1(18,0) := conv_integer(dl(54));
+		-- tune1(18,1) := conv_integer(dl(55));
+		-- tune1(18,2) := conv_integer(dl(56));
+		-- tune1(19,0) := conv_integer(dl(57));
+		-- tune1(19,1) := conv_integer(dl(58));
+		-- tune1(19,2) := conv_integer(dl(59));
+
+		-- return tune1;
+	-- end function;
+
+impure function load_tune_array(a : tune_array) return tune_array is
+	variable tune1: tune_array;
+	begin
+		tune1 := a;
+
+		tune1(0,0) := 10;
+		tune1(0,1) := 14;
+		tune1(0,2) := 0;
+
+		tune1(1,0) := 12;
+		tune1(1,1) := 16;
+		tune1(1,2) := 0;
+
+		tune1(2,0) := 14;
+		tune1(2,1) := 18;
+		tune1(2,2) := 0;
+
+		tune1(3,0) := 16;
+		tune1(3,1) := 20;
+		tune1(3,2) := 0;
+
+		tune1(4,0) := 18;
+		tune1(4,1) := 22;
+		tune1(4,2) := 0;
+
+		tune1(5,0) := 20;
+		tune1(5,1) := 24;
+		tune1(5,2) := 0;
+
+		tune1(6,0) := 22;
+		tune1(6,1) := 26;
+		tune1(6,2) := 0;
+
+		tune1(7,0) := 24;
+		tune1(7,1) := 28;
+		tune1(7,2) := 0;
+
+		tune1(8,0) := 26;
+		tune1(8,1) := 30;
+		tune1(8,2) := 0;
+
+		tune1(9,0) := 28;
+		tune1(9,1) := 32;
+		tune1(9,2) := 0;
+
+		tune1(10,0) := 30;
+		tune1(10,1) := 34;
+		tune1(10,2) := 7;
+
+		tune1(11,0) := 28;
+		tune1(11,1) := 32;
+		tune1(11,2) := 7;
+
+		tune1(12,0) := 26;
+		tune1(12,1) := 30;
+		tune1(12,2) := 7;
+
+		tune1(13,0) := 24;
+		tune1(13,1) := 38;
+		tune1(13,2) := 7;
+
+		tune1(14,0) := 22;
+		tune1(14,1) := 26;
+		tune1(14,2) := 7;
+
+		tune1(15,0) := 20;
+		tune1(15,1) := 24;
+		tune1(15,2) := 7;
+
+		tune1(16,0) := 18;
+		tune1(16,1) := 22;
+		tune1(16,2) := 7;
+
+		tune1(17,0) := 16;
+		tune1(17,1) := 20;
+		tune1(17,2) := 7;
+
+		tune1(18,0) := 14;
+		tune1(18,1) := 18;
+		tune1(18,2) := 7;
+
+		tune1(19,0) := 12;
+		tune1(19,1) := 16;
+		tune1(19,2) := 7;
+	
+		return tune1;
+	
+	end function;
+
+impure function load_notes_array(a : notes_array) return notes_array is
+	variable notes : notes_array;
+	begin
+		notes := a;
+		notes(0) := conv_std_logic_vector(C2,20);	--	0
+		notes(1) := conv_std_logic_vector(CS2,20);	--	1
+		notes(2) := conv_std_logic_vector(D2,20);	--	2
+		notes(3) := conv_std_logic_vector(DS2,20);	--	3
+		notes(4) := conv_std_logic_vector(E2,20);	--	4
+		notes(5) := conv_std_logic_vector(F2,20);	--	5
+		notes(6) := conv_std_logic_vector(FS2,20);	--	6
+		notes(7) := conv_std_logic_vector(G2,20);	--	7
+		notes(8) := conv_std_logic_vector(GS2,20);	--	8
+		notes(9) := conv_std_logic_vector(A2,20);	--	9
+		notes(10) := conv_std_logic_vector(AS2,20);	--	A
+		notes(11) := conv_std_logic_vector(B2,20);	--	B
+
+		notes(12) := conv_std_logic_vector(C3,20);	--	C
+		notes(13) := conv_std_logic_vector(CS3,20);	--	D
+		notes(14) := conv_std_logic_vector(D3,20);	--	E
+		notes(15) := conv_std_logic_vector(DS3,20);	--	F
+		notes(16) := conv_std_logic_vector(E3,20);	--	10
+		notes(17) := conv_std_logic_vector(F3,20);	--	11
+		notes(18) := conv_std_logic_vector(FS3,20);	--	12
+		notes(19) := conv_std_logic_vector(G3,20);	--	13
+		notes(20) := conv_std_logic_vector(GS3,20);	--	14
+		notes(21) := conv_std_logic_vector(A3,20);	--	15
+		notes(22) := conv_std_logic_vector(AS3,20);	--	16
+		notes(23) := conv_std_logic_vector(B3,20);	--	17
+
+		notes(24) := conv_std_logic_vector(C4,20);	--	18		middle C
+		notes(25) := conv_std_logic_vector(CS4,20);	--	19
+		notes(26) := conv_std_logic_vector(D4,20);	--	1A
+		notes(27) := conv_std_logic_vector(DS4,20);	--	1B
+		notes(28) := conv_std_logic_vector(E4,20);	--	1C
+		notes(29) := conv_std_logic_vector(F4,20);	--	1D
+		notes(30) := conv_std_logic_vector(FS4,20);	--	1E
+		notes(31) := conv_std_logic_vector(G4,20);	--	1F
+		notes(32) := conv_std_logic_vector(GS4,20);	--	20
+		notes(33) := conv_std_logic_vector(A4,20);	--	21
+		notes(34) := conv_std_logic_vector(AS4,20);	--	22
+		notes(35) := conv_std_logic_vector(B4,20);	--	23
+
+		notes(36) := conv_std_logic_vector(C5,20);	--	24
+		notes(37) := conv_std_logic_vector(CS5,20);	--	25
+		notes(38) := conv_std_logic_vector(D5,20);	--	26
+		notes(39) := conv_std_logic_vector(DS5,20);	--	27
+		notes(40) := conv_std_logic_vector(E5,20);	--	28
+		notes(41) := conv_std_logic_vector(F5,20);	--	29
+		notes(42) := conv_std_logic_vector(FS5,20);	--	2A
+		notes(43) := conv_std_logic_vector(G5,20);	--	2B
+		notes(44) := conv_std_logic_vector(GS5,20);	--	2C
+		notes(45) := conv_std_logic_vector(A5,20);	--	2D
+		notes(46) := conv_std_logic_vector(AS5,20);	--	2E
+		notes(47) := conv_std_logic_vector(B5,20);	--	2F
+
+		notes(48) := conv_std_logic_vector(C6,20);	--	30
+		notes(49) := conv_std_logic_vector(CS6,20);	--	31
+		notes(50) := conv_std_logic_vector(D6,20);	--	32
+		notes(51) := conv_std_logic_vector(DS6,20);	--	33
+		notes(52) := conv_std_logic_vector(E6,20);	--	34
+		notes(53) := conv_std_logic_vector(F6,20);	--	35
+		notes(54) := conv_std_logic_vector(FS6,20);	--	36
+		notes(55) := conv_std_logic_vector(G6,20);	--	37
+		notes(56) := conv_std_logic_vector(GS6,20);	--	38
+		notes(57) := conv_std_logic_vector(A6,20);	--	39
+		notes(58) := conv_std_logic_vector(AS6,20);	--	3A
+		notes(59) := conv_std_logic_vector(B6,20);	--	3B
+
+		notes(60) := conv_std_logic_vector(C7,20);	--	3C
+		notes(61) := conv_std_logic_vector(CS7,20);	--	3D
+		notes(62) := conv_std_logic_vector(D7,20);	--	3E
+		notes(63) := conv_std_logic_vector(DS7,20);	--	3F
+		notes(64) := conv_std_logic_vector(E7,20);	--	40
+		notes(65) := conv_std_logic_vector(F7,20);	--	41
+		notes(66) := conv_std_logic_vector(FS7,20);	--	42
+		notes(67) := conv_std_logic_vector(G7,20);	--	43
+		notes(68) := conv_std_logic_vector(GS7,20);	--	44
+		notes(69) := conv_std_logic_vector(A7,20);	--	45
+		notes(70) := conv_std_logic_vector(AS7,20);	--	46
+		notes(71) := conv_std_logic_vector(B7,20);	--	47
+
+		notes(72) := conv_std_logic_vector(C8,20);	--	48
+		notes(73) := conv_std_logic_vector(CS8,20);	--	49
+		notes(74) := conv_std_logic_vector(D8,20);	--	4A
+		notes(75) := conv_std_logic_vector(DS8,20);	--	4B
+		notes(76) := conv_std_logic_vector(E8,20);	--	4C
+		notes(77) := conv_std_logic_vector(F8,20);	--	4D
+		notes(78) := conv_std_logic_vector(FS8,20);	--	4E
+		notes(79) := conv_std_logic_vector(G8,20);	--	4F
+		notes(80) := conv_std_logic_vector(GS8,20);	--	50
+		notes(81) := conv_std_logic_vector(A8,20);	--	51
+		notes(82) := conv_std_logic_vector(AS8,20);	--	52
+
+		notes(83) := conv_std_logic_vector(C9,20);	--	53
+		notes(84) := conv_std_logic_vector(CS9,20);	--	54
+		notes(85) := conv_std_logic_vector(D9,20);	--	55
+		notes(86) := conv_std_logic_vector(DS9,20);	--	56
+		notes(87) := conv_std_logic_vector(E9,20);	--	57
+		notes(88) := conv_std_logic_vector(F9,20);	--	58
+		notes(89) := conv_std_logic_vector(FS9,20);	--	59
+		notes(90) := conv_std_logic_vector(G9,20);	--	5A
+		notes(91) := conv_std_logic_vector(GS9,20);	--	5B
+		notes(92) := conv_std_logic_vector(A9,20);	--	5C
+
+		notes(93) := conv_std_logic_vector(AS9,20);	--	5D
+		notes(94) := conv_std_logic_vector(B9,20);	--	5E
+		notes(95) := conv_std_logic_vector(B9,20);	--	5F
+		return notes;
+	end function;
 
 impure function load_dtmf(a : integer) return dtmf_array is
 variable dtmf: dtmf_array;

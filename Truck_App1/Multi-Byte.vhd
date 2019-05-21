@@ -51,7 +51,7 @@ architecture truck_arch of multi_byte is
 	signal state_tx1_reg, state_tx1_next: state_uart1;
 
 	-- recv_uart
-	type state_uart2 is (pre_idle, idle2, next1, start1, done);
+	type state_uart2 is (pre_idle, idle2, next1, start1, done, rx_delay);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
 
 	type state_fp is (idle_fp, start_fp, done_fp);
@@ -76,6 +76,7 @@ architecture truck_arch of multi_byte is
 	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);	-- calc_proc2
 	signal time_delay_reg3, time_delay_next3: unsigned(25 downto 0);	-- ref signal
+	signal time_delay_reg4, time_delay_next4: unsigned(19 downto 0);	-- recv uart
 	signal time_delay_reg8, time_delay_next8: unsigned(24 downto 0);
 
 	signal rpm_db, mph_db: std_logic;
@@ -144,9 +145,14 @@ architecture truck_arch of multi_byte is
 	signal pwm_done1: std_logic;
 	signal key_index: unsigned(7 downto 0);
 	signal key_len: signed(7 downto 0);
-	signal mykey: std_logic_vector(7 downto 0);
-	signal ikeys: key_array;
-	signal stlv_duty_cycle2: std_logic_vector(2 downto 0);
+	signal stlv_duty_cycle2: std_logic_vector(5 downto 0);
+	signal tune_ptr: signed(2 downto 0);
+	signal inc_params: signed(7 downto 0);	-- used in recv
+	signal tinc_params: signed(7 downto 0); -- used in xmit
+	signal download: dl_array;
+	signal tune1: tune_array;
+	signal note_len: std_logic_vector(7 downto 0);
+	signal stlv_flag: std_logic_vector(7 downto 0);
 	
 begin
 
@@ -215,7 +221,9 @@ pwm2_unit: entity work.pwm2
 		done=>pwm_done1,
 		len=>key_len,
 		duty_cycle=>stlv_duty_cycle2,
-		key=>mykey);
+		tune1=>tune1,
+		note_len=>note_len,
+		tune_ptr=>tune_ptr);
 
 pwm_unit: entity work.lcd_pwm
 	generic map(W2=>W2_SIZE)
@@ -447,17 +455,25 @@ end process;
 
 -- ********************************************************************************
 recv_uart: process(clk, reset, state_uart_reg2)
+variable no_params: integer range 0 to 255:= 0;
+variable no_params2: integer range 0 to 255:= 0;
 begin
 	if reset = '0' then
 		state_uart_reg2 <= pre_idle;
 		state_uart_next2 <= pre_idle;
+		time_delay_reg4 <= (others=>'0');
+		time_delay_next4 <= (others=>'0');
 		start_rx <= '0';
 		mparam <= (others=>'0');
 		mcmd <= (others=>'0');
 --		led1 <= "1111";
 		start_calc <= '0';
 		data_sent <= '0';
-
+		inc_params <= (others=>'0');
+--		data_tx <= (others=>'0');
+--		start_tx <= '0';
+		stlv_flag <= (others=>'0');
+	
 	else if clk'event and clk = '1' then
 		case state_uart_reg2 is
 			when pre_idle =>
@@ -466,39 +482,59 @@ begin
 				state_uart_next2 <= idle2;
 			
 			when idle2 =>
---				led1 <= "0111";
+				data_sent <= '0';
+--				start_tx <= '0';
 				start_calc <= '0';
 				if data_ready = '1' then
 					start_rx <= '1';
+					stlv_flag <= (others=>'0');
 					state_uart_next2 <= next1;
 				end if;
 
 			when next1 =>
---				led1 <= "1011";
 				if done_rx = '1' then
 					start_rx <= '0';
---					led1 <= data_rx(3 downto 0);
 					if cmd_param = '1' then
 						mcmd <= data_rx;
-						data_sent <= '0';
+						inc_params <= (others=>'0');
 					else
-						mparam <= data_rx;
-						data_sent <= '1';
-					end if;	
-					state_uart_next2 <= done;
+						no_params := conv_integer(inc_params);
+						download(no_params) <= data_rx;
+						inc_params <= inc_params + 1;
+						stlv_flag <= data_rx;
+					end if;
+					state_uart_next2 <= start1;
 				end if;	
 						
 			when start1 =>
+--				data_tx <= data_rx;
+--				start_tx <= '1';
+				if stlv_flag = X"FF" then
+					start_calc <= '1';
+				end if;
 				state_uart_next2 <= done;
 
 			when done =>
-				if cmd_param = '0' then
-					start_calc <= '1';
+--				start_tx <= '0';
+				start_calc <= '0';
+				if start_calc = '1' then
+					state_uart_next2 <= rx_delay;
+				else state_uart_next2 <= idle2;
 				end if;
---				led1 <= "0101";
-				state_uart_next2 <= idle2;
+
+			-- 40ms delay to allow sender finish sending manditory 8 bytes
+			-- and then pull data_ready line back low
+			when rx_delay =>
+				if time_delay_reg4 > TIME_DELAY7 then
+					time_delay_next4 <= (others=>'0');
+					state_uart_next2 <= idle2;
+				else
+					time_delay_next4 <= time_delay_reg4 + 1;
+				end if;
+
 		end case;
 		state_uart_reg2 <= state_uart_next2;
+		time_delay_reg4 <= time_delay_next4;
 		end if;
 	end if;
 end process;
@@ -516,21 +552,8 @@ begin
 		stdlv_transmit_update_rate <=  X"1FFFFF";
 		stlv_duty_cycle <= (others=>'1');
 		start_pwm2 <= '0';
-		key_index <= (others=>'0');
-		ikeys(0) <= X"00";
-		ikeys(1) <= X"01";
-		ikeys(2) <= X"02";
-		ikeys(3) <= X"03";
-		ikeys(4) <= X"04";
-		ikeys(5) <= X"05";
-		ikeys(6) <= X"06";
-		ikeys(7) <= X"07";
-		ikeys(8) <= X"08";
-		ikeys(9) <= X"09";
-		ikeys(10) <= X"0A";
-		ikeys(11) <= X"0B";
-		mykey <= ikeys(0);
-		key_len <= X"0C";
+		key_len <= X"14";
+		stlv_duty_cycle2 <= "111111";
 		
 		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
 --		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
@@ -585,14 +608,19 @@ begin
 							test_rpm_rev_limits <= mparam(0);
 							main_next1 <= do_mcmd;
 						when TUNE_ON =>
-							led1 <= "0111";
-							stlv_duty_cycle2 <= mparam(2 downto 0);
-							temp:= conv_integer("000" & mparam(7 downto 3));
-							mykey <= ikeys(temp);
+							key_len <= conv_signed(conv_integer(download(0)),8);
+							note_len <= download(1);
+							stlv_duty_cycle2 <= download(2)(5 downto 0);
 							start_pwm2 <= '1';
+							main_next1 <= do_mcmd;
 						when TUNE_OFF =>
-							led1 <= "1110";
+--							led1 <= "1111";
 							start_pwm2 <= '0';
+							main_next1 <= do_mcmd;
+						when LOAD_TUNE =>
+--							tune1 <= convert_dl_to_tune_array(download);
+							tune1 <= load_tune_array(tune1);
+							main_next1 <= do_mcmd;
 						when others =>
 --							main_next1 <= idle1a;
 							main_next1 <= other_cmd;
