@@ -53,11 +53,16 @@ PB11	<--			P34		- USART
 
 StartAVRTask() waits for a SendAVRQueueHandle message.
 Any task sending a SendAVRQueueHandle message will
-pack an 8-bit UCHAR array into a uint64_t which is
+pack an 8-byte UCHAR array into a uint64_t which is
 send to the queue handle. Use pack64() to byte shift
 the UCHAR array into the uint64_t. The first byte of
 the UCHAR array is the command which ends up in the
 lowest significant byte of the uint64_t.
+
+in the DefaultTask, wait for the global var: key_mode
+to change from either NORMAL, PASSWORD or NUM_ENTRY
+and suspend the current task and resume the appropriate
+one. 
 
 StartDefaultTask()		-	does basic setup
 StartBasicCmdTask()		-	get keypresses and process - mostly sending msg to 7200 task
@@ -69,7 +74,7 @@ StartRecv7200()			-	get cmd's from 7200 and process: mostly display on screen
 StartSendFPGA()			-	send cmd's to FPGA over USART3
 StartRecvFPGA()			-	recv data from FPGA
 StartTask10()			-	available
-StartTask11()			-	available
+StartNumEntryTask()		-	handles numeric key entry used to set values
 Callback01()			-	does 1 sec timing
 
 tune player:
@@ -82,6 +87,3 @@ other params are:
 duty cycle
 length of each note
 how many notes in the tune
-
-1,3,5,7	major
-1,3,5,-7 minor

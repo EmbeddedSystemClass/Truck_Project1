@@ -1,5 +1,6 @@
 #ifndef __FREERTOS_H
 #define __FREERTOS_H
+
 enum rt_values_offsets
 {
 	OIL_PRES,
@@ -121,22 +122,6 @@ typedef struct
 #define PWM_30DC_PARAM					0x0A // duty_cycle = 30%
 #define PWM_25DC_PARAM					0x06 // duty_cycle = 25%
 #define PWM_12DC_PARAM					0x02 // duty_cycle = 12%
-
-typedef enum
-{
-	STATE_WAIT_FOR_PRESS = 1,
-	STATE_WAIT_FOR_RELEASE
-} ISRSTATE;
-
-static ISRSTATE e_isrState;
-
-const uint8_t au8_keyTable[NUM_ROWS][NUM_COLS] =
-{
-	{KP_1, KP_2, KP_3, KP_A },
-	{KP_4, KP_5, KP_6, KP_B },
-	{KP_7, KP_8, KP_9, KP_C },
-	{KP_AST, KP_0, KP_POUND, KP_D}
-};
 
 typedef enum
 {

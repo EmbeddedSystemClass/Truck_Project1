@@ -114,7 +114,7 @@ static void format_param_msg(void);
 
 //extern int tcp_window_on;
 //int serial_recv_on;
-int time_set;
+//int time_set;
 
 // array of structs to list all the inputs that have outputs assigned
 // to them 
@@ -172,8 +172,9 @@ UCHAR get_host_cmd_task(int test)
 	struct tm *pt = &t;
 	int msg_len;
 	serial_recv_on = 1;
-	time_set = 0;
+//	time_set = 0;
 	shutdown_all = 0;
+//	UCHAR time_buffer[20];
 
 	// since each card only has 20 ports then the 1st 2 port access bytes
 	// are 8-bit and the 3rd is only 4-bits, so we have to translate the
@@ -335,6 +336,9 @@ UCHAR get_host_cmd_task(int test)
 					case BLOWER1:
 					case BLOWER2:
 					case BLOWER3:
+					case WIPER1:
+					case WIPER2:
+					case WIPER_OFF:
 //						basic_controls(cmd);
 						add_msg_queue(cmd);
 						strcpy(tempx,cmd_array[cmd].cmd_str);
@@ -525,7 +529,7 @@ UCHAR get_host_cmd_task(int test)
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						printf("%s\n",tempx);
 */
-						time_set = 1;
+//						time_set = 1;
 						break;
 
 					case GET_TIME:
@@ -538,7 +542,9 @@ UCHAR get_host_cmd_task(int test)
 						gettimeofday(&mtv, NULL);
 						curtime2 = mtv.tv_sec;
 						strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
-
+						printf("%s\n",time_buffer);
+*/
+/*
 						send_serialother(TIME_DATA1,tempx[0],tempx[1],tempx[3],	tempx[4],0);
 						usleep(10000);
 						send_serialother(TIME_DATA2,tempx[8],tempx[9],tempx[11],tempx[12],0);

@@ -12,6 +12,7 @@
 
 #define PROTOPORT         5193				  /* default protocol port number */
 #define QLEN              6					  /* size of request queue        */
+#define MSG_QUEUE_SIZE		50
 int global_socket;
 
 enum task_types

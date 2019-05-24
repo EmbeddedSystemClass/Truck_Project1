@@ -69,7 +69,7 @@ static int mask2int(UCHAR mask);
 static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
-extern int time_set;
+//extern int time_set;
 extern int live_window_on;
 int max_ips;
 IP ip[40];

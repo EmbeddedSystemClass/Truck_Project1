@@ -267,9 +267,9 @@ enum output_types
 // start positions on screen
 #define NUM_RT_LABELS 13
 #define START_RT_VALUE_ROW 8
-#define START_RT_VALUE_COL 1
-#define ENDING_RT_VALUE_ROW 15
-#define RT_VALUE_COL_WIDTH 15
+#define START_RT_VALUE_COL 2
+#define ENDING_RT_VALUE_ROW 16
+#define RT_VALUE_COL_WIDTH 17
 
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1
