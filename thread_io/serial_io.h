@@ -9,7 +9,10 @@ int init_serial(void);
 int write_serial(UCHAR byte);
 void printString(const char myString[]);
 UCHAR read_serial(char *errmsg);
+//int read_serial_buff(UCHAR *buff, char *errmsg);
+//int write_serial_buff(UCHAR *buff, char *errmsg);
 void close_serial(void);
 int global_handle;
+#define SERIAL_BUFF_SIZE  50
 
 

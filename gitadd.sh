@@ -91,7 +91,6 @@ git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
 git add thread_io/read_sd.c
-git add thread_io/odata.csv
 git add thread_io/thread_io_notes.txt
 git add thread_io/mingetty/mountcf.sh
 git add thread_io/mingetty/try_sched_7250.sh
@@ -127,6 +126,7 @@ git add thread_io/cs_client/make_db
 git add thread_io/cs_client/make_db2
 git add thread_io/cs_client/config_file.c
 git add thread_io/cs_client/config_file.h
+git add thread_io/odata.csv
 
 ./gitstatus.sh
 oneline.sh > oneline.txt

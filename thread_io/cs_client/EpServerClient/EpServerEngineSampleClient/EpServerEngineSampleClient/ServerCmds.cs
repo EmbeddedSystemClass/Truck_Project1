@@ -25,6 +25,7 @@ namespace EpServerEngineSampleClient
 			OFF_LIGHTS,			// 10
 			ON_BRIGHTS,			// 11
 			OFF_BRIGHTS,		// 12
+			BLANK,
 			ON_BRAKES,
 			OFF_BRAKES,
 			ON_RUNNING_LIGHTS,
@@ -40,11 +41,6 @@ namespace EpServerEngineSampleClient
 			OFF_RLIGHTS,
 			ON_RBRIGHTS,
 			OFF_RBRIGHTS,
-			SHUTDOWN_IOBOX,
-			REBOOT_IOBOX,
-			TEST_ALL_IO,
-			SEND_ODATA,
-			SAVE_TO_DISK,
 			BLOWER_OFF,
 			BLOWER1,
 			BLOWER2,
@@ -52,6 +48,11 @@ namespace EpServerEngineSampleClient
 			WIPER1,
 			WIPER2,
 			WIPER_OFF,
+			SHUTDOWN_IOBOX,
+			REBOOT_IOBOX,
+			TEST_ALL_IO,
+			SEND_ODATA,
+			SAVE_TO_DISK,
 			GET_DIR,
 			LCD_SHIFT_RIGHT,
 			LCD_SHIFT_LEFT,
@@ -74,8 +75,8 @@ namespace EpServerEngineSampleClient
 			BAD_MSG,
 			CURRENT_TIME,
 			SET_PARAMS,
-			EXIT_PROGRAM
-        }
+			EXIT_PROGRAM        
+		}
 
         public ServerCmds()
         {
@@ -269,6 +270,15 @@ namespace EpServerEngineSampleClient
                     break;
                 case "TEST_ALL_IO":
                     sendcmd = (int)Server_cmds.TEST_ALL_IO;
+                    break;
+                case "WIPER_LOW":
+                    sendcmd = (int)Server_cmds.WIPER1;
+                    break;
+                case "WIPER_HIGH":
+                    sendcmd = (int)Server_cmds.WIPER2;
+                    break;
+                case "WIPER_OFF":
+                    sendcmd = (int)Server_cmds.WIPER_OFF;
                     break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;

@@ -68,7 +68,7 @@
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(201, 350);
+            this.tbReceived.Size = new System.Drawing.Size(201, 397);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -164,11 +164,14 @@
             "BLOWER2_ON",
             "BLOWER3_ON",
             "BLOWER_OFF",
-            "TEST_ALL_IO"});
+            "TEST_ALL_IO",
+            "WIPER_LOW",
+            "WIPER_HIGH",
+            "WIPER_OFF"});
             this.cblistCommon.Location = new System.Drawing.Point(13, 205);
             this.cblistCommon.Name = "cblistCommon";
-            this.cblistCommon.Size = new System.Drawing.Size(202, 344);
-            this.cblistCommon.TabIndex = 9;
+            this.cblistCommon.Size = new System.Drawing.Size(202, 395);
+            this.cblistCommon.TabIndex = 5;
             this.cblistCommon.SelectedValueChanged += new System.EventHandler(this.cblist_SelValueChanged);
             // 
             // btn_SetTime
@@ -213,9 +216,9 @@
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(22, 135);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(71, 13);
+            this.label5.Size = new System.Drawing.Size(73, 13);
             this.label5.TabIndex = 31;
-            this.label5.Text = "connect time:";
+            this.label5.Text = "server uptime:";
             // 
             // tbEngRunTime
             // 
@@ -257,7 +260,7 @@
             this.btnShutdown.Location = new System.Drawing.Point(13, 21);
             this.btnShutdown.Name = "btnShutdown";
             this.btnShutdown.Size = new System.Drawing.Size(120, 23);
-            this.btnShutdown.TabIndex = 35;
+            this.btnShutdown.TabIndex = 12;
             this.btnShutdown.Text = "Shutdown Server";
             this.btnShutdown.UseVisualStyleBackColor = true;
             this.btnShutdown.Click += new System.EventHandler(this.ShutdownServer);
@@ -267,7 +270,7 @@
             this.btnReboot.Location = new System.Drawing.Point(13, 50);
             this.btnReboot.Name = "btnReboot";
             this.btnReboot.Size = new System.Drawing.Size(120, 23);
-            this.btnReboot.TabIndex = 36;
+            this.btnReboot.TabIndex = 11;
             this.btnReboot.Text = "Reboot Server";
             this.btnReboot.UseVisualStyleBackColor = true;
             this.btnReboot.Click += new System.EventHandler(this.RebootServer);
@@ -277,7 +280,7 @@
             this.btnStopSerial.Location = new System.Drawing.Point(13, 81);
             this.btnStopSerial.Name = "btnStopSerial";
             this.btnStopSerial.Size = new System.Drawing.Size(120, 23);
-            this.btnStopSerial.TabIndex = 37;
+            this.btnStopSerial.TabIndex = 10;
             this.btnStopSerial.Text = "Stop Mbox";
             this.btnStopSerial.UseVisualStyleBackColor = true;
             this.btnStopSerial.Click += new System.EventHandler(this.StopMbox);
@@ -287,7 +290,7 @@
             this.btnDBMgmt.Location = new System.Drawing.Point(12, 114);
             this.btnDBMgmt.Name = "btnDBMgmt";
             this.btnDBMgmt.Size = new System.Drawing.Size(120, 23);
-            this.btnDBMgmt.TabIndex = 38;
+            this.btnDBMgmt.TabIndex = 9;
             this.btnDBMgmt.Text = "DB Mgmt";
             this.btnDBMgmt.UseVisualStyleBackColor = true;
             this.btnDBMgmt.Click += new System.EventHandler(this.DBMgmt);
@@ -297,7 +300,7 @@
             this.btnClear.Location = new System.Drawing.Point(13, 143);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(119, 23);
-            this.btnClear.TabIndex = 39;
+            this.btnClear.TabIndex = 8;
             this.btnClear.Text = "Clear Screen";
             this.btnClear.UseVisualStyleBackColor = true;
             this.btnClear.Click += new System.EventHandler(this.ClearScreen);
@@ -307,7 +310,7 @@
             this.btnGetTime.Location = new System.Drawing.Point(138, 143);
             this.btnGetTime.Name = "btnGetTime";
             this.btnGetTime.Size = new System.Drawing.Size(75, 23);
-            this.btnGetTime.TabIndex = 40;
+            this.btnGetTime.TabIndex = 4;
             this.btnGetTime.Text = "Get Time";
             this.btnGetTime.UseVisualStyleBackColor = true;
             this.btnGetTime.Click += new System.EventHandler(this.GetTime);
@@ -317,7 +320,7 @@
             this.btnSetParams.Location = new System.Drawing.Point(13, 172);
             this.btnSetParams.Name = "btnSetParams";
             this.btnSetParams.Size = new System.Drawing.Size(119, 23);
-            this.btnSetParams.TabIndex = 34;
+            this.btnSetParams.TabIndex = 7;
             this.btnSetParams.Text = "Set Svr Params";
             this.btnSetParams.UseVisualStyleBackColor = true;
             this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
@@ -326,7 +329,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 570);
+            this.ClientSize = new System.Drawing.Size(460, 617);
             this.Controls.Add(this.btnSetParams);
             this.Controls.Add(this.btnGetTime);
             this.Controls.Add(this.btnClear);

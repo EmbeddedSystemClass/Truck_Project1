@@ -87,3 +87,48 @@ other params are:
 duty cycle
 length of each note
 how many notes in the tune
+
+msg's between 7200 & STM32:
+STM32 can't asynchronously send and receive
+serial data to and from 7200 because while
+waiting for a receive byte(s), the uart can'task
+send anything so just put the send and receive
+calls in one task and send and receive a chunk
+at a time, say, 50->100 bytes every 1 to 2 seconds.
+The task that sends receives the chunks is blocked
+by a xQueueReceive() that has a 1->2 second timeout.
+Any task, like StartBasicCmdTask, that sends a
+basic command will interrupt the 1 to 2 second 
+message.
+1st byte of the chunk sent has an '0xFF' to be
+used as a marker for the 7200. The next byte is
+the command sent. 
+
+STM32 -> 7200:
+SET_TIME - at least 6 bytes (hr:mn:sc)
+basic cmd's - 1 byte
+
+START_SEQ
+SHUTDOWN
+ON_FAN
+OFF_FAN
+ON_LIGHTS
+OFF_LIGHTS
+ON_BRIGHTS
+OFF_BRIGHTS
+ON_BRAKES
+OFF_BRAKES
+ON_RUNNING_LIGHTS
+OFF_RUNNING_LIGHTS
+BLOWER1
+BLOWER2
+BLOWER3
+BLOWER_OFF
+WIPER1
+WIPER2
+WIPER_OFF
+
+7200 -> STM32
+GET_TIME ? (time & date)
+
+

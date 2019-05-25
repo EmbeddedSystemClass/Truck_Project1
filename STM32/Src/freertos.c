@@ -41,6 +41,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define MSG_SIZE 50
 typedef enum
 {
 	STATE_WAIT_FOR_PRESS = 1,
@@ -66,7 +67,7 @@ FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 /* USER CODE BEGIN PD */
 uint64_t pack64(UCHAR *buff);
 uint32_t pack32(UCHAR *buff);
-
+static UCHAR buff1[100];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -290,7 +291,7 @@ uint8_t myQueue01Buffer[ 16 * sizeof( uint16_t ) ];
 osStaticMessageQDef_t myQueue01ControlBlock;
 
 osMessageQId Send7200QueueHandle;
-uint8_t myQueue02Buffer[ 16 * sizeof( uint16_t ) ];
+uint8_t myQueue02Buffer[ 5 * sizeof( uint64_t ) ];
 osStaticMessageQDef_t myQueue02ControlBlock;
 
 osMessageQId SendAVRQueueHandle;
@@ -391,7 +392,7 @@ void MX_FREERTOS_Init(void) {
 	keypressedQueueHandle = osMessageCreate(osMessageQ(myQueue01), NULL);
 
 	/* definition and creation of myQueue02 */
-	osMessageQStaticDef(myQueue02, 16, uint16_t, myQueue02Buffer, &myQueue02ControlBlock);
+	osMessageQStaticDef(myQueue02, 5, uint64_t, myQueue02Buffer, &myQueue02ControlBlock);
 	Send7200QueueHandle = osMessageCreate(osMessageQ(myQueue02), NULL);
 
 	/* definition and creation of myQueue03 */
@@ -560,7 +561,8 @@ void StartBasicCmdTask(void const * argument)
 	UCHAR key;
 	UCHAR cmd;
 	uint16_t recval;
-	uint16_t sendval; 
+	uint64_t buff[5];
+	UCHAR ucbuff[8];
 		
 	lights_on = 0;
 	brights_on = 0;
@@ -569,8 +571,6 @@ void StartBasicCmdTask(void const * argument)
 	engine_on = 0;
 	task7on = 0;
 	wipers = 0;
-
-	sendval = 8;
 
   /* Infinite loop */
 	for(;;)
@@ -585,18 +585,21 @@ void StartBasicCmdTask(void const * argument)
 				cmd = START_SEQ;
 				if(engine_on == 0)
 				{
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 				}
 			break;
 			case KP_2:
 				cmd = SHUTDOWN;
-				sendval = (uint16_t)cmd;
-				xQueueSend(Send7200QueueHandle, &sendval, 0);
+				ucbuff[0] = cmd;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200QueueHandle, buff, 0);
 				cmd = OFF_FAN;
-				sendval = (uint16_t)cmd;
-				xQueueSend(Send7200QueueHandle, &sendval, 0);
+				ucbuff[0] = cmd;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200QueueHandle, buff, 0);
 				engine_on = 0;
 				fan_on = 0;
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
@@ -609,15 +612,17 @@ void StartBasicCmdTask(void const * argument)
 					if(brights_on == 0)
 					{
 						cmd = ON_BRIGHTS;
-						sendval = (uint16_t)cmd;
-						xQueueSend(Send7200QueueHandle, &sendval, 0);
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
 						brights_on = 1;
 					}
 					else
 					{
 						cmd = OFF_BRIGHTS;
-						sendval = (uint16_t)cmd;
-						xQueueSend(Send7200QueueHandle, &sendval, 0);
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
 						brights_on = 0;
 					}
 				}
@@ -626,16 +631,18 @@ void StartBasicCmdTask(void const * argument)
 				if(fan_on == 0)
 				{
 					cmd = ON_FAN;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					fan_on = 1;
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 				}
 				else
 				{
 					cmd = OFF_FAN;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					fan_on = 0;
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 				}
@@ -645,23 +652,27 @@ void StartBasicCmdTask(void const * argument)
 				{
 					case 0:	
 					cmd = BLOWER_OFF;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					break;
 					case 1:
 					cmd = BLOWER1;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					break;
 					case 2:
 					cmd = BLOWER2;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					break;
 					case 3:
 					cmd = BLOWER3;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					break;
 					default:
 					blower_on = 0;
@@ -674,39 +685,41 @@ void StartBasicCmdTask(void const * argument)
 				{
 					running_lights_on = 1;
 					cmd = ON_RUNNING_LIGHTS;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 				}else
 				{
 					running_lights_on = 0;
 					cmd = OFF_RUNNING_LIGHTS;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 				}
 			break;
 			case KP_7:
 				if(lights_on == 0)
 				{
 					cmd = ON_LIGHTS;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
 					lights_on = 1;
-					sendval = 4;
-//					xQueueSend(FlashQueueHandle, &sendval, 0);
 				}
 				else
 				{
 					cmd = OFF_LIGHTS;
 					lights_on = 0;
-					sendval = (uint16_t)cmd;
-					xQueueSend(Send7200QueueHandle, &sendval, 0);
-					sendval = 2;
-//					xQueueSend(FlashQueueHandle, &sendval, 0);
+					ucbuff[0] = cmd;
+					buff[0] = pack64(ucbuff);
+					xQueueSend(Send7200QueueHandle, buff, 0);
+
 					if(brights_on == 1)
 					{
 						cmd = OFF_BRIGHTS;
-						sendval = (uint16_t)cmd;
-						xQueueSend(Send7200QueueHandle, &sendval, 0);
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
 						brights_on = 0;
 					}
 				}
@@ -729,8 +742,9 @@ void StartBasicCmdTask(void const * argument)
 					default:
 						wipers = 0;
 				}
-				sendval = (uint16_t)cmd;
-				xQueueSend(Send7200QueueHandle, &sendval, 0);
+				ucbuff[0] = cmd;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200QueueHandle, buff, 0);
 			break;
 			case KP_9:
 			break;
@@ -918,29 +932,78 @@ void StartDS1620Task(void const * argument)
 * @retval None
 */
 /* USER CODE END Header_StartTask05 */
+// queue receiving task - unpacks the param for the queue
+// and transmits to 7200 while at the same time gets
+// message from 7200 
 void StartTask7200(void const * argument)
 {
-	unsigned long ulReceivedValue;
-	UCHAR cmd;
-	UCHAR ucbuff[4];
-	uint64_t avr_buffer[5];
-	UCHAR rec_byte;
+	uint64_t buff[5];
+	UCHAR buff2[10];
+	UCHAR temp;
+	int i,j;
+	UCHAR xbyte;
+  /* USER CODE BEGIN StartTask04 */
+	/* Infinite loop */
 
+	i = 0;
+
+	memset(buff2,0,10);
+	memset(buff1,0,MSG_SIZE);
 	for(;;)
 	{
-		xQueueReceive(Send7200QueueHandle, &ulReceivedValue, portMAX_DELAY);
-		cmd = (UCHAR)ulReceivedValue;
-		HAL_UART_Transmit(&huart1, &cmd, 1, 100);
-#if 0
-		HAL_UART_Receive(&huart1, &rec_byte, 1, portMAX_DELAY);
-		ucbuff[0] = SEND_BYTE_HEX_VALUES;
-		ucbuff[1] = 0;
-		ucbuff[2] = 30;
-		ucbuff[3] = rec_byte;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-#endif
+		xQueueReceive(Send7200QueueHandle, buff, 4000);
+
+		buff2[0] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[1] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[2] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[3] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[4] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[5] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[6] = (UCHAR)buff[0];
+
+		buff[0] >>= 8;
+		buff2[7] = (UCHAR)buff[0];
+
+		buff1[0] = buff2[0];
+/*
+		memcpy(buff1+1,buff2+1,8);
+		memcpy(buff1+9,buff2+1,8);
+		memcpy(buff1+17,buff2+1,8);
+		memcpy(buff1+25,buff2+1,8);
+		memcpy(buff1+33,buff2+1,8);
+		memcpy(buff1+41,buff2+1,8);
+*/
+		temp = 0xFF;
+		HAL_UART_Transmit(&huart1, &temp, 1, 100);
+		HAL_UART_Transmit(&huart1, buff1, MSG_SIZE, 100);
+		HAL_UART_Receive(&huart1, buff1, MSG_SIZE, 100);
+
+/*
+		if(buff1[MSG_SIZE-1] == 0xFE)
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		}
+		else
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		}
+*/
 	}
+
 }
 
 /* USER CODE BEGIN Header_StartTask06 */
@@ -1983,6 +2046,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	uTemp = (UCHAR)temp;
 	temp >>= 8;
 	uTemp = (UCHAR)temp;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(menu_ptr == 0)
+	{
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		menu_ptr = 1;
+	}else
+	{
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+		menu_ptr = 0;
+	}	
 }
 /* USER CODE END Application */
 

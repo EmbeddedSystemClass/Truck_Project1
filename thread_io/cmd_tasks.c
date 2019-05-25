@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[63] =
+CMD_STRUCT cmd_array[64] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -49,6 +49,7 @@ CMD_STRUCT cmd_array[63] =
 	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
 	{   	ON_BRIGHTS,"ON_BRIGHTS\0" },
 	{   	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{   	BLANK,"BLANK\0" },
 	{		ON_BRAKES,"ON_BRAKES\0" },
 	{		OFF_BRAKES,"OFF_BRAKES\0" },
 	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
@@ -64,11 +65,6 @@ CMD_STRUCT cmd_array[63] =
 	{   	OFF_RLIGHTS,"OFF_RLIGHTS\0" },
 	{   	ON_RBRIGHTS,"ON_RBRIGHTS\0" },
 	{   	OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
-	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
-	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
-	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
-	{   	SEND_ODATA,"SEND_ODATA\0" },
-	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
 	{		BLOWER_OFF,"BLOWER_OFF\0" },
 	{		BLOWER1,"BLOWER1\0" },
 	{		BLOWER2,"BLOWER2\0" },
@@ -76,6 +72,11 @@ CMD_STRUCT cmd_array[63] =
 	{		WIPER1,"WIPER1\0" },
 	{		WIPER2,"WIPER2\0" },
 	{		WIPER_OFF,"WIPER_OFF\0" },
+	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
+	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
+	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
+	{   	SEND_ODATA,"SEND_ODATA\0" },
+	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
 	{   	GET_DIR,"GET_DIR\0" },
 	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
 	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
@@ -256,7 +257,7 @@ UCHAR get_host_cmd_task(int test)
 //	myprintf1("start....\0");
 
 	myprintf1("sched v1.21\0");
-//	printf("sched v1.19\r\n");
+//	printf("sched v1.21\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
 	trip = 0;
@@ -421,7 +422,7 @@ UCHAR get_host_cmd_task(int test)
 						printf("blower3: %d\r\n",ps.blower3_on);
 						printf("test_bank: %d\r\n",ps.test_bank);
 */
-						send_serialother(SEND_PARAMS,&msg_buf[2],12);
+//						send_serialother(SEND_PARAMS,&msg_buf[2],12);
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -807,7 +808,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_RECV:
-						send_serial(STOP_SERIAL_RECV);
+//						send_serial(STOP_SERIAL_RECV);
 						break;
 
 					// upload this program and then goto reboot so it comes up using the
@@ -848,7 +849,7 @@ exit_program:
 						else
 						{
 //							printf("exit program\r\n");
-							send_serial(STOP_SERIAL_RECV);
+//							send_serial(STOP_SERIAL_RECV);
 							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do

@@ -52,6 +52,7 @@ enum cmd_types
 	OFF_LIGHTS,			// 10
 	ON_BRIGHTS,			// 11
 	OFF_BRIGHTS,		// 12
+	BLANK,
 	ON_BRAKES,
 	OFF_BRAKES,
 	ON_RUNNING_LIGHTS,
@@ -67,11 +68,6 @@ enum cmd_types
 	OFF_RLIGHTS,
 	ON_RBRIGHTS,
 	OFF_RBRIGHTS,
-	SHUTDOWN_IOBOX,
-	REBOOT_IOBOX,
-	TEST_ALL_IO,
-	SEND_ODATA,
-	SAVE_TO_DISK,
 	BLOWER_OFF,
 	BLOWER1,
 	BLOWER2,
@@ -79,6 +75,11 @@ enum cmd_types
 	WIPER1,
 	WIPER2,
 	WIPER_OFF,
+	SHUTDOWN_IOBOX,
+	REBOOT_IOBOX,
+	TEST_ALL_IO,
+	SEND_ODATA,
+	SAVE_TO_DISK,
 	GET_DIR,
 	LCD_SHIFT_RIGHT,
 	LCD_SHIFT_LEFT,
@@ -267,9 +268,9 @@ enum output_types
 // start positions on screen
 #define NUM_RT_LABELS 13
 #define START_RT_VALUE_ROW 8
-#define START_RT_VALUE_COL 2
-#define ENDING_RT_VALUE_ROW 16
-#define RT_VALUE_COL_WIDTH 17
+#define START_RT_VALUE_COL 1
+#define ENDING_RT_VALUE_ROW 15
+#define RT_VALUE_COL_WIDTH 15
 
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1
@@ -345,9 +346,6 @@ typedef struct params
 #define SET_MIN_REV_LIMITER 		0x27
 #define TEST_RPM_LIMIT 				0x28
 #define TEST_COMM					0x29
-#define TUNE_ON						0x2A
-#define TUNE_OFF					0x2B
-#define LOAD_TUNE					0x2C
 
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on

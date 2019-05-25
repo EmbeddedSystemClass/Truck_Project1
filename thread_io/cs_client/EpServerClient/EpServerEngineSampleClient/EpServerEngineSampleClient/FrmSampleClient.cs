@@ -453,7 +453,9 @@ namespace EpServerEngineSampleClient
                              || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD" ||
                                  ctls[i].CtlName == "BLOWER1_ON" || ctls[i].CtlName == "BLOWER2_ON" || 
                                      ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || 
-                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO")
+                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO" ||
+                                        ctls[i].CtlName == "WIPER_LOW" || ctls[i].CtlName == "WIPER_HIGH" ||
+                                            ctls[i].CtlName == "WIPER_OFF")
                     {
                         ctls[i].CtlSet = 0;
                         cblistCommon.SetItemChecked(i, false);
