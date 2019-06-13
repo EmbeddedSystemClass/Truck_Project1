@@ -4,10 +4,10 @@ Screen Box has the AVR & LCD screen (in sep. panel to left above red & green but
 
 This box replaces the old monster box which housed the screen, keypad, AVR, PIC24FJ and the FPGA boards.
 The main box connects to the screen box via an RS-232 cable using 3v3->5v & RS-232 converters
-There is also a PWM wire from the STM32 to the screen box (or use the PWM on from the FPGA)
+There is also a PWM wire (screen dim) from the STM32 to the screen box (or use the PWM on from the FPGA)
 
 The AVR and screen work as before and are connected the same, but an STM32 Discovery board replaces the
-Microchip PIC24FJ.
+Microchip PIC24FJ128.
 
 The FPGA board will be in another box and will communicate with the Main Box via a serial port and the
 same handshacking lines as before. (UART3)
@@ -19,7 +19,6 @@ UART2: AVR (external)
 UART3: FPGA (external with 2 handshaking lines)
 
 The STM32 has up to 16 ADC channels but the FPGA can be used to do the ADC using support chips.
-The FPGA drove the 2 speakers for tones but the STM32 could do this. (keypad tones and alarms)
 
 pinout for LCD:
 
@@ -45,7 +44,7 @@ pinout for LCD:
 2) VSS		signal gnd
 1) FG		frame ground (can go to pin 2)
 
-bottom view w/ reset button on right
+bottom view of AVR w/ reset button on right
 
 TX		RX		RESET*		gnd		PD2		PD3		PD4		PD5		PD6		PD7		PB0		PB1
 
@@ -69,7 +68,6 @@ ICD cable from programmer looking at hole side with cable up:
 
 1	2	3	4	5
 6	7	8	9	10
-
 
 AVR to t6963:
 WR		C0
@@ -186,37 +184,276 @@ use AVR pro-mini to control wipers
 
 FPGA: (signals needed so far - some may need to be converted to 5v)
 
-# serial port
-tx_uart P34
-rx_uart P36
+TODO: need a 'recv_gate' signal so STM32 can shutoff/start the 
+recv_uart process. And another input to stop the broadcast (or command).
 
-# inputs from sensors
-rpm_signal P77
-mph_signal P75
+TODO: Also, may want a reference signal generated when the FPGA is running to
+blink an LED on the dash to show the FPGA is running.
 
-# 7-seg LED outputs
-tx_rpm P69
-tx_mph P64
+TODO: In the StartDefaultTask of freertos.c - wait for a message from the AVR/LCD 
+before sending the init_rtlabels/DISPLAY_RTLABELS msg's.
 
-# speaker outputs
-pwm_spk1 P62
-pwm_spk2 P61
+TODO: See if the parallel port can be made bi-directional, that would free up
+UART3 on the STM32. (The FPGA can have as many UARTS as there are pins available).
 
-# pwm for dimmer for LCD screen
-pwm_lcd P60
-fp_shutoff P33
-rev_limit P82
+TODO: use ATXMEGA128A4U on back of rpm/mph display box to read:
+1) serial rpm/mph data to display on LED's
+2) commands from FPGA to change params of LED's like brightness, decimal points, etc.
+XMEGA has (3) serial ports and the LED's only use 1 serial RX for each so 2 of the
+serial ports could have the one TX dedicated to the LED's while the other 2 RX's could
+be the lines that get data/cmd's from the FPGA. To test this use (2) AVR ProMini's to
+generate sample data/cmd's to the RX's of the XMEGA UART1 & 2 and then read the TX's 
+of the two XMEGA UART's on 1 or more tty terminals. The rpm/mph data is then generated
+once a second or 1/2 second by the FPGA, while the cmd's originate from the STM32 and 
+are passed on by the FPGA. The XMEGA will stop the display update when it gets a command
+to change the brightness or decimal points.
 
-#SPI master signals
-#MOSI_o P48
-#MISO_i P45
-#SCLK_o P41
-#SS_o P39
+FPGA connections:
+36 dip on top (1st 2 on left are vcc, next 2 are gnd)
+pin 1 starts at bottom 3rd one: P4
+pin 2 is P5
+pin 31 starts at bottom on other end: P161;
+pin 32 is 162
 
-data_ready P24
-cmd_param P30
-data_sent P28
-rx_ds1620 P40
-ref_signal P42
+2 sep dip's: one on left goes to 3v3 conv board
+one on right goes to STM32
+
+start from the left with 5v
+	using 14 out of 24 possible:
+	10 are from FPGA, 4 of the 3v3 conv ports 
+	are used by STM32 for UART1 & UART2
+
+starting from left
+32 - 162 DataReady C10	top
+31 - 161 CmdParam C11	bottom
+30 - 164 DataSent C12	top
+29 - 163 PP_CS A11		bottom
+28 - 167 PP_ACK A15		top
+27 - 165 PP0 B3			bottom
+26 - 171 PP1 B4			top
+25 - 168 PP2 B5			bottom
+24 - 177 PP3 B6			top
+23 - 172 PP4 B7			bottom
+22 - 179 PP5 B8			top
+21 - 178 PP6 B9			bottom
+20 - 181 PP7 A12		top
+19 - 180 rx_uart B10	bottom
+	
+start from the right with 3v3
+(these go directly to the STM32)
+NET "rx_uart"  LOC ="p180";
+NET "PP_DATA7"  LOC ="p181";
+NET "PP_DATA6"  LOC ="p178";
+NET "PP_DATA5"  LOC ="p179";
+NET "PP_DATA4"  LOC ="p172";
+NET "PP_DATA3"  LOC ="p177";
+NET "PP_DATA2"  LOC ="p168";
+NET "PP_DATA1"  LOC ="p171";
+NET "PP_DATA0"  LOC ="p165";
+NET "PP_ACK"  LOC ="p167";
+NET "PP_CS"  LOC ="p163";
+NET "data_sent"  LOC ="p164";
+NET "cmd_param"  LOC ="p161";
+NET "data_ready"  LOC ="p162";
+
+these go threw the 3v3 conv chip board
+
+p4 starts from the 2nd pair on the dip
+which is actually the 3rd pair on the board
+the first pair on the dip are gnd and 
+the first pair on the board are 3v3 which
+are not used
+
+NET "pwm_signal_1"  LOC ="p4";		bottom
+NET "pwm_signal_2"  LOC ="p5";		top
+NET "pwm_spk1"  LOC ="p2";			bottom
+NET "pwm_spk2"  LOC ="p3";			top
+NET "pwm_lcd"  LOC ="p203";			bottom
+NET "fp_shutoff"  LOC ="p205";		top
+NET "rev_limit"  LOC ="p200";		bottom
+NET "rpm1_signal"  LOC ="p202";		top
+NET "rpm2_signal"  LOC ="p197";		bottom
+NET "mph1_signal"  LOC ="p199";		top
+NET "mph2_signal"  LOC ="p193";		bottom
+NET "tx_rpm_mph"   LOC ="p196";		top
+
+(6) unused
+NET "32I/Os_2_13"  LOC ="p190";
+NET "32I/Os_2_14"  LOC ="p192";
+NET "32I/Os_2_15"  LOC ="p187";
+NET "32I/Os_2_16"  LOC ="p189";
+NET "32I/Os_2_17"  LOC ="p185";		// 2 extra pins on header
+NET "32I/Os_2_18"  LOC ="p186";
+
+3v3 converter board:
+24 dip on top and bottom
+conv chip placement: 
+1 2 3	HV on top, LV on bottom
+4 5 6
+dip pin order:
+1 3 5 ...
+2 4 6 ...
+
+*********************************
+exception because of screw-up !!!!!!
+last 2 3v3 conn's on conv chip #4
+go to 23 & 24 instead of 15 & 16
+on dip pins on bottom 
+*********************************
+
+5v outputs on top dip:
+1	3	5	7	9	11	13	23	15	17	19	21	x	5v
+2	4	6	8	10	12	14	24	16	18	20	22	x	gnd
+
+bottom dips:
+1 ... 23 5v
+2 ... 24 gnd
+
+DB-15 connections:
+(2) DB-15's at front of box
+A is on left, B - right
+pin 1 starts on left, pin 2 is directly
+underneath:
+1   3    5    7   ...
+  2   4    6   ...
+(looking at solder side)
+
+DB-15 on right looking on outside:
+1)	gnd
+2)	pwm_signal_1
+3)	pwm_signal_2
+4)	pwm_spk1
+5)	pwm_spk2
+6)	pwm_lcd
+7)	fp_shutoff
+8)	rev_limit
+9)	rpm1_signal
+10)	rpm2_signal
+11)	mph1_signal
+12)	mph2_signal
+13) tx_rpm_mph
+14)	AVR tx
+15)	AVR rx
+
+DB-156 on left looking from outside:
+1)	VCC
+2)	GND
+3)	DS1620 DQ
+4)	DS1620 CLK
+5)	DS1620 RST
+6)	
+7)
+8)
+9)
+10)
+11)
+12)
+13)
+14)
+15)
+
+5v to RS-232 converter is external to main box
+2 connections from 3v3 conv for UART1
+
+power to FPGA board is soldered to bottom (marked +/-)
+and goes to a 2 pin header on conv board
+
+probably need a master start signal from STM32 so that
+all proc's on FPGA wait for STM32 to start first
+
+double row dip headers on left of STM32 baseboard:
+starting at bottom: (1 on right, 2 on left)
+1)	VCC	(5v)	-	wired underneath
+2)	GND			-	wired underneath
+3)	DS1620 DQ	-	all the rest wired on top
+4)	DS1620 CLK
+5)	DS1620 RST
+6)
+7)
+8)
+9)
+10)
+11)
+12)
+
+single row header on right of STM32 baseboard for keypad:
+1)	col0	PC0
+2)	col1	PC1
+3)	col2	PC2
+4)	col3	PC3
+5)	row0	PB15
+6)	row1	PB14
+7)	row2	PB13
+8)	row3	PB12
+9)	tx for USART1
+10)	rx for USART1
 
 
+PA9			USART1_TX	- part of DataReady & CmdParam
+PA10		USART1_RX 	- not used
+PA2			USART2_TX	- AVR
+PA3			USART2_RX 
+PB10		USART3_TX	- TS-7200
+PB11		USART3_RX 
+
+keypad:
+col0		C0
+col1		C1
+col2		C2
+col3		C3
+row3		B12
+row2		B13
+row1		B14
+row0		B15
+
+on-board LED's
+LD4			C8
+LD3			C9
+
+DS1620:
+DQ			B0
+CLK			B1
+RST			B2
+
+
+avail:
+A: 0,1,4,5,6,7,8
+B: none
+C: 4,5,6,7,13
+can't use A: 13,14 (used by SWDIO/CLK)
+can't use D: 0,1 or C: 14,15 (unless change jumpers underneath)
+total: 11 left
+
+#32I/Os_2
+NET "32I/Os_2_1"  LOC ="p4";
+NET "32I/Os_2_2"  LOC ="p5";
+NET "32I/Os_2_3"  LOC ="p2";
+NET "32I/Os_2_4"  LOC ="p3";
+NET "32I/Os_2_5"  LOC ="p203";
+NET "32I/Os_2_6"  LOC ="p205";
+NET "32I/Os_2_7"  LOC ="p200";
+NET "32I/Os_2_8"  LOC ="p202";
+NET "32I/Os_2_9"  LOC ="p197";
+NET "32I/Os_2_10"  LOC ="p199";
+NET "32I/Os_2_11"  LOC ="p193";
+NET "32I/Os_2_12"  LOC ="p196";
+NET "32I/Os_2_13"  LOC ="p190";
+NET "32I/Os_2_14"  LOC ="p192";
+NET "32I/Os_2_15"  LOC ="p187";
+NET "32I/Os_2_16"  LOC ="p189";
+NET "32I/Os_2_17"  LOC ="p185";
+NET "32I/Os_2_18"  LOC ="p186";
+NET "32I/Os_2_19"  LOC ="p180";
+NET "32I/Os_2_20"  LOC ="p181";
+NET "32I/Os_2_21"  LOC ="p178";
+NET "32I/Os_2_22"  LOC ="p179";
+NET "32I/Os_2_23"  LOC ="p172";
+NET "32I/Os_2_24"  LOC ="p177";
+NET "32I/Os_2_25"  LOC ="p168";
+NET "32I/Os_2_26"  LOC ="p171";
+NET "32I/Os_2_27"  LOC ="p165";
+NET "32I/Os_2_28"  LOC ="p167";
+NET "32I/Os_2_29"  LOC ="p163";
+NET "32I/Os_2_30"  LOC ="p164";
+NET "32I/Os_2_31"  LOC ="p161";
+NET "32I/Os_2_32"  LOC ="p162";

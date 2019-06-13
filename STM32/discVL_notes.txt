@@ -17,6 +17,16 @@ DS1620_PIN_DQ	GPIO_PIN_0
 DS1620_PIN_CLK	GPIO_PIN_1
 DS1620_PIN_RST	GPIO_PIN_2
 
+wire w/ black tape:
+red - 3v3
+blk - gnd
+wht - PB0 (DQ)
+
+wire w/o black tape
+red - PB1 (CLK)
+blk - PB2 (RST)
+wht - not used
+
 PA1 - ADC channel 1
 
 keypad:
@@ -128,7 +138,36 @@ WIPER1
 WIPER2
 WIPER_OFF
 
+TODO: get/set params for time of day 
+and temp params (ps struct in tasks.c)
+
+Since the TS-7200 doesn't have a real-time clock
+there has to be a menu to set the hr:mm:sec
+it should update the time on the TS-7200 so it
+can set the timestamp on files it saves to disk.
+Also, the STM32 should display the time of day on 
+the screen. The year/month/day can be added later.
+
+Currently, there is a number of params that get sent
+from the client to the TS-7200 which specify the 
+temp for the cooling fan to go on/off and the indoor
+temps to automatically regulate the blower for the 
+heater. These are stored in a file on the TS-7200
+filesystem called 'param.conf'. This needs to be
+passed back and forth from the STM32 to the TS-7200
+so the current values can be viewed on the screen
+and updated. So just allocate all the params as
+offsets into the main buffer that get passed back
+and forth from the TS-7200. 
+
+The FPGA sends 15 bytes (not counting the 0xFF at
+the start of the frame) and includes 4 int temp
+values and 2 ints for the rpm & mph with 3 bytes
+left over. The 4 temp values were intended to be
+a separate AVR that reads the temp of (4) different
+DS1620's and sends them over a separate serial
+line to the FPGA. 
+
+
 7200 -> STM32
 GET_TIME ? (time & date)
-
-

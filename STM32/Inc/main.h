@@ -80,19 +80,25 @@ void Error_Handler(void);
 #define LD4_GPIO_Port GPIOC
 #define LD3_Pin GPIO_PIN_9
 #define LD3_GPIO_Port GPIOC
-#define TMS_SWDIO_Pin GPIO_PIN_13
-#define TMS_SWDIO_GPIO_Port GPIOA
-#define TCK_SWCLK_Pin GPIO_PIN_14
-#define TCK_SWCLK_GPIO_Port GPIOA
-#define Wiper_Park_Switch_Pin GPIO_PIN_4
-#define Wiper_Park_Switch_GPIO_Port GPIOC
-#define Wiper_Park_Switch_EXTI_IRQn EXTI4_IRQn
-#define DataReady_Pin GPIO_PIN_4
-#define DataReady_GPIO_Port GPIOA
-#define CmdParam_Pin GPIO_PIN_5
-#define CmdParam_GPIO_Port GPIOA
-#define DataSent_Pin GPIO_PIN_6
-#define DataSent_GPIO_Port GPIOA
+#define PP0 GPIO_PIN_3	// first 7 bits of par. port 
+#define PP1 GPIO_PIN_4	// are B3->B9
+#define PP2 GPIO_PIN_5
+#define PP3 GPIO_PIN_6
+#define PP4 GPIO_PIN_7
+#define PP5 GPIO_PIN_8
+#define PP6 GPIO_PIN_9
+#define PP_CS GPIO_PIN_11
+#define PP_CS_GPIO_Port GPIOA
+#define PP7 GPIO_PIN_12
+#define PP7_GPIO_Port GPIOA
+#define PP_ACK GPIO_PIN_15
+#define PP_ACK_GPIO_Port GPIOA
+#define DataReady_Pin GPIO_PIN_10
+#define DataReady_GPIO_Port GPIOC
+#define CmdParam_Pin GPIO_PIN_11
+#define CmdParam_GPIO_Port GPIOC
+#define DataSent_Pin GPIO_PIN_12
+#define DataSent_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

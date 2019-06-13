@@ -11,6 +11,7 @@ git add alot_of_work.txt
 git add append_br.c
 git add replace_tabs.c
 git add avr_cmds.txt
+git add main_box_pinout.ods
 
 git add STM32/*
 git add STM32/.cproject
@@ -127,7 +128,18 @@ git add thread_io/cs_client/make_db2
 git add thread_io/cs_client/config_file.c
 git add thread_io/cs_client/config_file.h
 git add thread_io/odata.csv
+git add XMEGA/avr_compiler.h
+git add XMEGA/documentation.h
+git add XMEGA/Makefile
+git add XMEGA/TC_driver.h
+git add XMEGA/usart_driver.c
+git add XMEGA/clean.sh
+git add XMEGA/main.c
+git add XMEGA/TC_driver.c
+git add XMEGA/usart_compile.sh
+git add XMEGA/usart_driver.h
 
 ./gitstatus.sh
 oneline.sh > oneline.txt
+
 

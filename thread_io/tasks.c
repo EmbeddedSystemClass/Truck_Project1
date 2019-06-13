@@ -883,23 +883,11 @@ UCHAR serial_recv_task(int test)
 */
 	ch = 0x21;
 
-/*
-	pthread_mutex_lock( &serial_read_lock); 
-
-	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-	{
-		read_serial_buffer[i] = ch;
-		if(++ch > 0x7e)
-			ch = 0x21;
-	}
-
-	pthread_mutex_unlock(&serial_read_lock);
-*/	
 	red_led(0);
 	green_led(0);
 
 	usleep(1000000);
-//	memset(read_serial_buff,0x20,SERIAL_BUFF_SIZE);
+
 	while(TRUE)
 	{
 //		if(serial_recv_on == 1)
@@ -1494,6 +1482,21 @@ UCHAR basic_controls_task(int test)
 				set_output(otp,1);
 			break;
 
+			// turn all off
+			case BLOWER_OFF:
+				index = HTRBLOWERMED;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERHIGH;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = HTRBLOWERLOW;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+			break;		
+
 			case WIPER1:
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
@@ -1523,21 +1526,6 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
 			break;	
-
-			// turn all off
-			case BLOWER_OFF:
-				index = HTRBLOWERMED;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				usleep(100000);
-				index = HTRBLOWERHIGH;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				usleep(100000);
-				index = HTRBLOWERLOW;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-			break;		
 
 			case TEST_ALL_IO:
 
