@@ -1,72 +1,42 @@
 ##############################################Core3S500E#################################################
 #note: the Vcc to the chip is 5v but all the other IO is 3v3
 
-NET		"clk"	LOC = "P184" ;
-NET		"reset"	LOC = "P101" ;
+NET		"clk"			LOC = "P184" ;
+NET		"reset"			LOC = "P101" ;
 
 # this turns the 'strange error' to a warning
 NET "reset" CLOCK_DEDICATED_ROUTE = FALSE;
 
-# serial port
-NET		"tx_uart"		LOC = "P34";
-NET		"rx_uart"		LOC = "P36";
+NET "PP_DATA7"  LOC ="p181";
+NET "PP_DATA6"  LOC ="p178";
+NET "PP_DATA5"  LOC ="p179";
+NET "PP_DATA4"  LOC ="p172";
+NET "PP_DATA3"  LOC ="p177";
+NET "PP_DATA2"  LOC ="p168";
+NET "PP_DATA1"  LOC ="p171";
+NET "PP_DATA0"  LOC ="p165";
+NET "PP_ACK"  LOC ="p167";
+NET "PP_CS"  LOC ="p163";
+NET "rx_uart"  LOC ="p180";
+NET "data_sent"  LOC ="p164";
+NET "cmd_param"  LOC ="p161";
+NET "data_ready"  LOC ="p162";
 
-# inputs from sensors
-NET		"rpm_signal"	LOC = "P77";
-NET		"mph_signal"	LOC = "P75";
-
-# 7-seg LED outputs
-NET		"tx_rpm"		LOC = "P69";
-NET		"tx_mph"		LOC = "P64";
-
-# speaker outputs
-NET		"pwm_spk1"		LOC = "P62";
-NET		"pwm_spk2"		LOC = "P61";
-
-NET		"pwm_signal_1"	LOC = "P35";
-NET		"pwm_signal_2"	LOC = "P39";
-
-# pwm for dimmer for LCD screen
-NET		"pwm_lcd"		LOC = "P60";
-NET		"fp_shutoff"	LOC = "P33";
-NET		"rev_limit"		LOC = "P82";
-
-#SPI master signals
-#NET		"MOSI_o"	LOC = "P48";
-#NET		"MISO_i"	LOC = "P45";
-#NET		"SCLK_o"	LOC = "P41";
-#NET		"SS_o"		LOC = "P39";
-
-NET 	"data_ready"	LOC = "P24";
-NET 	"cmd_param"		LOC = "P30";
-NET 	"data_sent"		LOC = "P28";
-NET		"rx_ds1620"		LOC = "P40";
-NET		"ref_signal"	LOC = "P42";
-
-# if using slave select for 2 different SPI slaves
-#NET	"SS_o[0]"   LOC = "P39";
-#NET	"SS_o[1]"   LOC = "P35";
+NET "pwm_signal_1"  LOC ="p4";
+NET "pwm_signal_2"  LOC ="p5";
+NET "pwm_spk1"  LOC ="p2";
+NET "pwm_spk2"  LOC ="p3";
+NET "pwm_lcd"  LOC ="p203";
+#NET "fp_shutoff"  LOC ="p205";
+#NET "rev_limit"  LOC ="p200";
+NET "rpm1_signal"  LOC ="p202";
+#NET "rpm2_signal"  LOC ="p197";
+NET "mph1_signal"  LOC ="p199";
+#NET "mph2_signal"  LOC ="p193";
+NET "tx_rpm_mph"   LOC ="p196";
 
 # led1 is the build-in LED's on the board
-NET		"led1[0]"	LOC = "p68";
-NET		"led1[1]"	LOC = "p78";
-NET		"led1[2]"	LOC = "p83";
-NET		"led1[3]"	LOC = "p89";
-
-# lower right pins looking at bottom of board
-#	.		.
-#	.		.
-#	.		.
-#	36		35
-#	5v		gnd
-#	40		39
-#	42		41
-#	47		45
-#	49		48
-#	55		50
-#	61		60
-#	63		62
-#	65		64
-#	74		69
-#	76		75
-#	82		77
+NET		"led1[0]"		LOC = "p68";
+NET		"led1[1]"		LOC = "p78";
+NET		"led1[2]"		LOC = "p83";
+NET		"led1[3]"		LOC = "p89";

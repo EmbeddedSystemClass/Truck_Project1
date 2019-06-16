@@ -270,7 +270,7 @@ begin
 	end if;
 end process;
 
-play_tune: process(clk, reset,state_pwm_reg, tune_ptr)
+play_tune: process(clk, reset,state_pwm_reg, tune_ptr, notes, tune1)
 --variable note_index: integer range 0 to 71:= 30;
 --variable tune_index: integer range 0 to 15:= 0;
 --variable mynote_index: integer range 0 to 15:= 0;

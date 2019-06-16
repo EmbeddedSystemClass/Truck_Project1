@@ -443,15 +443,15 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of SendFPGA */
   osThreadStaticDef(SendFPGA, StartSendFPGA, osPriorityIdle, 0, 70, myTask08Buffer, &myTask08ControlBlock);
   myTask08Handle = osThreadCreate(osThread(SendFPGA), NULL);
-#if 0
+
   /* definition and creation of RecvFPGA */
   osThreadStaticDef(RecvFPGA, StartRecvFPGA, osPriorityIdle, 0, 70, myTask09Buffer, &myTask09ControlBlock);
   myTask09Handle = osThreadCreate(osThread(RecvFPGA), NULL);
-#endif
+#if 0
   /* definition and creation of myTask10 */
   osThreadStaticDef(myTask10, StartTask10, osPriorityIdle, 0, 70, myTask10Buffer, &myTask10ControlBlock);
   myTask10Handle = osThreadCreate(osThread(myTask10), NULL);
-#if 0
+
   /* definition and creation of NumEntryTask */
   osThreadStaticDef(NumEntryTask, StartNumEntryTask, osPriorityIdle, 0, 70, myTask11Buffer, &myTask11ControlBlock);
   myTask11Handle = osThreadCreate(osThread(NumEntryTask), NULL);
@@ -981,41 +981,45 @@ void StartTask7200(void const * argument)
 #endif
 	no_sent = 0;
 	no_sent2 = 1;
+
+	cmd = LOAD_TUNE;
 	
 	for(;;)
 	{
-		cmd = TUNE_ON;
+//		cmd = TUNE_ON;
 		buff[0] = cmd;
-		buff[1] = cmd;
-		buff[2] = no_sent2;
-		buff[3] = no_sent2+1;
-		buff[4] = no_sent2+2;
-		buff[5] = no_sent2+3;
-		buff[6] = no_sent2+4;
-		buff[7] = 0xFF;
+		buff[1] = no_sent2;
+		buff[2] = no_sent2+1;
+		buff[3] = no_sent2+2;
+		buff[4] = no_sent2+3;
+		buff[5] = no_sent2+4;
+		buff[6] = no_sent2+5;
+		buff[7] = no_sent2+6;
 
 		send_char[0] = pack64(buff);
 		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-		vTaskDelay(1500);
+		vTaskDelay(200);
 
-		cmd = TUNE_OFF;
+//		cmd = TUNE_OFF;
 		buff[0] = cmd;
-		buff[1] = cmd;
-		buff[2] = no_sent+1;
-		buff[3] = no_sent+2;
-		buff[4] = no_sent+3;
-		buff[5] = no_sent+4;
-		buff[6] = no_sent+5;
-		buff[7] = 0xFF;
+		buff[1] = no_sent+1;
+		buff[2] = no_sent+2;
+		buff[3] = no_sent+3;
+		buff[4] = no_sent+4;
+		buff[5] = no_sent+5;
+		buff[6] = no_sent+6;
+		buff[7] = no_sent+7;
 		no_sent++;
 		no_sent2++;
+		if(++cmd > 0x2D)
+			cmd = LOAD_TUNE;
 		if(no_sent > 30)
 			no_sent = 0;
 		if(no_sent2 > 40)
 			no_sent2 = 2;
 		send_char[0] = pack64(buff);
 		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-		vTaskDelay(1500);
+		vTaskDelay(200);
 
 		if(--param < 1)
 			param = 20;
@@ -1138,160 +1142,6 @@ void StartRecv7200(void const * argument)
 	for(;;)
 	vTaskDelay(3000);
 
-#if 0	
-
-	onoff = 1;
-	ucbuff[0] = EEPROM_STR2;
-
-	rec_byte = SHUTDOWN;
-	engine_on = 0;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = BLOWER_OFF;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = OFF_FAN;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = OFF_LIGHTS;
-	lights_on = 0;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = OFF_RUNNING_LIGHTS;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = OFF_BRIGHTS;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(100);
-
-	rec_byte = OFF_BRAKES;
-	ucbuff[1] = rec_byte;
-	ucbuff[2] = 1;
-	avr_buffer[0] = pack64(ucbuff);
-	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-	vTaskDelay(5000);
-
-	for(;;)
-	{
-		rec_byte = 0;
-		// for some reason this just doesn't work
-		// it works when calling imm after and transmit in the 
-		// StartTask7200 but what good is it?
-		uart_rec = HAL_UART_Receive(&huart1, &rec_byte, 1, portMAX_DELAY);
-		vTaskDelay(100);
-/*
-		ucbuff[0] = SEND_BYTE_HEX_VALUES;
-		ucbuff[1] = 0;
-		ucbuff[2] = 30;
-		ucbuff[3] = rec_byte;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-		vTaskDelay(100);
-*/
-		if(uart_rec == HAL_OK)
-		{
-			switch(rec_byte)
-			{
-				case START_SEQ:
-					onoff = 0;
-					engine_on = 1;
-					break;
-				case SHUTDOWN:
-					onoff = 1;
-					engine_on = 0;
-					break;
-				case BLOWER_OFF:
-					onoff = 1;
-					break;
-				case BLOWER1:
-					onoff = 2;
-					break;
-				case BLOWER2:
-					onoff = 3;
-					break;
-				case BLOWER3:
-					onoff = 4;
-					break;
-				case ON_FAN:
-					onoff = 0;
-					break;
-				case OFF_FAN:
-					onoff = 1;
-					break;
-				case ON_LIGHTS:
-					onoff = 0;
-					lights_on = 1;
-					break;
-				case OFF_LIGHTS:
-					onoff = 1;
-					lights_on = 0;
-					break;
-				case ON_RUNNING_LIGHTS:
-					onoff = 0;
-					break;
-				case OFF_RUNNING_LIGHTS:
-					onoff = 1;
-					break;
-				case ON_BRIGHTS:
-					onoff = 0;
-					break;
-				case OFF_BRIGHTS:
-					onoff = 1;
-					break;
-				case ON_BRAKES:
-					onoff = 0;
-					break;
-				case OFF_BRAKES:
-					onoff = 1;
-					break;
-				case WIPER1:
-				case WIPER2:
-				case WIPER_OFF:
-					break;
-				default:
-					break;
-			}	// end of switch(cmd)
-
-			ucbuff[0] = EEPROM_STR2;
-//			ucbuff[0] = CHAR_CMD;
-			ucbuff[1] = rec_byte;
-			ucbuff[2] = onoff;
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-//			printHexByte1(rec_byte);
-		} else
-		{
-			ucbuff[0] = SEND_BYTE_HEX_VALUES;
-			ucbuff[1] = 0;
-			ucbuff[2] = 30;
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-		}
-	}
-#endif
 	/* USER CODE END StartRecv7200 */
 }
 
@@ -1399,6 +1249,14 @@ void StartSendFPGA(void const * argument)
 		HAL_UART_Transmit(&huart3, &param7, 1, 100);
 		SEND_FPGA_DELAY();
 		HAL_GPIO_WritePin(GPIOC, DataReady_Pin, GPIO_PIN_RESET);
+
+		param7 = 0xFF;
+		HAL_GPIO_WritePin(GPIOC, DataReady_Pin, GPIO_PIN_SET);
+		SEND_FPGA_DELAY();
+		HAL_UART_Transmit(&huart3, &param7, 1, 100);
+		SEND_FPGA_DELAY();
+		HAL_GPIO_WritePin(GPIOC, DataReady_Pin, GPIO_PIN_RESET);
+
 		if(menu_ptr == 0)
 		{
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
@@ -1415,57 +1273,13 @@ void StartSendFPGA(void const * argument)
 	/* USER CODE END StartSendFPGA */
 }
 
-/* USER CODE BEGIN Header_StartRecvFPGA */
+
 /**
 * @brief recv data from FPGA
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartRecvFPGA */
 void StartRecvFPGA(void const * argument)
-{
-	/* USER CODE BEGIN StartRecvFPGA */
-	// recv data from FPGA
-	// this waits for serial input from FPGA which happens at a freq determinted by setting
-	// the update rate - for now just sends the current rpm/mph preceded by '0xFF'
-	// FPGA sends
-	// 0 - 0xFF
-	// 1 - low byte of temperature data1
-	// 2 - high byte of temperature data1
-	// 3 - low byte of temperature data2
-	// 4 - high byte of temperature data2
-	// 5 - low byte of temperature data3
-	// 6 - high byte of temperature data3
-	// 7 - low byte of temperature data4
-	// 8 - high byte of temperature data4
-	// 9 - low byte of rpm
-	// 10 - high byte of mph
-	// 11 - low byte of mph
-	// 12 - high byte of mph
-	// 13 - should be a '5'	(not used)
-	// 14 - should be a '6'		"
-	// 15 - should be a '7'		"
-
-	/* Infinite loop */
-	vTaskDelay(3000);
-	for(;;)
-	{
-		vTaskDelay(50);
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_SET);
-		vTaskDelay(50);
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_RESET);
-	}
-	/* USER CODE END StartRecvFPGA */
-}
-
-/* USER CODE BEGIN Header_StartTask10 */
-/**
-* @brief (available)
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask10 */
-void StartTask10(void const * argument)
 {
 	UCHAR xbyte = 0;
 	int i;
@@ -1491,8 +1305,8 @@ void StartTask10(void const * argument)
 			state = HAL_GPIO_ReadPin(GPIOA,PP_CS);
 		}while(state != GPIO_PIN_SET);
 
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 			
 		state = HAL_GPIO_ReadPin(GPIOB,PP0);
 		if(state == GPIO_PIN_SET)
@@ -1523,8 +1337,8 @@ void StartTask10(void const * argument)
 			state = HAL_GPIO_ReadPin(GPIOA,PP_CS);
 		}while(state != GPIO_PIN_RESET);
 
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
 		HAL_UART_Transmit(&huart1, &xbyte, 1, 100);
 		HAL_GPIO_WritePin(GPIOA, PP_ACK, GPIO_PIN_SET);
@@ -1532,243 +1346,41 @@ void StartTask10(void const * argument)
 		HAL_GPIO_WritePin(GPIOA, PP_ACK, GPIO_PIN_RESET);
 		xbyte = 0;
 	}
-
-#if 0
-	vTaskDelay(100);
+/* USER CODE END StartRecvFPGA */
+}
+void StartTask10(void const * argument)
+{
+	UCHAR xbuff[100];
+	UCHAR xbyte = 0x21;
+	int i;
+	
 	for(i = 0;i < 100;i++)
 	{
-		buff[i] = xbyte;
+		xbuff[i] = xbyte;
 		if(++xbyte > 0x7e)
 			xbyte = 0x21;
 	}
-
-	i = 0;
+	vTaskDelay(3000);
 	for(;;)
 	{
-//		vTaskDelay(50);
-//		HAL_UART_Transmit(&huart1, buff, 100, 100);
-		HAL_UART_Receive(&huart1, &rec_byte, 1, portMAX_DELAY);
-		rec_byte++;
-		HAL_UART_Transmit(&huart1, &rec_byte, 1, 100);
-	}
+		HAL_UART_Transmit(&huart1, xbuff, 100, 100);
 
-// use this section to test the rt display
-	uint64_t avr_buffer[5];
-	UCHAR ucbuff[8];
-	UCHAR xbyte = 0x21;
-	int i;
-	UCHAR u8_pot[6];
-	int j;
-	
-	ucbuff[0] = CHAR_CMD;
-	vTaskDelay(2000);
-	
-	j = 0;
-	for(i = 0;i < 6;i++)
-		u8_pot[i] = j++;
-
-	for(;;)
-	{
-		if(key_mode == NORMAL)
+		vTaskDelay(50);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_SET);
+		vTaskDelay(50);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8,GPIO_PIN_RESET);
+		if(menu_ptr == 0)
 		{
-			// engine temp doesn't come from ADC anymore
-			for(i = OIL_PRES ;i <= O2;i++)
-			{
-				ucbuff[0] = SEND_BYTE_RT_VALUES;
-				ucbuff[1] = rtlabel_str[i].row;
-				ucbuff[2] = rtlabel_str[i].data_col;
-				ucbuff[3] = u8_pot[i];
- 				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-				vTaskDelay(200);
-			}
-			vTaskDelay(200);
-
-			for(i = 0;i < 6;i++)
-				u8_pot[i]++;
-			
-			if(u8_pot[i] > 200)
-			{
-				for(i = 0;i < 6;i++)
-					u8_pot[i] = j++;
-			}
-		} else vTaskDelay(1000);
-	}
-#endif
-
-
-#if 0
-
-// use this section to test the tone generator cmds to the FPGA
-	uint32_t send_char[5];
-	UCHAR mykey = 0;
-	UCHAR length = 10;
-	UCHAR dtmf_index = 0;
-	UCHAR duty_cycle = 0;
-	UCHAR temp;
-	UCHAR buff[60];
-	UCHAR cmd, param;
-	UCHAR no_sent;
-	int i,j,k;
-	
-	no_sent = 64;
-	cmd = LOAD_TUNE;
-	/* Infinite loop */
-
-	duty_cycle = 0;
-
-	k = 0;
-	j = 0;
-#if 0
-	for(i = 0;i < 10;i++,j+=3)
-	{
-		buff[j] = (i%2==0)?k+8:k+10;
-		buff[j+1] = (i%2==0)?k+14:k+16;
-		buff[j+2] = 0;
-		k += 2;
-	}
-	j = 30;
-	k = 0;
-	for(i = 10;i < 20;i++,j+=3)
-	{
-		buff[j] = (i%2==0)?44-k:40-k;
-		buff[j+1] = (i%2==0)?40-k:36-k;
-		buff[j+2] = 7;
-		k += 2;
-	}
-#endif
-//#if 0
-	for(i = 0;i < 10;i++,j+=3)
-	{
-		buff[j] = k+10;
-		buff[j+1] = k+14;
-		buff[j+2] = 0;
-		k++;
-	}
-	j = 30;
-	k = 0;
-	for(i = 10;i < 20;i++,j+=3)
-	{
-		buff[j] = 30-k;
-		buff[j+1] = 34-k;
-		buff[j+2] = 7;
-		k++;
-	}
-//#endif
-	vTaskDelay(1000);
-	HAL_GPIO_WritePin(GPIOA, CmdParam_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_SET);
-	vTaskDelay(10);
-	HAL_UART_Transmit(&huart3, &cmd, 1, 100);
-	vTaskDelay(10);
-	HAL_GPIO_WritePin(GPIOA, CmdParam_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_RESET);
-	vTaskDelay(10);
-
-	HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_SET);
-	vTaskDelay(10);
-	HAL_UART_Transmit(&huart3, &no_sent, 1, 100);
-	vTaskDelay(10);
-	HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_RESET);
-
-	for(i = 0;i < no_sent;i++)
-	{
-		param = buff[i];
-		vTaskDelay(10);
-		HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_SET);
-		vTaskDelay(10);
-		HAL_UART_Transmit(&huart3, &param, 1, 100);
-		vTaskDelay(10);
-		HAL_GPIO_WritePin(GPIOA, DataReady_Pin, GPIO_PIN_RESET);
-		vTaskDelay(10);
-	}
-
-	length = 20;
-	for(;;)
-	{
-#if 0
-		buff[0] = DTMF_TONE_ON;
-		
-		temp = dtmf_index;
-		temp |= 0x80;	// set the high bit for param1
-		buff[1] = temp;
-		buff[2] = 0;
-		buff[3] = 0;
-		buff[4] = 0;
-		send_char[0] = pack32(buff);
-
-		if(++dtmf_index > 14)
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+			menu_ptr = 1;
+		}else
 		{
-			dtmf_index = 0;
-
-			buff[0] = SPECIAL_TONE_ON;
-			buff[1] = 0x80;
-			buff[2] = 0;
-			buff[3] = 0;
-			send_char[0] = pack32(buff);
-			xQueueSend(SendFPGAQueueHandle, send_char, 0);
-			vTaskDelay(2000);
-
-			buff[0] = DTMF_TONE_OFF;
-			buff[1] = 0x80;
-			buff[2] = 0;
-			buff[3] = 0;
-			send_char[0] = pack32(buff);
-			xQueueSend(SendFPGAQueueHandle, &send_char, 0);
-			vTaskDelay(100);
-
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			menu_ptr = 0;
 		}
-
-		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-		vTaskDelay(300);
-
-		buff[0] = DTMF_TONE_OFF;
-		buff[1] = 0x80;
-		buff[2] = 0;
-		buff[3] = 0;
-		send_char[0] = pack32(buff);
-		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-
-		vTaskDelay(60);
-		if(++i > 200)
-		{
-			i = 0;
-			vTaskDelay(3000);
-		}
-#endif
-//#endif
-
-		vTaskDelay(5000);
-		buff[0] = TUNE_ON;
-		buff[1] = 4;		// 1st param is msg length 
-		buff[2] = length;	// 1st actual param
-		buff[3] = 0;
-		
-		send_char[0] = pack32(buff);
-		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-		vTaskDelay(1500);
-		buff[0] = TUNE_OFF;
-		buff[1] = 0;
-		buff[2] = 0;
-		buff[3] = 0;
-		send_char[0] = pack32(buff);
-		xQueueSend(SendFPGAQueueHandle, send_char, 0);
-		vTaskDelay(100);
-		if(--length < 2)
-			length = 20;
-
-/*
-		if(++duty_cycle > 7)
-		{
-			mykey = 0;
-			if(--length < 2)
-				length = 10;
-		}
-*/
-		vTaskDelay(4000);
 	}
-#endif
-	/* USER CODE END StartTask10 */
 }
 
 /* USER CODE BEGIN Header_StartNumEntryTask */
@@ -2077,7 +1689,7 @@ void StartNumEntryTask(void const * argument)
 /* Callback01 function */
 void Callback01(void const * argument)
 {
-//#if 0
+#if 0
 	if(menu_ptr == 0)
 	{
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
@@ -2089,7 +1701,7 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 		menu_ptr = 0;
 	}
-//#endif
+#endif
 }
 
 /* Private application code --------------------------------------------------*/

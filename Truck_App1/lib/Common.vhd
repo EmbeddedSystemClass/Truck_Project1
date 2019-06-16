@@ -290,8 +290,14 @@ package CommonPckg is
 	constant DVSR_MU_19200: integer:= 163;	-- 19200 baud
 	constant DVSR_MU_115200: integer:= 27;	-- 115200 baud
 -- mph is currently for (2) magnets on driveshaft
-	constant MPH_CLOCK_COUNT: integer:= 12500;
-	constant MPH_DVND: integer:= 128514;
+--	constant MPH_CLOCK_COUNT: integer:= 12500;
+	constant MPH_CLOCK_COUNT: integer:= 8000;
+
+--	constant MPH_DVND: integer:= 128514;
+
+--	constant MPH_CLOCK_COUNT: integer:= 25000;
+--	constant MPH_DVND: integer:= 128514;
+	constant MPH_DVND: integer:= 18216;
 												-- 26ms should be 2254
 --	constant RPM_CLOCK_COUNT: integer:= 500;
 --	constant RPM_CLOCK_COUNT: integer:= 454;
@@ -394,7 +400,8 @@ package CommonPckg is
 	type notes_array is array(0 to 95) of std_logic_vector(19 downto 0);
 --	type dkey_array is array(0 to 82) of std_logic_vector(7 downto 0);
 	type tune_array is array(0 to MAX_TUNE_LEN-1, 0 to 2) of integer range 0 to 95;
-	type dl_array is array(0 to 255) of std_logic_vector(7 downto 0);
+	type dl_array is array(0 to 25) of std_logic_vector(7 downto 0);
+	type led_array is array(0 to 8) of std_logic_vector(7 downto 0);
 	
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);

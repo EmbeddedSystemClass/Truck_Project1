@@ -1,6 +1,7 @@
 -- period.vhd
 -- measure the number of times CLK_MS_COUNT rolls over - this is the result (prd)
--- t_reg counts the number of clk cycles for 10us (rpm) or 1ms (mph) and each time it rolls over, p_reg is incremented
+-- t_reg counts the number of clk cycles for 10us (rpm) or 1ms (mph) and each 
+-- time it rolls over, p_reg is incremented
 -- divide t_reg into 6000000 to get rpm
 -- divide t_reg into 3213 to get mph
 -- there's a bug here somewhere - on the test bench, if I do:
