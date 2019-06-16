@@ -49,10 +49,10 @@
 #define T6963_H
 #if 1
 //Control pin setting
-#define SPI_SS		PORTB2
-#define LCD_RD		PORTC4       // LCD Read control line  pin number (D10)
 
-#define PWM_PIN		PORTC5			// used for dimming display
+#define LCD_RD		PORTC4       // LCD Read control line  pin number (D10)
+#define FONT_SELECT	PORTC5
+
 #define LCD_WR		PORTC0        // LCD Write control line pin number (A0)
 #define LCD_CE		PORTC1       // LCD Enable control line pin number (A1)
 #define LCD_RST		PORTC2        // LCD RST_ line (A2)
@@ -70,11 +70,9 @@
 
 #define SET_RD()	_SB(PORTC,LCD_RD)
 #define CLR_RD()	_CB(PORTC,LCD_RD)
-//#define SET_TEST1()	_SB(PORTB,TEST_PIN1)
-//#define CLR_TEST1()	_CB(PORTB,TEST_PIN1)
 
-#define SET_PWM()	_SB(PORTC,PWM_PIN)
-#define CLR_PWM()	_CB(PORTC,PWM_PIN)
+#define FONT_8X8()	_SB(PORTC,FONT_SELECT)
+#define FONT_6X8()	_CB(PORTC,FONT_SELECT)
 
 #define SET_WR()	_SB(PORTC,LCD_WR)
 #define SET_CE()	_SB(PORTC,LCD_CE)

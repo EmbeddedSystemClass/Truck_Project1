@@ -140,6 +140,7 @@ begin
 			when idle_pwm =>
 				if onoff = "01" then
 					next1 <= start_pwm1;
+					pwm_signal <= '0';
 				elsif onoff = "00" then
 					pwm_signal <= '0';
 					next1 <= idle_pwm;

@@ -123,6 +123,7 @@ int main(int argc, char **argv)
 
 /* spawn the threads */
 	for (i = 0; i < NUM_TASKS; i++)
+//	for (i = 5;i < 6;i++)
 	{
 /*
 		if (sched == DEFAULT)

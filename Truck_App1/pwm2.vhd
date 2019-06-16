@@ -18,9 +18,10 @@ entity pwm2 is
 		start: in std_logic;
 		done: out std_logic;
 		len: in signed(7 downto 0);
-		duty_cycle: in std_logic_vector(2 downto 0);
-		note_len_index: std_logic_vector(2 downto 0);
-		key: in std_logic_vector(7 downto 0)
+		duty_cycle: in std_logic_vector(5 downto 0);
+		tune1: in tune_array;
+		note_len: in std_logic_vector(7 downto 0);
+		tune_ptr: in signed(2 downto 0)
 		);
 end pwm2;
 
@@ -32,19 +33,18 @@ architecture pwm_arch of pwm2 is
 	type state_pwm is (idle_pwm, start_pwm1, on_pwm, off_pwm);
 	signal reg1, next1 : state_pwm;
 
+	type state_pwm2 is (idle_pwm2, start_pwm12, on_pwm2, off_pwm2);
+	signal reg12, next12 : state_pwm2;
+
 	type state_vary is (idle_vary, start_vary, next_vary1, next_vary2, next_vary3, done_vary);
 	signal vary_reg, vary_next : state_vary;
 
-	type state_pwm1 is (pwm_idle, pwm_idle1, pwm_idle2, pwm_start, pwm_next, pwm_next2, pwm_done);
+	type state_varya is (idle_varya, start_varya, next_varya1, next_varya2, next_varya3, done_varya);
+	signal vary_rega, vary_nexta : state_varya;
+
+	type state_pwm1 is (pwm_idle, pwm_start, pwm_next, pwm_next2, pwm_done);
 	signal state_pwm_reg, state_pwm_next: state_pwm1;
-
---	tune_array is array(0 to 7) of std_logic_vector(7 downto 0);
---  array of 
-
-	signal mykeys: keys;
-	signal temp_key: key_array;
-	signal temp_key2: key_array;
---	signal in_tune: std_logic_vector(7 downto 0);
+	signal stemp: signed(2 downto 0);
 
 	signal notes: notes_array;		-- array of notes(0)->(95)
 	
@@ -53,123 +53,231 @@ architecture pwm_arch of pwm2 is
 	signal time_delay_reg3, time_delay_next3: unsigned(23 downto 0);
 	signal start_pwm: std_logic;
 	signal next_note: std_logic;
-	signal sOn_Time: signed(19 downto 0);
-	signal sOff_Time: signed(19 downto 0);
-	signal iwhole_period: signed(19 downto 0);
-	signal ihalf_period: signed(19 downto 0);
-	signal iquarter_period: signed(19 downto 0);
-	signal isixteen_period: signed(19 downto 0);
-	signal whole_period: std_logic_vector(19 downto 0);
-	signal half_period: std_logic_vector(19 downto 0);
-	signal quarter_period: std_logic_vector(19 downto 0);
-	signal sixteen_period: std_logic_vector(19 downto 0);
+	signal sOn_Time1: signed(19 downto 0);
+	signal sOff_Time1: signed(19 downto 0);
+	signal sOn_Time2: signed(19 downto 0);
+	signal sOff_Time2: signed(19 downto 0);
+
+	signal iwhole_period1: signed(19 downto 0);
+	signal ihalf_period1: signed(19 downto 0);
+	signal iquarter_period1: signed(19 downto 0);
+	signal isixteen_period1: signed(19 downto 0);
+	signal whole_period1: std_logic_vector(19 downto 0);
+	signal half_period1: std_logic_vector(19 downto 0);
+	signal quarter_period1: std_logic_vector(19 downto 0);
+	signal sixteen_period1: std_logic_vector(19 downto 0);
+
+	signal iwhole_period2: signed(19 downto 0);
+	signal ihalf_period2: signed(19 downto 0);
+	signal iquarter_period2: signed(19 downto 0);
+	signal isixteen_period2: signed(19 downto 0);
+	signal whole_period2: std_logic_vector(19 downto 0);
+	signal half_period2: std_logic_vector(19 downto 0);
+	signal quarter_period2: std_logic_vector(19 downto 0);
+	signal sixteen_period2: std_logic_vector(19 downto 0);
+
 	signal skip: std_logic;
+	signal skip2: std_logic;
 	signal tune_done: std_logic;
-	signal note_index: signed(7 downto 0);
+	signal note_index1: signed(7 downto 0);
+	signal note_index2: signed(7 downto 0);
 	signal tune_index: signed(7 downto 0);
 	signal mynote_index: signed(7 downto 0);
 	signal slength: signed(7 downto 0);
-	signal sDutyCycle: std_logic_vector(2 downto 0);
-	signal which_pattern: std_logic_vector(2 downto 0);
-	signal next_pattern: std_logic_vector(2 downto 0);
-	signal note_len: unsigned(24 downto 0);
+	signal soctave: signed(7 downto 0);
+	signal sDutyCycle1: std_logic_vector(2 downto 0);
+	signal sDutyCycle2: std_logic_vector(2 downto 0);
+	signal stlv_note_len: std_logic_vector(24 downto 0);
+	signal sNoteLen: unsigned(24 downto 0);
+--	signal tune2: tune_array;
 begin
 
-play_note: process(clk, reset, vary_reg)
+play_note1: process(clk, reset, vary_reg)
 variable itemp: integer range 0 to 528290:= C6;
 begin
 	if reset = '0' then
-		whole_period <= (others=>'0');
-		sOn_Time <= (others=>'0');
-		sOff_Time <= (others=>'0');
-		time_delay_reg3 <= (others=>'0');
-		time_delay_next3 <= (others=>'0');
-		quarter_period <= (others=>'0');
-		half_period <= (others=>'0');
-		iquarter_period <= (others=>'0');
-		ihalf_period <= (others=>'0');
-		iwhole_period <= (others=>'0');
-		sDutyCycle <= "000";
+		whole_period1 <= (others=>'0');
+		sOn_Time1 <= (others=>'0');
+		sOff_Time1 <= (others=>'0');
+--		time_delay_reg3 <= (others=>'0');
+--		time_delay_next3 <= (others=>'0');
+		quarter_period1 <= (others=>'0');
+		half_period1 <= (others=>'0');
+		iquarter_period1 <= (others=>'0');
+		ihalf_period1 <= (others=>'0');
+		iwhole_period1 <= (others=>'0');
+		sDutyCycle1 <= "111";
 		
 	elsif clk'event and clk = '1' then
 		case vary_reg is
 			when idle_vary =>
 				if next_note = '1' then
-					sDutyCycle <= duty_cycle;
+					sDutyCycle1 <= duty_cycle(2 downto 0);
 					vary_next <= start_vary;
 				end if;	
 			when start_vary =>
-				itemp := conv_integer(notes(conv_integer(note_index)));
-				whole_period <= conv_std_logic_vector(itemp,20);
+				itemp := conv_integer(notes(conv_integer(note_index1)));
+				whole_period1 <= conv_std_logic_vector(itemp,20);
 				vary_next <= next_vary1;
 			when next_vary1 =>
-				half_period <= '0' & whole_period(19 downto 1);
-				quarter_period <= '0' & half_period(19 downto 1);
-				sixteen_period <= '0' & quarter_period(19 downto 1);
+				half_period1 <= '0' & whole_period1(19 downto 1);
+				quarter_period1 <= '0' & half_period1(19 downto 1);
+				sixteen_period1 <= '0' & quarter_period1(19 downto 1);
 				vary_next <= next_vary2;
 			when next_vary2 =>
---				quarter_period <= "0" & quarter_period(19 downto 1);
+--				quarter_period11 <= "0" & quarter_period11(19 downto 1);
 				vary_next <= next_vary3;
 			when next_vary3 =>
-				iwhole_period <= conv_signed(conv_integer(whole_period),20);
-				ihalf_period <= conv_signed(conv_integer(half_period),20);
-				iquarter_period <= conv_signed(conv_integer(quarter_period),20);
-				isixteen_period <= conv_signed(conv_integer(sixteen_period),20);
+				iwhole_period1 <= conv_signed(conv_integer(whole_period1),20);
+				ihalf_period1 <= conv_signed(conv_integer(half_period1),20);
+				iquarter_period1 <= conv_signed(conv_integer(quarter_period1),20);
+				isixteen_period1 <= conv_signed(conv_integer(sixteen_period1),20);
 				vary_next <= done_vary;
 			when done_vary =>
-				case sDutyCycle is
+				case sDutyCycle1 is
 					when "000" =>
 						-- 12% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period - iquarter_period - isixteen_period;
-						sOff_Time <= iwhole_period - ihalf_period + iquarter_period + isixteen_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1 - isixteen_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1 + isixteen_period1;
 					when "001" =>
 						-- 25% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period - iquarter_period;
-						sOff_Time <= iwhole_period - ihalf_period + iquarter_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1;
 					when "010" =>
 						-- 30% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period - iquarter_period + isixteen_period;
-						sOff_Time <= iwhole_period - ihalf_period + iquarter_period - isixteen_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1 + isixteen_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1 - isixteen_period1;
 					when "011" =>
 						-- square wave
-						sOn_Time <= iwhole_period - ihalf_period;
-						sOff_Time <= iwhole_period - ihalf_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1;
 					when "100" =>
 						-- 60% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period + iquarter_period - isixteen_period;
-						sOff_Time <= iwhole_period - ihalf_period - iquarter_period + isixteen_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1 - isixteen_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1 + isixteen_period1;
 					when "101" =>
 						-- 75% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period + iquarter_period;
-						sOff_Time <= iwhole_period - ihalf_period - iquarter_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1;
 					when "110" =>
 						-- 80% duty_cycle
-						sOn_Time <= iwhole_period - ihalf_period + iquarter_period + isixteen_period;
-						sOff_Time <= iwhole_period - ihalf_period - iquarter_period - isixteen_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1 + iquarter_period1 + isixteen_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1 - iquarter_period1 - isixteen_period1;
 					when others =>	
-						sOn_Time <= iwhole_period - ihalf_period;
-						sOff_Time <= iwhole_period - ihalf_period;
+						sOn_Time1 <= iwhole_period1 - ihalf_period1;
+						sOff_Time1 <= iwhole_period1 - ihalf_period1;
 				end case;
-					-- sOn_Time <= iwhole_period - ihalf_period - iquarter_period;
-					-- sOff_Time <= iwhole_period - ihalf_period + iquarter_period;
+					-- sOn_Time <= iwhole_period1 - ihalf_period1 - iquarter_period1;
+					-- sOff_Time <= iwhole_period1 - ihalf_period1 + iquarter_period1;
 				-- elsif sDutyCycle = "10" then
-					-- sOn_Time <= iwhole_period - ihalf_period + iquarter_period;
-					-- sOff_Time <= iwhole_period - ihalf_period - iquarter_period;
+					-- sOn_Time <= iwhole_period1 - ihalf_period1 + iquarter_period1;
+					-- sOff_Time <= iwhole_period1 - ihalf_period1 - iquarter_period1;
 				-- else	
 				-- end if;
 				vary_next <= idle_vary;
 		end case;
 		vary_reg <= vary_next;
-		time_delay_reg3 <= time_delay_next3;
+--		time_delay_reg3 <= time_delay_next3;
 	end if;
 end process;
 		
-play_tune: process(clk, reset,state_pwm_reg, key)
+play_note2: process(clk, reset, vary_rega)
+variable itemp: integer range 0 to 528290:= C6;
+begin
+	if reset = '0' then
+		whole_period2 <= (others=>'0');
+		sOn_Time2 <= (others=>'0');
+		sOff_Time2 <= (others=>'0');
+--		time_delay_reg3 <= (others=>'0');
+--		time_delay_next3 <= (others=>'0');
+		quarter_period2 <= (others=>'0');
+		half_period2 <= (others=>'0');
+		iquarter_period2 <= (others=>'0');
+		ihalf_period2 <= (others=>'0');
+		iwhole_period2 <= (others=>'0');
+		sDutyCycle2 <= "111";
+		
+	elsif clk'event and clk = '1' then
+		case vary_rega is
+			when idle_varya =>
+				if next_note = '1' then
+					sDutyCycle2 <= duty_cycle(5 downto 3);
+					vary_nexta <= start_varya;
+				end if;	
+			when start_varya =>
+				itemp := conv_integer(notes(conv_integer(note_index2)));
+				whole_period2 <= conv_std_logic_vector(itemp,20);
+				vary_nexta <= next_varya1;
+			when next_varya1 =>
+				half_period2 <= '0' & whole_period2(19 downto 1);
+				quarter_period2 <= '0' & half_period2(19 downto 1);
+				sixteen_period2 <= '0' & quarter_period2(19 downto 1);
+				vary_nexta <= next_varya2;
+			when next_varya2 =>
+--				quarter_period2 <= "0" & quarter_period2(19 downto 1);
+				vary_nexta <= next_varya3;
+			when next_varya3 =>
+				iwhole_period2 <= conv_signed(conv_integer(whole_period2),20);
+				ihalf_period2 <= conv_signed(conv_integer(half_period2),20);
+				iquarter_period2 <= conv_signed(conv_integer(quarter_period2),20);
+				isixteen_period2 <= conv_signed(conv_integer(sixteen_period2),20);
+				vary_nexta <= done_varya;
+			when done_varya =>
+				case sDutyCycle2 is
+					when "000" =>
+						-- 12% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2 - isixteen_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2 + isixteen_period2;
+					when "001" =>
+						-- 25% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2;
+					when "010" =>
+						-- 30% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2 + isixteen_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2 - isixteen_period2;
+					when "011" =>
+						-- square wave
+						sOn_Time2 <= iwhole_period2 - ihalf_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2;
+					when "100" =>
+						-- 60% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2 - isixteen_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2 + isixteen_period2;
+					when "101" =>
+						-- 75% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2;
+					when "110" =>
+						-- 80% duty_cycle
+						sOn_Time2 <= iwhole_period2 - ihalf_period2 + iquarter_period2 + isixteen_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2 - iquarter_period2 - isixteen_period2;
+					when others =>	
+						sOn_Time2 <= iwhole_period2 - ihalf_period2;
+						sOff_Time2 <= iwhole_period2 - ihalf_period2;
+				end case;
+					-- sOn_Time <= iwhole_period1 - ihalf_period1 - iquarter_period1;
+					-- sOff_Time <= iwhole_period1 - ihalf_period1 + iquarter_period1;
+				-- elsif sDutyCycle = "10" then
+					-- sOn_Time <= iwhole_period1 - ihalf_period1 + iquarter_period1;
+					-- sOff_Time <= iwhole_period1 - ihalf_period1 - iquarter_period1;
+				-- else	
+				-- end if;
+				vary_nexta <= idle_varya;
+		end case;
+		vary_rega <= vary_nexta;
+--		time_delay_reg3 <= time_delay_next3;
+	end if;
+end process;
+
+play_tune: process(clk, reset,state_pwm_reg, tune_ptr, notes, tune1)
 --variable note_index: integer range 0 to 71:= 30;
 --variable tune_index: integer range 0 to 15:= 0;
 --variable mynote_index: integer range 0 to 15:= 0;
 variable temp: integer range 0 to 15:= 0;
-
+variable temp1: integer range 0 to 95:= 0;
+variable temp2: integer range 0 to 95:= 0;
+variable temp3: integer range 0 to 95:= 0;
 begin
 	if reset = '0' then
 		state_pwm_reg <= pwm_idle;
@@ -178,33 +286,21 @@ begin
 		time_delay_next2 <= (others=>'0');
 		start_pwm <= '0';
 		skip <= '0';
+		skip2 <= '0';
 		next_note <= '0';
-		temp_key <= (others=>(others=>'0'));
-		temp_key2 <= (others=>(others=>'0'));
-		note_index <= (others=>'0');
+		note_index1 <= (others=>'0');
+		note_index2 <= (others=>'0');
 		slength <= (others=>'0');
 		
-		notes <= load_notes(1);
-
-		mykeys(0) <= load_keyOfC(1);
-		mykeys(1) <= load_keyOfCS(1);
-		mykeys(2) <= load_keyOfD(1);
-		mykeys(3) <= load_keyOfDS(1);
-		mykeys(4) <= load_keyOfE(1);
-		mykeys(5) <= load_keyOfF(1);
-		mykeys(6) <= load_keyOfFS(1);
-		mykeys(7) <= load_keyOfG(1);
-		mykeys(8) <= load_keyOfGS(1);
-		mykeys(9) <= load_keyOfA(1);
-		mykeys(10) <= load_keyOfAS(1);
-		mykeys(11) <= load_keyOfB(1);
+		notes <= load_notes_array(notes);
+--		tune1 <= load_tune_array(tune1);
 
 		tune_done <= '0';
 		done <= '0';
-		mynote_index <= (others=>'0');
+		note_index1 <= conv_signed(tune1(0,0),8);
+		note_index2 <= conv_signed(tune1(0,1),8);
 		tune_index <= (others=>'0');
-		which_pattern <= "000";
-		next_pattern <= "000";
+		
 -- goes threw current tune passed in by calling program and plays all 6 notes 
 -- then waits for next 'start' signal from calling program
 
@@ -213,70 +309,35 @@ begin
 			when pwm_idle =>
 				if start = '1' then		-- wait for calling program to start the whole process
 					slength <= len;
-					if slength > 41 then
-						slength <= X"29";
+					if slength > 20 then
+						slength <= X"14";
 					end if;
-					tune_index <= conv_signed(conv_integer(key),8);	-- get index from calling program
+					tune_index <= conv_signed(conv_integer(tune_ptr),8);	-- get index from calling program
 					temp := conv_integer(tune_index);
-					temp_key <= mykeys(temp);
+--					temp_key <= mykeys(temp);
+					state_pwm_next <= pwm_start;
 					done <= '0';
-					state_pwm_next <= pwm_idle1;
-				end if;	
+					stlv_note_len <= '0' & note_len & X"FFFF";
+ 					sNoteLen <= unsigned(stlv_note_len);
+				end if;
 				tune_done <= '0';
 
-			when pwm_idle1 =>
-				if which_pattern = "000" then
-					temp_key2 <= load_pattern1(temp_key);
-				elsif which_pattern = "001" then
-					temp_key2 <= load_pattern2(temp_key);
-				elsif which_pattern = "010" then
-					temp_key2 <= load_pattern2a(temp_key);
-				elsif which_pattern = "011" then
-					temp_key2 <= load_pattern3(temp_key);
-				elsif which_pattern = "100" then
-					temp_key2 <= load_pattern3a(temp_key);
-				elsif which_pattern = "101" then
-					temp_key2 <= load_pattern4(temp_key);
-				elsif which_pattern = "110" then
-					temp_key2 <= load_pattern4a(temp_key);
-				end if;
-				if note_len_index = "000" then
-					note_len <= conv_unsigned(TIME_DELAY5a,25);
-				elsif note_len_index = "001" then
-					note_len <= conv_unsigned(TIME_DELAY6,25);
-				elsif note_len_index = "010" then
-					note_len <= conv_unsigned(TIME_DELAY6a,25);
-				elsif note_len_index = "011" then
-					note_len <= conv_unsigned(TIME_DELAY6b,25);
-				elsif note_len_index = "100" then
-					note_len <= conv_unsigned(TIME_DELAY6a,25);
-				elsif note_len_index = "101" then
-					note_len <= conv_unsigned(TIME_DELAY6b,25);
-				elsif note_len_index = "110" then
-					note_len <= conv_unsigned(TIME_DELAY6,25);
-				end if;
-				which_pattern <= next_pattern;
-				state_pwm_next <= pwm_idle2;
-			when pwm_idle2 =>
-				case which_pattern is
-					when "000" => next_pattern <= "001";
-					when "001" => next_pattern <= "010";
-					when "010" => next_pattern <= "011";
-					when "011" => next_pattern <= "100";
-					when "100" => next_pattern <= "101";
-					when "101" => next_pattern <= "110";
-					when "110" => next_pattern <= "000";
---					when "111" => next_pattern <= "000";
-					when others => next_pattern <= "000";
-				end case;	
-				state_pwm_next <= pwm_start;
-				
 			when pwm_start =>
 				
-				note_index <= conv_signed(conv_integer(temp_key2(conv_integer(mynote_index))),8);
-				
-				-- one of the tunes 1->6 of which there are 12 notes to play				
+				skip2 <= not skip2;
+				if skip2 = '1' then
+					temp1 := tune1(conv_integer(mynote_index),0);
+					temp2 := tune1(conv_integer(mynote_index),1);
+					temp3 := tune1(conv_integer(mynote_index),1);
+					note_index1 <= conv_signed(temp1,8);
+					note_index2 <= conv_signed(temp2,8);
+					stemp <= conv_signed(temp3,3);
+					-- sDutyCycle1 <= conv_std_logic_vector(stemp,3);
+					-- sDutyCycle2 <= conv_std_logic_vector(stemp,3);
+				end if;
 
+--				note_index1 <= conv_signed(conv_integer(temp_key(conv_integer(mynote_index1))),8);
+				
 				skip <= not skip;
 				if skip = '1' then
 					if mynote_index > slength-1 then
@@ -290,14 +351,14 @@ begin
 				state_pwm_next <= pwm_next;
 				
 			when pwm_next =>
-				next_note <= '1';		-- trigger the play_note process which sets the on/off times
+				next_note <= '1'; -- trigger the play_note process which sets the on/off times
 				start_pwm <= '1';
 				state_pwm_next <= pwm_next2;
 
 			when pwm_next2 =>
 				next_note <= '0';
---				if time_delay_reg2 > TIME_DELAY5a then
-				if time_delay_reg2 > note_len then
+--				if time_delay_reg2 > TIME_DELAY7 then
+				if time_delay_reg2 > sNoteLen then
 					time_delay_next2 <= (others=>'0');
 					state_pwm_next <= pwm_done;
 				else
@@ -326,7 +387,6 @@ begin
 		reg1 <= idle_pwm;
 		next1 <= idle_pwm;
 		pwm_signal_1 <= '0';
-		pwm_signal_2 <= '0';
 		time_delay_next1 <= (others=>'0');
 		time_delay_reg1 <= (others=>'0');
 	elsif clk'event and clk = '1' then
@@ -337,19 +397,17 @@ begin
 				end if;
 			when start_pwm1 =>
 				pwm_signal_1 <= '1';
-				pwm_signal_2 <= '1';
 				next1 <= on_pwm;
 			when on_pwm =>
-				if time_delay_reg1 > sOn_Time then
+				if time_delay_reg1 > sOn_Time1 then
 					time_delay_next1 <= (others=>'0');
 					next1 <= off_pwm;
 					pwm_signal_1 <= '0';
-					pwm_signal_2 <= '0';
 				else
 					time_delay_next1 <= time_delay_reg1 + 1;
 				end if;
 			when off_pwm =>
-				if time_delay_reg1 > sOff_Time then
+				if time_delay_reg1 > sOff_Time1 then
 					time_delay_next1 <= (others=>'0');
 					next1 <= idle_pwm;
 				else
@@ -358,6 +416,47 @@ begin
 		end case;
 		time_delay_reg1 <= time_delay_next1;
 		reg1 <= next1;
+	end if;
+end process;
+
+--	type state_pwm2 is (idle_pwm2, start_pwm12, on_pwm2, off_pwm2);
+--	signal reg12, next12 : state_pwm2;
+
+pwm_proc2: process(clk,reset,reg12,start_pwm)
+begin
+	if reset = '0' then
+		reg12 <= idle_pwm2;
+		next12 <= idle_pwm2;
+		pwm_signal_2 <= '0';
+		time_delay_reg3 <= (others=>'0');
+		time_delay_next3 <= (others=>'0');
+	elsif clk'event and clk = '1' then
+		case reg12 is
+			when idle_pwm2 =>
+				if start_pwm = '1' then
+					next12 <= start_pwm12;
+				end if;
+			when start_pwm12 =>
+				pwm_signal_2 <= '1';
+				next12 <= on_pwm2;
+			when on_pwm2 =>
+				if time_delay_reg3 > sOn_Time2 then
+					time_delay_next3 <= (others=>'0');
+					next12 <= off_pwm2;
+					pwm_signal_2 <= '0';
+				else
+					time_delay_next3 <= time_delay_reg3 + 1;
+				end if;
+			when off_pwm2 =>
+				if time_delay_reg3 > sOff_Time2 then
+					time_delay_next3 <= (others=>'0');
+					next12 <= idle_pwm2;
+				else
+					time_delay_next3 <= time_delay_reg3 + 1;
+				end if;
+		end case;
+		time_delay_reg3 <= time_delay_next3;
+		reg12 <= next12;
 	end if;
 end process;
 

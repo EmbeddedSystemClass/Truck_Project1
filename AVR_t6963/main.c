@@ -36,6 +36,7 @@ static char eeprom[EEPROM_SIZE];
 volatile UINT xrow, xcol;
 volatile UCHAR buff[LEN];
 static char *eeprom_str_lookup(int index, char *str);
+static float convertF(int raw_data);
 
 // use timer to keep track of things like:
 // - seconds before re-enter password
@@ -77,6 +78,7 @@ int main(void)
 //	UCHAR tspi_ret;
 	int num_entry_ptr = 0;
 	num_entry_mode = 0;
+
 ///	char disp_str[STR_LEN];
 
 	GDispInit();
@@ -93,9 +95,10 @@ int main(void)
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
 	GDispClrTxt();
-	GDispStringAt(7,15,"LCD is on!");
-	_delay_us(100);
-
+	FONT_6X8();
+	GDispStringAt(7,7,"LCD is on!");
+	_delay_ms(1000);
+	FONT_8X8();
 
 //	initSPImaster();
 //******************************************************************************************//
@@ -119,9 +122,7 @@ int main(void)
 	spi_ret = 0x30;
 	xrow = 13;
 	xcol = 35;
-
 /*
-	for(i = 0;i < 2;i++)
 	for(row = 0;row < ROWS;row++)
 	{
 		for(col = 0;col < COLUMN-1;col++)
@@ -136,7 +137,8 @@ int main(void)
 	}
 */
 	GDispClrTxt();
-
+	FONT_8X8();
+		
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
 
@@ -420,6 +422,26 @@ int main(void)
 					sprintf(str,"%02d:%02d:%02d",hr,min,sec);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
+				case DISPLAY_TEMP:
+/*
+					byte_val = buff[3];
+					sprintf(str,"%02x ",byte_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2]+4,str);
+
+					byte_val = buff[4];
+					sprintf(str,"%02x ",byte_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2]+6,str);
+*/
+					int_val = (UINT)buff[3];
+					int_val <<= 8;
+					int_val |= (UINT)buff[4];
+					int_val = convertF(int_val);
+					if(int_val < 100)
+						sprintf(str,"%2d ",int_val);
+					else	
+						sprintf(str,"%3d ",int_val);
+					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
+				break;
 
 				default:
 				break;
@@ -455,5 +477,19 @@ static char *eeprom_str_lookup(int index, char *str)
 	memset(str,0,STR_LEN);
 	memcpy(str,&eeprom[k+1],j-k);
 	return str;
+}
+
+static float convertF(int raw_data)
+{
+	float T_F, T_celcius;
+	int ret;
+	if ((raw_data & 0x100) != 0)
+	{
+		raw_data = -(((~raw_data)+1) & 0xff); /* take 2's comp */   
+	}
+	T_celcius = raw_data * 0.5;
+	T_F = (T_celcius * 1.8) + 32;
+	ret = (int)T_F;
+	return ret;	// returns 257 -> -67
 }
 

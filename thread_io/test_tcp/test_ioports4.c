@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 	mydelay(50);
 	OutPortA(1,7);
 	mydelay(50);
-/*
+
 	OutPortB(1,0);
 	mydelay(50);
 	OutPortB(1,1);
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 	OutPortC(1,2);
 	mydelay(50);
 	OutPortC(1,3);
-*/
+
 	OutPortA(0,0);
 	mydelay(50);
 	OutPortA(0,1);
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 	mydelay(50);
 	OutPortA(0,7);
 	mydelay(50);
-/*
+
 	OutPortB(0,0);
 	mydelay(50);
 	OutPortB(0,1);
@@ -390,7 +390,7 @@ int main(int argc, char **argv)
 	mydelay(50);
 	OutPortF(0,3);
 	mydelay(50);
-*/
+
 	if(munmap((void *)card_ports,card_pagesize) == -1)
 		perror("error un-mapping card_ports file\n");
 	exit(0);

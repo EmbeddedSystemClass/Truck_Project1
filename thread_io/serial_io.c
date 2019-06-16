@@ -12,7 +12,7 @@
 #include "serial_io.h"
 
 #define BAUDRATE B19200
-//#define BAUDRATE B115200
+#define BAUDRATE2 B115200
 #ifdef MAKE_SIM
 #define MODEMDEVICE "/dev/ttyS0"
 #else
@@ -124,8 +124,8 @@ int init_serial(void)
 	set_interface_attribs (global_handle, BAUDRATE, 0);
 // if set to blocking, the serial_task won't exit properly
 // and then the sched program won't quit	
-//	set_blocking (global_handle, 1);	 // blocking
-	set_blocking (global_handle, 0);	// non-blocking
+	set_blocking (global_handle, 1);	 // blocking
+//	set_blocking (global_handle, 0);	// non-blocking
 	return global_handle;
 }
 
@@ -137,7 +137,38 @@ int write_serial(UCHAR byte)
 	res = write(global_handle,&byte,1);
 	return res;
 }
+/************************************************************************************/
+int write_serial2(UCHAR byte)
+{
+	int res;
+	res = write(global_handle2,&byte,1);
+//	printf("%c",byte);
+	return res;
+}
+#if 0
+/************************************************************************************/
+int read_serial_buff(UCHAR *buff, char *errmsg)
+{
+	int res;
+	res = read(global_handle2,&buff[0],SERIAL_BUFF_SIZE);
+	if(res < 0)
+//		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
 
+	return res;	
+}
+/************************************************************************************/
+int write_serial_buff(UCHAR *buff, char *errmsg)
+{
+	int res;
+//	printf("fd = %d\n",global_handle);
+	res = write(global_handle2,&buff[0],SERIAL_BUFF_SIZE);
+	if(res < 0)
+//		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
+	return res;
+}
+#endif
 /************************************************************************************/
 void printString(const char myString[])
 {
@@ -160,7 +191,17 @@ UCHAR read_serial(char *errmsg)
 		strcpy(errmsg,strerror(errno));
 	return byte;
 }
-
+/************************************************************************************/
+UCHAR read_serial2(char *errmsg)
+{
+	int res;
+	UCHAR byte;
+	res = read(global_handle2,&byte,1);
+	if(res < 0)
+		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
+	return byte;
+}
 /************************************************************************************/
 void close_serial(void)
 {
@@ -189,17 +230,10 @@ int init_serial2(void)
 		exit(1);
 	}
 	set_interface_attribs (global_handle2, BAUDRATE, 0);
-//	set_blocking (global_handle2, 1);	 // blocking
-	set_blocking (global_handle2, 0);	// non-blocking
+	set_blocking (global_handle2, 1);	 // blocking
+//	set_blocking (global_handle2, 0);	// non-blocking
 
 	return global_handle2;
-}
-/************************************************************************************/
-int write_serial2(UCHAR byte)
-{
-	int res;
-	res = write(global_handle2,&byte,1);
-	return res;
 }
 
 /************************************************************************************/
@@ -214,19 +248,9 @@ void printString2(char *myString)
 		write_serial2(myString[i]);
 		i++;
 	}
-	write_serial2(0xfe);
-}
-
-/************************************************************************************/
-UCHAR read_serial2(char *errmsg)
-{
-	int res;
-	UCHAR byte;
-	res = read(global_handle2,&byte,1);
-	if(res < 0)
-//		printf("\nread error: %s\n",strerror(errno));
-		strcpy(errmsg,strerror(errno));
-	return byte;
+//	write_serial2(0xfe);
+	write_serial2('\r');
+	write_serial2('\n');
 }
 
 /************************************************************************************/

@@ -1,0 +1,69 @@
+CHAR_CMD
+1) char to display at current screen location
+
+GOTO_CMD
+1) row
+2) col
+
+SET_MODE_CMD
+1) mode
+2) row
+3) col
+4) type
+
+LCD_CLRSCR
+(none)
+
+EEPROM_STR
+1) row
+2) col
+3) index+1 into strings in eeprom
+4) no. of spaces to put down starting from beginning of string 
+	to blank out what was there before
+	
+EEPROM_STR2
+1) basic cmd used to determine status row to display ON/OFF
+2) if blower then 2nd param is ONE/TWO/THREE otherwise ON/OFF is displayed
+
+DISPLAY_RTLABELS
+1) starting row
+2) col
+3) ending row
+4) col width
+5) num labels
+
+DISPLAY_STATUS_LABELS
+(none)
+
+SEND_BYTE_RT_VALUES
+1) row
+2) col
+3) byte value
+
+SEND_BYTE_HEX_VALUES
+1) row
+2) col
+3) byte value
+
+SEND_INT_RT_VALUES
+1) row
+2) col
+3) high byte
+4) low byte
+
+PASSWORD_MODE
+1) col (row is always 7)
+
+SET_NUM_ENTRY_MODE
+1) num entry mode
+
+DISPLAY_STR
+1) row
+2) col
+
+DISPLAY_ELAPSED_TIME
+1) row
+2) col
+3) high byte of value
+4) low byte of value
+

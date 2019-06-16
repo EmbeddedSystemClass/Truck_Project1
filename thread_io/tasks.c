@@ -54,10 +54,9 @@ PARAM_STRUCT ps;
 
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
-#define SERIAL_BUFF_SIZE  20
-
-//static UCHAR serial_buff[SERIAL_BUFF_SIZE];
-//static int no_serial_buff;
+static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
+//static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
+static int no_serial_buff;
 
 static int serial_rec;
 static int engine_running;
@@ -69,7 +68,7 @@ static int mask2int(UCHAR mask);
 static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
-extern int time_set;
+//extern int time_set;
 extern int live_window_on;
 int max_ips;
 IP ip[40];
@@ -126,7 +125,7 @@ void init_ips(void)
 			}
 		}
 	}
-	printf("\n");
+//	printf("\n");
 
 	max_ips = 0;
 	for(i = 0;i < 40;i++)
@@ -141,7 +140,7 @@ void init_ips(void)
 	i = LoadParams("param.conf",&ps,errmsg);
 	if(i < 0)
 	{
-		printf("%s\r\n",errmsg);
+//		printf("%s\r\n",errmsg);
 		myprintf1(errmsg);
 	}
 /*
@@ -272,7 +271,7 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				send_serial(ESTOP_SIGNAL,0);
+				send_serial(ESTOP_SIGNAL);
 				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
@@ -294,7 +293,7 @@ static void set_output(O_DATA *otp, int onoff)
 	
 }
 /*********************************************************************/
-void send_serial(UCHAR cmd, UCHAR code)
+void send_serial(UCHAR cmd)
 {
 	int i;
 //	UCHAR buffer[21];
@@ -302,7 +301,6 @@ void send_serial(UCHAR cmd, UCHAR code)
 //	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
 	write_serial(cmd);
-	write_serial(code);
 /*
 	buffer[0] = cmd;
 	buffer[1] = code;	
@@ -860,36 +858,100 @@ UCHAR serial_recv_task(int test)
 	serial_rec = 0;
 	int i;
 	int j = 0;
+	int k = 0;
 	UCHAR ch;
+	UCHAR cmd;
 	int fd;
 	char errmsg[20];
 	char tempx[30];
 
-//	memset(serial_buff,0,SERIAL_BUFF_SIZE);
-//	no_serial_buff = 0;
 	memset(errmsg,0,20);
+
 
 	if(fd = init_serial() < 0)
 	{
-		myprintf1("can't open comm port 1\0");
+		printf("can't open comm port 1\r\n");
 		return 0;
 	}
-	
+/*
+	if(fd = init_serial2() < 0)
+	{
+		printf("can't open comm port 2\r\n");
+		return 0;
+	}
+	printf("running serial task...\r\n");
+*/
+	ch = 0x21;
+
+	red_led(0);
+	green_led(0);
+
+	usleep(1000000);
+
 	while(TRUE)
 	{
 //		if(serial_recv_on == 1)
 		if(1)
 		{
-			pthread_mutex_lock( &serial_read_lock);
-			ch = read_serial(errmsg);
-			pthread_mutex_unlock(&serial_read_lock);
 
-			if(ch >= ENABLE_START && ch <= BLOWER3)
+			pthread_mutex_lock( &serial_read_lock); 
+
+			do {
+				ch = read_serial(errmsg);
+				if(k == 0)
+				{
+					red_led(1);
+					green_led(0);
+					k = 1;
+				}else
+				{
+					red_led(0);
+					green_led(1);
+					k = 0;
+				}
+			}while(ch != 0xFF);
+
+			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+				 read_serial_buffer[i] = read_serial2(errmsg);
+
+			cmd = read_serial_buffer[0];
+//			printf("%d ",cmd);
+/*
+			for(i = 1;i < SERIAL_BUFF_SIZE;i++)
 			{
-//				basic_controls(ch);
-				add_msg_queue(ch);
-				strcpy(tempx,cmd_array[ch].cmd_str);
+				ch = read_serial_buffer[i];
+				if(ch > 0x19 && ch < 0x7f)
+					printf("%c",ch);
+				else if(ch == 0xFE || ch == 0)
+					printf(" ");
+				else	
+					printf("%2x ",ch);	
+			}
+			printf("\r\n");
+*/
+			if(j == 0)
+			{
+				read_serial_buffer[SERIAL_BUFF_SIZE-1] = 0xFE;
+				j = 1;
+			}else
+			{
+				j = 0;
+			}
+
+			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+			{
+				write_serial(read_serial_buffer[i]);
+			}
+
+			pthread_mutex_unlock(&serial_read_lock);
+			// msg's known by the tcp laptop
+
+			if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
+			{
+				add_msg_queue(cmd);
+				strcpy(tempx,cmd_array[cmd].cmd_str);
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+//				printf("%s\r\n",tempx);
 			}
 		}
 						
@@ -1121,6 +1183,7 @@ UCHAR get_msg_queue(void)
 //		printf("get: %d %x\r\n",msg_queue_ptr,cmd);
 	return cmd;
 }
+
 /*********************************************************************/
 UCHAR basic_controls_task(int test)
 {
@@ -1161,6 +1224,7 @@ UCHAR basic_controls_task(int test)
 
 	while(TRUE)
 	{
+		// wait for a new cmd to arrive in the msg_queue
 		do{
 			cmd = get_msg_queue();
 			usleep(5000);
@@ -1186,12 +1250,17 @@ UCHAR basic_controls_task(int test)
 			case OFF_BRIGHTS:
 			case ON_BRAKES:
 			case OFF_BRAKES:
-				send_serial(GENERIC_CMD,cmd);
+			case WIPER1:
+			case WIPER2:
+			case WIPER_OFF:
+//				send_serial(cmd);
+				myprintf1(cmd_array[cmd].cmd_str);
+//				printf("%s\r\n",cmd_array[cmd].cmd_str);
 			break;
 			default:
 			break;
 		}
-
+		
 		switch(cmd)
 		{
 			case ENABLE_START:
@@ -1428,6 +1497,36 @@ UCHAR basic_controls_task(int test)
 				set_output(otp,0);
 			break;		
 
+			case WIPER1:
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;	
+
+			case WIPER2:
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,1);
+			break;	
+
+			case WIPER_OFF:
+				index = WWIPER1;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+				usleep(100000);
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				set_output(otp,0);
+			break;	
+
 			case TEST_ALL_IO:
 
 				for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
@@ -1444,7 +1543,7 @@ UCHAR basic_controls_task(int test)
 			break;
 
 			case START_SEQ:
-				myprintf1("start seq\0");
+//				myprintf1("start seq\0");
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 1;
 				otp->reset = 0;
@@ -1478,7 +1577,7 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case SHUTDOWN:
-				myprintf1("shutdown engine\0");
+//				myprintf1("shutdown engine\0");
 				running_seconds = running_minutes = running_hours = 0;
 				engine_running = 0;
 	//			printf("engine_running: %d\r\n",engine_running);
