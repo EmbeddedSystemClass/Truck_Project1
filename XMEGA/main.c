@@ -76,12 +76,19 @@ USART_data_t USART_data2;
 static UCHAR out_ch;
 static uint16_t rpm, mph, rpm2, mph2;
 static int digit;
+static int done_rpm, done_mph, done_cmd;
+static UCHAR cmd, cmd2;
 
+/*********************************************************************************************/
 int main(void)
 {
 	uint8_t i;
 	uint8_t ch;
 	uint8_t j;
+	uint8_t k;
+	UCHAR bright;
+	UCHAR colon;
+//	uint16_t rpm3, mph3;
 
 	out_ch = 0x21;
 	digit = 0;
@@ -123,9 +130,9 @@ int main(void)
 //	TC_SetPeriod( &TCC0, 61 );		// 1/32 second
 //	TC_SetPeriod( &TCC0, 122 );		// 1/16 second
 //	TC_SetPeriod( &TCC0, 244 );		// 1/8 second
-//	TC_SetPeriod( &TCC0, 488 );		// 1/4 second
+	TC_SetPeriod( &TCC0, 488 );		// 1/4 second
 //	TC_SetPeriod( &TCC0, 976 );		// 1/2 second
-	TC_SetPeriod( &TCC0, 1953 );	// one second
+//	TC_SetPeriod( &TCC0, 1953 );	// one second
 //	TC_SetPeriod( &TCC0, 3906 );	// two seconds
 
 	/* Select clock source. */
@@ -140,86 +147,163 @@ int main(void)
 /* Enable global interrupts. */
 	sei();
 
-	for(i = 0;i < 10;i++)
-	{
-		PORTE_OUTTGL = 2;
-		_delay_ms(50);
-	}
-
-
-	PORTE_OUTCLR = 2;
-
 	i = 0;
 
+	rpm = 6010;
+	mph = 10;
+	j = 0;
+	bright = 100;
+	colon = 1;
+	k = 0;
+	done_rpm = 0;
+	done_mph = 0;
+	done_cmd = 0;
+	cmd = 0xFF;
+	cmd2 = cmd;
+
+	sendChar(LED_CLRDISP,1);
+	sendChar(LED_CLRDISP,0);
+	sendChar(LED_CURSOR,1);
+	sendChar(0,1);
+	sendChar(LED_CURSOR,0);
+	sendChar(0,0);
+	_delay_ms(1);
+	sendChar(LED_BRIGHT,1);
+	_delay_ms(1);
+	sendChar(bright,1);
+	_delay_ms(1);
+	sendChar(LED_BRIGHT,0);
+	_delay_ms(1);
+	sendChar(bright,0);
+	_delay_ms(1);
+
+//	rpm3 = 500;
+//	mph3 = 10;
 	while(1)
 	{
-		_delay_ms(1000);
+		_delay_ms(5000);
+/*
+		if(++rpm3 > 5600)
+			rpm3 = 500;
+		if(++mph3 > 160)
+			mph3 = 10;	
+		process_digits(rpm3,1);
+		process_digits(mph3,0);
+*/
 	}
-
 }
 
-/*! \brief Receive complete interrupt service routine.
- *
- *  Receive complete interrupt service routine.
- *  Calls the common receive complete handler with pointer to the correct USART
- *  as argument.
- */
+/*********************************************************************************************/
 ISR(USARTC0_RXC_vect)	// USART1 is the data/cmd channel for the rpm LED
 {
 	UCHAR ch;
+	uint16_t temp;
 	USART_RXComplete(&USART_data1);
 	ch = USART_RXBuffer_GetByte(&USART_data1);
 
 	if(ch == 0xFF)
+	{
 		digit = 0;
+		PORTE_OUTTGL = 2;
+		rpm = 0;
+		mph = 0;
+	}
 	else
-	{	
-		if(digit == 0)
+	{
+		switch(digit)
 		{
-			digit = 1;
-			rpm = (uint16_t)ch;
+			case 0:
+				digit = 1;
+				rpm = (uint16_t)ch;
+				break;
+			case 1:
+				digit = 2;
+				temp = (uint16_t)ch;
+				temp <<= 8;
+				rpm |= temp;
+				if(rpm != rpm2)
+				{
+					rpm2 = rpm;
+					done_rpm = 1;
+					rpm = 0;
+				}
+				break;
+			case 2:	
+				digit = 3;
+				mph = (uint16_t)ch;
+				break;
+			case 3:
+				digit = 4;
+				temp = (uint16_t)ch;
+				temp <<= 8;
+				mph |= temp;
+				if(mph != mph2)
+				{
+					mph2 = mph;
+					done_mph = 1;
+					mph = 0;
+				}
+				break;
+			case 4:
+				digit = 5;
+				cmd = ch;
+				if(cmd != cmd2)
+				{
+					cmd2 = cmd;
+					done_cmd = 1;
+				}
+				break;
 		}
-		else
-		{
-			digit = 0;
-			rpm <<= 8;
-			rpm |= (uint16_t)ch;
-		}
-		rpm2 = rpm;
-	}		
+	}
 }
 
-ISR(USARTD0_RXC_vect)	// USART2 is for the mph LED
+/*********************************************************************************************/
+ISR(USARTD0_RXC_vect)	// USART2
 {
 	UCHAR ch;
 	USART_RXComplete(&USART_data2);
 	ch = USART_RXBuffer_GetByte(&USART_data2);
-	USART_TXBuffer_PutByte(&USART_data2, ch);
-//	PORTE_OUTTGL = 2;
+//	USART_TXBuffer_PutByte(&USART_data2, ch);
 }
 
-/*! \brief Data register empty  interrupt service routine.
- *
- *  Data register empty  interrupt service routine.
- *  Calls the common data register empty complete handler with pointer to the
- *  correct USART as argument.
- */
+/*********************************************************************************************/
 ISR(USARTC0_DRE_vect)
 {
 	USART_DataRegEmpty(&USART_data1);
 }
 
+/*********************************************************************************************/
 ISR(USARTD0_DRE_vect)
 {
 	USART_DataRegEmpty(&USART_data2);
 }
 
+/*********************************************************************************************/
 ISR(TCC0_OVF_vect)
 {
-	UCHAR tch;
-	/* Toggle PD0 output after 5 switch presses. */
-	PORTE.OUTTGL = 2;
-	process_digits(rpm,1);
+	if(done_rpm == 1)
+	{
+		PORTE.OUTTGL = 2;
+		process_digits(rpm2,1);
+		done_rpm = 0;
+	}
+	if(done_mph == 1)
+	{
+		process_digits(mph2,0);
+		done_mph = 0;
+	}
+	if(done_cmd == 1)
+	{
+		sendChar(LED_BRIGHT,1);
+		_delay_ms(1);
+		sendChar(cmd,1);
+		_delay_ms(1);
+		sendChar(LED_BRIGHT,0);
+		_delay_ms(1);
+		sendChar(cmd,0);
+		_delay_ms(1);
+		done_cmd = 0;
+	}
 }
 /*********************************************************************************************/
 void sendChar(UCHAR ch, int which)
@@ -233,7 +317,7 @@ void sendChar(UCHAR ch, int which)
 		if(USART_IsTXDataRegisterEmpty(&USART1))
 			USART_PutChar(&USART1,ch);
 	}
-	_delay_ms(2);
+	_delay_ms(3);
 }
 
 /*********************************************************************************************/
@@ -265,8 +349,6 @@ void process_digits(uint16_t val, int uart)
 	utemp >>= 4;
 	temp = (UCHAR)(utemp & 0x000f);
 	buff[digit_ptr] = temp;
-
-	PORTE_OUTTGL = 2;
 
 	sendChar(LED_CLRDISP,uart);
 
@@ -345,7 +427,7 @@ uint32_t dec2bcd(uint16_t dec)
     return result;
 }
 
-/* Recursive one liner because that's fun */
+// does the same as above
 /*********************************************************************************************/
 uint32_t dec2bcd_r(uint16_t dec)
 {

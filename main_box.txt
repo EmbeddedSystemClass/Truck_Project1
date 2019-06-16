@@ -9,10 +9,10 @@ There is also a PWM wire (screen dim) from the STM32 to the screen box (or use t
 The AVR and screen work as before and are connected the same, but an STM32 Discovery board replaces the
 Microchip PIC24FJ128.
 
-The FPGA board will be in another box and will communicate with the Main Box via a serial port and the
-same handshacking lines as before. (UART3)
+The FPGA board will be the Main Box and will use a parallel port to send data to the STM32 and
+use a serial recv line with same handshacking lines as before. (UART3)
 
-serial ports:
+serial ports on STM32:
 
 UART1: monitor/TS-7200 (external)
 UART2: AVR (external)
@@ -180,7 +180,8 @@ when closed they are up, either going up or down
 
 monitor input for off/intermitent/low/high
 processor monitors the park input (closed when wipers reach park position)
-use AVR pro-mini to control wipers
+
+one relay is the 'gate' the other is high/low speed
 
 FPGA: (signals needed so far - some may need to be converted to 5v)
 
@@ -207,6 +208,29 @@ of the two XMEGA UART's on 1 or more tty terminals. The rpm/mph data is then gen
 once a second or 1/2 second by the FPGA, while the cmd's originate from the STM32 and 
 are passed on by the FPGA. The XMEGA will stop the display update when it gets a command
 to change the brightness or decimal points.
+
+TODO: need a timer in Multi-Byte.vhd that senses if rpm and mph signals are either too
+low or too high - rpm too low will shut off fp. rpm too high (rev limit) will flash light 
+on dash and shut off ign. rpm too low will not display on LED's because it can't calculate
+down to less than ~10 mph.
+
+The TX's of USART's 1 & 2 go to the LED module (rpm/mph).
+2) one is for mph and the other is rpm.
+The RX's are interrupt driven. 
+Only USART1 RX is used to receive data/cmds from the XMEGA.
+The data stream is:
+1) 0xFF - header (nothing else in data stream can be 0xFF)
+2) low byte of rpm
+3) high byte of rpm
+4) low byte of mph
+5) high byte of mph
+6) brightness command (starts at 0xFF - brightest)
+(later I can add the 2nd rpm and mph)
+The RJ-11 port on LED display box:
+BLK - gnd
+YEL - rpm/mph serial input
+GRN - extra serial input 
+RED - 5vdc
 
 FPGA connections:
 36 dip on top (1st 2 on left are vcc, next 2 are gnd)
