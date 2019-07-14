@@ -12,6 +12,7 @@ git add append_br.c
 git add replace_tabs.c
 git add avr_cmds.txt
 git add main_box_pinout.ods
+git add avr_menus.txt
 
 git add STM32/*
 git add STM32/.cproject

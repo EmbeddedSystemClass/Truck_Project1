@@ -1,0 +1,35 @@
+AVR/LCD menuing:
+
+1) Laptop sends AVR menus to TS-7200.
+2) TS-7200 sends menus to STM32.
+3) STM32 sends menus to AVR.
+
+The menus are stored on disk on the TS-7200. The laptop client is used to 
+change the menuing system.
+
+main menu:
+key
+1:	send the START_SEQ command
+2:	send the SHUTDOWN command
+3:	toggle the headlights on or off
+4:	toggle the fan on or off
+5:	cycle the blower
+6:	toggle the running lights on or off
+7:	toggle the brights (only if lights are on)
+8:	cycle the wiper motor
+9:	
+0:	
+A:	
+B:	
+C:	
+D:	
+#:	
+*"	
+
+A & B are used to go to diff menus
+Menus are displayed starting with #'s (1,2,3...)
+Text for menus are stored in temp array in AVR_t6963/main.c
+
+
+Current menu is shown at top of screen above RT display.
+

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include "USART.h"
 #include "t6963.h"
-#include "spi.h"
 #include "macros.h"
 #include <string.h>
 //#include "main.h"
@@ -37,6 +36,8 @@ volatile UINT xrow, xcol;
 volatile UCHAR buff[LEN];
 static char *eeprom_str_lookup(int index, char *str);
 static float convertF(int raw_data);
+#define TEMP_SIZE 800
+UCHAR temp[TEMP_SIZE];
 
 // use timer to keep track of things like:
 // - seconds before re-enter password
@@ -84,7 +85,7 @@ int main(void)
 	GDispInit();
 //	GDispInitPort();
 	_delay_ms(1);
-    initUSART();
+	initUSART();
 	_delay_ms(1);
 //	initSPImaster();
 //	initSPIslave();
@@ -94,11 +95,16 @@ int main(void)
 	_delay_us(10);
 	GDispSetMode(TEXT_ON);
 	_delay_us(10);
+//	GDispSetMode(CURSOR_BLINK_ON);
+//	_delay_us(10);
 	GDispClrTxt();
 	FONT_6X8();
 	GDispStringAt(7,7,"LCD is on!");
 	_delay_ms(1000);
 	FONT_8X8();
+	GDispClrTxt();
+	GDispStringAt(7,7,"LCD is on!");
+	_delay_ms(1000);
 
 //	initSPImaster();
 //******************************************************************************************//
@@ -110,18 +116,19 @@ int main(void)
 //#endif
 
 	xbyte = 0x21;
-
+/*
 	TCCR1A = 0x00;
 	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
 //	TCCR1B = (1<<CS11);
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
-//	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
-
+	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
+*/
 	chptr = 0;
 	dc2 = 0;
 	spi_ret = 0x30;
 	xrow = 13;
 	xcol = 35;
+
 /*
 	for(row = 0;row < ROWS;row++)
 	{
@@ -135,9 +142,8 @@ int main(void)
 			}
 		}
 	}
+	_delay_ms(1000);
 */
-	GDispClrTxt();
-	FONT_8X8();
 		
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
@@ -199,9 +205,9 @@ int main(void)
 					ecol = buff[4];	
 					GDispClrSection(srow, scol, erow, ecol);
 					GDispGoto(0,0);
-*/
-				break;
 
+				break;
+*/
 				case LCD_CLRSCR:
 					GDispClrTxt();
 					GDispGoto(0,0);
@@ -441,6 +447,8 @@ int main(void)
 					else	
 						sprintf(str,"%3d ",int_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
+				break;
+				case LOAD_MENUS:
 				break;
 
 				default:

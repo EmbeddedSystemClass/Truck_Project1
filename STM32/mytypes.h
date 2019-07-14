@@ -317,35 +317,17 @@ typedef struct params
 
 }PARAM_STRUCT;
 
-// commands for RPM/MPH LED display
-#define RPM_SEND_CHAR_CMD 			0x01
-#define MPH_SEND_CHAR_CMD 			0x02
-
-#define RPM_OFF_CMD 				0x04
-#define RPM_SET_BRIGHTNESS_CMD 		0x05
-#define RPM_SET_CDECIMAL_CMD 		0x06
-#define RPM_SET_UPDATE_RATE_CMD 	0x07
-#define RPM_SET_FACTOR_CMD 			0x08
-#define RPM_SET_FACTORY_RESET		0x09
-
-#define MPH_OFF_CMD 				0x0A
-#define MPH_SET_BRIGHTNESS_CMD 		0x0C
-#define MPH_SET_CDECIMAL_CMD 		0x0D
-#define MPH_SET_UPDATE_RATE_CMD 	0x0E
-#define MPH_SET_FACTOR_CMD 			0x0F
-#define MPH_SET_FACTORY_RESET		0x10
-
-// other FPGA commands
-#define SET_FPGA_SEND_UPDATE_RATE 	0x20
-#define DTMF_TONE_ON 				0x21
-#define DTMF_TONE_OFF 				0x22
-#define SPECIAL_TONE_ON 			0x23
-#define LCD_PWM 					0x24
-#define FP_SHUTOFF_OVERRIDE 		0x25
-#define SET_MAX_REV_LIMITER 		0x26
-#define SET_MIN_REV_LIMITER 		0x27
-#define TEST_RPM_LIMIT 				0x28
-#define TEST_COMM					0x29
+// FPGA commands
+#define SET_FPGA_SEND_UPDATE_RATE 	0x01
+#define SET_UPDATE_RATE				0x02
+#define DTMF_TONE_ON 				0x03
+#define DTMF_TONE_OFF 				0x04
+#define SPECIAL_TONE_ON 			0x05
+#define LCD_PWM 					0x06
+#define TUNE_ON						0x07
+#define TUNE_OFF					0x08
+#define LOAD_TUNE					0x09
+#define SHOW_DOWNLOAD				0x0A
 
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on
