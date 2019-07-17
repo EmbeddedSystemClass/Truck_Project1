@@ -1,7 +1,7 @@
 Truck_Project1_notes.txt
 
 Truck_Project1 is an automotive SCADA system which uses a Xilinx Spartan-3E to 
-monitor real-time data, a PIC24FJ128GB110 to handle a keypad and route message
+monitor real-time data, a STM32F100RB to handle a keypad and route message
 traffic, a ATMEGA328P to drive a t6963 LCD screen, and a TS-7200/7800 to do
 I/O (turning on and off lights and reading switches).
 
@@ -13,15 +13,15 @@ I/O (turning on and off lights and reading switches).
 	|											  |							    ^
 F	|											  |								|
 P	|											  v								|TCP/IP
-G	|---------------> RS-232 ------------------>| P	|							|
-A	|											| I	|							v
-	|						|-----------|		| C |						|-----------|
-----|						|			|		| 2	|						|			|	
-							|  keypad	|======>| 4 |<------ RS-232 ------->| TS-7800	|
+G	|---------------> RS-232 ------------------>| S	|							|
+A	|											| T	|							v
+	|						|-----------|		| M |						|-----------|
+----|						|			|		| 3	|						|			|	
+							|  keypad	|======>| 2 |<------ RS-232 ------->| TS-7200	|
 							|			|									|			|
 							|-----------|									|-----------|
 
-the PIC24FJ128GB110 (PIC) will route message traffic to and from the FPGA, the 
+the STM32F100RB will route message traffic to and from the FPGA, the 
 TS-7200 and the LCD screen.
 
 The menuing of the LCD screen and can display optional real time info like engine speed,
@@ -36,19 +36,13 @@ the PIC via the serial port.
 Other telemetry data can be added later like distributor timing to use for spark advance.
 
 directories:
-PIC24_support - source and libs for PIC24FJ128GB110 (uses MPLAB X)
+STM32
 AVR_t6963 - ATMEGA328p source and support files (uses avrdude)
 thread_io - source for the TS-7200/7800 cards (from Technologic Systems)
 thread_io/ncurses - source for the ncurses program that runs on the laptop and communicates
 						with the TS-7200/7800.
 Truck_App1 - source for the FPGA (Xilinx Spartan-3E) in VHDL
-
-The PIC24 uses a really nice RTOS called ESOS which is from people at Mississippi State.
-(see https://sites.google.com/site/pic24micro//Home/Course)
-within the PIC24_support directory there is /lib and /esos. lib is the src & include
-for using a PIC24 (or most other 16-bit controllers from Microchip*) while the esos
-directory is the RTOS which uses some of the /lib directory files. There is a file in
-the PIC24_support directory called esos_examples.c that explains how to use the ESOS system.
+XMEGA - processor to drive LED module for rpm/mph
 
 The thread_io directory has files used to compile an embedded linux program that uses
 the POSIX pthread library to handle serial io and tcp/ip traffic and drive a io card that

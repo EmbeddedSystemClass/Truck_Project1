@@ -75,8 +75,8 @@ namespace EpServerEngineSampleClient
 			BAD_MSG,
 			CURRENT_TIME,
 			SET_PARAMS,
-			EXIT_PROGRAM        
-		}
+			EXIT_PROGRAM
+        }
 
         public ServerCmds()
         {
@@ -270,15 +270,6 @@ namespace EpServerEngineSampleClient
                     break;
                 case "TEST_ALL_IO":
                     sendcmd = (int)Server_cmds.TEST_ALL_IO;
-                    break;
-                case "WIPER_LOW":
-                    sendcmd = (int)Server_cmds.WIPER1;
-                    break;
-                case "WIPER_HIGH":
-                    sendcmd = (int)Server_cmds.WIPER2;
-                    break;
-                case "WIPER_OFF":
-                    sendcmd = (int)Server_cmds.WIPER_OFF;
                     break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;

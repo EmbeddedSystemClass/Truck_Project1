@@ -29,8 +29,7 @@
 /* USER CODE BEGIN Includes */     
 #include "dwt_stm32_delay.h"
 #include "../mytypes.h"
-#include "ds1620.h"	// not directly attached
-// for now just use the quad sensor via the serial port (UART3)
+#include "ds1620.h"	
 #include "freertos_defs.h"
 #include "usart.h"
 #include "screen.h"

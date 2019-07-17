@@ -21,7 +21,8 @@ namespace EpServerEngineSampleClient
         ENGINE_RUNTIME,
         SERVER_UPTIME,
         SEND_CONFIG,
-        GET_TIME
+        GET_TIME,
+		SHUTDOWN
     }
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
@@ -80,6 +81,7 @@ namespace EpServerEngineSampleClient
             btnStopSerial.Enabled = false;
             btn_SetTime.Enabled = false;
             btnGetTime.Enabled = false;
+            //Upload_New.Enabled = false;
             //            btnSetParams.Enabled = false;
             tbConnected.Text = "not connected";
 //            target_db_closed = false;
@@ -103,6 +105,7 @@ namespace EpServerEngineSampleClient
                 tbEngRunTime.Text = "";
                 btn_SetTime.Enabled = true;
                 btnGetTime.Enabled = true;
+                //Upload_New.Enabled = true;
                 ClientOps ops = new ClientOps(this, hostname, port);
                 m_client.Connect(ops);
 
@@ -120,6 +123,7 @@ namespace EpServerEngineSampleClient
                 btnStopSerial.Enabled = false;
                 btn_SetTime.Enabled = false;
                 btnGetTime.Enabled = false;
+                //Upload_New.Enabled = false;
                 tbEngRunTime.Text = "";
                 tbServerTime.Text = "";
                 if (m_client.IsConnectionAlive)
@@ -185,7 +189,8 @@ namespace EpServerEngineSampleClient
     ENGINE_RUNTIME,
     SERVER_UPTIME,
     SEND_CONFIG,
-    GET_TIME
+    GET_TIME,
+	SHUTDOWN
 */
             string str = Enum.GetName(typeof(msg_types), type_msg);
 //            int type = (int)Enum.Parse(typeof(msg_types), str);
@@ -304,6 +309,25 @@ namespace EpServerEngineSampleClient
                 case "GET_TIME":
                     AddMsg(ret);
                     break;
+
+				case "SHUTDOWN":
+					tbHostname.Enabled = true;
+					tbPort.Enabled = true;
+					btnConnect.Text = "Connect";
+					btnShutdown.Enabled = false;
+					btnReboot.Enabled = false;
+					btnStopSerial.Enabled = false;
+					btn_SetTime.Enabled = false;
+					btnGetTime.Enabled = false;
+					//Upload_New.Enabled = false;
+					tbEngRunTime.Text = "";
+					tbServerTime.Text = "";
+					if (m_client.IsConnectionAlive)
+						m_client.Disconnect();
+
+					AddMsg(ret);
+					break;
+
                 default:
                     break;
             }
@@ -453,9 +477,7 @@ namespace EpServerEngineSampleClient
                              || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD" ||
                                  ctls[i].CtlName == "BLOWER1_ON" || ctls[i].CtlName == "BLOWER2_ON" || 
                                      ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || 
-                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO" ||
-                                        ctls[i].CtlName == "WIPER_LOW" || ctls[i].CtlName == "WIPER_HIGH" ||
-                                            ctls[i].CtlName == "WIPER_OFF")
+                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO")
                     {
                         ctls[i].CtlSet = 0;
                         cblistCommon.SetItemChecked(i, false);
@@ -507,6 +529,11 @@ namespace EpServerEngineSampleClient
                 //                this.txtResult.Text = "Cancelled";
             }
             testDialog.Dispose();
+        }
+        private void Upload_New_Click(object sender, EventArgs e)
+        {
+            string cmd = "UPLOAD_NEW";
+            svrcmd.Send_Cmd(cmd, 0);
         }
     }
 }

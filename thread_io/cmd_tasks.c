@@ -1024,6 +1024,7 @@ void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type)
 			send_tcp((UCHAR *)&msg[i],1);
 			send_tcp((UCHAR *)&ret,1);
 		}
+
 	}
 }
 /*********************************************************************/

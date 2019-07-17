@@ -113,7 +113,8 @@ enum client_cmds
 	ENGINE_RUNTIME,
 	SERVER_UPTIME,
 	SEND_CONFIG,
-	GET_TIME2
+	GET_TIME2,
+	SHUTDOWN2
 }CLIENT_CMDS;
 
 // msg's sent from PIC24 to TS-7200
@@ -276,18 +277,6 @@ enum output_types
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1
 #define START_STATUS_VALUE_COL 2
-/*
-8) set time/date		(num entry)
-*) time till off eng	(num entry)
-#) fpga send rate		(num entry)
-
-menu 2: - screen dim	(num entry)
-1) rpm/mph update rate	(num entry)
-2) high rev limit		(num entry)
-3) low rev limit		(num entry)
-4) set lights off		(num entry)
-6) change password		(num entry)
-*/
 
 enum num_entry_types
 {

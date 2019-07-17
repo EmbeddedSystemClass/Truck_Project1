@@ -1,5 +1,7 @@
 AVR/LCD menuing:
 
+Current menu is shown at top of screen above RT display.
+
 1) Laptop sends AVR menus to TS-7200.
 2) TS-7200 sends menus to STM32.
 3) STM32 sends menus to AVR.
@@ -17,19 +19,36 @@ key
 6:	toggle the running lights on or off
 7:	toggle the brights (only if lights are on)
 8:	cycle the wiper motor
+9:	set date/time (mm/dd/yy/hr/mm/ss)
+0:	set high/low rev limit (high/llow - 4 digits each)
+A:	change password
+B:	time till lights off after engine shutoff
+C:	screen dim/off time when no key pressed
+D:	
+
+menu 2
+1:	fan on temp (of engine)
+2:	fan off temp
+3:	low speed blower on (of indoor temp)
+4:	med speed blower on
+5:	high speed blower on
+6:	blower temp spread
+7:	
+8:	
 9:	
 0:	
 A:	
 B:	
 C:	
 D:	
-#:	
-*"	
 
-A & B are used to go to diff menus
+# & * are used to go to diff menus
 Menus are displayed starting with #'s (1,2,3...)
 Text for menus are stored in temp array in AVR_t6963/main.c
-
-
-Current menu is shown at top of screen above RT display.
-
+When # is pressed either a msg is sent or the num entry is called
+If msg is sent, then the type of msg defines a list of msg's that
+are cycled threw. If just on/off then the list is the on and off
+msg type. e.g. LIGHTS_ON or LIGHTS_OFF. If the button press cycles
+threw the wiper states, then the list is: WIPER1, WIPER2 & WIPER_OFF.
+If the button is for the blower: BLOWER_OFF, BLOWER1, BLOWER2 & BLOWER3.
+If the button is to edit a param, like the date/time, then 

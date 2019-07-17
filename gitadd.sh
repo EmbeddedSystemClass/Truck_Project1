@@ -131,6 +131,5 @@ git add XMEGA/usart_compile.sh
 git add XMEGA/usart_driver.h
 
 ./gitstatus.sh
-oneline.sh > oneline.txt
 
 

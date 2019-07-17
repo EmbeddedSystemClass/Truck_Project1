@@ -52,6 +52,8 @@ extern CMD_STRUCT cmd_array[58];
 ollist_t oll;
 PARAM_STRUCT ps;
 
+extern pthread_t serial_thread;	// workaround for closing serial task
+
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
@@ -413,7 +415,7 @@ UCHAR monitor_input_task(int test)
 		if(shutdown_all)
 		{
 //				printf("done mon input tasks\r\n");
-//				myprintf1("done mon input");
+				myprintf1("done mon input");
 			return 0;
 		}
 	}
@@ -525,7 +527,7 @@ UCHAR monitor_fake_input_task(int test)
 		if(shutdown_all)
 		{
 //				printf("done mon fake input tasks\r\n");
-//				myprintf1("done mon input");
+				myprintf1("done mon input");
 			return 0;
 		}
 	}
@@ -648,6 +650,11 @@ UCHAR timer_task(int test)
 	rpm = mph = 0;
 	while(TRUE)
 	{
+		if(shutdown_all)
+		{
+//			printf("done timer_task\r\n");
+			return 0;
+		}
 		uSleep(1,0);
 
 		if(engine_running == 1)
@@ -664,8 +671,8 @@ UCHAR timer_task(int test)
 					running_hours++;
 				}
 			}
-		sprintf(tempx,"%dh %dm %ds ",running_hours, running_minutes, running_seconds);
-		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
+			sprintf(tempx,"%dh %dm %ds ",running_hours, running_minutes, running_seconds);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
 		}else running_seconds = running_minutes = running_hours = 0;
 
@@ -686,13 +693,6 @@ UCHAR timer_task(int test)
 		sprintf(tempx,"%dh %dm %ds ",trunning_hours, trunning_minutes, trunning_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
 
-/*
-	SEND_MSG = 60,
-	CURRENT_TIME2,
-	ENGINE_RUNTIME,
-	SERVER_UPTIME,
-	GET_TIME2,
-*/
 		if(test_lblinkers > 0)
 		{
 			if(test_lblinkers == 1)
@@ -780,12 +780,7 @@ UCHAR timer_task(int test)
 		}
 
 		// write to the sched.log file if buffer gets near full
-		
-		if(shutdown_all)
-		{
-//			printf("done timer_task\r\n");
-			return 0;
-		}
+
 	}
 	return 1;
 }
@@ -888,80 +883,77 @@ UCHAR serial_recv_task(int test)
 
 	usleep(1000000);
 
+
 	while(TRUE)
 	{
-//		if(serial_recv_on == 1)
-		if(1)
-		{
+		pthread_mutex_lock( &serial_read_lock); 
 
-			pthread_mutex_lock( &serial_read_lock); 
-
-			do {
-				ch = read_serial(errmsg);
-				if(k == 0)
-				{
-					red_led(1);
-					green_led(0);
-					k = 1;
-				}else
-				{
-					red_led(0);
-					green_led(1);
-					k = 0;
-				}
-			}while(ch != 0xFF);
-
-			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-				 read_serial_buffer[i] = read_serial2(errmsg);
-
-			cmd = read_serial_buffer[0];
-//			printf("%d ",cmd);
-/*
-			for(i = 1;i < SERIAL_BUFF_SIZE;i++)
+		do {
+			ch = read_serial(errmsg);
+			if(k == 0)
 			{
-				ch = read_serial_buffer[i];
-				if(ch > 0x19 && ch < 0x7f)
-					printf("%c",ch);
-				else if(ch == 0xFE || ch == 0)
-					printf(" ");
-				else	
-					printf("%2x ",ch);	
-			}
-			printf("\r\n");
-*/
-			if(j == 0)
-			{
-				read_serial_buffer[SERIAL_BUFF_SIZE-1] = 0xFE;
-				j = 1;
+				red_led(1);
+				green_led(0);
+				k = 1;
 			}else
 			{
-				j = 0;
+				red_led(0);
+				green_led(1);
+				k = 0;
 			}
+		}while(ch != 0xFF);
 
-			for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-			{
-				write_serial(read_serial_buffer[i]);
-			}
+		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+			 read_serial_buffer[i] = read_serial2(errmsg);
 
-			pthread_mutex_unlock(&serial_read_lock);
-			// msg's known by the tcp laptop
+		cmd = read_serial_buffer[0];
+//			printf("%d ",cmd);
+/*
+		for(i = 1;i < SERIAL_BUFF_SIZE;i++)
+		{
+			ch = read_serial_buffer[i];
+			if(ch > 0x19 && ch < 0x7f)
+				printf("%c",ch);
+			else if(ch == 0xFE || ch == 0)
+				printf(" ");
+			else	
+				printf("%2x ",ch);	
+		}
+		printf("\r\n");
+*/
+		if(j == 0)
+		{
+			read_serial_buffer[SERIAL_BUFF_SIZE-1] = 0xFE;
+			j = 1;
+		}else
+		{
+			j = 0;
+		}
 
-			if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
-			{
-				add_msg_queue(cmd);
-				strcpy(tempx,cmd_array[cmd].cmd_str);
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+		{
+			write_serial(read_serial_buffer[i]);
+		}
+
+		pthread_mutex_unlock(&serial_read_lock);
+		// msg's known by the tcp laptop
+
+		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
+		{
+			add_msg_queue(cmd);
+			strcpy(tempx,cmd_array[cmd].cmd_str);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 //				printf("%s\r\n",tempx);
-			}
 		}
 						
 		if(shutdown_all)
 		{
 //			printf("shutting down serial task\r\n");
 			close_serial();
-//			myprintf1("done serial task");
+			myprintf1("done serial task\r\n");
 			return 0;
 		}
+
 	}
 	return 1;
 }
@@ -992,7 +984,7 @@ UCHAR tcp_monitor_task(int test)
 	sock_open = 0;
 	tv.tv_sec = 2;
 	tv.tv_usec = 50000;
-	UCHAR tempx[40];
+	UCHAR tempx[20];
 	int s;
 
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
@@ -1054,9 +1046,13 @@ UCHAR tcp_monitor_task(int test)
 	{
 		if(sock_open == 1)
 		{
-			uSleep(1,0);
+			uSleep(0,1000);
 			if(shutdown_all)
 			{
+				strcpy(tempx,"shutdown...\0");
+				pthread_cancel(serial_thread);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN2);
+//				uSleep(2,0);
 				close_tcp();
 //				printf("done tcp_mon\r\n");
 				return 0;
@@ -1082,13 +1078,13 @@ UCHAR tcp_monitor_task(int test)
 			tcp_connected_time = 0;
 			
 			 send_param_msg();
-/*
+
 			if(shutdown_all)
 			{
 //				printf("tcp task closing\r\n");
 				return 0;
 			}
-
+/*
 		if (setsockopt (global_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
 			return -2;
 		if (setsockopt (global_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval)) < 0)
@@ -1111,7 +1107,9 @@ void close_tcp(void)
 	if(sock_open)
 	{
 		sock_open = 0;
+//		printf("closing socket...\r\n");
 		close(global_socket);
+//		printf("socket closed!\r\n");
 		global_socket = -1;
 	}else
 	{
@@ -1197,6 +1195,7 @@ UCHAR basic_controls_task(int test)
 	size_t osize;
 	char errmsg[50];
 	UCHAR cmd;
+	char tempx[20];
 
 //	static UCHAR buffer[30] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
 //				17,18,19,20,21,22,23,24,25,26,27,28,29};
@@ -1219,6 +1218,7 @@ UCHAR basic_controls_task(int test)
 	{RBRIGHTS,0},
 	{RHEADLAMP,0}};
 
+	strcpy(tempx,"shutdown...\0");
 	memset(msg_queue,0,sizeof(msg_queue));
 	msg_queue_ptr = 0;
 
@@ -1230,7 +1230,7 @@ UCHAR basic_controls_task(int test)
 			usleep(5000);
 		}while(cmd == 0 && shutdown_all == 0);
 
-		usleep(5000);
+		usleep(5000L);
 
 		switch(cmd)
 		{
@@ -1604,52 +1604,72 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case SHUTDOWN_IOBOX:
-				for(i = 0;i < 30;i++)
+				for(i = 0;i < 10;i++)
+				{
+					red_led(1);
+					usleep(2000L);
+					red_led(0);
+					green_led(1);
+					usleep(2000L);
+					green_led(0);
+					red_led(1);
+					usleep(2000L);
+					red_led(0);
+					green_led(1);
+					usleep(2000L);
+					green_led(0);
+				}
+				for(i = 0;i < 10;i++)
 				{
 					setdioline(7,0);
-					uSleep(0,TIME_DELAY/20);
+//					uSleep(0,TIME_DELAY/20);
+					usleep(2000L);
 					setdioline(7,1);
-					uSleep(0,TIME_DELAY/20);
+//					uSleep(0,TIME_DELAY/20);
+					usleep(2000L);
 				}
 				setdioline(7,0);
-				uSleep(2,0);
+//				uSleep(2,0);
+//				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN2);
+				usleep(20000L);
 				setdioline(7,1);
 				reboot_on_exit = 3;
 				myprintf1("shutdown iobox\0");
-	//			printf("shutdown iobox\0");
+//				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
 				break;
 
 			case REBOOT_IOBOX:
+				for(i = 0;i < 20;i++)
+				{
+					setdioline(7,0);
+//					uSleep(0,TIME_DELAY/20);
+					usleep(2000L);
+					setdioline(7,1);
+//					uSleep(0,TIME_DELAY/20);
+					usleep(2000L);
+				}
+				setdioline(7,1);
+
 				for(i = 0;i < 10;i++)
 				{
 					red_led(1);
-					usleep(30000);
+					usleep(2000L);
 					red_led(0);
 					green_led(1);
-					usleep(30000);
+					usleep(2000L);
 					green_led(0);
 					red_led(1);
-					usleep(30000);
+					usleep(2000L);
 					red_led(0);
 					green_led(1);
-					usleep(30000);
+					usleep(2000L);
 					green_led(0);
 				}
 
-				for(i = 0;i < 30;i++)
-				{
-					setdioline(7,0);
-					uSleep(0,TIME_DELAY/20);
-					setdioline(7,1);
-					uSleep(0,TIME_DELAY/20);
-				}
-				setdioline(7,0);
-				uSleep(2,0);
-				setdioline(7,1);
 				reboot_on_exit = 2;
 				myprintf1("reboot iobox\0");
-	//			printf("reboot iobox\0");
+//				printf("reboot iobox\r\n");
 				shutdown_all = 1;
 				break;			
 				default:

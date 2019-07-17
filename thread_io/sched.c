@@ -48,6 +48,8 @@ char oFileName[20];
 
 UCHAR reboot_on_exit;
 
+pthread_t serial_thread;	// workaround for closing serial thread (serial read is blocking)
+
 typedef struct
 {
 	pthread_t pthread;
@@ -201,6 +203,7 @@ int main(int argc, char **argv)
 /*	printf("\nmain()\t\t\t\t%d threads created. Main running fifo at max\n", NUM_TASKS); */
 
 /* wait until all threads have finished */
+	serial_thread = _threads[SERIAL_RECV].pthread;
 	for (i = 0; i < NUM_TASKS; i++)
 	{
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
