@@ -852,13 +852,12 @@ UCHAR serial_recv_task(int test)
 	UCHAR ch;
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
-	int engine_temp;
+	int engine_temp, rpm, mph;
 	int fd;
 	char errmsg[20];
 	char tempx[30];
 
 	memset(errmsg,0,20);
-
 
 	if(fd = init_serial() < 0)
 	{
@@ -871,8 +870,9 @@ UCHAR serial_recv_task(int test)
 		printf("can't open comm port 2\r\n");
 		return 0;
 	}
-	printf("running serial task...\r\n");
 */
+//	printf("running serial task...\r\n");
+
 	ch = 0x21;
 
 	red_led(0);
@@ -882,7 +882,6 @@ UCHAR serial_recv_task(int test)
 
 	while(TRUE)
 	{
-
 		pthread_mutex_lock( &serial_read_lock); 
 
 		do {
@@ -893,32 +892,13 @@ UCHAR serial_recv_task(int test)
 			 read_serial_buffer[i] = read_serial(errmsg);
 
 		cmd = read_serial_buffer[0];
-//			printf("%d ",cmd);
 
 /*
-		for(i = 1;i < SERIAL_BUFF_SIZE;i++)
-		{
-			ch = read_serial_buffer[i];
-			printf("%2x ",ch);	
-		}
-*/
-//		printf("\r\n");
-
-/*
-		if(j == 0)
-		{
-			read_serial_buffer[SERIAL_BUFF_SIZE-1] = 0xFE;
-			j = 1;
-		}else
-		{
-			j = 0;
-		}
-*/
 		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 		{
 			write_serial(read_serial_buffer[i]);
 		}
-
+*/
 		pthread_mutex_unlock(&serial_read_lock);
 		// msg's known by the tcp laptop
 
@@ -927,7 +907,6 @@ UCHAR serial_recv_task(int test)
 			add_msg_queue(cmd);
 			strcpy(tempx,cmd_array[cmd].cmd_str);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
-//				printf("%s\r\n",tempx);
 		}
 
 		if(cmd == ENGINE_TEMP)
@@ -940,7 +919,11 @@ UCHAR serial_recv_task(int test)
 			sprintf(tempx,"%.1f\0",convertF(engine_temp));
 //			sprintf(tempx,"%2x %2x",high_byte, low_byte);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
-
+		}
+		
+		if(cmd == SEND_RT_VALUES)
+		{
+/*
 			if(k == 0)
 			{
 				red_led(1);
@@ -952,6 +935,22 @@ UCHAR serial_recv_task(int test)
 				green_led(1);
 				k = 0;
 			}
+*/
+			high_byte = read_serial_buffer[1];
+			low_byte = read_serial_buffer[2];
+			rpm = (int)high_byte;
+			rpm <<= 8;
+			rpm |= (int)low_byte;
+			sprintf(tempx,"%d",rpm);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM2);
+
+			high_byte = read_serial_buffer[3];
+			low_byte = read_serial_buffer[4];
+			mph = (int)high_byte;
+			mph <<= 8;
+			mph |= (int)low_byte;
+			sprintf(tempx,"%d",mph);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH2);
 
 		}
 

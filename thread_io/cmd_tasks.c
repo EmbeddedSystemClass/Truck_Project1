@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[65] =
+CMD_STRUCT cmd_array[66] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -100,7 +100,8 @@ CMD_STRUCT cmd_array[65] =
 	{		CURRENT_TIME,"CURRENT_TIME\0" },
 	{		SET_PARAMS,"SET_PARAMS\0" },
 	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
-	{   	ENGINE_TEMP,"ENGINE_TEMP\0" }
+	{   	ENGINE_TEMP,"ENGINE_TEMP\0" },
+	{   	SEND_RT_VALUES,"SEND_RT_VALUES\0" }
 };
 
 //extern illist_t ill;
@@ -237,24 +238,25 @@ UCHAR get_host_cmd_task(int test)
 	same_msg = 0;
 	lcd_init();
 
+
 // flash green and red led's to signal we are up (if LCD screen not attached)
-#if 0
+//#if 0
 	for(i = 0;i < 10;i++)
 	{
 		red_led(1);
-		usleep(30000);
+		usleep(50000);
 		red_led(0);
 		green_led(1);
-		usleep(30000);
+		usleep(50000);
 		green_led(0);
 		red_led(1);
-		usleep(30000);
+		usleep(50000);
 		red_led(0);
 		green_led(1);
-		usleep(30000);
+		usleep(50000);
 		green_led(0);
 	}
-#endif
+//#endif
 //	myprintf1("start....\0");
 
 	myprintf1("sched v1.21\0");

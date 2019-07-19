@@ -22,7 +22,10 @@ namespace EpServerEngineSampleClient
         SERVER_UPTIME,
         SEND_CONFIG,
         GET_TIME,
-		SHUTDOWN
+		SHUTDOWN,
+		ENGINE_TEMP,
+		SEND_RPM,
+		SEND_MPH
     }
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
@@ -103,6 +106,9 @@ namespace EpServerEngineSampleClient
                 btnStopSerial.Enabled = true;
                 tbServerTime.Text = "";
                 tbEngRunTime.Text = "";
+                tbEngineTemp.Text = "";
+				tbRPM.Text = "";
+				tbMPH.Text = "";
                 btn_SetTime.Enabled = true;
                 btnGetTime.Enabled = true;
                 //Upload_New.Enabled = true;
@@ -125,6 +131,9 @@ namespace EpServerEngineSampleClient
                 btnGetTime.Enabled = false;
                 //Upload_New.Enabled = false;
                 tbEngRunTime.Text = "";
+                tbEngineTemp.Text = "";
+				tbRPM.Text = "";
+				tbMPH.Text = "";
                 tbServerTime.Text = "";
                 if (m_client.IsConnectionAlive)
                     m_client.Disconnect();
@@ -183,15 +192,7 @@ namespace EpServerEngineSampleClient
             type_msg = (int)chars[0];
             System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
             ret = new string(chars2);
-/*
-    SEND_MSG,
-    CURRENT_TIME,
-    ENGINE_RUNTIME,
-    SERVER_UPTIME,
-    SEND_CONFIG,
-    GET_TIME,
-	SHUTDOWN
-*/
+
             string str = Enum.GetName(typeof(msg_types), type_msg);
 //            int type = (int)Enum.Parse(typeof(msg_types), str);
             //if (type_msg != 4)
@@ -227,7 +228,12 @@ namespace EpServerEngineSampleClient
                 case "SEND_MSG":
                     AddMsg(ret);
                     if (ret == "SHUTDOWN")
+					{
+//		                tbEngineTemp.Text = "";
+						tbRPM.Text = "0";
+						tbMPH.Text = "0";
                         tbEngRunTime.Text = "";
+					}
                     break;
                 case "CURRENT_TIME":
 //                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + "curr" + " " + svrcmd.GetName(cmd));
@@ -241,6 +247,15 @@ namespace EpServerEngineSampleClient
                     //    tbEngRunTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
                     tbEngRunTime.Text = ret;
                     break;
+				case "ENGINE_TEMP":
+					tbEngineTemp.Text = ret;
+					break;
+                case "SEND_RPM":
+					tbRPM.Text = ret;
+					break;
+                case "SEND_MPH":
+					tbMPH.Text = ret;
+					break;
                 case "SEND_CONFIG":
                     string[] words = ret.Split(' ');
                     i = 0;
@@ -321,7 +336,10 @@ namespace EpServerEngineSampleClient
 					btnGetTime.Enabled = false;
 					//Upload_New.Enabled = false;
 					tbEngRunTime.Text = "";
+//					tbEngineTemp.Text = "";
 					tbServerTime.Text = "";
+					tbRPM.Text = "0";
+					tbMPH.Text = "0";
 					if (m_client.IsConnectionAlive)
 						m_client.Disconnect();
 
@@ -534,6 +552,7 @@ namespace EpServerEngineSampleClient
         {
             string cmd = "UPLOAD_NEW";
             svrcmd.Send_Cmd(cmd, 0);
+//			m_client.Send()
         }
     }
 }

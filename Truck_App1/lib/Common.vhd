@@ -417,7 +417,7 @@ package CommonPckg is
 	impure function load_pwm_delay(a : integer) return std_logic_vector;
 	impure function load_notes_array(a : notes_array) return notes_array;
 	impure function load_tune_array(a : tune_array) return tune_array;
---	impure function convert_dl_to_tune_array(a : dl_array) return tune_array;
+	impure function convert_dl_to_tune_array(a : dl_array) return tune_array;
 
 end package;
 
@@ -468,6 +468,26 @@ variable ptr: integer range 0 to 255:= 0;
 		-- dq1(ptr) := data_in;
 		-- return uptr;
 	-- end function;
+
+impure function convert_dl_to_tune_array(a : dl_array) return tune_array is
+	 variable tune1: tune_array;
+	 variable dl: dl_array;
+	 variable temp1: integer range 0 to MAX_TUNE_LEN-1:= 0;
+	 variable temp2: integer range 0 to 2:= 0;
+	 variable temp3: integer range 0 to 60:= 0;
+	 begin
+		 dl := a;
+		 
+		 -- for i in 0 to 19 loop
+			-- temp1:= conv_integer(i);
+			-- for j in 0 to 2 loop
+				-- temp2:= conv_integer(j);
+				-- tune1(temp1,temp2) := conv_integer(dl(temp3));
+				-- temp3:= temp3 + 1;
+			-- end loop;
+		-- end loop;	
+		return tune1;
+	end function;
 
 -- impure function convert_dl_to_tune_array(a : dl_array) return tune_array is
 	-- variable tune1: tune_array;

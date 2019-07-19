@@ -93,7 +93,6 @@ architecture truck_arch of multi_byte is
 	signal LED_cmd: std_logic_vector(7 downto 0);
 --	signal uLED_cmd: unsigned(7 downto 0);
 	signal mcmd: std_logic_vector(7 downto 0);
-	signal mparam: std_logic_vector(7 downto 0);
 	signal stlv_flag: std_logic_vector(7 downto 0);
 	signal inc_params: signed(7 downto 0);	-- used in recv
 	signal start_calc: std_logic;
@@ -108,13 +107,6 @@ architecture truck_arch of multi_byte is
 	signal start_dtmf: std_logic;
 	signal dtmf_done1: std_logic;
 	signal done_pwm: std_logic;
-	signal shutdown_rpm: std_logic;
-	signal fp_override: std_logic;
-	signal rev_limit_max: std_logic_vector(7 downto 0);
-	signal rev_limit_min: std_logic_vector(7 downto 0);
-	signal urev_limit_max: unsigned(16 downto 0);
-	signal urev_limit_min: unsigned(16 downto 0);
-	signal reset_rev_limits: std_logic;
 	signal led_dl_array: led_array;
 
 begin
@@ -260,87 +252,6 @@ begin
 		end if;
 	end if;
 end process;
-
--- ********************************************************************************
--- mon_fp: process(clk, reset, state_reg_fp)
--- begin
-	-- if reset = '0' then
-		-- state_reg_fp <= idle_fp;
-		-- state_next_fp <= idle_fp;
-		-- urpm_result <= (others=>'0');
-		-- fp_shutoff <= '1';	-- start out with relay closed (fp can be on if other relay closed)
-
-	-- else if clk'event and clk = '1' then
-		-- case state_reg_fp is
-			-- when idle_fp =>
-				-- -- if test_rpm_rev_limits = '1' then
-					-- -- urpm_result <= unsigned(rpm_result);
-				-- -- else
-					-- -- urpm_result <= unsigned(rpm_result);
-				-- -- end if;
-				-- state_next_fp <= start_fp;
-			-- when start_fp =>
-				-- if fp_override = '1' or urpm_result > 700 then
-					-- fp_shutoff <= '1';		-- close relay to fuel pump
-					-- state_next_fp <= idle_fp;
-				-- else
-					-- state_next_fp <= done_fp;
-				-- end if;	
-			-- when done_fp =>
-				-- if urpm_result < FP_RPM_MINIMUM then
-					-- fp_shutoff <= '0';
-				-- else fp_shutoff <= '1';
-				-- end if;
-				-- -- if shutdown_rpm = '1' then
-					-- -- fp_shutoff <= '0';
-				-- -- end if;
-				-- state_next_fp <= idle_fp;
-		-- end case;
-		-- state_reg_fp <= state_next_fp;
-		-- end if;
-	-- end if;
--- end process;
-
--- -- ********************************************************************************
--- -- 1) check if rpm > MAX -> turn off
--- -- 2) wait for rpm to be < MIN -> turn on
--- mon_rev: process(clk, reset, state_reg_rev)
--- begin
-	-- if reset = '0' then
-		-- state_reg_rev <= idle_rev;
-		-- state_next_rev <= idle_rev;
-		-- rev_limit <= '1';		-- start out with relay closed so ignition can be on if other relay closed
-
-	-- else if clk'event and clk = '1' then
-		-- case state_reg_rev is
-			-- when idle_rev =>
-				-- stdlv_temp1 <= "00000" & rev_limit_max & "0000";
-				-- stdlv_temp2 <= "00000" & rev_limit_min & "0000";
-				-- urev_limit_max <= unsigned(stdlv_temp1);
-				-- urev_limit_min <= unsigned(stdlv_temp2);
-				-- state_next_rev <= start_rev;
-			-- when start_rev =>
-				-- if reset_rev_limits = '1' then
-					-- state_next_rev <= idle_rev;
-				-- else
-					-- if urpm_result > urev_limit_max then
-						-- rev_limit <= '0';
-						-- state_next_rev <= done_rev;
-					-- end if;
-				-- end if;
-			-- when done_rev =>
-				-- if reset_rev_limits = '1' then
-					-- state_next_rev <= idle_rev;
-				-- elsif urpm_result < urev_limit_min then
-					-- rev_limit <= '1';
-					-- state_next_rev <= start_rev;
-				-- end if;
-		-- end case;
-		-- state_reg_rev <= state_next_rev;
-		-- end if;
-	-- end if;
--- end process;
-
 -- ********************************************************************************
 pport_unit: process(clk, reset, pport_reg)
 variable temp: integer range 0 to 255:= 0;
@@ -353,6 +264,7 @@ begin
 		sPort <= (others=>'0');
 --		pwm_lcd <= '0';
 --sPort <= "10101010";
+		led1 <= "1111";
 
 		PP_CS <= '0';
 		PP_DATA0 <= '0';
@@ -395,7 +307,7 @@ begin
 			
  			when pp_start1 =>
 				PP_CS <= '1';
---				led1 <= "0111";
+				led1 <= "0111";
 				skip <= not skip;
 				if skip = '1' then
 					sPort <= sPort + 1;
@@ -406,10 +318,10 @@ begin
 				pport_next <= pp_start2;
 
 			when pp_start2 =>
-				if time_delay_reg > TIME_DELAY8 then
+				if time_delay_reg > TIME_DELAY7 then
  					time_delay_next <= (others=>'0');
 					PP_CS <= '0';
---					led1 <= "0111";
+					led1 <= "0111";
 					pport_next <= pp_done;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -418,7 +330,7 @@ begin
 			when pp_done =>
 				if PP_ACK = '1' then
 					pport_next <= pp_done2;
---					led1 <= "1011";
+					led1 <= "1011";
 				end if;
 
 			when pp_done2 =>
@@ -429,12 +341,11 @@ begin
 					upload(2) <= rpm_result(15 downto 8);
 					upload(3) <= mph_result(7 downto 0);
 					upload(4) <= mph_result(15 downto 8);
-					upload(5) <= LED_cmd;
-					upload(6) <= download(0);
-					upload(7) <= download(1);
-					upload(8) <= download(2);
-					upload(9) <= download(3);
-					upload(10) <= download(4);
+					upload(5) <= download(0);
+					upload(6) <= download(1);
+					upload(7) <= download(2);
+					upload(8) <= download(3);
+					upload(9) <= download(4);
 					-- upload(6) <= download(5);
 					-- upload(7) <= download(6);
 					-- upload(8) <= download(7);
@@ -446,7 +357,7 @@ begin
 					-- upload(14) <= download(13);
 					-- upload(15) <= download(14);
 					pport_next <= pp_idle;
---					led1 <= "1101";
+					led1 <= "1101";
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;
@@ -468,7 +379,6 @@ begin
 		time_delay_reg3 <= (others=>'0');
 		time_delay_next3 <= (others=>'0');
 		start_rx <= '0';
-		mparam <= (others=>'0');
 		mcmd <= (others=>'0');
 --		led1 <= "1111";
 		start_calc <= '0';
@@ -480,10 +390,7 @@ begin
 	else if clk'event and clk = '1' then
 		case state_uart_reg2 is
 			when pre_idle =>
-				mcmd <= LCD_PWM;
-				mparam <= PWM_30DC_PARAM;
 				state_uart_next2 <= idle2;
---				led1 <= "0111";
 			
 			when idle2 =>
 				data_sent <= '0';
@@ -555,17 +462,7 @@ begin
 		special <= '0';
 		dtmf_index <= (others=>'0');
 --		stdlv_transmit_update_rate <=  X"1FFFFF";
-		led1 <= "1111";		
---		fp_override <= '0';	-- start off with relay open (need to send command to close it before starting)
---		rev_limit_max <= conv_std_logic_vector(RPM_MAXIMUM,7);	-- start out with defaults
---		rev_limit_min <= conv_std_logic_vector(RPM_MINIMUM,7);
--- 4000 = 0xFA0
--- 3888 = 0xF30
---		rev_limit_max <= X"FA";
---		rev_limit_min <= X"F3";
---		reset_rev_limits <= '0';
---		stlv_temp2 <= (others=>'1');
---		test_rpm_rev_limits <= '0';
+--		led1 <= "1111";		
 		start_pwm2 <= '0';
 		key_len <= X"14";
 		stlv_duty_cycle2 <= "111111";
@@ -577,7 +474,7 @@ begin
 --				reset_rev_limits <= '0';
 				if start_calc = '1' then
 --					led1 <= download(0)(3 downto 0);	-- first param is download(0)
-					led1 <= mcmd(3 downto 0);
+--					led1 <= mcmd(3 downto 0);
 				
 					case mcmd is
 						when SET_UPDATE_RATE =>
@@ -585,7 +482,7 @@ begin
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_ON =>
 --							led1 <= "0111";
-							dtmf_index <= mparam(4 downto 0);
+							dtmf_index <= download(0)(4 downto 0);
 							special <= '0';
 							start_dtmf <= '1';
 							main_next1 <= do_mcmd;
@@ -599,21 +496,7 @@ begin
 							start_dtmf <= '1';
 							main_next1 <= do_mcmd;
 						when LCD_PWM =>
-							stlv_duty_cycle <= mparam(4 downto 0);
-							main_next1 <= do_mcmd;
-						when FP_SHUTOFF_OVERRIDE =>
---							fp_override <= mparam(0);
-							main_next1 <= do_mcmd;
-						when SET_MAX_REV_LIMITER =>
---							rev_limit_max <= mparam;
---							reset_rev_limits <= '1';
-							main_next1 <= do_mcmd;
-						when SET_MIN_REV_LIMITER =>
---							rev_limit_min <= mparam;
---							reset_rev_limits <= '1';
-							main_next1 <= do_mcmd;
-						when TEST_RPM_LIMIT =>
---							test_rpm_rev_limits <= mparam(0);
+							stlv_duty_cycle <= download(0)(4 downto 0);
 							main_next1 <= do_mcmd;
 						when TUNE_ON =>
 							key_len <= conv_signed(conv_integer(download(0)),8);
@@ -627,7 +510,7 @@ begin
 							main_next1 <= do_mcmd;
 						when LOAD_TUNE =>
 --							tune1 <= convert_dl_to_tune_array(download);
---							tune1 <= load_tune_array(tune1);
+							tune1 <= load_tune_array(tune1);
 							main_next1 <= do_mcmd;
 --							led1 <= "0111";
 						when others =>

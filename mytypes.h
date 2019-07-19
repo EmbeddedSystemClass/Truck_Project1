@@ -17,6 +17,7 @@ typedef unsigned long ULONG;
 #define TDATE_STAMP_STR_LEN 16
 #define UPLOAD_BUFF_SIZE 10000
 #define NUM_ADC_CHANNELS 11
+#define SERIAL_BUFF_SIZE 20
 
 // tcp command sent to TS-7200 from laptop
 // these have to exactly match what's in cmd_array[] in tasks.c
@@ -102,7 +103,9 @@ enum cmd_types
 	BAD_MSG,
 	CURRENT_TIME,
 	SET_PARAMS,
-	EXIT_PROGRAM
+	EXIT_PROGRAM,
+	ENGINE_TEMP,
+	SEND_RT_VALUES
 }CMD_TYPES;
 
 // msg's sent to client
@@ -114,10 +117,13 @@ enum client_cmds
 	SERVER_UPTIME,
 	SEND_CONFIG,
 	GET_TIME2,
-	SHUTDOWN2
+	SHUTDOWN2,
+	ENGINE_TEMP2,
+	SEND_RPM2,
+	SEND_MPH2
 }CLIENT_CMDS;
 
-// msg's sent from PIC24 to TS-7200
+// msg's sent from STM32 to TS-7200
 enum upstream_msg
 {
 	RT_DATA = 0xD0,
@@ -131,9 +137,8 @@ enum upstream_msg
 	RESET_TYPE4
 } UPSTREAM_MSG;
 
-// msg's sent from TS-7200 to PIC24
-// each cmd must be followed by 4 bytes of data
-// using send_PIC_serialother()
+// msg's sent from TS-7200 to STM32
+
 enum downstream_msg
 {
 	START_DS_MSG = 0xD0,		// 208
@@ -166,7 +171,7 @@ enum input_types
 	ESTOP_INPUT,				// 7
 	BRAKE_INPUT					// 8
 }INPUT_TYPES;
-	
+
 enum output_types
 {
 	STARTER,			// bank 0
@@ -225,7 +230,7 @@ enum output_types
 #define SIZE_NUM			20		// size of buffer used by num entry mode
 #define PASSWORD_SIZE 13
 
-// messages sent from PIC24 to AVR using the AVR_cmd task
+// messages sent from STM32 to AVR using the AVR_cmd task
 #define CHAR_CMD				2
 #define GOTO_CMD				3
 #define SET_MODE_CMD	 		4

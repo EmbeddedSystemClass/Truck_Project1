@@ -57,7 +57,7 @@ RAW		gnd		RESET*		VCC		PC3		PC2		PC1		PC0		PB5		PB4		PB3		PB2
 3)  VPU
 4)  CLK
 5)  CS
- 6)  3.3V
+6)  3.3V
 7)  ADC
 8)  AUX
 9)  MOSI
@@ -95,6 +95,12 @@ drain - comes from gnd of LCD backlight (+LCD backlight is +5v always)
 source - goes to gnd
 for now use a toggle switch as signal (on/off)
 in the future, use a pwm signal from either FPGA or STM32
+
+4 wires to LCD:
+brn 5v
+bl gnd
+bl/wht TX
+brn/wht RX
 
 keypad:
 
@@ -340,37 +346,46 @@ DB-15 B: (on right)
     12    14    16     18     20      22    24   
 
 DB-15 on right looking on outside:
-24)	pwm_signal_1
-23)	pwm_signal_2
-22)	pwm_spk1
-21)	pwm_spk2
-20)	pwm_lcd
-19)	fp_shutoff	not used
-18)	rev_limit	not used
-17)	rpm1_signal
-16)	rpm2_signal
-15)	mph1_signal
-14)	mph2_signal
-13) tx_rpm_mph
-12)	
-11)	
+(yellow tape)
+
+*(1) & (2) are sep. Cat 5 cables
+
+25) grn (1)*			ground				
+24) grn/wht (2)			pwm_signal_1		
+23)	grn/wht (1)			pwm_signal_2
+22)	grn (2)				pwm_spk1
+21)	org (1)				pwm_spk2
+20)	brn (2)				pwm_lcd
+19)	bl/wht (1)			fp_shutoff	not used
+18)	brn/wht (2)			rev_limit	not used
+17)	bl (1)				rpm1_signal
+16)	org (2)				rpm2_signal
+15)	org/wht (1)			mph1_signal
+14)	org/wht (2)			mph2_signal
+13) br (1)				tx_rpm_mph
+12)	bl (2)				TX to LCD (PA2)
+11)	br/wht (1)			RX to LCD (PA3)
+(open) org/wht
 
 DB-15 on left looking from outside:
-1)	VCC
-2)	GND
-3)	DS1620 DQ
-4)	DS1620 CLK
-5)	DS1620 RST
-6)	
-7)
-8)
-9)
-10)
-11)
-12)
-13)
-14)
-15)
+(white tape)
+
+1)	org (1)				VCC
+2)	br/wht (2)			GND
+3)	org/wht (1)			DS1620 DQ
+4)	grn (2)				DS1620 CLK
+5)	br/wht (1)			DS1620 RST
+6)	grn/wht (2)
+7)	br (1)
+8)	br (2)
+9)	bl/wht (1)
+10)	bl (2)
+11)	bl (1)
+12)	org (2)
+13)	grn (1)
+14)	bl/wht(2)
+15)	grn/wht (1)
+(open) br/wht (2)
 
 5v to RS-232 converter is external to main box
 2 connections from 3v3 conv for UART1
@@ -441,6 +456,24 @@ C: 4,5,6,7,13
 can't use A: 13,14 (used by SWDIO/CLK)
 can't use D: 0,1 or C: 14,15 (unless change jumpers underneath)
 total: 11 left
+
+board to right of dash under backup cam screen and GPS:
+3 vertical 6 terminal boards on bottom:
+left:
+5 connections for DS1620 (starting at top)
+
+5vdc
+gnd
+DQ
+CLK
+RST
+(open)
+
+middle:
+13 to 18 (top to bottom)
+
+right:
+19 to 24 (top to bottom)
 
 #32I/Os_2
 NET "32I/Os_2_1"  LOC ="p4";
