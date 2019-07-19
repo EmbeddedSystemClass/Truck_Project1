@@ -1,5 +1,7 @@
 filename: odata.dat 
 
+sizeof O_DATA: 48
+
 port	onoff	input_port	type	time_delay	label
 
 0	0	5		2	10		STARTER
@@ -10,7 +12,6 @@ port	onoff	input_port	type	time_delay	label
 5	0	0		0	0		RHEADLAMP
 6	0	1		0	0		RUNNINGLIGHTS
 7	0	41		0	0		LIGHTBAR
-
 8	0	2		3	15		LEFTRBLINKER
 9	0	3		3	15		RIGHTRBLINKER
 10	0	2		3	15		LEFTFBLINKER
@@ -19,16 +20,14 @@ port	onoff	input_port	type	time_delay	label
 13	0	8		0	0		RBRAKELIGHT
 14	0	2		2	15		XLBLINKER
 15	0	3		2	15		XRBLINKER
-
 16	0	4		0	0		LBRIGHTS
 17	0	4		0	0		RBRIGHTS
 18	0	41		0	0		HTRBLOWERLOW
 19	0	41		0	0		HTRBLOWERMED
 20	0	41		0	0		HTRBLOWERHIGH
-21	0	41		0	0		CRANKCASEHEATER
-22	0	41		0	0		BATTERYHEATER
+21	0	41		0	0		WWIPER1
+22	0	41		0	0		WWIPER2
 23	0	41		0	0		TRLEFTBLINKER
-
 24	0	41		0	0		TRRIGHTBLINKER
 25	0	41		0	0		INTRUDERALARM
 26	0	41		0	0		BLINKINDICATE
@@ -37,7 +36,6 @@ port	onoff	input_port	type	time_delay	label
 29	0	41		0	0		BACKUPLIGHTS
 30	0	41		0	0		TESTOUTPUT27
 31	0	41		0	0		TESTOUTPUT28
-
 32	0	41		0	0		TESTOUTPUT29
 33	0	41		0	0		TESTOUTPUT30
 34	0	41		0	0		TESTOUTPUT31
@@ -46,4 +44,7 @@ port	onoff	input_port	type	time_delay	label
 37	0	41		0	0		TESTOUTPUT34
 38	0	41		0	0		TESTOUTPUT35
 39	0	41		0	0		NULL2
+num valid records: 40
 
+
+sizeof: 48 

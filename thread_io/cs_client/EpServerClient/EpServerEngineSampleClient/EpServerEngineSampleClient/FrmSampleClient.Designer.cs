@@ -53,6 +53,9 @@
             this.btnClear = new System.Windows.Forms.Button();
             this.btnGetTime = new System.Windows.Forms.Button();
             this.btnSetParams = new System.Windows.Forms.Button();
+            this.Upload_New = new System.Windows.Forms.Button();
+            this.tbEngineTemp = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -68,7 +71,7 @@
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(201, 397);
+            this.tbReceived.Size = new System.Drawing.Size(201, 350);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -85,7 +88,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(22, 51);
+            this.label2.Location = new System.Drawing.Point(22, 45);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(28, 13);
             this.label2.TabIndex = 3;
@@ -95,7 +98,7 @@
             // 
             this.tbPort.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbPort.Location = new System.Drawing.Point(148, 48);
+            this.tbPort.Location = new System.Drawing.Point(148, 42);
             this.tbPort.Name = "tbPort";
             this.tbPort.Size = new System.Drawing.Size(31, 20);
             this.tbPort.TabIndex = 12;
@@ -104,7 +107,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(19, 27);
+            this.label1.Location = new System.Drawing.Point(19, 21);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(56, 13);
             this.label1.TabIndex = 1;
@@ -114,7 +117,7 @@
             // 
             this.tbHostname.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbHostname.Location = new System.Drawing.Point(85, 24);
+            this.tbHostname.Location = new System.Drawing.Point(85, 18);
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(94, 20);
             this.tbHostname.TabIndex = 11;
@@ -122,7 +125,7 @@
             // 
             // tbConnected
             // 
-            this.tbConnected.Location = new System.Drawing.Point(95, 74);
+            this.tbConnected.Location = new System.Drawing.Point(95, 68);
             this.tbConnected.Name = "tbConnected";
             this.tbConnected.ReadOnly = true;
             this.tbConnected.Size = new System.Drawing.Size(84, 20);
@@ -133,7 +136,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(19, 76);
+            this.label3.Location = new System.Drawing.Point(19, 70);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 13);
             this.label3.TabIndex = 7;
@@ -164,13 +167,10 @@
             "BLOWER2_ON",
             "BLOWER3_ON",
             "BLOWER_OFF",
-            "TEST_ALL_IO",
-            "WIPER_LOW",
-            "WIPER_HIGH",
-            "WIPER_OFF"});
+            "TEST_ALL_IO"});
             this.cblistCommon.Location = new System.Drawing.Point(13, 205);
             this.cblistCommon.Name = "cblistCommon";
-            this.cblistCommon.Size = new System.Drawing.Size(202, 395);
+            this.cblistCommon.Size = new System.Drawing.Size(202, 344);
             this.cblistCommon.TabIndex = 5;
             this.cblistCommon.SelectedValueChanged += new System.EventHandler(this.cblist_SelValueChanged);
             // 
@@ -206,7 +206,7 @@
             // 
             // tbServerTime
             // 
-            this.tbServerTime.Location = new System.Drawing.Point(122, 132);
+            this.tbServerTime.Location = new System.Drawing.Point(122, 149);
             this.tbServerTime.Name = "tbServerTime";
             this.tbServerTime.Size = new System.Drawing.Size(57, 20);
             this.tbServerTime.TabIndex = 30;
@@ -214,7 +214,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(22, 135);
+            this.label5.Location = new System.Drawing.Point(22, 152);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(73, 13);
             this.label5.TabIndex = 31;
@@ -222,7 +222,7 @@
             // 
             // tbEngRunTime
             // 
-            this.tbEngRunTime.Location = new System.Drawing.Point(120, 102);
+            this.tbEngRunTime.Location = new System.Drawing.Point(120, 96);
             this.tbEngRunTime.Name = "tbEngRunTime";
             this.tbEngRunTime.Size = new System.Drawing.Size(59, 20);
             this.tbEngRunTime.TabIndex = 32;
@@ -230,7 +230,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(19, 109);
+            this.label6.Location = new System.Drawing.Point(19, 103);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(78, 13);
             this.label6.TabIndex = 33;
@@ -238,6 +238,8 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.tbEngineTemp);
             this.groupBox1.Controls.Add(this.label6);
             this.groupBox1.Controls.Add(this.tbEngRunTime);
             this.groupBox1.Controls.Add(this.label5);
@@ -325,11 +327,38 @@
             this.btnSetParams.UseVisualStyleBackColor = true;
             this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
             // 
+            // Upload_New
+            // 
+            this.Upload_New.Location = new System.Drawing.Point(140, 172);
+            this.Upload_New.Name = "Upload_New";
+            this.Upload_New.Size = new System.Drawing.Size(75, 23);
+            this.Upload_New.TabIndex = 34;
+            this.Upload_New.Text = "Upload New";
+            this.Upload_New.UseVisualStyleBackColor = true;
+            this.Upload_New.Click += new System.EventHandler(this.Upload_New_Click);
+            // 
+            // tbEngineTemp
+            // 
+            this.tbEngineTemp.Location = new System.Drawing.Point(120, 123);
+            this.tbEngineTemp.Name = "tbEngineTemp";
+            this.tbEngineTemp.Size = new System.Drawing.Size(59, 20);
+            this.tbEngineTemp.TabIndex = 34;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(22, 126);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(59, 13);
+            this.label4.TabIndex = 35;
+            this.label4.Text = "Eng. Temp";
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(460, 617);
+            this.ClientSize = new System.Drawing.Size(460, 570);
+            this.Controls.Add(this.Upload_New);
             this.Controls.Add(this.btnSetParams);
             this.Controls.Add(this.btnGetTime);
             this.Controls.Add(this.btnClear);
@@ -392,6 +421,9 @@
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Button btnGetTime;
         private System.Windows.Forms.Button btnSetParams;
+        private System.Windows.Forms.Button Upload_New;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox tbEngineTemp;
     }
 }
 

@@ -102,7 +102,8 @@ enum cmd_types
 	BAD_MSG,
 	CURRENT_TIME,
 	SET_PARAMS,
-	EXIT_PROGRAM
+	EXIT_PROGRAM,
+	ENGINE_TEMP
 }CMD_TYPES;
 
 // msg's sent to client
@@ -114,7 +115,8 @@ enum client_cmds
 	SERVER_UPTIME,
 	SEND_CONFIG,
 	GET_TIME2,
-	SHUTDOWN2
+	SHUTDOWN2,
+	ENGINE_TEMP2
 }CLIENT_CMDS;
 
 // msg's sent from PIC24 to TS-7200
@@ -166,7 +168,7 @@ enum input_types
 	ESTOP_INPUT,				// 7
 	BRAKE_INPUT					// 8
 }INPUT_TYPES;
-	
+
 enum output_types
 {
 	STARTER,			// bank 0
@@ -247,6 +249,7 @@ enum output_types
 #define DISPLAY_STATUSLABELS	20
 #define DISPLAY_ELAPSED_TIME	21
 #define DISPLAY_TEMP			22
+#define LOAD_MENUS				23
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
@@ -318,6 +321,7 @@ typedef struct params
 #define LOAD_TUNE					0x09
 #define SHOW_DOWNLOAD				0x0A
 
+// params for lcd_pwm (screen dimmer)
 #define PWM_OFF_PARAM					0x01 // off
 #define PWM_ON_PARAM					0x1F // on
 #define PWM_80DC_PARAM					0x1A // duty_cycle = 80%

@@ -34,7 +34,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[64] =
+CMD_STRUCT cmd_array[65] =
 {
 	{   	NON_CMD,"NON_CMD\0" },
 	{   	ENABLE_START,"ENABLE_START\0" },
@@ -99,13 +99,14 @@ CMD_STRUCT cmd_array[64] =
 	{		BAD_MSG,"BAD_MSG\0" },
 	{		CURRENT_TIME,"CURRENT_TIME\0" },
 	{		SET_PARAMS,"SET_PARAMS\0" },
-	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" }
+	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
+	{   	ENGINE_TEMP,"ENGINE_TEMP\0" }
 };
 
 //extern illist_t ill;
 extern ollist_t oll;
 
-UCHAR msg_buf[200];
+UCHAR msg_buf[2000];
 extern PARAM_STRUCT ps;
 
 int shutdown_all;
@@ -237,7 +238,7 @@ UCHAR get_host_cmd_task(int test)
 	lcd_init();
 
 // flash green and red led's to signal we are up (if LCD screen not attached)
-
+#if 0
 	for(i = 0;i < 10;i++)
 	{
 		red_led(1);
@@ -253,7 +254,7 @@ UCHAR get_host_cmd_task(int test)
 		usleep(30000);
 		green_led(0);
 	}
-
+#endif
 //	myprintf1("start....\0");
 
 	myprintf1("sched v1.21\0");
@@ -273,7 +274,7 @@ UCHAR get_host_cmd_task(int test)
 // 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			memset(msg_buf,0,sizeof(msg_buf));
 			msg_len = get_msg();
-			if(msg_len < 0)
+			if(msg_len < 0 && cmd != UPLOAD_NEW)
 			{
 //				printf("bad msg\r\n");
 				cmd = BAD_MSG;
@@ -426,7 +427,7 @@ UCHAR get_host_cmd_task(int test)
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
-							printf("%s\r\n",errmsg);
+//							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 						}
 						break;
@@ -794,7 +795,8 @@ UCHAR get_host_cmd_task(int test)
 
 					// update the sched.log file with current log of events
 					case BAD_MSG:
-						shutdown_all = 1;
+//						shutdown_all = 1;
+						myprintf1("bad msg");
 						break;
 
 					case DISCONNECT:
@@ -813,8 +815,11 @@ UCHAR get_host_cmd_task(int test)
 
 					// upload this program and then goto reboot so it comes up using the
 					// newly uploaded program (see try_sched.sh in /home/dan/dev/sched)
+
 					case UPLOAD_NEW:
+#if 0
 						recv_tcp((UCHAR*)&fsize,8,1);
+						printf("%ld %d\r\n",fsize,sizeof(fsize));
 						cur_fsize = (int)fsize;
 						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
 						strcpy(filename,"sched2");
@@ -840,8 +845,11 @@ UCHAR get_host_cmd_task(int test)
 						close(fp);
 
 					case EXIT_PROGRAM:
+#endif
+//printf("exiting program...\r\n");
 exit_program:
-						if(cmd == UPLOAD_NEW)
+if(0)
+//						if(cmd == UPLOAD_NEW)
 						{
 							reboot_on_exit = 1;
 							myprintf1("rebooting...\0");
@@ -850,7 +858,15 @@ exit_program:
 						{
 //							printf("exit program\r\n");
 //							send_serial(STOP_SERIAL_RECV);
-							recv_tcp((UCHAR*)&reboot_on_exit,1,1);
+							j = 0;
+/*
+							for(i = 2;i < msg_len;i+=2)
+							{
+								memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
+								printf("%02x\r\n",tempx[i-2]);
+							}
+*/
+reboot_on_exit = 1;
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do
 							if(reboot_on_exit == 1)
@@ -861,15 +877,15 @@ exit_program:
 							else if(reboot_on_exit == 2)
 							{
 								myprintf1("rebooting...\0");
-								printf("rebooting...\r\n");
+//								printf("rebooting...\r\n");
 							}
 							else if(reboot_on_exit == 3)
 							{
 								myprintf1("shutting down...\0");
-								printf("shutting down...\r\n");
+//								printf("shutting down...\r\n");
 							}
 						}
-
+#if 0
 						// save the current list of events
 						strcpy(tempx,"odometer.txt\0");
 						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
@@ -890,10 +906,10 @@ exit_program:
 						{
 							ollist_find_data(i,otpp,&oll);
 //							printf("%d %d\r\n",otp->port,otp->onoff);
-							usleep(1000);
+							usleep(_1MS);
 							change_output(otp->port,otp->onoff);
 							change_output(otp->port,0);
-							usleep(1000);
+							usleep(_1MS);
 							ollist_insert_data(i,&oll,otp);
 						}
 
@@ -903,7 +919,7 @@ exit_program:
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
-							printf("%s\r\n",errmsg);
+//							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 						}
 /*
@@ -949,7 +965,7 @@ exit_program:
 						setdioline(7,1);
 
 						// pulse the LED's on the card FWIW
-/*
+#endif
 						for(i = 0;i < 20;i++)
 						{
 							red_led(1);
@@ -959,7 +975,7 @@ exit_program:
 							usleep(20000);
 							green_led(0);
 						}
-*/
+
 						shutdown_all = 1;
 						return 0;
 						break;

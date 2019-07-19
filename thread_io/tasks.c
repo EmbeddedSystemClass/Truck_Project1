@@ -55,7 +55,7 @@ PARAM_STRUCT ps;
 extern pthread_t serial_thread;	// workaround for closing serial task
 
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
-
+static float convertF(int raw_data);
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
 //static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
@@ -589,37 +589,32 @@ UCHAR timer2_task(int test)
 	UCHAR mask;
 	static int led_counter;
 	static int led_onoff;
-//	static int seconds_counter;
-
-/*
-	static I_DATA *itp2;
-	static I_DATA **itpp2 = &itp2;
-
-	static O_DATA *otp2;
-	static O_DATA **otpp2 = &otp2;
-*/
 	led_counter = 0;
 	led_onoff = 0;
-	
+
 	while(TRUE)
 	{
 		uSleep(0,TIME_DELAY/10); 
 
 		if(++led_counter > 9)
 		{
-				if(led_onoff == 1)
+			if(led_onoff == 1)
 			{
 				led_counter = 0;
 				setdioline(7,1);
+//				red_led(1);
+//				green_led(0);
 			}
 			else
 			{
 				led_onoff = 7;
 				setdioline(7,0);
+//				red_led(0);
+//				green_led(1);
 			}
 			led_onoff = (led_onoff == 1?0:1);
 		}
-		
+
 		if(shutdown_all)
 		{
 //			printf("done timer2 task\r\n");
@@ -856,6 +851,8 @@ UCHAR serial_recv_task(int test)
 	int k = 0;
 	UCHAR ch;
 	UCHAR cmd;
+	UCHAR low_byte, high_byte;
+	int engine_temp;
 	int fd;
 	char errmsg[20];
 	char tempx[30];
@@ -881,46 +878,33 @@ UCHAR serial_recv_task(int test)
 	red_led(0);
 	green_led(0);
 
-	usleep(1000000);
-
+	usleep(_1SEC);
 
 	while(TRUE)
 	{
+
 		pthread_mutex_lock( &serial_read_lock); 
 
 		do {
 			ch = read_serial(errmsg);
-			if(k == 0)
-			{
-				red_led(1);
-				green_led(0);
-				k = 1;
-			}else
-			{
-				red_led(0);
-				green_led(1);
-				k = 0;
-			}
 		}while(ch != 0xFF);
 
 		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-			 read_serial_buffer[i] = read_serial2(errmsg);
+			 read_serial_buffer[i] = read_serial(errmsg);
 
 		cmd = read_serial_buffer[0];
 //			printf("%d ",cmd);
+
 /*
 		for(i = 1;i < SERIAL_BUFF_SIZE;i++)
 		{
 			ch = read_serial_buffer[i];
-			if(ch > 0x19 && ch < 0x7f)
-				printf("%c",ch);
-			else if(ch == 0xFE || ch == 0)
-				printf(" ");
-			else	
-				printf("%2x ",ch);	
+			printf("%2x ",ch);	
 		}
-		printf("\r\n");
 */
+//		printf("\r\n");
+
+/*
 		if(j == 0)
 		{
 			read_serial_buffer[SERIAL_BUFF_SIZE-1] = 0xFE;
@@ -929,7 +913,7 @@ UCHAR serial_recv_task(int test)
 		{
 			j = 0;
 		}
-
+*/
 		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 		{
 			write_serial(read_serial_buffer[i]);
@@ -945,7 +929,32 @@ UCHAR serial_recv_task(int test)
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 //				printf("%s\r\n",tempx);
 		}
-						
+
+		if(cmd == ENGINE_TEMP)
+		{
+			high_byte = read_serial_buffer[1];
+			low_byte = read_serial_buffer[2];
+			engine_temp = (int)high_byte;
+			engine_temp <<= 8;
+			engine_temp |= (int)low_byte;
+			sprintf(tempx,"%.1f\0",convertF(engine_temp));
+//			sprintf(tempx,"%2x %2x",high_byte, low_byte);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
+
+			if(k == 0)
+			{
+				red_led(1);
+				green_led(0);
+				k = 1;
+			}else
+			{
+				red_led(0);
+				green_led(1);
+				k = 0;
+			}
+
+		}
+
 		if(shutdown_all)
 		{
 //			printf("shutting down serial task\r\n");
@@ -1227,10 +1236,10 @@ UCHAR basic_controls_task(int test)
 		// wait for a new cmd to arrive in the msg_queue
 		do{
 			cmd = get_msg_queue();
-			usleep(5000);
+			usleep(_5MS);
 		}while(cmd == 0 && shutdown_all == 0);
 
-		usleep(5000L);
+		usleep(_5MS);
 
 		switch(cmd)
 		{
@@ -1384,7 +1393,7 @@ UCHAR basic_controls_task(int test)
 						index = sp_cmd_arr[i].index;
 						ollist_find_data(index,otpp,&oll);
 						set_output(otp,sp_cmd_arr[i].onoff);
-						usleep(100000);
+						usleep(_100MS);
 					}
 				break;
 
@@ -1444,11 +1453,11 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
@@ -1458,11 +1467,11 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
@@ -1472,11 +1481,11 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
@@ -1487,11 +1496,11 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
@@ -1501,7 +1510,7 @@ UCHAR basic_controls_task(int test)
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
@@ -1511,7 +1520,7 @@ UCHAR basic_controls_task(int test)
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
@@ -1521,7 +1530,7 @@ UCHAR basic_controls_task(int test)
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(100000);
+				usleep(_100MS);
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
@@ -1537,7 +1546,7 @@ UCHAR basic_controls_task(int test)
 //					printf("\r\n %d \r\n");
 					usleep(1000000);
 					set_output(otp,0);
-					usleep(100000);
+					usleep(_100MS);
 	//				printf("%d\r\n",i);
 				}
 			break;
@@ -1550,7 +1559,7 @@ UCHAR basic_controls_task(int test)
 	//			printf("%d %s\r\n",otp->port,otp->label);
 	//			change_output(otp->port,otp->onoff);
 				change_output(ACCON,1);
-				usleep(100000);
+				usleep(_100MS);
 				ollist_insert_data(otp->port,&oll,otp);
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 1;
@@ -1558,7 +1567,7 @@ UCHAR basic_controls_task(int test)
 	//			printf("%d %s\r\n",otp->port,otp->label);
 	//			change_output(otp->port,otp->onoff);
 				change_output(FUELPUMP,1);
-				usleep(100000);
+				usleep(_100MS);
 				ollist_insert_data(otp->port,&oll,otp);
 
 				index = STARTER;
@@ -1569,7 +1578,7 @@ UCHAR basic_controls_task(int test)
 	//			TOGGLE_OTP;
 	//			ollist_insert_data(index,&oll,otp);
 				change_input(STARTER_INPUT, 0);
-				usleep(10000);
+				usleep(_10MS);
 				change_input(STARTER_INPUT, 1);
 	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				engine_running = 1;
@@ -1582,7 +1591,7 @@ UCHAR basic_controls_task(int test)
 				engine_running = 0;
 	//			printf("engine_running: %d\r\n",engine_running);
 				change_output(ACCON, 0);
-				usleep(10000);
+				usleep(_10MS);
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
@@ -1604,34 +1613,35 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case SHUTDOWN_IOBOX:
+// read_led & green_led can only be seen on test bench
+#if 0
 				for(i = 0;i < 10;i++)
 				{
 					red_led(1);
-					usleep(2000L);
+					usleep(2000);
 					red_led(0);
 					green_led(1);
-					usleep(2000L);
+					usleep(2000);
 					green_led(0);
 					red_led(1);
-					usleep(2000L);
+					usleep(2000);
 					red_led(0);
 					green_led(1);
-					usleep(2000L);
+					usleep(2000);
 					green_led(0);
 				}
 				for(i = 0;i < 10;i++)
 				{
 					setdioline(7,0);
 //					uSleep(0,TIME_DELAY/20);
-					usleep(2000L);
+					usleep(2000);
 					setdioline(7,1);
 //					uSleep(0,TIME_DELAY/20);
-					usleep(2000L);
+					usleep(2000);
 				}
 				setdioline(7,0);
-//				uSleep(2,0);
-//				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN2);
-				usleep(20000L);
+				usleep(20000);
+#endif
 				setdioline(7,1);
 				reboot_on_exit = 3;
 				myprintf1("shutdown iobox\0");
@@ -1640,33 +1650,34 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case REBOOT_IOBOX:
+#if 0
 				for(i = 0;i < 20;i++)
 				{
 					setdioline(7,0);
 //					uSleep(0,TIME_DELAY/20);
-					usleep(2000L);
+					usleep(20000);
 					setdioline(7,1);
 //					uSleep(0,TIME_DELAY/20);
-					usleep(2000L);
+					usleep(20000);
 				}
 				setdioline(7,1);
-
 				for(i = 0;i < 10;i++)
 				{
 					red_led(1);
-					usleep(2000L);
+					usleep(20000);
 					red_led(0);
 					green_led(1);
-					usleep(2000L);
+					usleep(20000);
 					green_led(0);
 					red_led(1);
-					usleep(2000L);
+					usleep(20000);
 					red_led(0);
 					green_led(1);
-					usleep(2000L);
+					usleep(20000);
 					green_led(0);
 				}
-
+#endif
+				setdioline(7,1);
 				reboot_on_exit = 2;
 				myprintf1("reboot iobox\0");
 //				printf("reboot iobox\r\n");
@@ -1684,3 +1695,18 @@ UCHAR basic_controls_task(int test)
 	}
 	return 1;
 }
+
+static float convertF(int raw_data)
+{
+	float T_F, T_celcius;
+	int ret;
+	if ((raw_data & 0x100) != 0)
+	{
+		raw_data = -(((~raw_data)+1) & 0xff); /* take 2's comp */   
+	}
+	T_celcius = raw_data * 0.5;
+	T_F = (T_celcius * 1.8) + 32;
+	ret = (int)T_F;
+	return ret;	// returns 257 -> -67
+}
+
