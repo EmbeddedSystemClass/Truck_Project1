@@ -13,5 +13,6 @@ UCHAR read_serial(char *errmsg);
 //int write_serial_buff(UCHAR *buff, char *errmsg);
 void close_serial(void);
 int global_handle;
-
+void printHexByte(UCHAR byte);
+char nibbleToHexCharacter(UCHAR nibble);
 

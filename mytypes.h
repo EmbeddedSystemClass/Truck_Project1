@@ -146,6 +146,7 @@ enum downstream_msg
 	SEND_PARAMS,				// 210
 	OTHER_DATA,					// 211
 	ESTOP_SIGNAL,				// 212
+	SEND_TIME_DATA,				// 213
 	END_DS_MSG
 } DOWNSTREAM_MSG;
 

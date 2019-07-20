@@ -36,35 +36,35 @@ extern pthread_mutex_t     tcp_write_lock;
 
 CMD_STRUCT cmd_array[66] =
 {
-	{   	NON_CMD,"NON_CMD\0" },
-	{   	ENABLE_START,"ENABLE_START\0" },
-	{   	STARTER_OFF,"STARTER_OFF\0" },
-	{   	ON_ACC,"ON_ACC\0" },
-	{   	OFF_ACC,"OFF_ACC\0" },
-	{   	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
-	{   	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
-	{   	ON_FAN,"ON_FAN\0" },
-	{   	OFF_FAN,"OFF_FAN\0" },
-	{   	ON_LIGHTS,"ON_LIGHTS\0" },
-	{   	OFF_LIGHTS,"OFF_LIGHTS\0" },
-	{   	ON_BRIGHTS,"ON_BRIGHTS\0" },
-	{   	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
-	{   	BLANK,"BLANK\0" },
+	{		NON_CMD,"NON_CMD\0" },
+	{		ENABLE_START,"ENABLE_START\0" },
+	{		STARTER_OFF,"STARTER_OFF\0" },
+	{		ON_ACC,"ON_ACC\0" },
+	{		OFF_ACC,"OFF_ACC\0" },
+	{		ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
+	{		OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
+	{		ON_FAN,"ON_FAN\0" },
+	{		OFF_FAN,"OFF_FAN\0" },
+	{		ON_LIGHTS,"ON_LIGHTS\0" },
+	{		OFF_LIGHTS,"OFF_LIGHTS\0" },
+	{		ON_BRIGHTS,"ON_BRIGHTS\0" },
+	{		OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{		BLANK,"BLANK\0" },
 	{		ON_BRAKES,"ON_BRAKES\0" },
 	{		OFF_BRAKES,"OFF_BRAKES\0" },
 	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
 	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
-	{   	SPECIAL_CMD,"SPECIAL_CMD\0" },
-	{   	START_SEQ,"START_SEQ\0" },
-	{   	SHUTDOWN,"SHUTDOWN\0" },
-	{   	ON_LLIGHTS,"ON_LLIGHTS\0" },
-	{   	OFF_LLIGHTS,"OFF_LLIGHTS\0" },
-	{   	ON_LBRIGHTS,"ON_LBRIGHTS\0" },
-	{   	OFF_LBRIGHTS,"OFF_LBRIGHTS\0" },
-	{   	ON_RLIGHTS,"ON_RLIGHTS\0" },
-	{   	OFF_RLIGHTS,"OFF_RLIGHTS\0" },
-	{   	ON_RBRIGHTS,"ON_RBRIGHTS\0" },
-	{   	OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
+	{		SPECIAL_CMD,"SPECIAL_CMD\0" },
+	{		START_SEQ,"START_SEQ\0" },
+	{		SHUTDOWN,"SHUTDOWN\0" },
+	{		ON_LLIGHTS,"ON_LLIGHTS\0" },
+	{		OFF_LLIGHTS,"OFF_LLIGHTS\0" },
+	{		ON_LBRIGHTS,"ON_LBRIGHTS\0" },
+	{		OFF_LBRIGHTS,"OFF_LBRIGHTS\0" },
+	{		ON_RLIGHTS,"ON_RLIGHTS\0" },
+	{		OFF_RLIGHTS,"OFF_RLIGHTS\0" },
+	{		ON_RBRIGHTS,"ON_RBRIGHTS\0" },
+	{		OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
 	{		BLOWER_OFF,"BLOWER_OFF\0" },
 	{		BLOWER1,"BLOWER1\0" },
 	{		BLOWER2,"BLOWER2\0" },
@@ -72,20 +72,20 @@ CMD_STRUCT cmd_array[66] =
 	{		WIPER1,"WIPER1\0" },
 	{		WIPER2,"WIPER2\0" },
 	{		WIPER_OFF,"WIPER_OFF\0" },
-	{   	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
-	{   	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
+	{		SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
+	{		REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
-	{   	SEND_ODATA,"SEND_ODATA\0" },
-	{   	SAVE_TO_DISK,"SAVE_TO_DISK\0" },
-	{   	GET_DIR,"GET_DIR\0" },
-	{   	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
-	{   	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
-	{   	SCROLL_UP,"SCROLL_UP\0" },
-	{   	SCROLL_DOWN,"SCROLL_DOWN\0" },
-	{   	ENABLE_LCD,"ENABLE_LCD\0" },
-	{   	SET_TIME,"SET_TIME\0" },
-	{   	GET_TIME,"GET_TIME\0" },
-	{   	UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{		SEND_ODATA,"SEND_ODATA\0" },
+	{		SAVE_TO_DISK,"SAVE_TO_DISK\0" },
+	{		GET_DIR,"GET_DIR\0" },
+	{		LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
+	{		LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
+	{		SCROLL_UP,"SCROLL_UP\0" },
+	{		SCROLL_DOWN,"SCROLL_DOWN\0" },
+	{		ENABLE_LCD,"ENABLE_LCD\0" },
+	{		SET_TIME,"SET_TIME\0" },
+	{		GET_TIME,"GET_TIME\0" },
+	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
@@ -99,9 +99,9 @@ CMD_STRUCT cmd_array[66] =
 	{		BAD_MSG,"BAD_MSG\0" },
 	{		CURRENT_TIME,"CURRENT_TIME\0" },
 	{		SET_PARAMS,"SET_PARAMS\0" },
-	{   	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
-	{   	ENGINE_TEMP,"ENGINE_TEMP\0" },
-	{   	SEND_RT_VALUES,"SEND_RT_VALUES\0" }
+	{		EXIT_PROGRAM,"EXIT_PROGRAM\0" },
+	{		ENGINE_TEMP,"ENGINE_TEMP\0" },
+	{		SEND_RT_VALUES,"SEND_RT_VALUES\0" }
 };
 
 //extern illist_t ill;
@@ -244,16 +244,16 @@ UCHAR get_host_cmd_task(int test)
 	for(i = 0;i < 10;i++)
 	{
 		red_led(1);
-		usleep(50000);
+		usleep(5000);
 		red_led(0);
 		green_led(1);
-		usleep(50000);
+		usleep(5000);
 		green_led(0);
 		red_led(1);
-		usleep(50000);
+		usleep(5000);
 		red_led(0);
 		green_led(1);
-		usleep(50000);
+		usleep(5000);
 		green_led(0);
 	}
 //#endif

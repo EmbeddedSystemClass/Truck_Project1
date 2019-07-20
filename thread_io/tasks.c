@@ -303,27 +303,41 @@ void send_serial(UCHAR cmd)
 //	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
 	write_serial(cmd);
-/*
-	buffer[0] = cmd;
-	buffer[1] = code;	
- 	for(i = 0;i < 20;i++)
- 		write_serial(buffer[i]);
-*/
-//	write_serial(0xFF);
+
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
-void send_serialother(UCHAR cmd, UCHAR *buf, int len)
+void send_serial2(UCHAR cmd)
 {
-//return;
+	int i;
+	pthread_mutex_lock( &serial_write_lock);
+	write_serial2(cmd);
+
+	pthread_mutex_unlock(&serial_write_lock);
+}
+/*********************************************************************/
+void send_serialother(UCHAR cmd, UCHAR *buf)
+{
 	pthread_mutex_lock( &serial_write_lock);
 	int i;
-	buf[0] = cmd;
-	buf[1] = (UCHAR)len;
 
-	for(i = 0;i < len;i++)
+	write_serial(cmd);
+	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 	{
 		write_serial(buf[i]);
+	}
+	pthread_mutex_unlock(&serial_write_lock);
+}
+/*********************************************************************/
+void send_serialother2(UCHAR cmd, UCHAR *buf)
+{
+	pthread_mutex_lock( &serial_write_lock);
+	int i;
+
+	write_serial2(cmd);
+	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+	{
+		write_serial2(buf[i]);
 	}
 	pthread_mutex_unlock(&serial_write_lock);
 }
@@ -435,8 +449,6 @@ int change_input(int index, int onoff)
 	index = real_banks[index].index;
 
 	mask <<= index;
-
-//printf("%d %d\r\n",index,onoff);
 
 	if(onoff)
 	{
@@ -653,7 +665,7 @@ UCHAR timer_task(int test)
 		}
 		uSleep(1,0);
 
-/*
+
 		write_serial_buffer[0] = running_hours;
 		write_serial_buffer[1] = running_minutes;
 		write_serial_buffer[2] = running_seconds;
@@ -664,11 +676,10 @@ UCHAR timer_task(int test)
 		write_serial_buffer[7] = (UCHAR)odometer;
 		write_serial_buffer[8] = (UCHAR)(trip << 8);
 		write_serial_buffer[9] = (UCHAR)trip;
-*/
+		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
+
 		if(engine_running == 1)
 		{
-
-//printf("%d %d\r\n",running_seconds,running_minutes);
 
 			if(++running_seconds > 59)
 			{
@@ -877,13 +888,13 @@ UCHAR serial_recv_task(int test)
 		printf("can't open comm port 1\r\n");
 		return 0;
 	}
-/*
+
 	if(fd = init_serial2() < 0)
 	{
 		printf("can't open comm port 2\r\n");
 		return 0;
 	}
-*/
+
 //	printf("running serial task...\r\n");
 
 	ch = 0x21;
@@ -902,21 +913,16 @@ UCHAR serial_recv_task(int test)
 		}while(ch != 0xFF);
 
 		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+		{
 			 read_serial_buffer[i] = read_serial(errmsg);
+//			 send_serial2(read_serial_buffer[i]);
+		}
 
 		cmd = read_serial_buffer[0];
 
 		pthread_mutex_unlock(&serial_read_lock);
 		// msg's known by the tcp laptop
 
-/*
-		pthread_mutex_lock( &serial_write_lock);
-		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-		{
-			write_serial(write_serial_buffer[i]);
-		}
-		pthread_mutex_unlock(&serial_write_lock);
-*/
 		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
 		{
 			add_msg_queue(cmd);
@@ -932,25 +938,11 @@ UCHAR serial_recv_task(int test)
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
 			sprintf(tempx,"%.1f\0",convertF(engine_temp));
-//			sprintf(tempx,"%2x %2x",high_byte, low_byte);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
 		}
 		
 		if(cmd == SEND_RT_VALUES)
 		{
-/*
-			if(k == 0)
-			{
-				red_led(1);
-				green_led(0);
-				k = 1;
-			}else
-			{
-				red_led(0);
-				green_led(1);
-				k = 0;
-			}
-*/
 			high_byte = read_serial_buffer[1];
 			low_byte = read_serial_buffer[2];
 			rpm = (int)high_byte;
@@ -966,20 +958,13 @@ UCHAR serial_recv_task(int test)
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH2);
+		}
 
-		}
-/*
-		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
-		{
-			usleep(1000);
-			send_serial(cmd);
-			cmd = 0;
-		}
-*/
 		if(shutdown_all)
 		{
 //			printf("shutting down serial task\r\n");
 			close_serial();
+			close_serial2();
 			myprintf1("done serial task\r\n");
 			return 0;
 		}
@@ -1283,9 +1268,11 @@ UCHAR basic_controls_task(int test)
 			case WIPER1:
 			case WIPER2:
 			case WIPER_OFF:
-//				send_serial(cmd);
+				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
+				printHexByte(cmd);
 //				printf("%s\r\n",cmd_array[cmd].cmd_str);
+
 			break;
 			default:
 			break;

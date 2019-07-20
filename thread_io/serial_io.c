@@ -11,21 +11,17 @@
 #include "../mytypes.h"
 #include "serial_io.h"
 
-#define BAUDRATE B19200
+#define BAUDRATE B115200
 //#define BAUDRATE B115200
 #define BAUDRATE2 B115200
-#ifdef MAKE_SIM
-#define MODEMDEVICE "/dev/ttyS0"
-#else
 
 #ifdef TS_7800
 #define MODEMDEVICE "/dev/ttyS1"				  // 7800 uses ttyS1 as the 2nd serial port
 #else
-
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
 #define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
 #endif	// end of ifdef TS_7800
-#endif	// end of ifdef MAKE_SIM
+
 #define _POSIX_SOURCE 1							  /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -236,6 +232,33 @@ int init_serial2(void)
 
 	return global_handle2;
 }
+
+void printHexByte(UCHAR byte) 
+{
+	/* Prints a byte as its hexadecimal equivalent */
+	UCHAR nibble;
+//	nibble = (byte & 0b11110000) >> 4;
+	nibble = (byte & 0xF0) >> 4;
+	write_serial2(nibbleToHexCharacter(nibble));
+//	nibble = byte & 0b00001111;
+	nibble = byte & 0x0F;
+	write_serial2(nibbleToHexCharacter(nibble));
+	write_serial2(0x20);
+}
+
+char nibbleToHexCharacter(UCHAR nibble) 
+{
+		                           /* Converts 4 bits into hexadecimal */
+	if (nibble < 10) 
+	{
+		return ('0' + nibble);
+	}
+	else 
+	{
+		return ('A' + nibble - 10);
+	}
+}
+
 
 /************************************************************************************/
 void printString2(char *myString)
