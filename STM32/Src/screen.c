@@ -19,7 +19,7 @@ void init_rtlabels(void)
 	int i;
 	
 	col = START_RT_VALUE_COL;
-	data_col = col + 9;
+	data_col = col + 20;
 	
 	// rt labels at bottom of screen
  	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS;str++,row++)

@@ -54,8 +54,6 @@ git add Truck_App1/debounce.vhd
 git add Truck_App1/3S500E_layout_bottom.txt
 git add Truck_App1/3S500E_pin_assign.ods
 git add Truck_App1/uartLED.vhd
-git add Truck_App1/sendcharLED.vhd
-git add Truck_App1/uartLED.vhd
 git add Truck_App1/uartLED2.vhd
 git add Truck_App1/uart_tx.vhd
 git add Truck_App1/uart_rx.vhd

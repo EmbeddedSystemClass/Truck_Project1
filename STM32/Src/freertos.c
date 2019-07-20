@@ -74,7 +74,7 @@ FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 uint64_t pack64(UCHAR *buff);
 uint32_t pack32(UCHAR *buff);
 static UCHAR Recv7200buff[SERIAL_BUFF_SIZE];
-static UCHAR Send7200buff[SERIAL_BUFF_SIZE];
+//static UCHAR Send7200buff[SERIAL_BUFF_SIZE];
 static UCHAR params[PARAM_SIZE];
 /* USER CODE END PD */
 
@@ -91,8 +91,9 @@ static int brights_on;
 static int blower_on;
 static int fan_on;
 static int engine_on;
-
 static int running_lights_on;
+static int wipers_on;
+
 static UCHAR menu_ptr;
 static KEY_MODE key_mode;
 //static int key_enter_time;
@@ -103,15 +104,8 @@ static int password_ptr;
 static int password_retries;
 static int dim_screen;
 static int silent_key;
-static UINT gl_rpm, gl_mph;
-static UINT gl_engine_temp, gl_indoor_temp, gl_outdoor_temp, gl_temp4;
-static UINT gl_blower_en, gl_fan_on, gl_fan_off, gl_blower1_on, gl_blower2_on, gl_blower3_on;
-static int engine_run_time;
-static int engine_shutdown;
-static int engine_shuttingdown;
 static char num_entry_num[SIZE_NUM];
 //static int task7on;
-static int wipers;
 
 static void clr_scr(void)
 {
@@ -430,11 +424,11 @@ void MX_FREERTOS_Init(void) {
   osThreadStaticDef(KeyStateTask, StartKeyStateTask, osPriorityIdle, 0, 70, myTask03Buffer, 
 		&myTask03ControlBlock);
   KeyStateTaskHandle = osThreadCreate(osThread(KeyStateTask), NULL);
-#if 0
+
   /* definition and creation of AVRTask */
   osThreadStaticDef(AVRTask, StartAVRTask, osPriorityIdle, 0, 70, myTask06Buffer, &myTask06ControlBlock);
   AVRTaskHandle = osThreadCreate(osThread(AVRTask), NULL);
-#endif
+
   /* definition and creation of DS1620Task */
   osThreadStaticDef(DS1620Task, StartDS1620Task, osPriorityIdle, 0, 70, myTask04Buffer, 
 		&myTask04ControlBlock);
@@ -447,11 +441,11 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of Recv7200 */
   osThreadStaticDef(Recv7200, StartRecv7200, osPriorityIdle, 0, 70, myTask07Buffer, &myTask07ControlBlock);
   myTask07Handle = osThreadCreate(osThread(Recv7200), NULL);
-
+#endif
   /* definition and creation of SendFPGA */
   osThreadStaticDef(SendFPGA, StartSendFPGA, osPriorityIdle, 0, 70, myTask08Buffer, &myTask08ControlBlock);
   myTask08Handle = osThreadCreate(osThread(SendFPGA), NULL);
-#endif
+
   /* definition and creation of RecvFPGA */
   osThreadStaticDef(RecvFPGA, StartRecvFPGA, osPriorityIdle, 0, 70, myTask09Buffer, &myTask09ControlBlock);
   myTask09Handle = osThreadCreate(osThread(RecvFPGA), NULL);
@@ -476,7 +470,6 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
 	int i;
-	UCHAR xbyte;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
 
@@ -487,13 +480,6 @@ void StartDefaultTask(void const * argument)
 	password_retries = 0;
 	dim_screen = 0;
 	silent_key = 0;
-	gl_rpm = gl_mph = 0;
-	gl_engine_temp = gl_indoor_temp = gl_outdoor_temp = gl_temp4 = 0;
-	gl_blower_en = gl_fan_on = gl_fan_off = gl_blower1_on = 0;
-	gl_blower2_on = gl_blower3_on = 0;
-	engine_run_time = 0;
-	engine_shutdown = 0;
-	engine_shuttingdown = 0;
 
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
@@ -505,7 +491,7 @@ void StartDefaultTask(void const * argument)
 	memset(password,0,PASSWORD_SIZE);
 	memset(params,0,PARAM_SIZE);
 	memset(Recv7200buff,0,SERIAL_BUFF_SIZE);
-	memset(Send7200buff,0,SERIAL_BUFF_SIZE);
+//	memset(Send7200buff,0,SERIAL_BUFF_SIZE);
 //	avr_buffer[0] = PASSWORD_MODE;
 	
 //	vTaskSuspend(myTask07Handle);
@@ -514,12 +500,13 @@ void StartDefaultTask(void const * argument)
 //	since the UART1 receive doesn't work
 //	to receive the status msg's then
 //	this can be left out
-
+/*
 	ucbuff[0] = DISPLAY_STATUSLABELS;
 	avr_buffer[0] = pack64(ucbuff);
 	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+*/
 //#endif
-	xbyte = 0x21;
+
 	for(i = 0;i < 20;i++)
 	{
   		if(menu_ptr == 0)
@@ -583,7 +570,7 @@ void StartBasicCmdTask(void const * argument)
 	fan_on = 0;
 	blower_on = 0;
 	engine_on = 0;
-	wipers = 0;
+	wipers_on = 0;
 
   /* Infinite loop */
 	for(;;)
@@ -601,7 +588,7 @@ void StartBasicCmdTask(void const * argument)
 					ucbuff[0] = cmd;
 					buff[0] = pack64(ucbuff);
 					xQueueSend(Send7200QueueHandle, buff, 0);
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 					engine_on = 1;
 				}
 			break;
@@ -616,8 +603,8 @@ void StartBasicCmdTask(void const * argument)
 				xQueueSend(Send7200QueueHandle, buff, 0);
 				engine_on = 0;
 				fan_on = 0;
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//				HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
 			break;
 			case KP_3:
@@ -649,7 +636,7 @@ void StartBasicCmdTask(void const * argument)
 					buff[0] = pack64(ucbuff);
 					xQueueSend(Send7200QueueHandle, buff, 0);
 					fan_on = 1;
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 				}
 				else
 				{
@@ -658,38 +645,43 @@ void StartBasicCmdTask(void const * argument)
 					buff[0] = pack64(ucbuff);
 					xQueueSend(Send7200QueueHandle, buff, 0);
 					fan_on = 0;
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 				}
 			break;
 			case KP_5:
 				switch(blower_on)
 				{
 					case 0:	
-					cmd = BLOWER1;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200QueueHandle, buff, 0);
-					break;
+						cmd = BLOWER1;
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
+						blower_on = 1;
+						break;
 					case 1:
-					cmd = BLOWER2;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200QueueHandle, buff, 0);
-					break;
+						cmd = BLOWER2;
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
+						blower_on = 2;
+						break;
 					case 2:
-					cmd = BLOWER3;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200QueueHandle, buff, 0);
-					break;
+						cmd = BLOWER3;
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
+						blower_on = 3;
+						break;
 					case 3:
-					cmd = BLOWER_OFF;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200QueueHandle, buff, 0);
-					break;
+						cmd = BLOWER_OFF;
+						ucbuff[0] = cmd;
+						buff[0] = pack64(ucbuff);
+						xQueueSend(Send7200QueueHandle, buff, 0);
+						blower_on = 0;
+						break;
 					default:
-					blower_on = 0;
+						blower_on = 0;
+						break;
 				}
 				if(++blower_on > 3)
 					blower_on = 0;
@@ -739,22 +731,23 @@ void StartBasicCmdTask(void const * argument)
 				}
 			break;
 			case KP_8:
-				switch (wipers)
+				switch (wipers_on)
 				{
 					case 0:
 						cmd = WIPER1;
-						wipers = 1;
+						wipers_on = 1;
 						break;
 					case 1:
 						cmd = WIPER2;
-						wipers = 2;
+						wipers_on = 2;
 						break;
 					case 2:
 						cmd = WIPER_OFF;
-						wipers = 0;
+						wipers_on = 0;
 						break;
 					default:
-						wipers = 0;
+						wipers_on = 0;
+						break;
 				}
 				ucbuff[0] = cmd;
 				buff[0] = pack64(ucbuff);
@@ -817,23 +810,18 @@ void StartKeyStateTask(void const * argument)
 void StartDS1620Task(void const * argument)
 {
 	UINT raw_data, temp_raw;
-//	UINT rpm, mph;
-	UCHAR row, col;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
-	uint64_t temp;
 
 	initDS1620();
 	vTaskDelay(1000);
 
-	row = col = 0;
+//	row = col = 0;
 	raw_data = 0;
 //	rpm = 500;
 //	mph = 1;
 	memset(ucbuff, 0, 8);
 
-	row = 0;
-	col = 30;
 	raw_data = 1;
 	temp_raw = 1;
 	for(;;)
@@ -852,8 +840,8 @@ void StartDS1620Task(void const * argument)
 		ucbuff[4] = (UCHAR)temp_raw;
 		temp_raw >>= 8;
 		ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
-//		avr_buffer[0] = pack64(ucbuff);
-//		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
 		vTaskDelay(10);
 		
 		ucbuff[0] = ENGINE_TEMP;
@@ -863,22 +851,10 @@ void StartDS1620Task(void const * argument)
 		xQueueSend(Send7200QueueHandle, avr_buffer, 0);
 		vTaskDelay(1000);
 		raw_data++;
+		if(raw_data > 230)
+			raw_data = 10;
 		temp_raw = raw_data;
 		vTaskDelay(10);
-/*
-		ucbuff[0] = SEND_RT_VALUES;
-		ucbuff[1] = (UCHAR)(rpm >> 8);
-		ucbuff[2] = (UCHAR)rpm;
-		ucbuff[3] = (UCHAR)(mph >> 8);
-		ucbuff[4] = (UCHAR)mph;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(Send7200QueueHandle, avr_buffer, 0);
-
-		if(++rpm > 5000)
-			rpm = 500;
-		if(++mph > 100)
-			mph = 1;
-*/
 	}
 }
 /**
@@ -927,6 +903,31 @@ void StartTask7200(void const * argument)
 		
 		HAL_UART_Transmit(&huart1, &marker, 1, 100);
 		HAL_UART_Transmit(&huart1, &ucbuff[0], SERIAL_BUFF_SIZE, 100);
+/*
+		HAL_UART_Receive(&huart1, &Recv7200buff[0], SERIAL_BUFF_SIZE, 1000);
+
+		ucbuff[0] = SEND_BYTE_RT_VALUES;
+		ucbuff[1] = rtlabel_str[RUN_TIME].row;
+		ucbuff[2] = rtlabel_str[RUN_TIME].data_col;
+		ucbuff[3] = Recv7200buff[0];		// hours
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		vTaskDelay(5);
+
+		ucbuff[1] = rtlabel_str[RUN_TIME].row;
+		ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 3;
+		ucbuff[3] = Recv7200buff[1];		// minutes
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		vTaskDelay(5);
+
+		ucbuff[1] = rtlabel_str[RUN_TIME].row;
+		ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 6;
+		ucbuff[3] = Recv7200buff[2];		// seconds
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+		vTaskDelay(5);
+*/
 	}
 }
 /**
@@ -940,7 +941,7 @@ void StartAVRTask(void const * argument)
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
 	UCHAR end_byte;
-	uint64_t temp;
+//	uint64_t temp;
 
 	for(;;)
 	{
@@ -1018,10 +1019,99 @@ void StartAVRTask(void const * argument)
 */
 void StartRecv7200(void const * argument)
 {
+	UCHAR cmd;
+	
 	for(;;)
 	{
-		HAL_UART_Receive(&huart1, Recv7200buff, SERIAL_BUFF_SIZE, portMAX_DELAY);
-		vTaskDelay(3);
+		HAL_UART_Receive(&huart1, &cmd, 1, portMAX_DELAY);
+
+		switch (cmd)
+		{
+			case 	ON_ACC:				// 3
+				break;
+			case 	OFF_ACC:			// 4
+				break;
+			case 	ON_FUEL_PUMP:		// 5
+				break;
+			case 	OFF_FUEL_PUMP:		// 6
+				break;
+			case 	ON_FAN:				// 7
+				fan_on = 1;
+				break;
+			case 	OFF_FAN:			// 8
+				fan_on = 0;
+				break;
+			case 	ON_LIGHTS:			// 9
+				lights_on = 1;
+				break;
+			case 	OFF_LIGHTS:			// 10
+				lights_on = 0;
+				break;
+			case 	ON_BRIGHTS:			// 11
+				brights_on = 1;
+				break;
+			case 	OFF_BRIGHTS:		// 12
+				brights_on = 0;
+				break;
+			case 	ON_BRAKES:
+				break;
+			case 	OFF_BRAKES:
+				break;
+			case 	ON_RUNNING_LIGHTS:
+				running_lights_on = 1;
+				break;
+			case 	OFF_RUNNING_LIGHTS:
+				running_lights_on = 0;
+				break;
+			case 	SPECIAL_CMD:
+				break;
+			case 	START_SEQ:
+				engine_on = 1;
+				break;
+			case 	SHUTDOWN:
+				engine_on = 0;
+				break;
+			case 	ON_LLIGHTS:
+				break;
+			case 	OFF_LLIGHTS:
+				break;
+			case 	ON_LBRIGHTS:
+				break;
+			case 	OFF_LBRIGHTS:
+				break;
+			case 	ON_RLIGHTS:
+				break;
+			case 	OFF_RLIGHTS:
+				break;
+			case 	ON_RBRIGHTS:
+				break;
+			case 	OFF_RBRIGHTS:
+				break;
+			case 	BLOWER_OFF:
+				blower_on = 0;
+				break;
+			case 	BLOWER1:
+				blower_on = 1;
+				break;
+			case 	BLOWER2:
+				blower_on = 2;
+				break;
+			case 	BLOWER3:
+				blower_on = 3;
+				break;
+			case 	WIPER1:
+				wipers_on = 1;
+				break;
+			case 	WIPER2:
+				wipers_on = 2;
+				break;
+			case 	WIPER_OFF:
+				wipers_on = 0;
+				break;
+			default:
+				break;
+		}
+		vTaskDelay(30);
 	}
 }
 /**
@@ -1162,6 +1252,9 @@ void StartRecvFPGA(void const * argument)
 	UCHAR ucbuff[8];
 	UCHAR buff[5];
 	int frame_ptr;
+	UINT rpm, mph;
+	rpm = 500;
+	mph = 1;
 	
 	xbyte = 0x21;
 
@@ -1221,31 +1314,47 @@ void StartRecvFPGA(void const * argument)
 		if(xbyte == 0xFE)
 		{
 			frame_ptr = 0;
-/*
+
 			ucbuff[0] = SEND_INT_RT_VALUES;
 			ucbuff[1] = rtlabel_str[RPM].row;
 			ucbuff[2] = rtlabel_str[RPM].data_col;
-			ucbuff[4] = buff[0];
-			ucbuff[3] = buff[1];
+			ucbuff[3] = (UCHAR)(rpm >> 8);
+			ucbuff[4] = (UCHAR)rpm;
+//			ucbuff[4] = buff[0];
+//			ucbuff[3] = buff[1];
 			avr_buffer[0] = pack64(ucbuff);
 			xQueueSend(SendAVRQueueHandle,avr_buffer,0);
 			vTaskDelay(10);
 
 			ucbuff[1] = rtlabel_str[MPH].row;
 			ucbuff[2] = rtlabel_str[MPH].data_col;
-			ucbuff[4] = buff[2];
-			ucbuff[3] = buff[3];
+			ucbuff[3] = (UCHAR)(mph >> 8);
+			ucbuff[4] = (UCHAR)mph;
+//			ucbuff[4] = buff[2];
+//			ucbuff[3] = buff[3];
 			avr_buffer[0] = pack64(ucbuff);
 			xQueueSend(SendAVRQueueHandle,avr_buffer,0);
+
+			if((rpm+= 12) > 5000)
+				rpm = 500;
+			if(++mph > 100)
+				mph = 1;
+
 			vTaskDelay(10);
-*/
+
 			if(engine_on != 0)
 			{
 				ucbuff[0] = SEND_RT_VALUES;
+				ucbuff[1] = (UCHAR)(rpm >> 8);
+				ucbuff[2] = (UCHAR)rpm;
+				ucbuff[3] = (UCHAR)(mph >> 8);
+				ucbuff[4] = (UCHAR)mph;
+/*
 				ucbuff[2] = buff[0];
 				ucbuff[1] = buff[1];
 				ucbuff[4] = buff[2];
 				ucbuff[3] = buff[3];
+*/
 				avr_buffer[0] = pack64(ucbuff);
 				xQueueSend(Send7200QueueHandle, avr_buffer, 0);
 			}
@@ -1276,7 +1385,7 @@ void StartRecvFPGA(void const * argument)
 }
 void StartTask10(void const * argument)
 {
-	int i,k;
+	int i;
 	UCHAR temp = 0xFF;
 	UCHAR temp2[20];
 	UCHAR cmds[] =
@@ -1288,9 +1397,7 @@ void StartTask10(void const * argument)
 	SPECIAL_CMD, START_SEQ, SHUTDOWN };
 
 	vTaskDelay(3000);
-
 	i = 0;
-	k = 0;
 
 	memset(temp2,0,sizeof(temp2));
 	for(;;)
@@ -1303,18 +1410,6 @@ void StartTask10(void const * argument)
 			HAL_UART_Transmit(&huart1, &temp2[0], SERIAL_BUFF_SIZE-1, 100);
 			i++;
 			vTaskDelay(1000);
-
-			if(menu_ptr == 0)
-			{
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-				menu_ptr = 1;
-			}else
-			{
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-				menu_ptr = 0;
-			}
 		} while (i < 29);
 		i = 0;
 	}
@@ -1352,13 +1447,13 @@ void StartNumEntryTask(void const * argument)
 	avr_buffer[0] = pack64(ucbuff);
 	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
 	vTaskDelay(20);
-
+/*
 	ucbuff[0] = GOTO_CMD;
 	ucbuff[1] = (UCHAR)curr_num_entry_row;
 	ucbuff[2] = (UCHAR)curr_num_entry_col;
 	avr_buffer[0] = pack64(ucbuff);
 	xQueueSend(SendAVRQueueHandle,avr_buffer,0);
-
+*/
 	for(;;)
 	{
 		xQueueReceive(keypressedQueueHandle, &ukey, portMAX_DELAY);
@@ -1581,7 +1676,6 @@ void Callback01(void const * argument)
 uint64_t pack64(UCHAR *buff)
 {
 	uint64_t var64;
-	UCHAR temp;
 
 	var64 = (uint64_t)buff[7];
 	var64 <<= 8;

@@ -57,7 +57,7 @@ extern pthread_t serial_thread;	// workaround for closing serial task
 extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 static float convertF(int raw_data);
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
-//static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
+static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
 
 static int serial_rec;
@@ -642,6 +642,7 @@ UCHAR timer_task(int test)
 	O_DATA *otp2;
 	O_DATA **otpp2 = &otp2;
 
+	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
 	rpm = mph = 0;
 	while(TRUE)
 	{
@@ -652,6 +653,18 @@ UCHAR timer_task(int test)
 		}
 		uSleep(1,0);
 
+/*
+		write_serial_buffer[0] = running_hours;
+		write_serial_buffer[1] = running_minutes;
+		write_serial_buffer[2] = running_seconds;
+		write_serial_buffer[3] = trunning_hours;
+		write_serial_buffer[4] = trunning_minutes;
+		write_serial_buffer[5] = trunning_seconds;
+		write_serial_buffer[6] = (UCHAR)(odometer << 8);
+		write_serial_buffer[7] = (UCHAR)odometer;
+		write_serial_buffer[8] = (UCHAR)(trip << 8);
+		write_serial_buffer[9] = (UCHAR)trip;
+*/
 		if(engine_running == 1)
 		{
 
@@ -893,15 +906,17 @@ UCHAR serial_recv_task(int test)
 
 		cmd = read_serial_buffer[0];
 
-/*
-		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-		{
-			write_serial(read_serial_buffer[i]);
-		}
-*/
 		pthread_mutex_unlock(&serial_read_lock);
 		// msg's known by the tcp laptop
 
+/*
+		pthread_mutex_lock( &serial_write_lock);
+		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+		{
+			write_serial(write_serial_buffer[i]);
+		}
+		pthread_mutex_unlock(&serial_write_lock);
+*/
 		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
 		{
 			add_msg_queue(cmd);
@@ -953,7 +968,14 @@ UCHAR serial_recv_task(int test)
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH2);
 
 		}
-
+/*
+		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
+		{
+			usleep(1000);
+			send_serial(cmd);
+			cmd = 0;
+		}
+*/
 		if(shutdown_all)
 		{
 //			printf("shutting down serial task\r\n");

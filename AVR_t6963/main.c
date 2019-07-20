@@ -98,13 +98,13 @@ int main(void)
 //	GDispSetMode(CURSOR_BLINK_ON);
 //	_delay_us(10);
 	GDispClrTxt();
-	FONT_6X8();
-	GDispStringAt(7,7,"LCD is on!");
-	_delay_ms(1000);
+//	FONT_6X8();
+//	GDispStringAt(7,7,"LCD is on!");
+//	_delay_ms(1000);
 	FONT_8X8();
 	GDispClrTxt();
 	GDispStringAt(7,7,"LCD is on!");
-	_delay_ms(1000);
+	_delay_ms(500);
 
 //	initSPImaster();
 //******************************************************************************************//
