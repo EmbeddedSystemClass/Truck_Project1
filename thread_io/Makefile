@@ -1,5 +1,5 @@
 ######################################################################################
-# GNU GCC ARM Embeded Toolchain base directories and binaries 
+# GNU GCC ARM Embeded Toolchain base directories and binaries
 ######################################################################################
 #use this one when compiling on 115
 #GCC_BASE = /home/dan/dev/arm/opt/crosstool/gcc-3.4.4-glibc-2.3.2/arm-linux/
@@ -43,28 +43,28 @@ print-%:
 PROJECT           = main
 MCU_CC_FLAGS      = $(TS-7200_CC_FLAGS)
 MCU_LIB_PATH      = $(TS-7200_LIB_PATH)
-OPTIMIZE_FOR      = 
-DEBUG_LEVEL       = 
-OPTIM_LEVEL       = 
+OPTIMIZE_FOR      =
+DEBUG_LEVEL       =
+OPTIM_LEVEL       =
 PROJECT_OBJECTS   = main.o
 PROJECT_LIB_PATHS = -L/lib
 PROJECT_LIBRARIES =
-PROJECT_SYMBOLS   = -DTOOLCHAIN_GCC_ARM -DNO_RELOC='0'  
+PROJECT_SYMBOLS   = -DTOOLCHAIN_GCC_ARM -DNO_RELOC='0'
 
 ######################################################################################
 # Main makefile system configuration
 ######################################################################################
-SYS_OBJECTS = 
+SYS_OBJECTS =
 SYS_LIB_PATHS = -L$(MCU_LIB_PATH)
 ifeq (OPTIMIZE_FOR, SIZE)
 SYS_LIBRARIES = -lstdc++_s -lsupc++_s -lm -lc_s -lg_s -lnosys
 SYS_LD_FLAGS  = --specs=nano.specs -u _printf_float -u _scanf_float
-else 
+else
 SYS_LIBRARIES = -lstdc++ -lsupc++ -lm -lc -lg -lnosys
-SYS_LD_FLAGS  = 
+SYS_LD_FLAGS  =
 endif
 
-############################################################################### 
+###############################################################################
 # Command line building
 ###############################################################################
 ifdef DEBUG_LEVEL
@@ -73,12 +73,12 @@ CC_SYMBOLS = -DDEBUG $(PROJECT_SYMBOLS)
 else
 CC_DEBUG_FLAGS =
 CC_SYMBOLS = -DNODEBUG $(PROJECT_SYMBOLS)
-endif 
+endif
 
 ifdef OPTIM_LEVEL
 CC_OPTIM_FLAGS = -O$(OPTIM_LEVEL)
-else 
-CC_OPTIM_FLAGS = 
+else
+CC_OPTIM_FLAGS =
 endif
 
 INCLUDE_PATHS = -I.$(GCC_INC)
@@ -87,7 +87,7 @@ LIBRARY_PATHS = $(PROJECT_LIB_LIB) $(SYS_LIB_PATHS)
 #-pthread -static-libgcc
 # use -static-libgcc instead of -static to get rid of warning: "Using getprotobyname in statically linked apps requires
 # at runtime the shared libraries from the glibc version used for linking"
-LD_FLAGS = $(MCU_CC_FLAGS) -Wl,--gc-sections $(SYS_LD_FLAGS) -Wl,-Map=$(PROJECT).map 
+LD_FLAGS = $(MCU_CC_FLAGS) -Wl,--gc-sections $(SYS_LD_FLAGS) -Wl,-Map=$(PROJECT).map
 LD_SYS_LIBS = $(SYS_LIBRARIES)
 
 #GNUCFLAGS = -g -ansi -Wstrict-prototypes	doesn't compile "// ..comments.."
@@ -117,7 +117,7 @@ BULD_TARGET = $(PROJECT)
 
 all : sched
 #all : test_dio1
-#test_ioports test_inports # test_ports test_spi 
+#test_ioports test_inports # test_ports test_spi
 #llist_test_threads llist_test_threads_rw
 
 sched.o: sched.c tasks.h

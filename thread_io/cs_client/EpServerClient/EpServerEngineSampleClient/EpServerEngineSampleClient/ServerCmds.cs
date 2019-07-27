@@ -48,6 +48,9 @@ namespace EpServerEngineSampleClient
 			WIPER1,
 			WIPER2,
 			WIPER_OFF,
+			STOP_MBOX_XMIT,
+			START_MBOX_XMIT,
+			SEND_TIME_DATA,
 			SHUTDOWN_IOBOX,
 			REBOOT_IOBOX,
 			TEST_ALL_IO,
@@ -69,14 +72,15 @@ namespace EpServerEngineSampleClient
 			TEST_RIGHT_BLINKER,
 			RE_ENTER_PASSWORD,
 			DISCONNECT,
-			STOP_MBOX_RECV,
 			CLOSE_DB,
 			OPEN_DB,
 			BAD_MSG,
 			CURRENT_TIME,
 			SET_PARAMS,
-			EXIT_PROGRAM
-        }
+			EXIT_PROGRAM,
+			ENGINE_TEMP,
+			SEND_RT_VALUES
+		}
 
         public ServerCmds()
         {
@@ -219,9 +223,9 @@ namespace EpServerEngineSampleClient
                 case "TEST_RIGHT_BLINKER":
                     sendcmd = (int)Server_cmds.TEST_RIGHT_BLINKER;
                     break;
-                case "UPLOAD_NEW":
-                    sendcmd = (int)Server_cmds.UPLOAD_NEW;
-                    break;
+//                case "UPLOAD_NEW":
+ //                   sendcmd = (int)Server_cmds.UPLOAD_NEW;
+//                    break;
                 case "BRAKES":
                     if (onoff == 1)
                         sendcmd = (int)Server_cmds.ON_BRAKES;
@@ -241,14 +245,11 @@ namespace EpServerEngineSampleClient
                 case "GET_TIME":
                     sendcmd = (int)Server_cmds.GET_TIME;
                     break;
-                case "SET_TIME":
-                    sendcmd = (int)Server_cmds.SET_TIME;
-                    break;
+//                case "SET_TIME":
+//                    sendcmd = (int)Server_cmds.SET_TIME;
+//                    break;
                 case "DISCONNECT":
                     sendcmd = (int)Server_cmds.DISCONNECT;
-                    break;
-                case "STOP_MBOX_RECV":
-                    sendcmd = (int)Server_cmds.STOP_MBOX_RECV;
                     break;
                 case "SPECIAL_CMD":
                     sendcmd = (int)Server_cmds.SPECIAL_CMD;
@@ -268,9 +269,15 @@ namespace EpServerEngineSampleClient
                 case "SET_PARAMS":
                     sendcmd = (int)Server_cmds.SET_PARAMS;
                     break;
-                case "TEST_ALL_IO":
-                    sendcmd = (int)Server_cmds.TEST_ALL_IO;
-                    break;
+//                case "TEST_ALL_IO":
+//                    sendcmd = (int)Server_cmds.TEST_ALL_IO;
+//                    break;
+				case "STOP_MBOX_XMIT":
+                    sendcmd = (int)Server_cmds.STOP_MBOX_XMIT;
+					break;
+				case "START_MBOX_XMIT":
+                    sendcmd = (int)Server_cmds.START_MBOX_XMIT;
+					break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;
                     break;

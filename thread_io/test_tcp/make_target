@@ -103,14 +103,18 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 BULD_TARGET = $(PROJECT)
 
 #all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4 lcd_func2
-#all :  test_inports test_ioports2 test_ioports4
-all : test_ioports4 show_params make_params
+all :  test_inports test_ioports2 test_ioports4 lcd_func lcd_func2
+#all : test_ioports4 show_params make_params
+#all : test_upload_new
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
 
 server.o: server.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
+
+test_upload_new.o: test_upload_new.c
+	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c test_upload_new.c
 
 client: client.o
 	${CC} client.o -o client
@@ -129,6 +133,9 @@ client2: client2.o
 
 server2: server2.o
 	${CC} server.o -o server2
+
+test_upload_new: test_upload_new.o
+	${CC} test_upload_new.o -o test_upload_new
 
 test_write.o: test_write.c
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_write.c
@@ -180,6 +187,6 @@ make_params: make_params.o
 
 clean :
 	rm -f *.o *~ *# core client server client2 server2 test_write \
-	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params
+	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params test_upload_new
 #	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core server2

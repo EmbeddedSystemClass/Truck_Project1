@@ -1,3 +1,4 @@
+#if 1
 #include <unistd.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -34,7 +35,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[66] =
+CMD_STRUCT cmd_array[68] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -72,6 +73,9 @@ CMD_STRUCT cmd_array[66] =
 	{		WIPER1,"WIPER1\0" },
 	{		WIPER2,"WIPER2\0" },
 	{		WIPER_OFF,"WIPER_OFF\0" },
+	{		STOP_MBOX_XMIT,"STOP_MBOX_XMIT\0" },
+	{		START_MBOX_XMIT,"START_MBOX_XMIT\0" },
+	{		SEND_TIME_DATA,"SEND_TIME_DATA\0" },
 	{		SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{		REBOOT_IOBOX,"REBOOT_IOBOX\0" },
 	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
@@ -93,7 +97,6 @@ CMD_STRUCT cmd_array[66] =
 	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
 	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
 	{		DISCONNECT,"DISCONNECT\0" },
-	{		STOP_MBOX_RECV,"STOP_MBOX_RECV\0" },
 	{		CLOSE_DB,"CLOSE_DB\0" },
 	{		OPEN_DB,"OPEN_DB\0" },
 	{		BAD_MSG,"BAD_MSG\0" },
@@ -107,21 +110,21 @@ CMD_STRUCT cmd_array[66] =
 //extern illist_t ill;
 extern ollist_t oll;
 
-UCHAR msg_buf[2000];
+UCHAR msg_buf[UPLOAD_BUFF_SIZE];
+UCHAR msg_buf2[UPLOAD_BUFF_SIZE/2];
 extern PARAM_STRUCT ps;
 
 int shutdown_all;
-int live_window_on;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 static void format_param_msg(void);
 
-//extern int tcp_window_on;
+int tcp_window_on;
 //int serial_recv_on;
 //int time_set;
 
 // array of structs to list all the inputs that have outputs assigned
 // to them 
-
+#endif
 /*********************************************************************/
 // task to get commands from the host
 UCHAR get_host_cmd_task(int test)
@@ -158,8 +161,7 @@ UCHAR get_host_cmd_task(int test)
 	char tempx[100];
 	UCHAR tempy[30];
 	char temp_time[5];
-	UCHAR utemp1;
-	UCHAR utemp2;
+	UCHAR utemp1[2];
 	char *pch;
 	int fname_index;
 	UCHAR uch_fname_index;
@@ -169,7 +171,7 @@ UCHAR get_host_cmd_task(int test)
 	tcp_window_on = 0;	
 	int fp;
 	off_t fsize;
-	int cur_fsize;
+	long cur_fsize;
 	struct timeval mtv;
 	struct tm t;
 	struct tm *pt = &t;
@@ -241,31 +243,34 @@ UCHAR get_host_cmd_task(int test)
 
 // flash green and red led's to signal we are up (if LCD screen not attached)
 //#if 0
-	for(i = 0;i < 10;i++)
+	for(i = 0;i < 5;i++)
 	{
 		red_led(1);
-		usleep(5000);
+		usleep(10000);
 		red_led(0);
 		green_led(1);
-		usleep(5000);
+		usleep(10000);
 		green_led(0);
 		red_led(1);
-		usleep(5000);
+		usleep(10000);
 		red_led(0);
 		green_led(1);
-		usleep(5000);
+		usleep(10000);
 		green_led(0);
 	}
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.21\0");
-//	printf("sched v1.21\r\n");
+	myprintf1("sched v1.22\0");
+//	printString2("sched v1.22\0");
+//	printf("sched v1.23\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
 	trip = 0;
 	tcp_connected_time = 0;
 	mask = 1;
+
+//	printString2("System Up\0");
 
 	while(TRUE)
 	{
@@ -273,10 +278,10 @@ UCHAR get_host_cmd_task(int test)
 		if(test_sock() == 1)
 //		if(1)
 		{
-// 			rc = recv_tcp(&cmd,1,1);			  // blocking
 			memset(msg_buf,0,sizeof(msg_buf));
 			msg_len = get_msg();
-			if(msg_len < 0 && cmd != UPLOAD_NEW)
+//			printHexByte(msg_len);
+			if(msg_len < 0)
 			{
 //				printf("bad msg\r\n");
 				cmd = BAD_MSG;
@@ -284,6 +289,28 @@ UCHAR get_host_cmd_task(int test)
 			{
 				rc = recv_tcp(&msg_buf[0],msg_len,1);
 				cmd = msg_buf[0];
+//				printHexByte(cmd);
+//				printHexByte(rc);
+//				printString2("\r\n");	
+				j = 0;
+
+//				for(i = 0;i < msg_len;i++)
+//					printHexByte(msg_buf[i]);
+
+//				printString2("\r\n");	
+
+				for(i = 2;i < msg_len+2;i+=2)
+					msg_buf2[j++] = msg_buf[i];
+
+/*
+				for(i = 0;i < j;i++)
+				{
+//					printHexByte(msg_buf2[i]);
+					write_serial2(msg_buf2[i]);
+//					printHexByte(msg_buf2[i]);
+				}
+*/
+//				printString2("\r\n");	
 			}
 			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && 
@@ -291,10 +318,14 @@ UCHAR get_host_cmd_task(int test)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
 
-//			if(cmd > 0)
-//				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
-
-			if(rc > 0 && cmd > 0)
+/*
+			if(cmd > 0)
+			{
+				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
+				printString2(tempx);
+			}
+*/
+			if(cmd > 0)
 			{
 				rc = 0;
  				switch(cmd)
@@ -345,9 +376,9 @@ UCHAR get_host_cmd_task(int test)
 					case WIPER_OFF:
 //						basic_controls(cmd);
 						add_msg_queue(cmd);
-						strcpy(tempx,cmd_array[cmd].cmd_str);
+//						strcpy(tempx,cmd_array[cmd].cmd_str);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
-						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 						break;
 
 					// the next 2 turns on or off the serial port to the PIC24 (monster box)
@@ -360,17 +391,23 @@ UCHAR get_host_cmd_task(int test)
 						break;
 */
 					case SET_SERIAL_RECV_ON:
-						if(fd = init_serial() < 0)
+						if(serial_recv_on == 0)
 						{
-							myprintf1("can't open comm port 1\0");
-							return 0;
+							if(fd = init_serial() < 0)
+							{
+								myprintf1("can't open comm port 1\0");
+								return 0;
+							}
+							serial_recv_on = 1;
 						}
-						serial_recv_on = 1;
 						break;
 
 					case SET_SERIAL_RECV_OFF:
-						close_serial();
-						serial_recv_on = 0;
+						if(serial_recv_on == 1)
+						{
+							close_serial();
+							serial_recv_on = 0;
+						}
 						break;
 
 					// allows password to be changed from laptop via tcp connection
@@ -439,12 +476,27 @@ UCHAR get_host_cmd_task(int test)
 						j = 0;
 						memset(tempx,0,sizeof(tempx));
 
-						for(i = 2;i < msg_len;i+=2)
-							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
-						msg_buf[msg_len/2] = 0;
+//						for(i = 2;i < msg_len;i+=2)
+//							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
+						for(i = 0;i < msg_len/2+2;i++)
+						{
+							tempx[i] = msg_buf2[i];
+//							write_serial2(tempx[i]);
+						}
+						tempx[msg_len/2-2] = 'M';
+//						printString2("\r\n");	
+
+//						printString2(tempx);
+//						printString2("\r\n");
+
+//						printString2(tempx);	
+//						msg_buf[msg_len/2] = 0;
 //							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
 //								printf("%c",msg_buf[i]);
-//						printf("%s\r\n",tempx);
+//						printf("set_time: %d %s\r\n",msg_len,tempx);
+//						for(i = 0;i < msg_len*2;i++)
+//							printf("%02x ",msg_buf[i]);
+//#if 0
 						memset(temp_time,0,sizeof(temp_time));
 						i = 0;
 						pch = &tempx[0];
@@ -534,6 +586,7 @@ UCHAR get_host_cmd_task(int test)
 						printf("%s\n",tempx);
 */
 //						time_set = 1;
+//#endif
 						break;
 
 					case GET_TIME:
@@ -542,20 +595,6 @@ UCHAR get_host_cmd_task(int test)
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME2);
-/*
-						gettimeofday(&mtv, NULL);
-						curtime2 = mtv.tv_sec;
-						strftime((char*)&time_buffer[0],30,"%m-%d-%Y %T.\0",localtime(&curtime2));
-						printf("%s\n",time_buffer);
-*/
-/*
-						send_serialother(TIME_DATA1,tempx[0],tempx[1],tempx[3],	tempx[4],0);
-						usleep(10000);
-						send_serialother(TIME_DATA2,tempx[8],tempx[9],tempx[11],tempx[12],0);
-						usleep(10000);
-						send_serialother(TIME_DATA3,tempx[14],tempx[15],tempx[17],tempx[18],0);
-						usleep(10000);
-*/
 						break;
 
 					case SEND_ODATA:
@@ -805,61 +844,94 @@ UCHAR get_host_cmd_task(int test)
 						if(test_sock() > 0)
 						{
 							close_tcp();
-//							printf("disconnected from socket\r\n");
-							live_window_on = 0;
+							printString2("disconnected from socket\0");
 							tcp_connected_time = 0;
 						}
 						break;
 
-					case STOP_MBOX_RECV:
-//						send_serial(STOP_SERIAL_RECV);
+					case STOP_MBOX_XMIT:
+						send_serial(STOP_MBOX_XMIT);
+						printString2("System Down\0");
 						break;
 
-					// upload this program and then goto reboot so it comes up using the
-					// newly uploaded program (see try_sched.sh in /home/dan/dev/sched)
+					case START_MBOX_XMIT:
+						send_serial(START_MBOX_XMIT);
+						printString2("System Up\0");
+						break;
 
 					case UPLOAD_NEW:
 #if 0
-						recv_tcp((UCHAR*)&fsize,8,1);
-						printf("%ld %d\r\n",fsize,sizeof(fsize));
-						cur_fsize = (int)fsize;
-						memset(upload_buf,0,UPLOAD_BUFF_SIZE);
-						strcpy(filename,"sched2");
+						j = 0;
+						memset(tempx,0,sizeof(tempx));
+						for(i = 2;i < 20;i+=2)
+						{
+//							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
+							tempx[j++] = msg_buf[i];
+						}
+/*
+						for(i = 0;i < msg_len;i++)
+							printHexByte(tempx[i]);
+
+						for(i = 0;i < msg_len*2;i++)
+							printHexByte(msg_buf[i]);
+*/						
+						cur_fsize = (long)tempx[3];
+						cur_fsize <<= 8;
+						cur_fsize |= (long)tempx[2];
+						cur_fsize <<= 8;
+						cur_fsize |= (long)tempx[1];
+						cur_fsize <<= 8;
+						cur_fsize |= (long)tempx[0];
+
+						sprintf(tempx, "%ld\r\0",cur_fsize);
+						printString2(tempx);
+
+
+						strcpy(filename,"sched2a");
 						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 700);
 						if(fp < 0)
 						{
-//							printf("could not create file: %s\n",filename);
+							printf("could not create file: %s\n",filename);
 							goto exit_program;
 							break;
 						}
-						do {
-							rc = 0;
-							rc1 = 0;
-							rc += recv_tcp((UCHAR *)&upload_buf[0],UPLOAD_BUFF_SIZE,1);
-							rc1 += write(fp, upload_buf, rc);
-							cur_fsize -= rc;
 
-						}while(cur_fsize > UPLOAD_BUFF_SIZE);
+						rc1 = 0;
 
-						rc += recv_tcp((UCHAR *)&upload_buf[0],cur_fsize,1);
-						rc1 += write(fp,upload_buf,cur_fsize);
+						break;
 
-						close(fp);
+					case UPLOAD_NEW2:
 
-					case EXIT_PROGRAM:
+						rc1 = write(fp, &msg_buf[2], msg_len-2);
+						cur_fsize -= msg_len-2;
+
+						sprintf(tempx,"%ld\r\0",cur_fsize);
+						printString2(tempx);
+//						sprintf(tempx,"%d\r\0",msg_len);
+//						printString2(tempx);
+						sprintf(tempx,"%d\r\0",rc1);
+						printString2(tempx);
+
+						if(cur_fsize == 0)
+						{
+							close(fp);
+//							goto exit_program;
+						}	
+
+						break;
 #endif
+					case EXIT_PROGRAM:
+
 //printf("exiting program...\r\n");
 exit_program:
-if(0)
-//						if(cmd == UPLOAD_NEW)
+
+						if(cmd == UPLOAD_NEW)
 						{
 							reboot_on_exit = 1;
-							myprintf1("rebooting...\0");
+							myprintf1("upload done...\0");
 						}
 						else
 						{
-//							printf("exit program\r\n");
-//							send_serial(STOP_SERIAL_RECV);
 							j = 0;
 /*
 							for(i = 2;i < msg_len;i+=2)
@@ -868,7 +940,7 @@ if(0)
 								printf("%02x\r\n",tempx[i-2]);
 							}
 */
-reboot_on_exit = 1;
+
 //							printf("exit code: %d\r\n",reboot_on_exit);
 							// return codes that tell try_sched.sh what to do
 							if(reboot_on_exit == 1)
@@ -887,7 +959,7 @@ reboot_on_exit = 1;
 //								printf("shutting down...\r\n");
 							}
 						}
-#if 0
+
 						// save the current list of events
 						strcpy(tempx,"odometer.txt\0");
 						fp = open((const char *)&tempx[0], O_RDWR | O_CREAT | O_TRUNC,
@@ -904,6 +976,7 @@ reboot_on_exit = 1;
 							close(fp);
 						}
 
+/*
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_find_data(i,otpp,&oll);
@@ -917,7 +990,7 @@ reboot_on_exit = 1;
 
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-
+*/
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -955,6 +1028,7 @@ reboot_on_exit = 1;
 */
 
 						// pulse the LED on the IO box before shutting down
+#if 0
 						for(i = 0;i < 20;i++)
 						{
 							setdioline(7,0);
@@ -967,7 +1041,7 @@ reboot_on_exit = 1;
 						setdioline(7,1);
 
 						// pulse the LED's on the card FWIW
-#endif
+
 						for(i = 0;i < 20;i++)
 						{
 							red_led(1);
@@ -977,7 +1051,11 @@ reboot_on_exit = 1;
 							usleep(20000);
 							green_led(0);
 						}
-
+#endif
+//						send_serial(SYSTEM_DOWN);
+						sprintf(tempx,"%s\n","SYSTEM DOWN");
+//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SYSTEM_DOWN2);
+						usleep(10000000);
 						shutdown_all = 1;
 						return 0;
 						break;
@@ -995,22 +1073,37 @@ reboot_on_exit = 1;
 /*********************************************************************/
 // get preamble & msg len from client
 // preamble is: {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00,
-//	 msg_len(lowbyte),msg_len(highbyte),0x00,0x00,0x00,0x00,0x00,0x00}
+// msg_len(lowbyte),msg_len(highbyte),0x00,0x00,0x00,0x00,0x00,0x00}
+// returns message length
 int get_msg(void)
 {
 	int len;
+	UCHAR low, high;
 	int ret;
-	int i;
 
 	UCHAR preamble[20];
 	ret = recv_tcp(preamble,16,1);
-//	for(i = 0;i < 15;i++)
-//		printf("%02x ",preamble[i]);
-//	printf("\n");
+	if(ret < 0)
+	{
+//		printString2("get_msg error\0");
+//		printHexByte(ret);
+	}
+/*
+	printString2("\r\n");	
+
+	for(i = 0;i < 16;i++)
+		printHexByte(preamble[i]);
+	printString2("\r\n");	
+*/
 	if(memcmp(preamble,pre_preamble,8) != 0)
 		return -1;
-	len = (int)preamble[8];
-//	printf("len: %d\n",len);
+
+	low = preamble[8];
+	high = preamble[9];
+	len = (int)(high);
+	len <<= 8;
+	len |= (int)low;
+
 	return len;
 }
 

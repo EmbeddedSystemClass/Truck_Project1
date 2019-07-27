@@ -71,7 +71,6 @@ static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
 //extern int time_set;
-extern int live_window_on;
 int max_ips;
 IP ip[40];
 static UCHAR msg_queue[MSG_QUEUE_SIZE];
@@ -99,7 +98,6 @@ void init_ips(void)
 	O_DATA **otpp = &otp;
 	char errmsg[20];
 
-	live_window_on = 0;
 	engine_running = 0;
 	test_lblinkers = 0;
 	test_rblinkers = 0;
@@ -303,35 +301,45 @@ void send_serial(UCHAR cmd)
 //	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
 	write_serial(cmd);
-
+/*
+	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+	{
+		if(i == 10)
+			write_serial(SYSTEM_UP);
+		else
+			write_serial(0);
+	}
+*/
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 void send_serial2(UCHAR cmd)
 {
 	int i;
-	pthread_mutex_lock( &serial_write_lock);
+//	pthread_mutex_lock( &serial_write_lock);
 	write_serial2(cmd);
 
-	pthread_mutex_unlock(&serial_write_lock);
+//	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 void send_serialother(UCHAR cmd, UCHAR *buf)
 {
-	pthread_mutex_lock( &serial_write_lock);
 	int i;
+
+	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
 	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 	{
 		write_serial(buf[i]);
 	}
+//	printString2("\r\n");
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 void send_serialother2(UCHAR cmd, UCHAR *buf)
 {
-	pthread_mutex_lock( &serial_write_lock);
+//	pthread_mutex_lock( &serial_write_lock);
 	int i;
 
 	write_serial2(cmd);
@@ -339,7 +347,7 @@ void send_serialother2(UCHAR cmd, UCHAR *buf)
 	{
 		write_serial2(buf[i]);
 	}
-	pthread_mutex_unlock(&serial_write_lock);
+//	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -429,7 +437,7 @@ UCHAR monitor_input_task(int test)
 		if(shutdown_all)
 		{
 //				printf("done mon input tasks\r\n");
-				myprintf1("done mon input");
+//				myprintf1("done mon input");
 			return 0;
 		}
 	}
@@ -539,7 +547,7 @@ UCHAR monitor_fake_input_task(int test)
 		if(shutdown_all)
 		{
 //				printf("done mon fake input tasks\r\n");
-				myprintf1("done mon input");
+//				myprintf1("done mon input");
 			return 0;
 		}
 	}
@@ -653,6 +661,7 @@ UCHAR timer_task(int test)
 	O_DATA **otpp = &otp;
 	O_DATA *otp2;
 	O_DATA **otpp2 = &otp2;
+	static led_counter = 0;
 
 	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
 	rpm = mph = 0;
@@ -663,9 +672,22 @@ UCHAR timer_task(int test)
 //			printf("done timer_task\r\n");
 			return 0;
 		}
+//		uSleep(0,TIME_DELAY/2);		// 1/2 sec
 		uSleep(1,0);
 
-
+		if(led_counter == 1)
+		{
+			led_counter = 0;
+			red_led(1);
+			green_led(0);
+		}
+		else
+		{
+			led_counter = 1;
+			red_led(0);
+			green_led(1);
+		}
+/*
 		write_serial_buffer[0] = running_hours;
 		write_serial_buffer[1] = running_minutes;
 		write_serial_buffer[2] = running_seconds;
@@ -676,6 +698,10 @@ UCHAR timer_task(int test)
 		write_serial_buffer[7] = (UCHAR)odometer;
 		write_serial_buffer[8] = (UCHAR)(trip << 8);
 		write_serial_buffer[9] = (UCHAR)trip;
+		write_serial_buffer[10] = SYSTEM_UP;
+*/
+		write_serial_buffer[0] = 0xAA;
+		write_serial_buffer[1] = 0x55;
 		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
 		if(engine_running == 1)
@@ -694,6 +720,7 @@ UCHAR timer_task(int test)
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
 		}else running_seconds = running_minutes = running_hours = 0;
+
 
 		odometer++;
 		if(odometer % 2 == 0)
@@ -870,10 +897,10 @@ UCHAR read_button_inputs(int test)
 UCHAR serial_recv_task(int test)
 {
 	serial_rec = 0;
-	int i;
+	int i = 0;
 	int j = 0;
 	int k = 0;
-	UCHAR ch;
+	UCHAR ch, ch2;
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
 	int engine_temp, rpm, mph;
@@ -897,16 +924,19 @@ UCHAR serial_recv_task(int test)
 
 //	printf("running serial task...\r\n");
 
-	ch = 0x21;
+	ch = ch2 = 0x7e;
 
 	red_led(0);
 	green_led(0);
 
 	usleep(_1SEC);
 
+//	printString2("starting recv task...\r\n");
 	while(TRUE)
 	{
 		pthread_mutex_lock( &serial_read_lock); 
+
+		// serial data is SERIAL_BUFF_SIZE preceded by an 0xFF
 
 		do {
 			ch = read_serial(errmsg);
@@ -914,23 +944,27 @@ UCHAR serial_recv_task(int test)
 
 		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 		{
-			 read_serial_buffer[i] = read_serial(errmsg);
-//			 send_serial2(read_serial_buffer[i]);
+			read_serial_buffer[i] = read_serial(errmsg);
 		}
-
+		pthread_mutex_unlock(&serial_read_lock);
 		cmd = read_serial_buffer[0];
 
-		pthread_mutex_unlock(&serial_read_lock);
-		// msg's known by the tcp laptop
-
+/*
+		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+		{
+			send_serial2(read_serial_buffer[i]);
+//			printHexByte(read_serial_buffer[i]);
+		}
+*/
 		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
 		{
-			add_msg_queue(cmd);
+			add_msg_queue(cmd);		// send msg to basic_controls_task
 			strcpy(tempx,cmd_array[cmd].cmd_str);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+			// send to client if tcp connected
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
 		}
 
-		if(cmd == ENGINE_TEMP)
+		if(test_sock() && cmd == ENGINE_TEMP)
 		{
 			high_byte = read_serial_buffer[1];
 			low_byte = read_serial_buffer[2];
@@ -938,10 +972,10 @@ UCHAR serial_recv_task(int test)
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
 			sprintf(tempx,"%.1f\0",convertF(engine_temp));
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
+ 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
 		}
 		
-		if(cmd == SEND_RT_VALUES)
+		if(test_sock() && cmd == SEND_RT_VALUES)
 		{
 			high_byte = read_serial_buffer[1];
 			low_byte = read_serial_buffer[2];
@@ -1076,6 +1110,7 @@ UCHAR tcp_monitor_task(int test)
 		else
 		{
 			myprintf1("Server Waiting...\0");
+			printString2("Server Waiting...\0");
 //			printf("Server Waiting...\r\n");
 //
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, (socklen_t *)&alen)) < 0)
@@ -1088,8 +1123,8 @@ UCHAR tcp_monitor_task(int test)
 			if(global_socket > 0)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
+			printString2("connected to socket: \0");
 //			printf("connected to socket: \r\n");
-			live_window_on = 1;
 			tcp_connected_time = 0;
 			
 			 send_param_msg();
@@ -1268,18 +1303,22 @@ UCHAR basic_controls_task(int test)
 			case WIPER1:
 			case WIPER2:
 			case WIPER_OFF:
+			case SPECIAL_CMD:
+			case ON_FUEL_PUMP:
+			case OFF_FUEL_PUMP:
 				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
-				printHexByte(cmd);
+//				printHexByte(cmd);
 //				printf("%s\r\n",cmd_array[cmd].cmd_str);
 
 			break;
 			default:
 			break;
 		}
-		
+
 		switch(cmd)
 		{
+	
 			case ENABLE_START:
 	//			index = STARTER;
 	//			rc = ollist_find_data(index,otpp,&oll);
@@ -1439,7 +1478,7 @@ UCHAR basic_controls_task(int test)
 
 			case TEST_LEFT_BLINKER:
 				change_input(LEFTBLINKER_INPUT,1);
-				test_lblinkers = 1;
+ 				test_lblinkers = 1;
 			break;
 
 			case TEST_RIGHT_BLINKER:
@@ -1545,7 +1584,7 @@ UCHAR basic_controls_task(int test)
 			break;	
 
 			case TEST_ALL_IO:
-
+/*
 				for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
 				{
 					ollist_find_data(i,otpp,&oll);
@@ -1556,7 +1595,9 @@ UCHAR basic_controls_task(int test)
 					set_output(otp,0);
 					usleep(_100MS);
 	//				printf("%d\r\n",i);
+
 				}
+*/
 			break;
 
 			case START_SEQ:
@@ -1696,7 +1737,7 @@ UCHAR basic_controls_task(int test)
 		}	// end of switch
 		if(shutdown_all)
 		{
-			myprintf1("done basic task");
+//			myprintf1("done basic task");
 //			printf("done basic task\r\n");
 			return 0;
 		}

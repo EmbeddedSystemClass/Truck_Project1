@@ -184,8 +184,11 @@ UCHAR read_serial(char *errmsg)
 	UCHAR byte;
 	res = read(global_handle,&byte,1);
 	if(res < 0)
+	{
 //		printf("\nread error: %s\n",strerror(errno));
+		printString2("error\0");
 		strcpy(errmsg,strerror(errno));
+	}
 	return byte;
 }
 /************************************************************************************/
@@ -259,14 +262,11 @@ char nibbleToHexCharacter(UCHAR nibble)
 	}
 }
 
-
 /************************************************************************************/
 void printString2(char *myString)
 {
-	UCHAR i = 0;
-//	printf("%s",myString);
-//	printf("\n");
-	return;
+	int i = 0;
+
 	while(myString[i])
 	{
 		write_serial2(myString[i]);
@@ -275,6 +275,7 @@ void printString2(char *myString)
 //	write_serial2(0xfe);
 	write_serial2('\r');
 	write_serial2('\n');
+
 }
 
 /************************************************************************************/

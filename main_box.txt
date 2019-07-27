@@ -17,6 +17,26 @@ serial ports on STM32:
 UART1: monitor/TS-7200 (external)
 UART2: AVR (external)
 UART3: FPGA (external with 2 handshaking lines)
+note: UART3 RX is not used, instead, there is a parallel port used.
+		Also, the UART3 TX uses (2) handshacking lines (CS & ACK)
+
+FPGA -> STM32:
+rpm/mph data
+STM32 -> FPGA:
+cmds to FPGA
+
+TS-7200 -> STM32:
+
+STM32 -> TS-7200:
+cmds from keypad
+engine temp from DS1620 task 
+rt values (rpm/mph) from recv FPGA task
+
+Since the UART receive's are in queues, they can
+only transfer 8 bytes at a time, so the TS-7200 UART
+could just use buffers protected by mutexes but can
+the FreeRTOS mutexes be called from without the 
+FreeRTOS tasks, or just ordinary functions?
 
 The STM32 has up to 16 ADC channels but the FPGA can be used to do the ADC using support chips.
 
@@ -46,10 +66,15 @@ pinout for LCD:
 
 bottom view of AVR w/ reset button on right
 
-TX		RX		RESET*		gnd		PD2		PD3		PD4		PD5		PD6		PD7		PB0		PB1
+TX	RX	RESET*	gnd	PD2	PD3	PD4	PD5	PD6	PD7	PB0	PB1
 
-RAW		gnd		RESET*		VCC		PC3		PC2		PC1		PC0		PB5		PB4		PB3		PB2
-																	SCLK	MISO	MOSI	SS
+RAW	gnd	RESET*	VCC	PC3	PC2	PC1	PC0	PB5	PB4	PB3	PB2
+												
+PB2: SS
+PB3: MOSI
+PB4: MISO
+PB5: SCLK
+
 *either one goes to CS signal on programmer
 
 1)  gnd
@@ -189,6 +214,91 @@ stuff with it depending on the cmd/data. I was going to
 have a seperate process in the FPGA that shuts of the fp
 and does the rev limit but the receive data could have 
 commands from the FPGA to do that.
+
+system comm overview:
+
+get_msg in get_host_cmd_task() waits for incoming tcp msg from 
+client and does case statement for all the cmd_types:
+everything from ENABLE_START to WIPER_OFF is in the 1st 
+case and does a:
+	add_msg_queue(cmd);
+	strcpy(tempx,cmd_array[cmd].cmd_str);
+	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+	
+add_msg_queue puts the cmd in a queue which is sent to the
+basic_controls_task() which sets the io ports for each cmd
+anything from ON_FAN to WIPER_OFF in the case statement in
+basic_controls_task sends the cmd back to the STM32 (send_serial)
+
+timer_tasks sends the time data (engine runtime and total runtime
+plus odometer and trip data) back to the STM32 every second
+
+send_msg sends the cmd back to the client
+
+in the TS-7200 serial_recv_task, the serial data is read
+SERIAL_BUFF_SIZE and the cmd is always read_serial_buffer[0];
+then:
+
+if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
+{
+	add_msg_queue(cmd);		// send msg to basic_controls_task
+	strcpy(tempx,cmd_array[cmd].cmd_str);
+	// send to client if tcp connected
+	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
+}
+
+The client does a Process_Msg in OnReceive() and does a 
+switch statement mostly just setting the edit boxes
+and putting text on the scrolling msg list box
+only SEND_CONFIG does much more
+
+                case "SEND_MSG":
+                    AddMsg(ret);
+					...
+                    break;
+                case "CURRENT_TIME":
+                    break;
+                case "SERVER_UPTIME":
+                    tbServerTime.Text = ret;
+                    break;
+                case "ENGINE_RUNTIME":
+                    tbEngRunTime.Text = ret;
+                    break;
+				case "ENGINE_TEMP":
+					tbEngineTemp.Text = ret;
+					break;
+                case "SEND_RPM":
+					tbRPM.Text = ret;
+					break;
+                case "SEND_MPH":
+					tbMPH.Text = ret;
+					break;
+                case "SEND_CONFIG":
+                    string[] words = ret.Split(' ');
+                    i = 0;
+					...
+                    break;
+                case "GET_TIME":
+                    AddMsg(ret);
+                    break;
+				case "SHUTDOWN":
+					...
+					break;
+
+So now we need a way for the keypad to send commands back to 
+the laptop in order to control the client app. like navigating
+the app - simulating what you do on the laptop,
+tabbing to different buttons and pressing enter so that way,
+when the laptop screen is connected to the 8" backup cam monitor
+the user can used the button to switch from viewing the backup cam
+(bnc) to the laptop (vga) so then you can run the entire carputer
+using the keypad as input and see the client app on the monitor.
+
+TODO: use system calls to control the Windows 10 laptop
+	and/or set the laptop so power stays on when lid is closed
+
+1) StartBasicCmdTask() sends the keypad press to TS-7200.
+2) 
 
 separate processor to handle the windshield wiper motor:
 
@@ -345,6 +455,10 @@ DB-15 B: (on right)
 11    13    15     17     19     21     23     gnd
     12    14    16     18     20      22    24   
 
+DB-15 A: (on left)
+... 5   3   1
+...   4   2
+
 DB-15 on right looking on outside:
 (yellow tape)
 
@@ -363,16 +477,16 @@ DB-15 on right looking on outside:
 15)	org/wht (1)			mph1_signal
 14)	org/wht (2)			mph2_signal
 13) br (1)				tx_rpm_mph
-12)	bl (2)				TX to LCD (PA2)
-11)	br/wht (1)			RX to LCD (PA3)
+12)	bl (2)				TX to LCD (PA2)	- to brn/wht wire to LCD
+11)	br/wht (1)			RX to LCD (PA3)	- to bl/wht wire to LCD
 (open) org/wht
 
 DB-15 on left looking from outside:
 (white tape)
 
-1)	org (1)				VCC
+1)	org (1)				VCC (doesn't need to be +5v)
 2)	br/wht (2)			GND
-3)	org/wht (1)			DS1620 DQ
+3)	org/wht (1)			DS1620 DQ **
 4)	grn (2)				DS1620 CLK
 5)	br/wht (1)			DS1620 RST
 6)	grn/wht (2)
@@ -386,6 +500,17 @@ DB-15 on left looking from outside:
 14)	bl/wht(2)
 15)	grn/wht (1)
 (open) br/wht (2)
+
+** 2 shielded 3-wire cables from DS1620:
+striped wire w/ blk tape:
+rd - 5v
+blk - DQ
+wht - CLK
+
+non-striped wire
+rd - RST
+blk - gnd
+wht - nc
 
 5v to RS-232 converter is external to main box
 2 connections from 3v3 conv for UART1

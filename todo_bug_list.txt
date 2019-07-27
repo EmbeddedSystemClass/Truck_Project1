@@ -1,0 +1,34 @@
+TODO: get DS1620 wired up and test with main box
+
+TODO: install behind-backup-cam-monitor board and hook up wires
+
+TODO: install rpm sensor and hookup wires (also rpm wires)
+
+TODO: figure out how to do indoor/outdoor temp with DS1620's
+
+TODO: need a 'recv_gate' signal so STM32 can shutoff/start the 
+recv_uart process. And another input to stop the broadcast (or command).
+(data_sent signal is not being used - just make it and in instead of an out)
+
+TODO: Also, may want a reference signal generated when the FPGA is running to
+blink an LED on the dash to show the FPGA is running. (or in the main box)
+
+TODO: In the StartDefaultTask of freertos.c - wait for a message from the AVR/LCD 
+before sending the init_rtlabels/DISPLAY_RTLABELS msg's.
+
+TODO: See if the parallel port can be made bi-directional, that would free up
+UART3 on the STM32. (The FPGA can have as many UARTS as there are pins available).
+
+TODO: need a timer in XMEGA processor that turns displays to '0' if no signal 
+
+TODO: 3 or 4 input buttons on dash to int's on STM32
+		and 3 or 4 outputs on dash from STM32 for status lights
+
+TODO: figure how to calc trip & odometer and get iobox to save trip to file.
+
+
+
+bug: AVR prints some kind of debug msg to location 0.0
+
+
+

@@ -20,9 +20,10 @@ else
 fi
 ./sched odata.dat
 OUT=$?
-echo "OUT:"
-echo $OUT
+echo "OUT:" >> status.txt
+echo $OUT >> status.txt
 date >> status.txt
+date >> found.txt
 if [ $OUT -eq 1 ]
  then
   echo "exit to shell" >> status.txt
@@ -36,4 +37,9 @@ if [ $OUT -eq 3 ]
  then
   echo "shutdown from script" >> status.txt
  /sbin/shutdown -h now
+fi
+if [ $OUT -eq 141 ]
+ then
+  echo "rebooting from 141" >> status.txt
+  /sbin/reboot
 fi

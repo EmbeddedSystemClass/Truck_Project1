@@ -547,7 +547,7 @@ static int setdioddr(int n,int v)
 
 //#endif
 
-//#ifndef MAKE_TARGET
+#ifndef MAKE_TARGET
 /*********************************************************************************************************/
 static void mydelay(unsigned long i)
 {
@@ -745,4 +745,4 @@ int main(void)
 	}while(key != 'q');
 }
 #endif
-//#endif
+#endif

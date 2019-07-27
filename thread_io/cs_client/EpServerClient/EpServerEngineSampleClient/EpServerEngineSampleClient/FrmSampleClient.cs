@@ -25,7 +25,9 @@ namespace EpServerEngineSampleClient
 		SHUTDOWN,
 		ENGINE_TEMP,
 		SEND_RPM,
-		SEND_MPH
+		SEND_MPH,
+		SYSTEM_UP,
+		SYSTEM_DOWN
     }
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
@@ -60,6 +62,7 @@ namespace EpServerEngineSampleClient
         ServerCmds svrcmd = new ServerCmds();
         INetworkClient m_client = new IocpTcpClient();
         private System.Collections.Generic.List<CommonControls> ctls;
+		private bool system_up = true;
         public FrmSampleClient()
         {
             InitializeComponent();
@@ -114,8 +117,13 @@ namespace EpServerEngineSampleClient
                 //Upload_New.Enabled = true;
                 ClientOps ops = new ClientOps(this, hostname, port);
                 m_client.Connect(ops);
-
-//                MessageBox.Show(svrcmd.GetCount().ToString());
+/*
+                if (m_client.IsConnectionAlive)
+					AddMsg("connect");
+				else 
+					AddMsg("not connect");
+//                MessageBox.Show("connected?");
+*/
             }
             else
             {
@@ -223,6 +231,7 @@ namespace EpServerEngineSampleClient
             //        i++;
             //    }
             //}
+
             switch (str)
             {
                 case "SEND_MSG":
@@ -346,6 +355,14 @@ namespace EpServerEngineSampleClient
 					AddMsg(ret);
 					break;
 
+				case "SYSTEM_UP":
+					AddMsg(ret);
+					break;
+
+				case "SYSTEM_DOWN":
+					AddMsg(ret);
+					break;
+
                 default:
                     break;
             }
@@ -447,7 +464,7 @@ namespace EpServerEngineSampleClient
             bytes2[0] = svrcmd.GetCmdIndexB(set_time);
             Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
             m_client.Send(packet);
-
+//			AddMsg(bytes2.Length.ToString());
         }
         public void ShowMyDialogBox()
         {
@@ -495,7 +512,7 @@ namespace EpServerEngineSampleClient
                              || ctls[i].CtlName == "TEST_RIGHT_BLINKER" || ctls[i].CtlName == "SPECIAL_CMD" ||
                                  ctls[i].CtlName == "BLOWER1_ON" || ctls[i].CtlName == "BLOWER2_ON" || 
                                      ctls[i].CtlName == "BLOWER2_ON" || ctls[i].CtlName == "BLOWER3_ON" || 
-                                     ctls[i].CtlName == "BLOWER_OFF" || ctls[i].CtlName == "TEST_ALL_IO")
+                                     ctls[i].CtlName == "BLOWER_OFF")
                     {
                         ctls[i].CtlSet = 0;
                         cblistCommon.SetItemChecked(i, false);
@@ -517,8 +534,22 @@ namespace EpServerEngineSampleClient
         }
         private void StopMbox(object sender, EventArgs e)
         {
-            string cmd = "STOP_MBOX_RECV";
-            svrcmd.Send_Cmd(cmd, 0);
+			if(system_up)
+			{
+				string cmd = "STOP_MBOX_XMIT";
+				svrcmd.Send_Cmd(cmd, 0);
+				system_up = false;
+				btnStopSerial.Text = "Start Mbox Xmit";
+				AddMsg("System Down");
+			}
+			else
+			{
+				string cmd = "START_MBOX_XMIT";
+				svrcmd.Send_Cmd(cmd, 0);
+				system_up = true;
+				btnStopSerial.Text = "Stop Mbox Xmit";
+				AddMsg("System Up");
+			}
         }
         private void DBMgmt(object sender, EventArgs e)
         {
@@ -550,10 +581,98 @@ namespace EpServerEngineSampleClient
         }
         private void Upload_New_Click(object sender, EventArgs e)
         {
+/*
+			UInt32 fsize;
+			UInt32 chunk_size = 10000;
+			UInt32 iters;
+			UInt32 rem;
+			int i;
+
+            byte[] tbytes = ReadFile("c:\\users\\daniel\\dev\\sched");
+            string no_bytes = tbytes.Count().ToString();
+//            AddMsg(no_bytes);
+			fsize = (UInt32)tbytes.Count();
+			if(fsize > chunk_size)
+			{
+				iters = fsize/chunk_size;
+				rem = fsize - (iters*chunk_size);
+			}
+			else 
+			{
+				chunk_size = fsize;
+				iters = 1;
+				rem = 0;
+			}
+
+			AddMsg(fsize.ToString());
+			AddMsg(iters.ToString());
+			AddMsg(chunk_size.ToString());
+			AddMsg(rem.ToString());
+
+			byte[] bfsize = new byte[8];
+			bfsize[0] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[2] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[4] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[6] = (byte)fsize;
+			byte[] total_bytes = new byte[bfsize.Count() + 2];
+//			AddMsg(bfsize.Length.ToString());
+//			AddMsg(total_bytes.Length.ToString());
+			
+			// BlockCopy(src, srcoffset, dest, destoffset, count)
+            System.Buffer.BlockCopy(bfsize, 0, total_bytes, 2, bfsize.Length - 2);
             string cmd = "UPLOAD_NEW";
-            svrcmd.Send_Cmd(cmd, 0);
-//			m_client.Send()
+			total_bytes[0] = svrcmd.GetCmdIndexB(cmd);
+
+            Packet packet = new Packet(total_bytes, 0, total_bytes.Count(), false);
+//			AddMsg(packet.PacketByteSize.ToString());
+            m_client.Send(packet);
+			
+//			byte[] total_bytes2 = new byte[bytes.Count() + 2];
+			byte[] total_bytes2 = new byte[chunk_size + 2];
+
+			byte[] rem_bytes = new byte[rem + 2];
+			AddMsg(rem.ToString());
+			Packet packet2 = new Packet(total_bytes2, 0, total_bytes2.Count(), false);
+			Packet packet3 = new Packet(rem_bytes, 0, rem_bytes.Count(), false);
+			cmd = "UPLOAD_NEW2";
+			for(i = 0;i < iters;i++)
+			{
+				System.Buffer.BlockCopy(tbytes, (int)(chunk_size*i), total_bytes2, 2, total_bytes2.Length - 2);
+				total_bytes2[0] = svrcmd.GetCmdIndexB(cmd);
+//				AddMsg(packet2.PacketByteSize.ToString());
+				m_client.Send(packet2);
+			}
+			System.Buffer.BlockCopy(tbytes, (int)(chunk_size*i), rem_bytes, 2, rem_bytes.Length - 2);
+			rem_bytes[0] = svrcmd.GetCmdIndexB(cmd);
+//			AddMsg(packet3.PacketByteSize.ToString());
+			m_client.Send(packet3);
+*/
         }
+
+		public static byte[] ReadFile(string filePath)
+		{
+			byte[] buffer;
+			FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			try
+			{
+				int length = (int)fileStream.Length;  // get file length
+				buffer = new byte[length];            // create buffer
+				int count;                            // actual number of bytes read
+				int sum = 0;                          // total number of bytes read
+
+				// read until Read method returns 0 (end of the stream has been reached)
+				while ((count = fileStream.Read(buffer, sum, length - sum)) > 0)
+				sum += count;  // sum is a buffer offset for next reading
+			}
+			finally
+			{
+				fileStream.Close();
+			}
+			return buffer;
+		}
     }
 }
 

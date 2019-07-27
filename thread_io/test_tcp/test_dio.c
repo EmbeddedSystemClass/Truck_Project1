@@ -8,9 +8,10 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
-#include "../mytypes.h"
+#include <errno.h>
+#include "../../mytypes.h"
 #include "lcd_func.h"
-#include "serial_io.h"
+//#include "../serial_io.h"
 
 #ifndef TS_7800
 
@@ -21,6 +22,39 @@ static UCHAR *buf_ptr;
 static int cur_buf_line;
 static int cur_disp_line;
 static int cur_buf_size;
+
+/*********************************************************************/
+int uSleep(time_t sec, long nanosec)
+{
+/* Setup timespec */
+	struct timespec req;
+	req.tv_sec = sec;
+	req.tv_nsec = nanosec;
+
+/* Loop until we've slept long enough */
+	do
+	{
+/* Store remainder back on top of the original required time */
+		if( 0 != nanosleep( &req, &req ) )
+		{
+/* If any error other than a signal interrupt occurs, return an error */
+			if(errno != EINTR)
+			{
+				myprintf1("uSleep error\n");
+//             return -1;
+			}
+		}
+		else
+		{
+/* nanosleep succeeded, so exit the loop */
+			break;
+		}
+	} while ( req.tv_sec > 0 || req.tv_nsec > 0 );
+
+	return 0;									  /* Return success */
+}
+
+
 
 /*********************************************************************************************************/
 void lcd_init(void)
@@ -59,8 +93,6 @@ int myprintf1(char *str)
 	char temp[10];
 	char temp2[35];
 
-	printString2(str);
-
 	if(!lcd_enabled)
 	{
 //		printf("%s\n",str);
@@ -71,10 +103,10 @@ int myprintf1(char *str)
 //	printf("%d\n",cur_buf_line);
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
-	sprintf((char*)buffer[cur_buf_line],"%d:%s",cur_disp_line,str);
+	sprintf((char*)buffer[cur_buf_line],"%d: %s",cur_disp_line,str);
 	display_current(0);
 
-//	sprintf(temp2,"%d: %s",cur_disp_line,str);
+	sprintf(temp2,"%d: %s",cur_disp_line,str);
 	return 1;
 }
 
@@ -92,7 +124,7 @@ int myprintf2(char *str, int x)
 		return 1;
 	}
 
-	sprintf(temp,"%d:%s",cur_disp_line, str);
+	sprintf(temp,"%d: %s",cur_disp_line, str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	cur_buf_line = cur_buf_size;
@@ -122,7 +154,7 @@ int myprintf3(char *str, int x, int y)
 	inc_bufptrs();
 	memset(buffer[cur_buf_line],0,LCD_BUF_COLS);
 
-	sprintf(temp,"%d:%s",cur_disp_line,str);
+	sprintf(temp,"%d: %s",cur_disp_line,str);
 	sprintf(temp2,"% d",x);
 	strcat(temp,temp2);
 	sprintf(temp2,"% d",y);
@@ -311,6 +343,7 @@ volatile UINT *portfd;
 	setdioddr(7,1);									// set last one to output
 }
 
+
 /**********************************************************************************************************/
 static UINT lcd_wait(void)
 {
@@ -351,6 +384,7 @@ static UINT lcd_wait(void)
 	return dat;
 }
 
+
 /**********************************************************************************************************/
 static void lcd_cmd(UINT cmd)
 {
@@ -384,6 +418,7 @@ static void lcd_cmd(UINT cmd)
 	i = HOLD;
 	COUNTDOWN(i);
 }
+
 
 /**********************************************************************************************************/
 static void lcd_write(UCHAR *dat)
@@ -426,11 +461,11 @@ static void lcd_write(UCHAR *dat)
 
 void red_led(int onoff)
 {
-	setbiobit((UCHAR *)portled,1,onoff);
+	setbiobit(portled,1,onoff);
 }
 void green_led(int onoff)
 {
-	setbiobit((UCHAR *)portled,0,onoff);
+	setbiobit(portled,0,onoff);
 }
 
 
@@ -445,16 +480,19 @@ static int setbiobit(UCHAR *ptr,int n,int v)
 	return(v);
 }
 
+
 static UCHAR dio_get_ddr(void)
 {
 	return(*dio_ddr);
 }
+
 
 static UCHAR dio_set_ddr(UCHAR b)
 {
 	*dio_ddr=b;
 	return(b);
 }
+
 
 //#if 0
 int getdioline(int n)
@@ -465,6 +503,7 @@ int getdioline(int n)
 	if (n==8) return(((*portfb)>>1)&1);
 	return((*dio_addr>>n)&1);
 }
+
 
 /* setdioline(n,v) set DIO Line n to value v
  *                 return v, or -1 on error.
@@ -500,6 +539,7 @@ int setdioline(int n,int v)
 	return(v);
 }
 
+
 /* getdioddr(n)  read the DDR of the DIO Line n
  *                return 0 or 1, or -1 on error
  */
@@ -512,6 +552,7 @@ static int getdioddr(int n)
 	if (n==8) return((*portfd>>1)&1);
 	return((dio_get_ddr()>>n)&1);
 }
+
 
 /* setdioddr(n,v) set DDR for line n to value v
  *                 return v, or -1 on error.
@@ -536,6 +577,7 @@ static int setdioddr(int n,int v)
 	}
 	return(v);
 }
+
 
 //#endif
 
@@ -593,129 +635,104 @@ int main(void)
 	i = j = 0;
 	lcd_init();
 
-	printf("c - clear screen\n");
-	printf("l - left shift\n");
-	printf("r - right shift\n");
-	printf("h - home cursor\n");
-	printf("u - scroll_up\n");
-	printf("d - scroll_down\n");
-	printf("p - print new string to buffer\n");
-	printf("q - quit\n");
+	printf("a - set DIO 0\n");
+	printf("b - clear DIO 0\n");
+	printf("c - set DIO 1\n");
+	printf("d - clear DIO 1\n");
+	printf("i - toggle DIO 0\n");
+	printf("j - toggle DIO 1\n");
+	printf("k - toggle DIO 2\n");
+	printf("2 - toggle DIO 0,1,2\n");
 
-//	buffer[LCD_BUF_LINES][LCD_BUF_COLS];
-
-	myprintf1("line 1 this is a test      a\0");
-	myprintf1("line 2 this is a test      b\0");
-	myprintf1("line 3 this is a test      c\0");
-	myprintf1("line 4 this is a test      d\0");
-	myprintf1("line 5 this is a test      e\0");
-	myprintf1("line 6 this is a test      f\0");
-	myprintf1("line 7 this is a test      g\0");
-	myprintf1("line 8 this is a test      h\0");
-	myprintf1("line 9 this is a test      i\0");
-	myprintf1("line 10 this is a test      j\0");
-/*
-	myprintf1("line 11 this is a test       k\0");
-	mydelay(1000);
-	myprintf1("line 12 this is a test       l\0");
-	mydelay(1000);
-	myprintf1("line 13 this is a test       m\0");
-	mydelay(1000);
-	myprintf1("line 14 this is a test       n\0");
-	mydelay(1000);
-	myprintf1("line 15 this is a test       o\0");
-	mydelay(1000);
-	myprintf1("line 16 this is a test       p\0");
-	mydelay(1000);
-	myprintf1("line 17 this is a test       q\0");
-	mydelay(1000);
-	myprintf1("line 18 this is a test       r\0");
-	mydelay(1000);
-	myprintf1("line 19 this is a test       s\0");
-	mydelay(1000);
-	myprintf1("line 20 this is a test       t\0");
-	mydelay(1000);
-*/
+printf("try and guess what keys to push...\r\n");
 	do
 	{
 		key = getc(stdin);
 		switch(key)
 		{
+			case 'a':
+				setdioline(0,1);
+				break;
+			case 'b':
+				setdioline(0,0);
+				break;
 			case 'c':
-				lcd_cls();
-				memset(buffer,0,LCD_BUF_LINES*LCD_BUF_COLS);
-				buf_ptr = buffer[0];
-				cur_buf_line = cur_buf_size = 0;
-				i = j = 0;
-				break;
-			case 'l':
-				for(i = 0;i < 6;i++)
-				{
-					mydelay(5);
-					shift_left();
-				}
-				break;
-			case 'r':
-				for(i = 0;i < 6;i++)
-				{
-					mydelay(5);
-					shift_right();
-				}
-				break;
-			case 'm':
-				printf("c - clear screen\n");
-				printf("l - left shift\n");
-				printf("r - right shift\n");
-				printf("h - home cursor\n");
-				printf("u - scroll_up\n");
-				printf("d - scroll_down\n");
-				printf("p - print new string to buffer\n");
-				printf("q - quit\n");
-				break;
-			case 'p':
-				myprintf3("new string \0",i,j);
-				i++;
-				j += 2;
-				break;
-			case 'h':
-				lcd_home();
-				break;
-			case 'i':	
-				for(i = 0;i < cur_buf_size+1;i++)
-				{
-					printf("%s\n",buffer[i]);
-				}
-				break;
-			case 'u':
-				scroll_up();
+				setdioline(1,1);
 				break;
 			case 'd':
-				scroll_down();
+				setdioline(1,0);
 				break;
-			case 't':
-				myprintf1("line 11 this is a test       k\0");
-				myprintf1("line 12 this is a test       l\0");
-				myprintf1("line 13 this is a test       m\0");
-				myprintf1("line 14 this is a test       n\0");
-				myprintf1("line 15 this is a test       o\0");
+			case 'e':
+				setdioline(0,1);
 				break;
-			case 'v':
-				myprintf1("line 16 hello a test       p\0");
-				myprintf1("line 17 hello a test       q\0");
-				myprintf1("line 18 hello a test       r\0");
-				myprintf1("line 19 hello a test       s\0");
-				myprintf1("line 20 hello a test       t\0");
+			case 'f':
+				setdioline(0,0);
 				break;
-			case 'w':
-				myprintf1("16 hello a test       p\0");
-				myprintf1("17 hello a test       q\0");
-				myprintf1("18 hello a test       r\0");
-				myprintf1("19 hello a test       s\0");
-				myprintf1("20 hello a test       t\0");
+			case 'g':
+				setdioline(1,1);
 				break;
-			case '1':
+			case 'h':
+				setdioline(1,0);
+				break;
+			case 'i':
+				printf("working...\r\n");
+				for(i = 0;i < 500;i++)
+				{
+					setdioline(0,1);
+//					usleep(100);
+					uSleep(0,500);
+					setdioline(0,0);
+					uSleep(0,500);
+//					usleep(100);
+				}
+				setdioline(0,1);
+				printf("next key...\r\n");
+				break;
+			case 'j':
+				printf("working...\r\n");
+				for(i = 0;i < 100;i++)
+				{
+					setdioline(1,1);
+					usleep(100);
+					setdioline(1,0);
+					usleep(1000);
+				}
+				setdioline(1,1);
+				printf("next key...\r\n");
+				break;
+			case 'k':
+				printf("working...\r\n");
+				for(i = 0;i < 100;i++)
+				{
+					setdioline(2,1);
+					usleep(100);
+					setdioline(2,0);
+					usleep(100);
+				}
+				setdioline(2,1);
+				printf("next key...\r\n");
 				break;
 			case '2':
+				printf("working...\r\n");
+				for(i = 0;i < 10;i++)
+				{
+					setdioline(0,1);
+					usleep(100);
+					setdioline(0,0);
+					usleep(100);
+					setdioline(1,1);
+					usleep(100);
+					setdioline(1,0);
+					usleep(100);
+					setdioline(2,1);
+					usleep(100);
+					setdioline(2,0);
+					usleep(100);
+				}	
+				printf("next key...\r\n");
+				setdioline(0,1);
+				setdioline(1,1);
+				setdioline(2,1);
 				break;
 			case '3':
 				break;
@@ -735,6 +752,15 @@ int main(void)
 				break;
 		}
 	}while(key != 'q');
+	setdioline(0,1);
+	setdioline(1,1);
+	setdioline(2,1);
+	setdioline(3,1);
+	setdioline(4,1);
+	setdioline(5,1);
+	setdioline(6,1);
+	setdioline(7,1);
+	printf("\r\n\r\n         done!\r\n\r\n");
 }
 #endif
 #endif

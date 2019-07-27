@@ -125,7 +125,7 @@
             this.tbHostname.Name = "tbHostname";
             this.tbHostname.Size = new System.Drawing.Size(94, 20);
             this.tbHostname.TabIndex = 11;
-            this.tbHostname.Text = "192.168.42.149";
+            this.tbHostname.Text = "192.168.42.145";
             // 
             // tbConnected
             // 
@@ -339,7 +339,7 @@
             this.btnStopSerial.Name = "btnStopSerial";
             this.btnStopSerial.Size = new System.Drawing.Size(120, 23);
             this.btnStopSerial.TabIndex = 10;
-            this.btnStopSerial.Text = "Stop Mbox";
+            this.btnStopSerial.Text = "Stop Mbox Xmit";
             this.btnStopSerial.UseVisualStyleBackColor = true;
             this.btnStopSerial.Click += new System.EventHandler(this.StopMbox);
             // 

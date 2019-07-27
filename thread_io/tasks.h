@@ -92,6 +92,7 @@ typedef struct
 	int onoff;
 }SPECIAL_CMD_ARR;
 
+// global variables
 int tcp_window_on;
 static UCHAR running_hours, running_minutes, running_seconds;
 static UCHAR trunning_hours, trunning_minutes, trunning_seconds;
@@ -111,7 +112,7 @@ extern char oFileName[20];
 extern char iFileName[20];
 
 extern UCHAR reboot_on_exit;
-UCHAR upload_buf[UPLOAD_BUFF_SIZE];
+//UCHAR upload_buf[UPLOAD_BUFF_SIZE];
 static int same_msg;
 
 #endif
