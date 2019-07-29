@@ -41,10 +41,10 @@ namespace EpServerEngineSampleClient
 			OFF_RLIGHTS,
 			ON_RBRIGHTS,
 			OFF_RBRIGHTS,
-			BLOWER_OFF,
 			BLOWER1,
 			BLOWER2,
 			BLOWER3,
+			BLOWER_OFF,
 			WIPER1,
 			WIPER2,
 			WIPER_OFF,
@@ -79,7 +79,17 @@ namespace EpServerEngineSampleClient
 			SET_PARAMS,
 			EXIT_PROGRAM,
 			ENGINE_TEMP,
-			SEND_RT_VALUES
+			SEND_RT_VALUES,
+			ENGINE_RUNTIME,
+			SERVER_UPTIME,
+			SEND_CONFIG,
+			SEND_MSG,
+			SEND_RPM,
+			SEND_MPH,
+			NAV_UP,
+			NAV_DOWN,
+			NAV_CLICK,
+			NAV_CLOSE
 		}
 
         public ServerCmds()
@@ -140,12 +150,12 @@ namespace EpServerEngineSampleClient
             } while (i != cmd);
             return cmd2;
         }
-        public void Send_Cmd(string cmd, int onoff)
+        public void Send_Cmd(int sendcmd)
         {
-            string test = " ";
-            int sendcmd = 0;
-            byte[] bytes = BytesFromString(test);
 
+            string test = " ";
+            byte[] bytes = BytesFromString(test);
+/*
             switch (cmd)
             {
                 case "STARTER":
@@ -278,10 +288,20 @@ namespace EpServerEngineSampleClient
 				case "START_MBOX_XMIT":
                     sendcmd = (int)Server_cmds.START_MBOX_XMIT;
 					break;
+                case "WIPER1":
+                    sendcmd = (int)Server_cmds.WIPER1;
+                    break;
+                case "WIPER2":
+                    sendcmd = (int)Server_cmds.WIPER2;
+                    break;
+                case "WIPER_OFF":
+                    sendcmd = (int)Server_cmds.WIPER_OFF;
+                    break;
                 default:
                     sendcmd = (int)Server_cmds.NON_CMD;
                     break;
             }
+*/
             bytes.SetValue((byte)sendcmd, 0);
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);

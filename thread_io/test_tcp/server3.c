@@ -14,7 +14,7 @@
 #include <netdb.h>
 //#include <ncurses.h>
 #include "tcp.h"
-#include "../mytypes.h"
+#include "../../mytypes.h"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1

@@ -26,13 +26,14 @@ CC = ${GNUCC}
 
 #all : client server client2 server2
 #all : client2
-all : test_upload_new
+all : server
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
 
 server.o: server.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
+#	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
+	${CC} ${CC_FLAGS} -DSIMPLE_TEST ${INCLUDE_PATHS} -c server.c
 
 test_upload_new.o: test_upload_new.c
 	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c test_upload_new.c
@@ -40,26 +41,26 @@ test_upload_new.o: test_upload_new.c
 client: client.o
 	${CC} client.o -o client
 
-server: server.o
+server2: server.o
 	${CC} server.o -o server
 
-client2.o: client.c
+client3.o: client.c
 	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c client.c
 
 server2.o: server.c
 	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c server.c
 
-client2: client2.o
+client3: client3.o
 	${CC} client.o -o client2
 
-server2: server2.o
+server2: server.o
 	${CC} server.o -o server2
 
 test_upload_new: test_upload_new.o
 	${CC} test_upload_new.o -o test_upload_new
 
 clean :
-#	rm -f *.o *~ *# core client server client2 server2 test_write test_read
+	rm -f *.o *~ *# core client server client2 server2 test_write test_read
 #	rm -f *.o *~ *# client2
-	rm -f *.o *~ *# test_upload_new
+#	rm -f *.o *~ *# test_upload_new
 

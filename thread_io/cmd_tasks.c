@@ -35,7 +35,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[68] =
+CMD_STRUCT cmd_array[78] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -66,10 +66,10 @@ CMD_STRUCT cmd_array[68] =
 	{		OFF_RLIGHTS,"OFF_RLIGHTS\0" },
 	{		ON_RBRIGHTS,"ON_RBRIGHTS\0" },
 	{		OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
-	{		BLOWER_OFF,"BLOWER_OFF\0" },
 	{		BLOWER1,"BLOWER1\0" },
 	{		BLOWER2,"BLOWER2\0" },
 	{		BLOWER3,"BLOWER3\0" },
+	{		BLOWER_OFF,"BLOWER_OFF\0" },
 	{		WIPER1,"WIPER1\0" },
 	{		WIPER2,"WIPER2\0" },
 	{		WIPER_OFF,"WIPER_OFF\0" },
@@ -104,7 +104,17 @@ CMD_STRUCT cmd_array[68] =
 	{		SET_PARAMS,"SET_PARAMS\0" },
 	{		EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{		ENGINE_TEMP,"ENGINE_TEMP\0" },
-	{		SEND_RT_VALUES,"SEND_RT_VALUES\0" }
+	{		SEND_RT_VALUES,"SEND_RT_VALUES\0" },
+	{		ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
+	{		SERVER_UPTIME,"SERVER_UPTIME\0" },
+	{		SEND_CONFIG,"SEND_CONFIG\0" },
+	{		SEND_MSG,"SEND_MSG\0" },
+	{		SEND_RPM,"SEND_RPM\0" },
+	{		SEND_MPH,"SEND_MPH\0" },
+	{		NAV_UP,"NAV_UP\0" },
+	{		NAV_DOWN,"NAV_DOWN\0" },
+	{		NAV_CLICK,"NAV_CLICK\0" },
+	{		NAV_CLOSE,"NAV_CLOSE\0" }
 };
 
 //extern illist_t ill;
@@ -317,7 +327,6 @@ UCHAR get_host_cmd_task(int test)
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
-
 /*
 			if(cmd > 0)
 			{
@@ -594,7 +603,7 @@ UCHAR get_host_cmd_task(int test)
 						curtime2 = mtv.tv_sec;
 						strftime(tempx,30,"%m-%d-%Y %T\0",localtime(&curtime2));
 						myprintf1(tempx);
-						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME2);
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME);
 						break;
 
 					case SEND_ODATA:
@@ -1080,13 +1089,14 @@ int get_msg(void)
 	int len;
 	UCHAR low, high;
 	int ret;
+	int i;
 
 	UCHAR preamble[20];
 	ret = recv_tcp(preamble,16,1);
 	if(ret < 0)
 	{
-//		printString2("get_msg error\0");
-//		printHexByte(ret);
+		printString2("get_msg error\0");
+		printHexByte(ret);
 	}
 /*
 	printString2("\r\n");	
@@ -1152,6 +1162,8 @@ int recv_tcp(UCHAR *str, int strlen,int block)
 		if(ret < 0 && (strcmp(errmsg,"Success") != 0))
 		{
 			myprintf1(errmsg);
+//			sprintf(errmsg,"errno: %d\0",ret);
+//			printString2(errmsg);
 		}
 	}
 	else

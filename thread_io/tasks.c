@@ -611,6 +611,8 @@ UCHAR timer2_task(int test)
 	static int led_onoff;
 	led_counter = 0;
 	led_onoff = 0;
+	static test_ctr = 0;
+	static test_ctr2 = 0;
 
 	while(TRUE)
 	{
@@ -661,7 +663,10 @@ UCHAR timer_task(int test)
 	O_DATA **otpp = &otp;
 	O_DATA *otp2;
 	O_DATA **otpp2 = &otp2;
-	static led_counter = 0;
+	static int led_counter = 0;
+	static int test_ctr = 0;
+	static int test_ctr2 = 0;
+	static UCHAR nav = NAV_DOWN;
 
 	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
 	rpm = mph = 0;
@@ -702,7 +707,33 @@ UCHAR timer_task(int test)
 */
 		write_serial_buffer[0] = 0xAA;
 		write_serial_buffer[1] = 0x55;
-		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
+//		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
+
+//		sprintf(tempx,"nav click");
+//		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, NAV_CLICK);
+
+//		if(++test_ctr2 > 2)
+		{
+			usleep(10000);
+			sprintf(tempx,"nav");
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, nav);
+			test_ctr2 = 0;
+
+//			if(++test_ctr > 20)
+if(1)
+			{
+				usleep(10000);
+/*
+				if(nav == NAV_DOWN)
+					nav = NAV_UP;
+				else nav = NAV_DOWN;
+*/
+				sprintf(tempx,"nav click");
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, NAV_CLICK);
+				test_ctr = 0;
+				usleep(10000);
+			}
+		}
 
 		if(engine_running == 1)
 		{
@@ -972,7 +1003,7 @@ UCHAR serial_recv_task(int test)
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
 			sprintf(tempx,"%.1f\0",convertF(engine_temp));
- 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP2);
+ 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
 		}
 		
 		if(test_sock() && cmd == SEND_RT_VALUES)
@@ -983,7 +1014,7 @@ UCHAR serial_recv_task(int test)
 			rpm <<= 8;
 			rpm |= (int)low_byte;
 			sprintf(tempx,"%d",rpm);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM2);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
 
 			high_byte = read_serial_buffer[3];
 			low_byte = read_serial_buffer[4];
@@ -991,7 +1022,7 @@ UCHAR serial_recv_task(int test)
 			mph <<= 8;
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH2);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
 		}
 
 		if(shutdown_all)
@@ -1100,7 +1131,7 @@ UCHAR tcp_monitor_task(int test)
 			{
 				strcpy(tempx,"shutdown...\0");
 				pthread_cancel(serial_thread);
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN2);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
 //				uSleep(2,0);
 				close_tcp();
 //				printf("done tcp_mon\r\n");
@@ -1110,7 +1141,7 @@ UCHAR tcp_monitor_task(int test)
 		else
 		{
 			myprintf1("Server Waiting...\0");
-			printString2("Server Waiting...\0");
+//			printString2("Server Waiting...\0");
 //			printf("Server Waiting...\r\n");
 //
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, (socklen_t *)&alen)) < 0)
@@ -1123,7 +1154,7 @@ UCHAR tcp_monitor_task(int test)
 			if(global_socket > 0)
 				sock_open = 1;
 			myprintf1("connected to socket: \0");
-			printString2("connected to socket: \0");
+//			printString2("connected to socket: \0");
 //			printf("connected to socket: \r\n");
 			tcp_connected_time = 0;
 			
@@ -1306,6 +1337,14 @@ UCHAR basic_controls_task(int test)
 			case SPECIAL_CMD:
 			case ON_FUEL_PUMP:
 			case OFF_FUEL_PUMP:
+			case ON_LLIGHTS:
+			case OFF_LLIGHTS:
+			case ON_LBRIGHTS:
+			case OFF_LBRIGHTS:
+			case ON_RLIGHTS:
+			case OFF_RLIGHTS:
+			case ON_RBRIGHTS:
+			case OFF_RBRIGHTS:
 				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
 //				printHexByte(cmd);
@@ -1315,7 +1354,7 @@ UCHAR basic_controls_task(int test)
 			default:
 			break;
 		}
-
+#if 0
 		switch(cmd)
 		{
 	
@@ -1735,12 +1774,14 @@ UCHAR basic_controls_task(int test)
 				default:
 				break;
 		}	// end of switch
+#endif
 		if(shutdown_all)
 		{
 //			myprintf1("done basic task");
 //			printf("done basic task\r\n");
 			return 0;
 		}
+
 	}
 	return 1;
 }

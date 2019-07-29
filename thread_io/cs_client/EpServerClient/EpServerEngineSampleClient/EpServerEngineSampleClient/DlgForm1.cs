@@ -17,26 +17,23 @@ namespace EpServerEngineSampleClient
     public partial class DlgForm1 : Form
     {
        private System.Windows.Forms.BindingSource bindingSource1;
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString2 = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB3.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionStringlt = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Dan_Laptop\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        string connectionString =        "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
         string connstr_prefix = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=";
         string connstr_suffix = ";Integrated Security = True; Connect Timeout = 30";
+        string curr_table_name = "O_DATA";
 
-        private bool use_main_odata;
-        private bool use_laptop = false;
         private INetworkClient m_client;
         ServerCmds svrcmd = new ServerCmds();
 
         public DlgForm1()
         {
             InitializeComponent();
-            use_main_odata = true;
             btn_SendSelectedRecords.Enabled = true;
             bindingSource1 = new BindingSource();
             currentconnectionString = connectionString;
-//            currentconnectionString = connectionStringlt;
+            tbCurTable.Text = curr_table_name;
+            //            currentconnectionString = connectionStringlt;
             //if(m_client.IsConnectionAlive)
             //    svrcmd.SetClient(m_client);
         }
@@ -52,6 +49,7 @@ namespace EpServerEngineSampleClient
             m_client = client;
             svrcmd.SetClient(m_client);
         }
+        // this gives an error when LoadDB is called (Open doesn't work) so I hid this button
         private void btn_ListDB_Click(object sender, EventArgs e)
         {
             ChangeDB testDialog = new ChangeDB(currentconnectionString);
@@ -63,7 +61,7 @@ namespace EpServerEngineSampleClient
             }
             else
             {
-                currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB2.mdf;Integrated Security=True;Connect Timeout=30";
+                currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
             }
 //            MessageBox.Show(currentconnectionString);
             testDialog.Dispose();
@@ -74,6 +72,8 @@ namespace EpServerEngineSampleClient
             if(swtables.ShowDialog(this) == DialogResult.OK)
             {
                 LoadDb(swtables.returnStr);
+                curr_table_name = swtables.returnStr;
+                tbCurTable.Text = curr_table_name;
             }
         }
         private void DlgForm1_Load(object sender, EventArgs e)
@@ -90,14 +90,8 @@ namespace EpServerEngineSampleClient
                 {
                     conn.Open();
                     System.Data.SqlClient.SqlCommand cmd;
-                    if (use_main_odata)
-                    {
                         cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label, onoff=@onoff, polarity=@polarity, type=@type, time_delay= @time_delay,time_left=@time_left, reset=@reset WHERE port=@port", conn);
-                    }
-                    else
-                    {
-                        cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA2 SET label=@label, onoff=@onoff, polarity=@polarity, type=@type, time_delay= @time_delay,time_left=@time_left, reset=@reset WHERE port=@port", conn);
-                    }
+//                        cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA2 SET label=@label, onoff=@onoff, polarity=@polarity, type=@type, time_delay= @time_delay,time_left=@time_left, reset=@reset WHERE port=@port", conn);
                     cmd.Parameters.AddWithValue("@label", label);
                     cmd.Parameters.AddWithValue("@port", port.ToString());
                     cmd.Parameters.AddWithValue("@onoff", onoff.ToString());
@@ -113,7 +107,7 @@ namespace EpServerEngineSampleClient
             }
             catch (SqlException ex)
             {
-                //                AddMsg(ex.Message.ToString());
+//                AddMsg(ex.Message.ToString());
             }
         }
         private void Update_Table(int port, string data)
@@ -124,10 +118,8 @@ namespace EpServerEngineSampleClient
             string sql = null;
             //            SqlDataAdapter adapter = new SqlDataAdapter();
             int i = 0;
-            if (use_main_odata)
-                sql = "select * from O_DATA";
-            else
-                sql = "select * from O_DATA2";
+            //            sql = "select * from O_DATA";
+            sql = "select * from " + curr_table_name;
             sqlCnn = new SqlConnection(currentconnectionString);
             //            adapter.SelectCommand = sqlCmd;
             try
@@ -180,6 +172,7 @@ namespace EpServerEngineSampleClient
             string sql = null;
             sql = "Select * from " + str_table;
             sqlCnn = new SqlConnection(currentconnectionString);
+            tbCurTable.Text = sql;
             try
             {
                 sqlCnn.Open();
@@ -198,12 +191,13 @@ namespace EpServerEngineSampleClient
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                currentconnectionString = connectionString;
             }
         }
 
         private void btnShow_Click(object sender, EventArgs e)
         {
-            LoadDb("O_DATA");
+            LoadDb(curr_table_name);
             //SqlConnection sqlCnn;
             //SqlCommand sqlCmd;
             //SqlDataAdapter adapter = new SqlDataAdapter();
@@ -306,9 +300,7 @@ namespace EpServerEngineSampleClient
             SqlDataAdapter adapter = new SqlDataAdapter();
 
             string sql = null;
-            if (use_main_odata)
-                sql = "delete O_DATA";
-            else sql = "delete O_DATA2";
+                sql = "delete " + curr_table_name;
 
             sqlCnn = new SqlConnection(currentconnectionString);
             try
@@ -463,8 +455,8 @@ namespace EpServerEngineSampleClient
             //            string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.SAVE_TO_DISK);
             string cmd = "SAVE_TO_DISK";
 
-            if (m_client.IsConnectionAlive)
-                svrcmd.Send_Cmd(cmd, 0);
+            //if (m_client.IsConnectionAlive)
+                //svrcmd.Send_Cmd(cmd, 0);
         }
         private void btnDeleteO_DATA_Click(object sender, EventArgs e)
         {
