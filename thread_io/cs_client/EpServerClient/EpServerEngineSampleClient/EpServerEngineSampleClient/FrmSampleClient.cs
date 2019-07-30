@@ -64,9 +64,9 @@ namespace EpServerEngineSampleClient
 		private int current_button = 0;
 		private int previous_button = 0;
 		private int no_buttons = 14;
-		//private static System.Timers.Timer aTimer;
-		int i = 0;
-		int j = 0;
+		private int i = 0;
+		private bool avr_running = false;
+		private int server_connection_attempts = 1;
 		string xml_file_location = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
 		//string xml_file_location = "c:\\Users\\Dan_Laptop\\dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
 		public FrmSampleClient()
@@ -85,15 +85,15 @@ namespace EpServerEngineSampleClient
 			tbPort.Enabled = true;
 			/*
 									shutdown.Enabled = true;		// these have to be set true to use in debugger
-									button2.Enabled = true;
+									StartEng.Enabled = true;
 									btnShutdown.Enabled = true;
 									btnReboot.Enabled = true;
 									btnStopSerial.Enabled = true;
 									btn_SetTime.Enabled = true;
 									btnGetTime.Enabled = true;
 			*/
-			button3.Enabled = false;    // these are normally set false
-			button2.Enabled = false;
+			StopEng.Enabled = false;    // these are normally set false
+			StartEng.Enabled = false;
 			btnShutdown.Enabled = false;
 			btnReboot.Enabled = false;
 			btnStopSerial.Enabled = false;
@@ -111,8 +111,10 @@ namespace EpServerEngineSampleClient
 
 			i = 0;
 			ui_format = new List<UIFormat>();
+
 			XmlReader xmlReader = new XmlTextReader(xml_file_location);
 			UIFormat item = null;
+			
 			while (xmlReader.Read())
 			{
 				if (xmlReader.NodeType == XmlNodeType.Text)
@@ -147,12 +149,12 @@ namespace EpServerEngineSampleClient
 			}
 			//AddMsg("found XML file...");
 
+/*
 			for (i = 0; i < ui_format.Count(); i++)
 			{
-				//AddMsg(i.ToString() + " " + ui_format[i].Dlg_no.ToString() + " " + ui_format[i].Label + " " + ui_format[i].Command.ToString() + " " + ui_format[i].Length.ToString());
+				AddMsg(i.ToString() + " " + ui_format[i].Dlg_no.ToString() + " " + ui_format[i].Label + " " + ui_format[i].Command.ToString() + " " + ui_format[i].Length.ToString());
 			}
-			//AddMsg("");
-
+*/
 			i = 0;
 			foreach (Button btn in psDlg.Controls.OfType<Button>())
 			{
@@ -180,8 +182,7 @@ namespace EpServerEngineSampleClient
 									// first so let't reverse them and hope for the best
 			psDlg.SetButtonLabels();
 			psDlg.Name = "Dialog One";
-			//AddMsg("");
-			j = 0;
+			
 			foreach (Button btn in psDlg2.Controls.OfType<Button>())
 			{
 				//if (btn.Enabled && ui_format[i].Dlg_no == 1)
@@ -245,7 +246,6 @@ namespace EpServerEngineSampleClient
 
 				tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
 				tbPort.Enabled = false;
-				//tbSend.Enabled = true;
 				btnConnect.Text = "Disconnect";
 				btnShutdown.Enabled = true;
 				btnReboot.Enabled = true;
@@ -289,6 +289,7 @@ namespace EpServerEngineSampleClient
 				tbRPM.Text = "";
 				tbMPH.Text = "";
 				tbServerTime.Text = "";
+				timer1.Enabled = false;
 
 				if (m_client.IsConnectionAlive)
 					m_client.Disconnect();
@@ -304,33 +305,34 @@ namespace EpServerEngineSampleClient
 			tbConnected.Text = "connected";     // comment all these out in debug
 												//            cblistCommon.Enabled = true;      this one stays commneted out
 			btnConnect.Text = "Disconnect";
-			button3.Enabled = true;             // shutdown engine button
-			button2.Enabled = true;             // start engine
+			StopEng.Enabled = true;             // shutdown engine button
+			StartEng.Enabled = true;             // start engine
 			btnSetParams.Enabled = true;
+			tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
+			tbPort.Enabled = false;
+			
+			btnShutdown.Enabled = true;
+			btnReboot.Enabled = true;
+			btnStopSerial.Enabled = true;
+			tbServerTime.Text = "";
+			tbEngRunTime.Text = "";
+			tbEngineTemp.Text = "";
+			tbRPM.Text = "";
+			tbMPH.Text = "";
+
+			btn_SetTime.Enabled = true;
+			btnGetTime.Enabled = true;
 			reevaluate_enabled_buttons();
 		}
 		public void OnDisconnect(INetworkClient client)
 		{
-			int i;
 			tbHostname.Enabled = true;
 			tbPort.Enabled = true;
-			//            cblistCommon.Enabled = false;
 			btnConnect.Text = "Connect";
 			tbConnected.Text = "not connected";
-			//            shutdown.Enabled = false;
-			//            button2.Enabled = false;
+			btnShutdown.Enabled = false;
+			StartEng.Enabled = false;
 			btnSetParams.Enabled = false;
-			/*
-						for (i = 0; i < ctls.Count; i++)
-						{
-							ctls[i].CtlSet = 0;
-							ctls[i].Changed = 0;
-						}
-						for (i = 0; i < cblistCommon.Items.Count; i++)
-						{
-							cblistCommon.SetItemChecked(i, false);
-						}
-			*/
 			reevaluate_enabled_buttons();
 		}
 		protected override void OnClosed(EventArgs e)
@@ -468,7 +470,7 @@ namespace EpServerEngineSampleClient
 					btnStopSerial.Enabled = false;
 					btn_SetTime.Enabled = false;
 					btnGetTime.Enabled = false;
-					Upload_New.Enabled = false;
+					DialogTwo.Enabled = false;
 					tbEngRunTime.Text = "";
 					tbEngineTemp.Text = "";
 					tbServerTime.Text = "";
@@ -577,7 +579,7 @@ namespace EpServerEngineSampleClient
 			btnConnect_Click(sender, e);
 		}
 		// start engine
-		private void button2_Click(object sender, EventArgs e)
+		private void StartEng_Click(object sender, EventArgs e)
 		{
 			string cmd = "START_SEQ";
 			AddMsg("start seq: " + cmd);
@@ -586,7 +588,7 @@ namespace EpServerEngineSampleClient
 			svrcmd.Send_Cmd(offset);
 		}
 		// shutdown engine
-		private void shutdown_Click_1(object sender, EventArgs e)
+		private void StopEng_Click_1(object sender, EventArgs e)
 		{
 			string cmd = "SHUTDOWN";
 			int offset = svrcmd.GetCmdIndexI(cmd);
@@ -608,22 +610,6 @@ namespace EpServerEngineSampleClient
 			m_client.Send(packet);
 			//			AddMsg(bytes2.Length.ToString());
 		}
-		public void ShowMyDialogBox()
-		{
-			DlgForm1 testDialog = new DlgForm1();
-			testDialog.SetClient(m_client);
-			// Show testDialog as a modal dialog and determine if DialogResult = OK.
-			if (testDialog.ShowDialog(this) == DialogResult.OK)
-			{
-				//                AddMsg("dlg = OK");
-			}
-			else
-			{
-				//                this.txtResult.Text = "Cancelled";
-			}
-			testDialog.Dispose();
-		}
-
 		private void ShutdownServer(object sender, EventArgs e)
 		{
 			string cmd = "SHUTDOWN_IOBOX";
@@ -659,7 +645,19 @@ namespace EpServerEngineSampleClient
 		}
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			ShowMyDialogBox();
+			DlgForm1 testDialog = new DlgForm1();
+			testDialog.SetClient(m_client);
+			// Show testDialog as a modal dialog and determine if DialogResult = OK.
+			if (testDialog.ShowDialog(this) == DialogResult.OK)
+			{
+				//                AddMsg("dlg = OK");
+			}
+			else
+			{
+				//                this.txtResult.Text = "Cancelled";
+			}
+			testDialog.Dispose();
+
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -686,80 +684,9 @@ namespace EpServerEngineSampleClient
 			}
 			testDialog.Dispose();
 		}
-		private void Upload_New_Click(object sender, EventArgs e)
+		private void Dialog2_Click(object sender, EventArgs e)
 		{
-			/*
-                        UInt32 fsize;
-                        UInt32 chunk_size = 10000;
-                        UInt32 iters;
-                        UInt32 rem;
-                        int i;
-
-                        byte[] tbytes = ReadFile("c:\\users\\daniel\\dev\\sched");
-                        string no_bytes = tbytes.Count().ToString();
-            //            AddMsg(no_bytes);
-                        fsize = (UInt32)tbytes.Count();
-                        if(fsize > chunk_size)
-                        {
-                            iters = fsize/chunk_size;
-                            rem = fsize - (iters*chunk_size);
-                        }
-                        else 
-                        {
-                            chunk_size = fsize;
-                            iters = 1;
-                            rem = 0;
-                        }
-
-                        AddMsg(fsize.ToString());
-                        AddMsg(iters.ToString());
-                        AddMsg(chunk_size.ToString());
-                        AddMsg(rem.ToString());
-
-                        byte[] bfsize = new byte[8];
-                        bfsize[0] = (byte)fsize;
-                        fsize >>= 8;
-                        bfsize[2] = (byte)fsize;
-                        fsize >>= 8;
-                        bfsize[4] = (byte)fsize;
-                        fsize >>= 8;
-                        bfsize[6] = (byte)fsize;
-                        byte[] total_bytes = new byte[bfsize.Count() + 2];
-            //			AddMsg(bfsize.Length.ToString());
-            //			AddMsg(total_bytes.Length.ToString());
-
-                        // BlockCopy(src, srcoffset, dest, destoffset, count)
-                        System.Buffer.BlockCopy(bfsize, 0, total_bytes, 2, bfsize.Length - 2);
-                        string cmd = "UPLOAD_NEW";
-                        total_bytes[0] = svrcmd.GetCmdIndexB(cmd);
-
-                        Packet packet = new Packet(total_bytes, 0, total_bytes.Count(), false);
-            //			AddMsg(packet.PacketByteSize.ToString());
-                        m_client.Send(packet);
-
-            //			byte[] total_bytes2 = new byte[bytes.Count() + 2];
-                        byte[] total_bytes2 = new byte[chunk_size + 2];
-
-                        byte[] rem_bytes = new byte[rem + 2];
-                        AddMsg(rem.ToString());
-                        Packet packet2 = new Packet(total_bytes2, 0, total_bytes2.Count(), false);
-                        Packet packet3 = new Packet(rem_bytes, 0, rem_bytes.Count(), false);
-                        cmd = "UPLOAD_NEW2";
-                        for(i = 0;i < iters;i++)
-                        {
-                            System.Buffer.BlockCopy(tbytes, (int)(chunk_size*i), total_bytes2, 2, total_bytes2.Length - 2);
-                            total_bytes2[0] = svrcmd.GetCmdIndexB(cmd);
-            //				AddMsg(packet2.PacketByteSize.ToString());
-                            m_client.Send(packet2);
-                        }
-                        System.Buffer.BlockCopy(tbytes, (int)(chunk_size*i), rem_bytes, 2, rem_bytes.Length - 2);
-                        rem_bytes[0] = svrcmd.GetCmdIndexB(cmd);
-            //			AddMsg(packet3.PacketByteSize.ToString());
-                        m_client.Send(packet3);
-            */
-
-			//            foreach (Button btn in Controls.OfType<Button>())
-			//               AddMsg(btn.Name);
+			
 			psDlg2.Name = "Dialog Two";
 			psDlg2.Enable_Dlg(true);
 			if (psDlg2.ShowDialog(this) == DialogResult.OK)
@@ -772,39 +699,44 @@ namespace EpServerEngineSampleClient
 			}
 			psDlg2.Enable_Dlg(false);
 		}
-		/*
-                public static IEnumerable<Button> Buttons(this ControlCollection controls)
-                {
-                    return controls.OfType<Button>();
-                }
-        */
-		public static byte[] ReadFile(string filePath)
-		{
-			byte[] buffer;
-			FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			try
-			{
-				int length = (int)fileStream.Length;  // get file length
-				buffer = new byte[length];            // create buffer
-				int count;                            // actual number of bytes read
-				int sum = 0;                          // total number of bytes read
 
-				// read until Read method returns 0 (end of the stream has been reached)
-				while ((count = fileStream.Read(buffer, sum, length - sum)) > 0)
-					sum += count;  // sum is a buffer offset for next reading
-			}
-			finally
+		private void btnAVR_Click(object sender, EventArgs e)
+		{
+			string cmd = "";
+			int offset = 0;
+
+
+			if (avr_running)
 			{
-				fileStream.Close();
+				cmd = "STOP_AVR_XMIT";
+				offset = svrcmd.GetCmdIndexI(cmd);
+				svrcmd.Send_Cmd(offset);
+				avr_running = false;
+				AddMsg("AVR off");
+				btnAVR.Text = "AVR off";
 			}
-			return buffer;
+			else
+			{
+				cmd = "START_AVR_XMIT";
+				offset = svrcmd.GetCmdIndexI(cmd);
+				svrcmd.Send_Cmd(offset);
+				avr_running = true;
+				AddMsg("AVR on");
+				btnAVR.Text = "AVR on";
+			}
 		}
 
-		private void btnPortSettings_Click(object sender, EventArgs e)
+		private void Dialog1_Click(object sender, EventArgs e)
 		{
-			// Show testDialog as a modal dialog and determine if DialogResult = OK.
+/*
+			foreach (ButtonList btn in button_list)
+			{
+				AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
+			}
+*/
 			psDlg.Name = "Dialog One";
 			psDlg.Enable_Dlg(true);
+
 			if (psDlg.ShowDialog(this) == DialogResult.OK)
 			{
 				//                AddMsg("dlg = OK");
@@ -815,58 +747,6 @@ namespace EpServerEngineSampleClient
 			}
 			psDlg.Enable_Dlg(false);
 			//psDlg.Dispose();  don't do this if psDlg was created in constructor
-
-		}
-
-		private void btnLoadXML_Click(object sender, EventArgs e)
-		{
-			foreach (ButtonList btn in button_list)
-			{
-				AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
-			}
-			/*
-						try
-						{
-							XmlReader xmlFile = null;
-							DataSet ds2 = new DataSet();
-
-							var fileContent = string.Empty;
-							var filePath = string.Empty;
-
-							using (OpenFileDialog openFileDialog = new OpenFileDialog())
-							{
-								openFileDialog.InitialDirectory = "c:\\users\\daniel\\dev";
-								//                    openFileDialog.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
-								openFileDialog.Filter = "xml files (*.xml)|*.xml";
-								openFileDialog.FilterIndex = 2;
-								openFileDialog.RestoreDirectory = true;
-
-								if (openFileDialog.ShowDialog() == DialogResult.OK)
-								{
-									//Get the path of specified file
-									filePath = openFileDialog.FileName;
-
-									//Read the contents of the file into a stream
-									//var fileStream = openFileDialog.OpenFile();
-
-									//using (StreamReader reader = new StreamReader(fileStream))
-									//{
-									//    fileContent = reader.ReadToEnd();
-									//}
-								}
-							}
-							//                MessageBox.Show(filePath.ToString());
-
-							xmlFile = XmlReader.Create(filePath, new XmlReaderSettings());
-							ds2.ReadXml(xmlFile);
-							ds2.
-			//				dataGridView1.DataSource = ds2.Tables[0];
-						}
-						catch (Exception ex)
-						{
-							MessageBox.Show(ex.ToString());
-						}
-			*/
 		}
 
 		private void reevaluate_enabled_buttons()
@@ -888,12 +768,12 @@ namespace EpServerEngineSampleClient
 					if (current_button < 0)
 						current_button = no_buttons - 1;
 					button_list[current_button].Ctl.BackColor = Color.Aqua;
-					button_list[previous_button].Ctl.BackColor = Color.White;
+					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 
 					//AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
 					//textBox1.Text = "up  " + button_list[current_button].Name;
-					AddMsg("up  " + button_list[current_button].Name + " " 
-						+ current_button.ToString() + " " + previous_button.ToString()+ " " + button_list[current_button].TabOrder.ToString());
+					//AddMsg("up  " + button_list[current_button].Name + " " 
+						//+ current_button.ToString() + " " + previous_button.ToString()+ " " + button_list[current_button].TabOrder.ToString());
 					break;
 
 				case "NAV_DOWN":
@@ -902,10 +782,10 @@ namespace EpServerEngineSampleClient
 					if (current_button > no_buttons - 1)
 						current_button = 0;
 					button_list[current_button].Ctl.BackColor = Color.Aqua;
-					button_list[previous_button].Ctl.BackColor = Color.White;
+					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 //					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
-					AddMsg("down  " + button_list[current_button].Name + " " 
-						+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					//AddMsg("down  " + button_list[current_button].Name + " " 
+						//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
 					break;
 
 				case "NAV_SIDE":
@@ -915,46 +795,61 @@ namespace EpServerEngineSampleClient
 					else if(current_button < 7)
 						current_button += 7;
 					button_list[current_button].Ctl.BackColor = Color.Aqua;
-					button_list[previous_button].Ctl.BackColor = Color.White;
+					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 					//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
-					AddMsg("side  " + button_list[current_button].Name + " "
-						+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					//AddMsg("side  " + button_list[current_button].Name + " "
+						//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
 					break;
 				case "NAV_CLICK":
-					button_list[current_button].Ctl.PerformClick();
-					AddMsg("click  " + button_list[current_button].Name + " "
-						+ button_list[current_button].TabOrder.ToString());
-					textBox1.Text = "time";
-					textBox1.Text = "click";
+					if (button_list[current_button].Enabled)
+					{
+						button_list[current_button].Ctl.PerformClick();
+						//AddMsg("click  " + button_list[current_button].Name + " "
+							//+ button_list[current_button].TabOrder.ToString());
+						textBox1.Text = "time";
+						textBox1.Text = "click";
+					}
+					else AddMsg("Not Enabled");
 					break;
 			}
 		}
 
 		private void myTimerTick(object sender, EventArgs e)
 		{
-			if (!m_client.IsConnectionAlive)
-			{
-				AddMsg("attempting to connect to server...");
-				string hostname = tbHostname.Text;
-				string port = tbPort.Text;
+			bool connected = false;
+			
+			string hostname = tbHostname.Text;
+			string port = tbPort.Text;
+			ClientOps ops = new ClientOps(this, hostname, port);
 
+			if (m_client.IsConnectionAlive)
+			{
+/*
+				server_connection_attempts = 0;
 				tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
 				tbPort.Enabled = false;
-				//tbSend.Enabled = true;
 				btnConnect.Text = "Disconnect";
 				btnShutdown.Enabled = true;
 				btnReboot.Enabled = true;
 				btnStopSerial.Enabled = true;
-				tbServerTime.Text = "";
-				tbEngRunTime.Text = "";
-				tbEngineTemp.Text = "";
-				tbRPM.Text = "";
-				tbMPH.Text = "";
+				//tbServerTime.Text = "";
+				//tbEngRunTime.Text = "";
+				//tbEngineTemp.Text = "";
+				//tbRPM.Text = "";
+				//tbMPH.Text = "";
 
 				btn_SetTime.Enabled = true;
 				btnGetTime.Enabled = true;
-				//Upload_New.Enabled = true;
-				ClientOps ops = new ClientOps(this, hostname, port);
+				//tbReceived.Clear();
+				//AddMsg("Server Connected");
+*/
+			}
+			else
+			{
+				connected = false;
+				//tbReceived.Clear();
+				//AddMsg("attempting to connect to server " + server_connection_attempts.ToString());
+				//server_connection_attempts++;
 				m_client.Connect(ops);
 			}
 		}

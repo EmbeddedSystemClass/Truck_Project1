@@ -692,7 +692,7 @@ UCHAR timer_task(int test)
 			red_led(0);
 			green_led(1);
 		}
-/*
+
 		write_serial_buffer[0] = running_hours;
 		write_serial_buffer[1] = running_minutes;
 		write_serial_buffer[2] = running_seconds;
@@ -704,9 +704,9 @@ UCHAR timer_task(int test)
 		write_serial_buffer[8] = (UCHAR)(trip << 8);
 		write_serial_buffer[9] = (UCHAR)trip;
 		write_serial_buffer[10] = SYSTEM_UP;
-*/
-		write_serial_buffer[0] = 0xAA;
-		write_serial_buffer[1] = 0x55;
+
+//		write_serial_buffer[0] = 0xAA;
+//		write_serial_buffer[1] = 0x55;
 		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
 //		sprintf(tempx,"nav click");
@@ -1001,18 +1001,22 @@ UCHAR serial_recv_task(int test)
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
 		}else
 
-		if(test_sock() && cmd == ENGINE_TEMP)
+		if(cmd == ENGINE_TEMP)
 		{
 			high_byte = read_serial_buffer[1];
 			low_byte = read_serial_buffer[2];
+
 			engine_temp = (int)high_byte;
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
-			sprintf(tempx,"%.1f\0",convertF(engine_temp));
- 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
+//			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
+			sprintf(tempx,"%.1f\0", convertF(engine_temp));
+			printString2(tempx);
+			if(test_sock())
+	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
 		}else
 		
-		if(test_sock() && cmd == SEND_RT_VALUES)
+		if(cmd == SEND_RT_VALUES)
 		{
 			high_byte = read_serial_buffer[1];
 			low_byte = read_serial_buffer[2];
@@ -1020,7 +1024,9 @@ UCHAR serial_recv_task(int test)
 			rpm <<= 8;
 			rpm |= (int)low_byte;
 			sprintf(tempx,"%d",rpm);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
+//			printString2(tempx);
+			if(test_sock())
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
 
 			high_byte = read_serial_buffer[3];
 			low_byte = read_serial_buffer[4];
@@ -1028,6 +1034,7 @@ UCHAR serial_recv_task(int test)
 			mph <<= 8;
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
+//			printString2(tempx);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
 		}else
 		

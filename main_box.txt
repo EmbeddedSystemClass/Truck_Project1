@@ -192,114 +192,6 @@ row1		PB14
 row2		PB13
 row3		PB12
 
-StartAVRTask() waits for a SendAVRQueueHandle message.
-Any task sending a SendAVRQueueHandle message will
-pack an 8-bit UCHAR array into a uint64_t which is
-send to the queue handle. Use pack64() to byte shift
-the UCHAR array into the uint64_t. The first byte of
-the UCHAR array is the command which ends up in the
-lowest significant byte of the uint64_t.
-
-The StartSendFPGA task in freertos.c send data via the
-UART3 TX along with the handshacking lines to the FPGA
-which in it's receive process, stuffs the data in it's
-download dl_array. 
-
-The StartRecvFPGA task in freertos.c gets data sent via
-the parallel port from the upload dl_array in the pport
-process of the FPGA. For now, the data received in the
-StartRecvFPGA task just passes it along to UART1 which
-I used to check the data. In the future, we will do other
-stuff with it depending on the cmd/data. I was going to 
-have a seperate process in the FPGA that shuts of the fp
-and does the rev limit but the receive data could have 
-commands from the FPGA to do that.
-
-system comm overview:
-
-get_msg in get_host_cmd_task() waits for incoming tcp msg from 
-client and does case statement for all the cmd_types:
-everything from ENABLE_START to WIPER_OFF is in the 1st 
-case and does a:
-	add_msg_queue(cmd);
-	strcpy(tempx,cmd_array[cmd].cmd_str);
-	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
-	
-add_msg_queue puts the cmd in a queue which is sent to the
-basic_controls_task() which sets the io ports for each cmd
-anything from ON_FAN to WIPER_OFF in the case statement in
-basic_controls_task sends the cmd back to the STM32 (send_serial)
-
-timer_tasks sends the time data (engine runtime and total runtime
-plus odometer and trip data) back to the STM32 every second
-
-send_msg sends the cmd back to the client
-
-in the TS-7200 serial_recv_task, the serial data is read
-SERIAL_BUFF_SIZE and the cmd is always read_serial_buffer[0];
-then:
-
-if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
-{
-	add_msg_queue(cmd);		// send msg to basic_controls_task
-	strcpy(tempx,cmd_array[cmd].cmd_str);
-	// send to client if tcp connected
-	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
-}
-
-The client does a Process_Msg in OnReceive() and does a 
-switch statement mostly just setting the edit boxes
-and putting text on the scrolling msg list box
-only SEND_CONFIG does much more
-
-                case "SEND_MSG":
-                    AddMsg(ret);
-					...
-                    break;
-                case "CURRENT_TIME":
-                    break;
-                case "SERVER_UPTIME":
-                    tbServerTime.Text = ret;
-                    break;
-                case "ENGINE_RUNTIME":
-                    tbEngRunTime.Text = ret;
-                    break;
-				case "ENGINE_TEMP":
-					tbEngineTemp.Text = ret;
-					break;
-                case "SEND_RPM":
-					tbRPM.Text = ret;
-					break;
-                case "SEND_MPH":
-					tbMPH.Text = ret;
-					break;
-                case "SEND_CONFIG":
-                    string[] words = ret.Split(' ');
-                    i = 0;
-					...
-                    break;
-                case "GET_TIME":
-                    AddMsg(ret);
-                    break;
-				case "SHUTDOWN":
-					...
-					break;
-
-So now we need a way for the keypad to send commands back to 
-the laptop in order to control the client app. like navigating
-the app - simulating what you do on the laptop,
-tabbing to different buttons and pressing enter so that way,
-when the laptop screen is connected to the 8" backup cam monitor
-the user can used the button to switch from viewing the backup cam
-(bnc) to the laptop (vga) so then you can run the entire carputer
-using the keypad as input and see the client app on the monitor.
-
-TODO: use system calls to control the Windows 10 laptop
-	and/or set the laptop so power stays on when lid is closed
-
-1) StartBasicCmdTask() sends the keypad press to TS-7200.
-2) 
-
 separate processor to handle the windshield wiper motor:
 
 bk - common
@@ -333,6 +225,11 @@ TODO: need a timer in XMEGA processor that turns displays to '0' if no signal
 
 TODO: 3 or 4 input buttons on dash to int's on STM32
 		and 3 or 4 outputs on dash from STM32 for status lights
+		
+TODO: make text file in EpClient directory that says either "laptop" or "desktop"
+	so the client knows which xml file to read from
+
+TODO: SET_PARAMS not quite working right
 
 XMEGA proc for driving LED module (rpm/mph)
 The TX's of USART's 1 & 2 go to the LED module (rpm/mph).
@@ -452,7 +349,7 @@ DB-15 connections:
 A is on left, B - right
 
 DB-15 B: (on right)
-11    13    15     17     19     21     23     gnd
+11    13    15     17     19     21     23     25
     12    14    16     18     20      22    24   
 
 DB-15 A: (on left)
@@ -574,10 +471,12 @@ DQ			B0
 CLK			B1
 RST			B2
 
+Test_Pin	C6  test output that is toggled in the 1 sec timer
+
 avail:
 A: 0,1,4,5,6,7,8
 B: none
-C: 4,5,6,7,13
+C: 4,5,7,13
 can't use A: 13,14 (used by SWDIO/CLK)
 can't use D: 0,1 or C: 14,15 (unless change jumpers underneath)
 total: 11 left

@@ -35,7 +35,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[79] =
+CMD_STRUCT cmd_array[81] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -75,6 +75,8 @@ CMD_STRUCT cmd_array[79] =
 	{		WIPER_OFF,"WIPER_OFF\0" },
 	{		STOP_MBOX_XMIT,"STOP_MBOX_XMIT\0" },
 	{		START_MBOX_XMIT,"START_MBOX_XMIT\0" },
+	{		STOP_AVR_XMIT,"STOP_AVR_XMIT\0" },
+	{		START_AVR_XMIT,"START_AVR_XMIT\0" },
 	{		SEND_TIME_DATA,"SEND_TIME_DATA\0" },
 	{		SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{		REBOOT_IOBOX,"REBOOT_IOBOX\0" },
@@ -458,20 +460,32 @@ UCHAR get_host_cmd_task(int test)
 						}
 */
 						format_param_msg();
-/*
-						printf("\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
-						printf("mph_update: %d\r\n",ps.mph_update_rate);
-						printf("fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
-						printf("high_rev_limit: %d\r\n",ps.high_rev_limit);
-						printf("low_rev_limit: %d\r\n",ps.low_rev_limit);
-						printf("cooling fan: %d\r\n",ps.cooling_fan_on);
-						printf("fan off: %d\r\n",ps.cooling_fan_off);
-						printf("blwer en: %d\r\n",ps.blower_enabled);
-						printf("blower1: %d\r\n",ps.blower1_on);
-						printf("blower2: %d\r\n",ps.blower2_on);
-						printf("blower3: %d\r\n",ps.blower3_on);
-						printf("test_bank: %d\r\n",ps.test_bank);
-*/
+
+						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
+						printString2(tempx);
+						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
+						printString2(tempx);
+						sprintf(tempx,"fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
+						printString2(tempx);
+						sprintf(tempx,"high_rev_limit: %d\r\n",ps.high_rev_limit);
+						printString2(tempx);
+						sprintf(tempx,"low_rev_limit: %d\r\n",ps.low_rev_limit);
+						printString2(tempx);
+						sprintf(tempx,"cooling fan: %d\r\n",ps.cooling_fan_on);
+						printString2(tempx);
+						sprintf(tempx,"fan off: %d\r\n",ps.cooling_fan_off);
+						printString2(tempx);
+						sprintf(tempx,"blwer en: %d\r\n",ps.blower_enabled);
+						printString2(tempx);
+						sprintf(tempx,"blower1: %d\r\n",ps.blower1_on);
+						printString2(tempx);
+						sprintf(tempx,"blower2: %d\r\n",ps.blower2_on);
+						printString2(tempx);
+						sprintf(tempx,"blower3: %d\r\n",ps.blower3_on);
+						printString2(tempx);
+						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
+						printString2(tempx);
+
 //						send_serialother(SEND_PARAMS,&msg_buf[2],12);
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
@@ -867,6 +881,16 @@ UCHAR get_host_cmd_task(int test)
 					case START_MBOX_XMIT:
 						send_serial(START_MBOX_XMIT);
 						printString2("System Up\0");
+						break;
+
+					case STOP_AVR_XMIT:
+						send_serial(STOP_AVR_XMIT);
+						printString2("xmit to AVR off\0");
+						break;
+
+					case START_AVR_XMIT:
+						send_serial(START_AVR_XMIT);
+						printString2("xmit to AVR on\0");
 						break;
 
 					case UPLOAD_NEW:

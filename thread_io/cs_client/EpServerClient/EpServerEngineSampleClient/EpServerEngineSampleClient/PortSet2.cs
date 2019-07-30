@@ -81,13 +81,9 @@ namespace EpServerEngineSampleClient
 		{
 			return m_ctls[i].CtlText;
 		}
-		//		private System.Collections.Generic.List<CommonControls> GetInstByTabOrder(int tab)
-		//		private EpServerEngineSampleClient.FrmSampleClient.CommonControls GetInstByTabOrder(int tab)
 		private int GetInstByTabOrder(int tab)
 		{
 			int i;
-			//EpServerEngineSampleClient.FrmSampleClient.CommonControls ctl;
-			//			System.Collections.Generic.List<CommonControls> ctl;
 			for(i = 0;i < m_ctls.Count();i++)
 			{
 				if (tab == m_ctls[i].TabOrder)
@@ -111,8 +107,9 @@ namespace EpServerEngineSampleClient
             System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
             ret = new string(chars2);
 			string str = svrcmd.GetName(type_msg);
+			//AddMsg(str);
 
-			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK"))
+			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
 			{
 				previous_button = current_button;
 				switch (str)
@@ -144,6 +141,7 @@ namespace EpServerEngineSampleClient
 
 						break;
 					case "NAV_CLOSE":
+						//AddMsg("close");
 						this.Close();
 						break;
 					default:
@@ -156,12 +154,12 @@ namespace EpServerEngineSampleClient
 					j = GetInstByTabOrder(previous_button);
 					if (i > -1 && j > -1)
 					{
-						AddMsg(m_ctls[i].TabOrder.ToString());
+						//AddMsg(m_ctls[i].TabOrder.ToString());
 						Button temp = (Button)m_ctls[i].Ctlinst;
-						temp.BackColor = Color.White;
-						temp = (Button)m_ctls[j].Ctlinst;
 						temp.BackColor = Color.Aqua;
-//						AddMsg(current_button.ToString() + " " + i.ToString());
+						temp = (Button)m_ctls[j].Ctlinst;
+						temp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+						//						AddMsg(current_button.ToString() + " " + i.ToString());
 					}
 					else
 					{
@@ -170,43 +168,34 @@ namespace EpServerEngineSampleClient
 				}
 			}
         }
- 
-
 		private void button0_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button1_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button2_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button3_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button4_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button5_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button6_Click(object sender, EventArgs e)
 		{
 			send_cmd();
 		}
-
 		private void button7_Click(object sender, EventArgs e)
 		{
 			send_cmd();
@@ -228,7 +217,7 @@ namespace EpServerEngineSampleClient
 			string cmd = svrcmd.GetName(command + offset);
 
 //			AddMsg(cmd + " " + offset.ToString());
-			AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
+			//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
 
 			svrcmd.Send_Cmd(command + offset);
 

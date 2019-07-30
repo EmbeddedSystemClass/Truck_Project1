@@ -39,8 +39,8 @@
 			this.tbConnected = new System.Windows.Forms.TextBox();
 			this.label3 = new System.Windows.Forms.Label();
 			this.btn_SetTime = new System.Windows.Forms.Button();
-			this.button3 = new System.Windows.Forms.Button();
-			this.button2 = new System.Windows.Forms.Button();
+			this.StopEng = new System.Windows.Forms.Button();
+			this.StartEng = new System.Windows.Forms.Button();
 			this.tbServerTime = new System.Windows.Forms.TextBox();
 			this.label5 = new System.Windows.Forms.Label();
 			this.tbEngRunTime = new System.Windows.Forms.TextBox();
@@ -59,9 +59,9 @@
 			this.btnClear = new System.Windows.Forms.Button();
 			this.btnGetTime = new System.Windows.Forms.Button();
 			this.btnSetParams = new System.Windows.Forms.Button();
-			this.Upload_New = new System.Windows.Forms.Button();
-			this.btnPortSettings = new System.Windows.Forms.Button();
-			this.btnLoadXML = new System.Windows.Forms.Button();
+			this.DialogTwo = new System.Windows.Forms.Button();
+			this.btnAVR = new System.Windows.Forms.Button();
+			this.DialogOne = new System.Windows.Forms.Button();
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
@@ -79,7 +79,7 @@
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(437, 124);
+			this.tbReceived.Size = new System.Drawing.Size(437, 94);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -87,11 +87,11 @@
 			// 
 			this.btnConnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnConnect.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnConnect.Location = new System.Drawing.Point(267, 58);
+			this.btnConnect.Location = new System.Drawing.Point(255, 27);
 			this.btnConnect.Name = "btnConnect";
 			this.btnConnect.Size = new System.Drawing.Size(200, 48);
 			this.btnConnect.TabIndex = 0;
-			this.btnConnect.Text = "Connect";
+			this.btnConnect.Text = "Connect Server";
 			this.btnConnect.UseVisualStyleBackColor = false;
 			this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
 			// 
@@ -162,37 +162,37 @@
 			// 
 			this.btn_SetTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btn_SetTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btn_SetTime.Location = new System.Drawing.Point(267, 338);
+			this.btn_SetTime.Location = new System.Drawing.Point(255, 239);
 			this.btn_SetTime.Name = "btn_SetTime";
 			this.btn_SetTime.Size = new System.Drawing.Size(200, 48);
-			this.btn_SetTime.TabIndex = 4;
+			this.btn_SetTime.TabIndex = 3;
 			this.btn_SetTime.Text = "Set Time";
 			this.btn_SetTime.UseVisualStyleBackColor = false;
 			this.btn_SetTime.Click += new System.EventHandler(this.Btn_SetTime_Click);
 			// 
-			// button3
+			// StopEng
 			// 
-			this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.button3.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.button3.Location = new System.Drawing.Point(267, 270);
-			this.button3.Name = "button3";
-			this.button3.Size = new System.Drawing.Size(200, 48);
-			this.button3.TabIndex = 3;
-			this.button3.Text = "Off Engine";
-			this.button3.UseVisualStyleBackColor = false;
-			this.button3.Click += new System.EventHandler(this.shutdown_Click_1);
+			this.StopEng.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.StopEng.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.StopEng.Location = new System.Drawing.Point(255, 166);
+			this.StopEng.Name = "StopEng";
+			this.StopEng.Size = new System.Drawing.Size(200, 48);
+			this.StopEng.TabIndex = 2;
+			this.StopEng.Text = "Stop Engine";
+			this.StopEng.UseVisualStyleBackColor = false;
+			this.StopEng.Click += new System.EventHandler(this.StopEng_Click_1);
 			// 
-			// button2
+			// StartEng
 			// 
-			this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.button2.Location = new System.Drawing.Point(267, 197);
-			this.button2.Name = "button2";
-			this.button2.Size = new System.Drawing.Size(200, 48);
-			this.button2.TabIndex = 2;
-			this.button2.Text = "Start Engine";
-			this.button2.UseVisualStyleBackColor = false;
-			this.button2.Click += new System.EventHandler(this.button2_Click);
+			this.StartEng.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.StartEng.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.StartEng.Location = new System.Drawing.Point(255, 95);
+			this.StartEng.Name = "StartEng";
+			this.StartEng.Size = new System.Drawing.Size(200, 48);
+			this.StartEng.TabIndex = 1;
+			this.StartEng.Text = "Start Engine";
+			this.StartEng.UseVisualStyleBackColor = false;
+			this.StartEng.Click += new System.EventHandler(this.StartEng_Click);
 			// 
 			// tbServerTime
 			// 
@@ -313,7 +313,7 @@
 			// 
 			this.btnShutdown.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnShutdown.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnShutdown.Location = new System.Drawing.Point(46, 58);
+			this.btnShutdown.Location = new System.Drawing.Point(34, 27);
 			this.btnShutdown.Name = "btnShutdown";
 			this.btnShutdown.Size = new System.Drawing.Size(200, 48);
 			this.btnShutdown.TabIndex = 7;
@@ -325,7 +325,7 @@
 			// 
 			this.btnReboot.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnReboot.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnReboot.Location = new System.Drawing.Point(46, 126);
+			this.btnReboot.Location = new System.Drawing.Point(34, 95);
 			this.btnReboot.Name = "btnReboot";
 			this.btnReboot.Size = new System.Drawing.Size(200, 48);
 			this.btnReboot.TabIndex = 8;
@@ -337,7 +337,7 @@
 			// 
 			this.btnStopSerial.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnStopSerial.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnStopSerial.Location = new System.Drawing.Point(46, 197);
+			this.btnStopSerial.Location = new System.Drawing.Point(34, 166);
 			this.btnStopSerial.Name = "btnStopSerial";
 			this.btnStopSerial.Size = new System.Drawing.Size(200, 48);
 			this.btnStopSerial.TabIndex = 9;
@@ -349,7 +349,7 @@
 			// 
 			this.btnDBMgmt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnDBMgmt.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnDBMgmt.Location = new System.Drawing.Point(46, 270);
+			this.btnDBMgmt.Location = new System.Drawing.Point(34, 239);
 			this.btnDBMgmt.Name = "btnDBMgmt";
 			this.btnDBMgmt.Size = new System.Drawing.Size(200, 48);
 			this.btnDBMgmt.TabIndex = 10;
@@ -361,7 +361,7 @@
 			// 
 			this.btnClear.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnClear.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnClear.Location = new System.Drawing.Point(46, 339);
+			this.btnClear.Location = new System.Drawing.Point(34, 308);
 			this.btnClear.Name = "btnClear";
 			this.btnClear.Size = new System.Drawing.Size(200, 48);
 			this.btnClear.TabIndex = 11;
@@ -373,10 +373,10 @@
 			// 
 			this.btnGetTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnGetTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnGetTime.Location = new System.Drawing.Point(267, 407);
+			this.btnGetTime.Location = new System.Drawing.Point(255, 307);
 			this.btnGetTime.Name = "btnGetTime";
 			this.btnGetTime.Size = new System.Drawing.Size(200, 48);
-			this.btnGetTime.TabIndex = 5;
+			this.btnGetTime.TabIndex = 4;
 			this.btnGetTime.Text = "Get Time";
 			this.btnGetTime.UseVisualStyleBackColor = false;
 			this.btnGetTime.Click += new System.EventHandler(this.GetTime);
@@ -385,7 +385,7 @@
 			// 
 			this.btnSetParams.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnSetParams.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnSetParams.Location = new System.Drawing.Point(46, 407);
+			this.btnSetParams.Location = new System.Drawing.Point(34, 376);
 			this.btnSetParams.Name = "btnSetParams";
 			this.btnSetParams.Size = new System.Drawing.Size(200, 48);
 			this.btnSetParams.TabIndex = 12;
@@ -393,52 +393,52 @@
 			this.btnSetParams.UseVisualStyleBackColor = false;
 			this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
 			// 
-			// Upload_New
+			// DialogTwo
 			// 
-			this.Upload_New.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.Upload_New.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.Upload_New.Location = new System.Drawing.Point(267, 471);
-			this.Upload_New.Name = "Upload_New";
-			this.Upload_New.Size = new System.Drawing.Size(200, 48);
-			this.Upload_New.TabIndex = 6;
-			this.Upload_New.Text = "Upload New";
-			this.Upload_New.UseVisualStyleBackColor = false;
-			this.Upload_New.Click += new System.EventHandler(this.Upload_New_Click);
+			this.DialogTwo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.DialogTwo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.DialogTwo.Location = new System.Drawing.Point(255, 440);
+			this.DialogTwo.Name = "DialogTwo";
+			this.DialogTwo.Size = new System.Drawing.Size(200, 48);
+			this.DialogTwo.TabIndex = 6;
+			this.DialogTwo.Text = "Settings Two";
+			this.DialogTwo.UseVisualStyleBackColor = false;
+			this.DialogTwo.Click += new System.EventHandler(this.Dialog2_Click);
 			// 
-			// btnPortSettings
+			// btnAVR
 			// 
-			this.btnPortSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.btnPortSettings.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnPortSettings.Location = new System.Drawing.Point(267, 126);
-			this.btnPortSettings.Name = "btnPortSettings";
-			this.btnPortSettings.Size = new System.Drawing.Size(200, 48);
-			this.btnPortSettings.TabIndex = 1;
-			this.btnPortSettings.Text = "Port Settings";
-			this.btnPortSettings.UseVisualStyleBackColor = false;
-			this.btnPortSettings.Click += new System.EventHandler(this.btnPortSettings_Click);
+			this.btnAVR.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.btnAVR.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.btnAVR.Location = new System.Drawing.Point(255, 376);
+			this.btnAVR.Name = "btnAVR";
+			this.btnAVR.Size = new System.Drawing.Size(200, 48);
+			this.btnAVR.TabIndex = 5;
+			this.btnAVR.Text = "AVR off";
+			this.btnAVR.UseVisualStyleBackColor = false;
+			this.btnAVR.Click += new System.EventHandler(this.btnAVR_Click);
 			// 
-			// btnLoadXML
+			// DialogOne
 			// 
-			this.btnLoadXML.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.btnLoadXML.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnLoadXML.Location = new System.Drawing.Point(46, 471);
-			this.btnLoadXML.Name = "btnLoadXML";
-			this.btnLoadXML.Size = new System.Drawing.Size(200, 48);
-			this.btnLoadXML.TabIndex = 13;
-			this.btnLoadXML.Text = "Load XML";
-			this.btnLoadXML.UseVisualStyleBackColor = false;
-			this.btnLoadXML.Click += new System.EventHandler(this.btnLoadXML_Click);
+			this.DialogOne.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.DialogOne.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.DialogOne.Location = new System.Drawing.Point(34, 440);
+			this.DialogOne.Name = "DialogOne";
+			this.DialogOne.Size = new System.Drawing.Size(200, 48);
+			this.DialogOne.TabIndex = 13;
+			this.DialogOne.Text = "Settings One";
+			this.DialogOne.UseVisualStyleBackColor = false;
+			this.DialogOne.Click += new System.EventHandler(this.Dialog1_Click);
 			// 
 			// textBox1
 			// 
 			this.textBox1.Location = new System.Drawing.Point(491, 355);
 			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(310, 20);
+			this.textBox1.Size = new System.Drawing.Size(437, 20);
 			this.textBox1.TabIndex = 35;
 			// 
 			// timer1
 			// 
-			this.timer1.Interval = 5000;
+			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.myTimerTick);
 			// 
 			// FrmSampleClient
@@ -446,11 +446,11 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(958, 535);
+			this.ClientSize = new System.Drawing.Size(958, 508);
 			this.Controls.Add(this.textBox1);
-			this.Controls.Add(this.btnLoadXML);
-			this.Controls.Add(this.btnPortSettings);
-			this.Controls.Add(this.Upload_New);
+			this.Controls.Add(this.DialogOne);
+			this.Controls.Add(this.btnAVR);
+			this.Controls.Add(this.DialogTwo);
 			this.Controls.Add(this.btnSetParams);
 			this.Controls.Add(this.btnGetTime);
 			this.Controls.Add(this.btnClear);
@@ -460,8 +460,8 @@
 			this.Controls.Add(this.btnShutdown);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.btn_SetTime);
-			this.Controls.Add(this.button3);
-			this.Controls.Add(this.button2);
+			this.Controls.Add(this.StopEng);
+			this.Controls.Add(this.StartEng);
 			this.Controls.Add(this.tbReceived);
 			this.Controls.Add(this.btnConnect);
 			this.Name = "FrmSampleClient";
@@ -491,14 +491,14 @@
         //string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL-DB.mdf;Integrated Security=True;Connect Timeout=30";
         // laptop
 
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+        //string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
         string connectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
 
         private System.Windows.Forms.TextBox tbConnected;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btn_SetTime;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button StopEng;
+        private System.Windows.Forms.Button StartEng;
         private System.Windows.Forms.TextBox tbServerTime;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox tbEngRunTime;
@@ -511,15 +511,15 @@
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Button btnGetTime;
         private System.Windows.Forms.Button btnSetParams;
-        private System.Windows.Forms.Button Upload_New;
+        private System.Windows.Forms.Button DialogTwo;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox tbEngineTemp;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox tbMPH;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox tbRPM;
-        private System.Windows.Forms.Button btnPortSettings;
-		private System.Windows.Forms.Button btnLoadXML;
+        private System.Windows.Forms.Button btnAVR;
+		private System.Windows.Forms.Button DialogOne;
 		private System.Windows.Forms.TextBox textBox1;
 		private System.Windows.Forms.Timer timer1;
 	}

@@ -117,7 +117,7 @@ uint32_t pack32(UCHAR *buff);
 // variables used by the DS1620 conversion in timer Callback01
 uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
-int raw_data;
+int raw_data, temp_raw;
 
 static UCHAR buff[SERIAL_BUFF_SIZE+1];
 static int timer_toggle;
@@ -129,7 +129,9 @@ static int engine_on;
 static int running_lights_on;
 static int wipers_on;
 static int system_up;
+static int avr_up;
 static int run_time;
+static int rtdata_update_rate;
 
 static KEY_MODE key_mode;
 //static int key_enter_time;
@@ -377,15 +379,15 @@ void MX_FREERTOS_Init(void)
   keypressedHandle = osMessageCreate(osMessageQ(keypressed), NULL);
 
   /* definition and creation of Send7200 */
-  osMessageQDef(Send7200, 16, uint16_t);
+  osMessageQDef(Send7200, 5, uint64_t);
   Send7200Handle = osMessageCreate(osMessageQ(Send7200), NULL);
 
   /* definition and creation of SendAVR */
-  osMessageQDef(SendAVR, 16, uint16_t);
+  osMessageQDef(SendAVR, 5, uint64_t);
   SendAVRHandle = osMessageCreate(osMessageQ(SendAVR), NULL);
 
   /* definition and creation of SendFPGA */
-  osMessageQDef(SendFPGA, 16, uint16_t);
+  osMessageQDef(SendFPGA, 5, uint64_t);
   SendFPGAHandle = osMessageCreate(osMessageQ(SendFPGA), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -424,9 +426,11 @@ void StartDefaultTask(void const * argument)
 	dim_screen = 0;
 	silent_key = 0;
 	system_up = 1;
+	avr_up = 0;
 	run_time = 0;
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
+	temp_raw = raw_data = 43;
 
 	memset(correct_password,0,sizeof(correct_password));
 	strcpy(correct_password,"2354795\0");
@@ -437,6 +441,7 @@ void StartDefaultTask(void const * argument)
 	vTaskDelay(1000);
 
 	init_DS1620();
+	vTaskDelay(10);
 	initDS1620();
 
 	timer_toggle = 0;
@@ -711,71 +716,77 @@ void StartAVRTask(void const * argument)
   /* Infinite loop */
 	for(;;)
 	{
-		xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
-
-		ucbuff[0] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[1] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[2] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[3] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[4] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[5] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[6] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		ucbuff[7] = (UCHAR)avr_buffer[0];
-		avr_buffer[0] >>= 8;
-
-		switch (ucbuff[0])
+		if(avr_up == 0)
 		{
-			case EEPROM_STR:
-			case EEPROM_STR2:
-			case DISPLAY_TEMP:
-			case SEND_INT_RT_VALUES:
-			case DISPLAY_ELAPSED_TIME:
-			case SET_MODE_CMD:
-				HAL_UART_Transmit(&huart2, ucbuff, 5, 100);
-				break;
-			case CHAR_CMD:
-			case SET_NUM_ENTRY_MODE:
-			case PASSWORD_MODE:
-				HAL_UART_Transmit(&huart2, ucbuff, 2, 100);
-				break;
-			case GOTO_CMD:
-				HAL_UART_Transmit(&huart2, ucbuff, 3, 100);
-				break;
-			case DISPLAY_RTLABELS:
-				HAL_UART_Transmit(&huart2, ucbuff, 6, 100);
-				break;
-			case SEND_BYTE_HEX_VALUES:
-			case SEND_BYTE_RT_VALUES:
-				HAL_UART_Transmit(&huart2, ucbuff, 4, 100);
-				break;
-			case LCD_CLRSCR:
-			case DISPLAY_STATUSLABELS:
-				HAL_UART_Transmit(&huart2, ucbuff, 1, 100);
-				break;
-			default:
-				break;
-		}
-		end_byte = 0xFE;
-		HAL_UART_Transmit(&huart2, &end_byte, 1, 100);
-		end_byte = 0;
+			vTaskDelay(1000);
+		}else
+		{
+			xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
 
-		do {
-			HAL_UART_Receive(&huart2, &end_byte, 1, portMAX_DELAY);
-		} while(end_byte != 0xFD);
+			ucbuff[0] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[1] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[2] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[3] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[4] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[5] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[6] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			ucbuff[7] = (UCHAR)avr_buffer[0];
+			avr_buffer[0] >>= 8;
+
+			switch (ucbuff[0])
+			{
+				case EEPROM_STR:
+				case EEPROM_STR2:
+				case DISPLAY_TEMP:
+				case SEND_INT_RT_VALUES:
+				case DISPLAY_ELAPSED_TIME:
+				case SET_MODE_CMD:
+					HAL_UART_Transmit(&huart2, ucbuff, 5, 100);
+					break;
+				case CHAR_CMD:
+				case SET_NUM_ENTRY_MODE:
+				case PASSWORD_MODE:
+					HAL_UART_Transmit(&huart2, ucbuff, 2, 100);
+					break;
+				case GOTO_CMD:
+					HAL_UART_Transmit(&huart2, ucbuff, 3, 100);
+					break;
+				case DISPLAY_RTLABELS:
+					HAL_UART_Transmit(&huart2, ucbuff, 6, 100);
+					break;
+				case SEND_BYTE_HEX_VALUES:
+				case SEND_BYTE_RT_VALUES:
+					HAL_UART_Transmit(&huart2, ucbuff, 4, 100);
+					break;
+				case LCD_CLRSCR:
+				case DISPLAY_STATUSLABELS:
+					HAL_UART_Transmit(&huart2, ucbuff, 1, 100);
+					break;
+				default:
+					break;
+			}
+			end_byte = 0xFE;
+			HAL_UART_Transmit(&huart2, &end_byte, 1, 100);
+			end_byte = 0;
+
+			do {
+				HAL_UART_Receive(&huart2, &end_byte, 1, portMAX_DELAY);
+			} while(end_byte != 0xFD);
+		}
 	}
   /* USER CODE END StartAVRTask */
 }
@@ -838,7 +849,7 @@ void StartTask7200(void const * argument)
 		avr_buffer[0] >>= 8;
 
 		if(system_up == 1)
-		//if(1)
+//		if(1)
 		{
 			HAL_UART_Transmit(&huart1, &marker, 1, 100);
 			HAL_UART_Transmit(&huart1, &ucbuff[0], SERIAL_BUFF_SIZE, 100);
@@ -996,15 +1007,26 @@ void StartRecv7200(void const * argument)
 					wipers_on = 0;
 					break;
 				case START_MBOX_XMIT:	
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 					system_up = 1;
 					break;
 				case STOP_MBOX_XMIT:	
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 					system_up = 0;
 					break;
+				case START_AVR_XMIT:	
+					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+					avr_up = 1;
+					break;
+				case STOP_AVR_XMIT:	
+					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+					avr_up = 0;
+					break;
+					avr_up = 1;
 				case SEND_TIME_DATA:
 #if 0
 					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
@@ -1208,9 +1230,9 @@ void StartRecvFPGA(void const * argument)
 	UINT rpm, mph;
 	rpm = 500;
 	mph = 1;
+	rtdata_update_rate = 0;
 	
 	xbyte = 0x21;
-
 
 	vTaskDelay(2000);
 	HAL_GPIO_WritePin(GPIOA, PP_ACK_Pin, GPIO_PIN_SET);
@@ -1224,11 +1246,28 @@ void StartRecvFPGA(void const * argument)
 	
 	for(;;)
 	{
+/*
+		if(timer_toggle == 0)
+		{
+
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+			timer_toggle = 1;
+			HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_RESET);
+			
+		}else
+		{
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
+			timer_toggle = 0;
+		}
+*/
+
 		do {
 			state = HAL_GPIO_ReadPin(GPIOA,PP_CS_Pin);
 		}while(state != GPIO_PIN_SET);
 
-		
 		state = HAL_GPIO_ReadPin(GPIOB,PP0_Pin);
 		if(state == GPIO_PIN_SET)
 			xbyte |= 1;
@@ -1261,50 +1300,57 @@ void StartRecvFPGA(void const * argument)
 		if(xbyte == 0xFE)
 		{
 			frame_ptr = 0;
+			if(avr_up == 1)
+			{
+				ucbuff[0] = SEND_INT_RT_VALUES;
+				ucbuff[1] = rtlabel_str[RPM].row;
+				ucbuff[2] = rtlabel_str[RPM].data_col;
+	//			ucbuff[3] = (UCHAR)(rpm >> 8);
+	//			ucbuff[4] = (UCHAR)rpm;
+				ucbuff[4] = buff[0];
+				ucbuff[3] = buff[1];
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendAVRHandle,avr_buffer,0);
+				vTaskDelay(10);
 
-			ucbuff[0] = SEND_INT_RT_VALUES;
-			ucbuff[1] = rtlabel_str[RPM].row;
-			ucbuff[2] = rtlabel_str[RPM].data_col;
-//			ucbuff[3] = (UCHAR)(rpm >> 8);
-//			ucbuff[4] = (UCHAR)rpm;
-			ucbuff[4] = buff[0];
-			ucbuff[3] = buff[1];
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(SendAVRHandle,avr_buffer,0);
-			vTaskDelay(10);
+				ucbuff[1] = rtlabel_str[MPH].row;
+				ucbuff[2] = rtlabel_str[MPH].data_col;
+	//			ucbuff[3] = (UCHAR)(mph >> 8);
+	//			ucbuff[4] = (UCHAR)mph;
+				ucbuff[4] = buff[2];
+				ucbuff[3] = buff[3];
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendAVRHandle,avr_buffer,0);
+			}
 
-			ucbuff[1] = rtlabel_str[MPH].row;
-			ucbuff[2] = rtlabel_str[MPH].data_col;
-//			ucbuff[3] = (UCHAR)(mph >> 8);
-//			ucbuff[4] = (UCHAR)mph;
-			ucbuff[4] = buff[2];
-			ucbuff[3] = buff[3];
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(SendAVRHandle,avr_buffer,0);
-
-			if((rpm+= 12) > 5000)
+			if(rpm++ > 5000)		// simulate data for testing
 				rpm = 500;
 			if(++mph > 100)
 				mph = 1;
 
 			vTaskDelay(10);
 
-			if(engine_on != 0)
+			//if(++rtdata_update_rate > 3)
+if(1)
 			{
-				ucbuff[0] = SEND_RT_VALUES;
-/*
-				ucbuff[1] = (UCHAR)(rpm >> 8);
-				ucbuff[2] = (UCHAR)rpm;
-				ucbuff[3] = (UCHAR)(mph >> 8);
-				ucbuff[4] = (UCHAR)mph;
-*/
-				ucbuff[2] = buff[0];
-				ucbuff[1] = buff[1];
-				ucbuff[4] = buff[2];
-				ucbuff[3] = buff[3];
+				rtdata_update_rate = 0;
+				if(engine_on != 0)
+				{
+					ucbuff[0] = SEND_RT_VALUES;
 
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
+					ucbuff[1] = (UCHAR)(rpm >> 8);
+					ucbuff[2] = (UCHAR)rpm;
+					ucbuff[3] = (UCHAR)(mph >> 8);
+					ucbuff[4] = (UCHAR)mph;
+/*
+					ucbuff[2] = buff[0];
+					ucbuff[1] = buff[1];
+					ucbuff[4] = buff[2];
+					ucbuff[3] = buff[3];
+*/
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+				}
 			}
 		}else
 		{
@@ -1363,7 +1409,7 @@ void StartKeyStateTask(void const * argument)
 				e_isrState = STATE_WAIT_FOR_PRESS;
 				break;
 		}
-		vTaskDelay(1);
+		vTaskDelay(10);
 	}
   /* USER CODE END StartKeyStateTask */
 }
@@ -1372,24 +1418,33 @@ void StartKeyStateTask(void const * argument)
 void Callback01(void const * argument)
 {
   /* USER CODE BEGIN Callback01 */
-#if 0
+
 	// do the DS1620 temp conversion every second
 	global_ucbuff[0] = DISPLAY_TEMP;
 	global_ucbuff[1] = rtlabel_str[ENG_TEMP].row;
 	global_ucbuff[2] = rtlabel_str[ENG_TEMP].data_col;
+
 	global_ucbuff[4] = (UCHAR)raw_data;
 	raw_data >>= 8;
 	global_ucbuff[3] = (UCHAR)raw_data;	// send high byte 1st
-	global_avr_buffer[0] = pack64(global_ucbuff);
-	xQueueSend(SendAVRHandle,global_avr_buffer,0);
-	vTaskDelay(10);
+/*
+	global_ucbuff[4] = (UCHAR)temp_raw;
+	temp_raw >>= 8;
+	global_ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
+*/
+	if(avr_up == 1)
+	{
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(SendAVRHandle,global_avr_buffer,0);
+		vTaskDelay(10);
+	}
 	
 	global_ucbuff[0] = ENGINE_TEMP;
 	global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
 	global_ucbuff[2] = global_ucbuff[4];
 	global_avr_buffer[0] = pack64(global_ucbuff);
 	xQueueSend(Send7200Handle, global_avr_buffer, 0);
-	vTaskDelay(1000);
+	//vTaskDelay(1000);
 
 	writeByteTo1620(DS1620_CMD_STARTCONV);
 	vTaskDelay(30);
@@ -1397,16 +1452,15 @@ void Callback01(void const * argument)
 	vTaskDelay(30);
 	writeByteTo1620(DS1620_CMD_STOPCONV);
 	vTaskDelay(100);
-
 /*
-		raw_data++;				// used for testing
-		if(raw_data > 230)
-			raw_data = 10;
-		temp_raw = raw_data;
+	raw_data++;				// used for testing
+	if(raw_data > 230)
+		raw_data = 10;
+	temp_raw = raw_data;
 */
-#endif		
 	if(timer_toggle == 0)
 	{
+
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 		timer_toggle = 1;

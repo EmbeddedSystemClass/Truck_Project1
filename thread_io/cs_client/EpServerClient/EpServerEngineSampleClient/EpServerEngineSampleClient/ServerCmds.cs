@@ -50,6 +50,8 @@ namespace EpServerEngineSampleClient
 			WIPER_OFF,
 			STOP_MBOX_XMIT,
 			START_MBOX_XMIT,
+			STOP_AVR_XMIT,
+			START_AVR_XMIT,
 			SEND_TIME_DATA,
 			SHUTDOWN_IOBOX,
 			REBOOT_IOBOX,
