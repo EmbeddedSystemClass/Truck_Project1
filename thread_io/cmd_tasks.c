@@ -35,7 +35,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[78] =
+CMD_STRUCT cmd_array[79] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -113,6 +113,7 @@ CMD_STRUCT cmd_array[78] =
 	{		SEND_MPH,"SEND_MPH\0" },
 	{		NAV_UP,"NAV_UP\0" },
 	{		NAV_DOWN,"NAV_DOWN\0" },
+	{		NAV_SIDE,"NAV_SIDE\0" },
 	{		NAV_CLICK,"NAV_CLICK\0" },
 	{		NAV_CLOSE,"NAV_CLOSE\0" }
 };

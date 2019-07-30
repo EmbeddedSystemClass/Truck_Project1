@@ -56,6 +56,8 @@ namespace EpServerEngineSampleClient
 		public void Enable_Dlg(bool wait)
 		{
 			m_wait = wait;
+			if (wait)
+				tbReceived.Clear();
 		}
         delegate void AddMsg_Involk(string message);
         public void AddMsg(string message)
@@ -125,6 +127,11 @@ namespace EpServerEngineSampleClient
 						if (current_button > m_ctls.Count() - 1)
 							current_button = 0;
 						break;
+					case "NAV_SIDE":
+						if (current_button > 6)
+							current_button -= 7;
+						else current_button += 7;
+						break;
 					case "NAV_CLICK":
 						i = GetInstByTabOrder(current_button);
 						//if(m_ctls[i].CtlText != "Close")
@@ -143,13 +150,13 @@ namespace EpServerEngineSampleClient
 						break;
 				}
 
-				if (str == "NAV_UP" || str == "NAV_DOWN")
+				if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_SIDE")
 				{
 					i = GetInstByTabOrder(current_button);
 					j = GetInstByTabOrder(previous_button);
 					if (i > -1 && j > -1)
 					{
-//						AddMsg(m_ctls[i].CtlText);
+						AddMsg(m_ctls[i].TabOrder.ToString());
 						Button temp = (Button)m_ctls[i].Ctlinst;
 						temp.BackColor = Color.White;
 						temp = (Button)m_ctls[j].Ctlinst;

@@ -481,11 +481,8 @@ void StartDefaultTask(void const * argument)
 	avr_buffer[0] = pack64(ucbuff);
 //	xQueueSend(SendAVRHandle,avr_buffer,0);
 
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
   /* Infinite loop */
-
-  
+ 
   for(;;)
   {
 		xQueueReceive(keypressedHandle, &recval, portMAX_DELAY);
@@ -660,6 +657,35 @@ void StartDefaultTask(void const * argument)
 				xQueueSend(Send7200Handle, buff, 0);
 			break;
 			case KP_9:
+			break;
+			case KP_A:
+				ucbuff[0] = NAV_UP;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, buff, 0);
+			break;
+			case KP_B:
+				ucbuff[0] = NAV_DOWN;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, buff, 0);
+			break;
+			case KP_C:
+				ucbuff[0] = NAV_CLICK;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, buff, 0);
+			break;
+			case KP_D:
+				ucbuff[0] = NAV_CLOSE;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, buff, 0);
+			break;
+			case KP_AST:
+				ucbuff[0] = NAV_SIDE;
+				buff[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, buff, 0);
+			break;
+			case KP_0:
+			break;
+			case KP_POUND:
 			break;
 		}
 		vTaskDelay(10);
@@ -1346,7 +1372,7 @@ void StartKeyStateTask(void const * argument)
 void Callback01(void const * argument)
 {
   /* USER CODE BEGIN Callback01 */
-
+#if 0
 	// do the DS1620 temp conversion every second
 	global_ucbuff[0] = DISPLAY_TEMP;
 	global_ucbuff[1] = rtlabel_str[ENG_TEMP].row;
@@ -1378,7 +1404,7 @@ void Callback01(void const * argument)
 			raw_data = 10;
 		temp_raw = raw_data;
 */
-		
+#endif		
 	if(timer_toggle == 0)
 	{
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);

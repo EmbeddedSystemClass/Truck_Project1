@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+			this.components = new System.ComponentModel.Container();
 			this.tbReceived = new System.Windows.Forms.TextBox();
 			this.btnConnect = new System.Windows.Forms.Button();
 			this.label2 = new System.Windows.Forms.Label();
@@ -62,6 +63,7 @@
 			this.btnPortSettings = new System.Windows.Forms.Button();
 			this.btnLoadXML = new System.Windows.Forms.Button();
 			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
@@ -77,7 +79,7 @@
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(437, 159);
+			this.tbReceived.Size = new System.Drawing.Size(437, 124);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -434,12 +436,17 @@
 			this.textBox1.Size = new System.Drawing.Size(310, 20);
 			this.textBox1.TabIndex = 35;
 			// 
+			// timer1
+			// 
+			this.timer1.Interval = 5000;
+			this.timer1.Tick += new System.EventHandler(this.myTimerTick);
+			// 
 			// FrmSampleClient
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(958, 570);
+			this.ClientSize = new System.Drawing.Size(958, 535);
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.btnLoadXML);
 			this.Controls.Add(this.btnPortSettings);
@@ -514,6 +521,7 @@
         private System.Windows.Forms.Button btnPortSettings;
 		private System.Windows.Forms.Button btnLoadXML;
 		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.Timer timer1;
 	}
 }
 

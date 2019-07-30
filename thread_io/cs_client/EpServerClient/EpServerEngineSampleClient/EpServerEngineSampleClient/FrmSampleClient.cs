@@ -13,6 +13,7 @@ using EpLibrary.cs;
 using System.IO;
 using System.Xml.Serialization;
 using System.Drawing;
+using System.Timers;
 
 namespace EpServerEngineSampleClient
 {
@@ -63,6 +64,7 @@ namespace EpServerEngineSampleClient
 		private int current_button = 0;
 		private int previous_button = 0;
 		private int no_buttons = 14;
+		//private static System.Timers.Timer aTimer;
 		int i = 0;
 		int j = 0;
 		string xml_file_location = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
@@ -147,9 +149,9 @@ namespace EpServerEngineSampleClient
 
 			for (i = 0; i < ui_format.Count(); i++)
 			{
-				AddMsg(i.ToString() + " " + ui_format[i].Dlg_no.ToString() + " " + ui_format[i].Label + " " + ui_format[i].Command.ToString() + " " + ui_format[i].Length.ToString());
+				//AddMsg(i.ToString() + " " + ui_format[i].Dlg_no.ToString() + " " + ui_format[i].Label + " " + ui_format[i].Command.ToString() + " " + ui_format[i].Length.ToString());
 			}
-			AddMsg("");
+			//AddMsg("");
 
 			i = 0;
 			foreach (Button btn in psDlg.Controls.OfType<Button>())
@@ -158,7 +160,7 @@ namespace EpServerEngineSampleClient
 				//if (btn.Enabled && ui_format[i].Dlg_no == 0)
 				//if (ui_format[i].Dlg_no == 0)
 				{
-					AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
+					//AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
 					ctls.Add(new CommonControls()
 					{
 						CtlName = btn.Name,
@@ -178,14 +180,14 @@ namespace EpServerEngineSampleClient
 									// first so let't reverse them and hope for the best
 			psDlg.SetButtonLabels();
 			psDlg.Name = "Dialog One";
-			AddMsg("");
+			//AddMsg("");
 			j = 0;
 			foreach (Button btn in psDlg2.Controls.OfType<Button>())
 			{
 				//if (btn.Enabled && ui_format[i].Dlg_no == 1)
 				//if (ui_format[i].Dlg_no == 1)
 				{
-					AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
+					//AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
 					ctls2.Add(new CommonControls()
 					{
 						CtlName = btn.Name,
@@ -224,7 +226,7 @@ namespace EpServerEngineSampleClient
 					sCtl = GetNextControl(sCtl, true);
 				}
 			}
-	
+			timer1.Enabled = true;
 /*
 			foreach (ButtonList btn in button_list)
 			{
@@ -344,12 +346,10 @@ namespace EpServerEngineSampleClient
 			if (psDlg.Visible == true)
 			{
 				psDlg.Process_Msg(receivedPacket.PacketRaw);
-				AddMsg("dlg 1 up");
 			}
 			else if (psDlg2.Visible == true)
 			{
 				psDlg2.Process_Msg(receivedPacket.PacketRaw);
-				AddMsg("dlg 2 up");
 			}
 			else
 				Process_Msg(receivedPacket.PacketRaw);
@@ -381,13 +381,14 @@ namespace EpServerEngineSampleClient
 						tbMPH.Text = "0";
 						//                       tbEngRunTime.Text = "";
 					}
+					AddMsg(ret);
 					break;
 				case "CURRENT_TIME":
-					//                    AddMsg(mins.ToString() + " " + sec.ToString() + " " + "curr" + " " + svrcmd.GetName(cmd));
-					//                    AddMsg(mins.ToString() + " " + sec.ToString());
+					//AddMsg(mins.ToString() + " " + sec.ToString() + " " + "curr" + " " + svrcmd.GetName(cmd));
+					//AddMsg(mins.ToString() + " " + sec.ToString());
 					break;
 				case "SERVER_UPTIME":
-					//                    tbServerTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
+					//tbServerTime.Text = hours.ToString() + ':' + mins.ToString() + ':' + sec.ToString();
 					tbServerTime.Text = ret;		// comment out during debug
 					break;
 				case "ENGINE_RUNTIME":
@@ -489,18 +490,11 @@ namespace EpServerEngineSampleClient
 					break;
 
 				case "NAV_UP":
-					navigate_buttons(str);
-//					AddMsg(str);
-					break;
-
 				case "NAV_DOWN":
-					navigate_buttons(str);
-//					AddMsg(str);
-					break;
-
+				case "NAV_SIDE":
 				case "NAV_CLICK":
+				case "NAV_CLOSE":
 					navigate_buttons(str);
-//					AddMsg(str);
 					break;
 
 				default:
@@ -885,57 +879,85 @@ namespace EpServerEngineSampleClient
 
 		private void navigate_buttons(string str)
 		{
-			previous_button = current_button;
 			
 			switch (str)
 			{
 				case "NAV_UP":
-					if(true)
-					{
-						current_button--;
-						if (current_button < 0)
-							current_button = no_buttons - 1;
-					}
-					//button_list[current_button].Ctl.Focus();
-					//button_list[current_button].Ctl.Select();
-					//button_list[current_button].Ctl.Text += " X";
-					button_list[current_button].Ctl.BackColor = Color.White;
-					//button_list[previous_button].Ctl.Text = button_list[previous_button].Name;
-					button_list[previous_button].Ctl.BackColor = Color.Aqua;
+					previous_button = current_button;
+					current_button--;
+					if (current_button < 0)
+						current_button = no_buttons - 1;
+					button_list[current_button].Ctl.BackColor = Color.Aqua;
+					button_list[previous_button].Ctl.BackColor = Color.White;
 
-
-					AddMsg("up  " + button_list[current_button].Name);
+					//AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
 					//textBox1.Text = "up  " + button_list[current_button].Name;
+					AddMsg("up  " + button_list[current_button].Name + " " 
+						+ current_button.ToString() + " " + previous_button.ToString()+ " " + button_list[current_button].TabOrder.ToString());
 					break;
 
 				case "NAV_DOWN":
-					if(true)
-					{
-						//do
-							current_button++;
-						//while (button_list[current_button - 1].Enabled == false);
-						if (current_button > no_buttons - 1)
-							current_button = 0;
-					}
-					//button_list[current_button].Ctl.Select();
-					//					button_list[current_button].Ctl.Focus();
+					previous_button = current_button;
+					current_button++;
+					if (current_button > no_buttons - 1)
+						current_button = 0;
 					button_list[current_button].Ctl.BackColor = Color.Aqua;
 					button_list[previous_button].Ctl.BackColor = Color.White;
-					AddMsg("down  " + button_list[current_button].Name);
-					//textBox1.Text = "down  " + button_list[current_button].Name;
+//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
+					AddMsg("down  " + button_list[current_button].Name + " " 
+						+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					break;
+
+				case "NAV_SIDE":
+					previous_button = current_button;
+					if (current_button > 6)
+						current_button -= 7;
+					else if(current_button < 7)
+						current_button += 7;
+					button_list[current_button].Ctl.BackColor = Color.Aqua;
+					button_list[previous_button].Ctl.BackColor = Color.White;
+					//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
+					AddMsg("side  " + button_list[current_button].Name + " "
+						+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
 					break;
 				case "NAV_CLICK":
-					if(current_button > 1 && current_button < 6)
-//					if (button_list[current_button].Name == "Set Time" || button_list[current_button].Name == "Get Time")
-					{
-						button_list[current_button].Ctl.PerformClick();
-						AddMsg("click time");
-						textBox1.Text = "time";
-					}
+					button_list[current_button].Ctl.PerformClick();
+					AddMsg("click  " + button_list[current_button].Name + " "
+						+ button_list[current_button].TabOrder.ToString());
+					textBox1.Text = "time";
 					textBox1.Text = "click";
-				
 					break;
+			}
+		}
+
+		private void myTimerTick(object sender, EventArgs e)
+		{
+			if (!m_client.IsConnectionAlive)
+			{
+				AddMsg("attempting to connect to server...");
+				string hostname = tbHostname.Text;
+				string port = tbPort.Text;
+
+				tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
+				tbPort.Enabled = false;
+				//tbSend.Enabled = true;
+				btnConnect.Text = "Disconnect";
+				btnShutdown.Enabled = true;
+				btnReboot.Enabled = true;
+				btnStopSerial.Enabled = true;
+				tbServerTime.Text = "";
+				tbEngRunTime.Text = "";
+				tbEngineTemp.Text = "";
+				tbRPM.Text = "";
+				tbMPH.Text = "";
+
+				btn_SetTime.Enabled = true;
+				btnGetTime.Enabled = true;
+				//Upload_New.Enabled = true;
+				ClientOps ops = new ClientOps(this, hostname, port);
+				m_client.Connect(ops);
 			}
 		}
 	}
 }
+ 

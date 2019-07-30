@@ -664,9 +664,9 @@ UCHAR timer_task(int test)
 	O_DATA *otp2;
 	O_DATA **otpp2 = &otp2;
 	static int led_counter = 0;
-	static int test_ctr = 0;
-	static int test_ctr2 = 0;
-	static UCHAR nav = NAV_DOWN;
+//	static int test_ctr = 0;
+//	static int test_ctr2 = 0;
+//	static UCHAR nav = NAV_DOWN;
 
 	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
 	rpm = mph = 0;
@@ -707,11 +707,12 @@ UCHAR timer_task(int test)
 */
 		write_serial_buffer[0] = 0xAA;
 		write_serial_buffer[1] = 0x55;
-//		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
+		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
 //		sprintf(tempx,"nav click");
 //		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, NAV_CLICK);
-
+#if 0
+		//used for testing the remote keypad navigation for the client
 //		if(++test_ctr2 > 2)
 		{
 			usleep(10000);
@@ -734,7 +735,7 @@ if(1)
 				usleep(10000);
 			}
 		}
-
+#endif
 		if(engine_running == 1)
 		{
 
@@ -987,13 +988,18 @@ UCHAR serial_recv_task(int test)
 //			printHexByte(read_serial_buffer[i]);
 		}
 */
+		// these are the keypad cmd's sent from STM32
+		// but if the menus of the STM32/LCD/keypad select the feature
+		// then the cmd is between and including NAV_UP & NAV_CLOSE
+		// (see below)
 		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
 		{
 			add_msg_queue(cmd);		// send msg to basic_controls_task
 			strcpy(tempx,cmd_array[cmd].cmd_str);
-			// send to client if tcp connected
+			// send to client if tcp connected (all this does is 
+			// display the cmd's on the scrolling listbox
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
-		}
+		}else
 
 		if(test_sock() && cmd == ENGINE_TEMP)
 		{
@@ -1004,7 +1010,7 @@ UCHAR serial_recv_task(int test)
 			engine_temp |= (int)low_byte;
 			sprintf(tempx,"%.1f\0",convertF(engine_temp));
  			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
-		}
+		}else
 		
 		if(test_sock() && cmd == SEND_RT_VALUES)
 		{
@@ -1023,6 +1029,13 @@ UCHAR serial_recv_task(int test)
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
+		}else
+		
+		if(test_sock() && (cmd >= NAV_UP && cmd <= NAV_CLOSE))
+		{
+			sprintf(tempx,"nav cmd: %d",cmd);
+//			printString2(tempx);
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, cmd);
 		}
 
 		if(shutdown_all)
@@ -1354,7 +1367,7 @@ UCHAR basic_controls_task(int test)
 			default:
 			break;
 		}
-#if 0
+//#if 0
 		switch(cmd)
 		{
 	
@@ -1774,7 +1787,7 @@ UCHAR basic_controls_task(int test)
 				default:
 				break;
 		}	// end of switch
-#endif
+
 		if(shutdown_all)
 		{
 //			myprintf1("done basic task");

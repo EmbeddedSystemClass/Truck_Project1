@@ -116,6 +116,7 @@ enum cmd_types
 	SEND_MPH,
 	NAV_UP,
 	NAV_DOWN,
+	NAV_SIDE,
 	NAV_CLICK,
 	NAV_CLOSE
 }CMD_TYPES;

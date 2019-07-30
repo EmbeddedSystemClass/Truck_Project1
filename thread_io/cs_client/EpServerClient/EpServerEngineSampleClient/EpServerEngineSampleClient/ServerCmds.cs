@@ -88,8 +88,9 @@ namespace EpServerEngineSampleClient
 			SEND_MPH,
 			NAV_UP,
 			NAV_DOWN,
+			NAV_SIDE,
 			NAV_CLICK,
-			NAV_CLOSE
+			NAV_CLOSE,
 		}
 
         public ServerCmds()
