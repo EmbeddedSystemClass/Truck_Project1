@@ -23,7 +23,7 @@
 #include "client.h"
 #define closesocket      close
 //#define PROTOPORT        5193        /* default protocol port number */
-#define PROTOPORT        1003        /* default protocol port number */
+#define PROTOPORT        5193        /* default protocol port number */
 
 static int global_socket;
 static int sock_open;
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 	int buf_bytes;
 	int buf_bytes2;
 
-	if(argc < 3)
+	if(argc < 2)
 	{
 		printf("usage: %s [ip address of server] [file to send]\n",argv[0]);
 		exit(1);
@@ -375,4 +375,58 @@ int main(int argc, char *argv[])
 	return 0;
 }
 #endif
+#ifdef TEST_CLIENT
+int main(int argc, char *argv[])
+{
+	char test1,test2;
+	int rc;
+	int i,j;
+	char errmsg[20];
+	memset(errmsg,0,20);
+	char filename[20];
+	int fp;
+	off_t fsize;
+	int buf_bytes;
+	int buf_bytes2;
+	UCHAR buf[100];
 
+	printf("running simple test...\n");
+
+	if(argc < 2)
+	{
+		printf("usage: %s [ip address of server]\n",argv[0]);
+		exit(1);
+	}else
+	printf("sending file: %s to: %s\n",argv[2],argv[1]);
+
+	memset(buf,0,100);
+
+	printf("sizeof off_t: %ld\n",sizeof(off_t));
+
+	rc = init_client(argv[1]);
+//	rc = init_client("192.168.42.146");
+//	rc = init_client("192.168.42.115");
+
+	if(test_sock() == 0)
+	{
+		printf("trying to open socket...\n");
+		if(tcp_connect() > 0)
+		{
+			printf("connected\n");
+		}
+		else
+			return -1;
+	}
+
+	rc = put_sock((UCHAR *)&fsize,sizeof(off_t),1,errmsg);
+// if server is 32-bit machine the sizeof(off_t) is 4
+// but if client is 64-bit then sizeof(off_t) is 8
+//			rc = put_sock((UCHAR *)&fsize,4,1,errmsg);
+	rc = put_sock((UCHAR *)&buf[0],buf_bytes2,1,errmsg);
+	printf("\ndone\n");
+	close_sock();
+	close(fp);
+	
+	return 0;
+}
+#endif

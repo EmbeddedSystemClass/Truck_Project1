@@ -29,7 +29,7 @@ CC = ${GNUCC}
 all : server
 
 client.o: client.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
+	${CC} ${CC_FLAGS} -DTEST_CLIENT ${INCLUDE_PATHS} -c client.c
 
 server.o: server.c
 #	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
@@ -45,7 +45,7 @@ server2: server.o
 	${CC} server.o -o server
 
 client3.o: client.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c client.c
+	${CC} ${CC_FLAGS} -DTEST_CLIENT ${INCLUDE_PATHS} -c client.c
 
 server2.o: server.c
 	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c server.c
@@ -60,7 +60,7 @@ test_upload_new: test_upload_new.o
 	${CC} test_upload_new.o -o test_upload_new
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2 test_write test_read
+	rm -f *.o *~ *# core client server client2 server2 test_write test_read client
 #	rm -f *.o *~ *# client2
 #	rm -f *.o *~ *# test_upload_new
 

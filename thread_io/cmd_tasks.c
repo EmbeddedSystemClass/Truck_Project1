@@ -274,8 +274,8 @@ UCHAR get_host_cmd_task(int test)
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.22\0");
-//	printString2("sched v1.22\0");
+	myprintf1("sched v1.23\0");
+//	printString2("sched v1.23\0");
 //	printf("sched v1.23\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;

@@ -574,12 +574,12 @@ int get_msg(void)
 	}
 
 	for(i = 0;i < 16;i++)
-		printf("%d ",preamble[i]);
+		printf("%2x ",preamble[i]);
 
 	printf("\n");
 
-	for(i = 0;i < 16;i++)
-		printf("%c",preamble[i]);
+//	for(i = 0;i < 16;i++)
+//		printf("%c",preamble[i]);
 
 	printf("\n");
 
