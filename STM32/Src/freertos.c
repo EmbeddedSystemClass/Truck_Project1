@@ -70,7 +70,10 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 #define SEND_FPGA_DELAY() vTaskDelay(20)
-
+// WARNING! - if this gets pulled up on STM32CubeMX it will reset the queues
+// to 16 of uint16_t instead of  5 of uint64_t which has to be manually setOneRowLow
+// I just forgot to change it when I redid the whole thing under CubeMX
+// however, the keypressedHandle is still 16 of uint16_t tho...
 typedef enum
 {
 	STATE_WAIT_FOR_PRESS = 1,
@@ -144,24 +147,6 @@ static int dim_screen;
 static int silent_key;
 static char num_entry_num[SIZE_NUM];
 //static int task7on;
-
-static void clr_scr(void)
-{
-	UCHAR key[2];
-	key[0] = LCD_CLRSCR;
-	key[1] = 0xFE;
-	HAL_UART_Transmit(&huart2, key, 2, 100);
-}
-
-static void goto_scr(UCHAR row, UCHAR col)
-{
-	UCHAR key[4];
-	key[0] = GOTO_CMD;
-	key[1] = row;
-	key[2] = col;
-	key[3] = 0xFE;
-	HAL_UART_Transmit(&huart2, key, 4, 100);
-}
 
 static void setOneRowLow(uint8_t u8_x)
 {
@@ -344,7 +329,7 @@ void MX_FREERTOS_Init(void)
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-//#if 0
+
   /* definition and creation of myTask04 */
   osThreadDef(myTask04, StartAVRTask, osPriorityIdle, 0, 128);
   myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
@@ -368,7 +353,7 @@ void MX_FREERTOS_Init(void)
   /* definition and creation of myTask10 */
   osThreadDef(myTask10, StartKeyStateTask, osPriorityIdle, 0, 128);
   myTask10Handle = osThreadCreate(osThread(myTask10), NULL);
-//#endif
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -468,24 +453,60 @@ void StartDefaultTask(void const * argument)
 
 	vTaskDelay(2000);
 
-	clr_scr();
-	vTaskDelay(1000);
+	key = 0x21;
+	avr_buffer[0] = CHAR_CMD;
+	for(;;)
+	{
+		vTaskDelay(20);
+		avr_buffer[1] = key;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRHandle,avr_buffer,0);
+		if(++key > 0x7e)
+			key = 0x21;
+
+		if(timer_toggle == 0)
+		{
+
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+			timer_toggle = 1;
+			
+		}else
+		{
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			timer_toggle = 0;
+		}
+	}
+	
 
 	init_rtlabels();
 //	display_rtlabels();	
 
 	vTaskDelay(10);
+//#if 0
+// had to do this explicitly instead of using DISPLAY_RTLABELS (not working yet)
+	row = START_RT_VALUE_ROW;
+	col = START_RT_VALUE_COL;
 
-	ucbuff[0] = DISPLAY_RTLABELS;
-	ucbuff[1] = START_RT_VALUE_ROW;
-	ucbuff[2] = START_RT_VALUE_COL;
-	ucbuff[3] = ENDING_RT_VALUE_ROW;
-	ucbuff[4] = RT_VALUE_COL_WIDTH;
-	ucbuff[5] = NUM_RT_LABELS;
+	for(j = 1;j < NUM_RT_LABELS;j++)		// index has to start from 1
+	{
+		ucbuff[0] = EEPROM_STR;
+		ucbuff[1] = (UCHAR)row++;
+		ucbuff[2] = (UCHAR)col;
 
-	avr_buffer[0] = pack64(ucbuff);
-//	xQueueSend(SendAVRHandle,avr_buffer,0);
-
+		if(row > ENDING_RT_VALUE_ROW)
+		{
+			col += RT_VALUE_COL_WIDTH;
+			row = START_RT_VALUE_ROW;
+		}
+		ucbuff[3] = (UCHAR)j;
+		ucbuff[4] = 20;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(SendAVRHandle,avr_buffer,0);
+		vTaskDelay(10);
+	}
+//#endif
   /* Infinite loop */
  
   for(;;)
@@ -710,19 +731,18 @@ void StartAVRTask(void const * argument)
   /* USER CODE BEGIN StartAVRTask */
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
-	UCHAR end_byte;
-//	uint64_t temp;
+	UCHAR end_byte = AVR_START_BYTE;
+	UCHAR start_byte = AVR_END_BYTE;
 
   /* Infinite loop */
+
 	for(;;)
 	{
-		if(avr_up == 0)
-		{
-			vTaskDelay(1000);
-		}else
-		{
-			xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
 
+		xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
+
+		if(avr_up == 1)
+		{
 			ucbuff[0] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
 
@@ -779,13 +799,13 @@ void StartAVRTask(void const * argument)
 				default:
 					break;
 			}
-			end_byte = 0xFE;
-			HAL_UART_Transmit(&huart2, &end_byte, 1, 100);
+			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
 			end_byte = 0;
 
 			do {
 				HAL_UART_Receive(&huart2, &end_byte, 1, portMAX_DELAY);
 			} while(end_byte != 0xFD);
+
 		}
 	}
   /* USER CODE END StartAVRTask */
@@ -1026,7 +1046,6 @@ void StartRecv7200(void const * argument)
 					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 					avr_up = 0;
 					break;
-					avr_up = 1;
 				case SEND_TIME_DATA:
 #if 0
 					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
@@ -1458,6 +1477,7 @@ void Callback01(void const * argument)
 		raw_data = 10;
 	temp_raw = raw_data;
 */
+#if 0
 	if(timer_toggle == 0)
 	{
 
@@ -1483,7 +1503,7 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
 		timer_toggle = 0;
 	}
-
+#endif
   /* USER CODE END Callback01 */
 }
 

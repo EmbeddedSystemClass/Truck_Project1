@@ -18,18 +18,19 @@ void init_rtlabels(void)
 	static UCHAR col, data_col, row, str;
 	int i;
 	
-	col = START_RT_VALUE_COL;
 	data_col = col + 20;
 	
 	// rt labels at bottom of screen
- 	for(str = 0,row = START_RT_VALUE_ROW;str < NUM_RT_LABELS;str++,row++)
+	row = START_RT_VALUE_ROW;
+	col = START_RT_VALUE_COL;
+ 	for(str = 1;str < NUM_RT_LABELS;str++)
 	{
 		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
-		rtlabel_str[str].row = row;
+		rtlabel_str[str].row = row++;
 		rtlabel_str[str].col = col;
 		rtlabel_str[str].data_col = data_col;
 
-		if(row == ENDING_RT_VALUE_ROW)
+		if(row > ENDING_RT_VALUE_ROW)
 		{
 			row = START_RT_VALUE_ROW;
 			col += RT_VALUE_COL_WIDTH;

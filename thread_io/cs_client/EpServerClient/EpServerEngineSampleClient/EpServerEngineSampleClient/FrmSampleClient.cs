@@ -15,6 +15,7 @@ using System.Xml.Serialization;
 using System.Drawing;
 using System.Timers;
 
+
 namespace EpServerEngineSampleClient
 {
 	public partial class FrmSampleClient : Form, INetworkClientCallback
@@ -66,9 +67,12 @@ namespace EpServerEngineSampleClient
 		private int no_buttons = 14;
 		private int i = 0;
 		private bool avr_running = false;
-		private int server_connection_attempts = 1;
-		string xml_file_location = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
-		//string xml_file_location = "c:\\Users\\Dan_Laptop\\dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
+		private int please_lets_disconnect = 0;
+		//private int server_connection_attempts = 1;
+		private bool client_connected = false;
+		private string xml_file_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
+		private string xml_file_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat.xml";
+
 		public FrmSampleClient()
 		{
 			InitializeComponent();
@@ -111,11 +115,11 @@ namespace EpServerEngineSampleClient
 
 			i = 0;
 			ui_format = new List<UIFormat>();
-
-			XmlReader xmlReader = new XmlTextReader(xml_file_location);
+			XmlTextReader xmlReader = new XmlTextReader(File.Exists(xml_file_location_laptop) ? xml_file_location_laptop : xml_file_location_desktop);
+			// this doesn't work if the string 'xml_file_location... are not private
 			UIFormat item = null;
 			
-			while (xmlReader.Read())
+			while(xmlReader.Read())
 			{
 				if (xmlReader.NodeType == XmlNodeType.Text)
 				{
@@ -238,64 +242,18 @@ namespace EpServerEngineSampleClient
 
 		private void btnConnect_Click(object sender, EventArgs e)
 		{
-			if (btnConnect.Text.Equals("Connect"))
+			if(!client_connected)		// let's connect here! (see timer callback at end of file)
 			{
-
 				string hostname = tbHostname.Text;
 				string port = tbPort.Text;
-
-				tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
-				tbPort.Enabled = false;
-				btnConnect.Text = "Disconnect";
-				btnShutdown.Enabled = true;
-				btnReboot.Enabled = true;
-				btnStopSerial.Enabled = true;
-				tbServerTime.Text = "";
-				tbEngRunTime.Text = "";
-				tbEngineTemp.Text = "";
-				tbRPM.Text = "";
-				tbMPH.Text = "";
-
-				btn_SetTime.Enabled = true;
-				btnGetTime.Enabled = true;
-				//Upload_New.Enabled = true;
+				AddMsg("trying to connect...");
 				ClientOps ops = new ClientOps(this, hostname, port);
 				m_client.Connect(ops);
-				/*
-								if (m_client.IsConnectionAlive)
-									AddMsg("connect");
-								else 
-									AddMsg("not connect");
-				//                MessageBox.Show("connected?");
-				*/
+				please_lets_disconnect = 0;
 			}
 			else
 			{
-				string cmd = "DISCONNECT";
-				int offset = svrcmd.GetCmdIndexI(cmd);
-				svrcmd.Send_Cmd(offset);
-				tbHostname.Enabled = true;
-				tbPort.Enabled = true;
-				btnConnect.Text = "Connect";    // comment out in debug
-				btnShutdown.Enabled = false;
-				btnReboot.Enabled = false;
-				btnStopSerial.Enabled = false;
-				btn_SetTime.Enabled = false;
-				btnGetTime.Enabled = false;
-				//Upload_New.Enabled = false;
-
-				tbEngRunTime.Text = "";         /// comment the next 4 out in debug
-				tbEngineTemp.Text = "";
-				tbRPM.Text = "";
-				tbMPH.Text = "";
-				tbServerTime.Text = "";
-				timer1.Enabled = false;
-
-				if (m_client.IsConnectionAlive)
-					m_client.Disconnect();
-				//                string cmd = Enum.GetName(typeof(Server_cmds), Server_cmds.CLOSE_SOCKET);
-				//                AddMsg("shutdown: " + cmd);
-				//                Send_Cmd(cmd, 0);
+				please_lets_disconnect = 1;	// let's disconnect here!
 			}
 			reevaluate_enabled_buttons();
 		}
@@ -705,15 +663,14 @@ namespace EpServerEngineSampleClient
 			string cmd = "";
 			int offset = 0;
 
-
 			if (avr_running)
 			{
 				cmd = "STOP_AVR_XMIT";
 				offset = svrcmd.GetCmdIndexI(cmd);
 				svrcmd.Send_Cmd(offset);
 				avr_running = false;
-				AddMsg("AVR off");
-				btnAVR.Text = "AVR off";
+				AddMsg("Set LCD Off");
+				btnAVR.Text = "Set LCD On";
 			}
 			else
 			{
@@ -721,8 +678,8 @@ namespace EpServerEngineSampleClient
 				offset = svrcmd.GetCmdIndexI(cmd);
 				svrcmd.Send_Cmd(offset);
 				avr_running = true;
-				AddMsg("AVR on");
-				btnAVR.Text = "AVR on";
+				AddMsg("Set LCD On");
+				btnAVR.Text = "Set LCD Off";
 			}
 		}
 
@@ -816,41 +773,68 @@ namespace EpServerEngineSampleClient
 
 		private void myTimerTick(object sender, EventArgs e)
 		{
-			bool connected = false;
-			
-			string hostname = tbHostname.Text;
-			string port = tbPort.Text;
-			ClientOps ops = new ClientOps(this, hostname, port);
-
-			if (m_client.IsConnectionAlive)
+			switch (please_lets_disconnect)            // send the msg to server saying we are disconnecting
 			{
-/*
-				server_connection_attempts = 0;
-				tbHostname.Enabled = false;     /// from here to MPH should be commented out when in debugger
-				tbPort.Enabled = false;
-				btnConnect.Text = "Disconnect";
-				btnShutdown.Enabled = true;
-				btnReboot.Enabled = true;
-				btnStopSerial.Enabled = true;
-				//tbServerTime.Text = "";
-				//tbEngRunTime.Text = "";
-				//tbEngineTemp.Text = "";
-				//tbRPM.Text = "";
-				//tbMPH.Text = "";
+				case 0:
+					if (m_client.IsConnectionAlive)
+					{
+						if (client_connected == false)
+						{
+							client_connected = true;
+							tbHostname.Enabled = false;
+							tbPort.Enabled = false;
+							btnConnect.Text = "Disconnect";
+							btnShutdown.Enabled = true;
+							btnReboot.Enabled = true;
+							btnStopSerial.Enabled = true;
+							tbServerTime.Text = "";
+							tbEngRunTime.Text = "";
+							tbEngineTemp.Text = "";
+							tbRPM.Text = "";
+							tbMPH.Text = "";
+							btn_SetTime.Enabled = true;
+							btnGetTime.Enabled = true;
+							AddMsg("server connected");
+						}
+					}
+					else // if not alive
+					{
+						if (client_connected == true)
+						{
+							client_connected = false;
+							tbHostname.Enabled = true;
+							tbPort.Enabled = true;
+							btnConnect.Text = "Connect";
+							btnShutdown.Enabled = false;
+							btnReboot.Enabled = false;
+							btnStopSerial.Enabled = false;
+							btn_SetTime.Enabled = false;
+							btnGetTime.Enabled = false;
+							//Upload_New.Enabled = false;
 
-				btn_SetTime.Enabled = true;
-				btnGetTime.Enabled = true;
-				//tbReceived.Clear();
-				//AddMsg("Server Connected");
-*/
-			}
-			else
-			{
-				connected = false;
-				//tbReceived.Clear();
-				//AddMsg("attempting to connect to server " + server_connection_attempts.ToString());
-				//server_connection_attempts++;
-				m_client.Connect(ops);
+							tbEngRunTime.Text = "";         /// comment the next 4 out in debug
+							tbEngineTemp.Text = "";
+							tbRPM.Text = "";
+							tbMPH.Text = "";
+							tbServerTime.Text = "";
+							client_connected = false;
+							AddMsg("server disconnected");
+						}
+					}
+					break;
+				case 1:
+					string cmd = "DISCONNECT";
+					AddMsg("asking server to disconnect...");
+					int offset = svrcmd.GetCmdIndexI(cmd);
+					svrcmd.Send_Cmd(offset);
+					please_lets_disconnect = 2;		// next time around disconnect anyway
+					break;
+				case 2:         // then wait 1 second to see if it really did disconnect us
+					AddMsg("we are disconnecting");
+					if (m_client.IsConnectionAlive)
+						m_client.Disconnect();
+					please_lets_disconnect = 0;
+					break;
 			}
 		}
 	}

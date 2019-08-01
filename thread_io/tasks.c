@@ -709,36 +709,8 @@ UCHAR timer_task(int test)
 //		write_serial_buffer[1] = 0x55;
 		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
-//		sprintf(tempx,"nav click");
-//		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, NAV_CLICK);
-#if 0
-		//used for testing the remote keypad navigation for the client
-//		if(++test_ctr2 > 2)
-		{
-			usleep(10000);
-			sprintf(tempx,"nav");
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, nav);
-			test_ctr2 = 0;
-
-//			if(++test_ctr > 20)
-if(1)
-			{
-				usleep(10000);
-/*
-				if(nav == NAV_DOWN)
-					nav = NAV_UP;
-				else nav = NAV_DOWN;
-*/
-				sprintf(tempx,"nav click");
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, NAV_CLICK);
-				test_ctr = 0;
-				usleep(10000);
-			}
-		}
-#endif
 		if(engine_running == 1)
 		{
-
 			if(++running_seconds > 59)
 			{
 				running_seconds = 0;
@@ -1011,7 +983,7 @@ UCHAR serial_recv_task(int test)
 			engine_temp |= (int)low_byte;
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
-			printString2(tempx);
+//			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
 		}else
@@ -1725,8 +1697,8 @@ UCHAR basic_controls_task(int test)
 #if 0
 				for(i = 0;i < 10;i++)
 				{
-					red_led(1);
-					usleep(2000);
+					red_led(1);		// these lights on on the board
+					usleep(2000);	// aren't visible in the iobox
 					red_led(0);
 					green_led(1);
 					usleep(2000);
@@ -1738,36 +1710,28 @@ UCHAR basic_controls_task(int test)
 					usleep(2000);
 					green_led(0);
 				}
-				for(i = 0;i < 10;i++)
-				{
+#endif				
+				myprintf1("reboot iobox\0");
+				for(i = 0;i < 5;i++)		// scroll the display on the iobox
+				{							// to see the last 10 msg's and pause
+					setdioline(7,1);		// for 1 sec each time
+					uSleep(1,0);
+					scroll_up();
 					setdioline(7,0);
-//					uSleep(0,TIME_DELAY/20);
-					usleep(2000);
-					setdioline(7,1);
-//					uSleep(0,TIME_DELAY/20);
-					usleep(2000);
+					uSleep(1,0);
+					scroll_up();
 				}
 				setdioline(7,0);
 				usleep(20000);
-#endif
 				setdioline(7,1);
-				reboot_on_exit = 3;
-				myprintf1("shutdown iobox\0");
 //				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
+				reboot_on_exit = 3;
 				break;
 
 			case REBOOT_IOBOX:
+
 #if 0
-				for(i = 0;i < 20;i++)
-				{
-					setdioline(7,0);
-//					uSleep(0,TIME_DELAY/20);
-					usleep(20000);
-					setdioline(7,1);
-//					uSleep(0,TIME_DELAY/20);
-					usleep(20000);
-				}
 				setdioline(7,1);
 				for(i = 0;i < 10;i++)
 				{
@@ -1786,10 +1750,22 @@ UCHAR basic_controls_task(int test)
 				}
 #endif
 				setdioline(7,1);
-				reboot_on_exit = 2;
 				myprintf1("reboot iobox\0");
-//				printf("reboot iobox\r\n");
+				for(i = 0;i < 5;i++)
+				{
+					setdioline(7,1);
+					uSleep(1,0);
+					scroll_up();
+					setdioline(7,0);
+					uSleep(1,0);
+					scroll_up();
+				}
+				setdioline(7,0);
+				usleep(20000);
+				setdioline(7,1);
+//				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
+				reboot_on_exit = 2;
 				break;			
 				default:
 				break;

@@ -413,7 +413,7 @@
 			this.btnAVR.Name = "btnAVR";
 			this.btnAVR.Size = new System.Drawing.Size(200, 48);
 			this.btnAVR.TabIndex = 5;
-			this.btnAVR.Text = "AVR off";
+			this.btnAVR.Text = "Set LCD on";
 			this.btnAVR.UseVisualStyleBackColor = false;
 			this.btnAVR.Click += new System.EventHandler(this.btnAVR_Click);
 			// 
@@ -438,7 +438,7 @@
 			// 
 			// timer1
 			// 
-			this.timer1.Interval = 1000;
+			this.timer1.Interval = 2000;
 			this.timer1.Tick += new System.EventHandler(this.myTimerTick);
 			// 
 			// FrmSampleClient

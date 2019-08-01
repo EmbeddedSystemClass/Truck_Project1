@@ -11,8 +11,13 @@
 #include "../mytypes.h"
 #include "serial_io.h"
 
+// AVR_t6963/test uses comm 1 of TS-7200 at 19200
+#ifdef TEST_AVR_LCD
+#define BAUDRATE B19200
+#warning "TEST_AVR_LCD defined"
+#else
 #define BAUDRATE B115200
-//#define BAUDRATE B115200
+#endif
 #define BAUDRATE2 B115200
 
 #ifdef TS_7800
@@ -152,7 +157,7 @@ int read_serial_buff(UCHAR *buff, char *errmsg)
 //		printf("\nread error: %s\n",strerror(errno));
 		strcpy(errmsg,strerror(errno));
 
-	return res;	
+	return res;
 }
 /************************************************************************************/
 int write_serial_buff(UCHAR *buff, char *errmsg)
@@ -229,7 +234,7 @@ int init_serial2(void)
 		close(global_handle2);
 		exit(1);
 	}
-	set_interface_attribs (global_handle2, BAUDRATE, 0);
+	set_interface_attribs (global_handle2, BAUDRATE2, 0);
 	set_blocking (global_handle2, 1);	 // blocking
 //	set_blocking (global_handle2, 0);	// non-blocking
 

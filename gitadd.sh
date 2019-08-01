@@ -38,10 +38,17 @@ git add AVR_t6963/sfr_helper.h
 git add AVR_t6963/t6963.c
 git add AVR_t6963/USART.h
 git add AVR_t6963/test_gdisp.cx
+
 git add AVR_t6963/eeprom/main_burn.c
 git add AVR_t6963/eeprom/t6963.c
 git add AVR_t6963/eeprom/t6963.h
 git add AVR_t6963/eeprom/test.cx
+
+git add AVR_t6963/test/dmake3
+git add AVR_t6963/test/doftp.sh
+git add AVR_t6963/test/main.c
+git add AVR_t6963/test/make_target2
+git add AVR_t6963/test/readme.txt
 
 git add Truck_App1/Multi-Byte.vhd
 git add Truck_App1/multi-byte.ucf
@@ -64,6 +71,7 @@ git add Truck_App1/dtmf.vhd
 git add Truck_App1/lcd_pwm.vhd
 git add Truck_App1/lib/Common.vhd
 
+git add thread_io/setARMpath.sh
 git add thread_io/ioports.c
 git add thread_io/Makefile
 git add thread_io/sched.c

@@ -46,6 +46,16 @@ UCHAR temp[TEMP_SIZE];
 // - 
 ISR(TIMER1_OVF_vect)
 {
+	if(onoff > 0)
+	{
+		onoff = 0;
+		SET_LED();
+	}else
+	{
+		onoff = 1;
+		CLR_LED();
+	}
+/*
 	GDispCharAt(xrow,xcol,spi_ret);
 	if(++spi_ret > 0x41)
 		spi_ret = 0x30;
@@ -56,6 +66,7 @@ ISR(TIMER1_OVF_vect)
 		if(++xrow > 15)
 			xrow = 13;
 	}
+*/
 //	TCNT1 = (UINT)((high_delay << 8) & 0xFFF0);
 }
 
@@ -79,13 +90,14 @@ int main(void)
 //	UCHAR tspi_ret;
 	int num_entry_ptr = 0;
 	num_entry_mode = 0;
+	onoff = 0;
 
 ///	char disp_str[STR_LEN];
 
+	initUSART();
 	GDispInit();
 //	GDispInitPort();
 	_delay_ms(1);
-	initUSART();
 	_delay_ms(1);
 //	initSPImaster();
 //	initSPIslave();
@@ -116,13 +128,17 @@ int main(void)
 //#endif
 
 	xbyte = 0x21;
-/*
+
+	TCNT1 = 0xFFF0;
 	TCCR1A = 0x00;
-	TCCR1B = (1<<CS10) | (1<<CS12);;  // Timer mode with 1024 prescler
-//	TCCR1B = (1<<CS11);
+//	TCCR1B = (1<<CS10) | (1<<CS12);  // Timer mode with 1024 prescler
+	TCCR1B = (1<<CS10) | (1<<CS11);	// clk/64
+//	TCCR1B = (1<<CS11);	// clk/8	(see page 144 in datasheet)
+//	TCCR1B = (1<<CS10);	// no prescaling
+	
 	TIMSK1 = (1 << TOIE1) ;   // Enable timer1 overflow interrupt(TOIE1)
-	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
-*/
+//	sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
+
 	chptr = 0;
 	dc2 = 0;
 	spi_ret = 0x30;
@@ -158,11 +174,12 @@ int main(void)
 		buff[chptr] = key;
 		chptr++;
 
-		if(key == 0xfe)
+		if(key == AVR_START_BYTE)
 		{
 			switch(buff[0])
 			{
 				case CHAR_CMD:
+				
 					ch = buff[1];
 					if(ch > 0x1F && ch < 0x7f)
 					{
@@ -230,7 +247,7 @@ int main(void)
 					index = buff[3];
 					blanks = buff[4];
 
-					if(index >= 0 && index < NUM_STR)
+					if(index > 0 && index < NUM_STR+1)
 					{
 						strcpy(str,eeprom_str_lookup(index, str));
 						GDispGoto(row,col);
@@ -243,6 +260,35 @@ int main(void)
 						for(i = 0;i < blanks;i++)
  							GDispChar(0x20);
 */
+					}
+				break;
+
+				case DISPLAY_RTLABELS:
+					blanks = 6;
+
+					row = starting_row = (UINT)buff[1];
+					starting_col = col = (UINT)buff[2];
+					ending_row = (UINT)buff[3];
+					col_width = (UINT)buff[4];
+					num_labels = (UINT)buff[5];
+
+					
+					
+					for(index = 1;index < num_labels;index++);
+					{
+						strcpy(str,eeprom_str_lookup(index, str));
+						GDispGoto(row,col);
+
+						for(i = 0;i < blanks;i++)
+ 							GDispChar(0x20);
+
+						if(row > ending_row)
+						{
+							row = starting_row;
+							col += col_width;
+						}
+						GDispStringAt(row,col,str);
+						row++;
 					}
 				break;
 
@@ -281,6 +327,10 @@ int main(void)
 						case OFF_BRAKES:
 							row = STATUS_BRAKES;
 							break;
+						case WIPER1:
+						case WIPER2:
+						case WIPER_OFF:
+							row = STATUS_WIPERS;
 					}
 					GDispGoto(row,col);
 					_delay_ms(2);
@@ -307,32 +357,6 @@ int main(void)
 						GDispStringAt(row,col,str);
 					}
 					GDispGoto(0,0);
-				break;
-
-				case DISPLAY_RTLABELS:
-					index = 1;
-					blanks = 6;
-//					col = START_RT_VALUE_COL;
-					starting_row = (UINT)buff[1];
-					col = (UINT)buff[2];
-					ending_row = (UINT)buff[3];
-					col_width = (UINT)buff[4];
-					num_labels = (UINT)buff[5];
-
-					for(row = starting_row;index < num_labels+1;index++,row++)
-					{
-						strcpy(str,eeprom_str_lookup(index, str));
-						GDispGoto(row,col);
-						for(i = 0;i < blanks;i++)
- 							GDispChar(0x20);
-
-						if(row == ending_row)
-						{
-							row = starting_row;
-							col += col_width;
-						}
-						GDispStringAt(row,col,str);
-					}
 				break;
 
 				case DISPLAY_STATUSLABELS:
@@ -448,7 +472,22 @@ int main(void)
 						sprintf(str,"%3d ",int_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
-				case LOAD_MENUS:
+
+				case RESET:
+					GDispReset();
+					_delay_ms(1000);
+					FONT_8X8();
+					_delay_ms(100);
+				break;
+				
+				case SET_8X8_FONT:
+					FONT_8X8();
+					_delay_ms(100);
+				break;
+
+				case SET_6X8_FONT:
+					FONT_6X8();
+					_delay_ms(100);
 				break;
 
 				default:
@@ -456,7 +495,8 @@ int main(void)
 			}
 			chptr = 0;
 //			_delay_ms(5);
-			transmitByte(0xFD);	// send 0xFD back to let PIC24 know we are finished with this command
+			transmitByte(AVR_END_BYTE);	
+			// send 0xFD back to let PIC24 know we are finished with this command
 //			printHexByte(buff[5]+0x30);
 //			printString(" ");
 		}

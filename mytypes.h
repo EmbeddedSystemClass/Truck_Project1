@@ -233,6 +233,9 @@ enum output_types
 #define PASSWORD_SIZE 13
 
 // messages sent from STM32 to AVR using the AVR_cmd task
+#define AVR_START_BYTE 0xFE
+#define AVR_END_BYTE 0xFD
+
 #define CHAR_CMD				2
 #define GOTO_CMD				3
 #define SET_MODE_CMD	 		4
@@ -254,7 +257,9 @@ enum output_types
 #define DISPLAY_STATUSLABELS	20
 #define DISPLAY_ELAPSED_TIME	21
 #define DISPLAY_TEMP			22
-#define LOAD_MENUS				23
+#define RESET					23
+#define SET_8X8_FONT			24
+#define SET_6X8_FONT			25
 
 // offsets into eeprom
 #define RT_VALUES_OFFSET 1
@@ -268,6 +273,7 @@ enum output_types
 #define STATUS_BRAKES STATUS_ENGINE+4
 #define STATUS_RUNNING_LIGHTS STATUS_ENGINE+5
 #define STATUS_BLOWER STATUS_ENGINE+6
+#define STATUS_WIPERS STATUS_ENGINE+7
 
 #define VARIOUS_MSG_OFFSET 21
 #define STATUS_ON VARIOUS_MSG_OFFSET+4
@@ -275,11 +281,11 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 13
-#define START_RT_VALUE_ROW 1
-#define START_RT_VALUE_COL 1
+#define NUM_RT_LABELS 22
+#define START_RT_VALUE_ROW 6
+#define START_RT_VALUE_COL 0
 #define ENDING_RT_VALUE_ROW 15
-#define RT_VALUE_COL_WIDTH 15
+#define RT_VALUE_COL_WIDTH 18
 
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1

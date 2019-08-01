@@ -143,6 +143,15 @@ void GDispInit (void)
 	//first character code $80 for CG Ram
 	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
 }
+
+void GDispReset(void)
+{
+	GDispInitPort ();
+	GDispCmdAddrSend (TEXT_HOME_ADDR, TEXT_HOME_SET);
+	GDispCmdAddrSend (GRH_HOME_ADDR, GRAPH_HOME_SET);
+	GDispCmdAddrSend (COLUMN, TEXT_AREA_SET);
+	GDispCmdAddrSend (0x0002, OFFSET_REG_SET);
+}
 /*
 *********************************************************************************************************
  *                               SET MODE FOR DISPLAY/MODE/CURSOR/TEXT_ATTRIBUTE

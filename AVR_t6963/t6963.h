@@ -67,6 +67,7 @@
 #define DATA5		PORTD7		// D7
 #define DATA6		PORTB0		// D8
 #define DATA7		PORTB1		// D9
+#define LEDPIN		PORTB5
 
 #define SET_RD()	_SB(PORTC,LCD_RD)
 #define CLR_RD()	_CB(PORTC,LCD_RD)
@@ -83,6 +84,10 @@
 #define CLR_CE()	_CB(PORTC,LCD_CE)
 #define CLR_RST()	_CB(PORTC,LCD_RST)
 #define CLR_CD()	_CB(PORTC,LCD_CD)
+
+#define LED			PORTB5
+#define SET_LED()	_SB(PORTB,PORTB5)
+#define CLR_LED()	_CB(PORTB,PORTB5)
 
 #define SET_DATA_DIR_OUT()	DDRB |= 0x03;	\
 							DDRD |= 0xFC;
@@ -265,4 +270,5 @@ void GDispPeekChk (void);
 UCHAR GDispScreenPeek(UINT row, UINT col);
 void Data_Out(UCHAR data);
 UCHAR Data_In(void);
+void GDispReset(void);
 #endif
