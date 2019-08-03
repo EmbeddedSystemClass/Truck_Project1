@@ -8,7 +8,6 @@ namespace EpServerEngineSampleClient
 {
 	class UIFormat
 	{
-		public int Dlg_no { get; set; }
 		public string Label { get; set; }
 		public int Command { get; set; }
 		public int Length { get; set; }

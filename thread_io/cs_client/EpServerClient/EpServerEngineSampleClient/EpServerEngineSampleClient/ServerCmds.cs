@@ -26,6 +26,7 @@ namespace EpServerEngineSampleClient
 			ON_BRIGHTS,			// 11
 			OFF_BRIGHTS,		// 12
 			BLANK,
+			ESTOP_SIGNAL,
 			ON_BRAKES,
 			OFF_BRAKES,
 			ON_RUNNING_LIGHTS,
@@ -92,7 +93,7 @@ namespace EpServerEngineSampleClient
 			NAV_DOWN,
 			NAV_SIDE,
 			NAV_CLICK,
-			NAV_CLOSE,
+			NAV_CLOSE
 		}
 
         public ServerCmds()
@@ -158,153 +159,6 @@ namespace EpServerEngineSampleClient
 
             string test = " ";
             byte[] bytes = BytesFromString(test);
-/*
-            switch (cmd)
-            {
-                case "STARTER":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ENABLE_START;
-                    else sendcmd = (int)Server_cmds.STARTER_OFF;
-                    //                    cblistCommon.SetSelected(0, false);
-                    break;
-                case "IGNITION":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_ACC;
-                    else sendcmd = (int)Server_cmds.OFF_ACC;
-                    break;
-                case "FUELPUMP":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_FUEL_PUMP;
-                    else sendcmd = (int)Server_cmds.OFF_FUEL_PUMP;
-                    break;
-                case "COOLINGFAN":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_FAN;
-                    else sendcmd = (int)Server_cmds.OFF_FAN;
-                    break;
-                case "LIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_LIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_LIGHTS;
-                    break;
-                case "BRIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_BRIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_BRIGHTS;
-                    break;
-                case "LEFT_LIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_LLIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_LLIGHTS;
-                    break;
-                case "LEFT_BRIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_LBRIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_LBRIGHTS;
-                    break;
-                case "RIGHT_LIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_RLIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_RLIGHTS;
-                    break;
-                case "RIGHT_BRIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_RBRIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_RBRIGHTS;
-                    break;
-                case "START_SEQ":
-                    sendcmd = (int)Server_cmds.START_SEQ;
-                    break;
-                case "SHUTDOWN":
-                    sendcmd = (int)Server_cmds.SHUTDOWN;
-                    break;
-                case "SHUTDOWN_IOBOX":
-                    sendcmd = (int)Server_cmds.SHUTDOWN_IOBOX;
-                    break;
-                case "REBOOT_IOBOX":
-                    sendcmd = (int)Server_cmds.REBOOT_IOBOX;
-                    break;
-                case "CLOSE_DB":
-                    sendcmd = (int)Server_cmds.CLOSE_DB;
-                    break;
-                case "OPEN_DB":
-                    sendcmd = (int)Server_cmds.OPEN_DB;
-                    break;
-                case "TEST_LEFT_BLINKER":
-                    sendcmd = (int)Server_cmds.TEST_LEFT_BLINKER;
-                    break;
-                case "TEST_RIGHT_BLINKER":
-                    sendcmd = (int)Server_cmds.TEST_RIGHT_BLINKER;
-                    break;
-//                case "UPLOAD_NEW":
- //                   sendcmd = (int)Server_cmds.UPLOAD_NEW;
-//                    break;
-                case "BRAKES":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_BRAKES;
-                    else sendcmd = (int)Server_cmds.OFF_BRAKES;
-                    break;
-                case "RUNNING_LIGHTS":
-                    if (onoff == 1)
-                        sendcmd = (int)Server_cmds.ON_RUNNING_LIGHTS;
-                    else sendcmd = (int)Server_cmds.OFF_RUNNING_LIGHTS;
-                    break;
-                case "SAVE_TO_DISK":
-                    sendcmd = (int)Server_cmds.SAVE_TO_DISK;
-                    break;
-                case "CURRENT_TIME":
-                    sendcmd = (int)Server_cmds.CURRENT_TIME;
-                    break;
-                case "GET_TIME":
-                    sendcmd = (int)Server_cmds.GET_TIME;
-                    break;
-//                case "SET_TIME":
-//                    sendcmd = (int)Server_cmds.SET_TIME;
-//                    break;
-                case "DISCONNECT":
-                    sendcmd = (int)Server_cmds.DISCONNECT;
-                    break;
-                case "SPECIAL_CMD":
-                    sendcmd = (int)Server_cmds.SPECIAL_CMD;
-                    break;
-                case "BLOWER1_ON":
-                    sendcmd = (int)Server_cmds.BLOWER1;
-                    break;
-                case "BLOWER2_ON":
-                    sendcmd = (int)Server_cmds.BLOWER2;
-                    break;
-                case "BLOWER3_ON":
-                    sendcmd = (int)Server_cmds.BLOWER3;
-                    break;
-                case "BLOWER_OFF":
-                    sendcmd = (int)Server_cmds.BLOWER_OFF;
-                    break;
-                case "SET_PARAMS":
-                    sendcmd = (int)Server_cmds.SET_PARAMS;
-                    break;
-//                case "TEST_ALL_IO":
-//                    sendcmd = (int)Server_cmds.TEST_ALL_IO;
-//                    break;
-				case "STOP_MBOX_XMIT":
-                    sendcmd = (int)Server_cmds.STOP_MBOX_XMIT;
-					break;
-				case "START_MBOX_XMIT":
-                    sendcmd = (int)Server_cmds.START_MBOX_XMIT;
-					break;
-                case "WIPER1":
-                    sendcmd = (int)Server_cmds.WIPER1;
-                    break;
-                case "WIPER2":
-                    sendcmd = (int)Server_cmds.WIPER2;
-                    break;
-                case "WIPER_OFF":
-                    sendcmd = (int)Server_cmds.WIPER_OFF;
-                    break;
-                default:
-                    sendcmd = (int)Server_cmds.NON_CMD;
-                    break;
-            }
-*/
             bytes.SetValue((byte)sendcmd, 0);
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);

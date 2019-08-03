@@ -21,6 +21,7 @@ namespace EpServerEngineSampleClient
         public int blower3_on { get; set; }
         public int lights_on_delay { get; set; }
         public int test_bank { get; set; }
+		public int comm_en { get; set; }
 
         public int si_fan_on { get; set; }
         public int si_fan_off { get; set; }
@@ -35,6 +36,7 @@ namespace EpServerEngineSampleClient
         public int si_blower3_on { get; set; }
         public int si_lights_on_delay { get; set; }
         public int si_test_bank { get; set; }
+		public int si_comm_en { get; set; }
         public bool set { get; set; }
     }
 }

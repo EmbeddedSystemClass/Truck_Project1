@@ -229,6 +229,7 @@ int main(int argc, char **argv)
 	else if(reboot_on_exit == 2)
 	{
 //		printf("sched: reboot\r\n");
+
 		return 2;
 	}
 	else if(reboot_on_exit == 3)

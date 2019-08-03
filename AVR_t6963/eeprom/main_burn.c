@@ -17,37 +17,37 @@ static char *eeprom_str_lookup(int index, char *str);
 // values start at line 20 so its easy to calculate the offset
 
 char menu_labels[NUM_STR][24] = {
-	{"OIL PRES"},
-	{"AIR TEMP"},
-	{"MAP"},
-	{"OIL TEMP"},
-	{"O2"},
-	{"ODOM"},
-	{"TRIP"},
-	{"RPM"},
-	{"MPH"},
-	{"RUN TIME"},  
-	{"ENG TEMP"},
-	{"OUTDOOR TEMP"},
-	{"INDOOR TEMP"},
-	{"ENGINE"},				// status values (STATUS_VALUES_OFFSET)
-	{"COOLING FAN"},
-	{"HEAD LIGHTS"},
-	{"BRIGHTS"},
-	{"BRAKES"},
-	{"RUNNING LIGHTS"},
-	{"BLOWER"},
-	{"enter password:"},	// various message string	(VARIOUS_MSG_OFFSET)
-	{"bad password"},
-	{"start engine"},
-	{"retries left"},
-	{"ON   "},
-	{"OFF  "},
-	{"re-enter password"},
-	{"in    seconds"},
-	{"engine on:"},
-	{"engine shutoff"},
-	{"press   to"},
+	{"OIL PRES\0"},
+	{"AIR TEMP\0"},
+	{"MAP\0"},
+	{"OIL TEMP\0"},
+	{"O2\0"},
+	{"ODOM\0"},
+	{"TRIP\0"},
+	{"RPM\0"},
+	{"MPH\0"},
+	{"RUN TIME\0"},  
+	{"ENG TEMP\0"},
+	{"OUTDOOR TEMP\0"},
+	{"INDOOR TEMP\0"},
+	{"ENGINE\0"},				// status values (STATUS_VALUES_OFFSET)
+	{"COOLING FAN\0"},
+	{"HEAD LIGHTS\0"},
+	{"BRIGHTS\0"},
+	{"BRAKES\0"},
+	{"RUNNING LIGHTS\0"},
+	{"BLOWER\0"},
+	{"enter password:\0"},	// various message string	(VARIOUS_MSG_OFFSET)
+	{"bad password\0"},
+	{"start engine\0"},
+	{"retries left\0"},
+	{"ON   \0"},
+	{"OFF  \0"},
+	{"re-enter password\0"},
+	{"in    seconds\0"},
+	{"engine on:\0"},
+	{"engine shutoff\0"},
+	{"press   to\0"},
 	{"                "}
 };
 
@@ -72,6 +72,7 @@ int main(void)
 		j++;
 		*(temp+j) = 0;
 	}
+
 	eeprom_write_block((const void*)temp,(void *)eepromString,j);
 
 	GDispInit();
@@ -87,7 +88,7 @@ int main(void)
 	GDispClrTxt();
 
 	col = 0;
-	i = 1;		// lookup has to start at 1
+	i = 0;
 	for(row = 0;row < 16;row++)
 	{
 		strcpy(str,eeprom_str_lookup(i++, str));
@@ -108,6 +109,7 @@ static char *eeprom_str_lookup(int index, char *str)
 {
 	int i,j,k;
 	i = j = k = 0;
+	index++;
 
 	do{
 		j++;

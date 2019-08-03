@@ -26,6 +26,7 @@ int main(void)
 	params.blower2_on = 9;
 	params.blower3_on = 10;
 	params.test_bank = 2;
+	params.comm_port_en = 2;
 
 	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);	
 	write(fp,&params,sizeof(PARAM_STRUCT));

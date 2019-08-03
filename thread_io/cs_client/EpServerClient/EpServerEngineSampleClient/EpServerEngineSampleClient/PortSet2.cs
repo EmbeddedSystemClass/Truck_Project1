@@ -20,11 +20,20 @@ namespace EpServerEngineSampleClient
 		private int current_button = 0;
 		private int previous_button = 0;
 		public System.Collections.Generic.List<CommonControls> m_ctls;
-		bool m_wait = false;
+		private bool m_wait = false;
+		private int screen_ctr = 0;
+		
 
 		public void SetList(System.Collections.Generic.List<CommonControls> ctls)
 		{
 			m_ctls = ctls;
+			foreach(EpServerEngineSampleClient.FrmSampleClient.CommonControls ctl in ctls)
+			{
+				if(ctl.cmd == 0)
+				{
+					ctl.Ctlinst.Enabled = false;
+				}
+			}
 		}
 		public PortSet2()
 		{
@@ -93,6 +102,11 @@ namespace EpServerEngineSampleClient
 			}
 			return -1;
 		}
+		private bool m_key_pad;
+		public void Set_Type(bool key_pad)
+		{
+			m_key_pad = key_pad;
+		}
 			
         public void Process_Msg(byte[] bytes)
         {
@@ -109,9 +123,10 @@ namespace EpServerEngineSampleClient
 			string str = svrcmd.GetName(type_msg);
 			//AddMsg(str);
 
-			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
-			{
-				previous_button = current_button;
+//			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE"))
+				if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
+				{
+					previous_button = current_button;
 				switch (str)
 				{
 					case "NAV_UP":
@@ -133,8 +148,7 @@ namespace EpServerEngineSampleClient
 						i = GetInstByTabOrder(current_button);
 						//if(m_ctls[i].CtlText != "Close")
 						{
-							//AddMsg(i.ToString());
-							//AddMsg(m_ctls[i].CtlText);
+							AddMsg(i.ToString() + "     " + m_ctls[i].CtlText + "     " + m_ctls[i].Ctlinst.TabIndex.ToString());
 							Button temp = (Button)(m_ctls[i].Ctlinst);
 							temp.PerformClick();
 						}
@@ -154,7 +168,7 @@ namespace EpServerEngineSampleClient
 					j = GetInstByTabOrder(previous_button);
 					if (i > -1 && j > -1)
 					{
-						//AddMsg(m_ctls[i].TabOrder.ToString());
+						AddMsg(m_ctls[i].TabOrder.ToString());
 						Button temp = (Button)m_ctls[i].Ctlinst;
 						temp.BackColor = Color.Aqua;
 						temp = (Button)m_ctls[j].Ctlinst;
@@ -170,42 +184,62 @@ namespace EpServerEngineSampleClient
         }
 		private void button0_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 0;
 			send_cmd();
 		}
 		private void button1_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 1;
 			send_cmd();
 		}
 		private void button2_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 2;
 			send_cmd();
 		}
 		private void button3_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 3;
 			send_cmd();
 		}
 		private void button4_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 4;
 			send_cmd();
 		}
 		private void button5_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 5;
 			send_cmd();
 		}
 		private void button6_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 6;
 			send_cmd();
 		}
 		private void button7_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 7;
 			send_cmd();
 		}
 		private void button8_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 8;
 			send_cmd();
 		}
 		private void button9_Click(object sender, EventArgs e)
 		{
+			if (!m_key_pad)
+				current_button = 9;
 			send_cmd();
 		}
 		private void send_cmd()
@@ -217,9 +251,11 @@ namespace EpServerEngineSampleClient
 			string cmd = svrcmd.GetName(command + offset);
 
 //			AddMsg(cmd + " " + offset.ToString());
-			//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
+			AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
 
 			svrcmd.Send_Cmd(command + offset);
+			if (++screen_ctr > 20)
+				tbReceived.Clear();
 
 			if (++offset >= len)
 				m_ctls[current_button].offset = 0;

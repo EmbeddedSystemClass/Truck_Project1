@@ -54,6 +54,7 @@ enum cmd_types
 	ON_BRIGHTS,			// 11
 	OFF_BRIGHTS,		// 12
 	BLANK,
+	ESTOP_SIGNAL,
 	ON_BRAKES,
 	OFF_BRAKES,
 	ON_RUNNING_LIGHTS,
@@ -136,20 +137,6 @@ enum upstream_msg
 	ENGINE_TEMP_TOO_HIGH,
 	RESET_TYPE4
 } UPSTREAM_MSG;
-
-// msg's sent from TS-7200 to STM32
-
-enum downstream_msg
-{
-	START_DS_MSG = 0xD0,		// 208
-	STOP_SERIAL_RECV,			// 209
-	SEND_PARAMS,				// 210
-	OTHER_DATA,					// 211
-	ESTOP_SIGNAL,				// 212
-	SYSTEM_UP,
-	SYSTEM_DOWN,
-	END_DS_MSG
-} DOWNSTREAM_MSG;
 
 // 25 total output_types
 // until now the input labels match the outputs
@@ -317,6 +304,7 @@ typedef struct params
 	int blower2_on;
 	int blower3_on;
 	UCHAR test_bank;
+	UCHAR comm_port_en;
 
 }PARAM_STRUCT;
 

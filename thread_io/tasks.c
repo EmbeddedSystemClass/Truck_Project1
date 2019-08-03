@@ -25,7 +25,7 @@
 #include "serial_io.h"
 #include "queue/ollist_threads_rw.h"
 #include "tasks.h"
-#include "cs_client/config_file.h"
+//#include "cs_client/config_file.h"
 #include "lcd_func.h"
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
@@ -54,7 +54,7 @@ PARAM_STRUCT ps;
 
 extern pthread_t serial_thread;	// workaround for closing serial task
 
-extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
+//extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 static float convertF(int raw_data);
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
 static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -71,11 +71,12 @@ static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
 //extern int time_set;
+
 int max_ips;
 IP ip[40];
+
 static UCHAR msg_queue[MSG_QUEUE_SIZE];
 static int msg_queue_ptr;
-
 
 //static double program_start_time;
 
@@ -271,7 +272,7 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
-				send_serial(ESTOP_SIGNAL);
+				//send_serial(ESTOP_SIGNAL);
 				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
@@ -438,6 +439,7 @@ UCHAR monitor_input_task(int test)
 		{
 //				printf("done mon input tasks\r\n");
 //				myprintf1("done mon input");
+				//printString2("done mon");
 			return 0;
 		}
 	}
@@ -640,6 +642,7 @@ UCHAR timer2_task(int test)
 		if(shutdown_all)
 		{
 //			printf("done timer2 task\r\n");
+			//printString2("done time2");
 			return 0;
 		}		
 	}
@@ -675,6 +678,7 @@ UCHAR timer_task(int test)
 		if(shutdown_all)
 		{
 //			printf("done timer_task\r\n");
+			printString2("done timer");
 			return 0;
 		}
 //		uSleep(0,TIME_DELAY/2);		// 1/2 sec
@@ -703,7 +707,6 @@ UCHAR timer_task(int test)
 		write_serial_buffer[7] = (UCHAR)odometer;
 		write_serial_buffer[8] = (UCHAR)(trip << 8);
 		write_serial_buffer[9] = (UCHAR)trip;
-		write_serial_buffer[10] = SYSTEM_UP;
 
 //		write_serial_buffer[0] = 0xAA;
 //		write_serial_buffer[1] = 0x55;
@@ -890,6 +893,7 @@ UCHAR read_button_inputs(int test)
 		if(shutdown_all)
 		{
 //			printf("done read_buttons task\r\n");
+			//printString2('done buttons");
 			return 0;
 		}
 	}
@@ -916,17 +920,15 @@ UCHAR serial_recv_task(int test)
 
 	if(fd = init_serial() < 0)
 	{
-		printf("can't open comm port 1\r\n");
-		return 0;
+		myprintf1("can't open comm port 1");
+		//return 0;
 	}
 
 	if(fd = init_serial2() < 0)
 	{
-		printf("can't open comm port 2\r\n");
-		return 0;
+		myprintf1("can't open comm port 2");
+		//return 0;
 	}
-
-//	printf("running serial task...\r\n");
 
 	ch = ch2 = 0x7e;
 
@@ -935,7 +937,6 @@ UCHAR serial_recv_task(int test)
 
 	usleep(_1SEC);
 
-//	printString2("starting recv task...\r\n");
 	while(TRUE)
 	{
 		pthread_mutex_lock( &serial_read_lock); 
@@ -1022,7 +1023,8 @@ UCHAR serial_recv_task(int test)
 //			printf("shutting down serial task\r\n");
 			close_serial();
 			close_serial2();
-			myprintf1("done serial task\r\n");
+//			myprintf1("done serial task\r\n");
+			//printString2("closing serial ports");
 			return 0;
 		}
 
@@ -1121,9 +1123,10 @@ UCHAR tcp_monitor_task(int test)
 			uSleep(0,1000);
 			if(shutdown_all)
 			{
-				strcpy(tempx,"shutdown...\0");
+//				strcpy(tempx,"shutdown...\0");
 				pthread_cancel(serial_thread);
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
+//				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
+				//printString2("closing socket");
 //				uSleep(2,0);
 				close_tcp();
 //				printf("done tcp_mon\r\n");
@@ -1132,7 +1135,7 @@ UCHAR tcp_monitor_task(int test)
 		}
 		else
 		{
-			myprintf1("Server Waiting...\0");
+//			myprintf1("Server Waiting...\0");
 //			printString2("Server Waiting...\0");
 //			printf("Server Waiting...\r\n");
 //
@@ -1145,7 +1148,7 @@ UCHAR tcp_monitor_task(int test)
 			}
 			if(global_socket > 0)
 				sock_open = 1;
-			myprintf1("connected to socket: \0");
+//			myprintf1("connected to socket: \0");
 //			printString2("connected to socket: \0");
 //			printf("connected to socket: \r\n");
 			tcp_connected_time = 0;
@@ -1155,6 +1158,7 @@ UCHAR tcp_monitor_task(int test)
 			if(shutdown_all)
 			{
 //				printf("tcp task closing\r\n");
+				//printString2("closing tcp");
 				return 0;
 			}
 /*
@@ -1356,6 +1360,7 @@ UCHAR basic_controls_task(int test)
 	//			otp->onoff = 1;
 	//			ollist_insert_data(index,&oll,otp);
 				change_input(STARTER_INPUT,1);
+				printString2("starter on");
 				break;
 
 			case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
@@ -1365,6 +1370,7 @@ UCHAR basic_controls_task(int test)
 	//			otp->onoff = 0;
 	//			ollist_insert_data(index,&oll,otp);
 				change_input(STARTER_INPUT,0);
+				printString2("starter off");
 				break;
 
 			case ON_ACC:
@@ -1632,7 +1638,7 @@ UCHAR basic_controls_task(int test)
 			break;
 
 			case START_SEQ:
-//				myprintf1("start seq\0");
+				//myprintf1("start seq\0");
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 1;
 				otp->reset = 0;
@@ -1663,10 +1669,12 @@ UCHAR basic_controls_task(int test)
 	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				engine_running = 1;
 	//			printf("engine_running: %d\r\n",engine_running);
+				sprintf(tempx,"start engine");
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, START_SEQ);
 				break;
 
 			case SHUTDOWN:
-//				myprintf1("shutdown engine\0");
+				//myprintf1("shutdown engine\0");
 				running_seconds = running_minutes = running_hours = 0;
 				engine_running = 0;
 	//			printf("engine_running: %d\r\n",engine_running);
@@ -1679,6 +1687,8 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
+				sprintf(tempx,"shutdown engine");
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
 
 	//			index = STARTER;
 	//			rc = ollist_find_data(index,otpp,&oll);
@@ -1711,19 +1721,18 @@ UCHAR basic_controls_task(int test)
 					green_led(0);
 				}
 #endif				
-				myprintf1("reboot iobox\0");
+				myprintf1("shutdown iobox\0");
+				//printString2("shutdown iobox");
 				for(i = 0;i < 5;i++)		// scroll the display on the iobox
 				{							// to see the last 10 msg's and pause
 					setdioline(7,1);		// for 1 sec each time
-					uSleep(1,0);
+					uSleep(0,100);
 					scroll_up();
 					setdioline(7,0);
-					uSleep(1,0);
+					uSleep(0,100);
 					scroll_up();
 				}
 				setdioline(7,0);
-				usleep(20000);
-				setdioline(7,1);
 //				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 3;
@@ -1751,18 +1760,17 @@ UCHAR basic_controls_task(int test)
 #endif
 				setdioline(7,1);
 				myprintf1("reboot iobox\0");
+				//printString2("reboot iobox");
 				for(i = 0;i < 5;i++)
 				{
 					setdioline(7,1);
-					uSleep(1,0);
+					uSleep(0,100);
 					scroll_up();
 					setdioline(7,0);
-					uSleep(1,0);
+					uSleep(0,100);
 					scroll_up();
 				}
 				setdioline(7,0);
-				usleep(20000);
-				setdioline(7,1);
 //				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 2;

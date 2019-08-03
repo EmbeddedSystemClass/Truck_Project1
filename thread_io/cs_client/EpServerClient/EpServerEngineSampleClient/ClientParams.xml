@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<ClientParams>
+		<AutoConn>true</AutoConn>
+		<IPAdress>192.168.42.149</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>false</Primary>
+		<AttemptsToConnect>5</AttemptsToConnect>
+	</ClientParams>
+	<ClientParams>
+		<AutoConn>false</AutoConn>
+		<IPAdress>192.168.42.145</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>true</Primary>
+		<AttemptsToConnect>6</AttemptsToConnect>
+	</ClientParams>
+	<ClientParams>
+		<AutoConn>false</AutoConn>
+		<IPAdress>192.168.42.146</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>false</Primary>
+		<AttemptsToConnect>4</AttemptsToConnect>
+	</ClientParams>
+	<ClientParams>
+		<AutoConn>false</AutoConn>
+		<IPAdress>192.168.42.151</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>false</Primary>
+		<AttemptsToConnect>3</AttemptsToConnect>
+	</ClientParams>
+</Table>

@@ -59,7 +59,7 @@ int myprintf1(char *str)
 	char temp[10];
 	char temp2[35];
 
-	printString2(str);
+	//printString2(str);
 
 	if(!lcd_enabled)
 	{

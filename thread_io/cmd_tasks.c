@@ -35,7 +35,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[81] =
+CMD_STRUCT cmd_array[82] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -51,6 +51,7 @@ CMD_STRUCT cmd_array[81] =
 	{		ON_BRIGHTS,"ON_BRIGHTS\0" },
 	{		OFF_BRIGHTS,"OFF_BRIGHTS\0" },
 	{		BLANK,"BLANK\0" },
+	{		ESTOP_SIGNAL,"ESTOP_SIGNAL\0" },
 	{		ON_BRAKES,"ON_BRAKES\0" },
 	{		OFF_BRAKES,"OFF_BRAKES\0" },
 	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
@@ -274,9 +275,9 @@ UCHAR get_host_cmd_task(int test)
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.23\0");
-//	printString2("sched v1.23\0");
-//	printf("sched v1.23\r\n");
+	myprintf1("sched v1.25\0");
+	printString2("sched v1.25\0");
+//	printf("sched v1.25\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
 	trip = 0;
@@ -330,13 +331,13 @@ UCHAR get_host_cmd_task(int test)
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
-/*
+
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
 				printString2(tempx);
 			}
-*/
+
 			if(cmd > 0)
 			{
 				rc = 0;
@@ -355,9 +356,7 @@ UCHAR get_host_cmd_task(int test)
 					case OFF_FAN:
 					case ON_LIGHTS:
 					case OFF_LIGHTS:
-					// START_SEQ turns on acc, fp, fan and enables starter button
 					case START_SEQ:
-					// SHUTDOWN shuts off the starter enable, fp, acc and fan
 					case SHUTDOWN:
 					case SHUTDOWN_IOBOX:
 					case REBOOT_IOBOX:
@@ -386,7 +385,6 @@ UCHAR get_host_cmd_task(int test)
 					case WIPER1:
 					case WIPER2:
 					case WIPER_OFF:
-//						basic_controls(cmd);
 						add_msg_queue(cmd);
 //						strcpy(tempx,cmd_array[cmd].cmd_str);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
@@ -485,8 +483,9 @@ UCHAR get_host_cmd_task(int test)
 						printString2(tempx);
 						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
 						printString2(tempx);
+						sprintf(tempx,"comm ports: %d\r\n",ps.comm_port_en);
+						printString2(tempx);
 
-//						send_serialother(SEND_PARAMS,&msg_buf[2],12);
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -861,7 +860,7 @@ UCHAR get_host_cmd_task(int test)
 					// update the sched.log file with current log of events
 					case BAD_MSG:
 //						shutdown_all = 1;
-						myprintf1("bad msg");
+//						myprintf1("bad msg");
 						break;
 
 					case DISCONNECT:
@@ -1087,7 +1086,7 @@ exit_program:
 						}
 #endif
 //						send_serial(SYSTEM_DOWN);
-						sprintf(tempx,"%s\n","SYSTEM DOWN");
+//						sprintf(tempx,"%s\n","SYSTEM DOWN");
 //						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SYSTEM_DOWN2);
 						usleep(10000000);
 						shutdown_all = 1;
@@ -1329,13 +1328,15 @@ static void format_param_msg(void)
 	ps.fpga_xmit_rate = temp_conv;
 	
 	ps.test_bank = msg_buf[24];
+	ps.comm_port_en = msg_buf[25];
 }
 /*********************************************************************/
 void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d ",ps.rpm_update_rate,
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d",
+														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
 														ps.high_rev_limit,
@@ -1346,7 +1347,8 @@ void send_param_msg(void)
 														ps.blower1_on,
 														ps.blower2_on,
 														ps.blower3_on,
-														ps.test_bank);
+														ps.test_bank,
+														ps.comm_port_en);
 
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 }

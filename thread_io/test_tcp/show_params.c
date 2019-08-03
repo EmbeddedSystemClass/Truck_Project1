@@ -30,6 +30,7 @@ int main(void)
 	printf("blower2_on:      %d\r\n",ps.blower2_on);
 	printf("blower3_on:      %d\r\n",ps.blower3_on);
 	printf("test_bank:       %d\r\n",ps.test_bank);
+	printf("comm ports:      %d\r\n",ps.comm_port_en);
 	
 	return 0;
 }

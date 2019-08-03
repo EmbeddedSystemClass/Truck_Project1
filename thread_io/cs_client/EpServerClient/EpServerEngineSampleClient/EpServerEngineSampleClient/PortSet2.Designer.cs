@@ -152,7 +152,6 @@
 			// button9
 			// 
 			this.button9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.button9.Enabled = false;
 			this.button9.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.button9.Location = new System.Drawing.Point(21, 258);
 			this.button9.Name = "button9";
@@ -168,7 +167,7 @@
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(162, 292);
+			this.tbReceived.Size = new System.Drawing.Size(162, 633);
 			this.tbReceived.TabIndex = 10;
 			this.tbReceived.TabStop = false;
 			// 
@@ -177,7 +176,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(630, 326);
+			this.ClientSize = new System.Drawing.Size(630, 657);
 			this.Controls.Add(this.tbReceived);
 			this.Controls.Add(this.button9);
 			this.Controls.Add(this.button8);

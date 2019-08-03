@@ -22,6 +22,10 @@
 #define STR_LEN 30
 
 char eepromString[EEPROM_SIZE] EEMEM;
+static void putChar(void);
+static void clr(void);
+static void setMode(void);
+
 volatile UCHAR xbyte;
 volatile UCHAR high_delay;
 static char str[STR_LEN];
@@ -179,36 +183,23 @@ int main(void)
 			switch(buff[0])
 			{
 				case CHAR_CMD:
-				
-					ch = buff[1];
-					if(ch > 0x1F && ch < 0x7f)
-					{
-						GDispCharAt(row,col,ch);
 
-						if(++col > COLUMN-1)
-						{
-							col = 0;
-							if(++row > ROWS-1)
-								row = 0;
-						}
-						if(num_entry_mode == 1)
-							if(num_entry_ptr < SIZE_NUM)
-								curr_num[num_entry_ptr++] = ch;
+					putChar();
+				
+					if(num_entry_mode == 1)
+						if(num_entry_ptr < SIZE_NUM)
+							curr_num[num_entry_ptr++] = ch;
 					}
 					break;
 
 				case GOTO_CMD:
-					row = (UINT)buff[1];
-					col = (UINT)buff[2];
+					row = buff[1];
+					col = buff[2];
 					GDispGoto(row,col);
 				break;
 
 				case SET_MODE_CMD:
-					mode = buff[1];
-					row = (UINT)buff[2];
-					col = (UINT)buff[3];
-					type = buff[4];
-					GDispSetCursor (mode, row, col, type);
+					setMode();
 				break;
 
 				// could not get this to work as far as being able to select starting, ending
@@ -226,8 +217,7 @@ int main(void)
 				break;
 */
 				case LCD_CLRSCR:
-					GDispClrTxt();
-					GDispGoto(0,0);
+					clr();
 				break;
 
 				// not used
@@ -267,17 +257,15 @@ int main(void)
 					blanks = 6;
 
 					row = starting_row = (UINT)buff[1];
-					starting_col = col = (UINT)buff[2];
+					col = (UINT)buff[2];
 					ending_row = (UINT)buff[3];
 					col_width = (UINT)buff[4];
 					num_labels = (UINT)buff[5];
 
-					
-					
 					for(index = 1;index < num_labels;index++);
 					{
 						strcpy(str,eeprom_str_lookup(index, str));
-						GDispGoto(row,col);
+						GDispGoto(row++,col);
 
 						for(i = 0;i < blanks;i++)
  							GDispChar(0x20);
@@ -288,7 +276,6 @@ int main(void)
 							col += col_width;
 						}
 						GDispStringAt(row,col,str);
-						row++;
 					}
 				break;
 
@@ -504,10 +491,47 @@ int main(void)
     return (0);		// this should never happen
 }
 
+static void putChar(void)
+{
+	UCHAR ch = buff[1];
+	if(ch > 0x1F && ch < 0x7f)
+	{
+		GDispCharAt(row,col,ch);
+
+		if(++col > COLUMN-1)
+		{
+			col = 0;
+			if(++row > ROWS-1)
+				row = 0;
+		}
+	}	
+}	
+
+static void setMode(void)
+{
+	UCHAR mode, row, col, type;
+
+	mode = buff[1];
+	row = (UINT)buff[2];
+	col = (UINT)buff[3];
+	type = buff[4];
+	GDispSetCursor (mode, row, col, type);
+}
+
+void clr(void)
+{
+	GDispClrTxt();
+	GDispGoto(0,0);
+}
+
+//******************************************************************************************//
+//******************************** eeprom_str_lookup  **************************************//
+//******************************************************************************************//
 static char *eeprom_str_lookup(int index, char *str)
 {
 	int i,j,k;
 	i = j = k = 0;
+	index++;
 
 	do{
 		j++;
@@ -527,6 +551,9 @@ static char *eeprom_str_lookup(int index, char *str)
 	return str;
 }
 
+//******************************************************************************************//
+//************************************** convertF  *****************************************//
+//******************************************************************************************//
 static float convertF(int raw_data)
 {
 	float T_F, T_celcius;
