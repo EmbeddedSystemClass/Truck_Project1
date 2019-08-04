@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>						<!-- start of Test Ports -->
+		<Label>Engine On/Off</Label>
+		<Command>20</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Fan On/Off</Label>
+		<Command>7</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Lights On/Off</Label>
+		<Command>9</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Cooling Fan</Label>
+		<Command>7</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Lights</Label>
+		<Command>9</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Brights</Label>
+		<Command>0</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Markers</Label>
+		<Command>17</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Blower</Label>
+		<Command>30</Command>
+		<Length>4</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Brake Lights</Label>				<!-- end of Test Ports -->
+		<Command>15</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>asdf</Label>							<!-- start of 1st keypad dialog -->
+		<Command>30</Command>
+		<Length>4</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Lights</Label>
+		<Command>22</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Lights</Label>
+		<Command>26</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Brights</Label>
+		<Command>24</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Brights</Label>
+		<Command>28</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers2</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Special Cmd</Label>
+		<Command>19</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused1</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>1234</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>							<!-- start of 1st keypad dialog -->
+	<UIFormat>							<!-- start of 2nd keypad dialog -->
+		<Label>First</Label>
+		<Command>30</Command>
+		<Length>4</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>After First</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Lights</Label>
+		<Command>22</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Lights</Label>
+		<Command>26</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Brights</Label>
+		<Command>24</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Brights</Label>
+		<Command>28</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers2</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Special Cmd</Label>
+		<Command>19</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Next to Last</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Last </Label>							<!-- end of 2nd keypad dialog -->
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+</Table>
+ 

@@ -272,7 +272,10 @@ static void set_output(O_DATA *otp, int onoff)
 				otp->onoff = 0;
 				change_output(otp->port,otp->onoff);
 				ollist_insert_data(otp->port,&oll,otp);
+				// this causes the server to disconnect for some reason
 				//send_serial(ESTOP_SIGNAL);
+				add_msg_queue(ESTOP_SIGNAL);
+				
 				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
@@ -971,7 +974,7 @@ UCHAR serial_recv_task(int test)
 			strcpy(tempx,cmd_array[cmd].cmd_str);
 			// send to client if tcp connected (all this does is 
 			// display the cmd's on the scrolling listbox
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);	
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 		}else
 
 		if(cmd == ENGINE_TEMP)
@@ -1341,6 +1344,7 @@ UCHAR basic_controls_task(int test)
 			case OFF_RLIGHTS:
 			case ON_RBRIGHTS:
 			case OFF_RBRIGHTS:
+//			case ESTOP_SIGNAL:
 				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
 //				printHexByte(cmd);
@@ -1701,7 +1705,12 @@ UCHAR basic_controls_task(int test)
 	//			set_output(STARTER,0);
 	//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				break;
-
+/*
+			case ESTOP_SIGNAL:
+				sprintf(tempx,"engine off from estop");
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ESTOP_SIGNAL);
+				break;
+*/
 			case SHUTDOWN_IOBOX:
 // read_led & green_led can only be seen on test bench
 #if 0

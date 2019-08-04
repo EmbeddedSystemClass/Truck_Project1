@@ -55,19 +55,16 @@ namespace EpServerEngineSampleClient
 		ConfigParams cfg_params = new ConfigParams();
 		ServerCmds svrcmd = new ServerCmds();
 		INetworkClient m_client = new IocpTcpClient();
-		public System.Collections.Generic.List<CommonControls> ctls;
-		public System.Collections.Generic.List<CommonControls> ctls2;
-		public System.Collections.Generic.List<CommonControls> ctls3;
 		public System.Collections.Generic.List<ButtonList> button_list;
+		private List<int> Exclude_From_buttons = new List<int>();
 		private bool system_up = true;
-		private PortSet2 psDlg = new PortSet2();
-		private PortSet2 psDlg2 = new PortSet2();
-		private PortSet2 psDlg3 = new PortSet2();
-		private List<UIFormat> ui_format;
+		private PortSet2 psDlg = null;
+		private PortSet2 psDlg2 = null;
+		private PortSet2 psDlg3 = null;
 		private List<ClientParams> client_params;
 		private int current_button = 0;
 		private int previous_button = 0;
-		private int no_buttons = 14;
+		private int no_buttons = 0;
 		private int i = 0;
 		private int selected_address = 0;
 		private bool avr_running = false;
@@ -81,17 +78,18 @@ namespace EpServerEngineSampleClient
 		private int previous_timer_server_up_seconds = 0;
 		//private int server_connection_attempts = 1;
 		private bool client_connected = false;
-		private string xml_file_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat.xml";
-		private string xml_file_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat.xml";
+		private string dialog_one_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat1.xml";
+		private string dialog_one_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat1.xml";
+		private string dialog_two_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat2.xml";
+		private string dialog_two_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat2.xml";
+		private string test_ports_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat3.xml";
+		private string test_ports_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat3.xml";
 		private string xml_file2_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\ClientParams.xml";
 		private string xml_file2_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\ClientParams.xml";
 
 		public FrmSampleClient()
 		{
 			InitializeComponent();
-			ctls = new List<CommonControls>();
-			ctls2 = new List<CommonControls>();
-			ctls3 = new List<CommonControls>();
 			button_list = new List<ButtonList>();
 			//            use_main_odata = true;
 			this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
@@ -125,48 +123,20 @@ namespace EpServerEngineSampleClient
 			//target_db_closed = false;
 			//use_laptop = true;
 			tbReceived.Clear();
-			psDlg.SetClient(m_client);
-			psDlg2.SetClient(m_client);
-			psDlg3.SetClient(m_client);
+			psDlg = new PortSet2(File.Exists(dialog_one_location_laptop) ? dialog_one_location_laptop : dialog_one_location_desktop, m_client);
+			psDlg.SetButtonLabels();
+			psDlg.Name = "Dialog One";
+			//psDlg.Set_Type(false);
 
-			i = 0;
-			ui_format = new List<UIFormat>();
-			XmlTextReader xmlReader = new XmlTextReader(File.Exists(xml_file_location_laptop) ? xml_file_location_laptop : xml_file_location_desktop);
-			// this doesn't work if the string 'xml_file_location... are not private
-			UIFormat item = null;
-			
-			while(xmlReader.Read())
-			{
-				if (xmlReader.NodeType == XmlNodeType.Text)
-				{
-					switch (i)
-					{
-						case 0:
-							item = new UIFormat();
-							item.Label = xmlReader.Value.ToString();
-							//AddMsg(item.Label);
-							i++;
-							break;
-						case 1:
-							item.Command = xmlReader.ReadContentAsInt();
-							//AddMsg(item.Command.ToString());
-							i++;
-							break;
-						case 2:
-							item.Length = xmlReader.ReadContentAsInt();
-							i = 0;
-							ui_format.Add(item);
-							item = null;
-							break;
-					}
-				}
-			}
-			ui_format.Reverse();
+			psDlg2 = new PortSet2(File.Exists(dialog_two_location_laptop) ? dialog_two_location_laptop : dialog_two_location_desktop, m_client);
+			psDlg2.SetButtonLabels();
+			psDlg2.Name = "Dialog Two";
+			//psDlg2.Set_Type(false);
 
-			foreach (UIFormat ui in ui_format)
-			{
-				AddMsg(ui.Label + " " + ui.Command.ToString() + " " + ui.Length.ToString());
-			}
+			psDlg3 = new PortSet2(File.Exists(test_ports_location_laptop) ? test_ports_location_laptop : test_ports_location_desktop, m_client);
+			psDlg3.SetButtonLabels();
+			psDlg3.Name = "Test Ports";
+			//psDlg3.Set_Type(false);
 
 			client_params = new List<ClientParams>();
 			XmlTextReader xmlReader2 = new XmlTextReader(File.Exists(xml_file2_location_laptop) ? xml_file2_location_laptop : xml_file2_location_desktop);
@@ -201,6 +171,7 @@ namespace EpServerEngineSampleClient
 							i++;
 							break;
 						case 4:
+							// this not used, but can be something else
 							item2.AttemptsToConnect = xmlReader2.ReadContentAsInt();
 							client_params.Add(item2);
 							item2 = null;
@@ -211,114 +182,27 @@ namespace EpServerEngineSampleClient
 			}
 
 			bool found = false;
-			for (i = 0;i < client_params.Count();i++)
+			for (i = 0; i < client_params.Count(); i++)
 			{
-				
+
 				//AddMsg(client_params[i].AutoConn.ToString() + " " + client_params[i].IPAdress + " " + client_params[i].PortNo.ToString() + " " + client_params[i].AttemptsToConnect.ToString());
 				cbIPAdress.Items.Add(client_params[i].IPAdress);
-				if(client_params[i].Primary)
+				if (client_params[i].Primary)
 				{
 					m_hostname = cbIPAdress.Text = client_params[i].IPAdress;
 					m_portno = tbPort.Text = client_params[i].PortNo.ToString();
 					cbAutoConnecct.Checked = client_params[i].AutoConn;
-					tbAttemptsToConnect.Text = client_params[i].AttemptsToConnect.ToString();
 					selected_address = i;
 					found = true;
 				}
 			}
-			if(!found)
+			if (!found)
 			{
 				AddMsg("no primary address found in xml file");
 			}
 
-			i = 0;
-			// there must be exactly 10 buttons in each dialog and 10 entries
-			// of each Dlg_no in the xml file or this won't work
-			// Dlg_no = 0 for 1st dialog, 1 for next and so on
-			foreach (Button btn in psDlg.Controls.OfType<Button>())
-			{
-				// not getting the 1st one unless either of these are commented out
-				//if (btn.Enabled && ui_format[i].Dlg_no == 0)
-				//if (ui_format[i].Dlg_no == 0)
-				{
-					//AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
-					ctls.Add(new CommonControls()
-					{
-						CtlName = btn.Name,
-						CtlText = ui_format[i].Label,
-						TabOrder = btn.TabIndex,
-						Ctlinst = btn,
-						cmd = ui_format[i].Command,
-						len = ui_format[i].Length,
-						offset = 0
-					});
-				}
-				i++;
-			}
-			ctls.Reverse();
-			psDlg.SetList(ctls);    // AFAICT the buttons are loaded starting with the highest tab order
-									// first so let't reverse them and hope for the best
-			psDlg.SetButtonLabels();
-			psDlg.Name = "Dialog One";
-			psDlg.Set_Type(true);
-
-			foreach (Button btn in psDlg2.Controls.OfType<Button>())
-			{
-				//if (btn.Enabled && ui_format[i].Dlg_no == 1)
-				//if (ui_format[i].Dlg_no == 1)
-				{
-					//AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
-					ctls2.Add(new CommonControls()
-					{
-						CtlName = btn.Name,
-						CtlText = ui_format[i].Label,
-						TabOrder = btn.TabIndex,
-						Ctlinst = btn,
-						cmd = ui_format[i].Command,
-						len = ui_format[i].Length,
-						offset = 0
-					});
-				}
-				i++;
-				//                AddMsg(btn.Location.ToString());
-			}
-			ctls2.Reverse();
-			psDlg2.SetList(ctls2);
-			psDlg2.SetButtonLabels();
-			psDlg.Name = "Dialog Two";
-			psDlg.Set_Type(true);
-
-			foreach (Button btn in psDlg3.Controls.OfType<Button>())
-			{
-				//if (btn.Enabled && ui_format[i].Dlg_no == 1)
-				//if (ui_format[i].Dlg_no == 1)
-				{
-					//AddMsg(btn.TabIndex.ToString() + " " + btn.Name + " " + btn.Text);
-					ctls3.Add(new CommonControls()
-					{
-						CtlName = btn.Name,
-						CtlText = ui_format[i].Label,
-						TabOrder = btn.TabIndex,
-						Ctlinst = btn,
-						cmd = ui_format[i].Command,
-						len = ui_format[i].Length,
-						offset = 0
-					});
-				}
-				i++;
-				//                AddMsg(btn.Location.ToString());
-			}
-			ctls3.Reverse();
-			psDlg3.SetList(ctls3);
-			psDlg3.SetButtonLabels();
-			psDlg.Name = "Dialog Three";
-			psDlg.Set_Type(false);
-
 			Control sCtl = this.btnConnect;
-			//Control sCtl = this.GetNextControl(this.btnConnect, true);
-
-			//Control parent = sCtl.Parent;
-			for(i = 0;i < this.Controls.Count;i++)
+			for (i = 0; i < this.Controls.Count; i++)
 			{
 				if (sCtl.GetType() == typeof(Button))
 				{
@@ -332,13 +216,39 @@ namespace EpServerEngineSampleClient
 					sCtl = GetNextControl(sCtl, true);
 				}
 			}
-			timer1.Enabled = true;
-/*
+
+			// Set the list of buttons to skip
+			// over if in NAV mode (remote keypad)
+			// some for obvious reasons, you don't want to 
+			// execute the disconnect from server while
+			// on the keypad or you have to open up the
+			// laptop again and fix it
+
+			Exclude_From_buttons.Add(0);	// disconnect from server
+			Exclude_From_buttons.Add(2);	// test ports
+			Exclude_From_buttons.Add(7);	// shutdown server
+			Exclude_From_buttons.Add(8);	// reboot server
+			Exclude_From_buttons.Add(9);	// StopMbox xmit
+			Exclude_From_buttons.Add(10);	// db mgmt
+			Exclude_From_buttons.Add(12);	// set svr params
+
+			no_buttons = 0;
+			for (int j = 0; j < Exclude_From_buttons.Count(); j++)
+			{
+				for (i = 0; i < button_list.Count(); i++)
+				{
+					if (button_list[i].TabOrder == Exclude_From_buttons[j])
+						button_list.RemoveAt(i);
+
+				}
+			}
 			foreach (ButtonList btn in button_list)
 			{
-				AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
+				no_buttons++;
+				//AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
 			}
-*/
+			timer1.Enabled = true;
+			AddMsg("buttons used: " + no_buttons.ToString());
 		}
 		private void btnConnect_Click(object sender, EventArgs e)
 		{
@@ -404,10 +314,13 @@ namespace EpServerEngineSampleClient
 		protected override void OnClosed(EventArgs e)
 		{
 			if (m_client.IsConnectionAlive)
-				m_client.Disconnect();
-			psDlg.Dispose();
-			psDlg2.Dispose();
-			base.OnClosed(e);
+				please_lets_disconnect = 1;
+			else
+			{
+				psDlg.Dispose();
+				psDlg2.Dispose();
+				base.OnClosed(e);
+			}
 		}
 		public void OnReceived(INetworkClient client, Packet receivedPacket)
 		{
@@ -575,6 +488,7 @@ namespace EpServerEngineSampleClient
 
 				case "ESTOP_SIGNAL":
 					AddMsg("ESTOP: " + ret);
+					m_engine_running = false;
 					break;
 				default:
 					break;
@@ -642,7 +556,8 @@ namespace EpServerEngineSampleClient
 			}
 			else
 			{
-				tbReceived.Text += message + "\r\n";
+				//tbReceived.Text += message + "\r\n";
+				tbReceived.AppendText(message + "\r\n");
 			}
 		}
 		String StringFromByteArr(byte[] bytes)
@@ -689,7 +604,7 @@ namespace EpServerEngineSampleClient
 			bytes2[0] = svrcmd.GetCmdIndexB(set_time);
 			Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
 			m_client.Send(packet);
-			//			AddMsg(bytes2.Length.ToString());
+			//AddMsg(bytes2.Length.ToString());
 		}
 		private void ShutdownServer(object sender, EventArgs e)
 		{
@@ -767,7 +682,6 @@ namespace EpServerEngineSampleClient
 			}
 			testDialog.Dispose();
 		}
-
 		private void btnAVR_Click(object sender, EventArgs e)
 		{
 			string cmd = "";
@@ -792,7 +706,6 @@ namespace EpServerEngineSampleClient
 				btnAVR.Text = "Set LCD Off";
 			}
 		}
-
 		private void Dialog1_Click(object sender, EventArgs e)
 		{
 			psDlg.Name = "Dialog One";
@@ -824,7 +737,6 @@ namespace EpServerEngineSampleClient
 			}
 			psDlg2.Enable_Dlg(false);
 		}
-
 		private void TestPorts_Click(object sender, EventArgs e)
 		{
 			psDlg3.Enable_Dlg(true);
@@ -845,7 +757,6 @@ namespace EpServerEngineSampleClient
 				btn.Enabled = btn.Ctl.Enabled;
 			}
 		}
-
 		private void navigate_buttons(string str)
 		{
 			switch (str)
@@ -877,19 +788,21 @@ namespace EpServerEngineSampleClient
 					break;
 
 				case "NAV_SIDE":
-					previous_button = current_button;
-					if (current_button > 6)
-						current_button -= 7;
-					else if(current_button < 7)
-						current_button += 7;
-					button_list[current_button].Ctl.BackColor = Color.Aqua;
-					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-					//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
-					//AddMsg("side  " + button_list[current_button].Name + " "
-						//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					/*
+										previous_button = current_button;
+										if (current_button > 6)
+											current_button -= 7;
+										else if(current_button < 7)
+											current_button += 7;
+										button_list[current_button].Ctl.BackColor = Color.Aqua;
+										button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+										//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
+										//AddMsg("side  " + button_list[current_button].Name + " "
+											//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					*/
+					AddMsg("NAV_SIDE not working yet");
 					break;
 				case "NAV_CLICK":
-
 					//if (button_list[current_button].Enabled && button_list[current_button].Name != "Stop Mbox Xmit" && 
 					//button_list[current_button].Name != "Connect Server")
 					if (button_list[current_button].Enabled)
@@ -897,20 +810,20 @@ namespace EpServerEngineSampleClient
 						int tab_order = button_list[current_button].TabOrder;
 						// don't do a shutdown, reboot, disconnect or stop mbox xmit while using keypad!
 						// it's like sawing off the branch your sitting on
-						if (tab_order != 0 && tab_order != 9 && tab_order != 7 && tab_order != 8)
+						// this should be taken care of by the exclude list
+						//if (tab_order != 0 && tab_order != 9 && tab_order != 7 && tab_order != 8)
 						{
 							button_list[current_button].Ctl.PerformClick();
 							AddMsg("click  " + button_list[current_button].Name + " "
 								+ button_list[current_button].TabOrder.ToString());
 							
 						}
-						else AddMsg("don't do this!");
+						//else AddMsg("don't do this!");
 					}
 					else AddMsg("Not Enabled");
 					break;
 			}
 		}
-
 		private void myTimerTick(object sender, EventArgs e)
 		{
 			switch (please_lets_disconnect)            // send the msg to server saying we are disconnecting
@@ -1014,7 +927,6 @@ namespace EpServerEngineSampleClient
 					break;
 			}
 		}
-
 		private void IPAddressChanged(object sender, EventArgs e)
 		{
 			if (!client_connected)
@@ -1023,19 +935,8 @@ namespace EpServerEngineSampleClient
 				m_hostname = client_params[selected_address].IPAdress;
 				tbPort.Text = m_portno = client_params[selected_address].PortNo.ToString();
 				cbAutoConnecct.Checked = client_params[selected_address].AutoConn;
-				tbAttemptsToConnect.Text = client_params[selected_address].AttemptsToConnect.ToString();
 			}
 		}
-
-		private void TimeoutChanged(object sender, EventArgs e)
-		{
-			if (tbAttemptsToConnect.Text != "")
-			{
-				client_params[selected_address].AttemptsToConnect = (int)int.Parse(tbAttemptsToConnect.Text);
-				//AddMsg("timeout changed to:" + "    " + client_params[selected_address].AttemptsToConnect.ToString());
-			}
-		}
-
 	}
 }
  

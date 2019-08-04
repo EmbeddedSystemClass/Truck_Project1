@@ -275,8 +275,8 @@ UCHAR get_host_cmd_task(int test)
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.25\0");
-	printString2("sched v1.25\0");
+	myprintf1("sched v1.26\0");
+	printString2("sched v1.26\0");
 //	printf("sched v1.25\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
@@ -331,13 +331,13 @@ UCHAR get_host_cmd_task(int test)
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
-
+/*
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
 				printString2(tempx);
 			}
-
+*/
 			if(cmd > 0)
 			{
 				rc = 0;

@@ -2,13 +2,20 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Xml;
+using System.Text;
 using System.Windows.Forms;
-using EpLibrary.cs;
 using EpServerEngine.cs;
+using System.Diagnostics;
+using System.Globalization;
+using EpLibrary.cs;
+using System.IO;
+using System.Xml.Serialization;
+using System.Drawing;
+using System.Timers;
 using static EpServerEngineSampleClient.FrmSampleClient;
 
 namespace EpServerEngineSampleClient
@@ -21,23 +28,68 @@ namespace EpServerEngineSampleClient
 		private int previous_button = 0;
 		public System.Collections.Generic.List<CommonControls> m_ctls;
 		private bool m_wait = false;
-		private int screen_ctr = 0;
-		
+		private List<UIFormat> ui_format;
 
-		public void SetList(System.Collections.Generic.List<CommonControls> ctls)
+		public PortSet2(string xml_file_location, INetworkClient client)
 		{
-			m_ctls = ctls;
-			foreach(EpServerEngineSampleClient.FrmSampleClient.CommonControls ctl in ctls)
+			InitializeComponent();
+			ui_format = new List<UIFormat>();
+			System.Xml.XmlTextReader xmlReader = new System.Xml.XmlTextReader(xml_file_location);
+			// this doesn't work if the string 'xml_file_location... are not private
+			UIFormat item = null;
+			m_client = client;
+			svrcmd.SetClient(m_client);
+
+			int i = 0;
+			while (xmlReader.Read())
 			{
-				if(ctl.cmd == 0)
+				if (xmlReader.NodeType == XmlNodeType.Text)
+				{
+					switch (i)
+					{
+						case 0:
+							item = new UIFormat();
+							item.Label = xmlReader.Value.ToString();
+							//AddMsg(item.Label);
+							i++;
+							break;
+						case 1:
+							item.Command = xmlReader.ReadContentAsInt();
+							//AddMsg(item.Command.ToString());
+							i++;
+							break;
+						case 2:
+							item.Length = xmlReader.ReadContentAsInt();
+							i = 0;
+							ui_format.Add(item);
+							item = null;
+							break;
+					}
+				}
+			}
+			//ui_format.Reverse();
+			m_ctls = new List<CommonControls>();
+			foreach (Button btn in this.Controls.OfType<Button>())
+			{
+				m_ctls.Add(new CommonControls()
+				{
+					CtlName = btn.Name,
+					CtlText = ui_format[i].Label,
+					TabOrder = btn.TabIndex,
+					Ctlinst = btn,
+					cmd = ui_format[i].Command,
+					len = ui_format[i].Length,
+					offset = 0
+				});
+				i++;
+			}
+			foreach (EpServerEngineSampleClient.FrmSampleClient.CommonControls ctl in m_ctls)
+			{
+				if (ctl.cmd == 0)
 				{
 					ctl.Ctlinst.Enabled = false;
 				}
 			}
-		}
-		public PortSet2()
-		{
-			InitializeComponent();
 		}
 		public void SetButtonLabels()
 		{ 
@@ -52,12 +104,6 @@ namespace EpServerEngineSampleClient
 			this.button8.Text = m_ctls[8].CtlText;
 			this.button9.Text = m_ctls[9].CtlText;
 		}
-		public void SetClient(INetworkClient client)
-        {
-            m_client = client;
-            svrcmd.SetClient(m_client);
-            //            AddMsg(m_ctls.ToString());
-        }
         public void OnReceived(INetworkClient client, Packet receivedPacket)
         {
             Process_Msg(receivedPacket.PacketRaw);
@@ -78,10 +124,10 @@ namespace EpServerEngineSampleClient
             }
             else
             {
-                tbReceived.Text += message + "\r\n";
+				//tbReceived.Text += message + "\r\n";
+				tbReceived.AppendText(message + "\r\n");
             }
         }
-
 		private int GetTabOrder(int i)
 		{
 			return m_ctls[i].TabOrder;
@@ -102,12 +148,7 @@ namespace EpServerEngineSampleClient
 			}
 			return -1;
 		}
-		private bool m_key_pad;
-		public void Set_Type(bool key_pad)
-		{
-			m_key_pad = key_pad;
-		}
-			
+		private bool m_keypad;
         public void Process_Msg(byte[] bytes)
         {
             int type_msg;
@@ -124,9 +165,9 @@ namespace EpServerEngineSampleClient
 			//AddMsg(str);
 
 //			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE"))
-				if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
-				{
-					previous_button = current_button;
+			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
+			{
+				previous_button = current_button;
 				switch (str)
 				{
 					case "NAV_UP":
@@ -150,7 +191,9 @@ namespace EpServerEngineSampleClient
 						{
 							AddMsg(i.ToString() + "     " + m_ctls[i].CtlText + "     " + m_ctls[i].Ctlinst.TabIndex.ToString());
 							Button temp = (Button)(m_ctls[i].Ctlinst);
+							m_keypad = true;
 							temp.PerformClick();
+							m_keypad = false;
 						}
 
 						break;
@@ -168,7 +211,7 @@ namespace EpServerEngineSampleClient
 					j = GetInstByTabOrder(previous_button);
 					if (i > -1 && j > -1)
 					{
-						AddMsg(m_ctls[i].TabOrder.ToString());
+						//AddMsg(m_ctls[i].TabOrder.ToString());
 						Button temp = (Button)m_ctls[i].Ctlinst;
 						temp.BackColor = Color.Aqua;
 						temp = (Button)m_ctls[j].Ctlinst;
@@ -184,61 +227,61 @@ namespace EpServerEngineSampleClient
         }
 		private void button0_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 0;
 			send_cmd();
 		}
 		private void button1_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 1;
 			send_cmd();
 		}
 		private void button2_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 2;
 			send_cmd();
 		}
 		private void button3_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 3;
 			send_cmd();
 		}
 		private void button4_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 4;
 			send_cmd();
 		}
 		private void button5_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 5;
 			send_cmd();
 		}
 		private void button6_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 6;
 			send_cmd();
 		}
 		private void button7_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 7;
 			send_cmd();
 		}
 		private void button8_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 8;
 			send_cmd();
 		}
 		private void button9_Click(object sender, EventArgs e)
 		{
-			if (!m_key_pad)
+			if (!m_keypad)
 				current_button = 9;
 			send_cmd();
 		}
@@ -254,13 +297,12 @@ namespace EpServerEngineSampleClient
 			AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
 
 			svrcmd.Send_Cmd(command + offset);
-			if (++screen_ctr > 20)
-				tbReceived.Clear();
+			//if (++screen_ctr > 20)
+				//tbReceived.Clear();
 
 			if (++offset >= len)
 				m_ctls[current_button].offset = 0;
 			else m_ctls[current_button].offset = offset;
 		}
-
 	}
 }

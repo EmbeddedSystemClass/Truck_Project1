@@ -45,8 +45,6 @@
 			this.tbEngRunTime = new System.Windows.Forms.TextBox();
 			this.label6 = new System.Windows.Forms.Label();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.label9 = new System.Windows.Forms.Label();
-			this.tbAttemptsToConnect = new System.Windows.Forms.TextBox();
 			this.cbIPAdress = new System.Windows.Forms.ComboBox();
 			this.cbAutoConnecct = new System.Windows.Forms.CheckBox();
 			this.label8 = new System.Windows.Forms.Label();
@@ -225,8 +223,6 @@
 			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.label9);
-			this.groupBox1.Controls.Add(this.tbAttemptsToConnect);
 			this.groupBox1.Controls.Add(this.cbIPAdress);
 			this.groupBox1.Controls.Add(this.cbAutoConnecct);
 			this.groupBox1.Controls.Add(this.label8);
@@ -250,27 +246,6 @@
 			this.groupBox1.TabIndex = 34;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Status";
-			// 
-			// label9
-			// 
-			this.label9.AutoSize = true;
-			this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label9.Location = new System.Drawing.Point(16, 130);
-			this.label9.Name = "label9";
-			this.label9.Size = new System.Drawing.Size(174, 20);
-			this.label9.TabIndex = 43;
-			this.label9.Text = "Seconds to Timeout:";
-			// 
-			// tbAttemptsToConnect
-			// 
-			this.tbAttemptsToConnect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.tbAttemptsToConnect.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbAttemptsToConnect.Location = new System.Drawing.Point(209, 124);
-			this.tbAttemptsToConnect.Name = "tbAttemptsToConnect";
-			this.tbAttemptsToConnect.Size = new System.Drawing.Size(68, 29);
-			this.tbAttemptsToConnect.TabIndex = 42;
-			this.tbAttemptsToConnect.TextChanged += new System.EventHandler(this.TimeoutChanged);
 			// 
 			// cbIPAdress
 			// 
@@ -571,8 +546,6 @@
 		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.ComboBox cbIPAdress;
 		private System.Windows.Forms.CheckBox cbAutoConnecct;
-		private System.Windows.Forms.Label label9;
-		private System.Windows.Forms.TextBox tbAttemptsToConnect;
 		private System.Windows.Forms.TextBox tbServerUpTimeSeconds;
 		private System.Windows.Forms.Label label10;
 	}

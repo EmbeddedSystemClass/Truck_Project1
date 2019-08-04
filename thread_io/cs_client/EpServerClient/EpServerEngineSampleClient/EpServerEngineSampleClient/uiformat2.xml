@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>					<!-- Settings Two dialog -->
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Lights</Label>
+		<Command>22</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Lights</Label>
+		<Command>26</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Left Brights</Label>
+		<Command>24</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Right Brights</Label>
+		<Command>28</Command>
+		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Wipers2</Label>
+		<Command>34</Command>
+		<Length>3</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Special Cmd</Label>
+		<Command>19</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused1</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+</Table>
+ 

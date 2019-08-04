@@ -167,7 +167,7 @@
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(162, 633);
+			this.tbReceived.Size = new System.Drawing.Size(205, 294);
 			this.tbReceived.TabIndex = 10;
 			this.tbReceived.TabStop = false;
 			// 
@@ -176,7 +176,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(630, 657);
+			this.ClientSize = new System.Drawing.Size(673, 331);
 			this.Controls.Add(this.tbReceived);
 			this.Controls.Add(this.button9);
 			this.Controls.Add(this.button8);
