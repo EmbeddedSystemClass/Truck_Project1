@@ -352,6 +352,7 @@ namespace EpServerEngineSampleClient
                 xmlFile = XmlReader.Create(filePath, new XmlReaderSettings());
                 ds2.ReadXml(xmlFile);
                 dataGridView1.DataSource = ds2.Tables[0];
+				//ds2.Tables[0].Rows[]
             }
             catch (Exception ex)
             {

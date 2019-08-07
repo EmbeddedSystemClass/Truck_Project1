@@ -275,8 +275,8 @@ UCHAR get_host_cmd_task(int test)
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.26\0");
-	printString2("sched v1.26\0");
+	myprintf1("sched v1.29\0");
+	//printString2("sched v1.26\0");
 //	printf("sched v1.25\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
@@ -867,29 +867,29 @@ UCHAR get_host_cmd_task(int test)
 						if(test_sock() > 0)
 						{
 							close_tcp();
-							printString2("disconnected from socket\0");
+							//printString2("disconnected from socket\0");
 							tcp_connected_time = 0;
 						}
 						break;
 
 					case STOP_MBOX_XMIT:
 						send_serial(STOP_MBOX_XMIT);
-						printString2("System Down\0");
+						//printString2("System Down\0");
 						break;
 
 					case START_MBOX_XMIT:
 						send_serial(START_MBOX_XMIT);
-						printString2("System Up\0");
+						//printString2("System Up\0");
 						break;
 
 					case STOP_AVR_XMIT:
 						send_serial(STOP_AVR_XMIT);
-						printString2("xmit to AVR off\0");
+						//printString2("xmit to AVR off\0");
 						break;
 
 					case START_AVR_XMIT:
 						send_serial(START_AVR_XMIT);
-						printString2("xmit to AVR on\0");
+						//printString2("xmit to AVR on\0");
 						break;
 
 					case UPLOAD_NEW:
@@ -950,9 +950,9 @@ UCHAR get_host_cmd_task(int test)
 							close(fp);
 //							goto exit_program;
 						}	
+#endif
 
 						break;
-#endif
 					case EXIT_PROGRAM:
 
 //printf("exiting program...\r\n");

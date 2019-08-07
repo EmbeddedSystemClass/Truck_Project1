@@ -391,12 +391,13 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
-  	int i;
+  	int i,j;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
 	UCHAR key;
 	UCHAR cmd;
 	uint16_t recval;
+	int row, col;
 
 	lights_on = 0;
 	brights_on = 0;
@@ -411,7 +412,7 @@ void StartDefaultTask(void const * argument)
 	dim_screen = 0;
 	silent_key = 0;
 	system_up = 1;
-	avr_up = 0;
+	avr_up = 1;
 	run_time = 0;
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
@@ -428,6 +429,7 @@ void StartDefaultTask(void const * argument)
 	init_DS1620();
 	vTaskDelay(10);
 	initDS1620();
+//	init_rtlabels();
 
 	timer_toggle = 0;
   
@@ -451,41 +453,10 @@ void StartDefaultTask(void const * argument)
 	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 
-	vTaskDelay(2000);
-
-	key = 0x21;
-	avr_buffer[0] = CHAR_CMD;
-	for(;;)
-	{
-		vTaskDelay(20);
-		avr_buffer[1] = key;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRHandle,avr_buffer,0);
-		if(++key > 0x7e)
-			key = 0x21;
-
-		if(timer_toggle == 0)
-		{
-
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			timer_toggle = 1;
-			
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			timer_toggle = 0;
-		}
-	}
-	
-
-	init_rtlabels();
-//	display_rtlabels();	
-
 	vTaskDelay(10);
-//#if 0
+#if 0
 // had to do this explicitly instead of using DISPLAY_RTLABELS (not working yet)
+
 	row = START_RT_VALUE_ROW;
 	col = START_RT_VALUE_COL;
 
@@ -505,8 +476,9 @@ void StartDefaultTask(void const * argument)
 		avr_buffer[0] = pack64(ucbuff);
 		xQueueSend(SendAVRHandle,avr_buffer,0);
 		vTaskDelay(10);
+		row++;
 	}
-//#endif
+#endif
   /* Infinite loop */
  
   for(;;)
@@ -729,10 +701,11 @@ void StartDefaultTask(void const * argument)
 void StartAVRTask(void const * argument)
 {
   /* USER CODE BEGIN StartAVRTask */
-	uint64_t avr_buffer[5];
-	UCHAR ucbuff[8];
-	UCHAR end_byte = AVR_START_BYTE;
-	UCHAR start_byte = AVR_END_BYTE;
+	uint64_t avr_buffer[10];
+	UCHAR ucbuff[10];
+	UCHAR start_byte = AVR_START_BYTE;
+	UCHAR end_byte = AVR_END_BYTE;
+	UCHAR temp;
 
   /* Infinite loop */
 
@@ -741,7 +714,8 @@ void StartAVRTask(void const * argument)
 
 		xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
 
-		if(avr_up == 1)
+//		if(avr_up == 1)
+	if(1)
 		{
 			ucbuff[0] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
@@ -767,6 +741,8 @@ void StartAVRTask(void const * argument)
 			ucbuff[7] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
 
+			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
+
 			switch (ucbuff[0])
 			{
 				case EEPROM_STR:
@@ -775,36 +751,48 @@ void StartAVRTask(void const * argument)
 				case SEND_INT_RT_VALUES:
 				case DISPLAY_ELAPSED_TIME:
 				case SET_MODE_CMD:
-					HAL_UART_Transmit(&huart2, ucbuff, 5, 100);
+					HAL_UART_Transmit(&huart2, &ucbuff[0], 5, 100);
 					break;
 				case CHAR_CMD:
 				case SET_NUM_ENTRY_MODE:
 				case PASSWORD_MODE:
-					HAL_UART_Transmit(&huart2, ucbuff, 2, 100);
+					HAL_UART_Transmit(&huart2, &ucbuff[0], 2, 100);
 					break;
 				case GOTO_CMD:
-					HAL_UART_Transmit(&huart2, ucbuff, 3, 100);
-					break;
-				case DISPLAY_RTLABELS:
-					HAL_UART_Transmit(&huart2, ucbuff, 6, 100);
+					HAL_UART_Transmit(&huart2, &ucbuff[0], 3, 100);
 					break;
 				case SEND_BYTE_HEX_VALUES:
 				case SEND_BYTE_RT_VALUES:
-					HAL_UART_Transmit(&huart2, ucbuff, 4, 100);
+					HAL_UART_Transmit(&huart2, &ucbuff[0], 4, 100);
 					break;
 				case LCD_CLRSCR:
 				case DISPLAY_STATUSLABELS:
-					HAL_UART_Transmit(&huart2, ucbuff, 1, 100);
+					HAL_UART_Transmit(&huart2, &ucbuff[0], 1, 100);
 					break;
 				default:
 					break;
 			}
-			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
-			end_byte = 0;
+
+			temp = 0;
 
 			do {
-				HAL_UART_Receive(&huart2, &end_byte, 1, portMAX_DELAY);
-			} while(end_byte != 0xFD);
+				HAL_UART_Receive(&huart2, &temp, 1, portMAX_DELAY);
+			} while(temp != end_byte);
+
+			if(timer_toggle == 0)
+			{
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+				timer_toggle = 1;
+				HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_RESET);
+				
+			}else
+			{
+				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
+				timer_toggle = 0;
+			}
 
 		}
 	}
@@ -987,6 +975,7 @@ void StartRecv7200(void const * argument)
 					engine_on = 1;
 					break;
 				case 	SHUTDOWN:
+				case 	ESTOP_SIGNAL:
 					engine_on = 0;
 					break;
 				case 	ON_LLIGHTS:
@@ -1037,14 +1026,14 @@ void StartRecv7200(void const * argument)
 					system_up = 0;
 					break;
 				case START_AVR_XMIT:	
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 					avr_up = 1;
 					break;
 				case STOP_AVR_XMIT:	
-					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-					avr_up = 0;
+//					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+//					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//					avr_up = 0;
 					break;
 				case SEND_TIME_DATA:
 #if 0
@@ -1246,9 +1235,11 @@ void StartRecvFPGA(void const * argument)
 	UCHAR ucbuff[8];
 	UCHAR buff[5];
 	int frame_ptr;
+/*
 	UINT rpm, mph;
 	rpm = 500;
 	mph = 1;
+*/
 	rtdata_update_rate = 0;
 	
 	xbyte = 0x21;
@@ -1319,34 +1310,35 @@ void StartRecvFPGA(void const * argument)
 		if(xbyte == 0xFE)
 		{
 			frame_ptr = 0;
-			if(avr_up == 1)
+//			if(avr_up == 1)
+if(1)
 			{
 				ucbuff[0] = SEND_INT_RT_VALUES;
 				ucbuff[1] = rtlabel_str[RPM].row;
 				ucbuff[2] = rtlabel_str[RPM].data_col;
-	//			ucbuff[3] = (UCHAR)(rpm >> 8);
-	//			ucbuff[4] = (UCHAR)rpm;
+//				ucbuff[3] = (UCHAR)(rpm >> 8);
+//				ucbuff[4] = (UCHAR)rpm;
 				ucbuff[4] = buff[0];
 				ucbuff[3] = buff[1];
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendAVRHandle,avr_buffer,0);
+//				avr_buffer[0] = pack64(ucbuff);
+//				xQueueSend(SendAVRHandle,avr_buffer,0);
 				vTaskDelay(10);
 
 				ucbuff[1] = rtlabel_str[MPH].row;
 				ucbuff[2] = rtlabel_str[MPH].data_col;
-	//			ucbuff[3] = (UCHAR)(mph >> 8);
-	//			ucbuff[4] = (UCHAR)mph;
+//				ucbuff[3] = (UCHAR)(mph >> 8);
+//				ucbuff[4] = (UCHAR)mph;
 				ucbuff[4] = buff[2];
 				ucbuff[3] = buff[3];
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendAVRHandle,avr_buffer,0);
+//				avr_buffer[0] = pack64(ucbuff);
+//				xQueueSend(SendAVRHandle,avr_buffer,0);
 			}
-
+/*
 			if(rpm++ > 5000)		// simulate data for testing
 				rpm = 500;
 			if(++mph > 100)
 				mph = 1;
-
+*/
 			vTaskDelay(10);
 
 			//if(++rtdata_update_rate > 3)
@@ -1356,17 +1348,17 @@ if(1)
 				if(engine_on != 0)
 				{
 					ucbuff[0] = SEND_RT_VALUES;
-
+/*
 					ucbuff[1] = (UCHAR)(rpm >> 8);
 					ucbuff[2] = (UCHAR)rpm;
 					ucbuff[3] = (UCHAR)(mph >> 8);
 					ucbuff[4] = (UCHAR)mph;
-/*
-					ucbuff[2] = buff[0];
-					ucbuff[1] = buff[1];
-					ucbuff[4] = buff[2];
-					ucbuff[3] = buff[3];
 */
+					ucbuff[1] = buff[0];
+					ucbuff[2] = buff[1];
+					ucbuff[3] = buff[2];
+					ucbuff[4] = buff[3];
+
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(Send7200Handle, avr_buffer, 0);
 				}
@@ -1451,7 +1443,8 @@ void Callback01(void const * argument)
 	temp_raw >>= 8;
 	global_ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
 */
-	if(avr_up == 1)
+//	if(avr_up == 1)
+	if(0)
 	{
 		global_avr_buffer[0] = pack64(global_ucbuff);
 		xQueueSend(SendAVRHandle,global_avr_buffer,0);
@@ -1477,7 +1470,7 @@ void Callback01(void const * argument)
 		raw_data = 10;
 	temp_raw = raw_data;
 */
-#if 0
+//#if 0
 	if(timer_toggle == 0)
 	{
 
@@ -1503,7 +1496,7 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
 		timer_toggle = 0;
 	}
-#endif
+//#endif
   /* USER CODE END Callback01 */
 }
 

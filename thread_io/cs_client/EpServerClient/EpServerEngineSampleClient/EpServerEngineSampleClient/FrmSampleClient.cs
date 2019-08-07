@@ -78,14 +78,20 @@ namespace EpServerEngineSampleClient
 		private int previous_timer_server_up_seconds = 0;
 		//private int server_connection_attempts = 1;
 		private bool client_connected = false;
-		private string dialog_one_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat1.xml";
-		private string dialog_one_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat1.xml";
-		private string dialog_two_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat2.xml";
-		private string dialog_two_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat2.xml";
-		private string test_ports_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat3.xml";
-		private string test_ports_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat3.xml";
-		private string xml_file2_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\ClientParams.xml";
-		private string xml_file2_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\ClientParams.xml";
+		/*
+				private string dialog_one_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat1.xml";
+				private string dialog_one_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat1.xml";
+				private string dialog_two_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat2.xml";
+				private string dialog_two_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat2.xml";
+				private string test_ports_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat3.xml";
+				private string test_ports_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat3.xml";
+				private string xml_file2_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\ClientParams.xml";
+				private string xml_file2_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\ClientParams.xml";
+		*/
+		private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
+		private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
+		private string xml_dialog3_location = "c:\\Users\\daniel\\dev\\uiformat3.xml";
+		private string xml_params_location = "c:\\Users\\daniel\\dev\\ClientParams.xml";
 
 		public FrmSampleClient()
 		{
@@ -123,65 +129,45 @@ namespace EpServerEngineSampleClient
 			//target_db_closed = false;
 			//use_laptop = true;
 			tbReceived.Clear();
-			psDlg = new PortSet2(File.Exists(dialog_one_location_laptop) ? dialog_one_location_laptop : dialog_one_location_desktop, m_client);
+			//psDlg = new PortSet2(File.Exists(dialog_one_location_laptop) ? dialog_one_location_laptop : dialog_one_location_desktop, m_client);
+			psDlg = new PortSet2(xml_dialog1_location, m_client);
 			psDlg.SetButtonLabels();
 			psDlg.Name = "Dialog One";
 			//psDlg.Set_Type(false);
 
-			psDlg2 = new PortSet2(File.Exists(dialog_two_location_laptop) ? dialog_two_location_laptop : dialog_two_location_desktop, m_client);
+			//psDlg2 = new PortSet2(File.Exists(dialog_two_location_laptop) ? dialog_two_location_laptop : dialog_two_location_desktop, m_client);
+			psDlg2 = new PortSet2(xml_dialog2_location, m_client);
 			psDlg2.SetButtonLabels();
 			psDlg2.Name = "Dialog Two";
 			//psDlg2.Set_Type(false);
 
-			psDlg3 = new PortSet2(File.Exists(test_ports_location_laptop) ? test_ports_location_laptop : test_ports_location_desktop, m_client);
+			//psDlg3 = new PortSet2(File.Exists(test_ports_location_laptop) ? test_ports_location_laptop : test_ports_location_desktop, m_client);
+			psDlg3 = new PortSet2(xml_dialog3_location, m_client);
 			psDlg3.SetButtonLabels();
 			psDlg3.Name = "Test Ports";
 			//psDlg3.Set_Type(false);
 
 			client_params = new List<ClientParams>();
-			XmlTextReader xmlReader2 = new XmlTextReader(File.Exists(xml_file2_location_laptop) ? xml_file2_location_laptop : xml_file2_location_desktop);
-			// this doesn't work if the string 'xml_file_location... are not private
-			ClientParams item2 = null;
+			ClientParams item = null;
 
-			i = 0;
-			while (xmlReader2.Read())
+			DataSet ds = new DataSet();
+			//XmlReader xmlFile = XmlReader.Create(File.Exists(xml_file2_location_laptop) ? xml_file2_location_laptop : xml_file2_location_desktop);
+			XmlReader xmlFile = XmlReader.Create(xml_params_location);
+			ds.ReadXml(xmlFile);
+			foreach (DataRow dr in ds.Tables[0].Rows)
 			{
-				if (xmlReader2.NodeType == XmlNodeType.Text)
-				{
-					switch (i)
-					{
-						case 0:
-							item2 = new ClientParams();
-							item2.AutoConn = xmlReader2.ReadContentAsBoolean();
-							//AddMsg(item2.AutoConn.ToString());
-							i++;
-							break;
-						case 1:
-							item2.IPAdress = xmlReader2.Value.ToString();
-							//AddMsg(item2.IPAdress);
-							i++;
-							break;
-						case 2:
-							item2.PortNo = xmlReader2.ReadContentAsInt();
-							//AddMsg(item2.PortNo.ToString());
-							i++;
-							break;
-						case 3:
-							item2.Primary = xmlReader2.ReadContentAsBoolean();
-							i++;
-							break;
-						case 4:
-							// this not used, but can be something else
-							item2.AttemptsToConnect = xmlReader2.ReadContentAsInt();
-							client_params.Add(item2);
-							item2 = null;
-							i = 0;
-							break;
-					}
-				}
+				item = new ClientParams();
+				item.AutoConn = Convert.ToBoolean(dr.ItemArray[0]);
+				item.IPAdress = dr.ItemArray[1].ToString();
+				item.PortNo = Convert.ToUInt16(dr.ItemArray[2]);
+				item.Primary = Convert.ToBoolean(dr.ItemArray[3]);
+				item.AttemptsToConnect = Convert.ToInt16(dr.ItemArray[4]);
+				client_params.Add(item);
+				item = null;
 			}
 
 			bool found = false;
+			i = 0;
 			for (i = 0; i < client_params.Count(); i++)
 			{
 
@@ -191,7 +177,7 @@ namespace EpServerEngineSampleClient
 				{
 					m_hostname = cbIPAdress.Text = client_params[i].IPAdress;
 					m_portno = tbPort.Text = client_params[i].PortNo.ToString();
-					cbAutoConnecct.Checked = client_params[i].AutoConn;
+					//cbAutoConnecct.Checked = client_params[i].AutoConn;
 					selected_address = i;
 					found = true;
 				}
@@ -201,7 +187,7 @@ namespace EpServerEngineSampleClient
 				AddMsg("no primary address found in xml file");
 			}
 
-			Control sCtl = this.btnConnect;
+			Control sCtl = this.btnStartEng;
 			for (i = 0; i < this.Controls.Count; i++)
 			{
 				if (sCtl.GetType() == typeof(Button))
@@ -216,7 +202,12 @@ namespace EpServerEngineSampleClient
 					sCtl = GetNextControl(sCtl, true);
 				}
 			}
-
+			/*
+						foreach (ButtonList btn in button_list)
+						{
+							AddMsg(btn.Name + " " + btn.TabOrder.ToString());
+						}
+			*/
 			// Set the list of buttons to skip
 			// over if in NAV mode (remote keypad)
 			// some for obvious reasons, you don't want to 
@@ -224,13 +215,12 @@ namespace EpServerEngineSampleClient
 			// on the keypad or you have to open up the
 			// laptop again and fix it
 
-			Exclude_From_buttons.Add(0);	// disconnect from server
-			Exclude_From_buttons.Add(2);	// test ports
-			Exclude_From_buttons.Add(7);	// shutdown server
-			Exclude_From_buttons.Add(8);	// reboot server
-			Exclude_From_buttons.Add(9);	// StopMbox xmit
-			Exclude_From_buttons.Add(10);	// db mgmt
-			Exclude_From_buttons.Add(12);	// set svr params
+			Exclude_From_buttons.Add(8);
+			Exclude_From_buttons.Add(9);
+			Exclude_From_buttons.Add(10);
+			Exclude_From_buttons.Add(11);
+			Exclude_From_buttons.Add(12);
+			Exclude_From_buttons.Add(13);
 
 			no_buttons = 0;
 			for (int j = 0; j < Exclude_From_buttons.Count(); j++)
@@ -248,11 +238,11 @@ namespace EpServerEngineSampleClient
 				//AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
 			}
 			timer1.Enabled = true;
-			AddMsg("buttons used: " + no_buttons.ToString());
+			//AddMsg("buttons used: " + no_buttons.ToString());
 		}
 		private void btnConnect_Click(object sender, EventArgs e)
 		{
-			if(!client_connected)		// let's connect here! (see timer callback at end of file)
+			if (!client_connected)      // let's connect here! (see timer callback at end of file)
 			{
 				m_hostname = cbIPAdress.Items[selected_address].ToString();
 				m_portno = tbPort.Text;
@@ -279,7 +269,7 @@ namespace EpServerEngineSampleClient
 				btnConnect.Text = "Disconnect";
 				btnTestPorts.Enabled = true;             // shutdown engine button
 				btnStartEng.Enabled = true;             // start engine
-				//btnStartEng.Text = "Stop Engine";
+														//btnStartEng.Text = "Stop Engine";
 				btnSetParams.Enabled = true;
 				cbIPAdress.Enabled = false;     /// from here to MPH should be commented out when in debugger
 				tbPort.Enabled = false;
@@ -319,6 +309,7 @@ namespace EpServerEngineSampleClient
 			{
 				psDlg.Dispose();
 				psDlg2.Dispose();
+				psDlg3.Dispose();
 				base.OnClosed(e);
 			}
 		}
@@ -331,6 +322,10 @@ namespace EpServerEngineSampleClient
 			else if (psDlg2.Visible == true)
 			{
 				psDlg2.Process_Msg(receivedPacket.PacketRaw);
+			}
+			else if (psDlg3.Visible == true)
+			{
+				psDlg3.Process_Msg(receivedPacket.PacketRaw);
 			}
 			else
 				Process_Msg(receivedPacket.PacketRaw);
@@ -345,7 +340,7 @@ namespace EpServerEngineSampleClient
 			char[] chars2 = new char[bytes.Length / sizeof(char)];
 			// src srcoffset dest destoffset len
 			System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-			type_msg = (int)chars[0];
+			type_msg = chars[0];
 			System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
 			ret = new string(chars2);
 
@@ -356,12 +351,58 @@ namespace EpServerEngineSampleClient
 			switch (str)
 			{
 				case "SEND_MSG":
-					if (ret == "SHUTDOWN")
+					//AddMsg(str + " " + ret.ToString());
+					switch (ret)
 					{
-						tbRPM.Text = "0";
-						tbMPH.Text = "0";
+						case "START_SEQ":
+							m_engine_running = true;
+							AddMsg("start engine: " + ret);
+							btnStartEng.Text = "Stop Engine";
+							IgnitionOnLabel.BackColor = Color.Aqua;
+							break;
+						case "SHUTDOWN":
+							m_engine_running = false;
+							tbEngRunTime.Text = "";
+							tbEngineTemp.Text = "";
+							//tbServerTime.Text = "";
+							tbRPM.Text = "0";
+							tbMPH.Text = "0";
+							btnStartEng.Text = "Start Engine";
+							AddMsg("stop engine: " + ret);
+							IgnitionOnLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							reevaluate_enabled_buttons();
+							break;
+						case "ON_FAN":
+							CoolingFanLabel.BackColor = Color.Aqua;
+							break;
+						case "OFF_FAN":
+							CoolingFanLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
+						case "ON_LIGHTS":
+							LightsOnLabel.BackColor = Color.Aqua;
+							break;
+						case "OFF_LIGHTS":
+							LightsOnLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
+						case "ON_BRIGHTS":
+							BrightsLabel.BackColor = Color.Aqua;
+							break;
+						case "OFF_BRIGHTS":
+							BrightsLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
+						case "ON_BRAKES":
+							BrakeLightsLabel.BackColor = Color.Aqua;
+							break;
+						case "OFF_BRAKES":
+							BrakeLightsLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
+						case "ON_RUNNING_LIGHTS":
+							SideMarkerLabel.BackColor = Color.Aqua;
+							break;
+						case "OFF_RUNNING_LIGHTS":
+							SideMarkerLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
 					}
-					AddMsg(ret);
 					break;
 				case "CURRENT_TIME":
 					AddMsg(ret);
@@ -392,10 +433,10 @@ namespace EpServerEngineSampleClient
 					tbEngineTemp.Text = ret;
 					break;
 				case "SEND_RPM":
-					tbRPM.Text = ret;			// comment out for debug
+					tbRPM.Text = ret;           // comment out for debug
 					break;
 				case "SEND_MPH":
-					tbMPH.Text = ret;			// comment out for debug
+					tbMPH.Text = ret;           // comment out for debug
 					break;
 				case "SEND_CONFIG":
 					string[] words = ret.Split(' ');
@@ -452,30 +493,12 @@ namespace EpServerEngineSampleClient
 					AddMsg(ret);
 					break;
 
-				case "START_SEQ":
-					m_engine_running = true;
-					AddMsg(ret);
-					btnStartEng.Text = "Stop Engine";
-					break;
-
-				case "SHUTDOWN":		// msg from server saying engine has been shutdown
-					m_engine_running = false;
-					tbEngRunTime.Text = "";
-					tbEngineTemp.Text = "";
-					//tbServerTime.Text = "";
-					tbRPM.Text = "0";
-					tbMPH.Text = "0";
-					btnStartEng.Text = "Start Engine";
-					AddMsg(ret);
-					reevaluate_enabled_buttons();
-					break;
-
 				case "SYSTEM_UP":
 					AddMsg(ret);
 					break;
 
 				case "SYSTEM_DOWN":
-//					AddMsg(ret);
+					AddMsg(ret);
 					break;
 
 				case "NAV_UP":
@@ -570,7 +593,7 @@ namespace EpServerEngineSampleClient
 		{
 			btnConnect_Click(sender, e);
 		}
-		// start engine
+		// start/stop engine
 		private void StartEng_Click(object sender, EventArgs e)
 		{
 			if (!m_engine_running)
@@ -616,7 +639,7 @@ namespace EpServerEngineSampleClient
 		private void RebootServer(object sender, EventArgs e)
 		{
 			string cmd = "REBOOT_IOBOX";
-			int offset = svrcmd.GetCmdIndexI(cmd); 
+			int offset = svrcmd.GetCmdIndexI(cmd);
 			svrcmd.Send_Cmd(offset);
 			please_lets_disconnect = 1;
 		}
@@ -742,7 +765,6 @@ namespace EpServerEngineSampleClient
 			psDlg3.Enable_Dlg(true);
 			if (psDlg3.ShowDialog(this) == DialogResult.OK)
 			{
-				//                AddMsg("dlg = OK");
 			}
 			else
 			{
@@ -752,7 +774,7 @@ namespace EpServerEngineSampleClient
 		}
 		private void reevaluate_enabled_buttons()
 		{
-			foreach(ButtonList btn in button_list)
+			foreach (ButtonList btn in button_list)
 			{
 				btn.Enabled = btn.Ctl.Enabled;
 			}
@@ -770,7 +792,7 @@ namespace EpServerEngineSampleClient
 					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 
 					//AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
-					//textBox1.Text = "up  " + button_list[current_button].Name;
+					
 					//AddMsg("up  " + button_list[current_button].Name + " " 
 						//+ current_button.ToString() + " " + previous_button.ToString()+ " " + button_list[current_button].TabOrder.ToString());
 					break;
@@ -782,25 +804,22 @@ namespace EpServerEngineSampleClient
 						current_button = 0;
 					button_list[current_button].Ctl.BackColor = Color.Aqua;
 					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
 					//AddMsg("down  " + button_list[current_button].Name + " " 
 						//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
 					break;
 
 				case "NAV_SIDE":
-					/*
-										previous_button = current_button;
-										if (current_button > 6)
-											current_button -= 7;
-										else if(current_button < 7)
-											current_button += 7;
-										button_list[current_button].Ctl.BackColor = Color.Aqua;
-										button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-										//					AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
-										//AddMsg("side  " + button_list[current_button].Name + " "
-											//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
-					*/
-					AddMsg("NAV_SIDE not working yet");
+					previous_button = current_button;
+					if (current_button > 3)
+						current_button -= 4;
+					else if (current_button < 4)
+						current_button += 4;
+					button_list[current_button].Ctl.BackColor = Color.Aqua;
+					button_list[previous_button].Ctl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+					//AddMsg("up  " + button_list[current_button].Name + " " + button_list[current_button].TabOrder.ToString());
+					//AddMsg("side  " + button_list[current_button].Name + " "
+						//+ current_button.ToString() + " " + previous_button.ToString() + " " + button_list[current_button].TabOrder.ToString());
+					//AddMsg("NAV_SIDE not working yet");
 					break;
 				case "NAV_CLICK":
 					//if (button_list[current_button].Enabled && button_list[current_button].Name != "Stop Mbox Xmit" && 
@@ -814,9 +833,9 @@ namespace EpServerEngineSampleClient
 						//if (tab_order != 0 && tab_order != 9 && tab_order != 7 && tab_order != 8)
 						{
 							button_list[current_button].Ctl.PerformClick();
-							AddMsg("click  " + button_list[current_button].Name + " "
-								+ button_list[current_button].TabOrder.ToString());
-							
+							//AddMsg("click  " + button_list[current_button].Name + " "
+								//+ button_list[current_button].TabOrder.ToString());
+
 						}
 						//else AddMsg("don't do this!");
 					}
@@ -848,15 +867,15 @@ namespace EpServerEngineSampleClient
 							btn_SetTime.Enabled = true;
 							btnGetTime.Enabled = true;
 							AddMsg("server connected");
-						}else
+						} else
 						{
 							previous_timer_server_up_seconds = timer_server_up_seconds;
 							timer_server_up_seconds = server_up_seconds;
-							tbServerUpTimeSeconds.Text = "server up seconds: " + 
-								timer_server_up_seconds.ToString() + " " 
-									+ "previous up seconds: " + previous_timer_server_up_seconds.ToString();
-							if(timer_server_up_seconds > 2 && timer_server_up_seconds < 6)
-								Btn_SetTime_Click(new object(),new EventArgs());
+							//tbServerUpTimeSeconds.Text = "server up seconds: " + 
+							//timer_server_up_seconds.ToString() + " " 
+							//+ "previous up seconds: " + previous_timer_server_up_seconds.ToString();
+							if (timer_server_up_seconds > 2 && timer_server_up_seconds < 6)
+								Btn_SetTime_Click(new object(), new EventArgs());
 						}
 					}
 					else // if not alive
@@ -881,7 +900,7 @@ namespace EpServerEngineSampleClient
 							tbServerTime.Text = "";
 							client_connected = false;
 							AddMsg("server disconnected");
-							tbServerUpTimeSeconds.Text = "";
+							//tbServerUpTimeSeconds.Text = "";
 						}
 						else
 						{
@@ -917,7 +936,7 @@ namespace EpServerEngineSampleClient
 					AddMsg("asking server to disconnect...");
 					int offset = svrcmd.GetCmdIndexI(cmd);
 					svrcmd.Send_Cmd(offset);
-					please_lets_disconnect = 2;		// next time around disconnect anyway
+					please_lets_disconnect = 2;     // next time around disconnect anyway
 					break;
 				case 2:         // then wait 1 second to see if it really did disconnect us
 					AddMsg("Drake, we are leaving...");
@@ -934,9 +953,13 @@ namespace EpServerEngineSampleClient
 				selected_address = cbIPAdress.SelectedIndex;
 				m_hostname = client_params[selected_address].IPAdress;
 				tbPort.Text = m_portno = client_params[selected_address].PortNo.ToString();
-				cbAutoConnecct.Checked = client_params[selected_address].AutoConn;
+				//cbAutoConnecct.Checked = client_params[selected_address].AutoConn;
 			}
+		}
+
+		private void FrmSampleClient_Load(object sender, EventArgs e)
+		{
+
 		}
 	}
 }
- 

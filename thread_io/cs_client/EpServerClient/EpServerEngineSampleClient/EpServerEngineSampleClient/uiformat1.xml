@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>					<!-- Settings One dialog -->
-		<Label>LCD Scroll Up</Label>
-		<Command>50</Command>
-		<Length>1</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>LCD Scroll Down</Label>
-		<Command>51</Command>
-		<Length>1</Length>
-	</UIFormat>
-	<UIFormat>
 		<Label>Left Lights</Label>
 		<Command>22</Command>
 		<Length>2</Length>
@@ -31,14 +21,9 @@
 		<Length>2</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Wipers2</Label>
-		<Command>34</Command>
-		<Length>3</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Special Cmd</Label>
-		<Command>19</Command>
-		<Length>1</Length>
+		<Label>Left Brights</Label>
+		<Command>24</Command>
+		<Length>2</Length>
 	</UIFormat>
 	<UIFormat>
 		<Label>Test Left Blinker</Label>
@@ -48,6 +33,21 @@
 	<UIFormat>
 		<Label>Test Right Blinker</Label>
 		<Command>60</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>LCD Scroll Up</Label>
+		<Command>50</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>LCD Scroll Down</Label>
+		<Command>51</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Special Cmd</Label>
+		<Command>19</Command>
 		<Length>1</Length>
 	</UIFormat>
 </Table>

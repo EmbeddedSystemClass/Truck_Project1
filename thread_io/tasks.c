@@ -681,7 +681,7 @@ UCHAR timer_task(int test)
 		if(shutdown_all)
 		{
 //			printf("done timer_task\r\n");
-			printString2("done timer");
+			//printString2("done timer");
 			return 0;
 		}
 //		uSleep(0,TIME_DELAY/2);		// 1/2 sec
@@ -1014,11 +1014,12 @@ UCHAR serial_recv_task(int test)
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
 		}else
 		
-		if(test_sock() && (cmd >= NAV_UP && cmd <= NAV_CLOSE))
+		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
 		{
 			sprintf(tempx,"nav cmd: %d",cmd);
 //			printString2(tempx);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, cmd);
+			if(test_sock())
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, cmd);
 		}
 
 		if(shutdown_all)
@@ -1034,7 +1035,6 @@ UCHAR serial_recv_task(int test)
 	}
 	return 1;
 }
-
 
 // client calls 'connect' to get accept call below to stop
 // blocking and return sd2 socket descriptor
@@ -1347,8 +1347,10 @@ UCHAR basic_controls_task(int test)
 //			case ESTOP_SIGNAL:
 				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
-//				printHexByte(cmd);
-//				printf("%s\r\n",cmd_array[cmd].cmd_str);
+				sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+// comment out the printString2 when using on actual iobox				
+				printString2(tempx);
 
 			break;
 			default:
@@ -1364,7 +1366,7 @@ UCHAR basic_controls_task(int test)
 	//			otp->onoff = 1;
 	//			ollist_insert_data(index,&oll,otp);
 				change_input(STARTER_INPUT,1);
-				printString2("starter on");
+				//printString2("starter on");
 				break;
 
 			case STARTER_OFF:	// starter shuts off by itself (type 2 - timed)
@@ -1374,7 +1376,7 @@ UCHAR basic_controls_task(int test)
 	//			otp->onoff = 0;
 	//			ollist_insert_data(index,&oll,otp);
 				change_input(STARTER_INPUT,0);
-				printString2("starter off");
+				//printString2("starter off");
 				break;
 
 			case ON_ACC:
@@ -1541,13 +1543,13 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(_100MS);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
 				usleep(_100MS);
+				set_output(otp,0);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,1);
 			break;
 
@@ -1555,13 +1557,13 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
 				usleep(_100MS);
+				set_output(otp,0);
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,1);
 			break;
 
@@ -1569,13 +1571,13 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(_100MS);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
 				usleep(_100MS);
+				set_output(otp,0);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,1);
 			break;
 
@@ -1584,33 +1586,33 @@ UCHAR basic_controls_task(int test)
 				index = HTRBLOWERMED;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(_100MS);
 				index = HTRBLOWERHIGH;
 				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
 				usleep(_100MS);
+				set_output(otp,0);
 				index = HTRBLOWERLOW;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,0);
 			break;		
 
 			case WIPER1:
-				index = WWIPER2;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				usleep(_100MS);
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,1);
+				index = WWIPER2;
+				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
+				set_output(otp,0);
 			break;	
 
 			case WIPER2:
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				usleep(_100MS);
+				set_output(otp,1);
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,1);
 			break;	
 
@@ -1618,9 +1620,9 @@ UCHAR basic_controls_task(int test)
 				index = WWIPER1;
 				ollist_find_data(index,otpp,&oll);
 				set_output(otp,0);
-				usleep(_100MS);
 				index = WWIPER2;
 				ollist_find_data(index,otpp,&oll);
+				usleep(_100MS);
 				set_output(otp,0);
 			break;	
 
@@ -1649,7 +1651,6 @@ UCHAR basic_controls_task(int test)
 	//			printf("%d %s\r\n",otp->port,otp->label);
 	//			change_output(otp->port,otp->onoff);
 				change_output(ACCON,1);
-				usleep(_100MS);
 				ollist_insert_data(otp->port,&oll,otp);
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 1;
@@ -1657,7 +1658,6 @@ UCHAR basic_controls_task(int test)
 	//			printf("%d %s\r\n",otp->port,otp->label);
 	//			change_output(otp->port,otp->onoff);
 				change_output(FUELPUMP,1);
-				usleep(_100MS);
 				ollist_insert_data(otp->port,&oll,otp);
 
 				index = STARTER;
@@ -1667,14 +1667,13 @@ UCHAR basic_controls_task(int test)
 	//			otp->reset = 0;
 	//			TOGGLE_OTP;
 	//			ollist_insert_data(index,&oll,otp);
+				usleep(_100MS);
 				change_input(STARTER_INPUT, 0);
 				usleep(_10MS);
 				change_input(STARTER_INPUT, 1);
 	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				engine_running = 1;
 	//			printf("engine_running: %d\r\n",engine_running);
-				sprintf(tempx,"start engine");
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, START_SEQ);
 				break;
 
 			case SHUTDOWN:
@@ -1683,16 +1682,14 @@ UCHAR basic_controls_task(int test)
 				engine_running = 0;
 	//			printf("engine_running: %d\r\n",engine_running);
 				change_output(ACCON, 0);
-				usleep(_10MS);
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
+				usleep(_10MS);
 				change_output(FUELPUMP, 0);
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
-				sprintf(tempx,"shutdown engine");
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
 
 	//			index = STARTER;
 	//			rc = ollist_find_data(index,otpp,&oll);

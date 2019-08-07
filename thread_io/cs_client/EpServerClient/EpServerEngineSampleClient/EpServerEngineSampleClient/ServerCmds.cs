@@ -105,6 +105,7 @@ namespace EpServerEngineSampleClient
         {
             m_client = client;
         }
+		//Queue<int> qt = new Queue<int>();
 
         byte[] BytesFromString(String str)
         {
@@ -156,9 +157,9 @@ namespace EpServerEngineSampleClient
         }
         public void Send_Cmd(int sendcmd)
         {
-
             string test = " ";
             byte[] bytes = BytesFromString(test);
+			//qt.Enqueue(sendcmd);
             bytes.SetValue((byte)sendcmd, 0);
             Packet packet = new Packet(bytes, 0, bytes.Count(), false);
             m_client.Send(packet);

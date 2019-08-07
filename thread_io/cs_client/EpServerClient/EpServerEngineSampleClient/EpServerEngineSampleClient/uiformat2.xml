@@ -6,42 +6,7 @@
 		<Length>1</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Wipers</Label>
-		<Command>34</Command>
-		<Length>3</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Left Lights</Label>
-		<Command>22</Command>
-		<Length>2</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Right Lights</Label>
-		<Command>26</Command>
-		<Length>2</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Left Brights</Label>
-		<Command>24</Command>
-		<Length>2</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Right Brights</Label>
-		<Command>28</Command>
-		<Length>2</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Wipers2</Label>
-		<Command>34</Command>
-		<Length>3</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Special Cmd</Label>
-		<Command>19</Command>
-		<Length>1</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Unused1</Label>
+		<Label>Unused</Label>
 		<Command>0</Command>
 		<Length>1</Length>
 	</UIFormat>
@@ -49,6 +14,41 @@
 		<Label>Unused</Label>
 		<Command>0</Command>
 		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Disconnect</Label>
+		<Command>62</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Shutdown Svr</Label>
+		<Command>42</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Reboot Svr</Label>
+		<Command>43</Command>
+		<Length>1</Length>
 	</UIFormat>
 </Table>
  

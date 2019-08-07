@@ -16,19 +16,14 @@
 		<Length>2</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Cooling Fan</Label>
-		<Command>7</Command>
+		<Label>Brights</Label>
+		<Command>11</Command>
 		<Length>2</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Lights</Label>
-		<Command>9</Command>
+		<Label>Stop AVR</Label>
+		<Command>39</Command>
 		<Length>2</Length>
-	</UIFormat>
-	<UIFormat>
-		<Label>Disabled</Label>
-		<Command>0</Command>					<!-- set command to zero and control -->
-		<Length>1</Length>						<!-- is disabled -->
 	</UIFormat>
 	<UIFormat>
 		<Label>Markers</Label>
@@ -49,6 +44,11 @@
 		<Label>Brake Lights</Label>
 		<Command>15</Command>
 		<Length>2</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Special Cmd</Label>
+		<Command>19</Command>					<!-- set command to zero and control -->
+		<Length>1</Length>						<!-- is disabled -->
 	</UIFormat>
 </Table>
  

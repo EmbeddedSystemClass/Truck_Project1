@@ -75,6 +75,7 @@
     <Compile Include="ChangeDB.Designer.cs">
       <DependentUpon>ChangeDB.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChildDialogs.cs" />
     <Compile Include="ClientParams.cs" />
     <Compile Include="ConfigParams.cs" />
     <Compile Include="DlgForm1.cs">
