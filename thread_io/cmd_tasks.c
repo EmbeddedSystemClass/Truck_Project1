@@ -460,31 +460,31 @@ UCHAR get_host_cmd_task(int test)
 						format_param_msg();
 
 						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"high_rev_limit: %d\r\n",ps.high_rev_limit);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"low_rev_limit: %d\r\n",ps.low_rev_limit);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"cooling fan: %d\r\n",ps.cooling_fan_on);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"fan off: %d\r\n",ps.cooling_fan_off);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"blwer en: %d\r\n",ps.blower_enabled);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"blower1: %d\r\n",ps.blower1_on);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"blower2: %d\r\n",ps.blower2_on);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"blower3: %d\r\n",ps.blower3_on);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
-						printString2(tempx);
+//						printString2(tempx);
 						sprintf(tempx,"comm ports: %d\r\n",ps.comm_port_en);
-						printString2(tempx);
+//						printString2(tempx);
 
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)

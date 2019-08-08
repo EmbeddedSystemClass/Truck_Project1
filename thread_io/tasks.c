@@ -939,6 +939,28 @@ UCHAR serial_recv_task(int test)
 	green_led(0);
 
 	usleep(_1SEC);
+/*
+	rpm = 1000;
+	while(TRUE)
+	{
+		if((rpm+=10) > 5000)
+			rpm = 1000;
+		if(++mph > 100)
+			mph = 0;	
+
+		sprintf(tempx,"%d",rpm);
+		printString2(tempx);
+		if(test_sock())
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
+
+		sprintf(tempx,"%d",mph);
+		printString2(tempx);
+		if(test_sock())
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
+	
+		usleep(_100MS);
+	}
+*/
 
 	while(TRUE)
 	{
@@ -957,13 +979,6 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		cmd = read_serial_buffer[0];
 
-/*
-		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-		{
-			send_serial2(read_serial_buffer[i]);
-//			printHexByte(read_serial_buffer[i]);
-		}
-*/
 		// these are the keypad cmd's sent from STM32
 		// but if the menus of the STM32/LCD/keypad select the feature
 		// then the cmd is between and including NAV_UP & NAV_CLOSE
@@ -994,24 +1009,33 @@ UCHAR serial_recv_task(int test)
 		
 		if(cmd == SEND_RT_VALUES)
 		{
-			high_byte = read_serial_buffer[1];
-			low_byte = read_serial_buffer[2];
+			low_byte = read_serial_buffer[1];
+			high_byte = read_serial_buffer[2];
+//			printHexByte(low_byte);
+//			printHexByte(high_byte);
+//			printString2("\r\n");
+
 			rpm = (int)high_byte;
 			rpm <<= 8;
 			rpm |= (int)low_byte;
+
 			sprintf(tempx,"%d",rpm);
 //			printString2(tempx);
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
 
-			high_byte = read_serial_buffer[3];
-			low_byte = read_serial_buffer[4];
+			low_byte = read_serial_buffer[3];
+			high_byte = read_serial_buffer[4];
 			mph = (int)high_byte;
 			mph <<= 8;
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
 //			printString2(tempx);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
+//			printHexByte(low_byte);
+//			printHexByte(high_byte);
+//			printString2("\r\n");
+			if(test_sock())
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
 		}else
 		
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
@@ -1065,7 +1089,7 @@ UCHAR tcp_monitor_task(int test)
 	int s;
 
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
-	if(s != 0)
+//	if(s != 0)
 //		handle_err_en(s, "pthread_setcancelstate");
 //		printf("setcancelstate\r\n");
 
@@ -1350,7 +1374,7 @@ UCHAR basic_controls_task(int test)
 				sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 // comment out the printString2 when using on actual iobox				
-				printString2(tempx);
+//				printString2(tempx);
 
 			break;
 			default:

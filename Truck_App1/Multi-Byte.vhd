@@ -202,7 +202,6 @@ begin
 		LED_cmd <= X"FD";
 --		uLED_cmd <= X"FD";
 		led_dl_array <= (others=>(others=>'0'));
---		led1 <= "1111";
 		led_dl_array(0) <= X"FF";
 
 	else if clk'event and clk = '1' then
@@ -219,7 +218,6 @@ begin
 				state_led_next <= led_start;
 
 			when led_start =>
---				led1 <= "0111";
 				led_dl_array(1) <= rpm_result(7 downto 0);
 				led_dl_array(2) <= rpm_result(15 downto 8);
 				led_dl_array(3) <= mph_result(7 downto 0);
@@ -231,7 +229,6 @@ begin
 				if time_delay_reg1 > TIME_DELAY7 then
 					time_delay_next1 <= (others=>'0');
 					state_led_next <= led_start_xmit;
---					led1 <= "1011";
 				else
 					time_delay_next1 <= time_delay_reg1 + 1;
 				end if;
@@ -245,7 +242,6 @@ begin
 			when led_done =>
 				start_tx <= '0';
 				state_led_next <= led_idle;
---				led1 <= "1110";
 		end case;		
 		state_led_reg <= state_led_next;
 		time_delay_reg1 <= time_delay_next1;
@@ -264,7 +260,6 @@ begin
 		sPort <= (others=>'0');
 --		pwm_lcd <= '0';
 --sPort <= "10101010";
-		led1 <= "1111";
 
 		PP_CS <= '0';
 		PP_DATA0 <= '0';
@@ -275,7 +270,6 @@ begin
 		PP_DATA5 <= '0';
 		PP_DATA6 <= '0';
 		PP_DATA7 <= '0';
---		led1 <= "1111";
 		skip <= '0';
 		upload <= (others=>(others=>'0'));
 		upload(0) <= X"FE";		-- start of frame
@@ -307,7 +301,6 @@ begin
 			
  			when pp_start1 =>
 				PP_CS <= '1';
-				led1 <= "0111";
 				skip <= not skip;
 				if skip = '1' then
 					sPort <= sPort + 1;
@@ -321,7 +314,6 @@ begin
 				if time_delay_reg > TIME_DELAY7 then
  					time_delay_next <= (others=>'0');
 					PP_CS <= '0';
-					led1 <= "0111";
 					pport_next <= pp_done;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -330,7 +322,6 @@ begin
 			when pp_done =>
 				if PP_ACK = '1' then
 					pport_next <= pp_done2;
-					led1 <= "1011";
 				end if;
 
 			when pp_done2 =>
@@ -357,7 +348,6 @@ begin
 					-- upload(14) <= download(13);
 					-- upload(15) <= download(14);
 					pport_next <= pp_idle;
-					led1 <= "1101";
 				else
 					time_delay_next <= time_delay_reg + 1;
 				end if;
@@ -380,7 +370,6 @@ begin
 		time_delay_next3 <= (others=>'0');
 		start_rx <= '0';
 		mcmd <= (others=>'0');
---		led1 <= "1111";
 		start_calc <= '0';
 		data_sent <= '0';
 		inc_params <= (others=>'0');
@@ -399,23 +388,20 @@ begin
 					start_rx <= '1';
 					stlv_flag <= (others=>'0');
 					state_uart_next2 <= next1;
---					led1 <= "0111";
 				end if;
 
 			when next1 =>
 				if done_rx = '1' then
+					
 					start_rx <= '0';
 					if cmd_param = '1' then
 						mcmd <= data_rx;
---						led1 <= mcmd(3 downto 0);
 						inc_params <= (others=>'0');
---						led1 <= "1011";
 					else
 						no_params := conv_integer(inc_params);
 						download(no_params) <= data_rx;
 						inc_params <= inc_params + 1;
 						stlv_flag <= data_rx;
---						led1 <= "1101";
 					end if;
 					state_uart_next2 <= start1;
 				end if;	
@@ -423,7 +409,6 @@ begin
 			when start1 =>
 				if stlv_flag = X"FF" then
 					start_calc <= '1';
---					led1 <= "1110";
 				end if;
 				state_uart_next2 <= done;
 
@@ -434,12 +419,13 @@ begin
 --				end if;
 				state_uart_next2 <= idle2;
 
-			-- 40ms delay to allow sender finish sending manditory 8 bytes
+			-- 40ms delay to allow sender finish sending mandatory 8 bytes
 			-- and then pull data_ready line back low
 			when rx_delay =>
 				if time_delay_reg3 > TIME_DELAY7 then
 					time_delay_next3 <= (others=>'0');
 					state_uart_next2 <= idle2;
+
 				else
 					time_delay_next3 <= time_delay_reg3 + 1;
 				end if;
@@ -462,7 +448,7 @@ begin
 		special <= '0';
 		dtmf_index <= (others=>'0');
 --		stdlv_transmit_update_rate <=  X"1FFFFF";
---		led1 <= "1111";		
+		led1 <= "1111";
 		start_pwm2 <= '0';
 		key_len <= X"14";
 		stlv_duty_cycle2 <= "111111";
@@ -474,20 +460,20 @@ begin
 --				reset_rev_limits <= '0';
 				if start_calc = '1' then
 --					led1 <= download(0)(3 downto 0);	-- first param is download(0)
---					led1 <= mcmd(3 downto 0);
+					led1 <= mcmd(3 downto 0);
 				
 					case mcmd is
 						when SET_UPDATE_RATE =>
 --							stdlv_transmit_update_rate <= mparam & X"FFFF";
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_ON =>
---							led1 <= "0111";
+							led1 <= "0111";
 							dtmf_index <= download(0)(4 downto 0);
 							special <= '0';
 							start_dtmf <= '1';
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_OFF =>
---							led1 <= "1011";
+							led1 <= "1011";
 							start_dtmf <= '0';
 							special <= '0';
 							main_next1 <= do_mcmd;

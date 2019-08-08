@@ -14,8 +14,6 @@ enum rt_values_offsets
 	MPH,
 	RUN_TIME,
 	ENG_TEMP,
-	OUTDOOR_TEMP,
-	INDOOR_TEMP
 } RT_VALUES_OFFSETS_TYPES;
 
 enum key_types
@@ -43,7 +41,6 @@ typedef struct
 	UCHAR row;
 	UCHAR col;
 	UCHAR data_col;
-	UCHAR str;
 } FORMAT_STR;
 
 #define col0 col0_Pin

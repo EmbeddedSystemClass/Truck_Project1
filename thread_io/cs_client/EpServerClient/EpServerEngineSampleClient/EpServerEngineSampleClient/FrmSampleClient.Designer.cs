@@ -178,7 +178,6 @@
 			// 
 			// btnStartEng
 			// 
-			//this.btnStartEng.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.btnStartEng.BackColor = System.Drawing.Color.Aqua;
 			this.btnStartEng.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.btnStartEng.Location = new System.Drawing.Point(266, 281);
@@ -348,6 +347,7 @@
 			// btnDBMgmt
 			// 
 			this.btnDBMgmt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.btnDBMgmt.Enabled = false;
 			this.btnDBMgmt.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.btnDBMgmt.Location = new System.Drawing.Point(15, 192);
 			this.btnDBMgmt.Name = "btnDBMgmt";

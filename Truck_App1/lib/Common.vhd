@@ -297,7 +297,7 @@ package CommonPckg is
 
 --	constant MPH_CLOCK_COUNT: integer:= 25000;
 --	constant MPH_DVND: integer:= 128514;
-	constant MPH_DVND: integer:= 18216;
+	constant MPH_DVND: integer:= 20000;
 												-- 26ms should be 2254
 --	constant RPM_CLOCK_COUNT: integer:= 500;
 --	constant RPM_CLOCK_COUNT: integer:= 454;
@@ -316,40 +316,16 @@ package CommonPckg is
 	constant SIZE_32: integer:= 32;
 	constant MAX_TUNE_LEN: integer:= 20;
 
-	-- commands for rpm/mph LED
-	constant RPM_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"01";
-	constant MPH_SEND_CHAR_CMD: std_logic_vector(7 downto 0):= X"02";
-
-	-- these must match what's in PIC24_support/esos1/Truck_App.h
-
-	constant RPM_OFF_CMD: std_logic_vector(7 downto 0):= X"04";
-	constant RPM_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"05";
-	constant RPM_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"06";
-	constant RPM_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"07";
-	constant RPM_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"08";
-	constant RPM_SET_FACTORY_RESET: std_logic_vector(7 downto 0):= X"09";
-
-	constant MPH_OFF_CMD: std_logic_vector(7 downto 0):= X"0A";
-	constant MPH_SET_BRIGHTNESS_CMD: std_logic_vector(7 downto 0):= X"0C";
-	constant MPH_SET_CDECIMAL_CMD: std_logic_vector(7 downto 0):= X"0D";
-	constant MPH_SET_UPDATE_RATE_CMD: std_logic_vector(7 downto 0):= X"0E";
-	constant MPH_SET_FACTOR_CMD: std_logic_vector(7 downto 0):= X"0F";
-	constant MPH_SET_FACTORY_RESET: std_logic_vector(7 downto 0):= X"10";
-
-	constant SET_UPDATE_RATE: std_logic_vector(7 downto 0):= X"20";
-	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"21";
-	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"22";
-	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"23";
-	constant LCD_PWM: std_logic_vector(7 downto 0):= X"24";
-	constant FP_SHUTOFF_OVERRIDE: std_logic_vector(7 downto 0):= X"25";
-	constant SET_MAX_REV_LIMITER: std_logic_vector(7 downto 0):= X"26";
-	constant SET_MIN_REV_LIMITER: std_logic_vector(7 downto 0):= X"27";
-	constant TEST_RPM_LIMIT: std_logic_vector(7 downto 0):= X"28";
-	constant TEST_COMM: std_logic_vector(7 downto 0):= X"29";
-	constant TUNE_ON: std_logic_vector(7 downto 0):= X"2A";
-	constant TUNE_OFF: std_logic_vector(7 downto 0):= X"2B";
-	constant LOAD_TUNE: std_logic_vector(7 downto 0):= X"2C";
-	constant SHOW_DOWNLOAD: std_logic_vector(7 downto 0):= X"2D";
+	constant SET_FPGA_SEND_UPDATE_RATE: std_logic_vector(7 downto 0):= X"01";
+	constant SET_UPDATE_RATE: std_logic_vector(7 downto 0):= X"02";
+	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"03";
+	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"04";
+	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"05";
+	constant LCD_PWM: std_logic_vector(7 downto 0):= X"06";
+	constant TUNE_ON: std_logic_vector(7 downto 0):= X"07";
+	constant TUNE_OFF: std_logic_vector(7 downto 0):= X"08";
+	constant LOAD_TUNE: std_logic_vector(7 downto 0):= X"09";
+	constant SHOW_DOWNLOAD: std_logic_vector(7 downto 0):= X"0A";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";
@@ -360,16 +336,6 @@ package CommonPckg is
 	constant  PWM_30DC_PARAM: std_logic_vector(7 downto 0):= X"0A";
 	constant  PWM_25DC_PARAM: std_logic_vector(7 downto 0):= X"06";
 	constant  PWM_12DC_PARAM: std_logic_vector(7 downto 0):= X"02";
-
-	constant SET_CLEAR_CTL: std_logic_vector(7 downto 0):= X"76";
-	constant SET_CURSOR_CTL: std_logic_vector(7 downto 0):= X"79";
-	constant SET_BRIGHT_CTL: std_logic_vector(7 downto 0):= X"7A";
-	constant SET_DECIMAL_CTL: std_logic_vector(7 downto 0):= X"77";
-	constant SET_SEG1_CTL: std_logic_vector(7 downto 0):= X"7B";
-	constant SET_SEG2_CTL: std_logic_vector(7 downto 0):= X"7C";
-	constant SET_SEG3_CTL: std_logic_vector(7 downto 0):= X"7D";
-	constant SET_SEG4_CTL: std_logic_vector(7 downto 0):= X"7E";
-	constant FACTORY_RESET_CTL: std_logic_vector(7 downto 0):= X"81";
 
 	constant NUM_DATA_ARRAY : integer:= 16;
 	constant RT_RPM		: std_logic_vector := X"70";

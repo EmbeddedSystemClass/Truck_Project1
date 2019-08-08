@@ -98,8 +98,6 @@ void Error_Handler(void);
 #define col2_GPIO_Port GPIOC
 #define col3_Pin GPIO_PIN_3
 #define col3_GPIO_Port GPIOC
-#define PP7_Pin GPIO_PIN_7
-#define PP7_GPIO_Port GPIOA
 #define row3_Pin GPIO_PIN_12
 #define row3_GPIO_Port GPIOB
 #define row2_Pin GPIO_PIN_13
@@ -118,6 +116,8 @@ void Error_Handler(void);
 #define PP_ACK_GPIO_Port GPIOA
 #define PP_CS_Pin GPIO_PIN_11
 #define PP_CS_GPIO_Port GPIOA
+#define PP7_Pin GPIO_PIN_12
+#define PP7_GPIO_Port GPIOA
 #define TMS_SWDIO_Pin GPIO_PIN_13
 #define TMS_SWDIO_GPIO_Port GPIOA
 #define TCK_SWCLK_Pin GPIO_PIN_14

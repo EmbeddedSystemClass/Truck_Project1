@@ -69,7 +69,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define SEND_FPGA_DELAY() vTaskDelay(20)
+#define SEND_FPGA_DELAY() vTaskDelay(5)
 // WARNING! - if this gets pulled up on STM32CubeMX it will reset the queues
 // to 16 of uint16_t instead of  5 of uint64_t which has to be manually setOneRowLow
 // I just forgot to change it when I redid the whole thing under CubeMX
@@ -135,6 +135,7 @@ static int system_up;
 static int avr_up;
 static int run_time;
 static int rtdata_update_rate;
+static UCHAR test_dtmf;
 
 static KEY_MODE key_mode;
 //static int key_enter_time;
@@ -302,8 +303,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
        
   /* USER CODE END Init */
@@ -372,11 +372,13 @@ void MX_FREERTOS_Init(void)
   SendAVRHandle = osMessageCreate(osMessageQ(SendAVR), NULL);
 
   /* definition and creation of SendFPGA */
-  osMessageQDef(SendFPGA, 5, uint64_t);
+  osMessageQDef(SendFPGA, 10, uint64_t);
   SendFPGAHandle = osMessageCreate(osMessageQ(SendFPGA), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  /* note: Send7200, SendAVR & SendFPGA must be reset from uint16_t to uint64_t */
+  /* after pulling up in MXCube */
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -417,6 +419,7 @@ void StartDefaultTask(void const * argument)
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
 	temp_raw = raw_data = 43;
+	test_dtmf = 0;
 
 	memset(correct_password,0,sizeof(correct_password));
 	strcpy(correct_password,"2354795\0");
@@ -687,6 +690,7 @@ void StartDefaultTask(void const * argument)
 			break;
 		}
 		vTaskDelay(10);
+	
 	}
   /* USER CODE END StartDefaultTask */
 }
@@ -1122,7 +1126,8 @@ void StartSendFPGA(void const * argument)
 {
   /* USER CODE BEGIN StartSendFPGA */
 	UCHAR cmd, param1, param2, param3, param4, param5, param6, param7;
-	uint64_t rec_val[5];
+	uint64_t rec_val[10];
+	int i;
 
 	/* Infinite loop */
 	for(;;)
@@ -1233,13 +1238,13 @@ void StartRecvFPGA(void const * argument)
 	GPIO_PinState state;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
-	UCHAR buff[5];
+	UCHAR buff[10];
 	int frame_ptr;
-/*
+
 	UINT rpm, mph;
 	rpm = 500;
 	mph = 1;
-*/
+
 	rtdata_update_rate = 0;
 	
 	xbyte = 0x21;
@@ -1349,12 +1354,12 @@ if(1)
 				{
 					ucbuff[0] = SEND_RT_VALUES;
 /*
-					ucbuff[1] = (UCHAR)(rpm >> 8);
-					ucbuff[2] = (UCHAR)rpm;
-					ucbuff[3] = (UCHAR)(mph >> 8);
-					ucbuff[4] = (UCHAR)mph;
+					ucbuff[1] = (UCHAR)rpm;
+					ucbuff[2] = (UCHAR)(rpm << 8);
+					ucbuff[3] = (UCHAR)mph;
+					ucbuff[4] = (UCHAR)(mph << 8);
 */
-					ucbuff[1] = buff[0];
+					ucbuff[1] = buff[0];		// fpga sends the low byte 1st
 					ucbuff[2] = buff[1];
 					ucbuff[3] = buff[2];
 					ucbuff[4] = buff[3];
@@ -1365,6 +1370,7 @@ if(1)
 			}
 		}else
 		{
+//			buff[frame_ptr] = (xbyte & 0x7F);		// test for broken wire (in this case bit 7)
 			buff[frame_ptr] = xbyte;
 			frame_ptr++;
 		}
@@ -1388,11 +1394,13 @@ void StartKeyStateTask(void const * argument)
   /* USER CODE BEGIN StartKeyStateTask */
  	static UCHAR key;
 	unsigned long sendval;
-  
+	uint64_t avr_buffer[5];
+	UCHAR ucbuff[10];
 	e_isrState = STATE_WAIT_FOR_PRESS;  
 
 	vTaskDelay(1000);
   /* Infinite loop */
+	
 	for(;;)
 	{
 		switch (e_isrState)
@@ -1402,6 +1410,10 @@ void StartKeyStateTask(void const * argument)
 				if(key != 0)
 				{
 					e_isrState = STATE_WAIT_FOR_RELEASE;
+					ucbuff[0] = DTMF_TONE_ON;
+					ucbuff[1] = key-0xE0;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
 				}
 				break;
 
@@ -1413,6 +1425,10 @@ void StartKeyStateTask(void const * argument)
 					drive_row_high();
 					sendval = (unsigned long)key;
 					xQueueSend(keypressedHandle, &sendval, 0);
+					ucbuff[0] = DTMF_TONE_OFF;
+					avr_buffer[0] = pack64(ucbuff);
+					vTaskDelay(5);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
 					key = 0;
 				}
 				break;
@@ -1477,23 +1493,11 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 		timer_toggle = 1;
-/*
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_DQ, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_RESET);
-*/
-		HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_RESET);
 		
 	}else
 	{
 		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-/*
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_DQ, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_SET);
-*/
-		HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
 		timer_toggle = 0;
 	}
 //#endif

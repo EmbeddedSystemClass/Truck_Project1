@@ -18,15 +18,13 @@ void init_rtlabels(void)
 	static UCHAR col, data_col, row, str;
 	int i;
 	
-	data_col = col + 20;
-	
-	// rt labels at bottom of screen
-	row = START_RT_VALUE_ROW;
 	col = START_RT_VALUE_COL;
- 	for(str = 1;str < NUM_RT_LABELS;str++)
+	data_col = col + 10;
+	row = START_RT_VALUE_ROW;
+	// rt labels at bottom of screen
+ 	for(str = 0;str < NUM_RT_LABELS;str++)
 	{
-		rtlabel_str[str].str = str + RT_VALUES_OFFSET;
-		rtlabel_str[str].row = row++;
+		rtlabel_str[str].row = row;
 		rtlabel_str[str].col = col;
 		rtlabel_str[str].data_col = data_col;
 
@@ -36,10 +34,11 @@ void init_rtlabels(void)
 			col += RT_VALUE_COL_WIDTH;
 			data_col = col + 15;
 		}
+		row++;
 	}
 	row = col = 0;
 	data_col = 10;
-
+/*
 	// init labels for status above rt labels
  	for(str = 0;str < NUM_STATUS_LABELS+1;str++,row++)
 	{
@@ -48,6 +47,7 @@ void init_rtlabels(void)
 		status_label_str[str].col = col;
 		status_label_str[str].data_col = data_col;
 	}
+*/
 }
 
 // display the real time labels when:

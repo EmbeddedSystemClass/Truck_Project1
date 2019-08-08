@@ -246,7 +246,7 @@ namespace EpServerEngineSampleClient
 			{
 				m_hostname = cbIPAdress.Items[selected_address].ToString();
 				m_portno = tbPort.Text;
-				AddMsg("trying to connect to:    " + m_hostname + "   Port: " + m_portno.ToString() + "...");
+				AddMsg("trying to connect to:    " + m_hostname + ":" + m_portno.ToString() + "...");
 				ClientOps ops = new ClientOps(this, m_hostname, m_portno);
 				m_client.Connect(ops);
 				please_lets_disconnect = 0;
@@ -664,21 +664,113 @@ namespace EpServerEngineSampleClient
 				AddMsg("System Up");
 			}
 		}
+
+		public static byte[] ReadFile(string filePath)
+		{
+			byte[] buffer;
+			FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			try
+			{
+				int length = (int)fileStream.Length;  // get file length
+				buffer = new byte[length];            // create buffer
+				int count;                            // actual number of bytes read
+				int sum = 0;                          // total number of bytes read
+
+				// read until Read method returns 0 (end of the stream has been reached)
+				while ((count = fileStream.Read(buffer, sum, length - sum)) > 0)
+					sum += count;  // sum is a buffer offset for next reading
+			}
+			finally
+			{
+				fileStream.Close();
+			}
+			return buffer;
+		}
+
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			DlgForm1 testDialog = new DlgForm1();
-			testDialog.SetClient(m_client);
-			// Show testDialog as a modal dialog and determine if DialogResult = OK.
-			if (testDialog.ShowDialog(this) == DialogResult.OK)
+			UInt32 fsize;
+			UInt32 chunk_size = 10000;
+			UInt32 iters;
+			UInt32 rem;
+			int i;
+
+			byte[] tbytes = ReadFile("c:\\users\\daniel\\dev\\sched");
+			string no_bytes = tbytes.Count().ToString();
+			//            AddMsg(no_bytes);
+			fsize = (UInt32)tbytes.Count();
+			if (fsize > chunk_size)
 			{
-				//                AddMsg("dlg = OK");
+				iters = fsize / chunk_size;
+				rem = fsize - (iters * chunk_size);
 			}
 			else
 			{
-				//                this.txtResult.Text = "Cancelled";
+				chunk_size = fsize;
+				iters = 1;
+				rem = 0;
 			}
-			testDialog.Dispose();
 
+			AddMsg(fsize.ToString());
+			AddMsg(iters.ToString());
+			AddMsg(chunk_size.ToString());
+			AddMsg(rem.ToString());
+
+			byte[] bfsize = new byte[8];
+			bfsize[0] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[2] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[4] = (byte)fsize;
+			fsize >>= 8;
+			bfsize[6] = (byte)fsize;
+			byte[] total_bytes = new byte[bfsize.Count() + 2];
+			//			AddMsg(bfsize.Length.ToString());
+			//			AddMsg(total_bytes.Length.ToString());
+
+			// BlockCopy(src, srcoffset, dest, destoffset, count)
+			System.Buffer.BlockCopy(bfsize, 0, total_bytes, 2, bfsize.Length - 2);
+			string cmd = "UPLOAD_NEW";
+			total_bytes[0] = svrcmd.GetCmdIndexB(cmd);
+
+			Packet packet = new Packet(total_bytes, 0, total_bytes.Count(), false);
+			//			AddMsg(packet.PacketByteSize.ToString());
+			m_client.Send(packet);
+
+			//			byte[] total_bytes2 = new byte[bytes.Count() + 2];
+			byte[] total_bytes2 = new byte[chunk_size + 2];
+
+			byte[] rem_bytes = new byte[rem + 2];
+			AddMsg(rem.ToString());
+			Packet packet2 = new Packet(total_bytes2, 0, total_bytes2.Count(), false);
+			Packet packet3 = new Packet(rem_bytes, 0, rem_bytes.Count(), false);
+			cmd = "UPLOAD_NEW2";
+			for (i = 0; i < iters; i++)
+			{
+				System.Buffer.BlockCopy(tbytes, (int)(chunk_size * i), total_bytes2, 2, total_bytes2.Length - 2);
+				total_bytes2[0] = svrcmd.GetCmdIndexB(cmd);
+				//				AddMsg(packet2.PacketByteSize.ToString());
+				m_client.Send(packet2);
+			}
+			System.Buffer.BlockCopy(tbytes, (int)(chunk_size * i), rem_bytes, 2, rem_bytes.Length - 2);
+			rem_bytes[0] = svrcmd.GetCmdIndexB(cmd);
+			//			AddMsg(packet3.PacketByteSize.ToString());
+			m_client.Send(packet3);
+
+			/*
+						DlgForm1 testDialog = new DlgForm1();
+						testDialog.SetClient(m_client);
+						// Show testDialog as a modal dialog and determine if DialogResult = OK.
+						if (testDialog.ShowDialog(this) == DialogResult.OK)
+						{
+							//                AddMsg("dlg = OK");
+						}
+						else
+						{
+							//                this.txtResult.Text = "Cancelled";
+						}
+						testDialog.Dispose();
+			*/
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -867,6 +959,9 @@ namespace EpServerEngineSampleClient
 							btn_SetTime.Enabled = true;
 							btnGetTime.Enabled = true;
 							AddMsg("server connected");
+							// here we should get a message from the server
+							// data that tells us if the engine is already running
+							// or the lights are already on,etc.
 						} else
 						{
 							previous_timer_server_up_seconds = timer_server_up_seconds;
