@@ -120,9 +120,10 @@ uint32_t pack32(UCHAR *buff);
 // variables used by the DS1620 conversion in timer Callback01
 uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
-int raw_data, temp_raw;
+static int raw_data;
+static UCHAR key_mode1, key_mode2;
 
-static UCHAR buff[SERIAL_BUFF_SIZE+1];
+//static UCHAR buff[SERIAL_BUFF_SIZE+1];
 static int timer_toggle;
 static int lights_on;
 static int brights_on;
@@ -135,7 +136,6 @@ static int system_up;
 static int avr_up;
 static int run_time;
 static int rtdata_update_rate;
-static UCHAR test_dtmf;
 
 static KEY_MODE key_mode;
 //static int key_enter_time;
@@ -364,11 +364,11 @@ void MX_FREERTOS_Init(void) {
   keypressedHandle = osMessageCreate(osMessageQ(keypressed), NULL);
 
   /* definition and creation of Send7200 */
-  osMessageQDef(Send7200, 5, uint64_t);
+  osMessageQDef(Send7200, 10, uint64_t);
   Send7200Handle = osMessageCreate(osMessageQ(Send7200), NULL);
 
   /* definition and creation of SendAVR */
-  osMessageQDef(SendAVR, 5, uint64_t);
+  osMessageQDef(SendAVR, 10, uint64_t);
   SendAVRHandle = osMessageCreate(osMessageQ(SendAVR), NULL);
 
   /* definition and creation of SendFPGA */
@@ -418,8 +418,7 @@ void StartDefaultTask(void const * argument)
 	run_time = 0;
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
-	temp_raw = raw_data = 43;
-	test_dtmf = 0;
+	raw_data = 43;
 
 	memset(correct_password,0,sizeof(correct_password));
 	strcpy(correct_password,"2354795\0");
@@ -493,204 +492,321 @@ void StartDefaultTask(void const * argument)
 		switch(key)
 		{
 			case KP_1:
-				cmd = START_SEQ;
-				if(engine_on == 0)
+				if(key_mode == NORMAL)
 				{
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
-					engine_on = 1;
+					if(engine_on == 0)
+					{
+						cmd = START_SEQ;
+						ucbuff[0] = cmd;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+						engine_on = 1;
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
 				}
 			break;
-			case KP_2:
-				cmd = SHUTDOWN;
-				ucbuff[0] = cmd;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
-				cmd = OFF_FAN;
-				ucbuff[0] = cmd;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
-				engine_on = 0;
-				fan_on = 0;
 
-			break;
-			case KP_3:
-				if(lights_on == 1)
+			case KP_2:
+				if(key_mode == NORMAL)
 				{
-					if(brights_on == 0)
+					if(engine_on == 1)
 					{
-						cmd = ON_BRIGHTS;
+						cmd = SHUTDOWN;
 						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						brights_on = 1;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+						engine_on = 0;
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+				}
+				break;
+
+			case KP_3:
+				if(key_mode == NORMAL)
+				{
+					if(lights_on == 1)
+					{
+						if(brights_on == 0)
+						{
+							cmd = ON_BRIGHTS;
+							ucbuff[0] = cmd;
+							brights_on = 1;
+						}
+						else
+						{
+							cmd = OFF_BRIGHTS;
+							ucbuff[0] = cmd;
+							brights_on = 0;
+						}
+						ucbuff[0] = cmd;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+					}else
+					{
+						
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+				}
+			break;
+
+			case KP_4:
+				if(key_mode == NORMAL)
+				{
+					if(fan_on == 0)
+					{
+						cmd = ON_FAN;
+						ucbuff[0] = cmd;
+						fan_on = 1;
 					}
 					else
 					{
-						cmd = OFF_BRIGHTS;
+						cmd = OFF_FAN;
 						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						brights_on = 0;
+						fan_on = 0;
 					}
-				}
-			break;
-			case KP_4:
-				if(fan_on == 0)
-				{
-					cmd = ON_FAN;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
-					fan_on = 1;
-				}
-				else
-				{
-					cmd = OFF_FAN;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
-					fan_on = 0;
-				}
-			break;
-			case KP_5:
-				switch(blower_on)
-				{
-					case 0:	
-						cmd = BLOWER1;
-						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						blower_on = 1;
-						break;
-					case 1:
-						cmd = BLOWER2;
-						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						blower_on = 2;
-						break;
-					case 2:
-						cmd = BLOWER3;
-						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						blower_on = 3;
-						break;
-					case 3:
-						cmd = BLOWER_OFF;
-						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						blower_on = 0;
-						break;
-					default:
-						blower_on = 0;
-						break;
-				}
-			break;
-			case KP_6:
-				if(running_lights_on == 0)
-				{
-					running_lights_on = 1;
-					cmd = ON_RUNNING_LIGHTS;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
 				}else
 				{
-					running_lights_on = 0;
-					cmd = OFF_RUNNING_LIGHTS;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
 				}
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
-			case KP_7:
-				if(lights_on == 0)
-				{
-					cmd = ON_LIGHTS;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
-					lights_on = 1;
-				}
-				else
-				{
-					cmd = OFF_LIGHTS;
-					lights_on = 0;
-					ucbuff[0] = cmd;
-					buff[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, buff, 0);
 
-					if(brights_on == 1)
-					{
-						cmd = OFF_BRIGHTS;
-						ucbuff[0] = cmd;
-						buff[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, buff, 0);
-						brights_on = 0;
-					}
-				}
-			break;
-			case KP_8:
-				switch (wipers_on)
+			case KP_5:
+				if(key_mode == NORMAL)
 				{
-					case 0:
-						cmd = WIPER1;
-						wipers_on = 1;
-						break;
-					case 1:
-						cmd = WIPER2;
-						wipers_on = 2;
-						break;
-					case 2:
-						cmd = WIPER_OFF;
-						wipers_on = 0;
-						break;
-					default:
-						wipers_on = 0;
-						break;
+					switch(blower_on)
+					{
+						case 0:	
+							cmd = BLOWER1;
+							ucbuff[0] = cmd;
+							blower_on = 1;
+							break;
+						case 1:
+							cmd = BLOWER2;
+							ucbuff[0] = cmd;
+							blower_on = 2;
+							break;
+						case 2:
+							cmd = BLOWER3;
+							ucbuff[0] = cmd;
+							blower_on = 3;
+							break;
+						case 3:
+							cmd = BLOWER_OFF;
+							ucbuff[0] = cmd;
+							blower_on = 0;
+							break;
+						default:
+							blower_on = 0;
+							break;
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
 				}
-				ucbuff[0] = cmd;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
-			case KP_9:
+
+			case KP_6:
+				if(key_mode == NORMAL)
+				{
+					if(running_lights_on == 0)
+					{
+						running_lights_on = 1;
+						cmd = ON_RUNNING_LIGHTS;
+						ucbuff[0] = cmd;
+					}else
+					{
+						running_lights_on = 0;
+						cmd = OFF_RUNNING_LIGHTS;
+						ucbuff[0] = cmd;
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+				}
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
+			case KP_7:
+				if(key_mode == NORMAL)
+				{
+					if(lights_on == 0)
+					{
+						cmd = ON_LIGHTS;
+						ucbuff[0] = cmd;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+						lights_on = 1;
+					}
+					else
+					{
+						cmd = OFF_LIGHTS;
+						ucbuff[0] = cmd;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+						lights_on = 0;
+
+						if(brights_on == 1)
+						{
+							cmd = OFF_BRIGHTS;
+							ucbuff[0] = cmd;
+							brights_on = 0;
+							avr_buffer[0] = pack64(ucbuff);
+							xQueueSend(Send7200Handle, avr_buffer, 0);
+						}
+					}
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+				}
+
+			break;
+
+			case KP_8:
+				if(key_mode == NORMAL)
+				{
+					switch (wipers_on)
+					{
+						case 0:
+							cmd = WIPER1;
+							wipers_on = 1;
+							break;
+						case 1:
+							cmd = WIPER2;
+							wipers_on = 2;
+							break;
+						case 2:
+							cmd = WIPER_OFF;
+							wipers_on = 0;
+							break;
+						default:
+							wipers_on = 0;
+							break;
+					}
+					ucbuff[0] = cmd;
+				}else
+				{
+					ucbuff[0] = NAV_NUM;
+					ucbuff[1] = key-KP_1+1;
+				}
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
+			break;
+
 			case KP_A:
 				ucbuff[0] = NAV_UP;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
 			case KP_B:
 				ucbuff[0] = NAV_DOWN;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
 			case KP_C:
 				ucbuff[0] = NAV_CLICK;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
 			case KP_D:
 				ucbuff[0] = NAV_CLOSE;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
 			case KP_AST:
 				ucbuff[0] = NAV_SIDE;
-				buff[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, buff, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
+			case KP_9:
+				ucbuff[0] = NAV_NUM;
+				ucbuff[1] = key-KP_1+1;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
+			break;
+
 			case KP_0:
+				ucbuff[0] = NAV_NUM;
+				ucbuff[1] = key-KP_0;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
+
 			case KP_POUND:
+				vTaskDelay(100);
+				if(key_mode == NORMAL)
+				{
+					key_mode = NUM_ENTRY;
+					key_mode1 = 0;
+					key_mode2 = 1;
+				}else 
+				{
+					key_mode = NORMAL;
+					key_mode1 = 1;
+					key_mode2 = 0;
+				}
+				ucbuff[0] = DTMF_TONE_ON;
+				ucbuff[1] = key_mode1;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
+				vTaskDelay(20);
+				ucbuff[0] = DTMF_TONE_ON;
+				ucbuff[1] = key_mode2;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
+				vTaskDelay(20);
+				ucbuff[0] = DTMF_TONE_OFF;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
+			break;
+			
+			default:
+				ucbuff[0] = DTMF_TONE_ON;
+				ucbuff[1] = 10;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
+				vTaskDelay(20);
+				ucbuff[0] = DTMF_TONE_ON;
+				ucbuff[1] = 9;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
+				vTaskDelay(20);
+				ucbuff[0] = DTMF_TONE_OFF;
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(SendFPGAHandle,avr_buffer,0);
 			break;
 		}
 		vTaskDelay(10);
-	
 	}
   /* USER CODE END StartDefaultTask */
 }
@@ -924,16 +1040,18 @@ void StartRecv7200(void const * argument)
 	UCHAR cmd;
 	int j = 99;
 	int k = 0;
-	UCHAR buff[SERIAL_BUFF_SIZE];
+	int i;
+	UCHAR buff[SERIAL_BUFF_SIZE+1];
   	uint64_t avr_buffer[5];
 	UCHAR ucbuff[SERIAL_BUFF_SIZE];
 	UCHAR marker = 0xFF;
+	UCHAR tone;
 
 	/* Infinite loop */
 	for(;;)
 	{
 		HAL_UART_Receive_IT(&huart1, &cmd, 1);
-		if(cmd >= ENABLE_START && cmd <= SEND_TIME_DATA)
+		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || cmd == SERVER_DOWN)
 		{	
 			switch (cmd)
 			{
@@ -1038,6 +1156,34 @@ void StartRecv7200(void const * argument)
 //					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 //					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 //					avr_up = 0;
+					break;
+				case SERVER_UP:
+					for(i = 0;i < 10;i++)
+					{
+						ucbuff[0] = DTMF_TONE_ON;
+						ucbuff[1] = (UCHAR)i;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+						vTaskDelay(10);
+						ucbuff[0] = DTMF_TONE_OFF;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+						vTaskDelay(5);
+					}
+					break;
+				case SERVER_DOWN:
+					for(i = 0;i < 10;i++)
+					{
+						ucbuff[0] = DTMF_TONE_ON;
+						ucbuff[1] = (UCHAR)(10-i);
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+						vTaskDelay(10);
+						ucbuff[0] = DTMF_TONE_OFF;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+						vTaskDelay(5);
+					}
 					break;
 				case SEND_TIME_DATA:
 #if 0
@@ -1315,8 +1461,8 @@ void StartRecvFPGA(void const * argument)
 		if(xbyte == 0xFE)
 		{
 			frame_ptr = 0;
-//			if(avr_up == 1)
-if(1)
+#if 0
+			if(avr_up == 1)
 			{
 				ucbuff[0] = SEND_INT_RT_VALUES;
 				ucbuff[1] = rtlabel_str[RPM].row;
@@ -1338,18 +1484,17 @@ if(1)
 //				avr_buffer[0] = pack64(ucbuff);
 //				xQueueSend(SendAVRHandle,avr_buffer,0);
 			}
-/*
+
 			if(rpm++ > 5000)		// simulate data for testing
 				rpm = 500;
 			if(++mph > 100)
 				mph = 1;
-*/
-			vTaskDelay(10);
+#endif
 
-			//if(++rtdata_update_rate > 3)
 if(1)
 			{
-				rtdata_update_rate = 0;
+//				rtdata_update_rate = 0;
+
 				if(engine_on != 0)
 				{
 					ucbuff[0] = SEND_RT_VALUES;
@@ -1366,6 +1511,21 @@ if(1)
 
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(Send7200Handle, avr_buffer, 0);
+/*
+					if(timer_toggle == 0)
+					{
+
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+						timer_toggle = 1;
+						
+					}else
+					{
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+						timer_toggle = 0;
+					}
+*/
 				}
 			}
 		}else
@@ -1410,10 +1570,16 @@ void StartKeyStateTask(void const * argument)
 				if(key != 0)
 				{
 					e_isrState = STATE_WAIT_FOR_RELEASE;
-					ucbuff[0] = DTMF_TONE_ON;
-					ucbuff[1] = key-0xE0;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					if(key != KP_POUND)
+					{
+						ucbuff[0] = DTMF_TONE_ON;
+						if(key == KP_0)
+							ucbuff[1] = 0;
+						else
+							ucbuff[1] = key-KP_1+1;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+					}
 				}
 				break;
 
@@ -1425,10 +1591,13 @@ void StartKeyStateTask(void const * argument)
 					drive_row_high();
 					sendval = (unsigned long)key;
 					xQueueSend(keypressedHandle, &sendval, 0);
-					ucbuff[0] = DTMF_TONE_OFF;
-					avr_buffer[0] = pack64(ucbuff);
-					vTaskDelay(5);
-					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					if(key != KP_POUND)
+					{
+						ucbuff[0] = DTMF_TONE_OFF;
+						avr_buffer[0] = pack64(ucbuff);
+						vTaskDelay(5);
+						xQueueSend(SendFPGAHandle,avr_buffer,0);
+					}
 					key = 0;
 				}
 				break;

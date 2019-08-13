@@ -30,8 +30,6 @@ namespace EpServerEngineSampleClient
 		private bool m_wait = false;
 		private List<UIFormat> ui_format;
 		private List<UIFormat> ui_format2;
-		private List<ChildDialogs> child_dialogs;
-		private string xml_child_dialogs_location = "c:\\users\\daniel\\dev\\ChildDialog.xml";
 		private PortSet2 psDlg = null;
 
 		public PortSet2(string xml_file_location, INetworkClient client)
@@ -45,7 +43,7 @@ namespace EpServerEngineSampleClient
 			var filePath = xml_file_location;
 			xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
 			ds.ReadXml(xmlfile);
-			
+			// load the ui_format for this dialog from xml_file_location
 			foreach(DataRow dr in ds.Tables[0].Rows)
 			{
 				item = new UIFormat();
@@ -55,23 +53,6 @@ namespace EpServerEngineSampleClient
 				AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
 				ui_format.Add(item);
 				item = null;
-			}
-			child_dialogs = new List<ChildDialogs>();
-			ChildDialogs item2 = null;
-			filePath = xml_child_dialogs_location;
-			xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
-			ds.Reset();
-			ds.ReadXml(xmlfile);
-
-			foreach(DataRow dr in ds.Tables[0].Rows)
-			{
-				item2 = new ChildDialogs();
-				item2.Num = Convert.ToInt16(dr.ItemArray[0]);
-				item2.Name = dr.ItemArray[1].ToString();
-				//item2.Name += ".xml";
-				//AddMsg(item2.Num.ToString() + " " + item2.Name);
-				child_dialogs.Add(item2);
-				item2 = null;
 			}
 			m_client = client;
 			svrcmd.SetClient(m_client);
@@ -97,17 +78,6 @@ namespace EpServerEngineSampleClient
 				if (m_ctls[i].cmd == 0)
 					m_ctls[9-i].Ctlinst.Enabled = false;
 			}
-/*			
-			foreach (EpServerEngineSampleClient.FrmSampleClient.CommonControls ctl in m_ctls)
-			{
-				//AddMsg(ctl.CtlName + " " + ctl.TabOrder.ToString());
-				if (ctl.cmd == 0)
-				{
-					ctl.Ctlinst.Enabled = false;
-					AddMsg(ctl.CtlText);
-				}
-			}
-*/
 		}
 		public void SetButtonLabels()
 		{ 
@@ -183,7 +153,6 @@ namespace EpServerEngineSampleClient
 			//AddMsg(str);
 
 			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE"))
-//			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE"))
 			{
 				previous_button = current_button;
 				switch (str)
@@ -216,7 +185,7 @@ namespace EpServerEngineSampleClient
 
 						break;
 					case "NAV_CLOSE":
-						//AddMsg("close");
+						//this.Dispose();
 						this.Close();
 						break;
 					default:
@@ -308,66 +277,17 @@ namespace EpServerEngineSampleClient
 			int command = m_ctls[current_button].cmd;
 			int offset = m_ctls[current_button].offset;
 			int len = m_ctls[current_button].len;
-			// if the command in the xml file is > 200 then create and
-			// execute a child dialog according to child dialogs enum
-			if (command > 199 && command < 256)
-			{
-				if (command > child_dialogs.Count()+200)
-				{
-					AddMsg("cd cmd out of range");
-				}
-				else
-				{
-					int index = command - 200;
-					//AddMsg("special cmd: " + command.ToString());
-					//AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
-					UIFormat item = null;
-					XmlReader xmlfile = null;
-					DataSet ds = new DataSet();
-					var filePath = child_dialogs[index].Name;
-					filePath += ".xml";
-					xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
-					ds.ReadXml(xmlfile);
+			string cmd = svrcmd.GetName(command + offset);
 
-					foreach (DataRow dr in ds.Tables[0].Rows)
-					{
-						item = new UIFormat();
-						item.Label = dr.ItemArray[0].ToString();
-						item.Command = Convert.ToInt16(dr.ItemArray[1]);
-						item.Length = Convert.ToInt16(dr.ItemArray[2]);
-						//AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
-						ui_format.Add(item);
-						item = null;
-					}
-					psDlg = new PortSet2(filePath, m_client);
-					psDlg.SetButtonLabels();
-					psDlg.Name = "Dialog One";
-					psDlg.Enable_Dlg(true);
-					if (psDlg.ShowDialog(this) == DialogResult.OK)
-					{
-						//                AddMsg("dlg = OK");
-					}
-					else
-					{
-						//                this.txtResult.Text = "Cancelled";
-					}
-					psDlg.Enable_Dlg(false);
-				}
-			}
-			else
-			{
-				string cmd = svrcmd.GetName(command + offset);
+			//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
 
-				//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
+			svrcmd.Send_Cmd(command + offset);
+			//if (++screen_ctr > 20)
+			//tbReceived.Clear();
 
-				svrcmd.Send_Cmd(command + offset);
-				//if (++screen_ctr > 20)
-				//tbReceived.Clear();
-
-				if (++offset >= len)
-					m_ctls[current_button].offset = 0;
-				else m_ctls[current_button].offset = offset;
-			}
+			if (++offset >= len)
+				m_ctls[current_button].offset = 0;
+			else m_ctls[current_button].offset = offset;
 		}
 	}
 }

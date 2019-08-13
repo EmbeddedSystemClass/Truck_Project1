@@ -61,7 +61,7 @@ static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
 
 static int serial_rec;
-static int engine_running;
+int engine_running;
 static void set_output(O_DATA *otp, int onoff);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -962,6 +962,8 @@ UCHAR serial_recv_task(int test)
 	}
 */
 
+	send_serial(SERVER_UP);		// send msg to STM32 so it can play a set of beeps & blips
+
 	while(TRUE)
 	{
 		pthread_mutex_lock( &serial_read_lock); 
@@ -1180,7 +1182,16 @@ UCHAR tcp_monitor_task(int test)
 //			printf("connected to socket: \r\n");
 			tcp_connected_time = 0;
 			
-			 send_param_msg();
+			 //send_param_msg();
+//			 send_status_msg();
+
+			// this is for when the engine is already running and the client
+			// logs in 
+			if(engine_running)
+				strcpy(tempx,"START_SEQ");
+			else strcpy(tempx,"SHUTDOWN");	
+
+			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 
 			if(shutdown_all)
 			{
@@ -1371,8 +1382,11 @@ UCHAR basic_controls_task(int test)
 //			case ESTOP_SIGNAL:
 				send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
-				sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+				if(test_sock())
+				{
+					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
+					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+				}
 // comment out the printString2 when using on actual iobox				
 //				printString2(tempx);
 
@@ -1430,12 +1444,12 @@ UCHAR basic_controls_task(int test)
 				index = FUELPUMP;
 				rc = ollist_find_data(index,otpp,&oll);
 	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-	//			otp->onoff = 1;
-	//			otp->reset = 0;
-	//			ollist_insert_data(index,&oll,otp);
 				if(otp->reset == 0)
+				{
 					change_output(FUELPUMP, 1);
-
+					otp->onoff = 1;
+				}
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case OFF_FUEL_PUMP:
@@ -1443,29 +1457,53 @@ UCHAR basic_controls_task(int test)
 				index = FUELPUMP;
 				rc = ollist_find_data(index,otpp,&oll);
 	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
-	//			otp->onoff = 0;
-	//			otp->reset = 0;
-	//			change_input(FUELPUMP, 0);
-	//			ollist_insert_data(index,&oll,otp);
 
 				if(otp->reset == 0)
+				{
 					change_output(FUELPUMP, 0);
+					otp->onoff = 0;
+					ollist_insert_data(index,&oll,otp);
+				}
 				break;
 
 			case ON_FAN:
 				change_input(COOLINGFAN_INPUT, 1);
+				index = COOLINGFAN;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case OFF_FAN:
 				change_input(COOLINGFAN_INPUT, 0);
+				index = COOLINGFAN;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case ON_LIGHTS:
 				change_input(HEADLAMP_INPUT, 1);
+				index = LHEADLAMP;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
+				index = RHEADLAMP;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case OFF_LIGHTS:
 				change_input(HEADLAMP_INPUT, 0);
+				index = LHEADLAMP;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
+				index = RHEADLAMP;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case ON_LLIGHTS:
@@ -1494,10 +1532,18 @@ UCHAR basic_controls_task(int test)
 
 			case ON_RUNNING_LIGHTS:
 				change_input(RUNNING_LIGHTS_INPUT, 1);
+				index = RUNNINGLIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case OFF_RUNNING_LIGHTS:
 				change_input(RUNNING_LIGHTS_INPUT, 0);
+				index = RUNNINGLIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
 				break;
 		
 			case SPECIAL_CMD:
@@ -1513,10 +1559,26 @@ UCHAR basic_controls_task(int test)
 
 			case ON_BRIGHTS:
 				change_input(BRIGHTS_INPUT, 1);
+				index = LBRIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
+				index = RBRIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 1;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case OFF_BRIGHTS:
 				change_input(BRIGHTS_INPUT, 0);
+				index = LBRIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
+				index = RBRIGHTS;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				ollist_insert_data(index,&oll,otp);
 				break;
 
 			case ON_RBRIGHTS:
@@ -1714,6 +1776,11 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
+				index = STARTER;
+				rc = ollist_find_data(index,otpp,&oll);
+				otp->onoff = 0;
+				set_output(STARTER,0);
+				ollist_insert_data(index,&oll,otp);
 
 	//			index = STARTER;
 	//			rc = ollist_find_data(index,otpp,&oll);
@@ -1723,7 +1790,6 @@ UCHAR basic_controls_task(int test)
 	//			otp->time_left = 0;
 	//			ollist_insert_data(index,&oll,otp);
 	//			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
-	//			set_output(STARTER,0);
 	//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				break;
 /*
@@ -1751,6 +1817,7 @@ UCHAR basic_controls_task(int test)
 					green_led(0);
 				}
 #endif				
+				send_serial(SERVER_DOWN);
 				myprintf1("shutdown iobox\0");
 				//printString2("shutdown iobox");
 				for(i = 0;i < 5;i++)		// scroll the display on the iobox
@@ -1769,6 +1836,7 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case REBOOT_IOBOX:
+				send_serial(SERVER_DOWN);
 
 #if 0
 				setdioline(7,1);

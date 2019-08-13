@@ -43,8 +43,7 @@
 			// 
 			// button0
 			// 
-			//this.button0.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.button0.BackColor = System.Drawing.Color.Aqua;
+			this.button0.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
 			this.button0.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.button0.Location = new System.Drawing.Point(303, 15);
 			this.button0.Name = "button0";

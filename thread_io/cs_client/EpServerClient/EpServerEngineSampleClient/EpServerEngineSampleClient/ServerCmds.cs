@@ -13,18 +13,18 @@ namespace EpServerEngineSampleClient
         enum Server_cmds
         {
 			NON_CMD,
-			ENABLE_START,		// 1
-			STARTER_OFF,		// 2
-			ON_ACC,				// 3
-			OFF_ACC,			// 4
-			ON_FUEL_PUMP,		// 5
-			OFF_FUEL_PUMP,		// 6
-			ON_FAN,				// 7
-			OFF_FAN,			// 8
-			ON_LIGHTS,			// 9
-			OFF_LIGHTS,			// 10
-			ON_BRIGHTS,			// 11
-			OFF_BRIGHTS,		// 12
+			ENABLE_START,       // 1
+			STARTER_OFF,        // 2
+			ON_ACC,             // 3
+			OFF_ACC,            // 4
+			ON_FUEL_PUMP,       // 5
+			OFF_FUEL_PUMP,      // 6
+			ON_FAN,             // 7
+			OFF_FAN,            // 8
+			ON_LIGHTS,          // 9
+			OFF_LIGHTS,         // 10
+			ON_BRIGHTS,         // 11
+			OFF_BRIGHTS,        // 12
 			BLANK,
 			ESTOP_SIGNAL,
 			ON_BRAKES,
@@ -67,7 +67,7 @@ namespace EpServerEngineSampleClient
 			ENABLE_LCD,
 			SET_TIME,
 			GET_TIME,
-			UPLOAD_NEW,
+			SHOW_ODATA,
 			NEW_PASSWORD1,
 			SET_SERIAL_RECV_ON,
 			SET_SERIAL_RECV_OFF,
@@ -93,10 +93,14 @@ namespace EpServerEngineSampleClient
 			NAV_DOWN,
 			NAV_SIDE,
 			NAV_CLICK,
-			NAV_CLOSE
+			NAV_CLOSE,
+			NAV_NUM,
+			SEND_STATUS,
+			SERVER_UP,
+			SERVER_DOWN
 		}
 
-        public ServerCmds()
+		public ServerCmds()
         {
 
         }

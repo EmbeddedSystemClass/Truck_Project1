@@ -76,18 +76,11 @@ namespace EpServerEngineSampleClient
 		private int server_up_seconds = 0;
 		private int timer_server_up_seconds = 0;
 		private int previous_timer_server_up_seconds = 0;
+		//private string current_password = "testasdf";
+		//private int password_length = 8;
+		private int wait_before_starting = 0;
 		//private int server_connection_attempts = 1;
 		private bool client_connected = false;
-		/*
-				private string dialog_one_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat1.xml";
-				private string dialog_one_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat1.xml";
-				private string dialog_two_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat2.xml";
-				private string dialog_two_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat2.xml";
-				private string test_ports_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\uiformat3.xml";
-				private string test_ports_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\uiformat3.xml";
-				private string xml_file2_location_desktop = "c:\\users\\daniel\\other_dev\\EpServerClient\\EpServerEngineSampleClient\\ClientParams.xml";
-				private string xml_file2_location_laptop = "c:\\Users\\Dan_Laptop\\dev\\ClientParams.xml";
-		*/
 		private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
 		private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
 		private string xml_dialog3_location = "c:\\Users\\daniel\\dev\\uiformat3.xml";
@@ -105,15 +98,6 @@ namespace EpServerEngineSampleClient
 			cbIPAdress.Enabled = true;
 			tbReceived.Enabled = true;
 			tbPort.Enabled = true;
-			/*
-									shutdown.Enabled = true;		// these have to be set true to use in debugger
-									StartEng.Enabled = true;
-									btnShutdown.Enabled = true;
-									btnReboot.Enabled = true;
-									btnStopSerial.Enabled = true;
-									btn_SetTime.Enabled = true;
-									btnGetTime.Enabled = true;
-			*/
 			btnTestPorts.Enabled = true;    // these are normally set false
 			btnStartEng.Enabled = false;
 			btnStartEng.Text = "Start Engine";
@@ -123,11 +107,6 @@ namespace EpServerEngineSampleClient
 			btn_SetTime.Enabled = false;
 			btnGetTime.Enabled = false;
 
-			//Upload_New.Enabled = false;
-			//btnSetParams.Enabled = false;
-			//tbConnected.Text = "not connected";
-			//target_db_closed = false;
-			//use_laptop = true;
 			tbReceived.Clear();
 			//psDlg = new PortSet2(File.Exists(dialog_one_location_laptop) ? dialog_one_location_laptop : dialog_one_location_desktop, m_client);
 			psDlg = new PortSet2(xml_dialog1_location, m_client);
@@ -351,12 +330,11 @@ namespace EpServerEngineSampleClient
 			switch (str)
 			{
 				case "SEND_MSG":
-					//AddMsg(str + " " + ret.ToString());
+					//AddMsg(ret);
 					switch (ret)
 					{
 						case "START_SEQ":
 							m_engine_running = true;
-							AddMsg("start engine: " + ret);
 							btnStartEng.Text = "Stop Engine";
 							IgnitionOnLabel.BackColor = Color.Aqua;
 							break;
@@ -368,7 +346,6 @@ namespace EpServerEngineSampleClient
 							tbRPM.Text = "0";
 							tbMPH.Text = "0";
 							btnStartEng.Text = "Start Engine";
-							AddMsg("stop engine: " + ret);
 							IgnitionOnLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
 							reevaluate_enabled_buttons();
 							break;
@@ -401,6 +378,9 @@ namespace EpServerEngineSampleClient
 							break;
 						case "OFF_RUNNING_LIGHTS":
 							SideMarkerLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+							break;
+						default:
+							//AddMsg(str);
 							break;
 					}
 					break;
@@ -513,6 +493,10 @@ namespace EpServerEngineSampleClient
 					AddMsg("ESTOP: " + ret);
 					m_engine_running = false;
 					break;
+
+				case "NAV_NUM":
+					AddMsg(ret);
+					break;
 				default:
 					break;
 			}
@@ -598,10 +582,19 @@ namespace EpServerEngineSampleClient
 		{
 			if (!m_engine_running)
 			{
-				string cmd = "START_SEQ";
-				//AddMsg("start seq: " + cmd);
-				int offset = svrcmd.GetCmdIndexI(cmd);
-				svrcmd.Send_Cmd(offset);
+				// because of the way the database on the server works,
+				// we can't try and restart it after doing a shutdown
+				// within 10 seconds of doing a starter enable
+				if (wait_before_starting < 11 && wait_before_starting != 0)
+					AddMsg("wait " + wait_before_starting.ToString() + " sec");
+				else
+				{
+					wait_before_starting = 8;
+					string cmd = "START_SEQ";
+					//AddMsg("start seq: " + cmd);
+					int offset = svrcmd.GetCmdIndexI(cmd);
+					svrcmd.Send_Cmd(offset);
+				}
 				//btnStartEng.Text = "Stop Engine";
 			}
 			else
@@ -665,7 +658,7 @@ namespace EpServerEngineSampleClient
 			}
 		}
 
-		public static byte[] ReadFile(string filePath)
+ 		public static byte[] ReadFile(string filePath)
 		{
 			byte[] buffer;
 			FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -689,88 +682,10 @@ namespace EpServerEngineSampleClient
 
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			UInt32 fsize;
-			UInt32 chunk_size = 10000;
-			UInt32 iters;
-			UInt32 rem;
-			int i;
-
-			byte[] tbytes = ReadFile("c:\\users\\daniel\\dev\\sched");
-			string no_bytes = tbytes.Count().ToString();
-			//            AddMsg(no_bytes);
-			fsize = (UInt32)tbytes.Count();
-			if (fsize > chunk_size)
-			{
-				iters = fsize / chunk_size;
-				rem = fsize - (iters * chunk_size);
-			}
-			else
-			{
-				chunk_size = fsize;
-				iters = 1;
-				rem = 0;
-			}
-
-			AddMsg(fsize.ToString());
-			AddMsg(iters.ToString());
-			AddMsg(chunk_size.ToString());
-			AddMsg(rem.ToString());
-
-			byte[] bfsize = new byte[8];
-			bfsize[0] = (byte)fsize;
-			fsize >>= 8;
-			bfsize[2] = (byte)fsize;
-			fsize >>= 8;
-			bfsize[4] = (byte)fsize;
-			fsize >>= 8;
-			bfsize[6] = (byte)fsize;
-			byte[] total_bytes = new byte[bfsize.Count() + 2];
-			//			AddMsg(bfsize.Length.ToString());
-			//			AddMsg(total_bytes.Length.ToString());
-
-			// BlockCopy(src, srcoffset, dest, destoffset, count)
-			System.Buffer.BlockCopy(bfsize, 0, total_bytes, 2, bfsize.Length - 2);
-			string cmd = "UPLOAD_NEW";
-			total_bytes[0] = svrcmd.GetCmdIndexB(cmd);
-
-			Packet packet = new Packet(total_bytes, 0, total_bytes.Count(), false);
-			//			AddMsg(packet.PacketByteSize.ToString());
-			m_client.Send(packet);
-
-			//			byte[] total_bytes2 = new byte[bytes.Count() + 2];
-			byte[] total_bytes2 = new byte[chunk_size + 2];
-
-			byte[] rem_bytes = new byte[rem + 2];
-			AddMsg(rem.ToString());
-			Packet packet2 = new Packet(total_bytes2, 0, total_bytes2.Count(), false);
-			Packet packet3 = new Packet(rem_bytes, 0, rem_bytes.Count(), false);
-			cmd = "UPLOAD_NEW2";
-			for (i = 0; i < iters; i++)
-			{
-				System.Buffer.BlockCopy(tbytes, (int)(chunk_size * i), total_bytes2, 2, total_bytes2.Length - 2);
-				total_bytes2[0] = svrcmd.GetCmdIndexB(cmd);
-				//				AddMsg(packet2.PacketByteSize.ToString());
-				m_client.Send(packet2);
-			}
-			System.Buffer.BlockCopy(tbytes, (int)(chunk_size * i), rem_bytes, 2, rem_bytes.Length - 2);
-			rem_bytes[0] = svrcmd.GetCmdIndexB(cmd);
-			//			AddMsg(packet3.PacketByteSize.ToString());
-			m_client.Send(packet3);
-
-			/*
-						DlgForm1 testDialog = new DlgForm1();
-						testDialog.SetClient(m_client);
-						// Show testDialog as a modal dialog and determine if DialogResult = OK.
-						if (testDialog.ShowDialog(this) == DialogResult.OK)
-						{
-							//                AddMsg("dlg = OK");
-						}
-						else
-						{
-							//                this.txtResult.Text = "Cancelled";
-						}
-						testDialog.Dispose();
-			*/
+			string cmd = "SHOW_ODATA";
+			int offset = svrcmd.GetCmdIndexI(cmd);
+			svrcmd.Send_Cmd(offset);
+			AddMsg(cmd);
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -937,6 +852,9 @@ namespace EpServerEngineSampleClient
 		}
 		private void myTimerTick(object sender, EventArgs e)
 		{
+			if(wait_before_starting != 0)
+				wait_before_starting--;
+
 			switch (please_lets_disconnect)            // send the msg to server saying we are disconnecting
 			{
 				case 0:

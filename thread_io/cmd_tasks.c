@@ -30,12 +30,14 @@
 #include "cs_client/config_file.h"
 #include "lcd_func.h"
 
+extern int engine_running;
+
 extern pthread_mutex_t     tcp_read_lock;
 extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[82] =
+CMD_STRUCT cmd_array[87] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -92,7 +94,7 @@ CMD_STRUCT cmd_array[82] =
 	{		ENABLE_LCD,"ENABLE_LCD\0" },
 	{		SET_TIME,"SET_TIME\0" },
 	{		GET_TIME,"GET_TIME\0" },
-	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{		SHOW_ODATA,"SHOW_ODATA\0" },
 	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
 	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
 	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
@@ -118,7 +120,11 @@ CMD_STRUCT cmd_array[82] =
 	{		NAV_DOWN,"NAV_DOWN\0" },
 	{		NAV_SIDE,"NAV_SIDE\0" },
 	{		NAV_CLICK,"NAV_CLICK\0" },
-	{		NAV_CLOSE,"NAV_CLOSE\0" }
+	{		NAV_CLOSE,"NAV_CLOSE\0" },
+	{		NAV_NUM,"NAV_NUM\0" },
+	{		SEND_STATUS,"SEND_STATUS\0" },
+	{		SERVER_UP,"SERVER_UP\0" },
+	{		SERVER_DOWN,"SERVER_DOWN\0" }
 };
 
 //extern illist_t ill;
@@ -172,7 +178,7 @@ UCHAR get_host_cmd_task(int test)
 	struct dirent *dir;
 	int num;
 	UCHAR test_io_num = 0;
-	char tempx[100];
+	char tempx[200];
 	UCHAR tempy[30];
 	char temp_time[5];
 	UCHAR utemp1[2];
@@ -243,17 +249,9 @@ UCHAR get_host_cmd_task(int test)
 		}
 	}
 	init_ips();
-/*
-	for(i = 0;i < 20;i++)
-	{
-		ollist_find_data(i,&otp,&oll);
-		printf("%d %d %d %d %d %s\r\n",otp->port, otp->onoff, otp->input_port, 
-				otp->type, otp->time_delay, otp->label);
-	}
-*/
+
 	same_msg = 0;
 	lcd_init();
-
 
 // flash green and red led's to signal we are up (if LCD screen not attached)
 //#if 0
@@ -713,19 +711,22 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					// send all the data to the laptop
-/*
-					case SEND_ALL_ODATA:
+
+					case SHOW_ODATA:
+/* this crashes ???
 						rc = 0;
-						otp = &tempo1;
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
-							rc += recv_tcp((UCHAR *)otp,sizeof(O_DATA),1);
-							ollist_insert_data(i,&oll,otp);
+							ollist_find_data(i,&otp,&oll);
+							printf("%d %d %d %s\r\n",otp->port,otp->onoff,otp->type,otp->label);
+//							printString2(tempx);
 						}
 //						myprintf1("done\0");
+*/
 						break;
 
 					// get all the data from the laptop
+#if 0
 					case RECV_ALL_ODATA:
 						rc = 0;
 						otp = &tempo1;
@@ -746,6 +747,7 @@ UCHAR get_host_cmd_task(int test)
 */
 					// get the names and time/datestamps of only the dat files
 					// on the IO box and send to the laptop
+#endif
 					case GET_DIR:
 						d = opendir( "." );
 						if( d == NULL )
@@ -892,65 +894,12 @@ UCHAR get_host_cmd_task(int test)
 						//printString2("xmit to AVR on\0");
 						break;
 
-					case UPLOAD_NEW:
-#if 0
-						j = 0;
-						memset(tempx,0,sizeof(tempx));
-						for(i = 2;i < 20;i+=2)
+						for(i = 4;i < TRRIGHTBLINKER;i++)
 						{
-//							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
-							tempx[j++] = msg_buf[i];
+							ollist_find_data(i,otpp,&oll);
+							sprintf(tempx,"%s %d %d\r\n",otp->label, otp->port, otp->onoff);
+							printString2(tempx);
 						}
-/*
-						for(i = 0;i < msg_len;i++)
-							printHexByte(tempx[i]);
-
-						for(i = 0;i < msg_len*2;i++)
-							printHexByte(msg_buf[i]);
-*/						
-						cur_fsize = (long)tempx[3];
-						cur_fsize <<= 8;
-						cur_fsize |= (long)tempx[2];
-						cur_fsize <<= 8;
-						cur_fsize |= (long)tempx[1];
-						cur_fsize <<= 8;
-						cur_fsize |= (long)tempx[0];
-
-						sprintf(tempx, "%ld\r\0",cur_fsize);
-						printString2(tempx);
-
-
-						strcpy(filename,"sched2a");
-						fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 700);
-						if(fp < 0)
-						{
-							printf("could not create file: %s\n",filename);
-							goto exit_program;
-							break;
-						}
-
-						rc1 = 0;
-
-						break;
-
-					case UPLOAD_NEW2:
-
-						rc1 = write(fp, &msg_buf[2], msg_len-2);
-						cur_fsize -= msg_len-2;
-
-						sprintf(tempx,"%ld\r\0",cur_fsize);
-						printString2(tempx);
-//						sprintf(tempx,"%d\r\0",msg_len);
-//						printString2(tempx);
-						sprintf(tempx,"%d\r\0",rc1);
-						printString2(tempx);
-
-						if(cur_fsize == 0)
-						{
-							close(fp);
-//							goto exit_program;
-						}	
-#endif
 
 						break;
 					case EXIT_PROGRAM:
@@ -958,39 +907,23 @@ UCHAR get_host_cmd_task(int test)
 //printf("exiting program...\r\n");
 exit_program:
 
-						if(cmd == UPLOAD_NEW)
-						{
-							reboot_on_exit = 1;
-							myprintf1("upload done...\0");
-						}
-						else
-						{
-							j = 0;
-/*
-							for(i = 2;i < msg_len;i+=2)
-							{
-								memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
-								printf("%02x\r\n",tempx[i-2]);
-							}
-*/
-
+						j = 0;
 //							printf("exit code: %d\r\n",reboot_on_exit);
-							// return codes that tell try_sched.sh what to do
-							if(reboot_on_exit == 1)
-							{
-								myprintf1("exit to shell\0");
+						// return codes that tell try_sched.sh what to do
+						if(reboot_on_exit == 1)
+						{
+							myprintf1("exit to shell\0");
 //								printf("exit to shell\r\n");
-							}
-							else if(reboot_on_exit == 2)
-							{
-								myprintf1("rebooting...\0");
+						}
+						else if(reboot_on_exit == 2)
+						{
+							myprintf1("rebooting...\0");
 //								printf("rebooting...\r\n");
-							}
-							else if(reboot_on_exit == 3)
-							{
-								myprintf1("shutting down...\0");
+						}
+						else if(reboot_on_exit == 3)
+						{
+							myprintf1("shutting down...\0");
 //								printf("shutting down...\r\n");
-							}
 						}
 
 						// save the current list of events
@@ -1003,17 +936,17 @@ exit_program:
 							printf("can't create odometer.txt\n");
 						}else
 						{
-//							printf("writing to odometer.txt\r\n");
+	//							printf("writing to odometer.txt\r\n");
 							sprintf(tempx,"%d\r\n\0",odometer);
 							rc = write(fp,(const void *)tempx,strlen(tempx));
 							close(fp);
 						}
 
-/*
+	/*
 						for(i = 0;i < NUM_PORT_BITS;i++)
 						{
 							ollist_find_data(i,otpp,&oll);
-//							printf("%d %d\r\n",otp->port,otp->onoff);
+	//							printf("%d %d\r\n",otp->port,otp->onoff);
 							usleep(_1MS);
 							change_output(otp->port,otp->onoff);
 							change_output(otp->port,0);
@@ -1023,14 +956,14 @@ exit_program:
 
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
-*/
+	*/
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
-//							printf("%s\r\n",errmsg);
+	//							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 						}
-/*
+	/*
 						printf("%d\r\n",ps.rpm_update_rate);
 						printf("%d\r\n",ps.mph_update_rate);
 						printf("%d\r\n",ps.high_rev_limit);
@@ -1041,12 +974,12 @@ exit_program:
 						printf("%d\r\n",ps.blower1_on);
 						printf("%d\r\n",ps.blower2_on);
 						printf("%d\r\n",ps.blower3_on);
-*/
-//						close_tcp();
+	*/
+	//						close_tcp();
 
-//						strcpy(tempx,"sched.log\0");
-//						WriteOdometer(tempx, &odometer, errmsg);
-/*
+	//						strcpy(tempx,"sched.log\0");
+	//						WriteOdometer(tempx, &odometer, errmsg);
+	/*
 						logfile_handle = open((const char *)&tempx[0], O_RDWR,
 								S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
@@ -1058,10 +991,10 @@ exit_program:
 						write(logfile_handle,&odometer,sizeof(int));
 						write(logfile_handle,&trip,sizeof(int));
 						close(logfile_handle);
-*/
+	*/
 
 						// pulse the LED on the IO box before shutting down
-#if 0
+	#if 0
 						for(i = 0;i < 20;i++)
 						{
 							setdioline(7,0);
@@ -1084,10 +1017,10 @@ exit_program:
 							usleep(20000);
 							green_led(0);
 						}
-#endif
-//						send_serial(SYSTEM_DOWN);
-//						sprintf(tempx,"%s\n","SYSTEM DOWN");
-//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SYSTEM_DOWN2);
+	#endif
+	//						send_serial(SYSTEM_DOWN);
+	//						sprintf(tempx,"%s\n","SYSTEM DOWN");
+	//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SYSTEM_DOWN2);
 						usleep(10000000);
 						shutdown_all = 1;
 						return 0;
@@ -1350,5 +1283,23 @@ void send_param_msg(void)
 														ps.test_bank,
 														ps.comm_port_en);
 
+	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
+}
+/*********************************************************************/
+void send_status_msg(void)
+{
+	char tempx[40];
+/*
+	O_DATA *otp;
+	O_DATA **otpp = &otp;
+	int index;
+	int rc;
+	int engine, fan, lights, brights, rlights;
+	index = LBRIGHTS;
+	rc = ollist_find_data(index,otpp,&oll);
+*/	
+
+
+	sprintf(tempx,"%d",engine_running);
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 }
