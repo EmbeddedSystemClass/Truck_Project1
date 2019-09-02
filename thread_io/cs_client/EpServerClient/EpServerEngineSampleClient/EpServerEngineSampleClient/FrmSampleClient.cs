@@ -104,7 +104,7 @@ namespace EpServerEngineSampleClient
 			btnShutdown.Enabled = false;
 			btnReboot.Enabled = false;
 			btnStopSerial.Enabled = false;
-			btn_SetTime.Enabled = false;
+			btn_PlayList.Enabled = true;
 			btnGetTime.Enabled = false;
 
 			tbReceived.Clear();
@@ -214,7 +214,7 @@ namespace EpServerEngineSampleClient
 			foreach (ButtonList btn in button_list)
 			{
 				no_buttons++;
-				//AddMsg("Name: " + btn.Name + " en: " + btn.Enabled.ToString());
+				AddMsg(btn.Name + " en: " + btn.Enabled.ToString());
 			}
 			timer1.Enabled = true;
 			//AddMsg("buttons used: " + no_buttons.ToString());
@@ -262,7 +262,7 @@ namespace EpServerEngineSampleClient
 				tbRPM.Text = "";
 				tbMPH.Text = "";
 
-				btn_SetTime.Enabled = true;
+				btn_PlayList.Enabled = true;
 				btnGetTime.Enabled = true;
 				reevaluate_enabled_buttons();
 			}
@@ -608,19 +608,7 @@ namespace EpServerEngineSampleClient
 		}
 		private void Btn_SetTime_Click(object sender, EventArgs e)
 		{
-			DateTime localDate = DateTime.Now;
-			String cultureName = "en-US";
-			var culture = new CultureInfo(cultureName);
-			AddMsg(localDate.ToString(culture));
 
-			byte[] bytes = BytesFromString(localDate.ToString(culture));
-			byte[] bytes2 = new byte[bytes.Count() + 2];
-			System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
-			string set_time = "SET_TIME";
-			bytes2[0] = svrcmd.GetCmdIndexB(set_time);
-			Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
-			m_client.Send(packet);
-			//AddMsg(bytes2.Length.ToString());
 		}
 		private void ShutdownServer(object sender, EventArgs e)
 		{
@@ -682,10 +670,19 @@ namespace EpServerEngineSampleClient
 
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			string cmd = "SHOW_ODATA";
-			int offset = svrcmd.GetCmdIndexI(cmd);
-			svrcmd.Send_Cmd(offset);
-			AddMsg(cmd);
+			PlayerDlg playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml",m_client);
+			psDlg.Enable_Dlg(true);
+
+			playdlg.StartPosition = FormStartPosition.Manual;
+			playdlg.Location = new Point(10, 10);
+
+			if (playdlg.ShowDialog(this) == DialogResult.OK)
+			{
+			}
+			else
+			{
+				//                this.txtResult.Text = "Cancelled";
+			}
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -740,6 +737,8 @@ namespace EpServerEngineSampleClient
 		{
 			psDlg.Name = "Dialog One";
 			psDlg.Enable_Dlg(true);
+			psDlg.StartPosition = FormStartPosition.Manual;
+			psDlg.Location = new Point(10, 10);
 
 			if (psDlg.ShowDialog(this) == DialogResult.OK)
 			{
@@ -757,6 +756,8 @@ namespace EpServerEngineSampleClient
 
 			psDlg2.Name = "Dialog Two";
 			psDlg2.Enable_Dlg(true);
+			psDlg2.StartPosition = FormStartPosition.Manual;
+			psDlg2.Location = new Point(10, 10);
 			if (psDlg2.ShowDialog(this) == DialogResult.OK)
 			{
 				//                AddMsg("dlg = OK");
@@ -770,6 +771,8 @@ namespace EpServerEngineSampleClient
 		private void TestPorts_Click(object sender, EventArgs e)
 		{
 			psDlg3.Enable_Dlg(true);
+			psDlg3.StartPosition = FormStartPosition.Manual;
+			psDlg3.Location = new Point(10, 10);
 			if (psDlg3.ShowDialog(this) == DialogResult.OK)
 			{
 			}
@@ -874,7 +877,7 @@ namespace EpServerEngineSampleClient
 							tbEngineTemp.Text = "";
 							tbRPM.Text = "";
 							tbMPH.Text = "";
-							btn_SetTime.Enabled = true;
+							btn_PlayList.Enabled = true;
 							btnGetTime.Enabled = true;
 							AddMsg("server connected");
 							// here we should get a message from the server
@@ -888,7 +891,7 @@ namespace EpServerEngineSampleClient
 							//timer_server_up_seconds.ToString() + " " 
 							//+ "previous up seconds: " + previous_timer_server_up_seconds.ToString();
 							if (timer_server_up_seconds > 2 && timer_server_up_seconds < 6)
-								Btn_SetTime_Click(new object(), new EventArgs());
+								SetTime();
 						}
 					}
 					else // if not alive
@@ -902,7 +905,7 @@ namespace EpServerEngineSampleClient
 							btnShutdown.Enabled = false;
 							btnReboot.Enabled = false;
 							btnStopSerial.Enabled = false;
-							btn_SetTime.Enabled = false;
+							btn_PlayList.Enabled = false;
 							btnGetTime.Enabled = false;
 							//Upload_New.Enabled = false;
 
@@ -936,7 +939,7 @@ namespace EpServerEngineSampleClient
 									btnShutdown.Enabled = false;
 									btnReboot.Enabled = false;
 									btnStopSerial.Enabled = false;
-									btn_SetTime.Enabled = false;
+									btn_PlayList.Enabled = false;
 									btnGetTime.Enabled = false;
 									client_connected = false;
 								}
@@ -972,7 +975,40 @@ namespace EpServerEngineSampleClient
 
 		private void FrmSampleClient_Load(object sender, EventArgs e)
 		{
+			this.StartPosition = FormStartPosition.Manual;
+			this.Location = new Point(10, 10);
+		}
 
+		private void Btn_PlayList_Click(object sender, EventArgs e)
+		{
+			PlayerDlg playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
+			psDlg.Enable_Dlg(true);
+
+			playdlg.StartPosition = FormStartPosition.Manual;
+			playdlg.Location = new Point(10, 10);
+
+			if (playdlg.ShowDialog(this) == DialogResult.OK)
+			{
+			}
+			else
+			{
+				//                this.txtResult.Text = "Cancelled";
+			}
+		}
+		private void SetTime()
+		{
+			DateTime localDate = DateTime.Now;
+			String cultureName = "en-US";
+			var culture = new CultureInfo(cultureName);
+			AddMsg(localDate.ToString(culture));
+
+			byte[] bytes = BytesFromString(localDate.ToString(culture));
+			byte[] bytes2 = new byte[bytes.Count() + 2];
+			System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
+			string set_time = "SET_TIME";
+			bytes2[0] = svrcmd.GetCmdIndexB(set_time);
+			Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+			m_client.Send(packet);
 		}
 	}
 }

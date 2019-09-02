@@ -31,6 +31,8 @@ namespace EpServerEngineSampleClient
 		private List<UIFormat> ui_format;
 		private List<UIFormat> ui_format2;
 		private PortSet2 psDlg = null;
+		private List<ChildDialogs> child_dialogs;
+		private string xml_child_dialogs_location = "c:\\users\\daniel\\dev\\ChildDialog.xml";
 
 		public PortSet2(string xml_file_location, INetworkClient client)
 		{
@@ -53,6 +55,24 @@ namespace EpServerEngineSampleClient
 				AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
 				ui_format.Add(item);
 				item = null;
+			}
+			child_dialogs = new List<ChildDialogs>();
+			ChildDialogs item2 = null;
+			filePath = xml_child_dialogs_location;
+			xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
+			ds.Reset();
+			ds.ReadXml(xmlfile);
+			// load the list of child dialogs
+			foreach (DataRow dr in ds.Tables[0].Rows)
+			{
+				item2 = new ChildDialogs();
+				item2.Type = Convert.ToInt16(dr.ItemArray[0]);
+				item2.Num = Convert.ToInt16(dr.ItemArray[1]);
+				item2.Name = dr.ItemArray[2].ToString();
+				item2.Name += ".xml";
+				AddMsg(item2.Num.ToString() + " " + item2.Name);
+				child_dialogs.Add(item2);
+				item2 = null;
 			}
 			m_client = client;
 			svrcmd.SetClient(m_client);
@@ -268,26 +288,112 @@ namespace EpServerEngineSampleClient
 		}
 		private void button9_Click(object sender, EventArgs e)
 		{
-			if (!m_keypad)
-				current_button = 9;
-			send_cmd();
+			/*
+						if (!m_keypad)
+							current_button = 9;
+						send_cmd();
+			*/
+			this.Close();
 		}
 		private void send_cmd()
 		{
 			int command = m_ctls[current_button].cmd;
 			int offset = m_ctls[current_button].offset;
 			int len = m_ctls[current_button].len;
-			string cmd = svrcmd.GetName(command + offset);
+			// if the command in the xml file is > 200 then create and
+			// execute a child dialog according to child dialogs enum
+			if (command > 199 && command < 256)
+			{
+				if (command > child_dialogs.Count() + 200)
+				{
+					AddMsg("cd cmd out of range");
+				}
+				else
+				{
+					int index = command - 200;
+					AddMsg("special cmd: " + command.ToString());
+					AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
 
-			//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
+					UIFormat item = null;
+					XmlReader xmlfile = null;
+					DataSet ds = new DataSet();
+					var filePath = child_dialogs[index].Name;
+					//filePath += ".xml";
+					xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
+					ds.ReadXml(xmlfile);
 
-			svrcmd.Send_Cmd(command + offset);
-			//if (++screen_ctr > 20)
-			//tbReceived.Clear();
+					if (child_dialogs[index].Type == 0) // PortSet2 type dialog
+					{
+						UIFormat item2 = null;
+						XmlReader xmlfile2 = null;
+						DataSet ds2 = new DataSet();
+						var filePath2 = child_dialogs[index].Name;
+						//filePath += ".xml";
+						xmlfile2 = XmlReader.Create(filePath2, new XmlReaderSettings());
+						ds2.ReadXml(xmlfile2);
 
-			if (++offset >= len)
-				m_ctls[current_button].offset = 0;
-			else m_ctls[current_button].offset = offset;
+						foreach (DataRow dr2 in ds2.Tables[0].Rows)
+						{
+							item2 = new UIFormat();
+							item2.Label = dr2.ItemArray[0].ToString();
+							item2.Command = Convert.ToInt16(dr2.ItemArray[1]);
+							item2.Length = Convert.ToInt16(dr2.ItemArray[2]);
+							AddMsg("type 1: " + item2.Label + " " + item2.Command.ToString() + " " + item2.Length.ToString());
+							ui_format.Add(item2);
+							item2 = null;
+						}
+						psDlg = new PortSet2(filePath, m_client);
+						psDlg.SetButtonLabels();
+						psDlg.Name = "Dialog One";
+						psDlg.Enable_Dlg(true);
+						psDlg.StartPosition = FormStartPosition.Manual;
+						psDlg.Location = new Point(100, 100);
+						if (psDlg.ShowDialog(this) == DialogResult.OK)
+						{
+							//                AddMsg("dlg = OK");
+						}
+						else
+						{
+							//                this.txtResult.Text = "Cancelled";
+						}
+						psDlg.Enable_Dlg(false);
+
+					}
+/*
+					else if (child_dialogs[index].Type == 1)        // scrolling list type
+					{
+						var filePath2 = child_dialogs[index].Name;
+						slDlg = new Child_Scrolling_List(filePath2, m_client)
+						{
+							Name = "Dialog One"
+						};
+						slDlg.Enable_Dlg(true);
+						if (slDlg.ShowDialog(this) == DialogResult.OK)
+						{
+							//                AddMsg("dlg = OK");
+						}
+						else
+						{
+							//                this.txtResult.Text = "Cancelled";
+						}
+					}
+*/
+				}
+			}
+			else
+			{
+				string cmd = svrcmd.GetName(command + offset);
+
+				//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
+
+				svrcmd.Send_Cmd(command + offset);
+				//if (++screen_ctr > 20)
+				//tbReceived.Clear();
+
+				if (++offset >= len)
+					m_ctls[current_button].offset = 0;
+				else m_ctls[current_button].offset = offset;
+			}
 		}
 	}
 }

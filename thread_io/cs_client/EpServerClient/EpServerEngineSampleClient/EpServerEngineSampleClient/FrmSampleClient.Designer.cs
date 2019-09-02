@@ -37,7 +37,7 @@
 			this.table = new System.Data.DataTable();
 			this.tbConnected = new System.Windows.Forms.TextBox();
 			this.label3 = new System.Windows.Forms.Label();
-			this.btn_SetTime = new System.Windows.Forms.Button();
+			this.btn_PlayList = new System.Windows.Forms.Button();
 			this.btnTestPorts = new System.Windows.Forms.Button();
 			this.btnStartEng = new System.Windows.Forms.Button();
 			this.tbServerTime = new System.Windows.Forms.TextBox();
@@ -78,13 +78,13 @@
 			this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbReceived.Location = new System.Drawing.Point(799, 304);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(285, 305);
+			this.tbReceived.Size = new System.Drawing.Size(285, 252);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -152,17 +152,17 @@
 			this.label3.TabIndex = 7;
 			this.label3.Text = "Status:";
 			// 
-			// btn_SetTime
+			// btn_PlayList
 			// 
-			this.btn_SetTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.btn_SetTime.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btn_SetTime.Location = new System.Drawing.Point(15, 281);
-			this.btn_SetTime.Name = "btn_SetTime";
-			this.btn_SetTime.Size = new System.Drawing.Size(233, 61);
-			this.btn_SetTime.TabIndex = 4;
-			this.btn_SetTime.Text = "Set Time";
-			this.btn_SetTime.UseVisualStyleBackColor = false;
-			this.btn_SetTime.Click += new System.EventHandler(this.Btn_SetTime_Click);
+			this.btn_PlayList.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.btn_PlayList.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.btn_PlayList.Location = new System.Drawing.Point(15, 281);
+			this.btn_PlayList.Name = "btn_PlayList";
+			this.btn_PlayList.Size = new System.Drawing.Size(233, 61);
+			this.btn_PlayList.TabIndex = 4;
+			this.btn_PlayList.Text = "Play List";
+			this.btn_PlayList.UseVisualStyleBackColor = false;
+			this.btn_PlayList.Click += new System.EventHandler(this.Btn_PlayList_Click);
 			// 
 			// btnTestPorts
 			// 
@@ -208,27 +208,25 @@
 			// 
 			// tbEngRunTime
 			// 
-			this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbEngRunTime.Location = new System.Drawing.Point(122, 187);
+			this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbEngRunTime.Location = new System.Drawing.Point(856, 575);
 			this.tbEngRunTime.Name = "tbEngRunTime";
-			this.tbEngRunTime.Size = new System.Drawing.Size(149, 29);
+			this.tbEngRunTime.Size = new System.Drawing.Size(149, 31);
 			this.tbEngRunTime.TabIndex = 32;
 			// 
 			// label6
 			// 
 			this.label6.AutoSize = true;
-			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label6.Location = new System.Drawing.Point(27, 194);
+			this.label6.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label6.Location = new System.Drawing.Point(723, 576);
 			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(89, 20);
+			this.label6.Size = new System.Drawing.Size(128, 28);
 			this.label6.TabIndex = 33;
 			this.label6.Text = "Eng. Time";
 			// 
 			// groupBox1
 			// 
 			this.groupBox1.Controls.Add(this.cbIPAdress);
-			this.groupBox1.Controls.Add(this.label6);
-			this.groupBox1.Controls.Add(this.tbEngRunTime);
 			this.groupBox1.Controls.Add(this.label5);
 			this.groupBox1.Controls.Add(this.tbServerTime);
 			this.groupBox1.Controls.Add(this.label3);
@@ -258,7 +256,7 @@
 			// 
 			this.label8.AutoSize = true;
 			this.label8.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label8.Location = new System.Drawing.Point(540, 458);
+			this.label8.Location = new System.Drawing.Point(524, 579);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(74, 28);
 			this.label8.TabIndex = 39;
@@ -267,7 +265,7 @@
 			// tbMPH
 			// 
 			this.tbMPH.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbMPH.Location = new System.Drawing.Point(630, 455);
+			this.tbMPH.Location = new System.Drawing.Point(614, 572);
 			this.tbMPH.Name = "tbMPH";
 			this.tbMPH.Size = new System.Drawing.Size(93, 35);
 			this.tbMPH.TabIndex = 38;
@@ -276,7 +274,7 @@
 			// 
 			this.label7.AutoSize = true;
 			this.label7.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label7.Location = new System.Drawing.Point(540, 408);
+			this.label7.Location = new System.Drawing.Point(524, 529);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(73, 28);
 			this.label7.TabIndex = 37;
@@ -285,7 +283,7 @@
 			// tbRPM
 			// 
 			this.tbRPM.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbRPM.Location = new System.Drawing.Point(630, 401);
+			this.tbRPM.Location = new System.Drawing.Point(614, 521);
 			this.tbRPM.Name = "tbRPM";
 			this.tbRPM.Size = new System.Drawing.Size(93, 35);
 			this.tbRPM.TabIndex = 36;
@@ -294,7 +292,7 @@
 			// 
 			this.label4.AutoSize = true;
 			this.label4.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label4.Location = new System.Drawing.Point(540, 358);
+			this.label4.Location = new System.Drawing.Point(524, 479);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(85, 28);
 			this.label4.TabIndex = 35;
@@ -303,7 +301,7 @@
 			// tbEngineTemp
 			// 
 			this.tbEngineTemp.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbEngineTemp.Location = new System.Drawing.Point(630, 351);
+			this.tbEngineTemp.Location = new System.Drawing.Point(614, 472);
 			this.tbEngineTemp.Name = "tbEngineTemp";
 			this.tbEngineTemp.Size = new System.Drawing.Size(93, 35);
 			this.tbEngineTemp.TabIndex = 34;
@@ -347,7 +345,6 @@
 			// btnDBMgmt
 			// 
 			this.btnDBMgmt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-			this.btnDBMgmt.Enabled = false;
 			this.btnDBMgmt.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.btnDBMgmt.Location = new System.Drawing.Point(15, 192);
 			this.btnDBMgmt.Name = "btnDBMgmt";
@@ -438,7 +435,7 @@
 			// 
 			this.CoolingFanLabel.AutoSize = true;
 			this.CoolingFanLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.CoolingFanLabel.Location = new System.Drawing.Point(580, 83);
+			this.CoolingFanLabel.Location = new System.Drawing.Point(517, 59);
 			this.CoolingFanLabel.Name = "CoolingFanLabel";
 			this.CoolingFanLabel.Size = new System.Drawing.Size(171, 31);
 			this.CoolingFanLabel.TabIndex = 40;
@@ -448,7 +445,7 @@
 			// 
 			this.LightsOnLabel.AutoSize = true;
 			this.LightsOnLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.LightsOnLabel.Location = new System.Drawing.Point(580, 124);
+			this.LightsOnLabel.Location = new System.Drawing.Point(517, 100);
 			this.LightsOnLabel.Name = "LightsOnLabel";
 			this.LightsOnLabel.Size = new System.Drawing.Size(93, 31);
 			this.LightsOnLabel.TabIndex = 41;
@@ -458,7 +455,7 @@
 			// 
 			this.BrakeLightsLabel.AutoSize = true;
 			this.BrakeLightsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.BrakeLightsLabel.Location = new System.Drawing.Point(580, 246);
+			this.BrakeLightsLabel.Location = new System.Drawing.Point(517, 222);
 			this.BrakeLightsLabel.Name = "BrakeLightsLabel";
 			this.BrakeLightsLabel.Size = new System.Drawing.Size(177, 31);
 			this.BrakeLightsLabel.TabIndex = 43;
@@ -468,7 +465,7 @@
 			// 
 			this.SideMarkerLabel.AutoSize = true;
 			this.SideMarkerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.SideMarkerLabel.Location = new System.Drawing.Point(580, 205);
+			this.SideMarkerLabel.Location = new System.Drawing.Point(517, 181);
 			this.SideMarkerLabel.Name = "SideMarkerLabel";
 			this.SideMarkerLabel.Size = new System.Drawing.Size(177, 31);
 			this.SideMarkerLabel.TabIndex = 44;
@@ -478,7 +475,7 @@
 			// 
 			this.BrightsLabel.AutoSize = true;
 			this.BrightsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.BrightsLabel.Location = new System.Drawing.Point(580, 163);
+			this.BrightsLabel.Location = new System.Drawing.Point(517, 139);
 			this.BrightsLabel.Name = "BrightsLabel";
 			this.BrightsLabel.Size = new System.Drawing.Size(106, 31);
 			this.BrightsLabel.TabIndex = 45;
@@ -488,7 +485,7 @@
 			// 
 			this.IgnitionOnLabel.AutoSize = true;
 			this.IgnitionOnLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.IgnitionOnLabel.Location = new System.Drawing.Point(580, 44);
+			this.IgnitionOnLabel.Location = new System.Drawing.Point(517, 20);
 			this.IgnitionOnLabel.Name = "IgnitionOnLabel";
 			this.IgnitionOnLabel.Size = new System.Drawing.Size(110, 31);
 			this.IgnitionOnLabel.TabIndex = 46;
@@ -501,6 +498,8 @@
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
 			this.ClientSize = new System.Drawing.Size(1113, 631);
 			this.Controls.Add(this.IgnitionOnLabel);
+			this.Controls.Add(this.label6);
+			this.Controls.Add(this.tbEngRunTime);
 			this.Controls.Add(this.BrightsLabel);
 			this.Controls.Add(this.SideMarkerLabel);
 			this.Controls.Add(this.BrakeLightsLabel);
@@ -523,7 +522,7 @@
 			this.Controls.Add(this.btnReboot);
 			this.Controls.Add(this.btnShutdown);
 			this.Controls.Add(this.groupBox1);
-			this.Controls.Add(this.btn_SetTime);
+			this.Controls.Add(this.btn_PlayList);
 			this.Controls.Add(this.btnTestPorts);
 			this.Controls.Add(this.btnStartEng);
 			this.Controls.Add(this.tbReceived);
@@ -560,7 +559,7 @@
 
         private System.Windows.Forms.TextBox tbConnected;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Button btn_SetTime;
+        private System.Windows.Forms.Button btn_PlayList;
         private System.Windows.Forms.Button btnTestPorts;
         private System.Windows.Forms.Button btnStartEng;
         private System.Windows.Forms.TextBox tbServerTime;

@@ -45,7 +45,6 @@ git add AVR_t6963/eeprom/t6963.h
 git add AVR_t6963/eeprom/test.cx
 
 git add AVR_t6963/test/dmake3
-git add AVR_t6963/test/doftp.sh
 git add AVR_t6963/test/main.c
 git add AVR_t6963/test/make_target2
 git add AVR_t6963/test/readme.txt

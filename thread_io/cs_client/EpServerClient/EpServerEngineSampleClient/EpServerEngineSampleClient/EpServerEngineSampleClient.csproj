@@ -76,6 +76,12 @@
       <DependentUpon>ChangeDB.cs</DependentUpon>
     </Compile>
     <Compile Include="ChildDialogs.cs" />
+    <Compile Include="Child_Scrolling_List.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Child_Scrolling_List.Designer.cs">
+      <DependentUpon>Child_Scrolling_List.cs</DependentUpon>
+    </Compile>
     <Compile Include="ClientParams.cs" />
     <Compile Include="ConfigParams.cs" />
     <Compile Include="DlgForm1.cs">
@@ -96,6 +102,19 @@
     <Compile Include="FrmSampleClient.Designer.cs">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
     </Compile>
+    <Compile Include="Mp3File.cs" />
+    <Compile Include="Password.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Password.Designer.cs">
+      <DependentUpon>Password.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PlayerDlg.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PlayerDlg.Designer.cs">
+      <DependentUpon>PlayerDlg.cs</DependentUpon>
+    </Compile>
     <Compile Include="PortSet2.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -105,6 +124,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerCmds.cs" />
+    <Compile Include="SListTypes.cs" />
     <Compile Include="SwitchTable.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -120,6 +140,9 @@
     <EmbeddedResource Include="ChangeDB.resx">
       <DependentUpon>ChangeDB.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Child_Scrolling_List.resx">
+      <DependentUpon>Child_Scrolling_List.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DlgForm1.resx">
       <DependentUpon>DlgForm1.cs</DependentUpon>
     </EmbeddedResource>
@@ -128,6 +151,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSampleClient.resx">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Password.resx">
+      <DependentUpon>Password.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PlayerDlg.resx">
+      <DependentUpon>PlayerDlg.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PortSet2.resx">
       <DependentUpon>PortSet2.cs</DependentUpon>
