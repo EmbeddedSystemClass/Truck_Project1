@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[87] =
+CMD_STRUCT cmd_array[88] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -124,7 +124,8 @@ CMD_STRUCT cmd_array[87] =
 	{		NAV_NUM,"NAV_NUM\0" },
 	{		SEND_STATUS,"SEND_STATUS\0" },
 	{		SERVER_UP,"SERVER_UP\0" },
-	{		SERVER_DOWN,"SERVER_DOWN\0" }
+	{		SERVER_DOWN,"SERVER_DOWN\0" },
+	{		UPLOAD_NEW,"UPLOAD_NEW\0" }
 };
 
 //extern illist_t ill;
@@ -329,13 +330,14 @@ UCHAR get_host_cmd_task(int test)
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
-/*
+#if 0
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
 				printString2(tempx);
+//				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 			}
-*/
+#endif
 			if(cmd > 0)
 			{
 				rc = 0;
@@ -358,6 +360,7 @@ UCHAR get_host_cmd_task(int test)
 					case SHUTDOWN:
 					case SHUTDOWN_IOBOX:
 					case REBOOT_IOBOX:
+					case UPLOAD_NEW:
 					case TEST_ALL_IO:
 					case TEST_LEFT_BLINKER:
 					case TEST_RIGHT_BLINKER:
@@ -870,6 +873,7 @@ UCHAR get_host_cmd_task(int test)
 						{
 							close_tcp();
 							//printString2("disconnected from socket\0");
+//							printf("disconnecting...\r\n");
 							tcp_connected_time = 0;
 						}
 						break;
@@ -923,7 +927,12 @@ exit_program:
 						else if(reboot_on_exit == 3)
 						{
 							myprintf1("shutting down...\0");
-//								printf("shutting down...\r\n");
+							printf("shutting down...\r\n");
+						}
+						else if(reboot_on_exit == 4)
+						{
+							myprintf1("upload new...\0");
+							printf("upload new...\r\n");
 						}
 
 						// save the current list of events
@@ -1031,7 +1040,10 @@ exit_program:
 		{
 			uSleep(1,1000);
 			if(shutdown_all == 1)
+			{
+//				printf("shutting down cmd host\r\n");
 				return 0;
+			}
 		}
 	}
 	return test + 1;

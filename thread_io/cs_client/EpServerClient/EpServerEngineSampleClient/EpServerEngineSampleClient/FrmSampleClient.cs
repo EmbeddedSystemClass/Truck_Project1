@@ -214,7 +214,7 @@ namespace EpServerEngineSampleClient
 			foreach (ButtonList btn in button_list)
 			{
 				no_buttons++;
-				AddMsg(btn.Name + " en: " + btn.Enabled.ToString());
+				//AddMsg(btn.Name + " en: " + btn.Enabled.ToString());
 			}
 			timer1.Enabled = true;
 			//AddMsg("buttons used: " + no_buttons.ToString());
@@ -612,10 +612,12 @@ namespace EpServerEngineSampleClient
 		}
 		private void ShutdownServer(object sender, EventArgs e)
 		{
-			string cmd = "SHUTDOWN_IOBOX";
+			//string cmd = "SHUTDOWN_IOBOX";
+			string cmd = "UPLOAD_NEW";
 			int offset = svrcmd.GetCmdIndexI(cmd);
 			svrcmd.Send_Cmd(offset);
 			please_lets_disconnect = 1;
+			AddMsg("sending UPLOAD_NEW");
 		}
 		private void RebootServer(object sender, EventArgs e)
 		{
@@ -645,7 +647,6 @@ namespace EpServerEngineSampleClient
 				AddMsg("System Up");
 			}
 		}
-
  		public static byte[] ReadFile(string filePath)
 		{
 			byte[] buffer;
@@ -667,22 +668,9 @@ namespace EpServerEngineSampleClient
 			}
 			return buffer;
 		}
-
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			PlayerDlg playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml",m_client);
-			psDlg.Enable_Dlg(true);
-
-			playdlg.StartPosition = FormStartPosition.Manual;
-			playdlg.Location = new Point(10, 10);
-
-			if (playdlg.ShowDialog(this) == DialogResult.OK)
-			{
-			}
-			else
-			{
-				//                this.txtResult.Text = "Cancelled";
-			}
+			
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -738,7 +726,7 @@ namespace EpServerEngineSampleClient
 			psDlg.Name = "Dialog One";
 			psDlg.Enable_Dlg(true);
 			psDlg.StartPosition = FormStartPosition.Manual;
-			psDlg.Location = new Point(10, 10);
+			psDlg.Location = new Point(100, 10);
 
 			if (psDlg.ShowDialog(this) == DialogResult.OK)
 			{
@@ -757,7 +745,7 @@ namespace EpServerEngineSampleClient
 			psDlg2.Name = "Dialog Two";
 			psDlg2.Enable_Dlg(true);
 			psDlg2.StartPosition = FormStartPosition.Manual;
-			psDlg2.Location = new Point(10, 10);
+			psDlg2.Location = new Point(100, 10);
 			if (psDlg2.ShowDialog(this) == DialogResult.OK)
 			{
 				//                AddMsg("dlg = OK");
@@ -772,7 +760,7 @@ namespace EpServerEngineSampleClient
 		{
 			psDlg3.Enable_Dlg(true);
 			psDlg3.StartPosition = FormStartPosition.Manual;
-			psDlg3.Location = new Point(10, 10);
+			psDlg3.Location = new Point(100, 10);
 			if (psDlg3.ShowDialog(this) == DialogResult.OK)
 			{
 			}
@@ -976,7 +964,7 @@ namespace EpServerEngineSampleClient
 		private void FrmSampleClient_Load(object sender, EventArgs e)
 		{
 			this.StartPosition = FormStartPosition.Manual;
-			this.Location = new Point(10, 10);
+			this.Location = new Point(100, 10);
 		}
 
 		private void Btn_PlayList_Click(object sender, EventArgs e)
@@ -985,7 +973,7 @@ namespace EpServerEngineSampleClient
 			psDlg.Enable_Dlg(true);
 
 			playdlg.StartPosition = FormStartPosition.Manual;
-			playdlg.Location = new Point(10, 10);
+			playdlg.Location = new Point(100, 10);
 
 			if (playdlg.ShowDialog(this) == DialogResult.OK)
 			{

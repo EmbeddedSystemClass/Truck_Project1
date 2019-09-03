@@ -48,7 +48,7 @@ char oFileName[20];
 
 UCHAR reboot_on_exit;
 
-pthread_t serial_thread;	// workaround for closing serial thread (serial read is blocking)
+//pthread_t serial_thread;	// workaround for closing serial thread (serial read is blocking)
 
 typedef struct
 {
@@ -203,12 +203,18 @@ int main(int argc, char **argv)
 /*	printf("\nmain()\t\t\t\t%d threads created. Main running fifo at max\n", NUM_TASKS); */
 
 /* wait until all threads have finished */
-	serial_thread = _threads[SERIAL_RECV].pthread;
+//	serial_thread = _threads[SERIAL_RECV].pthread;
+
 	for (i = 0; i < NUM_TASKS; i++)
 	{
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
 			perror("main() pthread_join failed"),exit(1);
 
+		if(i == 0)
+		{
+			pthread_cancel(_threads[SERIAL_RECV].pthread);
+			pthread_cancel(_threads[TCP_MONITOR].pthread);
+		}
 //		printf("closing task :%d %s\r\n",i,_threads[i].label);
 	}
 	close_mem();
@@ -237,4 +243,10 @@ int main(int argc, char **argv)
 //		printf("sched: shutdown\r\n");
 		return 3;
 	}
+	else if(reboot_on_exit == 4)
+	{
+//		printf("doing upload new\r\n");
+		return 4;
+	}
+
 }

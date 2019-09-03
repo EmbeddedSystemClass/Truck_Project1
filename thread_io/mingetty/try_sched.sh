@@ -36,10 +36,21 @@ fi
 if [ $OUT -eq 3 ]
  then
   echo "shutdown from script" >> status.txt
- /sbin/shutdown -h now
+/sbin/shutdown -h now
+fi
+if [ $OUT -eq 4 ]
+ then
+  echo "downloading new sched" >> status.txt
+./server >> status.txt
+mv sched2 sched
+chmod +x sched
+/sbin/reboot
 fi
 if [ $OUT -eq 141 ]
  then
   echo "rebooting from 141" >> status.txt
-  /sbin/reboot
+fi
+if [ $OUT -eq 139 ]
+ then
+  echo "rebooting from 139" >> status.txt
 fi

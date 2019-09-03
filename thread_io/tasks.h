@@ -33,15 +33,15 @@ int global_socket;
 
 enum task_types
 {
+	GET_HOST_CMD,
 	MONITOR_INPUTS,
 	MONITOR_INPUTS2,
 	TIMER,
 	TIMER2,
 	BUTTONS,
 	TCP_MONITOR,
-	BASIC_CONTROLS,
-	GET_HOST_CMD,
-	SERIAL_RECV
+	SERIAL_RECV,
+	BASIC_CONTROLS
 } TASK_TYPES;
 
 UCHAR get_host_cmd_task(int test);

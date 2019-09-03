@@ -347,7 +347,7 @@ namespace EpServerEngineSampleClient
 						psDlg.Name = "Dialog One";
 						psDlg.Enable_Dlg(true);
 						psDlg.StartPosition = FormStartPosition.Manual;
-						psDlg.Location = new Point(100, 100);
+						psDlg.Location = new Point(150, 150);
 						if (psDlg.ShowDialog(this) == DialogResult.OK)
 						{
 							//                AddMsg("dlg = OK");

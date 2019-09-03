@@ -97,7 +97,8 @@ namespace EpServerEngineSampleClient
 			NAV_NUM,
 			SEND_STATUS,
 			SERVER_UP,
-			SERVER_DOWN
+			SERVER_DOWN,
+			UPLOAD_NEW
 		}
 
 		public ServerCmds()

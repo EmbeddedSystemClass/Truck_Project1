@@ -125,6 +125,8 @@ git add thread_io/cs_client/make_db2
 git add thread_io/cs_client/config_file.c
 git add thread_io/cs_client/config_file.h
 git add thread_io/odata.csv
+git add SendFiles/*
+
 git add XMEGA/avr_compiler.h
 git add XMEGA/documentation.h
 git add XMEGA/Makefile

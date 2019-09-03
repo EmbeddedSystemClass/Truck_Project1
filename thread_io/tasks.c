@@ -52,7 +52,7 @@ extern CMD_STRUCT cmd_array[58];
 ollist_t oll;
 PARAM_STRUCT ps;
 
-extern pthread_t serial_thread;	// workaround for closing serial task
+//extern pthread_t serial_thread;	// workaround for closing serial task
 
 //extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
 static float convertF(int raw_data);
@@ -918,6 +918,7 @@ UCHAR serial_recv_task(int test)
 	int fd;
 	char errmsg[20];
 	char tempx[30];
+	int s;
 
 	memset(errmsg,0,20);
 
@@ -937,6 +938,8 @@ UCHAR serial_recv_task(int test)
 
 	red_led(0);
 	green_led(0);
+
+	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
 
 	usleep(_1SEC);
 /*
@@ -1050,11 +1053,12 @@ UCHAR serial_recv_task(int test)
 
 		if(shutdown_all)
 		{
-//			printf("shutting down serial task\r\n");
+			printf("shutting down serial task\r\n");
 			close_serial();
 			close_serial2();
 //			myprintf1("done serial task\r\n");
 			//printString2("closing serial ports");
+			printf("serial ports done\r\n");
 			return 0;
 		}
 
@@ -1147,13 +1151,14 @@ UCHAR tcp_monitor_task(int test)
 /* Main server loop - accept and handle requests */
 	while (TRUE)
 	{
-		if(sock_open == 1)
+		if(test_sock())
 		{
 			uSleep(0,1000);
 			if(shutdown_all)
 			{
 //				strcpy(tempx,"shutdown...\0");
-				pthread_cancel(serial_thread);
+//				pthread_cancel(serial_thread);
+//				printf("cancel serial_thread\r\n");
 //				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SHUTDOWN);
 				//printString2("closing socket");
 //				uSleep(2,0);
@@ -1187,6 +1192,7 @@ UCHAR tcp_monitor_task(int test)
 
 			// this is for when the engine is already running and the client
 			// logs in 
+
 			if(engine_running)
 				strcpy(tempx,"START_SEQ");
 			else strcpy(tempx,"SHUTDOWN");	
@@ -1800,7 +1806,7 @@ UCHAR basic_controls_task(int test)
 */
 			case SHUTDOWN_IOBOX:
 // read_led & green_led can only be seen on test bench
-#if 0
+//#if 0
 				for(i = 0;i < 10;i++)
 				{
 					red_led(1);		// these lights on on the board
@@ -1816,9 +1822,10 @@ UCHAR basic_controls_task(int test)
 					usleep(2000);
 					green_led(0);
 				}
-#endif				
+//#endif				
 				send_serial(SERVER_DOWN);
 				myprintf1("shutdown iobox\0");
+//				printf("shutdown iobox\r\n");
 				//printString2("shutdown iobox");
 				for(i = 0;i < 5;i++)		// scroll the display on the iobox
 				{							// to see the last 10 msg's and pause
@@ -1872,12 +1879,17 @@ UCHAR basic_controls_task(int test)
 //				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 2;
-				break;			
+				break;
+			case UPLOAD_NEW:
+				shutdown_all = 1;
+				reboot_on_exit = 4;
+//				printf("UPLOAD_NEW\r\n");
+				break;	
 				default:
 				break;
 		}	// end of switch
 
-		if(shutdown_all)
+		if(shutdown_all == 1)
 		{
 //			myprintf1("done basic task");
 //			printf("done basic task\r\n");

@@ -15,7 +15,7 @@ typedef unsigned long ULONG;
 #define DAT_NAME_STR_LEN 25
 //#define TDATE_STAMP_STR_LEN 25
 #define TDATE_STAMP_STR_LEN 16
-#define UPLOAD_BUFF_SIZE 5000
+#define UPLOAD_BUFF_SIZE 10000
 #define NUM_ADC_CHANNELS 11
 #define SERIAL_BUFF_SIZE 20
 
@@ -125,7 +125,8 @@ enum cmd_types
 	NAV_NUM,
 	SEND_STATUS,
 	SERVER_UP,
-	SERVER_DOWN
+	SERVER_DOWN,
+	UPLOAD_NEW
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200

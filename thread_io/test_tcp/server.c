@@ -60,7 +60,8 @@ int init_server(void)
 	/* port number if one is specfied.  Otherwise, use the default     */
 	/* port value given by constant PROTOPORT                          */
 
-/*	to avoid "server already in use" error:
+/*	to avoid "server already in use" error: */
+/*
 	int sockfd;
 	int option = 1;
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,7 +91,7 @@ int init_server(void)
 #endif
 	int option = 1;
 //	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-//	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 	if (sd < 0)
 	{
 		fprintf(stderr, "socket creation failed\n");
@@ -256,6 +257,9 @@ int main(void)
 
 #warning "COPY_FILE defined"
 //UCHAR buf[30000];
+#define UPLOAD_BUFF_SIZE2 10000
+UCHAR msg_buf[UPLOAD_BUFF_SIZE2];
+
 UCHAR *buf;
 
 int main(void)
@@ -267,52 +271,17 @@ int main(void)
 	char errmsg[20];
 	memset(errmsg,0,20);
 	int fp;
-	off_t fsize;
+	long fsize, ofsize;
 	char filename[20];
-	UCHAR temp[20];
+	UCHAR temp[100];
+	UCHAR temp2[4];
+	UCHAR temp3;
+	int chunk = 10000;
+	long iter;
+	int chunk_num;
 
-	init_server();
-
-#if 0
-	rc = recv_tcp((UCHAR *)&temp[0],20,errmsg);
-
-	for(i = 0;i < 20;i++)
-		printf("%2x ",temp[i]);
-
-	printf("\n");
-
-	printf("%s\n",temp);
-#endif
-
-//	rc = recv_tcp((UCHAR*)&fsize,sizeof(off_t),errmsg);
-	rc = recv_tcp((UCHAR*)&fsize,8,errmsg);
-//	printf("sizeof(off_t): %d\n",sizeof(off_t));
-//	rc = recv_tcp((UCHAR*)&fsize,4,errmsg);
-	
-	if(rc < 0)
-	{
-		printf("%s\n",errmsg);
-		exit(1);
-	}
-
-	printf("fsize: %ld \n",fsize);
-	if(fsize <= 0)
-	{
-		printf("problem with fsize\n");
-		close(global_socket);
-		close(fp);
-		return 1;
-	}	
-
-	buf = (UCHAR *)malloc(fsize);
-	if(buf < 0)
-	{
-		printf("could not malloc %ld\n",fsize);
-		exit(1);
-	}
-	memset(buf,0x20,fsize);
-
-	strcpy(filename,"test.bin");
+	memset(msg_buf,0,UPLOAD_BUFF_SIZE2);
+	strcpy(filename,"sched2");
 	fp = open((const char *)filename, O_RDWR | O_CREAT | O_TRUNC, 600);
 	if(fp < 0)
 	{
@@ -320,25 +289,87 @@ int main(void)
 		exit(1);
 	}
 
-//	rc = recv_tcp((UCHAR *)&buf[0],4,errmsg);
+	printf("starting program...\n");
 
-	rc = recv_tcp((UCHAR *)&buf[0],fsize,errmsg);
+	init_server();
+/*
+	recv_tcp((UCHAR *)&temp[0],50,errmsg);
+	for(i = 0;i < 50;i++)
+	{
+		printf("%d: %02x ",i,temp[i]);
+		if(temp[i] > 0x19 && temp[i] < 0x7A)
+			printf("%c",temp[i]);
+		printf("\n");
+	}
+	close_tcp();
+	return 1;
+*/
+	recv_tcp((UCHAR *)&temp[0],8,errmsg);
+/*
+	for(i = 0;i < 8;i++)
+	{
+		printf("%02x ",temp[i]);
+	}
+*/
+	fsize = (int)temp[3];
+	fsize <<= 8;
+	fsize |= (int)temp[2];
+	fsize <<= 8;
+	fsize |= (int)temp[1];
+	fsize <<= 8;
+	fsize |= (int)temp[0];
+	ofsize = fsize;
+	printf("\nfsize: %ld\n",fsize);
 
-	printf("bytes recv'd: %d\n",rc);
-	if(rc < 0)
-		printf("%s\n",errmsg);
+//	iter = fsize/chunk;
+	iter = (int)temp[7];
+	iter <<= 8;
+	iter |= (int)temp[6];
+	iter <<= 8;
+	iter |= (int)temp[5];
+	iter <<= 8;
+	iter |= (int)temp[4];
+	printf("iter: %ld\n",iter);
 
-	close(global_socket);
-	rc = write(fp, buf, fsize);
-	printf("write to file: %d\n",rc);
+//	printf("\n");
+
+	for(j = 0;j < iter;j++)
+	{
+//		printf("%d: fsize: %ld\n",j,ofsize - fsize);
+/*
+		recv_tcp((UCHAR *)&temp,4,errmsg);
+		chunk_num = (int)temp[1];
+		chunk_num <<= 8;
+		chunk_num |= (int)temp[0];
+		printf("chunk: %d %04x\n",chunk_num,chunk_num);
+*/
+		if(j == iter-1)
+		{
+			rc = recv_tcp((UCHAR *)&msg_buf[0],fsize,errmsg);
+			rc = write(fp, &msg_buf[0], fsize);
+			printf("final fsize: %ld\n",fsize);
+		}
+		else
+		{
+			rc = recv_tcp((UCHAR *)&msg_buf[0],chunk,errmsg);
+			rc = write(fp, &msg_buf[0], chunk);
+		}
+//			printf("rc (file): %d\n",rc);
+		fsize -= chunk;
+	}
+
+//	printf("%d: fsize: %ld\n",j,ofsize - fsize);
+	printf("\n");
+//	printf("%s\n",temp);
+	fsize = lseek(fp,0,SEEK_END);
+	printf("fsize: %ld\n",fsize);
 	close(fp);
-	free(buf);
-
-	printf("\n\n");
+	close(global_socket);
+	printf("done\n");
 	return 0;
 }
-#endif
 
+#endif
 
 #ifdef SIMPLE_TEST
 

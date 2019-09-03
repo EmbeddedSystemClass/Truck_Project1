@@ -33,7 +33,24 @@ procedure for testing/debugging io box:
 	to the /home/dan/dev/sched directory, change the permissions and execute it. 
 	(do2.sh will execute the sched program already in the sched directory)
 
-	****************************** DESCRIPTION ***********************************
+procedure for uploading new sched to iobox:
+
+1) using the client, hit the button on the upper left called "shutdown server"
+
+2) then when the server is disconnected, exit the client program and start the sendfiles program (in windows)
+
+3) choose the browse button and it should default to c:\users\daniel\dev
+
+4) find the program called "sched" in the dev directory (you should put the new one there after it's 
+	recompiled - it's the one you want to upload)
+
+5) choose 'send' button and the progress bar at the bottom should finish
+
+6) the server should have the new sched (uploaded as sched2a) and then reboot. The try_sched.sh
+	script should find the sched2 file, set the attributes for execute and run it as the new sched
+
+
+****************************** DESCRIPTION ***********************************
 
 Relays on IO cards are 5A so use 5v power from separate DC-DC converter as coil voltage for 10A 
 relay arrays. (note: DO NOT use 5v from inside box - if you happen to short the 5v to gnd or

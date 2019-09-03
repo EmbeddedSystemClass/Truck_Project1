@@ -78,13 +78,13 @@
 			this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbReceived.Location = new System.Drawing.Point(799, 304);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(285, 252);
+			this.tbReceived.Size = new System.Drawing.Size(415, 312);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -190,10 +190,10 @@
 			// 
 			// tbServerTime
 			// 
-			this.tbServerTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbServerTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbServerTime.Location = new System.Drawing.Point(122, 145);
 			this.tbServerTime.Name = "tbServerTime";
-			this.tbServerTime.Size = new System.Drawing.Size(149, 29);
+			this.tbServerTime.Size = new System.Drawing.Size(149, 35);
 			this.tbServerTime.TabIndex = 30;
 			// 
 			// label5
@@ -208,17 +208,17 @@
 			// 
 			// tbEngRunTime
 			// 
-			this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbEngRunTime.Location = new System.Drawing.Point(856, 575);
+			this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbEngRunTime.Location = new System.Drawing.Point(927, 634);
 			this.tbEngRunTime.Name = "tbEngRunTime";
-			this.tbEngRunTime.Size = new System.Drawing.Size(149, 31);
+			this.tbEngRunTime.Size = new System.Drawing.Size(149, 35);
 			this.tbEngRunTime.TabIndex = 32;
 			// 
 			// label6
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Arial Rounded MT Bold", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label6.Location = new System.Drawing.Point(723, 576);
+			this.label6.Location = new System.Drawing.Point(794, 635);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(128, 28);
 			this.label6.TabIndex = 33;
@@ -496,7 +496,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(1113, 631);
+			this.ClientSize = new System.Drawing.Size(1243, 691);
 			this.Controls.Add(this.IgnitionOnLabel);
 			this.Controls.Add(this.label6);
 			this.Controls.Add(this.tbEngRunTime);
