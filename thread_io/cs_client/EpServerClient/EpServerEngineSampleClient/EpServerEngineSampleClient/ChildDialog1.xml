@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>			<!-- Settings for 'Test Ports' Dialog -->
+		<Offset>0</Offset>
+		<Name>Value 0</Name>
+		<Value>2</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>1</Offset>
+		<Name>Value 1</Name>
+		<Value>3</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>2</Offset>
+		<Name>Value 2</Name>
+		<Value>4</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>3</Offset>
+		<Name>Value 3</Name>
+		<Value>5</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>4</Offset>
+		<Name>Value 4</Name>
+		<Value>6</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>5</Offset>
+		<Name>Value 5</Name>					<!-- set Name to zero and control -->
+		<Value>7</Value>						<!-- is disabled -->
+	</UIFormat>
+	<UIFormat>
+		<Offset>6</Offset>
+		<Name>Value 6</Name>
+		<Value>8</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>7</Offset>
+		<Name>Value 7</Name>
+		<Value>9</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>8</Offset>
+		<Name>Value 8</Name>
+		<Value>10</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>9</Offset>
+		<Name>Value 9</Name>
+		<Value>11</Value>
+	</UIFormat>
+</Table>
+ 

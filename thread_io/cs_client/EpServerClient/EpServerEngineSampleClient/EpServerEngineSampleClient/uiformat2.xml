@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>					<!-- Settings Two dialog -->
-		<Label>Unused</Label>
-		<Command>0</Command>
-		<Length>1</Length>
+		<Label>Test List 1</Label>
+		<Command>200</Command>
+		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Unused</Label>
-		<Command>0</Command>
+		<Label>Test List 2</Label>
+		<Command>201</Command>
 		<Length>1</Length>
 	</UIFormat>
 	<UIFormat>

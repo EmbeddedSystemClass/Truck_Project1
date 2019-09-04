@@ -29,16 +29,14 @@ namespace EpServerEngineSampleClient
 		public System.Collections.Generic.List<CommonControls> m_ctls;
 		private bool m_wait = false;
 		private List<UIFormat> ui_format;
-		private List<UIFormat> ui_format2;
-		private PortSet2 psDlg = null;
 		private List<ChildDialogs> child_dialogs;
 		private string xml_child_dialogs_location = "c:\\users\\daniel\\dev\\ChildDialog.xml";
+		private Child_Scrolling_List slist = null;
 
 		public PortSet2(string xml_file_location, INetworkClient client)
 		{
 			InitializeComponent();
 			ui_format = new List<UIFormat>();
-			ui_format2 = new List<UIFormat>();
 			UIFormat item = null;
 			XmlReader xmlfile = null;
 			DataSet ds = new DataSet();
@@ -98,6 +96,8 @@ namespace EpServerEngineSampleClient
 				if (m_ctls[i].cmd == 0)
 					m_ctls[9-i].Ctlinst.Enabled = false;
 			}
+			slist = new Child_Scrolling_List(m_client);
+			//slist.Enable_Dlg(false);
 		}
 		public void SetButtonLabels()
 		{ 
@@ -114,13 +114,13 @@ namespace EpServerEngineSampleClient
 		}
         public void OnReceived(INetworkClient client, Packet receivedPacket)
         {
-            Process_Msg(receivedPacket.PacketRaw);
+			Process_Msg(receivedPacket.PacketRaw);
         }
 		public void Enable_Dlg(bool wait)
 		{
 			m_wait = wait;
-			if (wait)
-				tbReceived.Clear();
+			//if (wait)
+				//tbReceived.Clear();
 		}
         delegate void AddMsg_Involk(string message);
         public void AddMsg(string message)
@@ -172,64 +172,71 @@ namespace EpServerEngineSampleClient
 			string str = svrcmd.GetName(type_msg);
 			//AddMsg(str);
 
-			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE"))
+			if (m_wait == true)
 			{
-				previous_button = current_button;
-				switch (str)
+				if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE")
 				{
-					case "NAV_UP":
-						current_button--;
-						if (current_button < 0)
-							current_button = m_ctls.Count() - 1;
-						break;
-					case "NAV_DOWN":
-						current_button++;
-						if (current_button > m_ctls.Count() - 1)
-							current_button = 0;
-						break;
-					case "NAV_SIDE":
-						if (current_button > 4)
-							current_button -= 5;
-						else current_button += 5;
-						break;
-					case "NAV_CLICK":
+					previous_button = current_button;
+					switch (str)
+					{
+						case "NAV_UP":
+							current_button--;
+							if (current_button < 0)
+								current_button = m_ctls.Count() - 1;
+							break;
+						case "NAV_DOWN":
+							current_button++;
+							if (current_button > m_ctls.Count() - 1)
+								current_button = 0;
+							break;
+						case "NAV_SIDE":
+							if (current_button > 4)
+								current_button -= 5;
+							else current_button += 5;
+							break;
+						case "NAV_CLICK":
+							i = GetInstByTabOrder(current_button);
+							//if(m_ctls[i].CtlText != "Close")
+							{
+								AddMsg(m_ctls[9 - i].CtlText);
+								Button temp = (Button)(m_ctls[i].Ctlinst);
+								m_keypad = true;
+								temp.PerformClick();
+								m_keypad = false;
+							}
+
+							break;
+						case "NAV_CLOSE":
+							//this.Dispose();
+							this.Close();
+							break;
+						default:
+							break;
+					}
+
+					if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_SIDE")
+					{
 						i = GetInstByTabOrder(current_button);
-						//if(m_ctls[i].CtlText != "Close")
+						j = GetInstByTabOrder(previous_button);
+						if (i > -1 && j > -1)
 						{
-							AddMsg(m_ctls[9-i].CtlText);
-							Button temp = (Button)(m_ctls[i].Ctlinst);
-							m_keypad = true;
-							temp.PerformClick();
-							m_keypad = false;
+							//AddMsg(m_ctls[i].TabOrder.ToString());
+							Button temp = (Button)m_ctls[i].Ctlinst;
+							temp.BackColor = Color.Aqua;
+							temp = (Button)m_ctls[j].Ctlinst;
+							temp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+							//						AddMsg(current_button.ToString() + " " + i.ToString());
 						}
-
-						break;
-					case "NAV_CLOSE":
-						//this.Dispose();
-						this.Close();
-						break;
-					default:
-						break;
-				}
-
-				if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_SIDE")
-				{
-					i = GetInstByTabOrder(current_button);
-					j = GetInstByTabOrder(previous_button);
-					if (i > -1 && j > -1)
-					{
-						//AddMsg(m_ctls[i].TabOrder.ToString());
-						Button temp = (Button)m_ctls[i].Ctlinst;
-						temp.BackColor = Color.Aqua;
-						temp = (Button)m_ctls[j].Ctlinst;
-						temp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-						//						AddMsg(current_button.ToString() + " " + i.ToString());
-					}
-					else
-					{
-						AddMsg("bad tab order" + " " + current_button.ToString() + i.ToString());
+						else
+						{
+							AddMsg("bad tab order" + " " + current_button.ToString() + i.ToString());
+						}
 					}
 				}
+			}
+			else // then the slist dlg is visible...
+			{
+				slist.Process_Msg2(str);
 			}
         }
 		private void button0_Click(object sender, EventArgs e)
@@ -314,70 +321,17 @@ namespace EpServerEngineSampleClient
 					AddMsg("special cmd: " + command.ToString());
 					AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
 
-					UIFormat item = null;
-					XmlReader xmlfile = null;
-					DataSet ds = new DataSet();
-					var filePath = child_dialogs[index].Name;
-					//filePath += ".xml";
-					xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
-					ds.ReadXml(xmlfile);
-
-					if (child_dialogs[index].Type == 0) // PortSet2 type dialog
+					if (child_dialogs[index].Type == 0) // Scrolling_List type dialog
 					{
-						UIFormat item2 = null;
-						XmlReader xmlfile2 = null;
-						DataSet ds2 = new DataSet();
-						var filePath2 = child_dialogs[index].Name;
-						//filePath += ".xml";
-						xmlfile2 = XmlReader.Create(filePath2, new XmlReaderSettings());
-						ds2.ReadXml(xmlfile2);
-
-						foreach (DataRow dr2 in ds2.Tables[0].Rows)
-						{
-							item2 = new UIFormat();
-							item2.Label = dr2.ItemArray[0].ToString();
-							item2.Command = Convert.ToInt16(dr2.ItemArray[1]);
-							item2.Length = Convert.ToInt16(dr2.ItemArray[2]);
-							AddMsg("type 1: " + item2.Label + " " + item2.Command.ToString() + " " + item2.Length.ToString());
-							ui_format.Add(item2);
-							item2 = null;
-						}
-						psDlg = new PortSet2(filePath, m_client);
-						psDlg.SetButtonLabels();
-						psDlg.Name = "Dialog One";
-						psDlg.Enable_Dlg(true);
-						psDlg.StartPosition = FormStartPosition.Manual;
-						psDlg.Location = new Point(150, 150);
-						if (psDlg.ShowDialog(this) == DialogResult.OK)
-						{
-							//                AddMsg("dlg = OK");
-						}
-						else
-						{
-							//                this.txtResult.Text = "Cancelled";
-						}
-						psDlg.Enable_Dlg(false);
-
+						slist.SetXMLFile(child_dialogs[index].Name);
+						//m_wait = false;
+						slist.Enable_Dlg(true);
+						this.Enable_Dlg(false);
+						slist.ShowDialog(this);
+						slist.Enable_Dlg(false);
+						this.Enable_Dlg(true);
+						//m_wait = true;
 					}
-/*
-					else if (child_dialogs[index].Type == 1)        // scrolling list type
-					{
-						var filePath2 = child_dialogs[index].Name;
-						slDlg = new Child_Scrolling_List(filePath2, m_client)
-						{
-							Name = "Dialog One"
-						};
-						slDlg.Enable_Dlg(true);
-						if (slDlg.ShowDialog(this) == DialogResult.OK)
-						{
-							//                AddMsg("dlg = OK");
-						}
-						else
-						{
-							//                this.txtResult.Text = "Cancelled";
-						}
-					}
-*/
 				}
 			}
 			else

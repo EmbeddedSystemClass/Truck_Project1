@@ -56,9 +56,11 @@ namespace EpServerEngineSampleClient
 				no_selections++;
 			}
 			current_selection = 0;
+/*
 			string song = mp3file[current_selection].mp3_location;
 			player.SoundLocation = song;
 			player.Play();
+*/
 		}
 		delegate void AddMsg_Involk(string message);
 		public void AddMsg(string message)
@@ -81,37 +83,38 @@ namespace EpServerEngineSampleClient
 
 		private void btnPlay_Click(object sender, EventArgs e)
 		{
-
-			current_selection = lbPlayList.SelectedIndex;
-			string song = mp3file[current_selection].mp3_location;
-			player.SoundLocation = song;
-			player.Play();
-
+				current_selection = lbPlayList.SelectedIndex;
+				string song = mp3file[current_selection].mp3_location;
+				player.SoundLocation = song;
+				player.Play();
 		}
 
 		private void Next_Click(object sender, EventArgs e)
 		{
-			current_selection++;
-			if (current_selection > no_selections-1)
-				current_selection = 0;
-			lbPlayList.SelectedIndex = current_selection;
-			string song = mp3file[current_selection].mp3_location;
-			player.SoundLocation = song;
-			player.Play();
+				current_selection++;
+				if (current_selection > no_selections - 1)
+					current_selection = 0;
+				lbPlayList.SelectedIndex = current_selection;
+/*
+				string song = mp3file[current_selection].mp3_location;
+				player.SoundLocation = song;
+				player.Play();
+*/
 		}
 
 		private void Prev_Click(object sender, EventArgs e)
 		{
-			current_selection--;
-			if (current_selection < 0)
-				current_selection = no_selections-1;
-			AddMsg(current_selection.ToString() + " " + mp3file[current_selection].mp3_location.ToString());
+				current_selection--;
+				if (current_selection < 0)
+					current_selection = no_selections - 1;
+				AddMsg(current_selection.ToString() + " " + mp3file[current_selection].mp3_location.ToString());
 
-			lbPlayList.SelectedIndex = current_selection;
-			string song = mp3file[current_selection].mp3_location;
-			player.SoundLocation = song;
-			player.Play();
-
+				lbPlayList.SelectedIndex = current_selection;
+/*
+				string song = mp3file[current_selection].mp3_location;
+				player.SoundLocation = song;
+				player.Play();
+*/
 		}
 		public void Enable_Dlg(bool wait)
 		{
@@ -137,10 +140,11 @@ namespace EpServerEngineSampleClient
 			System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
 			ret = new string(chars2);
 			string str = svrcmd.GetName(type_msg);
-			//AddMsg(str);
 
 			if (m_wait == true && (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE"))
 			{
+				AddMsg(str);
+				AddMsg(ret);
 				switch (str)
 				{
 					case "NAV_UP":
@@ -150,8 +154,11 @@ namespace EpServerEngineSampleClient
 						Next_Click(new object(), new EventArgs());
 						break;
 					case "NAV_SIDE":
+						current_selection = 0;
+						lbPlayList.SelectedIndex = current_selection;
 						break;
 					case "NAV_CLICK":
+						btnPlay_Click(new object(), new EventArgs());
 						break;
 					case "NAV_CLOSE":
 						//this.Dispose();

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<ClientParams>
-		<AutoConn>true</AutoConn>
+		<AutoConn>false</AutoConn>
 		<IPAdress>192.168.42.149</IPAdress>
 		<PortNo>5193</PortNo>
 		<Primary>false</Primary>
@@ -11,14 +11,14 @@
 		<AutoConn>false</AutoConn>
 		<IPAdress>192.168.42.145</IPAdress>
 		<PortNo>5193</PortNo>
-		<Primary>true</Primary>
+		<Primary>false</Primary>
 		<AttemptsToConnect>6</AttemptsToConnect>
 	</ClientParams>
 	<ClientParams>
 		<AutoConn>false</AutoConn>
 		<IPAdress>192.168.42.146</IPAdress>
 		<PortNo>5193</PortNo>
-		<Primary>false</Primary>
+		<Primary>true</Primary>
 		<AttemptsToConnect>4</AttemptsToConnect>
 	</ClientParams>
 	<ClientParams>

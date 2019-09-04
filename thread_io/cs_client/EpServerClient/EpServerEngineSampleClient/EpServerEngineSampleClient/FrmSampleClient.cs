@@ -61,6 +61,9 @@ namespace EpServerEngineSampleClient
 		private PortSet2 psDlg = null;
 		private PortSet2 psDlg2 = null;
 		private PortSet2 psDlg3 = null;
+		private PlayerDlg playdlg = null;
+		private Child_Scrolling_List slist = null;
+
 		private List<ClientParams> client_params;
 		private int current_button = 0;
 		private int previous_button = 0;
@@ -125,6 +128,11 @@ namespace EpServerEngineSampleClient
 			psDlg3.SetButtonLabels();
 			psDlg3.Name = "Test Ports";
 			//psDlg3.Set_Type(false);
+
+			playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
+
+			slist = new Child_Scrolling_List(m_client);
+			slist.Enable_Dlg(false);
 
 			client_params = new List<ClientParams>();
 			ClientParams item = null;
@@ -305,6 +313,14 @@ namespace EpServerEngineSampleClient
 			else if (psDlg3.Visible == true)
 			{
 				psDlg3.Process_Msg(receivedPacket.PacketRaw);
+			}
+			else if (playdlg.Visible == true)
+			{
+				playdlg.Process_Msg(receivedPacket.PacketRaw);
+			}
+			else if (slist.Visible == true)
+			{
+				slist.Process_Msg(receivedPacket.PacketRaw);
 			}
 			else
 				Process_Msg(receivedPacket.PacketRaw);
@@ -758,6 +774,12 @@ namespace EpServerEngineSampleClient
 		}
 		private void TestPorts_Click(object sender, EventArgs e)
 		{
+			//AddMsg("test list dlg");
+			slist.SetXMLFile("C:\\Users\\daniel\\dev\\ChildDialog1.xml");
+			slist.Enable_Dlg(true);
+			slist.ShowDialog(this);
+			slist.Enable_Dlg(false);
+			/*
 			psDlg3.Enable_Dlg(true);
 			psDlg3.StartPosition = FormStartPosition.Manual;
 			psDlg3.Location = new Point(100, 10);
@@ -769,6 +791,7 @@ namespace EpServerEngineSampleClient
 				//                this.txtResult.Text = "Cancelled";
 			}
 			psDlg3.Enable_Dlg(false);
+			*/
 		}
 		private void reevaluate_enabled_buttons()
 		{
@@ -960,17 +983,14 @@ namespace EpServerEngineSampleClient
 				//cbAutoConnecct.Checked = client_params[selected_address].AutoConn;
 			}
 		}
-
 		private void FrmSampleClient_Load(object sender, EventArgs e)
 		{
 			this.StartPosition = FormStartPosition.Manual;
 			this.Location = new Point(100, 10);
 		}
-
 		private void Btn_PlayList_Click(object sender, EventArgs e)
 		{
-			PlayerDlg playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
-			psDlg.Enable_Dlg(true);
+			playdlg.Enable_Dlg(true);
 
 			playdlg.StartPosition = FormStartPosition.Manual;
 			playdlg.Location = new Point(100, 10);
@@ -982,6 +1002,7 @@ namespace EpServerEngineSampleClient
 			{
 				//                this.txtResult.Text = "Cancelled";
 			}
+			playdlg.Enable_Dlg(false);
 		}
 		private void SetTime()
 		{
