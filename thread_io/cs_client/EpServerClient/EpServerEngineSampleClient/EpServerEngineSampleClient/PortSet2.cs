@@ -295,12 +295,9 @@ namespace EpServerEngineSampleClient
 		}
 		private void button9_Click(object sender, EventArgs e)
 		{
-			/*
-						if (!m_keypad)
-							current_button = 9;
-						send_cmd();
-			*/
-			this.Close();
+			if (!m_keypad)
+				current_button = 9;
+			send_cmd();
 		}
 		private void send_cmd()
 		{

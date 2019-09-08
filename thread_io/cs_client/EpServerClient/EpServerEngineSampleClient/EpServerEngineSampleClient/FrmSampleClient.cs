@@ -622,10 +622,6 @@ namespace EpServerEngineSampleClient
 				//btnStartEng.Text = "Start Engine";
 			}
 		}
-		private void Btn_SetTime_Click(object sender, EventArgs e)
-		{
-
-		}
 		private void ShutdownServer(object sender, EventArgs e)
 		{
 			//string cmd = "SHUTDOWN_IOBOX";
@@ -775,11 +771,11 @@ namespace EpServerEngineSampleClient
 		private void TestPorts_Click(object sender, EventArgs e)
 		{
 			//AddMsg("test list dlg");
-			slist.SetXMLFile("C:\\Users\\daniel\\dev\\ChildDialog1.xml");
-			slist.Enable_Dlg(true);
-			slist.ShowDialog(this);
-			slist.Enable_Dlg(false);
-			/*
+			//slist.SetXMLFile("C:\\Users\\daniel\\dev\\ChildDialog1.xml");
+			//slist.Enable_Dlg(true);
+			//slist.ShowDialog(this);
+			//slist.Enable_Dlg(false);
+			
 			psDlg3.Enable_Dlg(true);
 			psDlg3.StartPosition = FormStartPosition.Manual;
 			psDlg3.Location = new Point(100, 10);
@@ -791,7 +787,6 @@ namespace EpServerEngineSampleClient
 				//                this.txtResult.Text = "Cancelled";
 			}
 			psDlg3.Enable_Dlg(false);
-			*/
 		}
 		private void reevaluate_enabled_buttons()
 		{

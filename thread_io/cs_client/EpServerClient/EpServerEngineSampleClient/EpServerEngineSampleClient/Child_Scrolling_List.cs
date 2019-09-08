@@ -184,6 +184,7 @@ namespace EpServerEngineSampleClient
 
 					case "NAV_CLOSE":
 						lbScroll.Items.Clear();
+                        AddMsg(list_index.ToString() + " " + "closed");
 						this.Close();
 						break;
 

@@ -49,11 +49,22 @@ namespace EpServerEngineSampleClient
 				item = new Mp3File();
 				item.mp3_location = dr.ItemArray[0].ToString();
 				item.index = Convert.ToInt16(dr.ItemArray[1]);
-				//AddMsg(item.mp3_location + " " + item.index.ToString());
-				mp3file.Add(item);
-				lbPlayList.Items.Add(item.mp3_location.ToString());
-				item = null;
-				no_selections++;
+                if (File.Exists(item.mp3_location))
+                {
+                    //AddMsg(item.mp3_location + " " + item.index.ToString());
+                    mp3file.Add(item);
+                    string str = item.mp3_location.ToString();
+                    int index = str.LastIndexOf("\\");
+                    string str2 = str.Substring(index+1);
+					//AddMsg(index.ToString());
+					//lbPlayList.Items.Add(item.mp3_location.ToString() + " " + index.ToString());
+					int count = 2;
+					//string str3 = str2.Substring(str2.IndexOf('.'));
+					str2 = str2.Remove(str2.IndexOf('.'));
+                    lbPlayList.Items.Add(str2);
+                    item = null;
+                    no_selections++;
+                }
 			}
 			current_selection = 0;
 /*
@@ -83,10 +94,11 @@ namespace EpServerEngineSampleClient
 
 		private void btnPlay_Click(object sender, EventArgs e)
 		{
-				current_selection = lbPlayList.SelectedIndex;
-				string song = mp3file[current_selection].mp3_location;
-				player.SoundLocation = song;
-				player.Play();
+			current_selection = lbPlayList.SelectedIndex;
+			string song = mp3file[current_selection].mp3_location;
+            AddMsg(song.ToString());               
+			player.SoundLocation = song;
+			player.Play();
 		}
 
 		private void Next_Click(object sender, EventArgs e)
@@ -169,5 +181,20 @@ namespace EpServerEngineSampleClient
 				}
 			}
 		}
-	}
+
+        private void Loop_Clicked(object sender, EventArgs e)
+        {
+            current_selection = lbPlayList.SelectedIndex;
+            string song = mp3file[current_selection].mp3_location;
+            AddMsg(song.ToString());
+            player.SoundLocation = song;
+            player.PlayLooping();       // plays the same damn file over and over again
+        }
+
+        private void Test_Click(object sender, EventArgs e)
+        {
+            //player.
+            //AddMsg(current_selection.ToString());
+        }
+    }
 }
