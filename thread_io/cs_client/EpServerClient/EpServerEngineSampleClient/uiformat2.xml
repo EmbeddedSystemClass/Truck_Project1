@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>					<!-- Settings Two dialog -->
+		<Label>Temp Alarm</Label>
+		<Command>200</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Fan On Temp</Label>
+		<Command>201</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Fan Off Temp</Label>
+		<Command>202</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Unused</Label>
+		<Command>0</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Disconnect</Label>
+		<Command>62</Command>
+		<Length>1</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Shutdown Svr</Label>
+		<Command>42</Command>
+		<Length>0</Length>
+	</UIFormat>
+	<UIFormat>
+		<Label>Reboot Svr</Label>
+		<Command>43</Command>
+		<Length>1</Length>
+	</UIFormat>
+</Table>
+ 

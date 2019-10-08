@@ -8,8 +8,8 @@ namespace EpServerEngineSampleClient
 {
 	class SListTypes
 	{
-		public int Offset { get; set; }
+		public string Offset { get; set; }
 		public string Name { get; set; }
-		public string Value { get; set; }
+		public int Value { get; set; }
 	}
 }

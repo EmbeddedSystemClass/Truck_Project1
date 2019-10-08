@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>200</Num>
+		<Name>C:\\Users\\daniel\\dev\\EngTempLimit</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>201</Num>
+		<Name>C:\\Users\\daniel\\dev\\FanOnTemp</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>202</Num>
+		<Name>C:\\Users\\daniel\\dev\\FanOffTemp</Name>
+	</ChildDialogs>
+</Table>

@@ -915,6 +915,7 @@ UCHAR serial_recv_task(int test)
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
 	int engine_temp, rpm, mph;
+	int engine_temp_limit = 182;	// 182 = 195F
 	int fd;
 	char errmsg[20];
 	char tempx[30];
@@ -1010,6 +1011,10 @@ UCHAR serial_recv_task(int test)
 //			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
+			if(engine_temp > engine_temp_limit)
+			{
+				// set alarm
+			}
 		}else
 		
 		if(cmd == SEND_RT_VALUES)

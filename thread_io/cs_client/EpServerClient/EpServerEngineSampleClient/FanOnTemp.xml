@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>			<!-- Settings for 'Test Ports' Dialog -->
+		<Offset>SET_FAN_ON</Offset>
+		<Name>170</Name>
+		<Value>170</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>172</Name>
+		<Value>172</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>174</Name>
+		<Value>174</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>176</Name>
+		<Value>176</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>178</Name>
+		<Value>178</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>180</Name>					<!-- set Name to zero and control -->
+		<Value>180</Value>						<!-- is disabled -->
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>182</Name>
+		<Value>182</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>184</Name>
+		<Value>184</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>186</Name>
+		<Value>186</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>188</Name>
+		<Value>188</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>190</Name>
+		<Value>190</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>192</Name>
+		<Value>192</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>194</Name>
+		<Value>194</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>196</Name>
+		<Value>196</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>198</Name>
+		<Value>198</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_ON</Offset>
+		<Name>200</Name>
+		<Value>200</Value>
+	</UIFormat>
+</Table>
+ 

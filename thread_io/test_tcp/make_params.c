@@ -19,15 +19,14 @@ int main(void)
 	params.fpga_xmit_rate = 3;
 	params.high_rev_limit = 4000;
 	params.low_rev_limit = 3800;
-	params.cooling_fan_on = 5;
-	params.cooling_fan_off = 6;
+	params.cooling_fan_on = 171;
+	params.cooling_fan_off = 154;
 	params.blower_enabled = 7;
 	params.blower1_on = 8;
 	params.blower2_on = 9;
 	params.blower3_on = 10;
 	params.test_bank = 2;
-	params.comm_port_en = 2;
-
+	params.engine_temp_limit = 182;
 	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);	
 	write(fp,&params,sizeof(PARAM_STRUCT));
 	close(fp);

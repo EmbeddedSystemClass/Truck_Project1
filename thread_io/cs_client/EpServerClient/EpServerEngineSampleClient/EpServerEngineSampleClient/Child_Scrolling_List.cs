@@ -28,6 +28,8 @@ namespace EpServerEngineSampleClient
 		private int list_index = 0;
 		private int prev_list_index = 0;
 		private bool m_wait;
+        public int final_value = 0;
+        public string cmd = "";
 
 		public Child_Scrolling_List(INetworkClient client)
 		{
@@ -47,9 +49,11 @@ namespace EpServerEngineSampleClient
 			foreach (DataRow dr in ds.Tables[0].Rows)
 			{
 				item = new SListTypes();
-				item.Offset = Convert.ToInt16(dr.ItemArray[0]);
+                item.Offset = dr.ItemArray[0].ToString();
 				item.Name = dr.ItemArray[1].ToString();
-				item.Value = dr.ItemArray[2].ToString();
+                //item.Value = dr.ItemArray[2].ToString();
+                item.Value = Convert.ToUInt16(dr.ItemArray[2]);
+                    
 				//AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
 				s_lists.Add(item);
 				lbScroll.Items.Add(item.Name);
@@ -134,6 +138,9 @@ namespace EpServerEngineSampleClient
 
 					case "NAV_CLICK":
 						AddMsg(lbScroll.Items[list_index].ToString() + " " + s_lists[list_index].Value.ToString());
+                        final_value = s_lists[list_index].Value;
+                        cmd = s_lists[list_index].Offset;
+
 						break;
 
 					case "NAV_CLOSE":
@@ -180,6 +187,7 @@ namespace EpServerEngineSampleClient
 
 					case "NAV_CLICK":
 						AddMsg(lbScroll.Items[list_index].ToString() + " " + s_lists[list_index].Value.ToString());
+                        final_value = s_lists[list_index].Value;
 						break;
 
 					case "NAV_CLOSE":

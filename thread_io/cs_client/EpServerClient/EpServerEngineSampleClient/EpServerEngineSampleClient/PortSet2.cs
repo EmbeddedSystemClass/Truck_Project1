@@ -315,6 +315,7 @@ namespace EpServerEngineSampleClient
 				else
 				{
 					int index = command - 200;
+                    byte indexb = (byte)index;
 					AddMsg("special cmd: " + command.ToString());
 					AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
 
@@ -325,6 +326,19 @@ namespace EpServerEngineSampleClient
 						slist.Enable_Dlg(true);
 						this.Enable_Dlg(false);
 						slist.ShowDialog(this);
+                        if(slist.final_value != 0)
+                        {
+                            string str = slist.cmd;
+                            byte[] bytes = new byte[2];
+                            byte[] bytes2 = new byte[4];
+                            bytes2[0] = svrcmd.GetCmdIndexB(str);
+                            bytes.SetValue((byte)slist.final_value,0);
+                            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, 4);
+                            Packet packet = new Packet(bytes, 0, 4, false);
+                            m_client.Send(packet);
+                            int temp = slist.final_value;
+                            AddMsg(str + " " + temp.ToString());
+                        }
 						slist.Enable_Dlg(false);
 						this.Enable_Dlg(true);
 						//m_wait = true;

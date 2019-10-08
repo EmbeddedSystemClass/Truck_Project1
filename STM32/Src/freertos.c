@@ -120,7 +120,11 @@ uint32_t pack32(UCHAR *buff);
 // variables used by the DS1620 conversion in timer Callback01
 uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
+UCHAR global_cmd;
 static int raw_data;
+static int engine_temp_limit = 182;	// 195F
+static int fan_on_temp = 171;	// 185F
+static int fan_off_temp = 154;	// 170F
 static UCHAR key_mode1, key_mode2;
 
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
@@ -1649,6 +1653,33 @@ void Callback01(void const * argument)
 	vTaskDelay(30);
 	writeByteTo1620(DS1620_CMD_STOPCONV);
 	vTaskDelay(100);
+	if(raw_data > engine_temp_limit)
+	{
+		// sound alarm
+		global_ucbuff[0] = SPECIAL_TONE_ON;
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+	}
+// fan_on_temp = 171;	// 185F
+// fan_off_temp = 154;	// 170F
+	
+	if(raw_data > fan_on_temp)
+	{
+		global_cmd = ON_FAN;
+		global_ucbuff[0] = global_cmd;
+		fan_on = 1;
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(Send7200Handle, global_avr_buffer, 0);
+	}
+	else if(raw_data < fan_off_temp)
+	{
+		global_cmd = OFF_FAN;
+		global_ucbuff[0] = global_cmd;
+		fan_on = 0;
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(Send7200Handle, global_avr_buffer, 0);
+	}	
+
 /*
 	raw_data++;				// used for testing
 	if(raw_data > 230)

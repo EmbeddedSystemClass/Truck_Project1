@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[88] =
+CMD_STRUCT cmd_array[90] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -125,7 +125,10 @@ CMD_STRUCT cmd_array[88] =
 	{		SEND_STATUS,"SEND_STATUS\0" },
 	{		SERVER_UP,"SERVER_UP\0" },
 	{		SERVER_DOWN,"SERVER_DOWN\0" },
-	{		UPLOAD_NEW,"UPLOAD_NEW\0" }
+	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
+	{		SET_FAN_ON,"SET_FAN_ON\0" },
+	{		SET_FAN_OFF,"SET_FAN_OFF\0" }
 };
 
 //extern illist_t ill;
@@ -459,34 +462,32 @@ UCHAR get_host_cmd_task(int test)
 						}
 */
 						format_param_msg();
-
+/*
 						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"high_rev_limit: %d\r\n",ps.high_rev_limit);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"low_rev_limit: %d\r\n",ps.low_rev_limit);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"cooling fan: %d\r\n",ps.cooling_fan_on);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"fan off: %d\r\n",ps.cooling_fan_off);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"blwer en: %d\r\n",ps.blower_enabled);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"blower1: %d\r\n",ps.blower1_on);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"blower2: %d\r\n",ps.blower2_on);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"blower3: %d\r\n",ps.blower3_on);
-//						printString2(tempx);
+						printString2(tempx);
 						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
-//						printString2(tempx);
-						sprintf(tempx,"comm ports: %d\r\n",ps.comm_port_en);
-//						printString2(tempx);
-
+						printString2(tempx);
+*/
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -906,6 +907,13 @@ UCHAR get_host_cmd_task(int test)
 						}
 
 						break;
+					case SET_TEMP_LIMIT:
+						break;
+					case SET_FAN_ON:
+						break;
+					case SET_FAN_OFF:
+						break;
+
 					case EXIT_PROGRAM:
 
 //printf("exiting program...\r\n");
@@ -1273,14 +1281,28 @@ static void format_param_msg(void)
 	ps.fpga_xmit_rate = temp_conv;
 	
 	ps.test_bank = msg_buf[24];
-	ps.comm_port_en = msg_buf[25];
+	
+	temp_conv = (int)msg_buf[25];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[26];
+	ps.engine_temp_limit = temp_conv;
+
+	temp_conv = (int)msg_buf[27];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[28];
+	ps.fan_on_temp = temp_conv;
+
+	temp_conv = (int)msg_buf[29];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[30];
+	ps.fan_off_temp = temp_conv;
 }
 /*********************************************************************/
 void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d",
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
@@ -1293,7 +1315,9 @@ void send_param_msg(void)
 														ps.blower2_on,
 														ps.blower3_on,
 														ps.test_bank,
-														ps.comm_port_en);
+														ps.engine_temp_limit,
+														ps.fan_on_temp,
+														ps.fan_off_temp);
 
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 }

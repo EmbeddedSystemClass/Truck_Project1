@@ -126,7 +126,10 @@ enum cmd_types
 	SEND_STATUS,
 	SERVER_UP,
 	SERVER_DOWN,
-	UPLOAD_NEW
+	UPLOAD_NEW,
+	SET_TEMP_LIMIT,
+	SET_FAN_ON,
+	SET_FAN_OFF
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200
@@ -309,7 +312,7 @@ typedef struct params
 	int blower2_on;
 	int blower3_on;
 	UCHAR test_bank;
-	UCHAR comm_port_en;
+	int engine_temp_limit;
 
 }PARAM_STRUCT;
 
