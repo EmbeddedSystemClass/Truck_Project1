@@ -69,6 +69,7 @@
             this.SideMarkerLabel = new System.Windows.Forms.Label();
             this.BrightsLabel = new System.Windows.Forms.Label();
             this.IgnitionOnLabel = new System.Windows.Forms.Label();
+            this.keymodeLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -78,7 +79,7 @@
             this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tbReceived.Location = new System.Drawing.Point(741, 304);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
@@ -491,12 +492,23 @@
             this.IgnitionOnLabel.TabIndex = 46;
             this.IgnitionOnLabel.Text = "Ignition";
             // 
+            // keymodeLabel
+            // 
+            this.keymodeLabel.AutoSize = true;
+            this.keymodeLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.keymodeLabel.Location = new System.Drawing.Point(518, 264);
+            this.keymodeLabel.Name = "keymodeLabel";
+            this.keymodeLabel.Size = new System.Drawing.Size(136, 31);
+            this.keymodeLabel.TabIndex = 47;
+            this.keymodeLabel.Text = "NORMAL";
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
             this.ClientSize = new System.Drawing.Size(1113, 631);
+            this.Controls.Add(this.keymodeLabel);
             this.Controls.Add(this.IgnitionOnLabel);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.tbEngRunTime);
@@ -591,6 +603,7 @@
 		private System.Windows.Forms.Label SideMarkerLabel;
 		private System.Windows.Forms.Label BrightsLabel;
 		private System.Windows.Forms.Label IgnitionOnLabel;
-	}
+        private System.Windows.Forms.Label keymodeLabel;
+    }
 }
 

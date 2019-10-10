@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<ClientParams>
-		<AutoConn>true</AutoConn>
+		<AutoConn>false</AutoConn>
 		<IPAdress>192.168.42.149</IPAdress>
 		<PortNo>5193</PortNo>
 		<Primary>false</Primary>

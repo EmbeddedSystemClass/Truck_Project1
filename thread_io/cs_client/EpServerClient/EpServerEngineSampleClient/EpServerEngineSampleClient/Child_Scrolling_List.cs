@@ -60,7 +60,6 @@ namespace EpServerEngineSampleClient
 				item = null;
 			}
 			lbScroll.SetSelected(list_index, true);
-
 		}
 		delegate void AddMsg_Involk(string message);
 		public void AddMsg(string message)
@@ -140,7 +139,7 @@ namespace EpServerEngineSampleClient
 						AddMsg(lbScroll.Items[list_index].ToString() + " " + s_lists[list_index].Value.ToString());
                         final_value = s_lists[list_index].Value;
                         cmd = s_lists[list_index].Offset;
-
+                        AddMsg("cmd: " + cmd);
 						break;
 
 					case "NAV_CLOSE":
@@ -186,8 +185,12 @@ namespace EpServerEngineSampleClient
 						break;
 
 					case "NAV_CLICK":
-						AddMsg(lbScroll.Items[list_index].ToString() + " " + s_lists[list_index].Value.ToString());
+                        AddMsg(lbScroll.Items[list_index].ToString() + " " + s_lists[list_index].Value.ToString());
                         final_value = s_lists[list_index].Value;
+                        cmd = s_lists[list_index].Offset;
+                        AddMsg("cmd: " + cmd);
+                        final_value = s_lists[list_index].Value;
+                        AddMsg("final_value: " + final_value);
 						break;
 
 					case "NAV_CLOSE":

@@ -12,96 +12,100 @@ namespace EpServerEngineSampleClient
     {
         enum Server_cmds
         {
-			NON_CMD,
-			ENABLE_START,       // 1
-			STARTER_OFF,        // 2
-			ON_ACC,             // 3
-			OFF_ACC,            // 4
-			ON_FUEL_PUMP,       // 5
-			OFF_FUEL_PUMP,      // 6
-			ON_FAN,             // 7
-			OFF_FAN,            // 8
-			ON_LIGHTS,          // 9
-			OFF_LIGHTS,         // 10
-			ON_BRIGHTS,         // 11
-			OFF_BRIGHTS,        // 12
-			BLANK,
-			ESTOP_SIGNAL,
-			ON_BRAKES,
-			OFF_BRAKES,
-			ON_RUNNING_LIGHTS,
-			OFF_RUNNING_LIGHTS,
-			SPECIAL_CMD,
-			START_SEQ,
-			SHUTDOWN,
-			ON_LLIGHTS,
-			OFF_LLIGHTS,
-			ON_LBRIGHTS,
-			OFF_LBRIGHTS,
-			ON_RLIGHTS,
-			OFF_RLIGHTS,
-			ON_RBRIGHTS,
-			OFF_RBRIGHTS,
-			BLOWER1,
-			BLOWER2,
-			BLOWER3,
-			BLOWER_OFF,
-			WIPER1,
-			WIPER2,
-			WIPER_OFF,
-			STOP_MBOX_XMIT,
-			START_MBOX_XMIT,
-			STOP_AVR_XMIT,
-			START_AVR_XMIT,
-			SEND_TIME_DATA,
-			SHUTDOWN_IOBOX,
-			REBOOT_IOBOX,
-			TEST_ALL_IO,
-			SEND_ODATA,
-			SAVE_TO_DISK,
-			GET_DIR,
-			LCD_SHIFT_RIGHT,
-			LCD_SHIFT_LEFT,
-			SCROLL_UP,
-			SCROLL_DOWN,
-			ENABLE_LCD,
-			SET_TIME,
-			GET_TIME,
-			SHOW_ODATA,
-			NEW_PASSWORD1,
-			SET_SERIAL_RECV_ON,
-			SET_SERIAL_RECV_OFF,
-			TEST_LEFT_BLINKER,
-			TEST_RIGHT_BLINKER,
-			RE_ENTER_PASSWORD,
-			DISCONNECT,
-			CLOSE_DB,
-			OPEN_DB,
-			BAD_MSG,
-			CURRENT_TIME,
-			SET_PARAMS,
-			EXIT_PROGRAM,
-			ENGINE_TEMP,
-			SEND_RT_VALUES,
-			ENGINE_RUNTIME,
-			SERVER_UPTIME,
-			SEND_CONFIG,
-			SEND_MSG,
-			SEND_RPM,
-			SEND_MPH,
-			NAV_UP,
-			NAV_DOWN,
-			NAV_SIDE,
-			NAV_CLICK,
-			NAV_CLOSE,
-			NAV_NUM,
-			SEND_STATUS,
-			SERVER_UP,
-			SERVER_DOWN,
-			UPLOAD_NEW
-		}
+            NON_CMD,
+            ENABLE_START,       // 1
+            STARTER_OFF,        // 2
+            ON_ACC,             // 3
+            OFF_ACC,            // 4
+            ON_FUEL_PUMP,       // 5
+            OFF_FUEL_PUMP,      // 6
+            ON_FAN,             // 7
+            OFF_FAN,            // 8
+            ON_LIGHTS,          // 9
+            OFF_LIGHTS,         // 10
+            ON_BRIGHTS,         // 11
+            OFF_BRIGHTS,        // 12
+            BLANK,
+            ESTOP_SIGNAL,
+            ON_BRAKES,
+            OFF_BRAKES,
+            ON_RUNNING_LIGHTS,
+            OFF_RUNNING_LIGHTS,
+            SPECIAL_CMD,
+            START_SEQ,
+            SHUTDOWN,
+            ON_LLIGHTS,
+            OFF_LLIGHTS,
+            ON_LBRIGHTS,
+            OFF_LBRIGHTS,
+            ON_RLIGHTS,
+            OFF_RLIGHTS,
+            ON_RBRIGHTS,
+            OFF_RBRIGHTS,
+            BLOWER1,
+            BLOWER2,
+            BLOWER3,
+            BLOWER_OFF,
+            WIPER1,
+            WIPER2,
+            WIPER_OFF,
+            STOP_MBOX_XMIT,
+            START_MBOX_XMIT,
+            STOP_AVR_XMIT,
+            START_AVR_XMIT,
+            SEND_TIME_DATA,
+            SHUTDOWN_IOBOX,
+            REBOOT_IOBOX,
+            TEST_ALL_IO,
+            SEND_ODATA,
+            SAVE_TO_DISK,
+            GET_DIR,
+            LCD_SHIFT_RIGHT,
+            LCD_SHIFT_LEFT,
+            SCROLL_UP,
+            SCROLL_DOWN,
+            ENABLE_LCD,
+            SET_TIME,
+            GET_TIME,
+            SHOW_ODATA,
+            NEW_PASSWORD1,
+            SET_SERIAL_RECV_ON,
+            SET_SERIAL_RECV_OFF,
+            TEST_LEFT_BLINKER,
+            TEST_RIGHT_BLINKER,
+            RE_ENTER_PASSWORD,
+            DISCONNECT,
+            CLOSE_DB,
+            OPEN_DB,
+            BAD_MSG,
+            CURRENT_TIME,
+            SET_PARAMS,
+            EXIT_PROGRAM,
+            ENGINE_TEMP,
+            SEND_RT_VALUES,
+            ENGINE_RUNTIME,
+            SERVER_UPTIME,
+            SEND_CONFIG,
+            SEND_MSG,
+            SEND_RPM,
+            SEND_MPH,
+            NAV_UP,
+            NAV_DOWN,
+            NAV_SIDE,
+            NAV_CLICK,
+            NAV_CLOSE,
+            NAV_NUM,
+            SEND_STATUS,
+            SERVER_UP,
+            SERVER_DOWN,
+            UPLOAD_NEW,
+            SET_TEMP_LIMIT,
+            SET_FAN_ON,
+            SET_FAN_OFF,
+            GET_VERSION
+        }
 
-		public ServerCmds()
+        public ServerCmds()
         {
 
         }

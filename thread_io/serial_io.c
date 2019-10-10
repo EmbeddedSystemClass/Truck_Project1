@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include "../mytypes.h"
 #include "serial_io.h"
+#include "tasks.h"
 
 // AVR_t6963/test uses comm 1 of TS-7200 at 19200
 #ifdef TEST_AVR_LCD
@@ -243,6 +244,23 @@ int init_serial2(void)
 
 void printHexByte(UCHAR byte) 
 {
+#if 0
+	char outstr[5];
+	memset(outstr,0x20,10);
+	UCHAR nibble;
+	char nibret;
+//	nibble = (byte & 0b11110000) >> 4;
+	nibble = (byte & 0xF0) >> 4;
+	nibret = nibbleToHexCharacter(nibble);
+	outstr[0] = nibret;
+	nibble = byte & 0x0F;
+	nibret = nibbleToHexCharacter(nibble);
+	outstr[1] = nibret;
+	outstr[3] = 0;
+	send_status_msg(outstr);
+#endif
+	
+//#if 0
 	/* Prints a byte as its hexadecimal equivalent */
 	UCHAR nibble;
 //	nibble = (byte & 0b11110000) >> 4;
@@ -252,6 +270,7 @@ void printHexByte(UCHAR byte)
 	nibble = byte & 0x0F;
 	write_serial2(nibbleToHexCharacter(nibble));
 	write_serial2(0x20);
+//#endif
 }
 
 char nibbleToHexCharacter(UCHAR nibble) 
@@ -272,11 +291,14 @@ void printString2(char *myString)
 {
 	int i = 0;
 
+//	send_status_msg(myString);
+
 	while(myString[i])
 	{
 		write_serial2(myString[i]);
 		i++;
 	}
+
 //	write_serial2(0xfe);
 	write_serial2('\r');
 	write_serial2('\n');

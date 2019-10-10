@@ -64,7 +64,7 @@ void send_serialother2(UCHAR cmd, UCHAR *buf);
 void send_param_msg(void);
 void add_msg_queue(UCHAR cmd);
 UCHAR get_msg_queue(void);
-
+void send_status_msg(char *msg);
 int uSleep(time_t sec, long nanosec);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);

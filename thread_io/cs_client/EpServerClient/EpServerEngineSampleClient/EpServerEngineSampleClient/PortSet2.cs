@@ -32,6 +32,8 @@ namespace EpServerEngineSampleClient
 		private List<ChildDialogs> child_dialogs;
 		private string xml_child_dialogs_location = "c:\\users\\daniel\\dev\\ChildDialog.xml";
 		private Child_Scrolling_List slist = null;
+        string slist_cmd = "";
+        int slist_value = 0;
 
 		public PortSet2(string xml_file_location, INetworkClient client)
 		{
@@ -50,7 +52,7 @@ namespace EpServerEngineSampleClient
 				item.Label = dr.ItemArray[0].ToString();
 				item.Command = Convert.ToInt16(dr.ItemArray[1]);
 				item.Length = Convert.ToInt16(dr.ItemArray[2]);
-				AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
+				//AddMsg(item.Label + " " + item.Command.ToString() + " " + item.Length.ToString());
 				ui_format.Add(item);
 				item = null;
 			}
@@ -68,12 +70,13 @@ namespace EpServerEngineSampleClient
 				item2.Num = Convert.ToInt16(dr.ItemArray[1]);
 				item2.Name = dr.ItemArray[2].ToString();
 				item2.Name += ".xml";
-				AddMsg(item2.Num.ToString() + " " + item2.Name);
+				//AddMsg(item2.Num.ToString() + " " + item2.Name);
 				child_dialogs.Add(item2);
 				item2 = null;
 			}
 			m_client = client;
 			svrcmd.SetClient(m_client);
+            //slist = new Child_Scrolling_List(client);
 
 			int i = 0;
 			m_ctls = new List<CommonControls>();
@@ -96,7 +99,7 @@ namespace EpServerEngineSampleClient
 				if (m_ctls[i].cmd == 0)
 					m_ctls[9-i].Ctlinst.Enabled = false;
 			}
-			slist = new Child_Scrolling_List(m_client);
+			//slist = new Child_Scrolling_List(m_client);
 			//slist.Enable_Dlg(false);
 		}
 		public void SetButtonLabels()
@@ -174,7 +177,11 @@ namespace EpServerEngineSampleClient
 
 			if (m_wait == true)
 			{
-				if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE")
+                if(str == "SEND_STATUS")
+                {
+                    AddMsg(ret);
+
+                } else if (str == "NAV_UP" || str == "NAV_DOWN" || str == "NAV_CLICK" || str == "NAV_CLOSE" || str == "NAV_SIDE")
 				{
 					previous_button = current_button;
 					switch (str)
@@ -198,7 +205,7 @@ namespace EpServerEngineSampleClient
 							i = GetInstByTabOrder(current_button);
 							//if(m_ctls[i].CtlText != "Close")
 							{
-								AddMsg(m_ctls[9 - i].CtlText);
+								//AddMsg(m_ctls[9 - i].CtlText);
 								Button temp = (Button)(m_ctls[i].Ctlinst);
 								m_keypad = true;
 								temp.PerformClick();
@@ -234,7 +241,7 @@ namespace EpServerEngineSampleClient
 					}
 				}
 			}
-			else // then the slist dlg is visible...
+			else if(!slist.IsDisposed)// then the slist dlg is visible...
 			{
 				slist.Process_Msg2(str);
 			}
@@ -314,10 +321,11 @@ namespace EpServerEngineSampleClient
 				}
 				else
 				{
-					int index = command - 200;
+                    slist = new Child_Scrolling_List(m_client);
+                    int index = command - 200;
                     byte indexb = (byte)index;
-					AddMsg("special cmd: " + command.ToString());
-					AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
+					//AddMsg("special cmd: " + command.ToString());
+					//AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
 
 					if (child_dialogs[index].Type == 0) // Scrolling_List type dialog
 					{
@@ -326,24 +334,27 @@ namespace EpServerEngineSampleClient
 						slist.Enable_Dlg(true);
 						this.Enable_Dlg(false);
 						slist.ShowDialog(this);
-                        if(slist.final_value != 0)
+                        slist_value = slist.final_value;
+                        slist_cmd = slist.cmd;
+                        //AddMsg("test: " + slist_cmd + " " + slist_value.ToString());
+                        slist.Enable_Dlg(false);
+                        this.Enable_Dlg(true);
+                        slist.Dispose();
+                        if (slist_value != 0)
                         {
-                            string str = slist.cmd;
-                            byte[] bytes = new byte[2];
-                            byte[] bytes2 = new byte[4];
-                            bytes2[0] = svrcmd.GetCmdIndexB(str);
-                            bytes.SetValue((byte)slist.final_value,0);
-                            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, 4);
-                            Packet packet = new Packet(bytes, 0, 4, false);
+                            //int val2 = slist.final_value;
+                            //string str = "SET_TEMP_LIMIT";
+                            //string str = "SET_FAN_ON";
+                            string str = slist_cmd;
+                            byte[] bytes1 = BitConverter.GetBytes(slist_value);
+                            byte[] bytes = new byte[bytes1.Count() + 2];
+                            bytes[0] = svrcmd.GetCmdIndexB(str);
+                            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
+                            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
                             m_client.Send(packet);
-                            int temp = slist.final_value;
-                            AddMsg(str + " " + temp.ToString());
                         }
-						slist.Enable_Dlg(false);
-						this.Enable_Dlg(true);
-						//m_wait = true;
-					}
-				}
+                    }
+                }
 			}
 			else
 			{

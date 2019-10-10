@@ -36,7 +36,7 @@ namespace EpServerEngineSampleClient
         public int si_blower3_on { get; set; }
         public int si_lights_on_delay { get; set; }
         public int si_test_bank { get; set; }
-		public int si_comm_en { get; set; }
+		public int si_engine_temp_limit { get; set; }
         public bool set { get; set; }
     }
 }

@@ -336,8 +336,8 @@ void send_serialother(UCHAR cmd, UCHAR *buf)
 	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 	{
 		write_serial(buf[i]);
+//		printHexByte(buf[i]);
 	}
-//	printString2("\r\n");
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
@@ -713,7 +713,7 @@ UCHAR timer_task(int test)
 
 //		write_serial_buffer[0] = 0xAA;
 //		write_serial_buffer[1] = 0x55;
-		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
+//		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
 		if(engine_running == 1)
 		{
@@ -920,6 +920,7 @@ UCHAR serial_recv_task(int test)
 	char errmsg[20];
 	char tempx[30];
 	int s;
+	UINT temp;
 
 	memset(errmsg,0,20);
 
@@ -1054,6 +1055,34 @@ UCHAR serial_recv_task(int test)
 //			printString2(tempx);
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, cmd);
+		}
+		if(cmd == NAV_NUM)
+		{
+/*
+			printHexByte(read_serial_buffer[1]);
+			printHexByte(read_serial_buffer[2]);
+			printHexByte(read_serial_buffer[3]);
+			printHexByte(read_serial_buffer[4]);
+			printHexByte(read_serial_buffer[5]);
+			printHexByte(read_serial_buffer[6]);
+*/
+			temp = read_serial_buffer[2];
+			temp <<= 8;
+			temp |= read_serial_buffer[1];
+			sprintf(tempx,"%d",temp);
+			printString2(tempx);
+
+			temp = read_serial_buffer[4];
+			temp <<= 8;
+			temp |= read_serial_buffer[3];
+			sprintf(tempx,"%d",temp);
+			printString2(tempx);
+
+			temp = read_serial_buffer[6];
+			temp <<= 8;
+			temp |= read_serial_buffer[5];
+			sprintf(tempx,"%d",temp);
+			printString2(tempx);
 		}
 
 		if(shutdown_all)

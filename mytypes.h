@@ -129,7 +129,8 @@ enum cmd_types
 	UPLOAD_NEW,
 	SET_TEMP_LIMIT,
 	SET_FAN_ON,
-	SET_FAN_OFF
+	SET_FAN_OFF,
+	GET_VERSION
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200

@@ -54,6 +54,9 @@ namespace EpServerEngineSampleClient
             str = cbBlower1.SelectedItem.ToString();
             cfg.blower1_on = dtemps[str];
 
+            str = cbTempLimit.SelectedItem.ToString();
+            cfg.si_engine_temp_limit = dtemps[str];
+
             //            blower1_on = Convert.ToInt16(cbBlower1.SelectedItem.ToString());
             //MessageBox.Show(cbRPMUpdateRate.SelectedItem.ToString());
             cfg.rpm_update_rate = Convert.ToInt16(cbRPMUpdateRate.SelectedItem.ToString());
@@ -138,13 +141,20 @@ namespace EpServerEngineSampleClient
             total[22] = result[3];
             total[23] = 0;
 
-			intBytes = BitConverter.GetBytes(cfg.si_comm_en);
-			Array.Reverse(intBytes);
-			result = intBytes;
-			total[24] = result[3];
-			total[25] = 0;
+            intBytes = BitConverter.GetBytes(cfg.FPGAXmitRate);
+            Array.Reverse(intBytes);
+            result = intBytes;
+            total[24] = result[2];
+            total[25] = result[3];
 
-			byte[] bytes2 = new byte[total.Count() + 2];
+            /*
+                        intBytes = BitConverter.GetBytes(cfg.si_comm_en);
+                        Array.Reverse(intBytes);
+                        result = intBytes;
+                        total[24] = result[3];
+                        total[25] = 0;
+            */
+            byte[] bytes2 = new byte[total.Count() + 2];
             System.Buffer.BlockCopy(total, 0, bytes2, 2, total.Length - 2);
             string cmd = "SET_PARAMS";
             bytes2[0] = svrcmd.GetCmdIndexB(cmd);
@@ -999,7 +1009,7 @@ namespace EpServerEngineSampleClient
                 cfg.si_test_bank = 2;
 
 				cbSetCommPorts.SelectedIndex = 1;
-				cfg.si_comm_en = 1;
+				//cfg.si_comm_en = 1;
 
                 cbHighRevLimit.SelectedIndex = 9;
                 cfg.si_high_rev_limit = 9;
@@ -1031,13 +1041,17 @@ namespace EpServerEngineSampleClient
                 cbRPMUpdateRate.SelectedIndex = cfg.si_rpm_update_rate;
                 cbMPHUpdateRate.SelectedIndex = cfg.si_mph_update_rate;
                 cbFPGAXmitRate.SelectedIndex = cfg.si_FPGAXmitRate;
-				cbSetCommPorts.SelectedIndex = cfg.si_comm_en;
             }
         }
 		private void cbSetCommPortSelIndexChaged(object sender, EventArgs e)
 		{
 			cfg.comm_en = cbSetCommPorts.SelectedIndex;
-			cfg.si_comm_en = cbSetCommPorts.SelectedIndex;
+			//cfg.si_comm_en = cbSetCommPorts.SelectedIndex;
 		}
-	}
+
+        private void cbTempLimit_selected_index_changed(object sender, EventArgs e)
+        {
+
+        }
+    }
 }

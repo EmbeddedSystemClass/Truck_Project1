@@ -48,3 +48,24 @@ Bank 1
 Bank 2
 Bank 3
 Bank 4
+
+typedef struct params
+{
+	int rpm_update_rate;	// update rates for LED displays
+	int mph_update_rate;
+	int fpga_xmit_rate;
+	int high_rev_limit;
+	int low_rev_limit;
+	int cooling_fan_on;
+	int cooling_fan_off;
+	int blower_enabled;
+	int blower1_on;
+	int blower2_on;
+	int blower3_on;
+	UCHAR test_bank;
+	int engine_temp_limit;
+
+}PARAM_STRUCT;
+
+cooling_fan_on/off & engine_temp_limit can be set in the scrolling list dlg of the client using the
+keypad. They are then sent to the server which saves them in the ps struct 

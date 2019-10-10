@@ -99,14 +99,12 @@ const uint8_t au8_keyTable[NUM_ROWS][NUM_COLS] =
 FORMAT_STR rtlabel_str[NUM_RT_LABELS];
 FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 uint64_t pack64(UCHAR *buff);
-uint32_t pack32(UCHAR *buff);
+//uint32_t pack32(UCHAR *buff);
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint64_t pack64(UCHAR *buff);
-uint32_t pack32(UCHAR *buff);
 
 /* USER CODE END PD */
 
@@ -122,9 +120,9 @@ uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
 UCHAR global_cmd;
 static int raw_data;
-static int engine_temp_limit = 182;	// 195F
-static int fan_on_temp = 171;	// 185F
-static int fan_off_temp = 154;	// 170F
+static uint16_t engine_temp_limit = 182;	// 195F
+static uint16_t fan_on_temp = 171;	// 185F
+static uint16_t fan_off_temp = 154;	// 170F
 static UCHAR key_mode1, key_mode2;
 
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
@@ -754,7 +752,22 @@ void StartDefaultTask(void const * argument)
 
 			case KP_9:
 				ucbuff[0] = NAV_NUM;
-				ucbuff[1] = key-KP_1+1;
+
+				recval = engine_temp_limit;
+				ucbuff[1] = (UCHAR)recval;
+				recval >>= 8;
+				ucbuff[2] = (UCHAR)recval;
+				
+				recval = fan_on_temp;
+				ucbuff[3] = (UCHAR)recval;
+				recval >>= 8;
+				ucbuff[4] = (UCHAR)recval;
+				
+				recval = fan_off_temp;
+				ucbuff[5] = (UCHAR)recval;
+				recval >>= 8;
+				ucbuff[6] = (UCHAR)recval;
+				
 				avr_buffer[0] = pack64(ucbuff);
 				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
@@ -1054,9 +1067,31 @@ void StartRecv7200(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		HAL_UART_Receive_IT(&huart1, &cmd, 1);
-		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || cmd == SERVER_DOWN)
+//		HAL_UART_Receive_IT(&huart1, &cmd, 1);
+//		memset(buff,0,SERIAL_BUFF_SIZE+1);
+		HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE+1);
+		cmd = buff[0];
+
+		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || 
+				cmd == SERVER_DOWN || cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF)
+
+//		if(cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF)
 		{	
+/*
+			if(timer_toggle == 0)
+			{
+
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+				timer_toggle = 1;
+				
+			}else
+			{
+				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+				timer_toggle = 0;
+			}
+*/
 			switch (cmd)
 			{
 				case 	ON_ACC:				// 3
@@ -1254,7 +1289,78 @@ odometer_high,low, trip_high,low
 					xQueueSend(SendAVRHandle,avr_buffer,0);
 #endif
 					break;
-					
+				case SET_TEMP_LIMIT:
+//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
+//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
+					engine_temp_limit = (uint16_t)buff[2];
+					engine_temp_limit <<= 8;
+					engine_temp_limit |= (uint16_t)buff[1];
+//					engine_temp_limit = 199;
+
+					if(timer_toggle == 0)
+					{
+
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+						timer_toggle = 1;
+						
+					}else
+					{
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+						timer_toggle = 0;
+					}
+
+					break;
+
+				case SET_FAN_ON:
+//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
+//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
+					fan_on_temp = (uint16_t)buff[2];
+					fan_on_temp <<= 8;
+					fan_on_temp |= (uint16_t)buff[1];
+//					fan_off_temp = 201;
+
+					if(timer_toggle == 0)
+					{
+
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+						timer_toggle = 1;
+						
+					}else
+					{
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+						timer_toggle = 0;
+					}
+
+					break;
+
+				case SET_FAN_OFF:
+//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
+//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
+ 					fan_off_temp = (uint16_t)buff[2];
+					fan_off_temp <<= 8;
+					fan_off_temp |= (uint16_t)buff[1];
+//					fan_off_temp = 203;
+
+					if(timer_toggle == 0)
+					{
+
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+						timer_toggle = 1;
+						
+					}else
+					{
+						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+						timer_toggle = 0;
+					}
+
+					break;
+
 				default:
 					break;
 			}
@@ -1643,8 +1749,8 @@ void Callback01(void const * argument)
 	global_ucbuff[0] = ENGINE_TEMP;
 	global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
 	global_ucbuff[2] = global_ucbuff[4];
-	global_avr_buffer[0] = pack64(global_ucbuff);
-	xQueueSend(Send7200Handle, global_avr_buffer, 0);
+//	global_avr_buffer[0] = pack64(global_ucbuff);
+//	xQueueSend(Send7200Handle, global_avr_buffer, 0);
 	//vTaskDelay(1000);
 
 	writeByteTo1620(DS1620_CMD_STARTCONV);
@@ -1686,7 +1792,7 @@ void Callback01(void const * argument)
 		raw_data = 10;
 	temp_raw = raw_data;
 */
-//#if 0
+#if 0
 	if(timer_toggle == 0)
 	{
 
@@ -1700,7 +1806,7 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 		timer_toggle = 0;
 	}
-//#endif
+#endif
   /* USER CODE END Callback01 */
 }
 
@@ -1768,6 +1874,7 @@ uint64_t pack64(UCHAR *buff)
 	var64 |= (uint64_t)buff[0];
 	return var64;
 }
+#if 0
 uint32_t pack32(UCHAR *buff)
 {
 	uint32_t var32;
@@ -1784,7 +1891,7 @@ uint32_t pack32(UCHAR *buff)
 
 	return var32;
 }
-     
+#endif
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

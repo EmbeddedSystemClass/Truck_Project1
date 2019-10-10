@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[90] =
+CMD_STRUCT cmd_array[91] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -128,7 +128,8 @@ CMD_STRUCT cmd_array[90] =
 	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
 	{		SET_FAN_ON,"SET_FAN_ON\0" },
-	{		SET_FAN_OFF,"SET_FAN_OFF\0" }
+	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
+	{		GET_VERSION,"GET_VERSION\0" }
 };
 
 //extern illist_t ill;
@@ -203,8 +204,12 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
+	char version[15] = "sched v1.31\0";
+	UINT utemp;
 //	UCHAR time_buffer[20];
+	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 
+	memset(write_serial_buffer, 0, SERIAL_BUFF_SIZE);
 	// since each card only has 20 ports then the 1st 2 port access bytes
 	// are 8-bit and the 3rd is only 4-bits, so we have to translate the
 	// inportstatus array, representing 3 byts of each 2 (3x8x2 = 48) to
@@ -277,7 +282,7 @@ UCHAR get_host_cmd_task(int test)
 //#endif
 //	myprintf1("start....\0");
 
-	myprintf1("sched v1.29\0");
+	myprintf1(version);
 	//printString2("sched v1.26\0");
 //	printf("sched v1.25\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
@@ -318,14 +323,14 @@ UCHAR get_host_cmd_task(int test)
 				for(i = 2;i < msg_len+2;i+=2)
 					msg_buf2[j++] = msg_buf[i];
 
-/*
-				for(i = 0;i < j;i++)
-				{
+
+//				for(i = 0;i < j;i++)
+//				{
 //					printHexByte(msg_buf2[i]);
-					write_serial2(msg_buf2[i]);
+//					write_serial2(msg_buf2[i]);
 //					printHexByte(msg_buf2[i]);
-				}
-*/
+//				}
+
 //				printString2("\r\n");	
 			}
 			tcp_connected_time = 0;
@@ -462,7 +467,7 @@ UCHAR get_host_cmd_task(int test)
 						}
 */
 						format_param_msg();
-/*
+
 						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
 						printString2(tempx);
 						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
@@ -487,7 +492,9 @@ UCHAR get_host_cmd_task(int test)
 						printString2(tempx);
 						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
 						printString2(tempx);
-*/
+						sprintf(tempx,"temp limit: %d\r\n",ps.engine_temp_limit);
+						printString2(tempx);
+
 						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
@@ -908,12 +915,49 @@ UCHAR get_host_cmd_task(int test)
 
 						break;
 					case SET_TEMP_LIMIT:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.engine_temp_limit = utemp;
+						sprintf(tempx,"engine temp limit: %d", ps.engine_temp_limit);
+						printString2(tempx);
+						write_serial_buffer[0] = msg_buf[2];
+						write_serial_buffer[1] = msg_buf[3];
+						//send_serial(SET_TEMP_LIMIT);
+						send_serialother(SET_TEMP_LIMIT, &write_serial_buffer[0]);
 						break;
+						
 					case SET_FAN_ON:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.cooling_fan_on = utemp;
+						sprintf(tempx,"cooling fan on: %d", ps.cooling_fan_on);
+						printString2(tempx);
+						write_serial_buffer[0] = msg_buf[2];
+						write_serial_buffer[1] = msg_buf[3];
+						send_serialother(SET_FAN_ON, &write_serial_buffer[0]);
+						//send_serial(SET_FAN_ON);
 						break;
+						
 					case SET_FAN_OFF:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.cooling_fan_off = utemp;
+						sprintf(tempx,"cooling fan off: %d",ps.cooling_fan_off);
+						printString2(tempx);
+						write_serial_buffer[0] = msg_buf[2];
+						write_serial_buffer[1] = msg_buf[3];
+						send_serialother(SET_FAN_OFF, &write_serial_buffer[0]);
+						//send_serial(SET_FAN_OFF);
 						break;
 
+					case GET_VERSION:
+						printString2(version);
+						send_status_msg(version);
+						break;
+						
 					case EXIT_PROGRAM:
 
 //printf("exiting program...\r\n");
@@ -1286,23 +1330,13 @@ static void format_param_msg(void)
 	temp_conv <<= 8;
 	temp_conv |= (int)msg_buf[26];
 	ps.engine_temp_limit = temp_conv;
-
-	temp_conv = (int)msg_buf[27];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[28];
-	ps.fan_on_temp = temp_conv;
-
-	temp_conv = (int)msg_buf[29];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[30];
-	ps.fan_off_temp = temp_conv;
 }
 /*********************************************************************/
 void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d",
 														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
@@ -1315,27 +1349,12 @@ void send_param_msg(void)
 														ps.blower2_on,
 														ps.blower3_on,
 														ps.test_bank,
-														ps.engine_temp_limit,
-														ps.fan_on_temp,
-														ps.fan_off_temp);
+														ps.engine_temp_limit);
 
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 }
 /*********************************************************************/
-void send_status_msg(void)
+void send_status_msg(char *msg)
 {
-	char tempx[40];
-/*
-	O_DATA *otp;
-	O_DATA **otpp = &otp;
-	int index;
-	int rc;
-	int engine, fan, lights, brights, rlights;
-	index = LBRIGHTS;
-	rc = ollist_find_data(index,otpp,&oll);
-*/	
-
-
-	sprintf(tempx,"%d",engine_running);
-	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
+	send_msg(strlen((char*)msg)*2,(UCHAR*)msg, SEND_STATUS);
 }

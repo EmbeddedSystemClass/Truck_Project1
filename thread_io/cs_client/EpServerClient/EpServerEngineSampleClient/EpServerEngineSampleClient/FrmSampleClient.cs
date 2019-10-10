@@ -513,6 +513,9 @@ namespace EpServerEngineSampleClient
 				case "NAV_NUM":
 					AddMsg(ret);
 					break;
+                case "SEND_STATUS":
+                    AddMsg(ret);
+                    break;
 				default:
 					break;
 			}
@@ -640,7 +643,19 @@ namespace EpServerEngineSampleClient
 		}
 		private void StopMbox(object sender, EventArgs e)
 		{
-			if (system_up)
+            int val2 = 205;
+            //string str = "SET_TEMP_LIMIT";
+            string str = "SET_FAN_OFF";
+            //byte[] bytes1 = new byte[2];
+
+            byte[] bytes1 = BitConverter.GetBytes(val2);
+            byte[] bytes = new byte[bytes1.Count() + 2];
+            bytes[0] = svrcmd.GetCmdIndexB(str);
+            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
+            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+            m_client.Send(packet);
+            /*
+            if (system_up)
 			{
 				string cmd = "STOP_MBOX_XMIT";
 				int offset = svrcmd.GetCmdIndexI(cmd);
@@ -658,6 +673,7 @@ namespace EpServerEngineSampleClient
 				btnStopSerial.Text = "Stop Mbox Xmit";
 				AddMsg("System Up");
 			}
+            */
 		}
  		public static byte[] ReadFile(string filePath)
 		{
@@ -682,7 +698,19 @@ namespace EpServerEngineSampleClient
 		}
 		private void DBMgmt(object sender, EventArgs e)
 		{
-			
+            int val2 = 185;
+            //string str = "SET_TEMP_LIMIT";
+            string str = "SET_FAN_ON";
+            //byte[] bytes1 = new byte[2];
+
+            byte[] bytes1 = BitConverter.GetBytes(val2);
+            byte[] bytes = new byte[bytes1.Count() + 2];
+            bytes[0] = svrcmd.GetCmdIndexB(str);
+            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
+            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+            m_client.Send(packet);
+            //DlgForm1 dlg = new DlgForm1();
+            //dlg.ShowDialog();
 		}
 		private void ClearScreen(object sender, EventArgs e)
 		{
@@ -693,10 +721,25 @@ namespace EpServerEngineSampleClient
 			string cmd = "GET_TIME";
 			int offset = svrcmd.GetCmdIndexI(cmd);
 			svrcmd.Send_Cmd(offset);
-		}
-		private void SetParamsClick(object sender, EventArgs e)
+            cmd = "GET_VERSION";
+            offset = svrcmd.GetCmdIndexI(cmd);
+            svrcmd.Send_Cmd(offset);
+        }
+        private void SetParamsClick(object sender, EventArgs e)
 		{
-			DlgSetParams testDialog = new DlgSetParams(cfg_params);
+            int val2 = 195;
+            string str = "SET_TEMP_LIMIT";
+            //string str = "SET_FAN_ON";
+            //byte[] bytes1 = new byte[2];
+
+            byte[] bytes1 = BitConverter.GetBytes(val2);
+            byte[] bytes = new byte[bytes1.Count() + 2];
+            bytes[0] = svrcmd.GetCmdIndexB(str);
+            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
+            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+            m_client.Send(packet);
+            /*
+            DlgSetParams testDialog = new DlgSetParams(cfg_params);
 			testDialog.SetClient(m_client);
 			// Show testDialog as a modal dialog and determine if DialogResult = OK.
 			if (testDialog.ShowDialog(this) == DialogResult.OK)
@@ -708,8 +751,9 @@ namespace EpServerEngineSampleClient
 				//                this.txtResult.Text = "Cancelled";
 			}
 			testDialog.Dispose();
-		}
-		private void btnAVR_Click(object sender, EventArgs e)
+            */
+        }
+        private void btnAVR_Click(object sender, EventArgs e)
 		{
 			string cmd = "";
 			int offset = 0;
