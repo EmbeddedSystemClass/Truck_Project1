@@ -79,13 +79,13 @@
             this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbReceived.Location = new System.Drawing.Point(741, 304);
+            this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tbReceived.Location = new System.Drawing.Point(700, 304);
             this.tbReceived.Multiline = true;
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(343, 252);
+            this.tbReceived.Size = new System.Drawing.Size(384, 252);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -118,7 +118,7 @@
             this.tbPort.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tbPort.Location = new System.Drawing.Point(122, 67);
             this.tbPort.Name = "tbPort";
-            this.tbPort.Size = new System.Drawing.Size(148, 29);
+            this.tbPort.Size = new System.Drawing.Size(189, 29);
             this.tbPort.TabIndex = 12;
             this.tbPort.Text = "5193";
             // 
@@ -210,7 +210,7 @@
             // tbEngRunTime
             // 
             this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbEngRunTime.Location = new System.Drawing.Point(856, 575);
+            this.tbEngRunTime.Location = new System.Drawing.Point(836, 575);
             this.tbEngRunTime.Name = "tbEngRunTime";
             this.tbEngRunTime.Size = new System.Drawing.Size(149, 31);
             this.tbEngRunTime.TabIndex = 32;
@@ -219,7 +219,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(723, 576);
+            this.label6.Location = new System.Drawing.Point(703, 576);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(124, 29);
             this.label6.TabIndex = 33;
@@ -236,9 +236,9 @@
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.tbPort);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.Location = new System.Drawing.Point(741, 49);
+            this.groupBox1.Location = new System.Drawing.Point(700, 20);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(343, 228);
+            this.groupBox1.Size = new System.Drawing.Size(384, 257);
             this.groupBox1.TabIndex = 34;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "TCP Status";
@@ -257,7 +257,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(524, 579);
+            this.label8.Location = new System.Drawing.Point(517, 574);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(72, 29);
             this.label8.TabIndex = 39;
@@ -266,7 +266,7 @@
             // tbMPH
             // 
             this.tbMPH.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbMPH.Location = new System.Drawing.Point(614, 572);
+            this.tbMPH.Location = new System.Drawing.Point(595, 570);
             this.tbMPH.Name = "tbMPH";
             this.tbMPH.Size = new System.Drawing.Size(93, 35);
             this.tbMPH.TabIndex = 38;
@@ -275,7 +275,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(524, 529);
+            this.label7.Location = new System.Drawing.Point(517, 525);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(72, 29);
             this.label7.TabIndex = 37;
@@ -284,7 +284,7 @@
             // tbRPM
             // 
             this.tbRPM.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbRPM.Location = new System.Drawing.Point(614, 521);
+            this.tbRPM.Location = new System.Drawing.Point(595, 521);
             this.tbRPM.Name = "tbRPM";
             this.tbRPM.Size = new System.Drawing.Size(93, 35);
             this.tbRPM.TabIndex = 36;
@@ -293,7 +293,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(524, 479);
+            this.label4.Location = new System.Drawing.Point(507, 477);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(83, 29);
             this.label4.TabIndex = 35;
@@ -302,7 +302,7 @@
             // tbEngineTemp
             // 
             this.tbEngineTemp.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbEngineTemp.Location = new System.Drawing.Point(614, 472);
+            this.tbEngineTemp.Location = new System.Drawing.Point(595, 472);
             this.tbEngineTemp.Name = "tbEngineTemp";
             this.tbEngineTemp.Size = new System.Drawing.Size(93, 35);
             this.tbEngineTemp.TabIndex = 34;
@@ -339,7 +339,7 @@
             this.btnStopSerial.Name = "btnStopSerial";
             this.btnStopSerial.Size = new System.Drawing.Size(235, 61);
             this.btnStopSerial.TabIndex = 9;
-            this.btnStopSerial.Text = "Stop Mbox Xmit";
+            this.btnStopSerial.Text = "Show Params";
             this.btnStopSerial.UseVisualStyleBackColor = false;
             this.btnStopSerial.Click += new System.EventHandler(this.StopMbox);
             // 
@@ -411,7 +411,7 @@
             this.btnAVR.Name = "btnAVR";
             this.btnAVR.Size = new System.Drawing.Size(235, 61);
             this.btnAVR.TabIndex = 7;
-            this.btnAVR.Text = "Set LCD on";
+            this.btnAVR.Text = "Settings Three";
             this.btnAVR.UseVisualStyleBackColor = false;
             this.btnAVR.Click += new System.EventHandler(this.btnAVR_Click);
             // 

@@ -13,7 +13,7 @@ int main(void)
 	char filename[20] = "param.conf\0";
 	char *fptr = filename;
 	PARAM_STRUCT params;
-	
+
 	params.rpm_update_rate = 1;
 	params.mph_update_rate = 2;
 	params.fpga_xmit_rate = 3;
@@ -25,11 +25,12 @@ int main(void)
 	params.blower1_on = 8;
 	params.blower2_on = 9;
 	params.blower3_on = 10;
-	params.test_bank = 2;
 	params.engine_temp_limit = 182;
-	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);	
+	params.batt_box_temp = 40;
+	params.test_bank = 2;
+	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
 	write(fp,&params,sizeof(PARAM_STRUCT));
 	close(fp);
-	
+
 	return 0;
 }

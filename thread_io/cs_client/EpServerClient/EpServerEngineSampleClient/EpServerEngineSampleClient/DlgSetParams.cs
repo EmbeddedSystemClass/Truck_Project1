@@ -32,6 +32,14 @@ namespace EpServerEngineSampleClient
         {
 
         }
+        public int get_dtemps(string str)
+        {
+            return dtemps[str];
+        }
+        public string get_temp_str(int index)
+        {
+            return temp_str[250-index];
+        }
         // TODO: need a dialog that pops up if blower1_on is lower that blower2_on or 
 		// blower3_on and so on
 		private void OKClicked(object sender, EventArgs e)
@@ -166,13 +174,18 @@ namespace EpServerEngineSampleClient
             string str = cbFanOn.SelectedItem.ToString();
             cfg.fan_on = dtemps[str];
             cfg.si_fan_on = cbFanOn.SelectedIndex;
-
         }
         private void cbFanOff_SelectedIndexChanged(object sender, EventArgs e)
         {
             string str = cbFanOff.SelectedItem.ToString();
             cfg.fan_off = dtemps[str];
             cfg.si_fan_off = cbFanOff.SelectedIndex;
+        }
+        private void cbTempLimit_selected_index_changed(object sender, EventArgs e)
+        {
+            string str = cbTempLimit.SelectedItem.ToString();
+            cfg.engine_temp_limit = dtemps[str];
+            cfg.si_engine_temp_limit = cbTempLimit.SelectedIndex;
         }
         private void cbBlowerEnabled_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -982,6 +995,9 @@ namespace EpServerEngineSampleClient
             foreach (string str in temp_str)
                 cbBlower1.Items.Add(str);
 
+            foreach (string str in temp_str)
+                cbTempLimit.Items.Add(str);
+
             if (cfg.set == false)
             {
                 cbFanOn.SelectedIndex = 64;
@@ -989,6 +1005,9 @@ namespace EpServerEngineSampleClient
 
                 cbFanOff.SelectedIndex = 97;
                 cfg.si_fan_off = 97;
+
+                cbTempLimit.SelectedIndex = 98;
+                cfg.si_engine_temp_limit = 98;
 
                 cbBlowerEnabled.SelectedIndex = 175;
                 cfg.si_blower_enabled = 175;
@@ -1008,7 +1027,7 @@ namespace EpServerEngineSampleClient
                 cbTestBank.SelectedIndex = 2;
                 cfg.si_test_bank = 2;
 
-				cbSetCommPorts.SelectedIndex = 1;
+				//cbSetCommPorts.SelectedIndex = 1;
 				//cfg.si_comm_en = 1;
 
                 cbHighRevLimit.SelectedIndex = 9;
@@ -1030,6 +1049,7 @@ namespace EpServerEngineSampleClient
             {
                 cbFanOn.SelectedIndex = cfg.si_fan_on;
                 cbFanOff.SelectedIndex = cfg.si_fan_off;
+                cbTempLimit.SelectedIndex = cfg.si_engine_temp_limit;
                 cbBlowerEnabled.SelectedIndex = cfg.si_blower_enabled;
                 cbBlower1.SelectedIndex = cfg.si_blower1_on;
                 cbBlower2.SelectedIndex = cfg.si_blower2_on;
@@ -1042,16 +1062,6 @@ namespace EpServerEngineSampleClient
                 cbMPHUpdateRate.SelectedIndex = cfg.si_mph_update_rate;
                 cbFPGAXmitRate.SelectedIndex = cfg.si_FPGAXmitRate;
             }
-        }
-		private void cbSetCommPortSelIndexChaged(object sender, EventArgs e)
-		{
-			cfg.comm_en = cbSetCommPorts.SelectedIndex;
-			//cfg.si_comm_en = cbSetCommPorts.SelectedIndex;
-		}
-
-        private void cbTempLimit_selected_index_changed(object sender, EventArgs e)
-        {
-
         }
     }
 }

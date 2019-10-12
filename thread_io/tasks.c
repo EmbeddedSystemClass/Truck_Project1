@@ -55,7 +55,7 @@ PARAM_STRUCT ps;
 //extern pthread_t serial_thread;	// workaround for closing serial task
 
 //extern int olLoadConfig(char *filename, ollist_t *oll, size_t size, char *errmsg);
-static float convertF(int raw_data);
+
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
 static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
@@ -98,6 +98,7 @@ void init_ips(void)
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
 	char errmsg[20];
+	char tempx[20];
 
 	engine_running = 0;
 	test_lblinkers = 0;
@@ -139,6 +140,8 @@ void init_ips(void)
 	}
 //	printf("max_ips: %d\r\n",max_ips);
 	i = LoadParams("param.conf",&ps,errmsg);
+	//sprintf(tempx,"%d %d %d",ps.engine_temp_limit,ps.cooling_fan_on,ps.cooling_fan_off);
+	//printString2(tempx);
 	if(i < 0)
 	{
 //		printf("%s\r\n",errmsg);
@@ -915,10 +918,10 @@ UCHAR serial_recv_task(int test)
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
 	int engine_temp, rpm, mph;
-	int engine_temp_limit = 182;	// 182 = 195F
 	int fd;
 	char errmsg[20];
 	char tempx[30];
+	UCHAR send_buffer[15];
 	int s;
 	UINT temp;
 
@@ -966,8 +969,42 @@ UCHAR serial_recv_task(int test)
 		usleep(_100MS);
 	}
 */
+	temp = ps.engine_temp_limit;
+	send_buffer[0] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[1] = (UCHAR)temp;
 
-	send_serial(SERVER_UP);		// send msg to STM32 so it can play a set of beeps & blips
+	temp = ps.cooling_fan_on;
+	send_buffer[2] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[3] = (UCHAR)temp;
+
+	temp = ps.cooling_fan_off;
+	send_buffer[4] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[5] = (UCHAR)temp;
+
+	temp = ps.blower1_on;
+	send_buffer[6] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[7] = (UCHAR)temp;
+
+	temp = ps.blower2_on;
+	send_buffer[8] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[9] = (UCHAR)temp;
+
+	temp = ps.blower3_on;
+	send_buffer[10] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[11] = (UCHAR)temp;
+
+	temp = ps.blower_enabled;
+	send_buffer[12] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[13] = (UCHAR)temp;
+	// send msg to STM32 so it can play a set of beeps & blips
+	send_serialother(SERVER_UP,&send_buffer[0]);
 
 	while(TRUE)
 	{
@@ -1007,17 +1044,28 @@ UCHAR serial_recv_task(int test)
 			engine_temp = (int)high_byte;
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
+			
+			temp = (int)high_byte;
+			temp <<= 8;
+			temp |= (int)low_byte;
+			
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
-//			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
-			if(engine_temp > engine_temp_limit)
-			{
-				// set alarm
-			}
+
+//			printString2(tempx);
+//			sprintf(tempx,"%d",temp);
+//			printString2(tempx);
+			
 		}else
 		
+		if(cmd == TEMP_TOO_HIGH)
+		{
+			printString2("temp too high");
+
+		}else
+
 		if(cmd == SEND_RT_VALUES)
 		{
 			low_byte = read_serial_buffer[1];
@@ -1058,30 +1106,22 @@ UCHAR serial_recv_task(int test)
 		}
 		if(cmd == NAV_NUM)
 		{
-/*
-			printHexByte(read_serial_buffer[1]);
-			printHexByte(read_serial_buffer[2]);
-			printHexByte(read_serial_buffer[3]);
-			printHexByte(read_serial_buffer[4]);
-			printHexByte(read_serial_buffer[5]);
-			printHexByte(read_serial_buffer[6]);
-*/
 			temp = read_serial_buffer[2];
 			temp <<= 8;
 			temp |= read_serial_buffer[1];
-			sprintf(tempx,"%d",temp);
+			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
 			printString2(tempx);
-
+			
 			temp = read_serial_buffer[4];
 			temp <<= 8;
 			temp |= read_serial_buffer[3];
-			sprintf(tempx,"%d",temp);
+			sprintf(tempx,"cooling fan on: %.1f\0", convertF(temp));
 			printString2(tempx);
 
 			temp = read_serial_buffer[6];
 			temp <<= 8;
 			temp |= read_serial_buffer[5];
-			sprintf(tempx,"%d",temp);
+			sprintf(tempx,"cooling fan off: %.1f\0", convertF(temp));
 			printString2(tempx);
 		}
 
@@ -1420,8 +1460,9 @@ UCHAR basic_controls_task(int test)
 			case ON_RBRIGHTS:
 			case OFF_RBRIGHTS:
 //			case ESTOP_SIGNAL:
-				send_serial(cmd);
+				//send_serial(cmd);
 				myprintf1(cmd_array[cmd].cmd_str);
+				printString2(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
@@ -1934,13 +1975,13 @@ UCHAR basic_controls_task(int test)
 	return 1;
 }
 
-static float convertF(int raw_data)
+float convertF(int raw_data)
 {
 	float T_F, T_celcius;
 	int ret;
 	if ((raw_data & 0x100) != 0)
 	{
-		raw_data = -(((~raw_data)+1) & 0xff); /* take 2's comp */   
+		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */   
 	}
 	T_celcius = raw_data * 0.5;
 	T_F = (T_celcius * 1.8) + 32;

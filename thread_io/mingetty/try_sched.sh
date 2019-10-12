@@ -8,15 +8,15 @@ if [ -e /root/sched ]
 then
  mv /root/sched sched
  chmod +x sched
-  echo "new sched found in /root" >> status.txt
-fi
-if [ -e sched2 ]
+ echo "new sched found in /root" >> status.txt
+else if [ -e sched2 ]
 then
  mv sched2 sched
  chmod +x sched
- echo "new sched found" >> status.txt
+ echo "new sched found (sched2)" >> status.txt
 else
  echo "using current sched" >> status.txt
+fi
 fi
 ./sched odata.dat
 OUT=$?

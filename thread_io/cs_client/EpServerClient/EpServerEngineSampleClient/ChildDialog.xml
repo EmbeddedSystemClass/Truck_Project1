@@ -15,4 +15,44 @@
 		<Num>202</Num>
 		<Name>C:\\Users\\daniel\\dev\\FanOffTemp</Name>
 	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>203</Num>
+		<Name>C:\\Users\\daniel\\dev\\HighRevLimit</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>204</Num>
+		<Name>C:\\Users\\daniel\\dev\\LowRevLimit</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>205</Num>
+		<Name>C:\\Users\\daniel\\dev\\LightsOnDelay</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>206</Num>
+		<Name>C:\\Users\\daniel\\dev\\Blower1Temps</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>207</Num>
+		<Name>C:\\Users\\daniel\\dev\\Blower2Temps</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>208</Num>
+		<Name>C:\\Users\\daniel\\dev\\Blower3Temps</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>209</Num>
+		<Name>C:\\Users\\daniel\\dev\\BlowerEnTemps</Name>
+	</ChildDialogs>
+	<ChildDialogs>
+		<Type>0</Type>
+		<Num>210</Num>
+		<Name>C:\\Users\\daniel\\dev\\BattBoxTemp</Name>
+	</ChildDialogs>
 </Table>

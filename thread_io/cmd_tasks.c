@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[91] =
+CMD_STRUCT cmd_array[100] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -129,6 +129,15 @@ CMD_STRUCT cmd_array[91] =
 	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
 	{		SET_FAN_ON,"SET_FAN_ON\0" },
 	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
+	{		HIGH_REV_LIMIT,"HIGH_REV_LIMIT\0" },
+	{		LOW_REV_LIMIT,"LOW_REV_LIMIT\0" },
+	{		LIGHTS_ON_DELAY,"LIGHTS_ON_DELAY\0" },
+	{		SET_BLOWER_EN_TEMP,"SET_BLOWER_EN_TEMP\0" },
+	{		SET_BLOWER1_TEMP,"SET_BLOWER1_TEMP\0" },
+	{		SET_BLOWER2_TEMP,"SET_BLOWER2_TEMP\0" },
+	{		SET_BLOWER3_TEMP,"SET_BLOWER3_TEMP\0" },
+	{		SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
+	{		TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
 	{		GET_VERSION,"GET_VERSION\0" }
 };
 
@@ -204,7 +213,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.31\0";
+	char version[15] = "sched v1.20\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -283,15 +292,11 @@ UCHAR get_host_cmd_task(int test)
 //	myprintf1("start....\0");
 
 	myprintf1(version);
-	//printString2("sched v1.26\0");
-//	printf("sched v1.25\r\n");
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
 	trip = 0;
 	tcp_connected_time = 0;
 	mask = 1;
-
-//	printString2("System Up\0");
 
 	while(TRUE)
 	{
@@ -448,6 +453,8 @@ UCHAR get_host_cmd_task(int test)
 					// TODO: first send the current params that are used by the server and
 					// have been saved to disk in a config file
 					case SET_PARAMS:
+						send_param_msg();
+#if 0
 						memset(tempx,0,sizeof(tempx));
 //						printf("msg len: %d\r\n",msg_len/2-2);
 //						printf("\r\n");
@@ -490,9 +497,9 @@ UCHAR get_host_cmd_task(int test)
 						printString2(tempx);
 						sprintf(tempx,"blower3: %d\r\n",ps.blower3_on);
 						printString2(tempx);
-						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
-						printString2(tempx);
 						sprintf(tempx,"temp limit: %d\r\n",ps.engine_temp_limit);
+						printString2(tempx);
+						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
 						printString2(tempx);
 
 						i = WriteParams("param.conf", &ps, errmsg);
@@ -501,6 +508,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 						}
+#endif
 						break;
 
 					case SET_TIME:
@@ -887,7 +895,24 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_XMIT:
-						send_serial(STOP_MBOX_XMIT);
+						sprintf(tempx,"engine temp limit: %.1f\0", convertF(ps.engine_temp_limit));
+						printString2(tempx);
+						sprintf(tempx,"cooling fan on: %.1f\0", convertF(ps.cooling_fan_on));
+						printString2(tempx);
+						sprintf(tempx,"cooling fan off: %.1f\0", convertF(ps.cooling_fan_off));
+						printString2(tempx);
+						sprintf(tempx,"blower 1 on: %.1f\0", convertF(ps.blower1_on));
+						printString2(tempx);
+						sprintf(tempx,"blower 2 on: %.1f\0", convertF(ps.blower2_on));
+						printString2(tempx);
+						sprintf(tempx,"blower 3 on: %.1f\0", convertF(ps.blower2_on));
+						printString2(tempx);
+						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
+						printString2(tempx);
+						sprintf(tempx,"battery box temp: %.1f\0", convertF(ps.batt_box_temp));
+						printString2(tempx);
+					
+//						send_serial(STOP_MBOX_XMIT);
 						//printString2("System Down\0");
 						break;
 
@@ -919,12 +944,22 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.engine_temp_limit = utemp;
-						sprintf(tempx,"engine temp limit: %d", ps.engine_temp_limit);
+//						sprintf(tempx,"engine temp limit: %d", ps.engine_temp_limit);
+						sprintf(tempx,"engine temp limit: %.1f\0", convertF(ps.engine_temp_limit));
+
 						printString2(tempx);
 						write_serial_buffer[0] = msg_buf[2];
 						write_serial_buffer[1] = msg_buf[3];
 						//send_serial(SET_TEMP_LIMIT);
 						send_serialother(SET_TEMP_LIMIT, &write_serial_buffer[0]);
+						usleep(1000);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
 						break;
 						
 					case SET_FAN_ON:
@@ -932,12 +967,21 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.cooling_fan_on = utemp;
-						sprintf(tempx,"cooling fan on: %d", ps.cooling_fan_on);
+//						sprintf(tempx,"cooling fan on: %d", ps.cooling_fan_on);
+						sprintf(tempx,"cooling fan on: %.1f\0", convertF(ps.cooling_fan_on));
 						printString2(tempx);
 						write_serial_buffer[0] = msg_buf[2];
 						write_serial_buffer[1] = msg_buf[3];
 						send_serialother(SET_FAN_ON, &write_serial_buffer[0]);
 						//send_serial(SET_FAN_ON);
+						usleep(1000);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
 						break;
 						
 					case SET_FAN_OFF:
@@ -945,19 +989,156 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.cooling_fan_off = utemp;
-						sprintf(tempx,"cooling fan off: %d",ps.cooling_fan_off);
+//						sprintf(tempx,"cooling fan off: %d",ps.cooling_fan_off);
+						sprintf(tempx,"cooling fan off: %.1f\0", convertF(ps.cooling_fan_off));
 						printString2(tempx);
 						write_serial_buffer[0] = msg_buf[2];
 						write_serial_buffer[1] = msg_buf[3];
 						send_serialother(SET_FAN_OFF, &write_serial_buffer[0]);
 						//send_serial(SET_FAN_OFF);
+						usleep(1000);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
 						break;
 
+					case HIGH_REV_LIMIT:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.high_rev_limit = utemp;
+						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case LOW_REV_LIMIT:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.low_rev_limit = utemp;
+						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case LIGHTS_ON_DELAY:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.low_rev_limit = utemp;
+						sprintf(tempx,"lights on delay: %d\0", ps.lights_on_delay);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case SET_BLOWER1_TEMP:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.blower1_on = utemp;
+						sprintf(tempx,"blower 1 on: %d\0", ps.blower1_on);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case SET_BLOWER2_TEMP:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.blower2_on = utemp;
+						sprintf(tempx,"blower 2 on: %d\0", ps.blower2_on);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case SET_BLOWER3_TEMP:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.blower3_on = utemp;
+						sprintf(tempx,"blower 3 on: %d\0", ps.blower3_on);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+
+					case SET_BLOWER_EN_TEMP:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.blower_enabled = utemp;
+						sprintf(tempx,"blower en on: %d\0", ps.blower_enabled);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+					
+					case SET_BATT_BOX_TEMP:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.batt_box_temp = utemp;
+						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+						}
+						break;
+					
 					case GET_VERSION:
 						printString2(version);
 						send_status_msg(version);
 						break;
-						
+					
 					case EXIT_PROGRAM:
 
 //printf("exiting program...\r\n");
@@ -1324,19 +1505,23 @@ static void format_param_msg(void)
 	temp_conv |= (int)msg_buf[23];
 	ps.fpga_xmit_rate = temp_conv;
 	
-	ps.test_bank = msg_buf[24];
-	
-	temp_conv = (int)msg_buf[25];
+	temp_conv = (int)msg_buf[24];
 	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[26];
+	temp_conv |= (int)msg_buf[25];
 	ps.engine_temp_limit = temp_conv;
+
+	temp_conv = (int)msg_buf[26];
+	temp_conv <<= 8;
+	temp_conv |= (int)msg_buf[27];
+	ps.test_bank = temp_conv;
+	
 }
 /*********************************************************************/
 void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d",
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
@@ -1348,8 +1533,9 @@ void send_param_msg(void)
 														ps.blower1_on,
 														ps.blower2_on,
 														ps.blower3_on,
-														ps.test_bank,
-														ps.engine_temp_limit);
+														ps.engine_temp_limit,
+														ps.batt_box_temp,
+														ps.test_bank);
 
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 }

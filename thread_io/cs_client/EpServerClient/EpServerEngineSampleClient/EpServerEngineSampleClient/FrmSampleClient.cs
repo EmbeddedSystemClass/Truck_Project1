@@ -53,7 +53,8 @@ namespace EpServerEngineSampleClient
 
 		}
 		ConfigParams cfg_params = new ConfigParams();
-		ServerCmds svrcmd = new ServerCmds();
+        private DlgSetParams dlgsetparams = null;
+        ServerCmds svrcmd = new ServerCmds();
 		INetworkClient m_client = new IocpTcpClient();
 		public System.Collections.Generic.List<ButtonList> button_list;
 		private List<int> Exclude_From_buttons = new List<int>();
@@ -61,7 +62,8 @@ namespace EpServerEngineSampleClient
 		private PortSet2 psDlg = null;
 		private PortSet2 psDlg2 = null;
 		private PortSet2 psDlg3 = null;
-		private PlayerDlg playdlg = null;
+        private PortSet2 psDlg4 = null;
+        private PlayerDlg playdlg = null;
 		private Child_Scrolling_List slist = null;
 
 		private List<ClientParams> client_params;
@@ -87,7 +89,8 @@ namespace EpServerEngineSampleClient
 		private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
 		private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
 		private string xml_dialog3_location = "c:\\Users\\daniel\\dev\\uiformat3.xml";
-		private string xml_params_location = "c:\\Users\\daniel\\dev\\ClientParams.xml";
+        private string xml_dialog4_location = "c:\\Users\\daniel\\dev\\uiformat4.xml";
+        private string xml_params_location = "c:\\Users\\daniel\\dev\\ClientParams.xml";
 
 		public FrmSampleClient()
 		{
@@ -97,8 +100,9 @@ namespace EpServerEngineSampleClient
 			this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
 			//            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
 			svrcmd.SetClient(m_client);
-
-			cbIPAdress.Enabled = true;
+            dlgsetparams = new DlgSetParams(cfg_params);
+            dlgsetparams.SetClient(m_client);
+            cbIPAdress.Enabled = true;
 			tbReceived.Enabled = true;
 			tbPort.Enabled = true;
 			btnTestPorts.Enabled = true;    // these are normally set false
@@ -123,13 +127,15 @@ namespace EpServerEngineSampleClient
 			psDlg2.Name = "Dialog Two";
 			//psDlg2.Set_Type(false);
 
-			//psDlg3 = new PortSet2(File.Exists(test_ports_location_laptop) ? test_ports_location_laptop : test_ports_location_desktop, m_client);
 			psDlg3 = new PortSet2(xml_dialog3_location, m_client);
 			psDlg3.SetButtonLabels();
 			psDlg3.Name = "Test Ports";
-			//psDlg3.Set_Type(false);
 
-			playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
+            psDlg4 = new PortSet2(xml_dialog4_location, m_client);
+            psDlg4.SetButtonLabels();
+            psDlg4.Name = "Dialog Three";
+
+            playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
 
 			slist = new Child_Scrolling_List(m_client);
 			slist.Enable_Dlg(false);
@@ -459,10 +465,18 @@ namespace EpServerEngineSampleClient
 								break;
 							case 5:
 								cfg_params.fan_on = int.Parse(word);
-								break;
+                                AddMsg("fan on: " + cfg_params.fan_on.ToString());
+                                substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
+                                AddMsg(substr);
+                                AddMsg("");
+                                break;
 							case 6:
 								cfg_params.fan_off = int.Parse(word);
-								break;
+                                AddMsg("fan off: " + cfg_params.fan_off.ToString());
+                                substr = dlgsetparams.get_temp_str(cfg_params.fan_off).ToString();
+                                AddMsg(substr);
+                                AddMsg("");
+                                break;
 							case 7:
 								cfg_params.blower_enabled = int.Parse(word);
 								break;
@@ -475,10 +489,17 @@ namespace EpServerEngineSampleClient
 							case 10:
 								cfg_params.blower3_on = int.Parse(word);
 								break;
-							case 11:
-								cfg_params.test_bank = int.Parse(word);
-								break;
-							default:
+                            case 11:
+                                cfg_params.engine_temp_limit = int.Parse(word);
+                                AddMsg("temp limit: " + cfg_params.engine_temp_limit.ToString());
+                                substr = dlgsetparams.get_temp_str(cfg_params.engine_temp_limit).ToString();
+                                AddMsg(substr);
+                                AddMsg("");
+                                break;
+                            case 12:
+                                cfg_params.test_bank = int.Parse(word);
+                                break;
+                            default:
 								break;
 						}
 						//                        MessageBox.Show(int.Parse(word).ToString());
@@ -522,7 +543,6 @@ namespace EpServerEngineSampleClient
 		}
 		void ProcessIOnums(byte[] bytes)
 		{
-			int temp;
 			char[] chars = new char[bytes.Length / sizeof(char)];
 			System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
 			string nums = new string(chars);
@@ -643,18 +663,8 @@ namespace EpServerEngineSampleClient
 		}
 		private void StopMbox(object sender, EventArgs e)
 		{
-            int val2 = 205;
-            //string str = "SET_TEMP_LIMIT";
-            string str = "SET_FAN_OFF";
-            //byte[] bytes1 = new byte[2];
-
-            byte[] bytes1 = BitConverter.GetBytes(val2);
-            byte[] bytes = new byte[bytes1.Count() + 2];
-            bytes[0] = svrcmd.GetCmdIndexB(str);
-            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
-            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-            m_client.Send(packet);
             /*
+            
             if (system_up)
 			{
 				string cmd = "STOP_MBOX_XMIT";
@@ -674,8 +684,11 @@ namespace EpServerEngineSampleClient
 				AddMsg("System Up");
 			}
             */
-		}
- 		public static byte[] ReadFile(string filePath)
+            string cmd = "STOP_MBOX_XMIT";
+            int offset = svrcmd.GetCmdIndexI(cmd);
+            svrcmd.Send_Cmd(offset);
+        }
+        public static byte[] ReadFile(string filePath)
 		{
 			byte[] buffer;
 			FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -727,35 +740,24 @@ namespace EpServerEngineSampleClient
         }
         private void SetParamsClick(object sender, EventArgs e)
 		{
-            int val2 = 195;
-            string str = "SET_TEMP_LIMIT";
-            //string str = "SET_FAN_ON";
-            //byte[] bytes1 = new byte[2];
-
-            byte[] bytes1 = BitConverter.GetBytes(val2);
-            byte[] bytes = new byte[bytes1.Count() + 2];
-            bytes[0] = svrcmd.GetCmdIndexB(str);
-            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
-            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-            m_client.Send(packet);
+            string cmd = "SET_PARAMS";
+            int offset = svrcmd.GetCmdIndexI(cmd);
+            svrcmd.Send_Cmd(offset);
             /*
-            DlgSetParams testDialog = new DlgSetParams(cfg_params);
-			testDialog.SetClient(m_client);
-			// Show testDialog as a modal dialog and determine if DialogResult = OK.
-			if (testDialog.ShowDialog(this) == DialogResult.OK)
+            if (dlgsetparams.ShowDialog(this) == DialogResult.OK)
 			{
-				cfg_params = testDialog.GetParams();
+				cfg_params = dlgsetparams.GetParams();
 			}
 			else
 			{
 				//                this.txtResult.Text = "Cancelled";
 			}
-			testDialog.Dispose();
             */
         }
         private void btnAVR_Click(object sender, EventArgs e)
 		{
-			string cmd = "";
+            /*
+            string cmd = "";
 			int offset = 0;
 
 			if (avr_running)
@@ -776,8 +778,24 @@ namespace EpServerEngineSampleClient
 				AddMsg("Set LCD On");
 				btnAVR.Text = "Set LCD Off";
 			}
-		}
-		private void Dialog1_Click(object sender, EventArgs e)
+            
+            psDlg4.Name = "Dialog Three";
+            psDlg4.Enable_Dlg(true);
+            psDlg4.StartPosition = FormStartPosition.Manual;
+            psDlg4.Location = new Point(100, 10);
+
+            if (psDlg4.ShowDialog(this) == DialogResult.OK)
+            {
+                //                AddMsg("dlg = OK");
+            }
+            else
+            {
+                //                this.txtResult.Text = "Cancelled";
+            }
+            psDlg.Enable_Dlg(false);
+            */
+        }
+        private void Dialog1_Click(object sender, EventArgs e)
 		{
 			psDlg.Name = "Dialog One";
 			psDlg.Enable_Dlg(true);
@@ -1005,11 +1023,18 @@ namespace EpServerEngineSampleClient
 					please_lets_disconnect = 2;     // next time around disconnect anyway
 					break;
 				case 2:         // then wait 1 second to see if it really did disconnect us
-					AddMsg("Drake, we are leaving...");
+                    System.Media.SoundPlayer player;
+                    AddMsg("Drake, we are leaving...");
 					if (m_client.IsConnectionAlive)
 						m_client.Disconnect();
 					please_lets_disconnect = 0;
-					break;
+                    //drake_img.Visible = true;
+                    string song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
+                    player = new System.Media.SoundPlayer();
+                    player.SoundLocation = song;
+                    player.Play();
+                    //drake_img.Visible = false;
+                    break;
 			}
 		}
 		private void IPAddressChanged(object sender, EventArgs e)
@@ -1058,5 +1083,20 @@ namespace EpServerEngineSampleClient
 			Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
 			m_client.Send(packet);
 		}
-	}
+/*
+        float convertF(int raw_data)
+        {
+            float T_F, T_celcius;
+            int ret;
+            if ((raw_data & 0x100) != 0)
+            {
+                raw_data = -(((~raw_data) + 1) & 0xff);
+            }
+            T_celcius = raw_data * 0.5;
+            T_F = (T_celcius * 1.8) + 32;
+            ret = (int)T_F;
+            return ret; // returns 257 -> -67
+        }
+*/
+    }
 }

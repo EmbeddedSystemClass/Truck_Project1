@@ -203,7 +203,7 @@ namespace EpServerEngineSampleClient
 							break;
 						case "NAV_CLICK":
 							i = GetInstByTabOrder(current_button);
-							//if(m_ctls[i].CtlText != "Close")
+							if(m_ctls[i].CtlText != "Close")
 							{
 								//AddMsg(m_ctls[9 - i].CtlText);
 								Button temp = (Button)(m_ctls[i].Ctlinst);
@@ -324,9 +324,9 @@ namespace EpServerEngineSampleClient
                     slist = new Child_Scrolling_List(m_client);
                     int index = command - 200;
                     byte indexb = (byte)index;
-					//AddMsg("special cmd: " + command.ToString());
-					//AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
-
+					AddMsg("special cmd: " + command.ToString());
+					AddMsg(child_dialogs[index].Name + " " + child_dialogs[index].Num.ToString());
+                    
 					if (child_dialogs[index].Type == 0) // Scrolling_List type dialog
 					{
 						slist.SetXMLFile(child_dialogs[index].Name);
@@ -342,9 +342,6 @@ namespace EpServerEngineSampleClient
                         slist.Dispose();
                         if (slist_value != 0)
                         {
-                            //int val2 = slist.final_value;
-                            //string str = "SET_TEMP_LIMIT";
-                            //string str = "SET_FAN_ON";
                             string str = slist_cmd;
                             byte[] bytes1 = BitConverter.GetBytes(slist_value);
                             byte[] bytes = new byte[bytes1.Count() + 2];
@@ -359,13 +356,8 @@ namespace EpServerEngineSampleClient
 			else
 			{
 				string cmd = svrcmd.GetName(command + offset);
-
 				//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
-
 				svrcmd.Send_Cmd(command + offset);
-				//if (++screen_ctr > 20)
-				//tbReceived.Clear();
-
 				if (++offset >= len)
 					m_ctls[current_button].offset = 0;
 				else m_ctls[current_button].offset = offset;

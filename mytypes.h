@@ -130,6 +130,15 @@ enum cmd_types
 	SET_TEMP_LIMIT,
 	SET_FAN_ON,
 	SET_FAN_OFF,
+	HIGH_REV_LIMIT,
+	LOW_REV_LIMIT,
+	LIGHTS_ON_DELAY,
+	SET_BLOWER_EN_TEMP,
+	SET_BLOWER1_TEMP,
+	SET_BLOWER2_TEMP,
+	SET_BLOWER3_TEMP,
+	SET_BATT_BOX_TEMP,
+	TEMP_TOO_HIGH,
 	GET_VERSION
 }CMD_TYPES;
 
@@ -293,8 +302,8 @@ enum num_entry_types
 	TIME_ENG_OFF,
 	FPGA_SEND_RATE,
 	RPM_MPH_UPDATE_RATE,
-	HIGH_REV_LIMIT,
-	LOW_REV_LIMIT,
+	HIGH_REV_LIMIT2,
+	LOW_REV_LIMIT2,
 	SET_LIGHTS_OFF,
 	CHANGE_PASSWORD
 }NUM_ENTRY_TYPES;
@@ -304,16 +313,18 @@ typedef struct params
 	int rpm_update_rate;	// update rates for LED displays
 	int mph_update_rate;
 	int fpga_xmit_rate;
-	int high_rev_limit;
-	int low_rev_limit;
+	UINT high_rev_limit;
+	UINT low_rev_limit;
 	int cooling_fan_on;
 	int cooling_fan_off;
 	int blower_enabled;
 	int blower1_on;
 	int blower2_on;
 	int blower3_on;
-	UCHAR test_bank;
+	int lights_on_delay;
 	int engine_temp_limit;
+	int batt_box_temp;
+	int test_bank;
 
 }PARAM_STRUCT;
 

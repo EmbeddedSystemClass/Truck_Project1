@@ -97,7 +97,6 @@ namespace EpServerEngineSampleClient
 		public void Process_Msg(byte[] bytes)
 		{
 			int type_msg;
-			int i, j;
 			string ret = null;
 			char[] chars = new char[bytes.Length / sizeof(char) + 2];
 			char[] chars2 = new char[bytes.Length / sizeof(char)];

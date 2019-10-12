@@ -37,7 +37,9 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.cbTempLimit = new System.Windows.Forms.ComboBox();
             this.cbBlower1 = new System.Windows.Forms.ComboBox();
+            this.label17 = new System.Windows.Forms.Label();
             this.cbBlower2 = new System.Windows.Forms.ComboBox();
             this.cbBlower3 = new System.Windows.Forms.ComboBox();
             this.cbBlowerEnabled = new System.Windows.Forms.ComboBox();
@@ -59,10 +61,6 @@
             this.cbMPHUpdateRate = new System.Windows.Forms.ComboBox();
             this.cbTestBank = new System.Windows.Forms.ComboBox();
             this.label15 = new System.Windows.Forms.Label();
-            this.cbSetCommPorts = new System.Windows.Forms.ComboBox();
-            this.label16 = new System.Windows.Forms.Label();
-            this.cbTempLimit = new System.Windows.Forms.ComboBox();
-            this.label17 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -165,6 +163,15 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Temperatures";
             // 
+            // cbTempLimit
+            // 
+            this.cbTempLimit.FormattingEnabled = true;
+            this.cbTempLimit.Location = new System.Drawing.Point(159, 188);
+            this.cbTempLimit.Name = "cbTempLimit";
+            this.cbTempLimit.Size = new System.Drawing.Size(76, 21);
+            this.cbTempLimit.TabIndex = 42;
+            this.cbTempLimit.SelectedIndexChanged += new System.EventHandler(this.cbTempLimit_selected_index_changed);
+            // 
             // cbBlower1
             // 
             this.cbBlower1.FormattingEnabled = true;
@@ -173,6 +180,15 @@
             this.cbBlower1.Size = new System.Drawing.Size(76, 21);
             this.cbBlower1.TabIndex = 31;
             this.cbBlower1.SelectedIndexChanged += new System.EventHandler(this.cbBlower1_SelectedIndexChanged);
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(25, 191);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(94, 13);
+            this.label17.TabIndex = 41;
+            this.label17.Text = "Engine Temp Limit";
             // 
             // cbBlower2
             // 
@@ -416,53 +432,11 @@
             this.label15.TabIndex = 38;
             this.label15.Text = "Test Bank";
             // 
-            // cbSetCommPorts
-            // 
-            this.cbSetCommPorts.FormattingEnabled = true;
-            this.cbSetCommPorts.Items.AddRange(new object[] {
-            "Comm 1 Only",
-            "Comm 2 Only",
-            "Comm 1 & 2"});
-            this.cbSetCommPorts.Location = new System.Drawing.Point(457, 236);
-            this.cbSetCommPorts.Name = "cbSetCommPorts";
-            this.cbSetCommPorts.Size = new System.Drawing.Size(94, 21);
-            this.cbSetCommPorts.TabIndex = 39;
-            this.cbSetCommPorts.SelectedIndexChanged += new System.EventHandler(this.cbSetCommPortSelIndexChaged);
-            // 
-            // label16
-            // 
-            this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(345, 240);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(82, 13);
-            this.label16.TabIndex = 40;
-            this.label16.Text = "Set Comm Ports";
-            // 
-            // cbTempLimit
-            // 
-            this.cbTempLimit.FormattingEnabled = true;
-            this.cbTempLimit.Location = new System.Drawing.Point(159, 188);
-            this.cbTempLimit.Name = "cbTempLimit";
-            this.cbTempLimit.Size = new System.Drawing.Size(76, 21);
-            this.cbTempLimit.TabIndex = 42;
-            this.cbTempLimit.SelectedIndexChanged += new System.EventHandler(this.cbTempLimit_selected_index_changed);
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(25, 191);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(94, 13);
-            this.label17.TabIndex = 41;
-            this.label17.Text = "Engine Temp Limit";
-            // 
             // DlgSetParams
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(585, 435);
-            this.Controls.Add(this.label16);
-            this.Controls.Add(this.cbSetCommPorts);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.cbTestBank);
             this.Controls.Add(this.cbMPHUpdateRate);
@@ -524,8 +498,6 @@
         private System.Windows.Forms.ComboBox cbMPHUpdateRate;
         private System.Windows.Forms.ComboBox cbTestBank;
         private System.Windows.Forms.Label label15;
-		private System.Windows.Forms.ComboBox cbSetCommPorts;
-		private System.Windows.Forms.Label label16;
         private System.Windows.Forms.ComboBox cbTempLimit;
         private System.Windows.Forms.Label label17;
     }

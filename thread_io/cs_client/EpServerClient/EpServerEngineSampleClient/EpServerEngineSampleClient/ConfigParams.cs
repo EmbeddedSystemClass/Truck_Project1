@@ -21,7 +21,7 @@ namespace EpServerEngineSampleClient
         public int blower3_on { get; set; }
         public int lights_on_delay { get; set; }
         public int test_bank { get; set; }
-		public int comm_en { get; set; }
+        public int engine_temp_limit { get; set; }
 
         public int si_fan_on { get; set; }
         public int si_fan_off { get; set; }

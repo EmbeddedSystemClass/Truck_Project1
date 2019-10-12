@@ -64,7 +64,7 @@ void send_serialother2(UCHAR cmd, UCHAR *buf);
 void send_param_msg(void);
 void add_msg_queue(UCHAR cmd);
 UCHAR get_msg_queue(void);
-void send_status_msg(char *msg);
+
 int uSleep(time_t sec, long nanosec);
 int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
@@ -78,7 +78,7 @@ void close_tcp(void);
 int test_sd(int test);
 int test_sock(void);
 void init_ips(void);
-
+void send_status_msg(char *msg);
 typedef struct
 {
 	int i;
@@ -107,7 +107,7 @@ static int trip;
 static int tcp_connected_time;
 static int serial_recv_on;
 static char dat_names[NUM_DAT_NAMES][DAT_NAME_STR_LEN];
-
+float convertF(int raw_data);
 extern char oFileName[20];
 extern char iFileName[20];
 

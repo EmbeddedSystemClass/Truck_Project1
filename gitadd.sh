@@ -113,6 +113,9 @@ git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 git add thread_io/list.txt
 git add thread_io/IO_card_layout.png
+git add thread_io/print_cmds.c
+git add thread_io/do_print_cmds.sh
+git add thread_io/cmds_list.txt
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/ChildDialog.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/ClientParams.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EngTempLimit.xml
@@ -123,6 +126,16 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat1.
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat2.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat3.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/BattBoxTemp.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/Blower1Temps.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/Blower2Temps.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/Blower3Temps.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/BlowerEnTemps.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/HighRevLimit.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/LightsOnDelay.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/LowRevLimit.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat4.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/EpServerEngineSampleClient.csproj
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ChildDialogs.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Child_Scrolling_List.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Child_Scrolling_List.Designer.cs

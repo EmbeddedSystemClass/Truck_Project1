@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>6000</Name>
+		<Value>6000</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>5800</Name>
+		<Value>5800</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>5600</Name>
+		<Value>5600</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>5400</Name>
+		<Value>5400</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>5200</Name>
+		<Value>5200</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>5000</Name>
+		<Value>5000</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>4800</Name>
+		<Value>4800</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>4600</Name>
+		<Value>4600</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>4200</Name>
+		<Value>4200</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>HIGH_REV_LIMIT</Offset>
+		<Name>4000</Name>
+		<Value>4000</Value>
+	</UIFormat>
+</Table>
+ 

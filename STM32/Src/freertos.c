@@ -120,9 +120,17 @@ uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
 UCHAR global_cmd;
 static int raw_data;
-static uint16_t engine_temp_limit = 182;	// 195F
-static uint16_t fan_on_temp = 171;	// 185F
-static uint16_t fan_off_temp = 154;	// 170F
+static int temp_raw;
+static int test_rise_temp;
+static int too_high_flag;
+static int cooling_fan_override;
+static uint16_t engine_temp_limit = 190;
+static uint16_t fan_on_temp = 175;	// 185F
+static uint16_t fan_off_temp = 150;
+static uint16_t blower1_temp = 65;
+static uint16_t blower2_temp = 50;
+static uint16_t blower3_temp = 35;
+static uint16_t blower_en_temp = 75;
 static UCHAR key_mode1, key_mode2;
 
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
@@ -420,7 +428,8 @@ void StartDefaultTask(void const * argument)
 	run_time = 0;
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
-	raw_data = 43;
+	raw_data = 121;
+	cooling_fan_override = 0;
 
 	memset(correct_password,0,sizeof(correct_password));
 	strcpy(correct_password,"2354795\0");
@@ -574,12 +583,14 @@ void StartDefaultTask(void const * argument)
 						cmd = ON_FAN;
 						ucbuff[0] = cmd;
 						fan_on = 1;
+						cooling_fan_override = 1;
 					}
 					else
 					{
 						cmd = OFF_FAN;
 						ucbuff[0] = cmd;
 						fan_on = 0;
+						cooling_fan_override = 0;
 					}
 				}else
 				{
@@ -767,7 +778,7 @@ void StartDefaultTask(void const * argument)
 				ucbuff[5] = (UCHAR)recval;
 				recval >>= 8;
 				ucbuff[6] = (UCHAR)recval;
-				
+
 				avr_buffer[0] = pack64(ucbuff);
 				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
@@ -1063,6 +1074,8 @@ void StartRecv7200(void const * argument)
 	UCHAR ucbuff[SERIAL_BUFF_SIZE];
 	UCHAR marker = 0xFF;
 	UCHAR tone;
+	test_rise_temp = 0;
+	too_high_flag = 0;
 
 	/* Infinite loop */
 	for(;;)
@@ -1074,24 +1087,7 @@ void StartRecv7200(void const * argument)
 
 		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || 
 				cmd == SERVER_DOWN || cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF)
-
-//		if(cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF)
 		{	
-/*
-			if(timer_toggle == 0)
-			{
-
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-				timer_toggle = 1;
-				
-			}else
-			{
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-				timer_toggle = 0;
-			}
-*/
 			switch (cmd)
 			{
 				case 	ON_ACC:				// 3
@@ -1103,10 +1099,10 @@ void StartRecv7200(void const * argument)
 				case 	OFF_FUEL_PUMP:		// 6
 					break;
 				case 	ON_FAN:				// 7
-					fan_on = 1;
+//					fan_on = 1;
 					break;
 				case 	OFF_FAN:			// 8
-					fan_on = 0;
+//					fan_on = 0;
 					break;
 				case 	ON_LIGHTS:			// 9
 					lights_on = 1;
@@ -1197,6 +1193,34 @@ void StartRecv7200(void const * argument)
 //					avr_up = 0;
 					break;
 				case SERVER_UP:
+					engine_temp_limit = (uint16_t)buff[2];
+					engine_temp_limit <<= 8;
+					engine_temp_limit |= (uint16_t)buff[1];
+
+					fan_on_temp = (uint16_t)buff[4];
+					fan_on_temp <<= 8;
+					fan_on_temp |= (uint16_t)buff[3];
+
+ 					fan_off_temp = (uint16_t)buff[6];
+					fan_off_temp <<= 8;
+					fan_off_temp |= (uint16_t)buff[5];
+
+ 					blower1_temp = (uint16_t)buff[8];
+					blower1_temp <<= 8;
+					blower1_temp |= (uint16_t)buff[7];
+
+ 					blower2_temp = (uint16_t)buff[10];
+					blower2_temp <<= 8;
+					blower2_temp |= (uint16_t)buff[9];
+
+ 					blower3_temp = (uint16_t)buff[12];
+					blower3_temp <<= 8;
+					blower3_temp |= (uint16_t)buff[11];
+
+ 					blower_en_temp = (uint16_t)buff[14];
+					blower_en_temp <<= 8;
+					blower_en_temp |= (uint16_t)buff[13];
+
 					for(i = 0;i < 10;i++)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
@@ -1209,6 +1233,7 @@ void StartRecv7200(void const * argument)
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
 						vTaskDelay(5);
 					}
+					
 					break;
 				case SERVER_DOWN:
 					for(i = 0;i < 10;i++)
@@ -1289,75 +1314,48 @@ odometer_high,low, trip_high,low
 					xQueueSend(SendAVRHandle,avr_buffer,0);
 #endif
 					break;
+
 				case SET_TEMP_LIMIT:
-//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
-//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
 					engine_temp_limit = (uint16_t)buff[2];
 					engine_temp_limit <<= 8;
 					engine_temp_limit |= (uint16_t)buff[1];
-//					engine_temp_limit = 199;
-
-					if(timer_toggle == 0)
-					{
-
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-						timer_toggle = 1;
-						
-					}else
-					{
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-						timer_toggle = 0;
-					}
-
 					break;
 
 				case SET_FAN_ON:
-//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
-//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
 					fan_on_temp = (uint16_t)buff[2];
 					fan_on_temp <<= 8;
 					fan_on_temp |= (uint16_t)buff[1];
-//					fan_off_temp = 201;
-
-					if(timer_toggle == 0)
-					{
-
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-						timer_toggle = 1;
-						
-					}else
-					{
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-						timer_toggle = 0;
-					}
-
 					break;
 
 				case SET_FAN_OFF:
-//					HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE);
-//					HAL_UART_Receive(&huart1, &buff[0], SERIAL_BUFF_SIZE, 1000);
  					fan_off_temp = (uint16_t)buff[2];
 					fan_off_temp <<= 8;
 					fan_off_temp |= (uint16_t)buff[1];
-//					fan_off_temp = 203;
+					break;
 
-					if(timer_toggle == 0)
-					{
+				case SET_BLOWER_EN_TEMP:
+ 					blower_en_temp = (uint16_t)buff[2];
+					blower_en_temp <<= 8;
+					blower_en_temp |= (uint16_t)buff[1];
+					break;
 
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-						timer_toggle = 1;
-						
-					}else
-					{
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-						timer_toggle = 0;
-					}
+				case SET_BLOWER1_TEMP:
+ 					blower1_temp = (uint16_t)buff[2];
+					blower1_temp <<= 8;
+					blower1_temp |= (uint16_t)buff[1];
+					break;
+
+				case SET_BLOWER2_TEMP:
+ 					blower2_temp = (uint16_t)buff[2];
+					blower2_temp <<= 8;
+					blower2_temp |= (uint16_t)buff[1];
+					break;
+
+				case SET_BLOWER3_TEMP:
+ 					blower3_temp = (uint16_t)buff[2];
+					blower3_temp <<= 8;
+					blower3_temp |= (uint16_t)buff[1];
+					break;
 
 					break;
 
@@ -1726,10 +1724,11 @@ void Callback01(void const * argument)
   /* USER CODE BEGIN Callback01 */
 
 	// do the DS1620 temp conversion every second
+/*
 	global_ucbuff[0] = DISPLAY_TEMP;
 	global_ucbuff[1] = rtlabel_str[ENG_TEMP].row;
 	global_ucbuff[2] = rtlabel_str[ENG_TEMP].data_col;
-
+*/
 	global_ucbuff[4] = (UCHAR)raw_data;
 	raw_data >>= 8;
 	global_ucbuff[3] = (UCHAR)raw_data;	// send high byte 1st
@@ -1749,8 +1748,8 @@ void Callback01(void const * argument)
 	global_ucbuff[0] = ENGINE_TEMP;
 	global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
 	global_ucbuff[2] = global_ucbuff[4];
-//	global_avr_buffer[0] = pack64(global_ucbuff);
-//	xQueueSend(Send7200Handle, global_avr_buffer, 0);
+	global_avr_buffer[0] = pack64(global_ucbuff);
+	xQueueSend(Send7200Handle, global_avr_buffer, 0);
 	//vTaskDelay(1000);
 
 	writeByteTo1620(DS1620_CMD_STARTCONV);
@@ -1759,40 +1758,73 @@ void Callback01(void const * argument)
 	vTaskDelay(30);
 	writeByteTo1620(DS1620_CMD_STOPCONV);
 	vTaskDelay(100);
-	if(raw_data > engine_temp_limit)
-	{
-		// sound alarm
-		global_ucbuff[0] = SPECIAL_TONE_ON;
-		global_avr_buffer[0] = pack64(global_ucbuff);
-		xQueueSend(SendFPGAHandle,global_avr_buffer,0);
-	}
-// fan_on_temp = 171;	// 185F
-// fan_off_temp = 154;	// 170F
-	
-	if(raw_data > fan_on_temp)
-	{
-		global_cmd = ON_FAN;
-		global_ucbuff[0] = global_cmd;
-		fan_on = 1;
-		global_avr_buffer[0] = pack64(global_ucbuff);
-		xQueueSend(Send7200Handle, global_avr_buffer, 0);
-	}
-	else if(raw_data < fan_off_temp)
-	{
-		global_cmd = OFF_FAN;
-		global_ucbuff[0] = global_cmd;
-		fan_on = 0;
-		global_avr_buffer[0] = pack64(global_ucbuff);
-		xQueueSend(Send7200Handle, global_avr_buffer, 0);
-	}	
 
 /*
-	raw_data++;				// used for testing
-	if(raw_data > 230)
-		raw_data = 10;
-	temp_raw = raw_data;
+DS1620 returns 250->1 for temps of 257.0F->32.9F
+and 511->403 for temps of 31.1F->-66.1F
+
+257.0 fa 250
+...
+32.9 01 1
+31.1 1ff 511
+...
+-66.1 193 403
+so if raw_data is > 402 && < 510 then ignore the logic to control fan
 */
-#if 0
+
+	if(raw_data < 251)
+	{
+		if(too_high_flag == 0 && raw_data > engine_temp_limit)
+		{
+			// sound alarm
+			global_ucbuff[0] = SPECIAL_TONE_ON;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			vTaskDelay(100);
+			global_cmd = TEMP_TOO_HIGH;
+			global_ucbuff[0] = global_cmd;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(Send7200Handle, global_avr_buffer, 0);
+			too_high_flag = 1;
+
+		}else if(too_high_flag == 1)
+		{
+			global_ucbuff[0] = DTMF_TONE_OFF;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			too_high_flag = 0;
+		}
+
+		if(fan_on == 0 && raw_data >= fan_on_temp)
+		{
+			global_cmd = ON_FAN;
+			global_ucbuff[0] = global_cmd;
+			fan_on = 1;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(Send7200Handle, global_avr_buffer, 0);
+		}
+		if(cooling_fan_override == 0 && fan_on == 1 && raw_data < fan_off_temp)
+		{
+			global_cmd = OFF_FAN;
+			global_ucbuff[0] = global_cmd;
+			fan_on = 0;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(Send7200Handle, global_avr_buffer, 0);
+		}	
+	}
+/*
+	if(test_rise_temp == 0)
+		raw_data += 2;				// used for testing
+	else raw_data -= 2;
+	temp_raw = raw_data;
+
+	if(raw_data > 209)
+		test_rise_temp = 1;
+
+	if(raw_data < 121)
+		test_rise_temp = 0;
+*/
+//#if 0
 	if(timer_toggle == 0)
 	{
 
@@ -1806,7 +1838,7 @@ void Callback01(void const * argument)
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 		timer_toggle = 0;
 	}
-#endif
+//#endif
   /* USER CODE END Callback01 */
 }
 

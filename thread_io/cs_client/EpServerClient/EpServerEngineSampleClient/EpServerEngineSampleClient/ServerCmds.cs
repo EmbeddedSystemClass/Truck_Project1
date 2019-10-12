@@ -102,6 +102,14 @@ namespace EpServerEngineSampleClient
             SET_TEMP_LIMIT,
             SET_FAN_ON,
             SET_FAN_OFF,
+            HIGH_REV_LIMIT,
+            LOW_REV_LIMIT,
+            LIGHTS_ON_DELAY,
+            SET_BLOWER_EN_TEMP,
+            SET_BLOWER1_TEMP,
+            SET_BLOWER2_TEMP,
+            SET_BLOWER3_TEMP,
+            TEMP_TOO_HIGH,
             GET_VERSION
         }
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>1 seconds</Name>
+		<Value>1</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>5 seconds</Name>
+		<Value>5</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>15 seconds</Name>
+		<Value>15</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>30 seconds</Name>
+		<Value>30</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>1 minute</Name>
+		<Value>60</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>2 minutes</Name>
+		<Value>120</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>5 minutes</Name>
+		<Value>300</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>10 minutes</Name>
+		<Value>600</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>30 minutes</Name>
+		<Value>1800</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>1 hour</Name>
+		<Value>6000</Value>
+	</UIFormat>
+</Table>
+ 

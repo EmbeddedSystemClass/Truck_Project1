@@ -1,53 +1,53 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>
-		<Label>Temp Alarm</Label>
-		<Command>200</Command>
+		<Label>Battery Box Temp</Label>
+		<Command>210</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Fan On Temp</Label>
-		<Command>201</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Fan Off Temp</Label>
-		<Command>202</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>High Rev Limit</Label>
-		<Command>203</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Low Rev Limit</Label>
-		<Command>204</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Lights On Delay</Label>
-		<Command>205</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Blower1 On</Label>
-		<Command>206</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Blower2 On</Label>
-		<Command>207</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Blower3 On</Label>
-		<Command>208</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 	<UIFormat>
-		<Label>Blower Off</Label>
-		<Command>209</Command>
+		<Label>Unused</Label>
+		<Command>0</Command>
 		<Length>0</Length>
 	</UIFormat>
 </Table>
