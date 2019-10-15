@@ -99,6 +99,7 @@ namespace EpServerEngineSampleClient
             SERVER_UP,
             SERVER_DOWN,
             UPLOAD_NEW,
+            UPLOAD_OTHER,
             SET_TEMP_LIMIT,
             SET_FAN_ON,
             SET_FAN_OFF,
@@ -109,6 +110,7 @@ namespace EpServerEngineSampleClient
             SET_BLOWER1_TEMP,
             SET_BLOWER2_TEMP,
             SET_BLOWER3_TEMP,
+            SET_BATT_BOX_TEMP,
             TEMP_TOO_HIGH,
             GET_VERSION
         }

@@ -109,6 +109,12 @@
     <Compile Include="FrmSampleClient.Designer.cs">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
     </Compile>
+    <Compile Include="ManageServer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ManageServer.Designer.cs">
+      <DependentUpon>ManageServer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Mp3File.cs" />
     <Compile Include="Password.cs">
       <SubType>Form</SubType>
@@ -163,6 +169,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSampleClient.resx">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ManageServer.resx">
+      <DependentUpon>ManageServer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Password.resx">
       <DependentUpon>Password.cs</DependentUpon>

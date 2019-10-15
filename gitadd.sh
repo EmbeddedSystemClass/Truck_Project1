@@ -135,6 +135,8 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/HighRevLim
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/LightsOnDelay.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/LowRevLimit.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat4.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat5.xml
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/uiformat6.xml
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/EpServerEngineSampleClient.csproj
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ChildDialogs.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Child_Scrolling_List.cs
@@ -159,6 +161,9 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/SwitchTable.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/SwitchTable.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/UIFormat.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.Designer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.resx
 git add thread_io/cs_client/server_on_linux.c
 git add thread_io/cs_client/server_on_linux2.c
 git add thread_io/cs_client/new_client.txt

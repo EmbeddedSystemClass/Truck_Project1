@@ -676,9 +676,11 @@ UCHAR timer_task(int test)
 //	static int test_ctr = 0;
 //	static int test_ctr2 = 0;
 //	static UCHAR nav = NAV_DOWN;
-
+	UCHAR cmd;
+	
 	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
 	rpm = mph = 0;
+
 	while(TRUE)
 	{
 		if(shutdown_all)
@@ -747,7 +749,6 @@ UCHAR timer_task(int test)
 				trunning_minutes = 0;
 				trunning_hours++;
 			}
-				
 		}
 		sprintf(tempx,"%dh %dm %ds ",trunning_hours, trunning_minutes, trunning_seconds);
 		send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SERVER_UPTIME);
@@ -946,29 +947,8 @@ UCHAR serial_recv_task(int test)
 
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
 
-	usleep(_1SEC);
-/*
-	rpm = 1000;
-	while(TRUE)
-	{
-		if((rpm+=10) > 5000)
-			rpm = 1000;
-		if(++mph > 100)
-			mph = 0;	
-
-		sprintf(tempx,"%d",rpm);
-		printString2(tempx);
-		if(test_sock())
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
-
-		sprintf(tempx,"%d",mph);
-		printString2(tempx);
-		if(test_sock())
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
-	
-		usleep(_100MS);
-	}
-*/
+	usleep(_5SEC);	// delay 5 seconds because it hangs when trying
+					// to send to STM32 when starting up
 	temp = ps.engine_temp_limit;
 	send_buffer[0] = (UCHAR)temp;
 	temp >>= 8;
@@ -1005,6 +985,7 @@ UCHAR serial_recv_task(int test)
 	send_buffer[13] = (UCHAR)temp;
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
+	printString2("server_up");
 
 	while(TRUE)
 	{
@@ -1033,7 +1014,7 @@ UCHAR serial_recv_task(int test)
 			strcpy(tempx,cmd_array[cmd].cmd_str);
 			// send to client if tcp connected (all this does is 
 			// display the cmd's on the scrolling listbox
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
+			//send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 		}else
 
 		if(cmd == ENGINE_TEMP)
@@ -1127,12 +1108,12 @@ UCHAR serial_recv_task(int test)
 
 		if(shutdown_all)
 		{
-			printf("shutting down serial task\r\n");
+			//printf("shutting down serial task\r\n");
 			close_serial();
 			close_serial2();
 //			myprintf1("done serial task\r\n");
 			//printString2("closing serial ports");
-			printf("serial ports done\r\n");
+			//printf("serial ports done\r\n");
 			return 0;
 		}
 
@@ -1390,7 +1371,7 @@ UCHAR basic_controls_task(int test)
 	size_t osize;
 	char errmsg[50];
 	UCHAR cmd;
-	char tempx[20];
+	char tempx[SERIAL_BUFF_SIZE];
 
 //	static UCHAR buffer[30] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
 //				17,18,19,20,21,22,23,24,25,26,27,28,29};
@@ -1460,9 +1441,9 @@ UCHAR basic_controls_task(int test)
 			case ON_RBRIGHTS:
 			case OFF_RBRIGHTS:
 //			case ESTOP_SIGNAL:
-				//send_serial(cmd);
+				send_serialother(cmd,tempx);
 				myprintf1(cmd_array[cmd].cmd_str);
-				printString2(cmd_array[cmd].cmd_str);
+//				printString2(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
@@ -1573,6 +1554,7 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 1;
 				ollist_insert_data(index,&oll,otp);
+				printString2("lights on");
 				break;
 
 			case OFF_LIGHTS:
@@ -1585,6 +1567,7 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(index,&oll,otp);
+				printString2("off lights");
 				break;
 
 			case ON_LLIGHTS:
@@ -1625,6 +1608,7 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(index,&oll,otp);
+				//printString2("off running lights");
 				break;
 		
 			case SPECIAL_CMD:
@@ -1862,16 +1846,6 @@ UCHAR basic_controls_task(int test)
 				otp->onoff = 0;
 				set_output(STARTER,0);
 				ollist_insert_data(index,&oll,otp);
-
-	//			index = STARTER;
-	//			rc = ollist_find_data(index,otpp,&oll);
-	//			change_input(STARTER_INPUT,0);
-	//			otp->onoff = 0;
-	//			otp->reset = 0;
-	//			otp->time_left = 0;
-	//			ollist_insert_data(index,&oll,otp);
-	//			printf("starter off: port: %d onoff: %d type: %d reset: %d time_left: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset,otp->time_left);
-	//			printf("starter off: %d %d %d %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				break;
 /*
 			case ESTOP_SIGNAL:
@@ -1940,7 +1914,7 @@ UCHAR basic_controls_task(int test)
 #endif
 				setdioline(7,1);
 				myprintf1("reboot iobox\0");
-				//printString2("reboot iobox");
+
 				for(i = 0;i < 5;i++)
 				{
 					setdioline(7,1);
@@ -1951,14 +1925,19 @@ UCHAR basic_controls_task(int test)
 					scroll_up();
 				}
 				setdioline(7,0);
-//				printf("shutdown iobox\r\n");
+
 				shutdown_all = 1;
 				reboot_on_exit = 2;
 				break;
 			case UPLOAD_NEW:
 				shutdown_all = 1;
 				reboot_on_exit = 4;
-//				printf("UPLOAD_NEW\r\n");
+
+				break;	
+			case UPLOAD_OTHER:
+				shutdown_all = 1;
+				reboot_on_exit = 5;
+
 				break;	
 				default:
 				break;

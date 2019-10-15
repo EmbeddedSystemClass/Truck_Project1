@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<Mp3File>
+		<mp3_location>c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav</mp3_location>
+		<index>0</index>
+	</Mp3File>
+	<Mp3File>
 		<mp3_location>c:\\users\\Daniel\\Music\\WavFiles\\In The Evening.wav</mp3_location>
 		<index>0</index>
 	</Mp3File>

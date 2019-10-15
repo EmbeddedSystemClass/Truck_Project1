@@ -7,6 +7,16 @@
 	</UIFormat>
 	<UIFormat>
 		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>2 seconds</Name>
+		<Value>2</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
+		<Name>3 seconds</Name>
+		<Value>3</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>LIGHTS_ON_DELAY</Offset>
 		<Name>5 seconds</Name>
 		<Value>5</Value>
 	</UIFormat>

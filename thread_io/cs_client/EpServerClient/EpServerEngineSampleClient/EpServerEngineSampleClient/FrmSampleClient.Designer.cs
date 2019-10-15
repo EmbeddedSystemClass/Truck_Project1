@@ -70,6 +70,8 @@
             this.BrightsLabel = new System.Windows.Forms.Label();
             this.IgnitionOnLabel = new System.Windows.Forms.Label();
             this.keymodeLabel = new System.Windows.Forms.Label();
+            this.btnSettingsFour = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -85,7 +87,7 @@
             this.tbReceived.Name = "tbReceived";
             this.tbReceived.ReadOnly = true;
             this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbReceived.Size = new System.Drawing.Size(384, 252);
+            this.tbReceived.Size = new System.Drawing.Size(401, 272);
             this.tbReceived.TabIndex = 18;
             this.tbReceived.TabStop = false;
             // 
@@ -96,7 +98,7 @@
             this.btnConnect.Location = new System.Drawing.Point(266, 14);
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(233, 61);
-            this.btnConnect.TabIndex = 8;
+            this.btnConnect.TabIndex = 10;
             this.btnConnect.Text = "Connect Server";
             this.btnConnect.UseVisualStyleBackColor = false;
             this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
@@ -118,8 +120,8 @@
             this.tbPort.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tbPort.Location = new System.Drawing.Point(122, 67);
             this.tbPort.Name = "tbPort";
-            this.tbPort.Size = new System.Drawing.Size(189, 29);
-            this.tbPort.TabIndex = 12;
+            this.tbPort.Size = new System.Drawing.Size(206, 29);
+            this.tbPort.TabIndex = 1;
             this.tbPort.Text = "5193";
             // 
             // label1
@@ -157,10 +159,10 @@
             // 
             this.btn_PlayList.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btn_PlayList.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_PlayList.Location = new System.Drawing.Point(15, 281);
+            this.btn_PlayList.Location = new System.Drawing.Point(15, 230);
             this.btn_PlayList.Name = "btn_PlayList";
             this.btn_PlayList.Size = new System.Drawing.Size(233, 61);
-            this.btn_PlayList.TabIndex = 4;
+            this.btn_PlayList.TabIndex = 5;
             this.btn_PlayList.Text = "Play List";
             this.btn_PlayList.UseVisualStyleBackColor = false;
             this.btn_PlayList.Click += new System.EventHandler(this.Btn_PlayList_Click);
@@ -169,7 +171,7 @@
             // 
             this.btnTestPorts.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnTestPorts.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTestPorts.Location = new System.Drawing.Point(266, 370);
+            this.btnTestPorts.Location = new System.Drawing.Point(266, 302);
             this.btnTestPorts.Name = "btnTestPorts";
             this.btnTestPorts.Size = new System.Drawing.Size(235, 61);
             this.btnTestPorts.TabIndex = 1;
@@ -181,7 +183,7 @@
             // 
             this.btnStartEng.BackColor = System.Drawing.Color.Aqua;
             this.btnStartEng.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnStartEng.Location = new System.Drawing.Point(266, 281);
+            this.btnStartEng.Location = new System.Drawing.Point(266, 230);
             this.btnStartEng.Name = "btnStartEng";
             this.btnStartEng.Size = new System.Drawing.Size(235, 61);
             this.btnStartEng.TabIndex = 0;
@@ -210,7 +212,7 @@
             // tbEngRunTime
             // 
             this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbEngRunTime.Location = new System.Drawing.Point(836, 575);
+            this.tbEngRunTime.Location = new System.Drawing.Point(524, 545);
             this.tbEngRunTime.Name = "tbEngRunTime";
             this.tbEngRunTime.Size = new System.Drawing.Size(149, 31);
             this.tbEngRunTime.TabIndex = 32;
@@ -219,7 +221,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(703, 576);
+            this.label6.Location = new System.Drawing.Point(533, 508);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(124, 29);
             this.label6.TabIndex = 33;
@@ -238,7 +240,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(700, 20);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(384, 257);
+            this.groupBox1.Size = new System.Drawing.Size(401, 257);
             this.groupBox1.TabIndex = 34;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "TCP Status";
@@ -250,14 +252,14 @@
             this.cbIPAdress.Location = new System.Drawing.Point(121, 28);
             this.cbIPAdress.Name = "cbIPAdress";
             this.cbIPAdress.Size = new System.Drawing.Size(149, 28);
-            this.cbIPAdress.TabIndex = 41;
+            this.cbIPAdress.TabIndex = 0;
             this.cbIPAdress.SelectedIndexChanged += new System.EventHandler(this.IPAddressChanged);
             // 
             // label8
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(517, 574);
+            this.label8.Location = new System.Drawing.Point(513, 407);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(72, 29);
             this.label8.TabIndex = 39;
@@ -266,7 +268,7 @@
             // tbMPH
             // 
             this.tbMPH.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbMPH.Location = new System.Drawing.Point(595, 570);
+            this.tbMPH.Location = new System.Drawing.Point(591, 403);
             this.tbMPH.Name = "tbMPH";
             this.tbMPH.Size = new System.Drawing.Size(93, 35);
             this.tbMPH.TabIndex = 38;
@@ -275,7 +277,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(517, 525);
+            this.label7.Location = new System.Drawing.Point(513, 358);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(72, 29);
             this.label7.TabIndex = 37;
@@ -284,7 +286,7 @@
             // tbRPM
             // 
             this.tbRPM.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbRPM.Location = new System.Drawing.Point(595, 521);
+            this.tbRPM.Location = new System.Drawing.Point(591, 354);
             this.tbRPM.Name = "tbRPM";
             this.tbRPM.Size = new System.Drawing.Size(93, 35);
             this.tbRPM.TabIndex = 36;
@@ -293,7 +295,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(507, 477);
+            this.label4.Location = new System.Drawing.Point(503, 310);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(83, 29);
             this.label4.TabIndex = 35;
@@ -302,7 +304,7 @@
             // tbEngineTemp
             // 
             this.tbEngineTemp.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbEngineTemp.Location = new System.Drawing.Point(595, 472);
+            this.tbEngineTemp.Location = new System.Drawing.Point(591, 305);
             this.tbEngineTemp.Name = "tbEngineTemp";
             this.tbEngineTemp.Size = new System.Drawing.Size(93, 35);
             this.tbEngineTemp.TabIndex = 34;
@@ -314,8 +316,8 @@
             this.btnShutdown.Location = new System.Drawing.Point(15, 14);
             this.btnShutdown.Name = "btnShutdown";
             this.btnShutdown.Size = new System.Drawing.Size(235, 61);
-            this.btnShutdown.TabIndex = 11;
-            this.btnShutdown.Text = "Shutdown Server";
+            this.btnShutdown.TabIndex = 13;
+            this.btnShutdown.Text = "Manage Server";
             this.btnShutdown.UseVisualStyleBackColor = false;
             this.btnShutdown.Click += new System.EventHandler(this.ShutdownServer);
             // 
@@ -323,10 +325,10 @@
             // 
             this.btnReboot.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnReboot.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnReboot.Location = new System.Drawing.Point(15, 103);
+            this.btnReboot.Location = new System.Drawing.Point(15, 86);
             this.btnReboot.Name = "btnReboot";
             this.btnReboot.Size = new System.Drawing.Size(235, 61);
-            this.btnReboot.TabIndex = 12;
+            this.btnReboot.TabIndex = 14;
             this.btnReboot.Text = "Reboot Server";
             this.btnReboot.UseVisualStyleBackColor = false;
             this.btnReboot.Click += new System.EventHandler(this.RebootServer);
@@ -335,10 +337,10 @@
             // 
             this.btnStopSerial.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnStopSerial.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnStopSerial.Location = new System.Drawing.Point(266, 103);
+            this.btnStopSerial.Location = new System.Drawing.Point(266, 86);
             this.btnStopSerial.Name = "btnStopSerial";
             this.btnStopSerial.Size = new System.Drawing.Size(235, 61);
-            this.btnStopSerial.TabIndex = 9;
+            this.btnStopSerial.TabIndex = 11;
             this.btnStopSerial.Text = "Show Params";
             this.btnStopSerial.UseVisualStyleBackColor = false;
             this.btnStopSerial.Click += new System.EventHandler(this.StopMbox);
@@ -347,10 +349,10 @@
             // 
             this.btnDBMgmt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnDBMgmt.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnDBMgmt.Location = new System.Drawing.Point(15, 192);
+            this.btnDBMgmt.Location = new System.Drawing.Point(15, 158);
             this.btnDBMgmt.Name = "btnDBMgmt";
             this.btnDBMgmt.Size = new System.Drawing.Size(235, 61);
-            this.btnDBMgmt.TabIndex = 13;
+            this.btnDBMgmt.TabIndex = 15;
             this.btnDBMgmt.Text = "DB Mgmt";
             this.btnDBMgmt.UseVisualStyleBackColor = false;
             this.btnDBMgmt.Click += new System.EventHandler(this.DBMgmt);
@@ -359,10 +361,10 @@
             // 
             this.btnClear.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnClear.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnClear.Location = new System.Drawing.Point(15, 459);
+            this.btnClear.Location = new System.Drawing.Point(15, 374);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(235, 61);
-            this.btnClear.TabIndex = 6;
+            this.btnClear.TabIndex = 7;
             this.btnClear.Text = "Clear Screen";
             this.btnClear.UseVisualStyleBackColor = false;
             this.btnClear.Click += new System.EventHandler(this.ClearScreen);
@@ -371,10 +373,10 @@
             // 
             this.btnGetTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnGetTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetTime.Location = new System.Drawing.Point(15, 370);
+            this.btnGetTime.Location = new System.Drawing.Point(15, 302);
             this.btnGetTime.Name = "btnGetTime";
             this.btnGetTime.Size = new System.Drawing.Size(235, 61);
-            this.btnGetTime.TabIndex = 5;
+            this.btnGetTime.TabIndex = 6;
             this.btnGetTime.Text = "Get Time";
             this.btnGetTime.UseVisualStyleBackColor = false;
             this.btnGetTime.Click += new System.EventHandler(this.GetTime);
@@ -383,10 +385,10 @@
             // 
             this.btnSetParams.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnSetParams.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSetParams.Location = new System.Drawing.Point(266, 192);
+            this.btnSetParams.Location = new System.Drawing.Point(266, 158);
             this.btnSetParams.Name = "btnSetParams";
             this.btnSetParams.Size = new System.Drawing.Size(235, 61);
-            this.btnSetParams.TabIndex = 10;
+            this.btnSetParams.TabIndex = 12;
             this.btnSetParams.Text = "Set Svr Params";
             this.btnSetParams.UseVisualStyleBackColor = false;
             this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
@@ -395,7 +397,7 @@
             // 
             this.DialogTwo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.DialogTwo.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DialogTwo.Location = new System.Drawing.Point(266, 548);
+            this.DialogTwo.Location = new System.Drawing.Point(266, 446);
             this.DialogTwo.Name = "DialogTwo";
             this.DialogTwo.Size = new System.Drawing.Size(235, 61);
             this.DialogTwo.TabIndex = 3;
@@ -407,11 +409,11 @@
             // 
             this.btnAVR.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btnAVR.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAVR.Location = new System.Drawing.Point(15, 548);
+            this.btnAVR.Location = new System.Drawing.Point(15, 446);
             this.btnAVR.Name = "btnAVR";
             this.btnAVR.Size = new System.Drawing.Size(235, 61);
-            this.btnAVR.TabIndex = 7;
-            this.btnAVR.Text = "Settings Three";
+            this.btnAVR.TabIndex = 8;
+            this.btnAVR.Text = "Settings Five";
             this.btnAVR.UseVisualStyleBackColor = false;
             this.btnAVR.Click += new System.EventHandler(this.btnAVR_Click);
             // 
@@ -419,7 +421,7 @@
             // 
             this.DialogOne.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.DialogOne.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DialogOne.Location = new System.Drawing.Point(266, 459);
+            this.DialogOne.Location = new System.Drawing.Point(266, 374);
             this.DialogOne.Name = "DialogOne";
             this.DialogOne.Size = new System.Drawing.Size(235, 61);
             this.DialogOne.TabIndex = 2;
@@ -502,12 +504,38 @@
             this.keymodeLabel.TabIndex = 47;
             this.keymodeLabel.Text = "NORMAL";
             // 
+            // btnSettingsFour
+            // 
+            this.btnSettingsFour.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.btnSettingsFour.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSettingsFour.Location = new System.Drawing.Point(15, 518);
+            this.btnSettingsFour.Name = "btnSettingsFour";
+            this.btnSettingsFour.Size = new System.Drawing.Size(235, 61);
+            this.btnSettingsFour.TabIndex = 9;
+            this.btnSettingsFour.Text = "Settings Four";
+            this.btnSettingsFour.UseVisualStyleBackColor = false;
+            this.btnSettingsFour.Click += new System.EventHandler(this.btnSettingsFour_Click);
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.Location = new System.Drawing.Point(266, 518);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(235, 61);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "Settings Three";
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // FrmSampleClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.ClientSize = new System.Drawing.Size(1113, 631);
+            this.ClientSize = new System.Drawing.Size(1113, 592);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.btnSettingsFour);
             this.Controls.Add(this.keymodeLabel);
             this.Controls.Add(this.IgnitionOnLabel);
             this.Controls.Add(this.label6);
@@ -604,6 +632,8 @@
 		private System.Windows.Forms.Label BrightsLabel;
 		private System.Windows.Forms.Label IgnitionOnLabel;
         private System.Windows.Forms.Label keymodeLabel;
+        private System.Windows.Forms.Button btnSettingsFour;
+        private System.Windows.Forms.Button button2;
     }
 }
 

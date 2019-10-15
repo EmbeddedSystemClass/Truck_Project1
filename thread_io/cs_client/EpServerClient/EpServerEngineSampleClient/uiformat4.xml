@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>
-		<Label>Battery Box Temp</Label>
+		<Label>uiformat 4</Label>
 		<Command>210</Command>
 		<Length>0</Length>
 	</UIFormat>

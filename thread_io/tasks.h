@@ -14,6 +14,7 @@
 #define QLEN              6					  /* size of request queue        */
 #define MSG_QUEUE_SIZE		50
 
+#define _5SEC	 	5000000 
 #define _1SEC	 	1000000 
 #define _100MS		100000 	
 #define _10MS		10000 	

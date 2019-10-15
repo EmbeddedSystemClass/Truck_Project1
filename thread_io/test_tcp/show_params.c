@@ -29,6 +29,7 @@ int main(void)
 	printf("blower1_on:\t\t\t%d\r\n",ps.blower1_on);
 	printf("blower2_on:\t\t\t%d\r\n",ps.blower2_on);
 	printf("blower3_on:\t\t\t%d\r\n",ps.blower3_on);
+	printf("lights delay:\t\t\t%d\r\n",ps.lights_on_delay);
 	printf("engine_temp_limit:\t\t%d\r\n",ps.engine_temp_limit);
 	printf("battery box temp:\t\t%d\r\n",ps.batt_box_temp);
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);

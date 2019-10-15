@@ -20,8 +20,9 @@ namespace EpServerEngineSampleClient
         public int blower2_on { get; set; }
         public int blower3_on { get; set; }
         public int lights_on_delay { get; set; }
-        public int test_bank { get; set; }
         public int engine_temp_limit { get; set; }
+        public int battery_box_temp { get; set; }
+        public int test_bank { get; set; }
 
         public int si_fan_on { get; set; }
         public int si_fan_off { get; set; }
@@ -35,8 +36,9 @@ namespace EpServerEngineSampleClient
         public int si_blower2_on { get; set; }
         public int si_blower3_on { get; set; }
         public int si_lights_on_delay { get; set; }
+        public int si_engine_temp_limit { get; set; }
         public int si_test_bank { get; set; }
-		public int si_engine_temp_limit { get; set; }
+        public int si_battery_box_temp { get; set; }
         public bool set { get; set; }
     }
 }

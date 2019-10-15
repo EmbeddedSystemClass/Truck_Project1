@@ -3,82 +3,82 @@
 	<UIFormat>			<!-- Settings for 'Test Ports' Dialog -->
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>170</Name>
-		<Value>170</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>168</Name>
-		<Value>168</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>166</Name>
-		<Value>166</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>164</Name>
-		<Value>164</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>162</Name>
-		<Value>162</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>160</Name>					<!-- set Name to zero and control -->
-		<Value>160</Value>						<!-- is disabled -->
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>158</Name>
-		<Value>158</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>156</Name>
-		<Value>156</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_FAN_OFF</Offset>
-		<Name>154</Name>
 		<Value>154</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
-		<Name>152</Name>
+		<Name>168</Name>
 		<Value>152</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
+		<Name>166</Name>
+		<Value>149</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>164</Name>
+		<Value>147</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>162</Name>
+		<Value>145</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>160</Name>					<!-- set Name to zero and control -->
+		<Value>143</Value>						<!-- is disabled -->
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>158</Name>
+		<Value>141</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>156</Name>
+		<Value>138</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>154</Name>
+		<Value>136</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
+		<Name>152</Name>
+		<Value>134</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_FAN_OFF</Offset>
 		<Name>150</Name>
-		<Value>150</Value>
+		<Value>132</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>148</Name>
-		<Value>148</Value>
+		<Value>129</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>146</Name>
-		<Value>146</Value>
+		<Value>127</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>144</Name>
-		<Value>144</Value>
+		<Value>125</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>142</Name>
-		<Value>142</Value>
+		<Value>123</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_FAN_OFF</Offset>
 		<Name>140</Name>
-		<Value>140</Value>
+		<Value>120</Value>
 	</UIFormat>
 </Table>
  

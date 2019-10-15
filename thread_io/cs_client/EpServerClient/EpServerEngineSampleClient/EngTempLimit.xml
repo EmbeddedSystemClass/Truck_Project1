@@ -1,79 +1,99 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
-	<UIFormat>			<!-- Settings for 'Test Ports' Dialog -->
+	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>184</Name>
-		<Value>184</Value>
+		<Value>169</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>186</Name>
-		<Value>186</Value>
+		<Value>172</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>188</Name>
-		<Value>188</Value>
+		<Value>174</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>190</Name>
-		<Value>190</Value>
+		<Value>176</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>192</Name>
-		<Value>192</Value>
+		<Value>178</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>194</Name>
-		<Value>194</Value>
+		<Value>180</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>196</Name>
-		<Value>196</Value>
+		<Value>183</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>198</Name>
-		<Value>198</Value>
+		<Value>185</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>200</Name>
-		<Value>200</Value>
+		<Value>187</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>202</Name>
-		<Value>202</Value>
-	</UIFormat>
-	<UIFormat>
-		<Offset>SET_TEMP_LIMIT</Offset>
-		<Name>202</Name>
-		<Value>202</Value>
+		<Value>189</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>204</Name>
-		<Value>204</Value>
+		<Value>192</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>206</Name>
-		<Value>206</Value>
+		<Value>194</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>208</Name>
-		<Value>208</Value>
+		<Value>196</Value>
 	</UIFormat>
 	<UIFormat>
 		<Offset>SET_TEMP_LIMIT</Offset>
 		<Name>210</Name>
-		<Value>210</Value>
+		<Value>198</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_TEMP_LIMIT</Offset>
+		<Name>212</Name>
+		<Value>201</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_TEMP_LIMIT</Offset>
+		<Name>214</Name>
+		<Value>203</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_TEMP_LIMIT</Offset>
+		<Name>216</Name>
+		<Value>205</Value>
+	</UIFormat>
+	<UIFormat>
+		<Offset>SET_TEMP_LIMIT</Offset>
+		<Name>218</Name>
+		<Value>207</Value>
+	</UIFormat>	
+	<UIFormat>
+		<Offset>SET_TEMP_LIMIT</Offset>
+		<Name>220</Name>
+		<Value>209</Value>
 	</UIFormat>
 </Table>
  
