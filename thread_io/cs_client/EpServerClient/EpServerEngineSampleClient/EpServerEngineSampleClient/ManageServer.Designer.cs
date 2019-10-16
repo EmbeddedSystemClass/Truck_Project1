@@ -77,7 +77,7 @@
             this.btnUploadOther.Name = "btnUploadOther";
             this.btnUploadOther.Size = new System.Drawing.Size(163, 35);
             this.btnUploadOther.TabIndex = 3;
-            this.btnUploadOther.Text = "Upload Other";
+            this.btnUploadOther.Text = "Exit to Shell";
             this.btnUploadOther.UseVisualStyleBackColor = true;
             this.btnUploadOther.Click += new System.EventHandler(this.UploadOther_Click);
             // 

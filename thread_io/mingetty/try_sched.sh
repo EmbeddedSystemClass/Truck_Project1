@@ -1,4 +1,4 @@
-echo "running try_sched.sh (v1.13)" >> status.txt
+echo "running try_sched.sh (v1.14)" >> status.txt
 if [ ! -e /mnt/cf/temp.txt ]
 then
  ../mountcf.sh
@@ -46,25 +46,22 @@ fi
 
 if [ $OUT -eq 4 ]
  then
-  echo "downloading new sched" >> status.txt
-#rm upload.tar >> status.txt
-./server >> status.txt
-mv sched2 upload.tar >> status.txt
-tar xvf upload.tar >> status.txt
-mv sched2 sched >> status.txt
-chmod +x sched
-chmod +x try_sched.sh
-cat try_sched.sh | head -n1 >> status.txt
-/sbin/reboot
-fi
-
-if [ $OUT -eq 5 ]
- then
   echo "downloading new try_sched.sh" >> status.txt
-./server >> status.txt
-mv sched2 try_sched.sh
-chmod +x try_sched.sh
-/sbin/reboot
+  ./server >> status.txt
+  ./sched2 test 1
+  OUT=$?
+
+if [ $OUT -eq 10 ]
+  then
+   echo "download ok" >> status.txt
+   mv sched2 sched
+   chmod +x sched
+   /sbin/reboot
+else 
+ echo "bad download" >> status.txt
+  rm sched2
+  /sbin/reboot
+fi
 fi
 
 if [ $OUT -eq 141 ]

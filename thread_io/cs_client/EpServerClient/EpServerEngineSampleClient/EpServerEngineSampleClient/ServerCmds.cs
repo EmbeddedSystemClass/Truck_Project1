@@ -112,7 +112,8 @@ namespace EpServerEngineSampleClient
             SET_BLOWER3_TEMP,
             SET_BATT_BOX_TEMP,
             TEMP_TOO_HIGH,
-            GET_VERSION
+            GET_VERSION,
+            DIM_SCREEN
         }
 
         public ServerCmds()

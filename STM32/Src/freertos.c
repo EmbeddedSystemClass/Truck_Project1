@@ -816,31 +816,9 @@ void StartDefaultTask(void const * argument)
 			break;
 
 			case KP_POUND:
-				vTaskDelay(100);
-				if(key_mode == NORMAL)
-				{
-					key_mode = NUM_ENTRY;
-					key_mode1 = 0;
-					key_mode2 = 1;
-				}else 
-				{
-					key_mode = NORMAL;
-					key_mode1 = 1;
-					key_mode2 = 0;
-				}
-				ucbuff[0] = DTMF_TONE_ON;
-				ucbuff[1] = key_mode1;
+				ucbuff[0] = DIM_SCREEN;
 				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendFPGAHandle,avr_buffer,0);
-				vTaskDelay(20);
-				ucbuff[0] = DTMF_TONE_ON;
-				ucbuff[1] = key_mode2;
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendFPGAHandle,avr_buffer,0);
-				vTaskDelay(20);
-				ucbuff[0] = DTMF_TONE_OFF;
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(SendFPGAHandle,avr_buffer,0);
+				xQueueSend(Send7200Handle,avr_buffer,0);
 			break;
 			
 			default:
@@ -1028,7 +1006,6 @@ void StartTask7200(void const * argument)
 		avr_buffer[0] >>= 8;
 
 		if(system_up == 1)
-//		if(1)
 		{
 			HAL_UART_Transmit(&huart1, &marker, 1, 100);
 			HAL_UART_Transmit(&huart1, &ucbuff[0], SERIAL_BUFF_SIZE, 100);
@@ -1260,20 +1237,20 @@ void StartRecv7200(void const * argument)
  					blower_en_temp = (uint16_t)buff[14];
 					blower_en_temp <<= 8;
 					blower_en_temp |= (uint16_t)buff[13];
-/*
+
 					for(i = 0;i < 10;i++)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
 						ucbuff[1] = (UCHAR)i;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(10);
+						vTaskDelay(5);
 						ucbuff[0] = DTMF_TONE_OFF;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
 						vTaskDelay(5);
 					}
-*/
+
 					server_up = 1;
 					break;
 
@@ -1284,7 +1261,7 @@ void StartRecv7200(void const * argument)
 						ucbuff[1] = (UCHAR)(10-i);
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(10);
+						vTaskDelay(5);
 						ucbuff[0] = DTMF_TONE_OFF;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);

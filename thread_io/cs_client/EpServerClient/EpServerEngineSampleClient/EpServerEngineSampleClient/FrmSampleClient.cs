@@ -14,7 +14,7 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Drawing;
 using System.Timers;
-
+using System.Runtime.InteropServices;
 
 namespace EpServerEngineSampleClient
 {
@@ -58,6 +58,7 @@ namespace EpServerEngineSampleClient
         INetworkClient m_client = new IocpTcpClient();
         public System.Collections.Generic.List<ButtonList> button_list;
         private List<int> Exclude_From_buttons = new List<int>();
+        BScreen screen_dimmer = null;
         private bool system_up = true;
         private PortSet2 psDlg = null;
         private PortSet2 psDlg2 = null;
@@ -88,6 +89,7 @@ namespace EpServerEngineSampleClient
         private int wait_before_starting = 0;
         //private int server_connection_attempts = 1;
         private bool client_connected = false;
+        private int brighness = 0;
 
         private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
         private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
@@ -123,30 +125,31 @@ namespace EpServerEngineSampleClient
             //psDlg = new PortSet2(File.Exists(dialog_one_location_laptop) ? dialog_one_location_laptop : dialog_one_location_desktop, m_client);
             psDlg = new PortSet2(xml_dialog1_location, m_client);
             psDlg.SetButtonLabels();
-            psDlg.Name = "Dialog One";
+            //psDlg.Name = "Dialog One";
             //psDlg.Set_Type(false);
 
             //psDlg2 = new PortSet2(File.Exists(dialog_two_location_laptop) ? dialog_two_location_laptop : dialog_two_location_desktop, m_client);
             psDlg2 = new PortSet2(xml_dialog2_location, m_client);
             psDlg2.SetButtonLabels();
-            psDlg2.Name = "Dialog Two";
+            //psDlg2.Name = "Dialog Two";
             //psDlg2.Set_Type(false);
 
             psDlg3 = new PortSet2(xml_dialog3_location, m_client);
             psDlg3.SetButtonLabels();
-            psDlg3.Name = "Test Ports";
+            psDlg3.Text = "test";
+            //psDlg3.Name = "Test Ports";
 
             psDlg4 = new PortSet2(xml_dialog4_location, m_client);
             psDlg4.SetButtonLabels();
-            psDlg4.Name = "Dialog Three";
+            //psDlg4.Name = "Dialog Three";
 
             psDlg5 = new PortSet2(xml_dialog5_location, m_client);
             psDlg5.SetButtonLabels();
-            psDlg5.Name = "Dialog Three";
+            //psDlg5.Name = "Dialog Three";
 
             psDlg6 = new PortSet2(xml_dialog6_location, m_client);
             psDlg6.SetButtonLabels();
-            psDlg6.Name = "Dialog Three";
+            //psDlg6.Name = "Dialog Three";
 
             playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
 
@@ -245,6 +248,8 @@ namespace EpServerEngineSampleClient
             }
             timer1.Enabled = true;
             //AddMsg("buttons used: " + no_buttons.ToString());
+            screen_dimmer = new BScreen();
+            //screen_dimmer.SetBright(130);
         }
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -316,6 +321,10 @@ namespace EpServerEngineSampleClient
                 psDlg.Dispose();
                 psDlg2.Dispose();
                 psDlg3.Dispose();
+                psDlg4.Dispose();
+                psDlg5.Dispose();
+                psDlg6.Dispose();
+                playdlg.Dispose();
                 base.OnClosed(e);
             }
         }
@@ -350,6 +359,7 @@ namespace EpServerEngineSampleClient
             int type_msg;
             string ret = null;
             int i = 0;
+            int dim;
             char[] chars = new char[bytes.Length / sizeof(char) + 2];
             char[] chars2 = new char[bytes.Length / sizeof(char)];
             // src srcoffset dest destoffset len
@@ -558,6 +568,12 @@ namespace EpServerEngineSampleClient
                 case "SEND_STATUS":
                     AddMsg(ret);
                     break;
+
+                case "DIM_SCREEN":
+                    dim = int.Parse(ret);
+                    AddMsg("dim: " + dim.ToString());
+                    screen_dimmer.SetBright(dim);
+                    break;
                 default:
                     break;
             }
@@ -730,8 +746,24 @@ namespace EpServerEngineSampleClient
             }
             return buffer;
         }
+        //[DllImport("C:\\Users\\Daniel\\other_dev\\EpServerClient\\ScreenBrighnessClass.NET(3.5).dll")]
+        //public static extern void Test() { }
+
         private void DBMgmt(object sender, EventArgs e)
         {
+            byte test;
+            int test2;
+            string cmd = "DIM_SCREEN";
+            //AddMsg("DIM_SCREEN");
+            int offset = svrcmd.GetCmdIndexI(cmd);
+            svrcmd.Send_Cmd(offset);
+            /*
+            AddMsg(brighness.ToString());
+            BScreen test_screen = new BScreen();
+            test_screen.SetBright(brighness += 10);
+            if (brighness > 150)
+                brighness = 0;
+            
             int val2 = 185;
             //string str = "SET_TEMP_LIMIT";
             string str = "SET_FAN_ON";
@@ -745,6 +777,8 @@ namespace EpServerEngineSampleClient
             m_client.Send(packet);
             //DlgForm1 dlg = new DlgForm1();
             //dlg.ShowDialog();
+            */
+            
         }
         private void ClearScreen(object sender, EventArgs e)
         {
@@ -907,6 +941,7 @@ namespace EpServerEngineSampleClient
                     break;
             }
         }
+        bool drake = true;
         private void myTimerTick(object sender, EventArgs e)
         {
             if (wait_before_starting != 0)
@@ -1011,15 +1046,27 @@ namespace EpServerEngineSampleClient
                     break;
                 case 2:         // then wait 1 second to see if it really did disconnect us
                     System.Media.SoundPlayer player;
-                    AddMsg("Drake, we are leaving...");
+                    string song = "";
+                    if (drake)
+                    {
+                        AddMsg("Drake, we are leaving...");
+                        drake = false;
+                        song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
+                    }
+                    else
+                    {
+                        AddMsg("Game over man");
+                        drake = true;
+                        song = "c:\\users\\Daniel\\Music\\WavFiles\\GameOverMan.wav";
+                    }
                     if (m_client.IsConnectionAlive)
                         m_client.Disconnect();
                     please_lets_disconnect = 0;
                     //drake_img.Visible = true;
-                    string song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
                     player = new System.Media.SoundPlayer();
                     player.SoundLocation = song;
                     player.Play();
+                    player.Dispose();
                     //drake_img.Visible = false;
                     break;
             }
@@ -1071,4 +1118,51 @@ namespace EpServerEngineSampleClient
             m_client.Send(packet);
         }
     }
+
+    public partial class BScreen
+    {
+        [DllImport("gdi32.dll")]
+        private unsafe static extern bool SetDeviceGammaRamp(Int32 hdc, void* ramp);
+        private static bool initialized = false;
+        private static Int32 hdc;
+        private static int a;
+        public BScreen()
+        {
+        }
+        private static void InitializeClass()
+        {
+            if (initialized)
+                return;
+            hdc = Graphics.FromHwnd(IntPtr.Zero).GetHdc().ToInt32();
+            initialized = true;
+        }
+        public static unsafe bool SetBrightness(int brightness)
+        {
+            InitializeClass();
+            if (brightness > 255)
+                brightness = 255;
+            if (brightness < 0)
+                brightness = 0;
+            short* gArray = stackalloc short[3 * 256];
+            short* idx = gArray;
+            for (int j = 0; j < 3; j++)
+            {
+                for (int i = 0; i < 256; i++)
+                {
+                    int arrayVal = i * (brightness + 128);
+                    if (arrayVal > 65535)
+                        arrayVal = 65535;
+                    *idx = (short)arrayVal;
+                    idx++;
+                }
+            }
+            bool retVal = SetDeviceGammaRamp(hdc, gArray);
+            return retVal;
+        }
+        public void SetBright(int bright)
+        {
+            SetBrightness(bright);
+        }
+    }
+
 }

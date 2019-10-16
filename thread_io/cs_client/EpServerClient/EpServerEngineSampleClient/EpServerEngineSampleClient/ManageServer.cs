@@ -58,7 +58,7 @@ namespace EpServerEngineSampleClient
 
         private void UploadOther_Click(object sender, EventArgs e)
         {
-            AddMsg("sending UPLOAD_OTHER");
+            AddMsg("sending EXIT TO SHELL");
             reboot_code = 4;
         }
 

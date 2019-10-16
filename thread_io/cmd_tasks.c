@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[101] =
+CMD_STRUCT cmd_array[102] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -139,7 +139,8 @@ CMD_STRUCT cmd_array[101] =
 	{		SET_BLOWER3_TEMP,"SET_BLOWER3_TEMP\0" },
 	{		SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
 	{		TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
-	{		GET_VERSION,"GET_VERSION\0" }
+	{		GET_VERSION,"GET_VERSION\0" },
+	{		DIM_SCREEN,"DIM_SCREEN\0" }
 };
 
 //extern illist_t ill;
@@ -152,6 +153,7 @@ extern PARAM_STRUCT ps;
 int shutdown_all;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 static void format_param_msg(void);
+int screen_dim = 100;
 
 int tcp_window_on;
 //int serial_recv_on;
@@ -215,7 +217,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.25\0";
+	char version[15] = "sched v1.34\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -1153,6 +1155,15 @@ UCHAR get_host_cmd_task(int test)
 					case GET_VERSION:
 						printString2(version);
 						send_status_msg(version);
+						break;
+
+					case DIM_SCREEN:
+						if((screen_dim += 30) > 200)
+							screen_dim = 0;
+						sprintf(tempx,"%d",screen_dim);
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, DIM_SCREEN);
+						//strcat(tempx," DIM_SCREEN");
+						//printString2(tempx);
 						break;
 
 					case EXIT_PROGRAM:

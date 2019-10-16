@@ -80,10 +80,20 @@ int main(int argc, char **argv)
 	{
 		strcpy(oFileName,"odata.dat\0");
 	}
+
 	else if(argc == 2)
 	{
 		strcpy(oFileName,argv[1]);
 		strcpy(oFileName,"odata.dat\0");
+	}
+	else if(argc == 3)
+	{
+		if((strcmp(argv[1],"test") == 0))
+		{
+			printf("testing\r\n");
+		}
+		printf("%s\r\n",argv[1]);
+		return 10;
 	}
 
 	id_arg = (int *)malloc(NUM_TASKS*sizeof(int));

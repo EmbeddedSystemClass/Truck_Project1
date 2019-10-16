@@ -322,6 +322,8 @@ namespace EpServerEngineSampleClient
 				else
 				{
                     slist = new Child_Scrolling_List(m_client);
+                    slist.Enabled = true;
+
                     int index = command - 200;
                     byte indexb = (byte)index;
 					AddMsg("special cmd: " + command.ToString());
@@ -330,13 +332,13 @@ namespace EpServerEngineSampleClient
 					if (child_dialogs[index].Type == 0) // Scrolling_List type dialog
 					{
 						slist.SetXMLFile(child_dialogs[index].Name);
-						//m_wait = false;
-						slist.Enable_Dlg(true);
+                        //m_wait = false;
+                        slist.Enable_Dlg(true);
 						this.Enable_Dlg(false);
 						slist.ShowDialog(this);
                         slist_value = slist.final_value;
                         slist_cmd = slist.cmd;
-                        //AddMsg("test: " + slist_cmd + " " + slist_value.ToString());
+                        AddMsg("test: " + slist_cmd + " " + slist_value.ToString());
                         slist.Enable_Dlg(false);
                         this.Enable_Dlg(true);
                         slist.Dispose();
