@@ -51,7 +51,6 @@ static UCHAR check_inputs(int index, int test);
 extern CMD_STRUCT cmd_array[58];
 ollist_t oll;
 PARAM_STRUCT ps;
-extern int screen_dim;
 
 //extern pthread_t serial_thread;	// workaround for closing serial task
 
@@ -1106,16 +1105,6 @@ UCHAR serial_recv_task(int test)
 			temp |= read_serial_buffer[5];
 			sprintf(tempx,"cooling fan off: %.1f\0", convertF(temp));
 			printString2(tempx);
-		}else
-
-		if(cmd == DIM_SCREEN)
-		{
-			if((screen_dim += 30) > 200)
-				screen_dim = 0;
-			sprintf(tempx,"%d",screen_dim);
-			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, DIM_SCREEN);
-			//strcat(tempx," DIM_SCREEN (2)");
-			//printString2(tempx);
 		}
 
 		if(shutdown_all)

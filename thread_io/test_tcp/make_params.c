@@ -1,3 +1,61 @@
+/* make_params.c - actual values of rpm_update_rate->low_rev_limit & lights_on_delay is 
+	the index into the choices in the xml files and the collections of the comboboxes
+	in the DlgSetParams.cs of the client proj. and ParamsForm.cs of the server proj.
+
+high_rev_limit:
+0 - 6000
+1 - 5800
+2 - 5600
+3 - 5400
+4 - 5200
+5 - 5000
+6 - 4800
+7 - 4600
+8 - 4200
+9 - 4000
+
+low_rev_limit:
+0 - 4500
+1 - 4400
+2 - 4300
+3 - 4200
+4 - 4100
+5 - 4000
+6 - 3900
+7 - 3800
+8 - 3700
+
+fpga_xmit_rate:
+0 - 1000
+1 - 2000
+2 - 3000
+
+rpm_update_rate:
+0 - 1000
+1 - 2000
+2 - 3000
+
+mph_update_rate:
+0 - 1000
+1 - 2000
+2 - 3000
+
+lights_on_delay:
+0 - 1 second
+1 - 2 seconds
+2 - 3 seconds
+3 - 5 seconds
+4 - 10 seconds
+5 - 15 seconds
+6 - 30 seconds
+7 - 1 minute
+8 - 2 minutes
+9 - 5 minutes
+10 - 10 minutes
+11 - 30 minutes
+12 - 1 hour
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -16,16 +74,16 @@ int main(void)
 
 	ps.rpm_update_rate = 1;
 	ps.mph_update_rate = 2;
-	ps.fpga_xmit_rate = 3;
-	ps.high_rev_limit = 4000;
-	ps.low_rev_limit = 3800;
+	ps.fpga_xmit_rate = 2;
+	ps.high_rev_limit = 9;
+	ps.low_rev_limit = 7;
 	ps.cooling_fan_on = 171;
 	ps.cooling_fan_off = 154;
 	ps.blower_enabled = 7;
 	ps.blower1_on = 8;
 	ps.blower2_on = 9;
 	ps.blower3_on = 10;
-	ps.lights_on_delay = 30;
+	ps.lights_on_delay = 6;
 	ps.engine_temp_limit = 182;
 	ps.batt_box_temp = 40;
 	ps.test_bank = 2;

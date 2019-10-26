@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using EpLibrary.cs;
 using EpServerEngine.cs;
 
-namespace EpServerEngineSampleClient
+namespace EpServerEngineSampleServer
 {
     class ServerCmds
     {

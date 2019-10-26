@@ -141,7 +141,11 @@ enum cmd_types
 	SET_BATT_BOX_TEMP,
 	TEMP_TOO_HIGH,
 	GET_VERSION,
-	DIM_SCREEN
+	SVR_CMD,
+	HOME_SVR_ON,
+	HOME_SVR_OFF,
+	UPDATE_CONFIG,
+	SEND_CONFIG2
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200
@@ -315,8 +319,8 @@ typedef struct params
 	int rpm_update_rate;	// update rates for LED displays
 	int mph_update_rate;
 	int fpga_xmit_rate;
-	UINT high_rev_limit;
-	UINT low_rev_limit;
+	int high_rev_limit;
+	int low_rev_limit;
 	int cooling_fan_on;
 	int cooling_fan_off;
 	int blower_enabled;

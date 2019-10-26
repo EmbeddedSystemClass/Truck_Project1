@@ -23,6 +23,7 @@ namespace EpServerEngineSampleClient
 	public partial class PortSet2 : Form
 	{
 		private INetworkClient m_client;
+		//private INetworkClient m_client2;
 		ServerCmds svrcmd = new ServerCmds();
 		private int current_button = 0;
 		private int previous_button = 0;
@@ -240,6 +241,19 @@ namespace EpServerEngineSampleClient
 						}
 					}
 				}
+
+				/*
+				else if(str == "HOME_SVR_ON" && !m_client.IsConnectionAlive)
+				{
+					ClientOps ops = new ClientOps((FrmSampleClient)this.Parent, "192.168.42.150", "8000");
+					m_client2.Connect(ops);
+				}
+				else if (str == "HOME_SVR_OFF" && m_client.IsConnectionAlive)
+				{
+					m_client2.Disconnect();
+				}
+				*/
+
 			}
 			else if(!slist.IsDisposed)// then the slist dlg is visible...
 			{
@@ -357,6 +371,10 @@ namespace EpServerEngineSampleClient
 			}
 			else
 			{
+				if (offset > 101 && offset < 103)
+				{
+					AddMsg("svr cmd: " + offset.ToString());
+				}
 				string cmd = svrcmd.GetName(command + offset);
 				//AddMsg(cmd + " " + current_button.ToString() + " " + command.ToString() + " " + offset.ToString());
 				svrcmd.Send_Cmd(command + offset);

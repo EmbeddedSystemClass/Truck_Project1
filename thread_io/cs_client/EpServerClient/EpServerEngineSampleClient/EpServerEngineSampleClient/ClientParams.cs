@@ -13,5 +13,5 @@ namespace EpServerEngineSampleClient
 		public int PortNo { get; set; }
 		public bool Primary { get; set; }
 		public int AttemptsToConnect { get; set; }
-	}
+    }
 }

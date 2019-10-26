@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[102] =
+CMD_STRUCT cmd_array[106] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -140,7 +140,11 @@ CMD_STRUCT cmd_array[102] =
 	{		SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
 	{		TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
 	{		GET_VERSION,"GET_VERSION\0" },
-	{		DIM_SCREEN,"DIM_SCREEN\0" }
+	{		SVR_CMD,"SVR_CMD\0" },
+	{		HOME_SVR_ON,"HOME_SVR_ON\0" },
+	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
+	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
+	{		SEND_CONFIG,"SEND_CONFIG\0" }
 };
 
 //extern illist_t ill;
@@ -153,8 +157,51 @@ extern PARAM_STRUCT ps;
 int shutdown_all;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
 static void format_param_msg(void);
-int screen_dim = 100;
 
+// these are the actual values that are shown in the client's dialog's comboboxes
+// as choices for rev limit's and lights_on_delays
+// they are stored on disk as the selected indexes in the comboboxes
+// so the have to be converted to the actual values
+char hi_rev[10][10] =  {"6000",
+						"5800",
+						"5600",
+						"5400",
+						"5200",
+						"5000",
+						"4800",
+						"4600",
+						"4200",
+						"4000"};
+
+char lo_rev[9][10] =   {"4500",
+						"4400",
+						"4300",
+						"4200",
+						"4100",
+						"4000",
+						"3900",
+						"3800",
+						"3700"};
+
+/*
+char lights[13][15] =  {"1 second",
+						"2 seconds",
+						"3 seconds",
+						"5 seconds",
+						"10 seconds",
+						"15 seconds",
+						"30 seconds",
+						"1 minute",
+						"2 minutes",
+						"5 minutes",
+						"10 minutes",
+						"30 minutes",
+						"1 hour"};
+*/
+int lights_on_delay[13] = {1,2,3,5,10,15,30,60,120,300,600,1800,3600};
+static int actual_high_rev_limit;
+static int actual_low_rev_limit;
+static int actual_lights_on_delay;
 int tcp_window_on;
 //int serial_recv_on;
 //int time_set;
@@ -217,7 +264,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.34\0";
+	char version[15] = "sched v1.38\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -970,7 +1017,7 @@ UCHAR get_host_cmd_task(int test)
 						//send_serial(SET_TEMP_LIMIT);
 						send_serialother(SET_TEMP_LIMIT, &write_serial_buffer[0]);
 						usleep(1000);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -991,7 +1038,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[1] = msg_buf[3];
 						send_serialother(SET_FAN_ON, &write_serial_buffer[0]);
 						usleep(1000);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1012,7 +1059,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[1] = msg_buf[3];
 						send_serialother(SET_FAN_OFF, &write_serial_buffer[0]);
 						usleep(1000);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1028,13 +1075,16 @@ UCHAR get_host_cmd_task(int test)
 						ps.high_rev_limit = utemp;
 						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
 						}
+						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
+						sprintf(tempx,"actual: %d",actual_high_rev_limit);
+						printString2(tempx);
 						break;
 
 					case LOW_REV_LIMIT:
@@ -1044,13 +1094,16 @@ UCHAR get_host_cmd_task(int test)
 						ps.low_rev_limit = utemp;
 						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
 						}
+						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
+						sprintf(tempx,"actual: %d",actual_low_rev_limit);
+						printString2(tempx);
 						break;
 
 					case LIGHTS_ON_DELAY:
@@ -1060,10 +1113,15 @@ UCHAR get_host_cmd_task(int test)
 						ps.lights_on_delay = utemp;
 						sprintf(tempx,"lights on delay: %d\0", ps.lights_on_delay);
 						printString2(tempx);
+						actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
+						utemp = (UINT)actual_lights_on_delay;
+						msg_buf[2] = (UCHAR)utemp;
+						utemp >>= 8;
+						msg_buf[3] = (UCHAR)utemp;
 						write_serial_buffer[0] = msg_buf[2];
 						write_serial_buffer[1] = msg_buf[3];
 						send_serialother(LIGHTS_ON_DELAY, &write_serial_buffer[0]);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1079,7 +1137,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower1_on = utemp;
 						sprintf(tempx,"blower 1 on: %d\0", ps.blower1_on);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1095,7 +1153,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower2_on = utemp;
 						sprintf(tempx,"blower 2 on: %d\0", ps.blower2_on);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1111,7 +1169,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower3_on = utemp;
 						sprintf(tempx,"blower 3 on: %d\0", ps.blower3_on);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1127,7 +1185,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower_enabled = utemp;
 						sprintf(tempx,"blower en on: %d\0", ps.blower_enabled);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1143,7 +1201,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.batt_box_temp = utemp;
 						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
 						printString2(tempx);
-						i = WriteParams("param.conf", &ps, errmsg);
+//						i = WriteParams("param.conf", &ps, errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
@@ -1151,19 +1209,29 @@ UCHAR get_host_cmd_task(int test)
 							sprintf(tempx,"%s %d",errmsg,i);
 						}
 						break;
-					
+	
+					case UPDATE_CONFIG:
+						i = WriteParams("param.conf", &ps, errmsg);
+						break;
+
 					case GET_VERSION:
 						printString2(version);
 						send_status_msg(version);
 						break;
 
-					case DIM_SCREEN:
-						if((screen_dim += 30) > 200)
-							screen_dim = 0;
-						sprintf(tempx,"%d",screen_dim);
-						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, DIM_SCREEN);
-						//strcat(tempx," DIM_SCREEN");
-						//printString2(tempx);
+					case SVR_CMD:
+						break;
+
+					case HOME_SVR_ON:
+						strcpy(tempx,"HOME_SVR_ON");
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_ON);
+						printString2("Home Server On");
+						break;
+
+					case HOME_SVR_OFF:
+						strcpy(tempx,"HOME_SVR_OFF");
+						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_OFF);
+						printString2("Home Server Off");
 						break;
 
 					case EXIT_PROGRAM:
@@ -1563,8 +1631,8 @@ void send_param_msg(void)
 														ps.engine_temp_limit,
 														ps.batt_box_temp,
 														ps.test_bank);
-
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
+printString2(tempx);
 }
 /*********************************************************************/
 void send_status_msg(char *msg)

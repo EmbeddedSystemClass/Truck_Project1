@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "Truck_Project1/mytypes.h"
+#include "../mytypes.h"
 
-CMD_STRUCT cmd_array[99] =
+CMD_STRUCT cmd_array[104] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -90,6 +90,7 @@ CMD_STRUCT cmd_array[99] =
 	{		SERVER_UP,"SERVER_UP\0" },
 	{		SERVER_DOWN,"SERVER_DOWN\0" },
 	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{		UPLOAD_OTHER,"UPLOAD_OTHER\0" },
 	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
 	{		SET_FAN_ON,"SET_FAN_ON\0" },
 	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
@@ -100,14 +101,17 @@ CMD_STRUCT cmd_array[99] =
 	{		SET_BLOWER1_TEMP,"SET_BLOWER1_TEMP\0" },
 	{		SET_BLOWER2_TEMP,"SET_BLOWER2_TEMP\0" },
 	{		SET_BLOWER3_TEMP,"SET_BLOWER3_TEMP\0" },
+	{		SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
 	{		TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
-	{		GET_VERSION,"GET_VERSION\0" }
+	{		GET_VERSION,"GET_VERSION\0" },
+	{		SVR_CMD,"SVR_CMD\0" },
+	{		HOME_SVR_ON,"HOME_SVR_ON\0" },
+	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" }
 };
-
 
 int main(void)
 {
 	int i;
-	for(i = 0;i < 99;i++)
+	for(i = 0;i < 104;i++)
 		printf("%02d\t\t%02x\t\t%s\n",cmd_array[i].cmd, cmd_array[i].cmd, cmd_array[i].cmd_str);
 }

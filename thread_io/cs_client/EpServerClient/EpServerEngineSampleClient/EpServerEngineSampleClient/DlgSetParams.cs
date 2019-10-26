@@ -32,13 +32,19 @@ namespace EpServerEngineSampleClient
         {
 
         }
-        public int get_dtemps(string str)
-        {
-            return dtemps[str];
-        }
         public string get_temp_str(int index)
         {
-            return temp_str[250-index];
+			if (index < 512 && index > 402)
+			{
+				int ret = 250;
+				ret += (511 - index);
+				if (ret > 0 && ret < 359)
+					return temp_str[ret];
+				else return "NAN";
+			}
+			else if (index < 251 && index > 0)
+				return temp_str[250 - index];
+			else return "NAN";
         }
         // TODO: need a dialog that pops up if blower1_on is lower that blower2_on or 
 		// blower3_on and so on

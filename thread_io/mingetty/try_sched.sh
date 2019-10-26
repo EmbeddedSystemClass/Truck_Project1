@@ -1,4 +1,5 @@
 echo "running try_sched.sh (v1.14)" >> status.txt
+date >> status.txt
 if [ ! -e /mnt/cf/temp.txt ]
 then
  ../mountcf.sh

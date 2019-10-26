@@ -20,46 +20,48 @@ namespace EpServerEngineSampleClient
 {
     public partial class FrmSampleClient : Form, INetworkClientCallback
     {
-        public class CommonControls : IEquatable<CommonControls>
-        {
-            public string CtlName { get; set; }     // the name of the button control (should be button0->9)
-            public string CtlText { get; set; }     // the text on the button (set programmatically)
-            public int TabOrder { get; set; }       // tab order
-            public Control Ctlinst { get; set; }    // instance of the control (makes the above 3 redundant)
-            public int cmd { get; set; }            // the index into enum command_types
-            public int len { get; set; }            // total length of included commands including 1st one (as a set)
-            public int offset { get; set; }
+		public class CommonControls : IEquatable<CommonControls>
+		{
+			public string CtlName { get; set; }     // the name of the button control (should be button0->9)
+			public string CtlText { get; set; }     // the text on the button (set programmatically)
+			public int TabOrder { get; set; }       // tab order
+			public Control Ctlinst { get; set; }    // instance of the control (makes the above 3 redundant)
+			public int cmd { get; set; }            // the index into enum command_types
+			public int len { get; set; }            // total length of included commands including 1st one (as a set)
+			public int offset { get; set; }
 
-            public override string ToString()
-            {
-                return CtlName + " " + CtlText + " " + TabOrder.ToString();
-            }
-            public override bool Equals(object obj)
-            {
-                if (obj == null) return false;
-                CommonControls objAsPart = obj as CommonControls;
-                if (objAsPart == null) return false;
-                else return Equals(objAsPart);
-            }
-            public override int GetHashCode()
-            {
-                return TabOrder;
-            }
-            public bool Equals(CommonControls other)
-            {
-                if (other == null) return false;
-                return (this.TabOrder.Equals(other.TabOrder));
-            }
-
-        }
+			public override string ToString()
+			{
+				return CtlName + " " + CtlText + " " + TabOrder.ToString();
+			}
+			public override bool Equals(object obj)
+			{
+				if (obj == null) return false;
+					CommonControls objAsPart = obj as CommonControls;
+				if (objAsPart == null) return false;
+					else return Equals(objAsPart);
+			}
+			public override int GetHashCode()
+			{
+				return TabOrder;
+			}
+			public bool Equals(CommonControls other)
+			{
+				if (other == null) return false;
+					return (this.TabOrder.Equals(other.TabOrder));
+			}
+		}
         ConfigParams cfg_params = new ConfigParams();
         private DlgSetParams dlgsetparams = null;
         ServerCmds svrcmd = new ServerCmds();
-        INetworkClient m_client = new IocpTcpClient();
-        public System.Collections.Generic.List<ButtonList> button_list;
+		ServerCmds svrcmd2 = new ServerCmds();
+		INetworkClient m_client = new IocpTcpClient();
+		INetworkClient m_client2 = new IocpTcpClient();
+
+		public System.Collections.Generic.List<ButtonList> button_list;
         private List<int> Exclude_From_buttons = new List<int>();
-        BScreen screen_dimmer = null;
         private bool system_up = true;
+		private bool HomeSvrConnected = false;
         private PortSet2 psDlg = null;
         private PortSet2 psDlg2 = null;
         private PortSet2 psDlg3 = null;
@@ -107,7 +109,8 @@ namespace EpServerEngineSampleClient
             this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             svrcmd.SetClient(m_client);
-            dlgsetparams = new DlgSetParams(cfg_params);
+			svrcmd2.SetClient(m_client2);
+			dlgsetparams = new DlgSetParams(cfg_params);
             dlgsetparams.SetClient(m_client);
             cbIPAdress.Enabled = true;
             tbReceived.Enabled = true;
@@ -186,7 +189,6 @@ namespace EpServerEngineSampleClient
                 {
                     m_hostname = cbIPAdress.Text = client_params[i].IPAdress;
                     m_portno = tbPort.Text = client_params[i].PortNo.ToString();
-                    //cbAutoConnecct.Checked = client_params[i].AutoConn;
                     selected_address = i;
                     found = true;
                 }
@@ -248,8 +250,6 @@ namespace EpServerEngineSampleClient
             }
             timer1.Enabled = true;
             //AddMsg("buttons used: " + no_buttons.ToString());
-            screen_dimmer = new BScreen();
-            //screen_dimmer.SetBright(130);
         }
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -272,47 +272,53 @@ namespace EpServerEngineSampleClient
         }
         public void OnConnected(INetworkClient client, ConnectStatus status)
         {
+			if (client.HostName == m_hostname)
+			{
+				if (m_client.IsConnectionAlive)
+				{
+					tbConnected.Text = "connected";     // comment all these out in debug
+														//            cblistCommon.Enabled = true;      this one stays commneted out
+					btnConnect.Text = "Disconnect";
+					btnTestPorts.Enabled = true;             // shutdown engine button
+					btnStartEng.Enabled = true;             // start engine
+															//btnStartEng.Text = "Stop Engine";
+					btnSetParams.Enabled = true;
+					cbIPAdress.Enabled = false;     /// from here to MPH should be commented out when in debugger
+					tbPort.Enabled = false;
 
-            if (m_client.IsConnectionAlive)
-            {
-                tbConnected.Text = "connected";     // comment all these out in debug
-                                                    //            cblistCommon.Enabled = true;      this one stays commneted out
-                btnConnect.Text = "Disconnect";
-                btnTestPorts.Enabled = true;             // shutdown engine button
-                btnStartEng.Enabled = true;             // start engine
-                                                        //btnStartEng.Text = "Stop Engine";
-                btnSetParams.Enabled = true;
-                cbIPAdress.Enabled = false;     /// from here to MPH should be commented out when in debugger
-				tbPort.Enabled = false;
+					btnShutdown.Enabled = true;
+					btnReboot.Enabled = true;
+					btnStopSerial.Enabled = true;
+					tbServerTime.Text = "";
+					tbEngRunTime.Text = "";
+					tbEngineTemp.Text = "";
+					tbRPM.Text = "";
+					tbMPH.Text = "";
 
-                btnShutdown.Enabled = true;
-                btnReboot.Enabled = true;
-                btnStopSerial.Enabled = true;
-                tbServerTime.Text = "";
-                tbEngRunTime.Text = "";
-                tbEngineTemp.Text = "";
-                tbRPM.Text = "";
-                tbMPH.Text = "";
-
-                btn_PlayList.Enabled = true;
-                btnGetTime.Enabled = true;
-                reevaluate_enabled_buttons();
-            }
+					btn_PlayList.Enabled = true;
+					btnGetTime.Enabled = true;
+					reevaluate_enabled_buttons();
+				}
+			}
+			else AddMsg("other hostname: " + client.HostName);
         }
         public void OnDisconnect(INetworkClient client)
         {
-            cbIPAdress.Enabled = true;
-            tbPort.Enabled = true;
-            btnConnect.Text = "Connect";
-            tbConnected.Text = "not connected";
-            btnShutdown.Enabled = false;
-            btnStartEng.Enabled = false;
-            //btnStartEng.Text = "Stop Engine";
-            btnSetParams.Enabled = false;
-            reevaluate_enabled_buttons();
-            timer_server_up_seconds = 0;
-        }
-        protected override void OnClosed(EventArgs e)
+			if (client.HostName == m_hostname)
+			{
+				cbIPAdress.Enabled = true;
+				tbPort.Enabled = true;
+				btnConnect.Text = "Connect";
+				tbConnected.Text = "not connected";
+				btnShutdown.Enabled = false;
+				btnStartEng.Enabled = false;
+				//btnStartEng.Text = "Stop Engine";
+				btnSetParams.Enabled = false;
+				reevaluate_enabled_buttons();
+				timer_server_up_seconds = 0;
+			}
+		}
+		protected override void OnClosed(EventArgs e)
         {
             if (m_client.IsConnectionAlive)
                 please_lets_disconnect = 1;
@@ -330,7 +336,11 @@ namespace EpServerEngineSampleClient
         }
         public void OnReceived(INetworkClient client, Packet receivedPacket)
         {
-            if (psDlg.Visible == true)
+			// anything that gets sent here gets sent to home server if it's up
+			if (m_client2.IsConnectionAlive)
+				m_client2.Send(receivedPacket);
+
+			if (psDlg.Visible == true)
             {
                 psDlg.Process_Msg(receivedPacket.PacketRaw);
             }
@@ -341,6 +351,18 @@ namespace EpServerEngineSampleClient
             else if (psDlg3.Visible == true)
             {
                 psDlg3.Process_Msg(receivedPacket.PacketRaw);
+            }
+            else if (psDlg4.Visible == true)
+            {
+                psDlg4.Process_Msg(receivedPacket.PacketRaw);
+            }
+            else if (psDlg5.Visible == true)
+            {
+                psDlg5.Process_Msg(receivedPacket.PacketRaw);
+            }
+            else if (psDlg6.Visible == true)
+            {
+                psDlg6.Process_Msg(receivedPacket.PacketRaw);
             }
             else if (playdlg.Visible == true)
             {
@@ -359,7 +381,6 @@ namespace EpServerEngineSampleClient
             int type_msg;
             string ret = null;
             int i = 0;
-            int dim;
             char[] chars = new char[bytes.Length / sizeof(char) + 2];
             char[] chars2 = new char[bytes.Length / sizeof(char)];
             // src srcoffset dest destoffset len
@@ -370,13 +391,160 @@ namespace EpServerEngineSampleClient
 
             //            string str = Enum.GetName(typeof(msg_types), type_msg);
             string str = svrcmd.GetName(type_msg);
-            //AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
+			//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
 
             switch (str)
             {
-                case "SEND_MSG":
-                    AddMsg(ret);
-                    switch (ret)
+				case "SEND_CONFIG2":
+					byte[] recv_conf_bytes = new byte[62];
+					AddMsg(bytes.Length.ToString());
+					System.Buffer.BlockCopy(bytes, 0, recv_conf_bytes, 0, bytes.Length);
+					int test;
+					for (i = 0; i < 15; i++)
+					{
+						test = BitConverter.ToInt16(bytes, 2+i*2);
+						AddMsg(test.ToString());
+					}
+					break;
+
+				case "SVR_CMD":
+					//AddMsg("str: " + str.Length.ToString());
+					//AddMsg(str);
+					//AddMsg("ret: " + ret.Length.ToString());
+					AddMsg("svr: " + ret);
+					int offset = svrcmd.GetCmdIndexI(ret);
+					svrcmd.Send_Cmd(offset);
+					break;
+
+				case "UPDATE_CONFIG":
+					int val2 = cfg_params.fan_on;
+					str = "SET_FAN_ON";
+					byte[] bytes1 = BitConverter.GetBytes(val2);
+					byte[] bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.fan_off;
+					str = "SET_FAN_OFF";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.engine_temp_limit;
+					str = "SET_TEMP_LIMIT";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					AddMsg(cfg_params.engine_temp_limit.ToString());
+					m_client.Send(packet);
+
+					val2 = cfg_params.high_rev_limit;
+					str = "HIGH_REV_LIMIT";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.low_rev_limit;
+					str = "LOW_REV_LIMIT";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.lights_on_delay;
+					str = "LIGHTS_ON_DELAY";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.blower_enabled;
+					str = "SET_BLOWER_EN_TEMP";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.blower1_on;
+					str = "SET_BLOWER1_TEMP";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.blower2_on;
+					str = "SET_BLOWER2_TEMP";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					val2 = cfg_params.blower3_on;
+					str = "SET_BLOWER3_TEMP";
+					bytes1 = BitConverter.GetBytes(val2);
+					bytes2 = new byte[bytes1.Count() + 2];
+					bytes2[0] = svrcmd.GetCmdIndexB(str);
+					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					m_client.Send(packet);
+
+					string cmd = "UPDATE_CONFIG";		// tell server to write to disk
+					type_msg = svrcmd.GetCmdIndexI(cmd);
+					svrcmd.Send_Cmd(type_msg);
+
+					break;
+
+				case "HOME_SVR_ON":
+					if (!HomeSvrConnected)
+					{
+						ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
+						m_client2.Connect(ops);
+						HomeSvrConnected = true;
+						lbHomeSvr.Text = "Home Server Connected";
+					}
+					else
+					{
+						AddMsg("home server on already");
+					}
+					break;
+
+				case "HOME_SVR_OFF":
+					if (!HomeSvrConnected)
+					{
+						AddMsg("home server off already");
+					}
+					else
+					{
+						m_client2.Disconnect();
+						HomeSvrConnected = false;
+						lbHomeSvr.Text = "Home Server Not Connected";
+					}
+					break;
+
+				case "SEND_MSG":
+					//AddMsg("str: " + str + " " + str.Length.ToString());
+					//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
+					switch (ret)
                     {
                         case "START_SEQ":
                             m_engine_running = true;
@@ -429,9 +597,11 @@ namespace EpServerEngineSampleClient
                             break;
                     }
                     break;
+
                 case "CURRENT_TIME":
                     AddMsg(ret);
                     break;
+
                 case "SERVER_UPTIME":
                     substr = ret.Substring(0, 2);
                     server_up_seconds++;
@@ -454,18 +624,25 @@ namespace EpServerEngineSampleClient
                     else
                         tbEngRunTime.Text = ret;
                     break;
+
                 case "ENGINE_TEMP":
                     tbEngineTemp.Text = ret;
                     break;
+
                 case "SEND_RPM":
                     tbRPM.Text = ret;           // comment out for debug
                     break;
+
                 case "SEND_MPH":
                     tbMPH.Text = ret;           // comment out for debug
                     break;
+
                 case "SEND_CONFIG":
                     string[] words = ret.Split(' ');
                     i = 0;
+					AddMsg("send config");
+					AddMsg(ret);
+					
                     foreach (var word in words)
                     {
                         //                    temp = int.Parse(word);
@@ -482,10 +659,12 @@ namespace EpServerEngineSampleClient
                                 break;
                             case 3:
                                 cfg_params.high_rev_limit = int.Parse(word);
+								AddMsg("hi rev: " + cfg_params.high_rev_limit.ToString());
                                 break;
                             case 4:
                                 cfg_params.low_rev_limit = int.Parse(word);
-                                break;
+								AddMsg("lo rev: " + cfg_params.low_rev_limit.ToString());
+								break;
                             case 5:
                                 cfg_params.fan_on = int.Parse(word);
                                 //AddMsg("fan on: " + cfg_params.fan_on.ToString());
@@ -502,16 +681,28 @@ namespace EpServerEngineSampleClient
                                 break;
                             case 7:
                                 cfg_params.blower_enabled = int.Parse(word);
-                                break;
+								substr = dlgsetparams.get_temp_str(cfg_params.blower_enabled).ToString();
+								AddMsg("blower en: " + substr);
+								AddMsg("");
+								break;
                             case 8:
                                 cfg_params.blower1_on = int.Parse(word);
-                                break;
+								substr = dlgsetparams.get_temp_str(cfg_params.blower1_on).ToString();
+								AddMsg("blower1 on: " + substr);
+								AddMsg("");
+								break;
                             case 9:
                                 cfg_params.blower2_on = int.Parse(word);
-                                break;
+								substr = dlgsetparams.get_temp_str(cfg_params.blower2_on).ToString();
+								AddMsg("blower2 on: " + substr);
+								AddMsg("");
+								break;
                             case 10:
                                 cfg_params.blower3_on = int.Parse(word);
-                                break;
+								substr = dlgsetparams.get_temp_str(cfg_params.blower3_on).ToString();
+								AddMsg("blower3 on: " + substr);
+								AddMsg("");
+								break;
                             case 11:
                                 cfg_params.lights_on_delay = int.Parse(word);
                                 AddMsg("lights on delay: " + cfg_params.lights_on_delay.ToString());
@@ -525,7 +716,10 @@ namespace EpServerEngineSampleClient
                                 break;
                             case 13:
                                 cfg_params.battery_box_temp = int.Parse(word);
-                                break;
+								substr = dlgsetparams.get_temp_str(cfg_params.battery_box_temp).ToString();
+								AddMsg("battery box temp: " + substr);
+								AddMsg("");
+								break;
                             case 14:
                                 cfg_params.test_bank = int.Parse(word);
                                 break;
@@ -535,7 +729,8 @@ namespace EpServerEngineSampleClient
                         //                        MessageBox.Show(int.Parse(word).ToString());
                         i++;
                     }
-                    break;
+					break;
+
                 case "GET_TIME":
                     AddMsg(ret);
                     break;
@@ -569,11 +764,6 @@ namespace EpServerEngineSampleClient
                     AddMsg(ret);
                     break;
 
-                case "DIM_SCREEN":
-                    dim = int.Parse(ret);
-                    AddMsg("dim: " + dim.ToString());
-                    screen_dimmer.SetBright(dim);
-                    break;
                 default:
                     break;
             }
@@ -746,24 +936,9 @@ namespace EpServerEngineSampleClient
             }
             return buffer;
         }
-        //[DllImport("C:\\Users\\Daniel\\other_dev\\EpServerClient\\ScreenBrighnessClass.NET(3.5).dll")]
-        //public static extern void Test() { }
-
         private void DBMgmt(object sender, EventArgs e)
         {
-            byte test;
-            int test2;
-            string cmd = "DIM_SCREEN";
-            //AddMsg("DIM_SCREEN");
-            int offset = svrcmd.GetCmdIndexI(cmd);
-            svrcmd.Send_Cmd(offset);
-            /*
-            AddMsg(brighness.ToString());
-            BScreen test_screen = new BScreen();
-            test_screen.SetBright(brighness += 10);
-            if (brighness > 150)
-                brighness = 0;
-            
+			/*            
             int val2 = 185;
             //string str = "SET_TEMP_LIMIT";
             string str = "SET_FAN_ON";
@@ -777,10 +952,22 @@ namespace EpServerEngineSampleClient
             m_client.Send(packet);
             //DlgForm1 dlg = new DlgForm1();
             //dlg.ShowDialog();
-            */
-            
-        }
-        private void ClearScreen(object sender, EventArgs e)
+
+            Control sCtl = this.Controls[0];
+            for (i = 0; i < this.Controls.Count; i++)
+            {
+                if (sCtl.GetType() == typeof(Button))
+                {
+                    sCtl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
+                    sCtl.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(200)))));
+                    AddMsg(sCtl.Name);
+                }
+                sCtl = GetNextControl(sCtl, true);
+            }
+            AddMsg(this.Controls.Count.ToString());
+			*/
+		}
+		private void ClearScreen(object sender, EventArgs e)
         {
             tbReceived.Clear();
         }
@@ -795,7 +982,7 @@ namespace EpServerEngineSampleClient
         }
         private void SetParamsClick(object sender, EventArgs e)
         {
-            string cmd = "SET_PARAMS";
+			string cmd = "SET_PARAMS";
             int offset = svrcmd.GetCmdIndexI(cmd);
             svrcmd.Send_Cmd(offset);
             /*
@@ -807,15 +994,30 @@ namespace EpServerEngineSampleClient
 			{
 				//                this.txtResult.Text = "Cancelled";
 			}
-            */
-        }
-        private void btnAVR_Click(object sender, EventArgs e)
+			*/
+		}
+		private void btnAVR_Click(object sender, EventArgs e)
         {
-            psDlg4.Enable_Dlg(true);
+			if (!HomeSvrConnected)
+			{
+				ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
+				m_client2.Connect(ops);
+				HomeSvrConnected = true;
+				lbHomeSvr.Text = "Home Server Connected";
+			}
+			else
+			{
+				m_client2.Disconnect();
+				HomeSvrConnected = false;
+				lbHomeSvr.Text = "Home Server Not Connected";
+			}
+			/*
+			psDlg4.Enable_Dlg(true);
             psDlg4.StartPosition = FormStartPosition.Manual;
             psDlg4.Location = new Point(100, 10);
             psDlg4.ShowDialog(this);
             psDlg.Enable_Dlg(false);
+			*/
         }
         private void Dialog1_Click(object sender, EventArgs e)
         {
@@ -856,18 +1058,21 @@ namespace EpServerEngineSampleClient
         }
         private void button2_Click(object sender, EventArgs e)
         {
+            //AddMsg(psDlg5.Name);
             psDlg5.Enable_Dlg(true);
             psDlg5.StartPosition = FormStartPosition.Manual;
             psDlg5.Location = new Point(100, 10);
-            psDlg5.ShowDialog();
+            psDlg5.ShowDialog(this);
             psDlg5.Enable_Dlg(false);
+            //AddMsg(psDlg5.Name);
+            //AddMsg(psDlg5.Text);
         }
         private void btnSettingsFour_Click(object sender, EventArgs e)
         {
             psDlg6.Enable_Dlg(true);
             psDlg6.StartPosition = FormStartPosition.Manual;
             psDlg6.Location = new Point(100, 10);
-            psDlg6.ShowDialog();
+            psDlg6.ShowDialog(this);
             psDlg6.Enable_Dlg(false);
         }
         private void reevaluate_enabled_buttons()
@@ -1078,7 +1283,6 @@ namespace EpServerEngineSampleClient
                 selected_address = cbIPAdress.SelectedIndex;
                 m_hostname = client_params[selected_address].IPAdress;
                 tbPort.Text = m_portno = client_params[selected_address].PortNo.ToString();
-                //cbAutoConnecct.Checked = client_params[selected_address].AutoConn;
             }
         }
         private void FrmSampleClient_Load(object sender, EventArgs e)
@@ -1118,51 +1322,4 @@ namespace EpServerEngineSampleClient
             m_client.Send(packet);
         }
     }
-
-    public partial class BScreen
-    {
-        [DllImport("gdi32.dll")]
-        private unsafe static extern bool SetDeviceGammaRamp(Int32 hdc, void* ramp);
-        private static bool initialized = false;
-        private static Int32 hdc;
-        private static int a;
-        public BScreen()
-        {
-        }
-        private static void InitializeClass()
-        {
-            if (initialized)
-                return;
-            hdc = Graphics.FromHwnd(IntPtr.Zero).GetHdc().ToInt32();
-            initialized = true;
-        }
-        public static unsafe bool SetBrightness(int brightness)
-        {
-            InitializeClass();
-            if (brightness > 255)
-                brightness = 255;
-            if (brightness < 0)
-                brightness = 0;
-            short* gArray = stackalloc short[3 * 256];
-            short* idx = gArray;
-            for (int j = 0; j < 3; j++)
-            {
-                for (int i = 0; i < 256; i++)
-                {
-                    int arrayVal = i * (brightness + 128);
-                    if (arrayVal > 65535)
-                        arrayVal = 65535;
-                    *idx = (short)arrayVal;
-                    idx++;
-                }
-            }
-            bool retVal = SetDeviceGammaRamp(hdc, gArray);
-            return retVal;
-        }
-        public void SetBright(int bright)
-        {
-            SetBrightness(bright);
-        }
-    }
-
 }
