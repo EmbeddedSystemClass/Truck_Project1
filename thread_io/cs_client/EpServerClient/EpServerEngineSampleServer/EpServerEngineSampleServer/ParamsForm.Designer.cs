@@ -63,6 +63,8 @@
 			this.btnCancel = new System.Windows.Forms.Button();
 			this.tbDebug = new System.Windows.Forms.TextBox();
 			this.btnTest = new System.Windows.Forms.Button();
+			this.cbBatteryTemp = new System.Windows.Forms.ComboBox();
+			this.label1 = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -263,6 +265,8 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.cbBatteryTemp);
+			this.groupBox1.Controls.Add(this.label1);
 			this.groupBox1.Controls.Add(this.cbTempLimit);
 			this.groupBox1.Controls.Add(this.cbBlower1);
 			this.groupBox1.Controls.Add(this.label17);
@@ -279,7 +283,7 @@
 			this.groupBox1.Controls.Add(this.label20);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(252, 229);
+			this.groupBox1.Size = new System.Drawing.Size(252, 259);
 			this.groupBox1.TabIndex = 56;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Temperatures";
@@ -432,11 +436,11 @@
 			// 
 			// tbDebug
 			// 
-			this.tbDebug.Location = new System.Drawing.Point(2, 250);
+			this.tbDebug.Location = new System.Drawing.Point(2, 298);
 			this.tbDebug.Multiline = true;
 			this.tbDebug.Name = "tbDebug";
 			this.tbDebug.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbDebug.Size = new System.Drawing.Size(355, 294);
+			this.tbDebug.Size = new System.Drawing.Size(355, 246);
 			this.tbDebug.TabIndex = 75;
 			// 
 			// btnTest
@@ -448,6 +452,24 @@
 			this.btnTest.Text = "button1";
 			this.btnTest.UseVisualStyleBackColor = true;
 			this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+			// 
+			// cbBatteryTemp
+			// 
+			this.cbBatteryTemp.FormattingEnabled = true;
+			this.cbBatteryTemp.Location = new System.Drawing.Point(159, 216);
+			this.cbBatteryTemp.Name = "cbBatteryTemp";
+			this.cbBatteryTemp.Size = new System.Drawing.Size(76, 21);
+			this.cbBatteryTemp.TabIndex = 44;
+			this.cbBatteryTemp.SelectedIndexChanged += new System.EventHandler(this.cbBatteryTemp_SelectedIndexChanged);
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(25, 219);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(91, 13);
+			this.label1.TabIndex = 43;
+			this.label1.Text = "Battery Box Temp";
 			// 
 			// ParamsForm
 			// 
@@ -521,5 +543,7 @@
 		private System.Windows.Forms.Button btnCancel;
 		private System.Windows.Forms.TextBox tbDebug;
 		private System.Windows.Forms.Button btnTest;
+		private System.Windows.Forms.ComboBox cbBatteryTemp;
+		private System.Windows.Forms.Label label1;
 	}
 }

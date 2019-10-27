@@ -424,13 +424,11 @@ namespace EpServerEngineSampleServer
 			*/
 			if (params_form.ShowDialog(this) == DialogResult.OK)
 			{
-				//cfg_params = params_form.GetParams();
-				//AddMsg(cfg_params.engine_temp_limit.ToString());
-				//AddMsg(cfg_params.si_engine_temp_limit.ToString());
+				cfg_params = params_form.GetParams();
 			}
 			else
 			{
-				//                this.txtResult.Text = "Cancelled";
+				// cancelled
 			}
 			params_form.Hide();
 		}
@@ -578,7 +576,6 @@ namespace EpServerEngineSampleServer
 
 		private void btnUploadParams_Click(object sender, EventArgs e)
 		{
-			cfg_params = params_form.GetParams();
 			//AddMsg(cfg_params.engine_temp_limit.ToString());
 			string cmd = "SEND_CONFIG2";
 
@@ -621,10 +618,17 @@ namespace EpServerEngineSampleServer
 			System.Buffer.BlockCopy(limit, 0, bytes, 26, limit.Count());
 			System.Buffer.BlockCopy(batt, 0, bytes, 28, batt.Count());
 			System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
-			AddMsg(bytes.Length.ToString());
+			//AddMsg(bytes.Length.ToString());
+			AddMsg("send config2");
 			
 			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
 			m_server.Broadcast(packet);
+			/*
+			cmd = "UPDATE_CONFIG";
+			bytes[0] = svrcmd.GetCmdIndexB(cmd);
+			Packet packet2 = new Packet(bytes, 0, 2, false);
+			m_server.Broadcast(packet2);
+			*/
 		}
 
 		private void btnShutdown_Click(object sender, EventArgs e)

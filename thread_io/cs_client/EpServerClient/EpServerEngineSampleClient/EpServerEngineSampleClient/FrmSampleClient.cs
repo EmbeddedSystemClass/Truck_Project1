@@ -396,15 +396,41 @@ namespace EpServerEngineSampleClient
             switch (str)
             {
 				case "SEND_CONFIG2":
-					byte[] recv_conf_bytes = new byte[62];
-					AddMsg(bytes.Length.ToString());
-					System.Buffer.BlockCopy(bytes, 0, recv_conf_bytes, 0, bytes.Length);
+					/*
 					int test;
+					int test2;
 					for (i = 0; i < 15; i++)
 					{
-						test = BitConverter.ToInt16(bytes, 2+i*2);
-						AddMsg(test.ToString());
+						test2 = 2 + i * 2;
+						test = BitConverter.ToInt16(bytes, test2);
+						AddMsg(test2.ToString() + " " + test.ToString());
 					}
+					*/
+					AddMsg("send config2");
+					cfg_params.rpm_update_rate = BitConverter.ToInt16(bytes, 2);
+					cfg_params.mph_update_rate = BitConverter.ToInt16(bytes, 4);
+					cfg_params.FPGAXmitRate = BitConverter.ToInt16(bytes, 6);
+					cfg_params.high_rev_limit = BitConverter.ToInt16(bytes, 8);
+					cfg_params.low_rev_limit= BitConverter.ToInt16(bytes, 10);
+					cfg_params.fan_on = BitConverter.ToInt16(bytes, 12);
+					cfg_params.fan_off = BitConverter.ToInt16(bytes, 14);
+					cfg_params.blower_enabled = BitConverter.ToInt16(bytes, 16);
+					cfg_params.blower1_on = BitConverter.ToInt16(bytes, 18);
+					cfg_params.blower2_on = BitConverter.ToInt16(bytes, 20);
+					cfg_params.blower3_on = BitConverter.ToInt16(bytes, 22);
+					cfg_params.lights_on_delay = BitConverter.ToInt16(bytes, 24);
+					cfg_params.engine_temp_limit = BitConverter.ToInt16(bytes, 26);
+					cfg_params.battery_box_temp = BitConverter.ToInt16(bytes, 28);
+					cfg_params.test_bank = BitConverter.ToInt16(bytes, 30);
+					// pass the same msg along to the linux server but just
+					// change the cmd to "UPLOAD_CONFIG"
+					bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
+					Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+					m_client.Send(packet);
+					//AddMsg("hi rev: " + cfg_params.high_rev_limit.ToString());
+					//substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
+					//AddMsg("fan on: " + substr);
+					//AddMsg("");
 					break;
 
 				case "SVR_CMD":
@@ -423,7 +449,7 @@ namespace EpServerEngineSampleClient
 					byte[] bytes2 = new byte[bytes1.Count() + 2];
 					bytes2[0] = svrcmd.GetCmdIndexB(str);
 					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+					packet = new Packet(bytes2, 0, bytes2.Count(), false);
 					m_client.Send(packet);
 
 					val2 = cfg_params.fan_off;
@@ -442,7 +468,7 @@ namespace EpServerEngineSampleClient
 					bytes2[0] = svrcmd.GetCmdIndexB(str);
 					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
 					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					AddMsg(cfg_params.engine_temp_limit.ToString());
+					//AddMsg(cfg_params.engine_temp_limit.ToString());
 					m_client.Send(packet);
 
 					val2 = cfg_params.high_rev_limit;
@@ -511,7 +537,7 @@ namespace EpServerEngineSampleClient
 					string cmd = "UPDATE_CONFIG";		// tell server to write to disk
 					type_msg = svrcmd.GetCmdIndexI(cmd);
 					svrcmd.Send_Cmd(type_msg);
-
+					//AddMsg("update config");
 					break;
 
 				case "HOME_SVR_ON":

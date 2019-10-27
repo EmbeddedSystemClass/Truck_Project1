@@ -60,7 +60,7 @@
 			// tbPort
 			// 
 			this.tbPort.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.tbPort.Location = new System.Drawing.Point(45, 13);
+			this.tbPort.Location = new System.Drawing.Point(46, 12);
 			this.tbPort.Name = "tbPort";
 			this.tbPort.Size = new System.Drawing.Size(44, 20);
 			this.tbPort.TabIndex = 1;
@@ -88,12 +88,12 @@
 			// tbReceived
 			// 
 			this.tbReceived.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.tbReceived.Location = new System.Drawing.Point(15, 102);
+			this.tbReceived.Location = new System.Drawing.Point(13, 93);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(427, 424);
+			this.tbReceived.Size = new System.Drawing.Size(357, 377);
 			this.tbReceived.TabIndex = 7;
 			// 
 			// tbServerTime
@@ -270,7 +270,7 @@
 			// 
 			// btnConfigParams
 			// 
-			this.btnConfigParams.Location = new System.Drawing.Point(473, 245);
+			this.btnConfigParams.Location = new System.Drawing.Point(393, 245);
 			this.btnConfigParams.Name = "btnConfigParams";
 			this.btnConfigParams.Size = new System.Drawing.Size(116, 23);
 			this.btnConfigParams.TabIndex = 28;
@@ -292,7 +292,7 @@
 			this.gbControls.Controls.Add(this.btnRunningLights);
 			this.gbControls.Controls.Add(this.btnFan);
 			this.gbControls.Controls.Add(this.btnLights);
-			this.gbControls.Location = new System.Drawing.Point(457, 20);
+			this.gbControls.Location = new System.Drawing.Point(391, 20);
 			this.gbControls.Name = "gbControls";
 			this.gbControls.Size = new System.Drawing.Size(274, 190);
 			this.gbControls.TabIndex = 29;
@@ -301,7 +301,7 @@
 			// 
 			// btnGetParams
 			// 
-			this.btnGetParams.Location = new System.Drawing.Point(473, 216);
+			this.btnGetParams.Location = new System.Drawing.Point(393, 216);
 			this.btnGetParams.Name = "btnGetParams";
 			this.btnGetParams.Size = new System.Drawing.Size(116, 23);
 			this.btnGetParams.TabIndex = 30;
@@ -311,7 +311,7 @@
 			// 
 			// btnUploadParams
 			// 
-			this.btnUploadParams.Location = new System.Drawing.Point(473, 274);
+			this.btnUploadParams.Location = new System.Drawing.Point(393, 274);
 			this.btnUploadParams.Name = "btnUploadParams";
 			this.btnUploadParams.Size = new System.Drawing.Size(116, 23);
 			this.btnUploadParams.TabIndex = 31;
@@ -323,7 +323,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(743, 565);
+			this.ClientSize = new System.Drawing.Size(678, 480);
 			this.Controls.Add(this.btnUploadParams);
 			this.Controls.Add(this.btnGetParams);
 			this.Controls.Add(this.gbControls);

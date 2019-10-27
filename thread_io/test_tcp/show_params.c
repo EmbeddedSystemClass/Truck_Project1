@@ -73,6 +73,8 @@ typedef struct temps
 	int index;
 }TEMPS;
 
+char update_rates[10][6] = {"1000","2000","3000"};
+
 char hi_rev[10][10] =  {"6000",
 						"5800",
 						"5600",
@@ -487,11 +489,8 @@ int main(void)
 	for(i = 0;i < 13;i++)
 		printf("lights: %s\n",lights[i]);
 
-	return 0;
-
 	for(i = 0;i < 359;i++)
 		printf("%d %s\n",temp_str[i].index,temp_str[i].str_temp);
-	return 0;
 
 	for(i = 1;i < 251;i++)
 		printf("%s\n",get_temp_str(i));
@@ -510,9 +509,9 @@ int main(void)
 	read(fp, &ps, sizeof(PARAM_STRUCT));
 	close(fp);
 
-	printf("\r\nrpm_update_rate:\t\t%d\r\n",ps.rpm_update_rate);
-	printf("mph_update_rate:\t\t%d\r\n",ps.mph_update_rate);
-	printf("fpga_xmit_rate:\t\t\t%d\r\n",ps.fpga_xmit_rate);
+	printf("\r\nrpm_update_rate:\t\t%s\r\n",update_rates[ps.rpm_update_rate]);
+	printf("mph_update_rate:\t\t%s\r\n",update_rates[ps.mph_update_rate]);
+	printf("fpga_xmit_rate:\t\t\t%s\r\n",update_rates[ps.fpga_xmit_rate]);
 	printf("high_rev_limit:\t\t\t%s\r\n",hi_rev[ps.high_rev_limit]);
 	printf("low_rev_limit:\t\t\t%s\r\n",lo_rev[ps.low_rev_limit]);
 	printf("cooling_fan_on:\t\t\t%s\r\n",get_temp_str(ps.cooling_fan_on));
@@ -521,7 +520,7 @@ int main(void)
 	printf("blower1_on:\t\t\t%s\r\n",get_temp_str(ps.blower1_on));
 	printf("blower2_on:\t\t\t%s\r\n",get_temp_str(ps.blower2_on));
 	printf("blower3_on:\t\t\t%s\r\n",get_temp_str(ps.blower3_on));
-	printf("lights delay:\t\t\t%d\r\n",ps.lights_on_delay);
+	printf("lights delay:\t\t\t%s\r\n",lights[ps.lights_on_delay]);
 	printf("engine_temp_limit:\t\t%s\r\n",get_temp_str(ps.engine_temp_limit));
 	printf("battery box temp:\t\t%s\r\n",get_temp_str(ps.batt_box_temp));
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
@@ -542,4 +541,35 @@ static char *get_temp_str(int index)
 		return temp_str[250 - index].str_temp;
 	else return "NAN";
 }
+
+/*
+        public string get_temp_str(int index)
+
+        {
+
+			if (index < 512 && index > 402)
+
+			{
+
+				int ret = 250;
+
+				ret += (511 - index);
+
+				if (ret > 0 && ret < 359)
+
+					return temp_str[ret];
+
+				else return "NAN";
+
+			}
+
+			else if (index < 251 && index > 0)
+
+				return temp_str[250 - index];
+
+			else return "NAN";
+
+        }
+
+*/
 

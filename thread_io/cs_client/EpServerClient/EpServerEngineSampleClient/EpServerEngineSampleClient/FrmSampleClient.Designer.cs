@@ -82,13 +82,13 @@
 			this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbReceived.Location = new System.Drawing.Point(700, 264);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(582, 312);
+			this.tbReceived.Size = new System.Drawing.Size(329, 312);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -121,7 +121,7 @@
 			this.tbPort.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbPort.Location = new System.Drawing.Point(103, 69);
 			this.tbPort.Name = "tbPort";
-			this.tbPort.Size = new System.Drawing.Size(64, 29);
+			this.tbPort.Size = new System.Drawing.Size(54, 29);
 			this.tbPort.TabIndex = 1;
 			this.tbPort.Text = "5193";
 			// 
@@ -242,7 +242,7 @@
 			this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.groupBox1.Location = new System.Drawing.Point(700, 20);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(401, 233);
+			this.groupBox1.Size = new System.Drawing.Size(329, 233);
 			this.groupBox1.TabIndex = 34;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "TCP Status";
@@ -544,7 +544,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(1294, 592);
+			this.ClientSize = new System.Drawing.Size(1043, 592);
 			this.Controls.Add(this.button2);
 			this.Controls.Add(this.btnSettingsFour);
 			this.Controls.Add(this.keymodeLabel);

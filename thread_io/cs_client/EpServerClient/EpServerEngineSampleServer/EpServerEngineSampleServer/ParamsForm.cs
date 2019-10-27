@@ -29,6 +29,7 @@ namespace EpServerEngineSampleServer
 			cbBlower1.SelectedIndex = m_cfg.si_blower1_on = get_temp_index(m_cfg.blower1_on);
 			cbBlower2.SelectedIndex = m_cfg.si_blower2_on = get_temp_index(m_cfg.blower2_on);
 			cbBlower3.SelectedIndex = m_cfg.si_blower3_on = get_temp_index(m_cfg.blower3_on);
+			cbBatteryTemp.SelectedIndex = m_cfg.si_battery_box_temp = get_temp_index(m_cfg.battery_box_temp);
 
 			cbLightsOnDelay.SelectedIndex = m_cfg.si_lights_on_delay;
 			cbTestBank.SelectedIndex = m_cfg.si_test_bank;
@@ -181,6 +182,11 @@ namespace EpServerEngineSampleServer
 			m_cfg.mph_update_rate = cbMPHUpdateRate.SelectedIndex;
 			m_cfg.si_mph_update_rate = cbMPHUpdateRate.SelectedIndex;
 		}
+		private void cbBatteryTemp_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			m_cfg.battery_box_temp = cbBatteryTemp.SelectedIndex;
+			m_cfg.si_battery_box_temp = cbBatteryTemp.SelectedIndex;
+		}
 		private void cbTestBank_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			m_cfg.test_bank = cbTestBank.SelectedIndex;
@@ -195,6 +201,7 @@ namespace EpServerEngineSampleServer
 
 			// initialize the string list with all the string values in the dictionary and
 			// populate the temperature comboboxes with them all
+			// might be more readable if we load it from an xml file...
 			temp_str = new List<string>(359);
 			temp_str.Add("257.0\0");
 			temp_str.Add("256.1\0");
@@ -939,6 +946,9 @@ namespace EpServerEngineSampleServer
 			foreach (string str in temp_str)
 				cbTempLimit.Items.Add(str);
 
+			foreach (string str in temp_str)
+				cbBatteryTemp.Items.Add(str);
+
 			//AddMsg("set = false");
 			//tbDebug.Text = "false";
 			cbFanOn.SelectedIndex = 64;
@@ -961,6 +971,9 @@ namespace EpServerEngineSampleServer
 
 			cbBlower3.SelectedIndex = 235;
 			m_cfg.si_blower3_on = 235;
+
+			cbBatteryTemp.SelectedIndex = 100;
+			m_cfg.si_battery_box_temp = 100;
 
 			cbLightsOnDelay.SelectedIndex = 3;
 			m_cfg.si_lights_on_delay = 3;
@@ -1011,8 +1024,9 @@ namespace EpServerEngineSampleServer
 			str = cbTempLimit.SelectedItem.ToString();
 			m_cfg.engine_temp_limit = dtemps[str];
 
-			//            blower1_on = Convert.ToInt16(cbBlower1.SelectedItem.ToString());
-			//MessageBox.Show(cbRPMUpdateRate.SelectedItem.ToString());
+			str = cbBatteryTemp.SelectedItem.ToString();
+			m_cfg.battery_box_temp = dtemps[str];
+
 			m_cfg.rpm_update_rate = Convert.ToInt16(cbRPMUpdateRate.SelectedItem.ToString());
 			m_cfg.mph_update_rate = Convert.ToInt16(cbMPHUpdateRate.SelectedItem.ToString());
 			m_cfg.high_rev_limit = Convert.ToInt16(cbHighRevLimit.SelectedItem.ToString());
@@ -1101,7 +1115,6 @@ namespace EpServerEngineSampleServer
 			result = intBytes;
 			total[24] = result[2];
 			total[25] = result[3];
-			this.DialogResult = DialogResult.OK;
 
 			byte[] bytes2 = new byte[total.Count() + 2];
 			System.Buffer.BlockCopy(total, 0, bytes2, 2, total.Length - 2);
@@ -1111,6 +1124,7 @@ namespace EpServerEngineSampleServer
 			Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
 			m_client.Send(packet);
 			*/
+			this.DialogResult = DialogResult.OK;
 		}
 		private void btnCancel_Click(object sender, EventArgs e)
 		{

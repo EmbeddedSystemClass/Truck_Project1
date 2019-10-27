@@ -14,6 +14,7 @@ git add avr_cmds.txt
 git add main_box_pinout.ods
 git add avr_menus.txt
 git add todo_bug_list.txt
+git add client_server_notes.odt
 
 git add STM32/*
 git add STM32/.cproject
@@ -111,7 +112,6 @@ git add thread_io/how2formatSDCardExt.png
 git add thread_io/TS-7200_connections.jpg
 git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
-git add thread_io/list.txt
 git add thread_io/IO_card_layout.png
 git add thread_io/print_cmds.c
 git add thread_io/do_print_cmds.sh
