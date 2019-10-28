@@ -131,8 +131,9 @@ static uint16_t blower1_temp = 65;
 static uint16_t blower2_temp = 50;
 static uint16_t blower3_temp = 35;
 static uint16_t blower_en_temp = 75;
+static uint16_t batt_box_temp = 75;
 //static uint16_t lights_on_delay = 5;	// default is 3 seconds
-static UCHAR key_mode1, key_mode2;
+//static UCHAR key_mode1, key_mode2;
 static int server_up = 0;
 
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
@@ -140,11 +141,12 @@ static int timer_toggle;
 static int lights_on;
 static int brights_on;
 static int blower_on;
+static int blower_off_countdown = 0;
 static int fan_on;
 static int engine_on;
 static int running_lights_on;
 static int wipers_on;
-static int system_up;
+//static int system_up;
 static int avr_up;
 static int run_time;
 static int rtdata_update_rate;
@@ -405,11 +407,11 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
-  	int i;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
 	UCHAR key;
 	UCHAR cmd;
+	UINT utemp;
 	uint16_t recval;
 //	int row, col;
 
@@ -425,7 +427,7 @@ void StartDefaultTask(void const * argument)
 	password_retries = 0;
 	dim_screen = 0;
 	silent_key = 0;
-	system_up = 1;
+//	system_up = 1;
 	avr_up = 1;
 	run_time = 0;
 //	key_mode = PASSWORD;
@@ -446,29 +448,6 @@ void StartDefaultTask(void const * argument)
 	initDS1620();
 //	init_rtlabels();
 
-	timer_toggle = 0;
-  
-  	for(i = 0;i < 20;i++)
-	{
-  		if(timer_toggle == 0)
-		{
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			vTaskDelay(50);
-			timer_toggle = 1;
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			vTaskDelay(50);
-			timer_toggle = 0;
-		}
-	}
-
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-
-	vTaskDelay(10);
 #if 0
 // had to do this explicitly instead of using DISPLAY_RTLABELS (not working yet)
 
@@ -538,6 +517,7 @@ void StartDefaultTask(void const * argument)
 						engine_on = 0;
 						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+/*
 						if(running_lights_on == 1)
 						{
 							vTaskDelay(200);
@@ -556,6 +536,7 @@ void StartDefaultTask(void const * argument)
 							xQueueSend(Send7200Handle, avr_buffer, 0);
 							lights_on = 0;
 						}
+*/
 					}
 				}else
 				{
@@ -634,21 +615,25 @@ void StartDefaultTask(void const * argument)
 							cmd = BLOWER1;
 							ucbuff[0] = cmd;
 							blower_on = 1;
+							blower_off_countdown = 30;
 							break;
 						case 1:
 							cmd = BLOWER2;
 							ucbuff[0] = cmd;
 							blower_on = 2;
+							blower_off_countdown = 30;
 							break;
 						case 2:
 							cmd = BLOWER3;
 							ucbuff[0] = cmd;
 							blower_on = 3;
+							blower_off_countdown = 30;
 							break;
 						case 3:
 							cmd = BLOWER_OFF;
 							ucbuff[0] = cmd;
 							blower_on = 0;
+							blower_off_countdown = 0;
 							break;
 						default:
 							blower_on = 0;
@@ -816,9 +801,24 @@ void StartDefaultTask(void const * argument)
 			break;
 
 			case KP_POUND:
-				ucbuff[0] = DIM_SCREEN;
+				ucbuff[0] = GET_CONFIG2;
+				utemp = fan_on_temp;
+				ucbuff[1] = (UCHAR)utemp;
+				utemp >>= 8;
+				ucbuff[2] = (UCHAR)utemp;
+
+				utemp = fan_off_temp;
+				ucbuff[3] = (UCHAR)utemp;
+				utemp >>= 8;
+				ucbuff[4] = (UCHAR)utemp;
+
+				utemp = engine_temp_limit;
+				ucbuff[5] = (UCHAR)utemp;
+				utemp >>= 8;
+				ucbuff[6] = (UCHAR)utemp;
+
 				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle,avr_buffer,0);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
 			
 			default:
@@ -927,22 +927,6 @@ void StartAVRTask(void const * argument)
 			do {
 				HAL_UART_Receive(&huart2, &temp, 1, portMAX_DELAY);
 			} while(temp != end_byte);
-
-			if(timer_toggle == 0)
-			{
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-				timer_toggle = 1;
-				HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_RESET);
-				
-			}else
-			{
-				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
-				timer_toggle = 0;
-			}
-
 		}
 	}
   /* USER CODE END StartAVRTask */
@@ -968,19 +952,7 @@ void StartTask7200(void const * argument)
 	for(;;)
 	{
 		xQueueReceive(Send7200Handle, avr_buffer, portMAX_DELAY);
-/*
-		if(timer_toggle == 0)
-		{
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			timer_toggle = 1;
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			timer_toggle = 0;
-		}
-*/
+
 		ucbuff[0] = (UCHAR)avr_buffer[0];
 		avr_buffer[0] >>= 8;
 
@@ -1005,7 +977,8 @@ void StartTask7200(void const * argument)
 		ucbuff[7] = (UCHAR)avr_buffer[0];
 		avr_buffer[0] >>= 8;
 
-		if(system_up == 1)
+//		if(system_up == 1)
+		if(server_up == 1)
 		{
 			HAL_UART_Transmit(&huart1, &marker, 1, 100);
 			HAL_UART_Transmit(&huart1, &ucbuff[0], SERIAL_BUFF_SIZE, 100);
@@ -1038,18 +1011,6 @@ void StartTask7200(void const * argument)
 		vTaskDelay(5);
 
 		vTaskDelay(100);
-
-		if(timer_toggle == 0)
-		{
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-		timer_toggle = 1;
-		}else
-		{
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		timer_toggle = 0;
-		}
 		*/
 	}
   /* USER CODE END StartTask7200 */
@@ -1066,19 +1027,23 @@ void StartRecv7200(void const * argument)
 {
   /* USER CODE BEGIN StartRecv7200 */
 	UCHAR cmd;
+	int i;
 //	int j = 99;
 //	int k = 0;
-	int i;
+	UINT utemp;
+	uint64_t avr_buffer[5];
+
 	UCHAR buff[SERIAL_BUFF_SIZE+1];
-  	uint64_t avr_buffer[5];
-	UCHAR ucbuff[SERIAL_BUFF_SIZE];
+//  	uint64_t avr_buffer[5];
+//	UCHAR ucbuff[SERIAL_BUFF_SIZE];
 //	UCHAR marker = 0xFF;
 //	UCHAR tone;
 	test_rise_temp = 0;
 	too_high_flag = 0;
+	UCHAR ucbuff[8];
 
 	/* Infinite loop */
-	vTaskDelay(5000);
+	vTaskDelay(1000);
 	for(;;)
 	{
 //		HAL_UART_Receive_IT(&huart1, &cmd, 1);
@@ -1087,7 +1052,8 @@ void StartRecv7200(void const * argument)
 		cmd = buff[0];
 
 		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || 
-				cmd == SERVER_DOWN || cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF)
+				cmd == SERVER_DOWN || cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF 
+					|| cmd == SEND_CONFIG2 || cmd == GET_CONFIG2)
 		{	
 /*
 			if(timer_toggle == 0)
@@ -1238,35 +1204,59 @@ void StartRecv7200(void const * argument)
 					blower_en_temp <<= 8;
 					blower_en_temp |= (uint16_t)buff[13];
 
-					for(i = 0;i < 10;i++)
+					for(i = 0;i < 20;i++)
+					{
+						if(timer_toggle == 0)
+						{
+							HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+							HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+							vTaskDelay(50);
+							timer_toggle = 1;
+						}else
+						{
+							HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+							HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+							vTaskDelay(50);
+							timer_toggle = 0;
+						}
+					}
+
+					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+
+/*
+					for(i = 0;i < 3;i++)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
 						ucbuff[1] = (UCHAR)i;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(5);
+						vTaskDelay(10);
 						ucbuff[0] = DTMF_TONE_OFF;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(5);
+						vTaskDelay(10);
 					}
-
+*/
 					server_up = 1;
 					break;
 
 				case SERVER_DOWN:
-					for(i = 0;i < 10;i++)
+/*
+					for(i = 0;i < 3;i++)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
-						ucbuff[1] = (UCHAR)(10-i);
+						ucbuff[1] = (UCHAR)(3-i);
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(5);
+						vTaskDelay(10);
 						ucbuff[0] = DTMF_TONE_OFF;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
-						vTaskDelay(5);
+						vTaskDelay(10);
 					}
+*/
+					vTaskDelay(10);
 					server_up = 0;
 					break;
 #if 0
@@ -1317,61 +1307,76 @@ odometer_high,low, trip_high,low
 					break;
 #endif
 
-				case SET_TEMP_LIMIT:
-					engine_temp_limit = (uint16_t)buff[2];
-					engine_temp_limit <<= 8;
-					engine_temp_limit |= (uint16_t)buff[1];
-					break;
-
-				case SET_FAN_ON:
+				case SEND_CONFIG2:
 					fan_on_temp = (uint16_t)buff[2];
 					fan_on_temp <<= 8;
 					fan_on_temp |= (uint16_t)buff[1];
-					break;
-
-				case SET_FAN_OFF:
- 					fan_off_temp = (uint16_t)buff[2];
+					
+ 					fan_off_temp = (uint16_t)buff[4];
 					fan_off_temp <<= 8;
-					fan_off_temp |= (uint16_t)buff[1];
-					break;
-
-				case SET_BLOWER_EN_TEMP:
- 					blower_en_temp = (uint16_t)buff[2];
+					fan_off_temp |= (uint16_t)buff[3];
+					
+ 					blower_en_temp = (uint16_t)buff[6];
 					blower_en_temp <<= 8;
-					blower_en_temp |= (uint16_t)buff[1];
-					break;
-
-				case SET_BLOWER1_TEMP:
- 					blower1_temp = (uint16_t)buff[2];
+					blower_en_temp |= (uint16_t)buff[5];
+					
+ 					blower1_temp = (uint16_t)buff[8];
 					blower1_temp <<= 8;
-					blower1_temp |= (uint16_t)buff[1];
-					break;
-
-				case SET_BLOWER2_TEMP:
- 					blower2_temp = (uint16_t)buff[2];
+					blower1_temp |= (uint16_t)buff[7];
+					
+ 					blower2_temp = (uint16_t)buff[10];
 					blower2_temp <<= 8;
-					blower2_temp |= (uint16_t)buff[1];
-					break;
-
-				case SET_BLOWER3_TEMP:
- 					blower3_temp = (uint16_t)buff[2];
+					blower2_temp |= (uint16_t)buff[9];
+					
+ 					blower3_temp = (uint16_t)buff[12];
 					blower3_temp <<= 8;
-					blower3_temp |= (uint16_t)buff[1];
+					blower3_temp |= (uint16_t)buff[11];
+					
+					engine_temp_limit = (uint16_t)buff[14];
+					engine_temp_limit <<= 8;
+					engine_temp_limit |= (uint16_t)buff[13];
+					
+					batt_box_temp = (uint16_t)buff[16];
+					batt_box_temp <<= 8;
+					batt_box_temp |= (uint16_t)buff[15];
 					break;
+					
+				case GET_CONFIG2:
+					// this is just to verify we are sending
+					// the right data
+					// serial send buffer can only send 8
+					// bytes at a time so just send
+					// 3 temps (plus cmd)
+					// we can use the same cmd because it is
+					// sent from the tcp switch/case and then
+					// the same msg gets recv'd in the serial
+					// receive task of the linux server
+					ucbuff[0] = GET_CONFIG2;
+					utemp = fan_on_temp;
+					ucbuff[1] = (UCHAR)utemp;
+					utemp >>= 8;
+					ucbuff[2] = (UCHAR)utemp;
 
-				case LIGHTS_ON_DELAY:
-/*
-					lights_on_delay = (uint16_t)buff[2];
-					lights_on_delay <<= 8;
-					lights_on_delay |= (uint16_t)buff[1];
-*/
+					utemp = fan_off_temp;
+					ucbuff[3] = (UCHAR)utemp;
+					utemp >>= 8;
+					ucbuff[4] = (UCHAR)utemp;
+
+					utemp = engine_temp_limit;
+					ucbuff[5] = (UCHAR)utemp;
+					utemp >>= 8;
+					ucbuff[6] = (UCHAR)utemp;
+
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					vTaskDelay(100);
 					break;
 
 				default:
 					break;
 			}
+			memset(buff,0,SERIAL_BUFF_SIZE);
 		}
-		cmd = 0;
 		vTaskDelay(50);
 	}
   /* USER CODE END StartRecv7200 */
@@ -1523,23 +1528,6 @@ void StartRecvFPGA(void const * argument)
 	
 	for(;;)
 	{
-/*
-		if(timer_toggle == 0)
-		{
-
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			timer_toggle = 1;
-			HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_RESET);
-			
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(GPIOC, Test_Pin, GPIO_PIN_SET);
-			timer_toggle = 0;
-		}
-*/
 
 		do {
 			state = HAL_GPIO_ReadPin(GPIOA,PP_CS_Pin);
@@ -1627,21 +1615,6 @@ if(1)
 
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(Send7200Handle, avr_buffer, 0);
-/*
-					if(timer_toggle == 0)
-					{
-
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-						timer_toggle = 1;
-						
-					}else
-					{
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-						timer_toggle = 0;
-					}
-*/
 				}
 			}
 		}else
@@ -1737,35 +1710,38 @@ void Callback01(void const * argument)
 	global_ucbuff[1] = rtlabel_str[ENG_TEMP].row;
 	global_ucbuff[2] = rtlabel_str[ENG_TEMP].data_col;
 */
-	global_ucbuff[4] = (UCHAR)raw_data;
-	raw_data >>= 8;
-	global_ucbuff[3] = (UCHAR)raw_data;	// send high byte 1st
-/*
-	global_ucbuff[4] = (UCHAR)temp_raw;
-	temp_raw >>= 8;
-	global_ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
-*/
-//	if(avr_up == 1)
-	if(0)
+	if(server_up == 1)
 	{
-		global_avr_buffer[0] = pack64(global_ucbuff);
-		xQueueSend(SendAVRHandle,global_avr_buffer,0);
-		vTaskDelay(10);
-	}
-	
-	global_ucbuff[0] = ENGINE_TEMP;
-	global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
-	global_ucbuff[2] = global_ucbuff[4];
-	global_avr_buffer[0] = pack64(global_ucbuff);
-	xQueueSend(Send7200Handle, global_avr_buffer, 0);
-	//vTaskDelay(1000);
 
-	writeByteTo1620(DS1620_CMD_STARTCONV);
-	vTaskDelay(30);
-	raw_data = readTempFrom1620();
-	vTaskDelay(30);
-	writeByteTo1620(DS1620_CMD_STOPCONV);
-	vTaskDelay(100);
+		global_ucbuff[4] = (UCHAR)raw_data;
+		raw_data >>= 8;
+		global_ucbuff[3] = (UCHAR)raw_data;	// send high byte 1st
+	/*
+		global_ucbuff[4] = (UCHAR)temp_raw;
+		temp_raw >>= 8;
+		global_ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
+	*/
+	//	if(avr_up == 1)
+		if(0)
+		{
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(SendAVRHandle,global_avr_buffer,0);
+			vTaskDelay(10);
+		}
+		
+		global_ucbuff[0] = ENGINE_TEMP;
+		global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
+		global_ucbuff[2] = global_ucbuff[4];
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(Send7200Handle, global_avr_buffer, 0);
+		//vTaskDelay(1000);
+
+		writeByteTo1620(DS1620_CMD_STARTCONV);
+		vTaskDelay(30);
+		raw_data = readTempFrom1620();
+		vTaskDelay(30);
+		writeByteTo1620(DS1620_CMD_STOPCONV);
+		vTaskDelay(100);
 
 /*
 DS1620 returns 250->1 for temps of 257.0F->32.9F
@@ -1780,46 +1756,58 @@ and 511->403 for temps of 31.1F->-66.1F
 so if raw_data is > 402 && < 510 then ignore the logic to control fan
 */
 
-	if(raw_data < 251)
-	{
-		if(too_high_flag == 0 && raw_data > engine_temp_limit)
+		if(engine_on > 0 && blower_on > 0)
 		{
-			// sound alarm
-			global_ucbuff[0] = SPECIAL_TONE_ON;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
-			vTaskDelay(100);
-			global_cmd = TEMP_TOO_HIGH;
-			global_ucbuff[0] = global_cmd;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(Send7200Handle, global_avr_buffer, 0);
-			too_high_flag = 1;
-
-		}else if(too_high_flag == 1)
-		{
-			global_ucbuff[0] = DTMF_TONE_OFF;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
-			too_high_flag = 0;
+			blower_off_countdown--;
+			if(blower_off_countdown == 0)
+			{
+				global_cmd = BLOWER_OFF;
+				global_ucbuff[0] = global_cmd;
+				blower_on = 0;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+			}
 		}
+		if(raw_data < 251)
+		{
+			if(too_high_flag == 0 && raw_data > engine_temp_limit)
+			{
+				// sound alarm
+				global_ucbuff[0] = SPECIAL_TONE_ON;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+				vTaskDelay(100);
+				global_cmd = TEMP_TOO_HIGH;
+				global_ucbuff[0] = global_cmd;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+				too_high_flag = 1;
 
-		if(fan_on == 0 && raw_data >= fan_on_temp)
-		{
-			global_cmd = ON_FAN;
-			global_ucbuff[0] = global_cmd;
-			fan_on = 1;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(Send7200Handle, global_avr_buffer, 0);
+			}else if(too_high_flag == 1)
+			{
+				global_ucbuff[0] = DTMF_TONE_OFF;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+				too_high_flag = 0;
+			}
+
+			if(fan_on == 0 && raw_data >= fan_on_temp)
+			{
+				global_cmd = ON_FAN;
+				global_ucbuff[0] = global_cmd;
+				fan_on = 1;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+			}
+			if(cooling_fan_override == 0 && fan_on == 1 && raw_data < fan_off_temp)
+			{
+				global_cmd = OFF_FAN;
+				global_ucbuff[0] = global_cmd;
+				fan_on = 0;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+			}	
 		}
-		if(cooling_fan_override == 0 && fan_on == 1 && raw_data < fan_off_temp)
-		{
-			global_cmd = OFF_FAN;
-			global_ucbuff[0] = global_cmd;
-			fan_on = 0;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(Send7200Handle, global_avr_buffer, 0);
-		}	
-	}
 /*
 	if(test_rise_temp == 0)
 		raw_data += 2;				// used for testing
@@ -1846,21 +1834,20 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 		}
 	}
 */
-#if 0
-	if(timer_toggle == 0)
-	{
-
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-		timer_toggle = 1;
-		
-	}else
-	{
-		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		timer_toggle = 0;
+		if(timer_toggle == 0)
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+			timer_toggle = 1;
+			
+		}else
+		{
+			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			timer_toggle = 0;
+		}
 	}
-#endif
+
   /* USER CODE END Callback01 */
 }
 
@@ -1870,19 +1857,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART1)
 	{
-/*
-		if(timer_toggle == 0)
-		{
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			timer_toggle = 1;
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			timer_toggle = 0;
-		}
-*/
 	}
 }
 
@@ -1892,19 +1866,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 	if(huart->Instance == USART1)
 	{
-/*
-		if(timer_toggle == 0)
-		{
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-			timer_toggle = 1;
-		}else
-		{
-			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-			timer_toggle = 0;
-		}
-*/
 	}
 }
 uint64_t pack64(UCHAR *buff)

@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[106] =
+CMD_STRUCT cmd_array[107] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -144,7 +144,8 @@ CMD_STRUCT cmd_array[106] =
 	{		HOME_SVR_ON,"HOME_SVR_ON\0" },
 	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
 	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
-	{		SEND_CONFIG2,"SEND_CONFIG2\0" }
+	{		SEND_CONFIG2,"SEND_CONFIG2\0" },
+	{		GET_CONFIG2,"GET_CONFIG2\0" }
 };
 
 //extern illist_t ill;
@@ -201,7 +202,7 @@ char lights[13][15] =  {"1 second",
 int lights_on_delay[13] = {1,2,3,5,10,15,30,60,120,300,600,1800,3600};
 static int actual_high_rev_limit;
 static int actual_low_rev_limit;
-static int actual_lights_on_delay;
+int actual_lights_on_delay;
 int tcp_window_on;
 //int serial_recv_on;
 //int time_set;
@@ -264,7 +265,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.39\0";
+	char version[15] = "sched v1.47\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -455,7 +456,7 @@ UCHAR get_host_cmd_task(int test)
 						//send_serialother(cmd,tempx);
 						add_msg_queue(cmd);
 						strcpy(tempx,cmd_array[cmd].cmd_str);
-						printString2(tempx);
+//						printString2(tempx);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
 //						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 						break;
@@ -1231,65 +1232,111 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[8];
 						ps.high_rev_limit = utemp;
+						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
+						sprintf(tempx,"hi rev: %d",actual_high_rev_limit);
+						printString2(tempx);
 						
 						utemp = (UINT)msg_buf[11];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[10];
 						ps.low_rev_limit = utemp;
+						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
+						sprintf(tempx,"low rev: %d",actual_low_rev_limit);
+						printString2(tempx);
 						
 						utemp = (UINT)msg_buf[13];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[12];
 						ps.cooling_fan_on = utemp;
-						
+						// start loading serial buffer to send to STM32
+						// as a SEND_CONFIG2 msg
+						// only need to send temp data - low byte 1st
+						write_serial_buffer[0] = msg_buf[12];
+						write_serial_buffer[1] = msg_buf[13];
+						//sprintf(tempx,"fan on: %d",ps.cooling_fan_on);
+						sprintf(tempx,"fan on: %.1f\0", convertF(ps.cooling_fan_on));
+						printString2(tempx);
+
 						utemp = (UINT)msg_buf[15];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[14];
 						ps.cooling_fan_off = utemp;
+						write_serial_buffer[2] = msg_buf[14];
+						write_serial_buffer[3] = msg_buf[15];
+						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
+						printString2(tempx);
 						
 						utemp = (UINT)msg_buf[17];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[16];
 						ps.blower_enabled = utemp;
+						write_serial_buffer[4] = msg_buf[16];
+						write_serial_buffer[5] = msg_buf[17];
+						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
+						printString2(tempx);
 						
 						utemp = (UINT)msg_buf[19];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[18];
 						ps.blower1_on = utemp;
+						write_serial_buffer[6] = msg_buf[18];
+						write_serial_buffer[7] = msg_buf[19];
+						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
+						printString2(tempx);
 						
 						utemp = (UINT)msg_buf[21];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[20];
 						ps.blower2_on = utemp;
+						write_serial_buffer[8] = msg_buf[20];
+						write_serial_buffer[9] = msg_buf[21];
 						
 						utemp = (UINT)msg_buf[23];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[22];
 						ps.blower3_on = utemp;
+						write_serial_buffer[10] = msg_buf[22];
+						write_serial_buffer[11] = msg_buf[23];
 						
 						utemp = (UINT)msg_buf[25];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[24];
 						ps.lights_on_delay = utemp;
-						
+						actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
+						utemp = (UINT)actual_lights_on_delay;
+						sprintf(tempx,"lights on delay: %d %d",actual_lights_on_delay,ps.lights_on_delay);
+						printString2(tempx);
+
 						utemp = (UINT)msg_buf[27];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[26];
 						ps.engine_temp_limit = utemp;
-						
+						write_serial_buffer[12] = msg_buf[26];
+						write_serial_buffer[13] = msg_buf[27];
+						sprintf(tempx,"eng temp limit: %.1f\0", convertF(ps.engine_temp_limit));
+						printString2(tempx);
+
 						utemp = (UINT)msg_buf[29];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[28];
 						ps.batt_box_temp = utemp;
+						write_serial_buffer[14] = msg_buf[28];
+						write_serial_buffer[15] = msg_buf[29];
 						
 						utemp = (UINT)msg_buf[31];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[30];
 						ps.test_bank = utemp;
 						
+						send_serialother(SEND_CONFIG2, &write_serial_buffer[0]);
+						usleep(1000);
 						i = WriteParams("param.conf", &ps, errmsg);
 						printString2("update config file");
-						printString2("\n");
+						break;
+
+					case GET_CONFIG2:
+						printString2("get config2");
+						send_serialother(GET_CONFIG2,&write_serial_buffer[0]);
 						break;
 
 					case GET_VERSION:
@@ -1409,7 +1456,7 @@ exit_program:
 	*/
 
 						// pulse the LED on the IO box before shutting down
-	#if 0
+#if 0
 						for(i = 0;i < 20;i++)
 						{
 							setdioline(7,0);
@@ -1432,7 +1479,7 @@ exit_program:
 							usleep(20000);
 							green_led(0);
 						}
-	#endif
+#endif
 	//						send_serial(SYSTEM_DOWN);
 	//						sprintf(tempx,"%s\n","SYSTEM DOWN");
 	//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SYSTEM_DOWN2);

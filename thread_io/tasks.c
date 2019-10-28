@@ -39,6 +39,7 @@ pthread_mutex_t     serial_write_lock2=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     msg_queue_lock=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
+extern int lights_on_delay[13];
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, 
 monitor_fake_input_task, timer_task, timer2_task, read_button_inputs, 
@@ -62,6 +63,7 @@ static int no_serial_buff;
 
 static int serial_rec;
 int engine_running;
+int lights_on_countdown = 0;
 static void set_output(O_DATA *otp, int onoff);
 static UCHAR inportstatus[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
 static UCHAR fake_inportstatus1[OUTPORTF_OFFSET-OUTPORTA_OFFSET+1];
@@ -70,6 +72,7 @@ static int mask2int(UCHAR mask);
 static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
+extern int actual_lights_on_delay;
 //extern int time_set;
 
 int max_ips;
@@ -140,6 +143,8 @@ void init_ips(void)
 	}
 //	printf("max_ips: %d\r\n",max_ips);
 	i = LoadParams("param.conf",&ps,errmsg);
+	actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
+
 	//sprintf(tempx,"%d %d %d",ps.engine_temp_limit,ps.cooling_fan_on,ps.cooling_fan_off);
 	//printString2(tempx);
 	if(i < 0)
@@ -734,7 +739,30 @@ UCHAR timer_task(int test)
 			sprintf(tempx,"%dh %dm %ds ",running_hours, running_minutes, running_seconds);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
-		}else running_seconds = running_minutes = running_hours = 0;
+		}else
+		{
+			running_seconds = running_minutes = running_hours = 0;
+			if(lights_on_countdown > 0)
+			{
+				lights_on_countdown--;
+				sprintf(tempx,"countdown: %d",lights_on_countdown);
+				printString2(tempx);
+				if(lights_on_countdown == 0)
+				{
+					add_msg_queue(OFF_LLIGHTS);
+					add_msg_queue(OFF_RLIGHTS);
+					add_msg_queue(OFF_RUNNING_LIGHTS);
+//					add_msg_queue(BLOWER_OFF);
+					usleep(1000);
+					send_serialother(OFF_LIGHTS,tempx);
+					usleep(1000);
+					send_serialother(OFF_RUNNING_LIGHTS,tempx);
+					usleep(1000);
+					send_serialother(BLOWER_OFF,tempx);
+					usleep(1000);
+				}
+			}
+		}
 
 
 		odometer++;
@@ -1105,6 +1133,27 @@ UCHAR serial_recv_task(int test)
 			temp |= read_serial_buffer[5];
 			sprintf(tempx,"cooling fan off: %.1f\0", convertF(temp));
 			printString2(tempx);
+		}else
+
+		if(cmd == GET_CONFIG2)
+		{
+			temp = read_serial_buffer[2];
+			temp <<= 8;
+			temp |= read_serial_buffer[1];
+			sprintf(tempx,"fan on: %.1f\0", convertF(temp));
+			printString2(tempx);
+
+			temp = read_serial_buffer[4];
+			temp <<= 8;
+			temp |= read_serial_buffer[3];
+			sprintf(tempx,"fan off: %.1f\0", convertF(temp));
+			printString2(tempx);
+
+			temp = read_serial_buffer[6];
+			temp <<= 8;
+			temp |= read_serial_buffer[5];
+			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
+			printString2(tempx);
 		}
 
 		if(shutdown_all)
@@ -1444,7 +1493,7 @@ UCHAR basic_controls_task(int test)
 //			case ESTOP_SIGNAL:
 				send_serialother(cmd,tempx);
 				myprintf1(cmd_array[cmd].cmd_str);
-//				printString2(cmd_array[cmd].cmd_str);
+				printString2(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
@@ -1503,7 +1552,6 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case ON_FUEL_PUMP:
-
 				index = FUELPUMP;
 				rc = ollist_find_data(index,otpp,&oll);
 	//			printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->reset);
@@ -1555,7 +1603,7 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 1;
 				ollist_insert_data(index,&oll,otp);
-				printString2("lights on");
+//				printString2("lights on");
 				break;
 
 			case OFF_LIGHTS:
@@ -1568,7 +1616,7 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(index,&oll,otp);
-				printString2("off lights");
+//				printString2("off lights");
 				break;
 
 			case ON_LLIGHTS:
@@ -1847,6 +1895,8 @@ UCHAR basic_controls_task(int test)
 				otp->onoff = 0;
 				set_output(STARTER,0);
 				ollist_insert_data(index,&oll,otp);
+				lights_on_countdown = actual_lights_on_delay;
+//				add_msg_queue(OFF_RUNNING_LIGHTS);
 				break;
 /*
 			case ESTOP_SIGNAL:
@@ -1931,6 +1981,7 @@ UCHAR basic_controls_task(int test)
 				reboot_on_exit = 2;
 				break;
 			case UPLOAD_NEW:
+				send_serial(SERVER_DOWN);
 				shutdown_all = 1;
 				reboot_on_exit = 4;
 

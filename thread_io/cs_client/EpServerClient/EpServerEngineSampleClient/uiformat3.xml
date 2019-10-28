@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>			<!-- Settings for 'Test Ports' Dialog -->
-		<Label>uiformat 3</Label>
-		<Command>17</Command>
-		<Length>2</Length>
+		<Label>Get Config2</Label>
+		<Command>106</Command>
+		<Length>1</Length>
 	</UIFormat>
 	<UIFormat>
 		<Label>Set Time</Label>

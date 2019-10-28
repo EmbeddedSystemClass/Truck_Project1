@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "../mytypes.h"
 
-CMD_STRUCT cmd_array[104] =
+CMD_STRUCT cmd_array[107] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -106,12 +106,14 @@ CMD_STRUCT cmd_array[104] =
 	{		GET_VERSION,"GET_VERSION\0" },
 	{		SVR_CMD,"SVR_CMD\0" },
 	{		HOME_SVR_ON,"HOME_SVR_ON\0" },
-	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" }
+	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
+	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
+	{		SEND_CONFIG2,"SEND_CONFIG2\0" },
+	{		GET_CONFIG2,"GET_CONFIG2\0" }
 };
-
 int main(void)
 {
 	int i;
-	for(i = 0;i < 104;i++)
+	for(i = 0;i < 107;i++)
 		printf("%02d\t\t%02x\t\t%s\n",cmd_array[i].cmd, cmd_array[i].cmd, cmd_array[i].cmd_str);
 }

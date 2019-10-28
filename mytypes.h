@@ -17,7 +17,7 @@ typedef unsigned long ULONG;
 #define TDATE_STAMP_STR_LEN 16
 #define UPLOAD_BUFF_SIZE 10000
 #define NUM_ADC_CHANNELS 11
-#define SERIAL_BUFF_SIZE 20
+#define SERIAL_BUFF_SIZE 50
 
 // tcp command sent to TS-7200 from laptop
 // these have to exactly match what's in cmd_array[] in tasks.c
@@ -145,7 +145,8 @@ enum cmd_types
 	HOME_SVR_ON,
 	HOME_SVR_OFF,
 	UPDATE_CONFIG,
-	SEND_CONFIG2
+	SEND_CONFIG2,
+	GET_CONFIG2
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200

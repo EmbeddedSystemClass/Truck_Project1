@@ -437,7 +437,7 @@ namespace EpServerEngineSampleClient
 					//AddMsg("str: " + str.Length.ToString());
 					//AddMsg(str);
 					//AddMsg("ret: " + ret.Length.ToString());
-					AddMsg("svr: " + ret);
+					//AddMsg("svr: " + ret);
 					int offset = svrcmd.GetCmdIndexI(ret);
 					svrcmd.Send_Cmd(offset);
 					break;
@@ -570,6 +570,7 @@ namespace EpServerEngineSampleClient
 				case "SEND_MSG":
 					//AddMsg("str: " + str + " " + str.Length.ToString());
 					//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
+					AddMsg(ret);
 					switch (ret)
                     {
                         case "START_SEQ":
