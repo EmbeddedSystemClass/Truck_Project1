@@ -61,7 +61,7 @@ and another comes from a light sensor on the crankshaft. The FPGA also gets mess
 STM32 to generate DTMF tones whenever the keys on the keypad are pushed. The data from the<br />
 RPM/MPH is sent over a parallel port to the STM32 which sends it on to the client and also<br />
 sent to an XMEGA processor over a serial line which drives two LCD displays mounted on the dash.<br />
-<h2 The Home Server</h2>
+<h2> The Home Server</h2>
 <img src="Images/ClientUI2.JPG">
 I'm currently working on another Windows C# app which works just like the client, only it's a TCP<br />
 server which runs on the desktop in the garage and only works when the truck is parked just outside.<br />
@@ -71,5 +71,10 @@ on the laptop, I have to connect to the TS-7200 using the top-left button called
 Then I can close the lid on the laptop, put it under the seat and use the keypad to navigate<br />
 the 10 buttons on the bottom. The button called 'Call Home' will connect to the Home Server<br />
 and then I can go back in the garage and while the engine is warming up, set config parameters<br />
-and control the lights, blower and shut off the engine for what it's worth.<br />
+and control the lights, blower and shut off the engine for what it's worth. The picture shows<br />
+the home server on the lower-right and the status window of the client (running on my desktop)<br />
+on the upper-left. The blue window on the upper-right is just a tty connected to an extra comm port<br />
+on the TS-7200 which just shows debug messages. The messages scrolling on the edit boxes are from<br />
+clicking on the buttons on the home server. The main purpose of the home server is to set configuration<br />
+parameters which get saved to a file on the TS-7200.<br />
 
