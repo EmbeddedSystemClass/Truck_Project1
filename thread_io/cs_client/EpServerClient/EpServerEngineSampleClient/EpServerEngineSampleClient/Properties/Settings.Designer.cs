@@ -12,7 +12,7 @@ namespace EpServerEngineSampleClient.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.5.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -27,10 +27,43 @@ namespace EpServerEngineSampleClient.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
         [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQ" +
-            "L-DB2.mdf;Integrated Security=True;Connect Timeout=30")]
+            "L.mdf;Integrated Security=True;Connect Timeout=30")]
         public string Client_SQL_DB2ConnectionString {
             get {
                 return ((string)(this["Client_SQL_DB2ConnectionString"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=NEWWINDOWS\\SQLEXPRESS;Initial Catalog=c:\\users\\daniel\\dev\\Client-SQL." +
+            "mdf;Integrated Security=True")]
+        public string c__users_daniel_dev_Client_SQL_mdfConnectionString {
+            get {
+                return ((string)(this["c__users_daniel_dev_Client_SQL_mdfConnectionString"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=NEWWINDOWS\\SQLEXPRESS;Initial Catalog=Client-SQL;Integrated Security=" +
+            "True")]
+        public string Client_SQLConnectionString {
+            get {
+                return ((string)(this["Client_SQLConnectionString"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=NEWWINDOWS\\SQLEXPRESS;Initial Catalog=Client-SQL2;Integrated Security" +
+            "=True")]
+        public string Client_SQL2ConnectionString {
+            get {
+                return ((string)(this["Client_SQL2ConnectionString"]));
             }
         }
     }

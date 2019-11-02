@@ -61,7 +61,6 @@ namespace EpServerEngineSampleClient
 		public System.Collections.Generic.List<ButtonList> button_list;
         private List<int> Exclude_From_buttons = new List<int>();
         private bool system_up = true;
-		private bool HomeSvrConnected = false;
         private PortSet2 psDlg = null;
         private PortSet2 psDlg2 = null;
         private PortSet2 psDlg3 = null;
@@ -79,7 +78,7 @@ namespace EpServerEngineSampleClient
         private int selected_address = 0;
         private bool avr_running = false;
         private int please_lets_disconnect = 0;
-        private int disconnect_attempts = 0;
+		private int disconnect_attempts = 0;
         private string m_hostname;
         private string m_portno;
         private bool m_engine_running = false;
@@ -91,7 +90,11 @@ namespace EpServerEngineSampleClient
         private int wait_before_starting = 0;
         //private int server_connection_attempts = 1;
         private bool client_connected = false;
-        private int brighness = 0;
+		private bool home_svr_connected = false;
+		private int giveup_home_svr = 10;
+		// initially try for 20 seconds to connect, then 
+		// give up until user hits 'Call Home' button
+		private int connection_timeout = 0;
 
         private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
         private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
@@ -106,7 +109,7 @@ namespace EpServerEngineSampleClient
             InitializeComponent();
             button_list = new List<ButtonList>();
             //            use_main_odata = true;
-            this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
+            //this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             svrcmd.SetClient(m_client);
 			svrcmd2.SetClient(m_client2);
@@ -249,8 +252,12 @@ namespace EpServerEngineSampleClient
                 //AddMsg(btn.Name + " en: " + btn.Enabled.ToString());
             }
             timer1.Enabled = true;
-            //AddMsg("buttons used: " + no_buttons.ToString());
-        }
+			//btnAVR_Click(new object(), new EventArgs());
+			//AddMsg("buttons used: " + no_buttons.ToString());
+			// start the connection to the home server by default
+			//btnAVR_Click(new object(), new EventArgs());
+			//AddMsg("connection timeout: " + m_client2.ConnectionTimeOut.ToString()); - this returns '0'
+		}
         private void btnConnect_Click(object sender, EventArgs e)
         {
             if (!client_connected)      // let's connect here! (see timer callback at end of file)
@@ -259,6 +266,9 @@ namespace EpServerEngineSampleClient
                 m_portno = tbPort.Text;
                 AddMsg("trying to connect to:    " + m_hostname + ":" + m_portno.ToString() + "...");
                 ClientOps ops = new ClientOps(this, m_hostname, m_portno);
+				// set the timeout to 5ms - by default it's 0 which causes it to wait a long time
+				// and slows down the UI
+				ops.ConnectionTimeOut = 5;
                 m_client.Connect(ops);
                 please_lets_disconnect = 0;
                 disconnect_attempts++;
@@ -272,6 +282,7 @@ namespace EpServerEngineSampleClient
         }
         public void OnConnected(INetworkClient client, ConnectStatus status)
         {
+			//AddMsg(client.HostName);
 			if (client.HostName == m_hostname)
 			{
 				if (m_client.IsConnectionAlive)
@@ -300,7 +311,10 @@ namespace EpServerEngineSampleClient
 					reevaluate_enabled_buttons();
 				}
 			}
-			else AddMsg("other hostname: " + client.HostName);
+			//else if (m_client2.IsConnectionAlive)
+				//AddMsg("connection alive");
+
+			//else AddMsg("home svr: " + client.HostName);
         }
         public void OnDisconnect(INetworkClient client)
         {
@@ -338,8 +352,9 @@ namespace EpServerEngineSampleClient
         {
 			// anything that gets sent here gets sent to home server if it's up
 			if (m_client2.IsConnectionAlive)
+			{
 				m_client2.Send(receivedPacket);
-
+			}
 			if (psDlg.Visible == true)
             {
                 psDlg.Process_Msg(receivedPacket.PacketRaw);
@@ -426,7 +441,10 @@ namespace EpServerEngineSampleClient
 					// change the cmd to "UPLOAD_CONFIG"
 					bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
 					Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-					m_client.Send(packet);
+					if (m_client.IsConnectionAlive)
+					{
+						m_client.Send(packet);
+					}
 					//AddMsg("hi rev: " + cfg_params.high_rev_limit.ToString());
 					//substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
 					//AddMsg("fan on: " + substr);
@@ -437,7 +455,6 @@ namespace EpServerEngineSampleClient
 					//AddMsg("str: " + str.Length.ToString());
 					//AddMsg(str);
 					//AddMsg("ret: " + ret.Length.ToString());
-					//AddMsg("svr: " + ret);
 					int offset = svrcmd.GetCmdIndexI(ret);
 					svrcmd.Send_Cmd(offset);
 					break;
@@ -540,37 +557,10 @@ namespace EpServerEngineSampleClient
 					//AddMsg("update config");
 					break;
 
-				case "HOME_SVR_ON":
-					if (!HomeSvrConnected)
-					{
-						ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
-						m_client2.Connect(ops);
-						HomeSvrConnected = true;
-						lbHomeSvr.Text = "Home Server Connected";
-					}
-					else
-					{
-						AddMsg("home server on already");
-					}
-					break;
-
-				case "HOME_SVR_OFF":
-					if (!HomeSvrConnected)
-					{
-						AddMsg("home server off already");
-					}
-					else
-					{
-						m_client2.Disconnect();
-						HomeSvrConnected = false;
-						lbHomeSvr.Text = "Home Server Not Connected";
-					}
-					break;
-
 				case "SEND_MSG":
 					//AddMsg("str: " + str + " " + str.Length.ToString());
 					//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
-					AddMsg(ret);
+					ListMsg(ret);
 					switch (ret)
                     {
                         case "START_SEQ":
@@ -626,7 +616,7 @@ namespace EpServerEngineSampleClient
                     break;
 
                 case "CURRENT_TIME":
-                    AddMsg(ret);
+                    ListMsg(ret);
                     break;
 
                 case "SERVER_UPTIME":
@@ -656,7 +646,11 @@ namespace EpServerEngineSampleClient
                     tbEngineTemp.Text = ret;
                     break;
 
-                case "SEND_RPM":
+				case "INDOOR_TEMP":
+					tbIndoorTemp.Text = ret;
+					break;
+
+				case "SEND_RPM":
                     tbRPM.Text = ret;           // comment out for debug
                     break;
 
@@ -668,7 +662,7 @@ namespace EpServerEngineSampleClient
                     string[] words = ret.Split(' ');
                     i = 0;
 					AddMsg("send config");
-					AddMsg(ret);
+					//AddMsg(ret);
 					
                     foreach (var word in words)
                     {
@@ -759,15 +753,15 @@ namespace EpServerEngineSampleClient
 					break;
 
                 case "GET_TIME":
-                    AddMsg(ret);
+					ListMsg(ret);
                     break;
 
                 case "SYSTEM_UP":
-                    AddMsg(ret);
+					ListMsg(ret);
                     break;
 
                 case "SYSTEM_DOWN":
-                    AddMsg(ret);
+                    ListMsg(ret);
                     break;
 
                 case "NAV_UP":
@@ -822,28 +816,47 @@ namespace EpServerEngineSampleClient
         }
         public void OnSent(INetworkClient client, SendStatus status, Packet sentPacket)
         {
-            switch (status)
-            {
-                case SendStatus.SUCCESS:
-                    Debug.WriteLine("SEND Success");
-                    break;
-                case SendStatus.FAIL_CONNECTION_CLOSING:
-                    AddMsg(status.ToString());
-                    Debug.WriteLine("SEND failed due to connection closing");
-                    break;
-                case SendStatus.FAIL_INVALID_PACKET:
-                    AddMsg(status.ToString());
-                    Debug.WriteLine("SEND failed due to invalid socket");
-                    break;
-                case SendStatus.FAIL_NOT_CONNECTED:
-                    AddMsg(status.ToString());
-                    Debug.WriteLine("SEND failed due to no connection");
-                    break;
-                case SendStatus.FAIL_SOCKET_ERROR:
-                    AddMsg(status.ToString());
-                    Debug.WriteLine("SEND Socket Error");
-                    break;
-            }
+			if (client == m_client2)
+			{
+				if (status != SendStatus.SUCCESS)
+				{
+					AddMsg("status: home svr not success");
+					SetHomeSvrStatus(false);
+				}else
+				{
+					if (!home_svr_connected)
+					{
+						SetHomeSvrStatus(true);
+						AddMsg("home server success");
+						connection_timeout = 0;
+					}
+				}
+			}
+			else
+			{
+				switch (status)
+				{
+					case SendStatus.SUCCESS:
+						Debug.WriteLine("SEND Success");
+						break;
+					case SendStatus.FAIL_CONNECTION_CLOSING:
+						AddMsg(status.ToString());
+						Debug.WriteLine("SEND failed due to connection closing");
+						break;
+					case SendStatus.FAIL_INVALID_PACKET:
+						AddMsg(status.ToString());
+						Debug.WriteLine("SEND failed due to invalid socket");
+						break;
+					case SendStatus.FAIL_NOT_CONNECTED:
+						AddMsg(status.ToString());
+						Debug.WriteLine("SEND failed due to no connection");
+						break;
+					case SendStatus.FAIL_SOCKET_ERROR:
+						AddMsg(status.ToString());
+						Debug.WriteLine("SEND Socket Error");
+						break;
+				}
+			}
 
         }
         delegate void AddMsg_Involk(string message);
@@ -1025,18 +1038,19 @@ namespace EpServerEngineSampleClient
 		}
 		private void btnAVR_Click(object sender, EventArgs e)
         {
-			if (!HomeSvrConnected)
+			if (!home_svr_connected)
 			{
 				ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
+				ops.ConnectionTimeOut = 5;
 				m_client2.Connect(ops);
-				HomeSvrConnected = true;
-				lbHomeSvr.Text = "Home Server Connected";
+				giveup_home_svr = 10;       // later we can set this to the value in the config params
+				//AddMsg("initial connect to home svr " + m_client2.IsConnectionAlive.ToString());
+				SetHomeSvrStatus(true);
 			}
 			else
 			{
+				SetHomeSvrStatus(false);
 				m_client2.Disconnect();
-				HomeSvrConnected = false;
-				lbHomeSvr.Text = "Home Server Not Connected";
 			}
 			/*
 			psDlg4.Enable_Dlg(true);
@@ -1045,7 +1059,7 @@ namespace EpServerEngineSampleClient
             psDlg4.ShowDialog(this);
             psDlg.Enable_Dlg(false);
 			*/
-        }
+		}
         private void Dialog1_Click(object sender, EventArgs e)
         {
             psDlg.Enable_Dlg(true);
@@ -1237,7 +1251,7 @@ namespace EpServerEngineSampleClient
                             tbMPH.Text = "";
                             tbServerTime.Text = "";
                             client_connected = false;
-                            AddMsg("server disconnected");
+                            ListMsg("server disconnected");
                             //tbServerUpTimeSeconds.Text = "";
                         }
                         else
@@ -1302,8 +1316,79 @@ namespace EpServerEngineSampleClient
                     //drake_img.Visible = false;
                     break;
             }
-        }
-        private void IPAddressChanged(object sender, EventArgs e)
+
+//			if (giveup_home_svr > 0)
+			//if(!home_svr_connected)
+			/*
+			if(true)
+			{
+
+				if (connection_timeout > 2 || !home_svr_connected)
+				{
+					tbHomeSvrConnAttempts.Visible = true;
+					lbHomeSvrConnAttempts.Visible = true;
+					tbHomeSvrConnAttempts.Text = (connection_timeout - 2).ToString() + " " + connection_timeout.ToString();
+					btnHomeSvr.Text = "Call Home";
+					if (!home_svr_connected)
+					{
+						ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
+						ops.ConnectionTimeOut = 2000;
+						m_client2.Connect(ops);
+					}
+					if (--giveup_home_svr < 1)
+					{
+						connection_timeout = 0;
+						tbHomeSvrConnAttempts.Visible = false;
+						lbHomeSvrConnAttempts.Visible = false;
+						//AddMsg("give up home svr");
+					}
+					if (giveup_home_svr == 1)
+						lbHomeSvrConnAttempts.Text = "giving up";
+					//AddMsg(giveup_home_svr.ToString());
+				}
+				else
+				{
+					tbHomeSvrConnAttempts.Visible = false;
+					lbHomeSvrConnAttempts.Visible = false;
+					btnHomeSvr.Text = "Hangup Home";
+				}
+				if(!home_svr_connected)
+					connection_timeout++;
+			}
+			*/
+			Send_Svr_Cmd("CLIENT_CONNECTED");
+		}
+		private void SetHomeSvrStatus(bool logged_in)
+		{
+			if (logged_in)
+			{
+				home_svr_connected = true;
+				//AddMsg("avr svr connect");
+				btnHomeSvr.Text = "Hangup Home";
+			}
+			else
+			{
+				home_svr_connected = false;
+				btnHomeSvr.Text = "Call Home";
+				//AddMsg("avr svr disconnect");
+			}
+
+		}
+		private void Send_Svr_Cmd(string cmd2)
+		{
+			if (m_client2.IsConnectionAlive)
+			{
+				byte[] bytes1;
+				string cmd = "SEND_MSG";
+				bytes1 = BytesFromString(cmd2);
+				byte[] bytes = new byte[bytes1.Count() - 1 + 2];
+				bytes[0] = svrcmd.GetCmdIndexB(cmd);
+				System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count() - 1);
+				Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+				m_client2.Send(packet);
+			}
+		}
+		private void IPAddressChanged(object sender, EventArgs e)
         {
             if (!client_connected)
             {
@@ -1335,18 +1420,28 @@ namespace EpServerEngineSampleClient
         }
         private void SetTime()
         {
-            DateTime localDate = DateTime.Now;
-            String cultureName = "en-US";
-            var culture = new CultureInfo(cultureName);
-            AddMsg(localDate.ToString(culture));
+			if (m_client.IsConnectionAlive)
+			{
+				DateTime localDate = DateTime.Now;
+				String cultureName = "en-US";
+				var culture = new CultureInfo(cultureName);
+				AddMsg(localDate.ToString(culture));
 
-            byte[] bytes = BytesFromString(localDate.ToString(culture));
-            byte[] bytes2 = new byte[bytes.Count() + 2];
-            System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
-            string set_time = "SET_TIME";
-            bytes2[0] = svrcmd.GetCmdIndexB(set_time);
-            Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
-            m_client.Send(packet);
+				byte[] bytes = BytesFromString(localDate.ToString(culture));
+				byte[] bytes2 = new byte[bytes.Count() + 2];
+				System.Buffer.BlockCopy(bytes, 0, bytes2, 2, bytes.Length - 2);
+				string set_time = "SET_TIME";
+				bytes2[0] = svrcmd.GetCmdIndexB(set_time);
+				Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
+				m_client.Send(packet);
+			}
         }
-    }
+		private void ListMsg(string msg)
+		{
+			DateTime localDate = DateTime.Now;
+			String cultureName = "en-US";
+			var culture = new CultureInfo(cultureName);
+			AddMsg(msg + " " + localDate.ToString(culture));
+		}
+	}
 }

@@ -49,6 +49,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
+#include "cmsis_os.h"
 /* USER CODE BEGIN 0 */
 #include "ds1620.h"
 /* USER CODE END 0 */
@@ -161,7 +162,7 @@ void set_input(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	osDelay(10);
+	vTaskDelay(10);
 }
 
 void set_output(void)
@@ -173,6 +174,41 @@ void set_output(void)
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	osDelay(10);
+}
+
+void init_DS16202(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_DQ2 | DS1620_PIN_CLK2 | DS1620_PIN_RST2, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = DS1620_PIN_DQ2 | DS1620_PIN_CLK2 | DS1620_PIN_RST2;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
+void set_input2(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = DS1620_PIN_DQ2;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	vTaskDelay(10);
+}
+
+void set_output2(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	GPIO_InitStruct.Pin = DS1620_PIN_DQ2;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	osDelay(10);
 }
 

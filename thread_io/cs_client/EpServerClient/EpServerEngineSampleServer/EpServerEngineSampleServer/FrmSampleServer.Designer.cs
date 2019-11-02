@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+			this.components = new System.ComponentModel.Container();
 			this.tbPort = new System.Windows.Forms.TextBox();
 			this.label2 = new System.Windows.Forms.Label();
 			this.btnConnect = new System.Windows.Forms.Button();
@@ -54,6 +55,14 @@
 			this.gbControls = new System.Windows.Forms.GroupBox();
 			this.btnGetParams = new System.Windows.Forms.Button();
 			this.btnUploadParams = new System.Windows.Forms.Button();
+			this.timer1 = new System.Windows.Forms.Timer(this.components);
+			this.lbConnected = new System.Windows.Forms.Label();
+			this.tbCurrentTime = new System.Windows.Forms.TextBox();
+			this.tbConnectionTries = new System.Windows.Forms.TextBox();
+			this.lbConnTries = new System.Windows.Forms.Label();
+			this.btnClearScreen = new System.Windows.Forms.Button();
+			this.label5 = new System.Windows.Forms.Label();
+			this.tbIndoorTemp = new System.Windows.Forms.TextBox();
 			this.gbControls.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -88,18 +97,19 @@
 			// tbReceived
 			// 
 			this.tbReceived.Anchor = System.Windows.Forms.AnchorStyles.None;
-			this.tbReceived.Location = new System.Drawing.Point(13, 93);
+			this.tbReceived.Location = new System.Drawing.Point(13, 167);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(357, 377);
+			this.tbReceived.Size = new System.Drawing.Size(357, 303);
 			this.tbReceived.TabIndex = 7;
 			// 
 			// tbServerTime
 			// 
 			this.tbServerTime.Location = new System.Drawing.Point(240, 12);
 			this.tbServerTime.Name = "tbServerTime";
+			this.tbServerTime.ReadOnly = true;
 			this.tbServerTime.Size = new System.Drawing.Size(111, 20);
 			this.tbServerTime.TabIndex = 8;
 			// 
@@ -107,6 +117,7 @@
 			// 
 			this.tbEngRunTime.Location = new System.Drawing.Point(240, 38);
 			this.tbEngRunTime.Name = "tbEngRunTime";
+			this.tbEngRunTime.ReadOnly = true;
 			this.tbEngRunTime.Size = new System.Drawing.Size(111, 20);
 			this.tbEngRunTime.TabIndex = 9;
 			// 
@@ -114,7 +125,8 @@
 			// 
 			this.tbEngineTemp.Location = new System.Drawing.Point(240, 64);
 			this.tbEngineTemp.Name = "tbEngineTemp";
-			this.tbEngineTemp.Size = new System.Drawing.Size(52, 20);
+			this.tbEngineTemp.ReadOnly = true;
+			this.tbEngineTemp.Size = new System.Drawing.Size(45, 20);
 			this.tbEngineTemp.TabIndex = 10;
 			// 
 			// btnLights
@@ -244,7 +256,7 @@
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(149, 15);
+			this.label1.Location = new System.Drawing.Point(152, 15);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(77, 13);
 			this.label1.TabIndex = 25;
@@ -253,7 +265,7 @@
 			// label3
 			// 
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(149, 41);
+			this.label3.Location = new System.Drawing.Point(152, 41);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(85, 13);
 			this.label3.TabIndex = 26;
@@ -262,7 +274,7 @@
 			// label4
 			// 
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(149, 63);
+			this.label4.Location = new System.Drawing.Point(152, 68);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(73, 13);
 			this.label4.TabIndex = 27;
@@ -319,11 +331,84 @@
 			this.btnUploadParams.UseVisualStyleBackColor = true;
 			this.btnUploadParams.Click += new System.EventHandler(this.btnUploadParams_Click);
 			// 
+			// timer1
+			// 
+			this.timer1.Interval = 2000;
+			this.timer1.Tick += new System.EventHandler(this.timer_callback);
+			// 
+			// lbConnected
+			// 
+			this.lbConnected.AutoSize = true;
+			this.lbConnected.Location = new System.Drawing.Point(12, 85);
+			this.lbConnected.Name = "lbConnected";
+			this.lbConnected.Size = new System.Drawing.Size(79, 13);
+			this.lbConnected.TabIndex = 32;
+			this.lbConnected.Text = "Not Connected";
+			// 
+			// tbCurrentTime
+			// 
+			this.tbCurrentTime.Location = new System.Drawing.Point(15, 108);
+			this.tbCurrentTime.Name = "tbCurrentTime";
+			this.tbCurrentTime.ReadOnly = true;
+			this.tbCurrentTime.Size = new System.Drawing.Size(120, 20);
+			this.tbCurrentTime.TabIndex = 33;
+			// 
+			// tbConnectionTries
+			// 
+			this.tbConnectionTries.Location = new System.Drawing.Point(310, 136);
+			this.tbConnectionTries.Name = "tbConnectionTries";
+			this.tbConnectionTries.ReadOnly = true;
+			this.tbConnectionTries.Size = new System.Drawing.Size(60, 20);
+			this.tbConnectionTries.TabIndex = 34;
+			// 
+			// lbConnTries
+			// 
+			this.lbConnTries.AutoSize = true;
+			this.lbConnTries.Location = new System.Drawing.Point(211, 140);
+			this.lbConnTries.Name = "lbConnTries";
+			this.lbConnTries.Size = new System.Drawing.Size(90, 13);
+			this.lbConnTries.TabIndex = 35;
+			this.lbConnTries.Text = "Connection Tries:";
+			// 
+			// btnClearScreen
+			// 
+			this.btnClearScreen.Location = new System.Drawing.Point(393, 445);
+			this.btnClearScreen.Name = "btnClearScreen";
+			this.btnClearScreen.Size = new System.Drawing.Size(116, 23);
+			this.btnClearScreen.TabIndex = 36;
+			this.btnClearScreen.Text = "Clear Screen";
+			this.btnClearScreen.UseVisualStyleBackColor = true;
+			this.btnClearScreen.Click += new System.EventHandler(this.btnClearScreen_Click);
+			// 
+			// label5
+			// 
+			this.label5.AutoSize = true;
+			this.label5.Location = new System.Drawing.Point(152, 95);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(70, 13);
+			this.label5.TabIndex = 38;
+			this.label5.Text = "Indoor Temp:";
+			// 
+			// tbIndoorTemp
+			// 
+			this.tbIndoorTemp.Location = new System.Drawing.Point(240, 92);
+			this.tbIndoorTemp.Name = "tbIndoorTemp";
+			this.tbIndoorTemp.ReadOnly = true;
+			this.tbIndoorTemp.Size = new System.Drawing.Size(45, 20);
+			this.tbIndoorTemp.TabIndex = 37;
+			// 
 			// FrmSampleServer
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(678, 480);
+			this.Controls.Add(this.label5);
+			this.Controls.Add(this.tbIndoorTemp);
+			this.Controls.Add(this.btnClearScreen);
+			this.Controls.Add(this.lbConnTries);
+			this.Controls.Add(this.tbConnectionTries);
+			this.Controls.Add(this.tbCurrentTime);
+			this.Controls.Add(this.lbConnected);
 			this.Controls.Add(this.btnUploadParams);
 			this.Controls.Add(this.btnGetParams);
 			this.Controls.Add(this.gbControls);
@@ -338,7 +423,9 @@
 			this.Controls.Add(this.btnConnect);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.tbPort);
+			this.Location = new System.Drawing.Point(1200, 540);
 			this.Name = "FrmSampleServer";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
 			this.Text = "SampleServer";
 			this.gbControls.ResumeLayout(false);
 			this.ResumeLayout(false);
@@ -374,6 +461,14 @@
 		private System.Windows.Forms.GroupBox gbControls;
 		private System.Windows.Forms.Button btnGetParams;
 		private System.Windows.Forms.Button btnUploadParams;
+		private System.Windows.Forms.Timer timer1;
+		private System.Windows.Forms.Label lbConnected;
+		private System.Windows.Forms.TextBox tbCurrentTime;
+		private System.Windows.Forms.TextBox tbConnectionTries;
+		private System.Windows.Forms.Label lbConnTries;
+		private System.Windows.Forms.Button btnClearScreen;
+		private System.Windows.Forms.Label label5;
+		private System.Windows.Forms.TextBox tbIndoorTemp;
 	}
 }
 

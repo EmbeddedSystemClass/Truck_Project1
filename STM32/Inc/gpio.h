@@ -72,6 +72,10 @@ void init_DS1620(void);
 void set_input(void);
 void set_output(void);
 
+void init_DS16202(void);
+void set_input2(void);
+void set_output2(void);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

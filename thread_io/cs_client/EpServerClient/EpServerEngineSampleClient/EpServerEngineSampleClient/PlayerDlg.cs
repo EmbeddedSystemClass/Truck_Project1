@@ -56,11 +56,8 @@ namespace EpServerEngineSampleClient
                     string str = item.mp3_location.ToString();
                     int index = str.LastIndexOf("\\");
                     string str2 = str.Substring(index+1);
-					//AddMsg(index.ToString());
-					//lbPlayList.Items.Add(item.mp3_location.ToString() + " " + index.ToString());
-					int count = 2;
-					//string str3 = str2.Substring(str2.IndexOf('.'));
-					str2 = str2.Remove(str2.IndexOf('.'));
+                    //AddMsg(index.ToString());
+                    //lbPlayList.Items.Add(item.mp3_location.ToString() + " " + index.ToString());
                     lbPlayList.Items.Add(str2);
                     item = null;
                     no_selections++;

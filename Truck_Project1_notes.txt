@@ -241,6 +241,20 @@ of just idata & odata which are loaded by default (see odometer.txt)
 When E-Stop button is pushed and if lights are one, the lights will stay on for a preset
 amount of time. 
 
+Start making backups of client exe's when uploading new sched's to iobox on vehicle because
+if any of the cmd_types get changed in the system and the new client gets started it might
+not work with the old sched because it is sending different cmd_types back and forth.
+If this happens, then the only way to fix it is to have a linux desktop in the vehicle to
+use to ftp into the iobox and upload the new exe. 
+
+1) get dual boot linux/windows desktop with keyboard and mouse and hook up the VGA port to
+	the in-dash monitor.
+2) with a null-modem RS-232 cable, connect to the iobox to the linux desktop.
+3) put the sched on the linux drive and boot up in linux.
+4) install a router between the iobox and the desktop
+5) ftp into the iobox and load the new sched to the root of the iobox.
+6) reboot the desktop into windows and with the new client, make sure everything works.
+
 **************** nice to have's: ****************
 
 use 2 extra pins from FPGA to 25 watt stereo amp using pwm2.vhd to play tunes

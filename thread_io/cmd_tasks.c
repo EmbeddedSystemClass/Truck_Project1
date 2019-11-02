@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[107] =
+CMD_STRUCT cmd_array[108] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -109,6 +109,7 @@ CMD_STRUCT cmd_array[107] =
 	{		SET_PARAMS,"SET_PARAMS\0" },
 	{		EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{		ENGINE_TEMP,"ENGINE_TEMP\0" },
+	{		INDOOR_TEMP,"INDOOR_TEMP\0" },
 	{		SEND_RT_VALUES,"SEND_RT_VALUES\0" },
 	{		ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
 	{		SERVER_UPTIME,"SERVER_UPTIME\0" },
@@ -265,7 +266,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.47\0";
+	char version[15] = "sched v1.48\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];

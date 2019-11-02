@@ -752,14 +752,15 @@ UCHAR timer_task(int test)
 					add_msg_queue(OFF_LLIGHTS);
 					add_msg_queue(OFF_RLIGHTS);
 					add_msg_queue(OFF_RUNNING_LIGHTS);
-//					add_msg_queue(BLOWER_OFF);
+					add_msg_queue(BLOWER_OFF);
 					usleep(1000);
-					send_serialother(OFF_LIGHTS,tempx);
+					send_serialother(OFF_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
-					send_serialother(OFF_RUNNING_LIGHTS,tempx);
+					send_serialother(OFF_RUNNING_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
-					send_serialother(BLOWER_OFF,tempx);
+					send_serialother(BLOWER_OFF,(UCHAR*)tempx);
 					usleep(1000);
+					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, OFF_LIGHTS);
 				}
 			}
 		}
@@ -946,7 +947,7 @@ UCHAR serial_recv_task(int test)
 	UCHAR ch, ch2;
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
-	int engine_temp, rpm, mph;
+	int engine_temp, rpm, mph, indoor_temp;
 	int fd;
 	char errmsg[20];
 	char tempx[30];
@@ -1067,6 +1068,27 @@ UCHAR serial_recv_task(int test)
 //			sprintf(tempx,"%d",temp);
 //			printString2(tempx);
 			
+		}else
+			
+		if(cmd == INDOOR_TEMP)
+		{
+			high_byte = read_serial_buffer[1];
+			low_byte = read_serial_buffer[2];
+			//printHexByte(high_byte);
+			//printHexByte(low_byte);
+			indoor_temp = (int)high_byte;
+			indoor_temp <<= 8;
+			indoor_temp |= (int)low_byte;
+			
+			temp = (int)high_byte;
+			temp <<= 8;
+			temp |= (int)low_byte;
+			
+//			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
+			sprintf(tempx,"%.1f\0", convertF(indoor_temp));
+			//printString2(tempx);
+			if(test_sock())
+	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,INDOOR_TEMP);
 		}else
 		
 		if(cmd == TEMP_TOO_HIGH)

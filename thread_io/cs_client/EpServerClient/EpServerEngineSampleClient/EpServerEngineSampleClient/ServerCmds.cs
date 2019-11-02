@@ -82,6 +82,7 @@ namespace EpServerEngineSampleClient
             SET_PARAMS,
             EXIT_PROGRAM,
             ENGINE_TEMP,
+			INDOOR_TEMP,
             SEND_RT_VALUES,
             ENGINE_RUNTIME,
             SERVER_UPTIME,
@@ -117,7 +118,9 @@ namespace EpServerEngineSampleClient
 			HOME_SVR_ON,
 			HOME_SVR_OFF,
 			UPDATE_CONFIG,
-			SEND_CONFIG2
+			SEND_CONFIG2,
+			CLIENT_CONNECTED,
+			SERVER_CONNECTED
 		}
 
 		public ServerCmds()
@@ -184,9 +187,12 @@ namespace EpServerEngineSampleClient
             string test = " ";
             byte[] bytes = BytesFromString(test);
 			//qt.Enqueue(sendcmd);
-            bytes.SetValue((byte)sendcmd, 0);
-            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-            m_client.Send(packet);
+			if (m_client.IsConnectionAlive)
+			{
+				bytes.SetValue((byte)sendcmd, 0);
+				Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+				m_client.Send(packet);
+			}
         }
     }
 }

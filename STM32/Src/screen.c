@@ -12,11 +12,11 @@ extern osMessageQId SendAVRQueueHandle;
 
 extern FORMAT_STR rtlabel_str[NUM_RT_LABELS];
 extern FORMAT_STR status_label_str[NUM_STATUS_LABELS];
+extern uint64_t pack64(UCHAR *buff);
 
 void init_rtlabels(void)
 {
 	static UCHAR col, data_col, row, str;
-	int i;
 	
 	col = START_RT_VALUE_COL;
 	data_col = col + 10;
@@ -57,7 +57,6 @@ void init_rtlabels(void)
 
 void display_rtlabels(void)
 {
-	static UCHAR data2, i, onoff, code;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
 

@@ -15,6 +15,7 @@ git add main_box_pinout.ods
 git add avr_menus.txt
 git add todo_bug_list.txt
 git add client_server_notes.odt
+git add System_Diagram.jpg
 
 git add STM32/*
 git add STM32/.cproject
@@ -143,6 +144,10 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/Properties/Resources.resx
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/Properties/Resources.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/Properties/AssemblyInfo.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Properties/Resources.Designer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Properties/Resources.resx
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Properties/Settings.Designer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Properties/Settings.settings
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/EpServerEngineSampleClient.csproj
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ChildDialogs.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Child_Scrolling_List.cs
@@ -170,6 +175,11 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.resx
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/ClientSide/ClientInterface.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/EpServerEngine.cs.csproj
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient.sln
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/App.config
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/SQLQuery2.sql
 
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer.sln
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/Properties/Settings.settings
@@ -188,6 +198,14 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ParamsForm.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ConfigParams.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ServerCmds.cs
+
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/IocpTcpServer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/IocpTcpSocket.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/Room.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/RoomInterface.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/ServerInterface.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/bin/
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/EpServerEngineSampleClient.csproj.user
 
 git add thread_io/cs_client/server_on_linux.c
 git add thread_io/cs_client/server_on_linux2.c

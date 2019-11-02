@@ -16,11 +16,17 @@ namespace EpServerEngineSampleClient
 {
     public partial class DlgForm1 : Form
     {
-       private System.Windows.Forms.BindingSource bindingSource1;
-        string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
-        string connectionString =        "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
-        string connstr_prefix = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=";
+        private System.Windows.Forms.BindingSource bindingSource1;
+        //string currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL2.mdf;Integrated Security=True;Connect Timeout=30";
+        //string connectionString =        "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL2.mdf;Integrated Security=True;Connect Timeout=30";
+        //string connstr_prefix = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=";
+        string pathName = @"c:\Program Files (x86)\Microsoft SQL Server\Mssql.1\Mssql\Data";
+        string fileName1 = "Client-SQL.mdf";
+        //string fileName2 = "Client-SQL2.mdf";
+        string connstr_prefix = "Data Source = NEWWINDOWS\\SQLEXPRESS;AttachDbFilename=";
         string connstr_suffix = ";Integrated Security = True; Connect Timeout = 30";
+        string currentconnectionString = "";
+        string connectionString = "";
         string curr_table_name = "O_DATA";
 
         private INetworkClient m_client;
@@ -31,11 +37,27 @@ namespace EpServerEngineSampleClient
             InitializeComponent();
             btn_SendSelectedRecords.Enabled = true;
             bindingSource1 = new BindingSource();
-            currentconnectionString = connectionString;
+            currentconnectionString = connstr_prefix + pathName + fileName1 + connstr_suffix;
+            connectionString = currentconnectionString;
             tbCurTable.Text = curr_table_name;
+            AddMsg(curr_table_name);
             //            currentconnectionString = connectionStringlt;
             //if(m_client.IsConnectionAlive)
             //    svrcmd.SetClient(m_client);
+        }
+        delegate void AddMsg_Involk(string message);
+        public void AddMsg(string message)
+        {
+            if (tbStatus.InvokeRequired)
+            {
+                AddMsg_Involk CI = new AddMsg_Involk(AddMsg);
+                tbStatus.Invoke(CI, message);
+            }
+            else
+            {
+                //tbReceived.Text += message + "\r\n";
+                tbStatus.AppendText(message + "\r\n");
+            }
         }
         byte[] BytesFromString(String str)
         {
@@ -58,12 +80,13 @@ namespace EpServerEngineSampleClient
             {
                 string str = testDialog.returnStr;
                 currentconnectionString = connstr_prefix + str + connstr_suffix;
+                AddMsg(currentconnectionString);
             }
             else
             {
-                currentconnectionString = "Data Source = (LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\Daniel\\dev\\Client-SQL.mdf;Integrated Security=True;Connect Timeout=30";
+                currentconnectionString = connstr_prefix + pathName + fileName1 + connstr_suffix;
             }
-//            MessageBox.Show(currentconnectionString);
+            //            MessageBox.Show(currentconnectionString);
             testDialog.Dispose();
         }
         private void btnListTables_Click(object sender, EventArgs e)
@@ -78,8 +101,11 @@ namespace EpServerEngineSampleClient
         }
         private void DlgForm1_Load(object sender, EventArgs e)
         {
-//            this.o_DATATableAdapter1.Fill(this._Client_SQL_DBDataSet.O_DATA);		// comment this out when running on desktop
-            this.o_DATATableAdapter.Fill(this._Client_SQL_DB2DataSet.O_DATA);
+            // TODO: This line of code loads data into the '_Client_SQL2DataSet1.O_DATA' table. You can move, or remove it, as needed.
+            this.o_DATATableAdapter.Fill(this._Client_SQL2DataSet1.O_DATA);
+            AddMsg(this._Client_SQL2DataSet1.O_DATA.ToString());
+            //            this.o_DATATableAdapter1.Fill(this._Client_SQL_DBDataSet.O_DATA);		// comment this out when running on desktop
+            //this.o_DATATableAdapter.Fill(this._Client_SQL_DB2DataSet.O_DATA);
         }
         private void Update_Record(int port, string label, int onoff, int type, int time_delay)
         {
@@ -192,6 +218,7 @@ namespace EpServerEngineSampleClient
             {
                 MessageBox.Show(ex.Message);
                 currentconnectionString = connectionString;
+                AddMsg(currentconnectionString);
             }
         }
 

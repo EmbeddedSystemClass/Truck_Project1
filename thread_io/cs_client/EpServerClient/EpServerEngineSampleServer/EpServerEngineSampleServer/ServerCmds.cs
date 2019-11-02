@@ -82,6 +82,7 @@ namespace EpServerEngineSampleServer
             SET_PARAMS,
             EXIT_PROGRAM,
             ENGINE_TEMP,
+			INDOOR_TEMP,
             SEND_RT_VALUES,
             ENGINE_RUNTIME,
             SERVER_UPTIME,
@@ -117,7 +118,9 @@ namespace EpServerEngineSampleServer
 			HOME_SVR_ON,
 			HOME_SVR_OFF,
 			UPDATE_CONFIG,
-			SEND_CONFIG2
+			SEND_CONFIG2,
+			CLIENT_CONNECTED,
+			SERVER_CONNECTED
 		}
 
 		public ServerCmds()

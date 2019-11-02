@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EpServerEngine.cs;
 using System.Diagnostics;
+using System.Timers;
+using System.Globalization;
 
 namespace EpServerEngineSampleServer
 {
@@ -20,6 +22,8 @@ namespace EpServerEngineSampleServer
 		private ConfigParams cfg_params = null;
 		int server_up_seconds = 0;
 		bool lights, running_lights, cooling_fan, brights;
+		bool bclient_connected = false;
+		int connection_timeout;
 		int blower, wipers;
 		
 		public FrmSampleServer()
@@ -33,6 +37,8 @@ namespace EpServerEngineSampleServer
 			cfg_params.set = false;
 			params_form = new ParamsForm(cfg_params);
 			btnConnect_Click(new object(), new EventArgs());
+			timer1.Enabled = true;
+			connection_timeout = 0;
 		}
 
 		private void btnConnect_Click(object sender, EventArgs e)
@@ -43,21 +49,26 @@ namespace EpServerEngineSampleServer
                 btnConnect.Text = "Stop";
 				string port = tbPort.Text;
 				ServerOps ops = new ServerOps(this, port,this);
+				//AddMsg("NoDelay: " + ops.NoDelay.ToString() + " MaxSocketCount: " + ops.MaxSocketCount.ToString());
                 m_server.StartServer(ops);
+				timer1.Enabled = true;
             }
             else
             {
                 tbPort.Enabled = true;
                 btnConnect.Text = "Start";
 				if (m_server.IsServerStarted)
-                    m_server.StopServer();
+				{
+					m_server.StopServer();
+					timer1.Enabled = false;
+				}
             }
-
-        }
-        public void OnServerStarted(INetworkServer server, StartStatus status)
+		}
+		public void OnServerStarted(INetworkServer server, StartStatus status)
         {
             if (status == StartStatus.FAIL_ALREADY_STARTED || status == StartStatus.SUCCESS)
             {
+				AddMsg("server started");
             }
             else
                 MessageBox.Show("Unknown Error occurred");
@@ -66,7 +77,8 @@ namespace EpServerEngineSampleServer
 
         public bool OnAccept(INetworkServer server, IPInfo ipInfo)
         {
-            return true;
+			AddMsg("Client Accepted");
+			return true;
         }
 
         public INetworkSocketCallback GetSocketCallback()
@@ -97,6 +109,7 @@ namespace EpServerEngineSampleServer
 			btnBlower.Enabled = true;
 			btnWiper.Enabled = true;
 			btnSpecial.Enabled = true;
+			
 			//btnShutdown.Enabled = true;
 
 			/*
@@ -110,12 +123,13 @@ namespace EpServerEngineSampleServer
                 }
             }
 			*/
-        }
+		}
 
         public void OnReceived(INetworkSocket socket, Packet receivedPacket)
         {
             string sendString = socket.IPInfo.IPAddress;
-            //AddMsg(sendString);
+			//AddMsg(sendString);
+			bclient_connected = true;			
 			Process_Msg(receivedPacket.PacketRaw);
 			/*
             foreach (var socketObj in m_socketList)
@@ -149,7 +163,6 @@ namespace EpServerEngineSampleServer
 			{
 				case "SEND_MSG":
 					//AddMsg(str);
-					AddMsg(ret);
 					switch (ret)
 					{
 						case "START_SEQ":
@@ -178,6 +191,11 @@ namespace EpServerEngineSampleServer
 							break;
 						case "OFF_RUNNING_LIGHTS":
 							break;
+						case "CLIENT_CONNECTED":
+							//bclient_connected = true;
+							//lbConnected.Text = "Connected";
+							//AddMsg("getting CLIENT_CONNECTED msg");
+							break;
 						default:
 							//AddMsg(str);
 							break;
@@ -186,6 +204,7 @@ namespace EpServerEngineSampleServer
 				case "CURRENT_TIME":
 					AddMsg(ret);
 					break;
+
 				case "SERVER_UPTIME":
 					substr = ret.Substring(0, 2);
 					server_up_seconds++;
@@ -208,15 +227,22 @@ namespace EpServerEngineSampleServer
 					else
 						tbEngRunTime.Text = ret;
 					break;
+
 				case "ENGINE_TEMP":
 					tbEngineTemp.Text = ret;
 					break;
+
+				case "INDOOR_TEMP":
+					tbIndoorTemp.Text = ret;
+					break;
+
 				case "SEND_RPM":
 					//tbRPM.Text = ret;           // comment out for debug
 					break;
 				case "SEND_MPH":
 					//tbMPH.Text = ret;           // comment out for debug
 					break;
+
 				case "SEND_CONFIG":
 					string[] words = ret.Split(' ');
 					i = 0;
@@ -425,6 +451,11 @@ namespace EpServerEngineSampleServer
 			if (params_form.ShowDialog(this) == DialogResult.OK)
 			{
 				cfg_params = params_form.GetParams();
+				if (cfg_params.fan_off > cfg_params.fan_on)
+					AddMsg("WARNING: fan off is > fan on");
+
+				if (cfg_params.engine_temp_limit < 150)
+					AddMsg("WARNING: engine temp limit is set below 150");
 			}
 			else
 			{
@@ -629,6 +660,53 @@ namespace EpServerEngineSampleServer
 			Packet packet2 = new Packet(bytes, 0, 2, false);
 			m_server.Broadcast(packet2);
 			*/
+		}
+
+		private void timer_callback(object sender, EventArgs e)
+		{
+			DateTime localDate = DateTime.Now;
+			String cultureName = "en-US";
+			var culture = new CultureInfo(cultureName);
+			tbCurrentTime.Text = localDate.ToString(culture);
+
+			if (m_server.IsServerStarted)
+			{
+				if (!bclient_connected)
+				{
+					if (++connection_timeout > 2)
+					{
+						tbConnectionTries.Visible = true;
+						lbConnTries.Visible = true;
+						if (connection_timeout == 2)
+						{
+							lbConnected.Text = "Not Connected";
+							AddMsg("client not connected");
+						}
+						tbConnectionTries.Text = (connection_timeout - 2).ToString();
+						/*
+						string port = tbPort.Text;
+						ServerOps ops = new ServerOps(this, port, this);
+						m_server.StartServer(ops);
+						*/
+					}
+				}
+				else
+				{
+					tbConnectionTries.Visible = false;
+					lbConnTries.Visible = false;
+					//AddMsg("client connected");
+					connection_timeout = 0;
+					lbConnected.Text = "Connected";
+				}
+				//Send_Cmd("SERVER_CONNECTED");
+			}
+			else AddMsg("server stopped");
+			bclient_connected = false;
+		}
+
+		private void btnClearScreen_Click(object sender, EventArgs e)
+		{
+			tbReceived.Clear();
 		}
 
 		private void btnShutdown_Click(object sender, EventArgs e)

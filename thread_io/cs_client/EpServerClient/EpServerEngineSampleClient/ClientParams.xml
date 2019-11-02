@@ -6,6 +6,15 @@
 		<PortNo>5193</PortNo>
 		<Primary>false</Primary>
 		<AttemptsToConnect>5</AttemptsToConnect>
+		<SreenBrightness>180</SreenBrightness>
+	</ClientParams>
+	<ClientParams>
+		<AutoConn>false</AutoConn>
+		<IPAdress>192.168.42.149</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>false</Primary>
+		<AttemptsToConnect>5</AttemptsToConnect>
+		<SreenBrightness>50</SreenBrightness>
 	</ClientParams>
 	<ClientParams>
 		<AutoConn>false</AutoConn>
@@ -13,6 +22,15 @@
 		<PortNo>5193</PortNo>
 		<Primary>true</Primary>
 		<AttemptsToConnect>6</AttemptsToConnect>
+		<SreenBrightness>180</SreenBrightness>
+	</ClientParams>
+	<ClientParams>
+		<AutoConn>false</AutoConn>
+		<IPAdress>192.168.42.145</IPAdress>
+		<PortNo>5193</PortNo>
+		<Primary>false</Primary>
+		<AttemptsToConnect>6</AttemptsToConnect>
+		<SreenBrightness>50</SreenBrightness>
 	</ClientParams>
 	<ClientParams>
 		<AutoConn>false</AutoConn>
@@ -20,6 +38,7 @@
 		<PortNo>5193</PortNo>
 		<Primary>false</Primary>
 		<AttemptsToConnect>4</AttemptsToConnect>
+		<SreenBrightness>180</SreenBrightness>
 	</ClientParams>
 	<ClientParams>
 		<AutoConn>false</AutoConn>
@@ -27,5 +46,6 @@
 		<PortNo>5193</PortNo>
 		<Primary>false</Primary>
 		<AttemptsToConnect>3</AttemptsToConnect>
+		<SreenBrightness>180</SreenBrightness>
 	</ClientParams>
 </Table>

@@ -2,7 +2,7 @@
 <Table>
 	<UIFormat>
 		<Offset>SET_BATT_BOX_TEMP</Offset>
-		<Name>65.3</Name>
+		<Name>batt box</Name>
 		<Value>37</Value>
 	</UIFormat>
 	<UIFormat>

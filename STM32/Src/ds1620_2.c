@@ -6,7 +6,7 @@
 static void writeCommandTo1620( uint8_t cmd, uint8_t data );
 static void writeTempTo1620( uint8_t reg, int temp );
 
-void initDS1620(void)
+void initDS16202(void)
 {
 	// All pins -> output
 	writeCommandTo1620( DS1620_CMD_WRITECONF, 0x02 );			// CPU mode; continous conversion
@@ -19,40 +19,40 @@ static void shiftOutByte( uint8_t val )
 	// Send uint8_t, LSB first
 	for( i = 0; i < 8; i++ )
 	{
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOA, DS1620_PIN_CLK2, GPIO_PIN_RESET);
 		
 		// Set bit
 		if( val & (1 << i))
 		{
-			HAL_GPIO_WritePin(GPIOB, DS1620_PIN_DQ, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOA, DS1620_PIN_DQ2, GPIO_PIN_SET);
 			osDelay(2);
 		}
 		else
 		{
-			HAL_GPIO_WritePin(GPIOB, DS1620_PIN_DQ, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOA, DS1620_PIN_DQ2, GPIO_PIN_RESET);
 			osDelay(2);
 		}
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOA, DS1620_PIN_CLK2, GPIO_PIN_SET);
 	}
 }
 
-void writeByteTo1620( uint8_t cmd )
+void writeByteTo16202( uint8_t cmd )
 {
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_SET);
 
 	shiftOutByte( cmd );
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_RESET);
 }
 
 static void writeCommandTo1620( uint8_t cmd, uint8_t data )
 {
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_SET);
 	
 	shiftOutByte( cmd );	// send command
 	shiftOutByte( data );	// send 8 bit data
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_RESET);
 }
 
 static void writeTempTo1620( uint8_t reg, int temp )
@@ -60,42 +60,42 @@ static void writeTempTo1620( uint8_t reg, int temp )
 	uint8_t lsb = temp;											// truncate to high uint8_t
 	uint8_t msb = temp >> 8;									// shift high -> low uint8_t
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_SET);
 	
 	shiftOutByte( reg );	// send register select
 	shiftOutByte( lsb );	// send LSB 8 bit data
 	shiftOutByte( msb );	// send MSB 8 bit data (only bit 0 is used)
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_RESET);
 
 }
 
-int readTempFrom1620()
+int readTempFrom16202()
 {
 	int i;
 	GPIO_PinState state;
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_SET);
 	
 	shiftOutByte( DS1620_CMD_READTEMP );						// send register select
 	
-	set_input();
+	set_input2();
 	int raw = 0;
 	
 	for( i=0; i<9; i++ )										// read 9 bits
 	{
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOA, DS1620_PIN_CLK2, GPIO_PIN_RESET);
 
 		osDelay(10);
-		state = HAL_GPIO_ReadPin(GPIOB, DS1620_PIN_DQ);
+		state = HAL_GPIO_ReadPin(GPIOA, DS1620_PIN_DQ2);
 		if(state == GPIO_PIN_SET)
 			raw |= (1 << i);									// add value
-		HAL_GPIO_WritePin(GPIOB, DS1620_PIN_CLK, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOA, DS1620_PIN_CLK2, GPIO_PIN_SET);
 	}
 	
-	HAL_GPIO_WritePin(GPIOB, DS1620_PIN_RST, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, DS1620_PIN_RST2, GPIO_PIN_RESET);
 	
-	set_output();
+	set_output2();
 //	return (double)(raw/(double)2);								// divide by 2 and return
 	return raw;
 }

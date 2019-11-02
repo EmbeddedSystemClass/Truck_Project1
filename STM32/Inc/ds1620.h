@@ -14,9 +14,16 @@
 
 // DQ is set from input to output and back in gpio.c
 // the others need to be init'd somehow if not configured using STMCube
+
+// 1st DS1620 for engine temp - PORTB
 #define DS1620_PIN_DQ	GPIO_PIN_0
 #define DS1620_PIN_CLK	GPIO_PIN_1
 #define DS1620_PIN_RST	GPIO_PIN_2
+
+// 2nd DS1620 for indoor temp - PORTA
+#define DS1620_PIN_DQ2	GPIO_PIN_4
+#define DS1620_PIN_CLK2	GPIO_PIN_5
+#define DS1620_PIN_RST2	GPIO_PIN_6
 /*
 red 5v
 org gnd
@@ -38,8 +45,12 @@ blu/wh data
 
 void initDS1620(void);
 void writeByteTo1620( uint8_t cmd );
-void writeCommandTo1620( uint8_t cmd, uint8_t data );
-void writeTempTo1620( uint8_t reg, int temp );
-//double readTempFrom1620();
 int readTempFrom1620();
+
+void initDS16202(void);
+void writeByteTo16202( uint8_t cmd );
+//void writeCommandTo16202( uint8_t cmd, uint8_t data );
+//void writeTempTo16202( uint8_t reg, int temp );
+int readTempFrom16202();
+
 #endif

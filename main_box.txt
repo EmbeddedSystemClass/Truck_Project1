@@ -178,6 +178,12 @@ DS1620_PIN_DQ	GPIO_PIN_0
 DS1620_PIN_CLK	GPIO_PIN_1
 DS1620_PIN_RST	GPIO_PIN_2
 
+2nd DS1620 pins: (PORTA)
+
+DS1620_PIN_DQ2	GPIO_PIN_4
+DS1620_PIN_CLK2	GPIO_PIN_5
+DS1620_PIN_RST2	GPIO_PIN_6
+
 PA1 - ADC channel 1
 
 keypad:
@@ -386,9 +392,9 @@ DB-15 on left looking from outside:
 3)	org/wht (1)			DS1620 DQ **
 4)	grn (2)				DS1620 CLK
 5)	br/wht (1)			DS1620 RST
-6)	grn/wht (2)
-7)	br (1)
-8)	br (2)
+6)	grn/wht (2)			DS16202 DQ
+7)	br (1)				DS16202 CLK
+8)	br (2)				DS16202 RST
 9)	bl/wht (1)
 10)	bl (2)
 11)	bl (1)
@@ -425,9 +431,9 @@ starting at bottom: (1 on right, 2 on left)
 3)	DS1620 DQ	-	all the rest wired on top
 4)	DS1620 CLK
 5)	DS1620 RST
-6)
-7)
-8)
+6)	DS1620_PIN_DQ2
+7)	DS1620_PIN_CLK2
+8)	DS1620_PIN_RST2
 9)
 10)
 11)
@@ -466,20 +472,25 @@ on-board LED's
 LD4			C8
 LD3			C9
 
-DS1620:
+DS1620:	 (engine temp)
 DQ			B0
 CLK			B1
 RST			B2
 
+DS16202: (indoor temp)
+DQ			A4
+CLK			A5
+RST			A6
+
 Test_Pin	C6  test output that is toggled in the 1 sec timer
 
 avail:
-A: 0,1,4,5,6,7,8
+A: 7,8
 B: none
 C: 4,5,7,13
 can't use A: 13,14 (used by SWDIO/CLK)
 can't use D: 0,1 or C: 14,15 (unless change jumpers underneath)
-total: 11 left
+total: 6 left
 
 board to right of dash under backup cam screen and GPS:
 3 vertical 6 terminal boards on bottom:

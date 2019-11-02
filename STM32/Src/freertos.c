@@ -119,8 +119,9 @@ uint64_t pack64(UCHAR *buff);
 uint64_t global_avr_buffer[5];
 UCHAR global_ucbuff[8];
 UCHAR global_cmd;
-static int raw_data;
-//static int temp_raw;
+static int raw_data;	// engine temp
+static int raw_data2;	// indoor temp
+static int temp_raw;
 static int test_rise_temp;
 static int too_high_flag;
 static int cooling_fan_override;
@@ -132,6 +133,7 @@ static uint16_t blower2_temp = 50;
 static uint16_t blower3_temp = 35;
 static uint16_t blower_en_temp = 75;
 static uint16_t batt_box_temp = 75;
+static int blower_on_countdown = 20;
 //static uint16_t lights_on_delay = 5;	// default is 3 seconds
 //static UCHAR key_mode1, key_mode2;
 static int server_up = 0;
@@ -141,7 +143,6 @@ static int timer_toggle;
 static int lights_on;
 static int brights_on;
 static int blower_on;
-static int blower_off_countdown = 0;
 static int fan_on;
 static int engine_on;
 static int running_lights_on;
@@ -432,7 +433,8 @@ void StartDefaultTask(void const * argument)
 	run_time = 0;
 //	key_mode = PASSWORD;
 	key_mode = NORMAL;
-	raw_data = 121;
+	temp_raw = raw_data = 4;
+	raw_data2 = 4;
 	cooling_fan_override = 0;
 
 	memset(correct_password,0,sizeof(correct_password));
@@ -446,7 +448,10 @@ void StartDefaultTask(void const * argument)
 	init_DS1620();
 	vTaskDelay(10);
 	initDS1620();
-//	init_rtlabels();
+
+	init_DS16202();
+	vTaskDelay(10);
+	initDS16202();
 
 #if 0
 // had to do this explicitly instead of using DISPLAY_RTLABELS (not working yet)
@@ -495,6 +500,7 @@ void StartDefaultTask(void const * argument)
 						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 						engine_on = 1;
+						blower_on_countdown = 20;
 					}
 				}else
 				{
@@ -615,26 +621,26 @@ void StartDefaultTask(void const * argument)
 							cmd = BLOWER1;
 							ucbuff[0] = cmd;
 							blower_on = 1;
-							blower_off_countdown = 30;
 							break;
+
 						case 1:
 							cmd = BLOWER2;
 							ucbuff[0] = cmd;
 							blower_on = 2;
-							blower_off_countdown = 30;
 							break;
+
 						case 2:
 							cmd = BLOWER3;
 							ucbuff[0] = cmd;
 							blower_on = 3;
-							blower_off_countdown = 30;
 							break;
+
 						case 3:
 							cmd = BLOWER_OFF;
 							ucbuff[0] = cmd;
 							blower_on = 0;
-							blower_off_countdown = 0;
 							break;
+
 						default:
 							blower_on = 0;
 							break;
@@ -1113,6 +1119,7 @@ void StartRecv7200(void const * argument)
 					break;
 				case 	START_SEQ:
 					engine_on = 1;
+					blower_on_countdown = 20;
 					break;
 				case 	SHUTDOWN:
 				case 	ESTOP_SIGNAL:
@@ -1223,7 +1230,6 @@ void StartRecv7200(void const * argument)
 
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-
 /*
 					for(i = 0;i < 3;i++)
 					{
@@ -1712,35 +1718,40 @@ void Callback01(void const * argument)
 */
 	if(server_up == 1)
 	{
-
-		global_ucbuff[4] = (UCHAR)raw_data;
-		raw_data >>= 8;
-		global_ucbuff[3] = (UCHAR)raw_data;	// send high byte 1st
-	/*
-		global_ucbuff[4] = (UCHAR)temp_raw;
-		temp_raw >>= 8;
-		global_ucbuff[3] = (UCHAR)temp_raw;	// send high byte 1st
-	*/
-	//	if(avr_up == 1)
-		if(0)
-		{
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(SendAVRHandle,global_avr_buffer,0);
-			vTaskDelay(10);
-		}
-		
 		global_ucbuff[0] = ENGINE_TEMP;
-		global_ucbuff[1] = global_ucbuff[3];			// send high byte 1st
-		global_ucbuff[2] = global_ucbuff[4];
+		global_ucbuff[2] = (UCHAR)raw_data;
+		raw_data >>= 8;
+		global_ucbuff[1] = (UCHAR)raw_data;		// send high byte 1st
 		global_avr_buffer[0] = pack64(global_ucbuff);
 		xQueueSend(Send7200Handle, global_avr_buffer, 0);
-		//vTaskDelay(1000);
+		vTaskDelay(100);
 
+		// raw_data is engine temp
 		writeByteTo1620(DS1620_CMD_STARTCONV);
 		vTaskDelay(30);
 		raw_data = readTempFrom1620();
 		vTaskDelay(30);
 		writeByteTo1620(DS1620_CMD_STOPCONV);
+		vTaskDelay(100);
+
+		global_ucbuff[0] = INDOOR_TEMP;
+		global_ucbuff[2] = (UCHAR)raw_data2;
+		raw_data2 >>= 8;
+		global_ucbuff[1] = (UCHAR)raw_data2;		// send high byte 1st
+		global_avr_buffer[0] = pack64(global_ucbuff);
+		xQueueSend(Send7200Handle, global_avr_buffer, 0);
+		vTaskDelay(100);
+
+//		raw_data = temp_raw;
+//		if(++temp_raw > 200)
+	///		temp_raw = 40;
+
+		// raw_data2 is indoor temp
+		writeByteTo16202(DS1620_CMD_STARTCONV);
+		vTaskDelay(30);
+		raw_data2 = readTempFrom16202();
+		vTaskDelay(30);
+		writeByteTo16202(DS1620_CMD_STOPCONV);
 		vTaskDelay(100);
 
 /*
@@ -1756,19 +1767,10 @@ and 511->403 for temps of 31.1F->-66.1F
 so if raw_data is > 402 && < 510 then ignore the logic to control fan
 */
 
-		if(engine_on > 0 && blower_on > 0)
-		{
-			blower_off_countdown--;
-			if(blower_off_countdown == 0)
-			{
-				global_cmd = BLOWER_OFF;
-				global_ucbuff[0] = global_cmd;
-				blower_on = 0;
-				global_avr_buffer[0] = pack64(global_ucbuff);
-				xQueueSend(Send7200Handle, global_avr_buffer, 0);
-			}
-		}
-		if(raw_data < 251)
+		if(blower_on_countdown != 0)
+			blower_on_countdown--;
+
+		if(raw_data < 251)	// 251 = 257F - high as DS1620 will go
 		{
 			if(too_high_flag == 0 && raw_data > engine_temp_limit)
 			{
@@ -1783,7 +1785,7 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 				xQueueSend(Send7200Handle, global_avr_buffer, 0);
 				too_high_flag = 1;
 
-			}else if(too_high_flag == 1)
+			}else if(too_high_flag == 1)		// must be else or else
 			{
 				global_ucbuff[0] = DTMF_TONE_OFF;
 				global_avr_buffer[0] = pack64(global_ucbuff);
@@ -1798,56 +1800,92 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 				fan_on = 1;
 				global_avr_buffer[0] = pack64(global_ucbuff);
 				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+				vTaskDelay(200);
 			}
-			if(cooling_fan_override == 0 && fan_on == 1 && raw_data < fan_off_temp)
+			if(cooling_fan_override == 0 && fan_on == 1 && raw_data <= fan_off_temp)
 			{
 				global_cmd = OFF_FAN;
 				global_ucbuff[0] = global_cmd;
 				fan_on = 0;
 				global_avr_buffer[0] = pack64(global_ucbuff);
 				xQueueSend(Send7200Handle, global_avr_buffer, 0);
-			}	
-		}
+			}
+			if((raw_data > blower_en_temp && engine_on > 0) && blower_on_countdown == 0)
+//			if(raw_data > blower_en_temp && engine_on > 0)
+			{
+				if(raw_data2 < blower3_temp && blower_on != 3)
+				{
+					global_cmd = BLOWER3;
+					global_ucbuff[0] = global_cmd;
+					global_avr_buffer[0] = pack64(global_ucbuff);
+					xQueueSend(Send7200Handle, global_avr_buffer, 0);
+					blower_on = 3;
+
+				}else if(raw_data2 < blower2_temp && raw_data2 > blower3_temp && blower_on != 2)
+				{
+					global_cmd = BLOWER2;
+					global_ucbuff[0] = global_cmd;
+					global_avr_buffer[0] = pack64(global_ucbuff);
+					xQueueSend(Send7200Handle, global_avr_buffer, 0);
+					blower_on = 2;
+
+				}else if(raw_data2 < blower1_temp && raw_data2 > blower2_temp && blower_on != 1)
+				{
+					global_cmd = BLOWER1;
+					global_ucbuff[0] = global_cmd;
+					global_avr_buffer[0] = pack64(global_ucbuff);
+					xQueueSend(Send7200Handle, global_avr_buffer, 0);
+					blower_on = 1;
+				}else if(raw_data2 > blower1_temp && blower_on != 0)
+				{
+					global_cmd = BLOWER_OFF;
+					global_ucbuff[0] = global_cmd;
+					global_avr_buffer[0] = pack64(global_ucbuff);
+					xQueueSend(Send7200Handle, global_avr_buffer, 0);
+					blower_on = 0;
+				}
+			}
 /*
-	if(test_rise_temp == 0)
-		raw_data += 2;				// used for testing
-	else raw_data -= 2;
-	temp_raw = raw_data;
-
-	if(raw_data > 209)
-		test_rise_temp = 1;
-
-	if(raw_data < 121)
-		test_rise_temp = 0;
+			else if(blower_on != 0)
+			{
+				global_cmd = BLOWER_OFF;
+				global_ucbuff[0] = global_cmd;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+				blower_on = 0;
+			}
 */
-/*
-	if(engine_on == 0 && lights_on > 0)
-	{
-		lights_on--;
-		vTaskDelay(10);
-		if(lights_on == 0)
-		{
-			global_cmd = OFF_LIGHTS;
-			global_ucbuff[0] = global_cmd;
-			global_avr_buffer[0] = pack64(global_ucbuff);
-			xQueueSend(Send7200Handle, global_avr_buffer, 0);
 		}
-	}
+
+/*
+if(test_rise_temp == 0)
+	raw_data += 2;				// used for testing
+else raw_data -= 2;
+temp_raw = raw_data;
+
+if(raw_data > 209)
+	test_rise_temp = 1;
+
+if(raw_data < 121)
+	test_rise_temp = 0;
 */
 		if(timer_toggle == 0)
 		{
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 			timer_toggle = 1;
-			
+
+	//			HAL_GPIO_WritePin(GPIOA, DS1620_PIN_DQ2 | DS1620_PIN_CLK2 | DS1620_PIN_RST2, GPIO_PIN_RESET);
+
 		}else
 		{
 			HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 			timer_toggle = 0;
-		}
-	}
 
+	//			HAL_GPIO_WritePin(GPIOA, DS1620_PIN_DQ2 | DS1620_PIN_CLK2 | DS1620_PIN_RST2, GPIO_PIN_SET);
+		}
+	}	// end of 'if server up'
   /* USER CODE END Callback01 */
 }
 

@@ -2,6 +2,7 @@
     [label]      NVARCHAR (20) NOT NULL,
     [port]       INT           NOT NULL,
     [onoff]      INT           NOT NULL,
+    [input_port] INT           NOT NULL,
     [polarity]   INT           NOT NULL,
     [type]       INT           NOT NULL,
     [time_delay] INT           NOT NULL,
