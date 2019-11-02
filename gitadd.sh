@@ -15,7 +15,11 @@ git add main_box_pinout.ods
 git add avr_menus.txt
 git add todo_bug_list.txt
 git add client_server_notes.odt
-git add System_Diagram.jpg
+git add Images/System_Diagram.JPG
+git add Images/ClientUI.JPG
+git add Images/ClientUI2.JPG
+git add Images/STM32_pinout.JPG
+git add Images/DlgSetParams.JPG
 
 git add STM32/*
 git add STM32/.cproject
@@ -232,5 +236,6 @@ git add XMEGA/usart_compile.sh
 git add XMEGA/usart_driver.h
 
 ./gitstatus.sh
+
 
 
