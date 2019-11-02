@@ -42,7 +42,7 @@ by changing xml files.<br />
 The STM32F100RB is in the subdirectory 'STM32' and was generated using STM32CubeMX and compiled<br />
 with TrueStudio. The project uses FreeRTOS as the operating system. Currently, all but 3 pins<br />
 are used so the next step is to upgrade to a better STM32 chip.<br />
-<img src="Image/STM32pinout.JPG">
+<img src="Images/STM32pinout.JPG">
 <h2>The Xilinx processor</h2>
 I use a Spartan-3E Xilinx FPGA board to monitor real-time data like engine RPM,MPH. It sends<br />
 data to the STM32 over a parallel port. The STM32 sends data to the FPGA board over a<br />
