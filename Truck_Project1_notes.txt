@@ -5,21 +5,7 @@ monitor real-time data, a PIC24FJ128GB110 to handle a keypad and route message
 traffic, a ATMEGA328P to drive a t6963 LCD screen, and a TS-7200/7800 to do
 I/O (turning on and off lights and reading switches).
 
-
-  												| AVR |===> t6963 LCD screen
-  												  ^
-  												  | RS-232
-----|											  |							Laptop (optional)
-	|											  |							    ^
-F	|											  |								|
-P	|											  v								|TCP/IP
-G	|<--------------> RS-232 ------------------>| S	|							|
-A	|											| T	|							v
-	|						|-----------|		| M |						|-----------|
-----|						|			|		| 3	|						|			|	
-							|  keypad	|======>| 2 |<------ RS-232 ------->| TS-7800	|
-							|			|									|			|
-							|-----------|									|-----------|
+![System Diagram](System_Diagram.JPG)
 
 the STM32F100RB (STM32) will route message traffic to and from the FPGA, the 
 TS-7200 and the LCD screen.
