@@ -6,6 +6,7 @@ traffic, and a TS-7200/7800 to do I/O (turning on and off lights and reading swi
 The STM32F100RB (STM32) will route message traffic to and from the FPGA, the <br />
 TS-7200 and handle the keypad input.<br />
 ![System Diagram](Images/SystemDiagram.JPG)
+<img src="Images/SystemDiagram.JPG">
 <br />
 A Windows 10 TCP client runs on a laptop and the VGA port is connected to an external 8"<br />
 monitor in the dash as the UI<br />
