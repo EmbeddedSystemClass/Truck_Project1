@@ -81,7 +81,15 @@ directory called 'try_sched.sh' which gets called when the linux card boots up. 
 client where the message list is different and try to run it before uploading the new sched, I have to pull<br />
 it in the garage and move a linux desktop inside and ftp into it.<br />
 There is also an 2 line LCD screen (not shown) on the iobox that scrolls the messages that come to the sched.<br />
-<h2> The Home Server</h2>
+<h2>The LCD screen</h2>
+<img src="Images/LCD_screen.jpg">
+I originally was using a t6963 LCD screen with an AVR Pro-Mini on the back of it which got serial commands<br />
+from UART2 of the STM32. I was trying to do some kind of user input from the keypad which got too problematic<br />
+so I went to using the Windows laptop as the UI. This is not show on the system diagram at the top, but I will<br />
+have to, at some point re-install it when I start running out of room to display RT data on the Windows screen.<br />
+All the code for the AVR processor is in the AVR_t6963 directory. At one time I had a PWM signal coming from<br />
+the FPGA board which would dim the LCD screen.<br />
+<h2>The Home Server</h2>
 <img src="Images/ClientUI2.JPG">
 I'm currently working on another Windows C# app which works just like the client, only it's a TCP<br />
 server which runs on the desktop in the garage and only works when the truck is parked just outside.<br />
