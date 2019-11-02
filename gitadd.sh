@@ -20,6 +20,7 @@ git add Images/ClientUI.JPG
 git add Images/ClientUI2.JPG
 git add Images/STM32pinout.JPG
 git add Images/DlgSetParams.JPG
+git add Images/iobox.JPG
 
 git add STM32/*
 git add STM32/.cproject

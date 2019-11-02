@@ -28,7 +28,7 @@ The keypad buttons, for now, do the basic functions I need:<br />
 <li> '0' - not used</li>
 Note: when you press '1' to start the engine, it only powers the relays for the ignition,<br />
 fuel pump, and completes a circuit to a button on the dash to power the starter solinoid.<br />
-The, the code in the TS-7200 only gives you 10 seconds to start the engine. After that,<br />
+Then, the code in the TS-7200 only gives you 10 seconds to start the engine. After that,<br />
 the starter solinoid is disabled.<br />
 The 'stop engine' button (2) will turn off the ignition and fuel pump<br />
 The keys: A->D navigate the bottom 10 buttons on the windows client starting with 'Start Engine'<br />
@@ -46,7 +46,7 @@ are used so the next step is to upgrade to a better STM32 chip.<br />
 What's shown here is the pinout that STM32CubeMX reports. I added some user code in the gpio.c<br />
 file that added the pins for the 2 DS1620's. There are sections in the generated code that<br />
 are reserved for user editing. Anything outside these sections gets removed if you pull the<br />
-project back into CubeMX. I had to do it this was because the data pin on the DS1620 is<br />
+project back into CubeMX. I had to do it this way because the data pin on the DS1620 is<br />
 changed from input to output. One of the routines generated is a callback for a 1 second<br />
 timer which reads the temp settings to turn the cooling fan on or off according to what the<br />
 DS1620 for engine temp reads. (The DS1620 is mounted on the thermostat housing). The other<br />
@@ -61,6 +61,26 @@ and another comes from a light sensor on the crankshaft. The FPGA also gets mess
 STM32 to generate DTMF tones whenever the keys on the keypad are pushed. The data from the<br />
 RPM/MPH is sent over a parallel port to the STM32 which sends it on to the client and also<br />
 sent to an XMEGA processor over a serial line which drives two LCD displays mounted on the dash.<br />
+<h2> The IO box (TS-7200)</h2>
+<img src="Images/iobox.JPG">
+I'm using a TS-7200 embedded linux card from Technologic which has a PC-104 card connector. (shown on left)<br />
+The card runs linux compiled for the ARM processor on the card. When it gets powered up, it automatically<br />
+starts an app called 'sched' which uses POSIX threads and runs as a TCP/IP server. The ethernet port is<br />
+extended to an RJ-45 socket on the outside of the box where the cross-over cable plugs into.<br />
+The picture on the right shows the 2 PC-104 IO cards mounted on top of it. Each card has 20 input and output<br />
+ports; The outputs are the small 5A relays, 10 on each side, and the inputs come from the grey ribbon cable.<br />
+The outputs of the small 5A relays go to other 10A relays which control low voltage 12Vdc circuits like the<br />
+running lights and blinkers, while the higher amperage circuits like the headlights and starter solinoid are<br />
+controlled by 10-30A cube relays. The serial port next to the ethernet port goes to the STM32. So there is no<br />
+way to upload a new sched program to the iobox because on the bench, I have to ftp into it from another linux<br />
+desktop. When it's in the vehicle, I have to use a Windows app called 'SendFiles' which makes an FTP connection<br />
+to the linux server after the sched program exits with a special code. There is another ARM compiled program<br />
+on the linux server called 'server' which downloads the new sched program from the SendFiles program running<br />
+on the client. After downloading, the system is rebooted. This is all handled by a bash script in the sched<br />
+directory called 'try_sched.sh' which gets called when the linux card boots up. So if I make a change to the<br />
+client where the message list is different and try to run it before uploading the new sched, I have to pull<br />
+it in the garage and move a linux desktop inside and ftp into it.<br />
+There is also an 2 line LCD screen (not shown) on the iobox that scrolls the messages that come to the sched.<br />
 <h2> The Home Server</h2>
 <img src="Images/ClientUI2.JPG">
 I'm currently working on another Windows C# app which works just like the client, only it's a TCP<br />
