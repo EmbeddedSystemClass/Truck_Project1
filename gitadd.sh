@@ -15,10 +15,10 @@ git add main_box_pinout.ods
 git add avr_menus.txt
 git add todo_bug_list.txt
 git add client_server_notes.odt
-git add Images/System_Diagram.JPG
+git add Images/SystemDiagram.JPG
 git add Images/ClientUI.JPG
 git add Images/ClientUI2.JPG
-git add Images/STM32_pinout.JPG
+git add Images/STM32pinout.JPG
 git add Images/DlgSetParams.JPG
 
 git add STM32/*
