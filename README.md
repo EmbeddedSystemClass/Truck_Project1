@@ -43,8 +43,23 @@ The STM32F100RB is in the subdirectory 'STM32' and was generated using STM32Cube
 with TrueStudio. The project uses FreeRTOS as the operating system. Currently, all but 3 pins<br />
 are used so the next step is to upgrade to a better STM32 chip.<br />
 <img src="Images/STM32pinout.JPG">
+What's shown here is the pinout that STM32CubeMX reports. I added some user code in the gpio.c<br />
+file that added the pins for the 2 DS1620's. There are sections in the generated code that<br />
+are reserved for user editing. Anything outside these sections gets removed if you pull the<br />
+project back into CubeMX. I had to do it this was because the data pin on the DS1620 is<br />
+changed from input to output. One of the routines generated is a callback for a 1 second<br />
+timer which reads the temp settings to turn the cooling fan on or off according to what the<br />
+DS1620 for engine temp reads. (The DS1620 is mounted on the thermostat housing). The other<br />
+DS1620 is in the cab and reads the indoor temp. A section in the timer callback turns on/off<br />
+the blower for the heater depending on the indoor temp.<br />
 <h2>The Xilinx processor</h2>
 I use a Spartan-3E Xilinx FPGA board to monitor real-time data like engine RPM,MPH. It sends<br />
 data to the STM32 over a parallel port. The STM32 sends data to the FPGA board over a<br />
-RS-232 port and uses handshaking signal.<br />
+RS-232 port and uses handshaking signal. Two sensors are connected to the FPGA board which<br />
+are converted to RPM/MPH readings. One sensor comes from a hall-effect switch on the driveshaft<br />
+and another comes from a light sensor on the crankshaft. The FPGA also gets messages from the<br />
+STM32 to generate DTMF tones whenever the keys on the keypad are pushed. The data from the<br />
+RPM/MPH is sent over a parallel port to the STM32 which sends it on to the client and also<br />
+sent to an XMEGA processor over a serial line which drives two LCD displays mounted on the dash.<br />
+
 
