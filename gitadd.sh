@@ -23,6 +23,7 @@ git add Images/DlgSetParams.JPG
 git add Images/iobox.JPG
 git add Images/LCD_screen.jpg
 git add Images/ChildDialog.JPG
+git add Images/blinker_ctl.jpg
 
 git add STM32/*
 git add STM32/.cproject

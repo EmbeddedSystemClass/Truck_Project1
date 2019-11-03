@@ -387,12 +387,12 @@ DB-15 on right looking on outside:
 DB-15 on left looking from outside:
 (white tape)
 
-1)	org (1)				VCC (doesn't need to be +5v)
+1)	org (1)*				VCC (doesn't need to be +5v)
 2)	br/wht (2)			GND
 3)	org/wht (1)			DS1620 DQ **
 4)	grn (2)				DS1620 CLK
 5)	br/wht (1)			DS1620 RST
-6)	grn/wht (2)			DS16202 DQ
+6)	grn/wht (2)			DS16202 DQ ***
 7)	br (1)				DS16202 CLK
 8)	br (2)				DS16202 RST
 9)	bl/wht (1)
@@ -404,6 +404,8 @@ DB-15 on left looking from outside:
 15)	grn/wht (1)
 (open) br/wht (2)
 
+* cable going to terminal strips behind monitor: green tape is (1)
+
 ** 2 shielded 3-wire cables from DS1620:
 striped wire w/ blk tape:
 rd - 5v
@@ -414,6 +416,13 @@ non-striped wire
 rd - RST
 blk - gnd
 wht - nc
+
+*** 2nd DS1620 is below heater:
+org +5vdc
+blu gnd
+grn DQ
+or/wht CLK
+brn RST
 
 5v to RS-232 converter is external to main box
 2 connections from 3v3 conv for UART1
@@ -509,6 +518,11 @@ middle:
 
 right:
 19 to 24 (top to bottom)
+
+DS1620 pinout (bottom view)
+
+x		x		x 		VDD
+GND 	RST 	CLK		DQ
 
 #32I/Os_2
 NET "32I/Os_2_1"  LOC ="p4";

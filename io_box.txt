@@ -1,54 +1,28 @@
 io_box.txt - notes to self on the box with the TS-7200 card and the (2) 20 port IO cards
 
-procedure for testing/debugging io box:
+To get the iobox to a bash prompt, i.e. not start the sched automatically, either:
+1) ftp into it and delete the try_sched.sh and then restart it.
+2) If comm1 is connected to a tty, then when it starts coming up after a restart,
+	start hitting 'Ctl-C' several times until it says: "<Redboot>", then type in:
+	"fis load vmlinux" and hit return. Then type in:
+	exec -c "S console=ttyAM0,115200 root=/dev/mtdblock"
+	and hit return it will reboot and when it comes up to shell and asks for a login,
+	type "root" and	hit enter.
 
-1)  recompile the sched program in thread_io so that the serial port is at 115200.
-	(see serial_io.c - MODEMDEVICE)
-	
-2)  uncomment (or add) any printf statements in either tasks.c or cmd_tasks.c
-	(usually the printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str); in cmd_tasks.c
-	just before the main tcp loop)
-	
-3)  recompile and upload to the io box using the correct ip address.
-
-4)  plug the DB-9 serial output of the io box to a terminal program running on windows or linux.
-
-5)  reboot the io box (turn it off and back on) and be ready to hit 'Ctl-C' when it 
-	starts coming up. (start hitting 'Ctl-C' several times)
-	
-6)  when it says "<Redboot>" type in "fis load vmlinux" and hit return.
-
-7)  then type in: exec -c "S console=ttyAM0,115200 root=/dev/mtdblock" and hit return
-
-8)  it will reboot and when it comes up to shell and asks for a login, type "root" and
-	hit enter.
-
-9)  then change to directory /home/dan/dev/sched and rename try_sched.sh to anything
-	(usually just "ls -ltr")
-
-10) then issue the command: "reboot" and it will reboot and execute the try_sched.sh script.
-
-11) you can then check for the new sched program which should be in /root and execute
-	it by changing to the sched directory and typing "do1.sh" which will move /root/sched 
-	to the /home/dan/dev/sched directory, change the permissions and execute it. 
-	(do2.sh will execute the sched program already in the sched directory)
+then change to directory /home/dan/dev/sched and rename try_sched.sh to anything
+(usually just "ls -ltr") at this point, you can't ftp into it because it doesn't have
+the network drivers loaded, so you have to issue the command: "reboot" and it will 
+reboot and execute the try_sched.sh script.
 
 procedure for uploading new sched to iobox:
 
-1) using the client, hit the button on the upper left called "shutdown server"
-
-2) then when the server is disconnected, exit the client program and start the sendfiles program (in windows)
-
-3) choose the browse button and it should default to c:\users\daniel\dev
-
-4) find the program called "sched" in the dev directory (you should put the new one there after it's 
-	recompiled - it's the one you want to upload)
-
-5) choose 'send' button and the progress bar at the bottom should finish
-
-6) the server should have the new sched (uploaded as sched2a) and then reboot. The try_sched.sh
-	script should find the sched2 file, set the attributes for execute and run it as the new sched
-
+In the Windows Client, while connected, go to the 'Manage Server' button, then go
+down to 'Upload New' then hit 'OK'. You will see the client disconnect from the server.
+Close the client app, start the SendFiles app, enter the correct ip address and location
+of the new sched program to upload and hit 'Send'. You should see a green progress bar
+at the bottom. If it hangs or crashed, the linux server should recover and you will see
+the light start blinking. If it works, fire up the client again and hit 'Get Time' to
+see the current version of the server.
 
 ****************************** DESCRIPTION ***********************************
 
