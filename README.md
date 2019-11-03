@@ -105,4 +105,50 @@ on the upper-left. The blue window on the upper-right is just a tty connected to
 on the TS-7200 which just shows debug messages. The messages scrolling on the edit boxes are from<br />
 clicking on the buttons on the home server. The main purpose of the home server is to set configuration<br />
 parameters which get saved to a file on the TS-7200.<br />
-
+<h2>Configuration Parameters</h2>
+<img src="Images/DlgSetParams.JPG">
+The 3 buttons on the lower-right of the home server are used to manage the configuration parameters.<br />
+The 'Get Params' button gets the parameters from the param.conf file which stores the params on disk(TS-7200).<br />
+The 'Config Params' button pulls up a dialog (show above) on the home server where the user can modify the<br />
+params. The 'Upload Params' button loads the params needed by the STM32 to control the cooling and heater fan.<br />
+Namely, the temperatures on the left. There is also a way to set the params on the Windows client.<br />
+<h3>List of config params on TS-7200</h3>
+<li>rpm_update_rate</li>
+<li>mph_update_rate</li>
+<li>fpga_xmit_rate</li>
+<li>high_rev_limit</li>
+<li>low_rev_limit</li>
+<li>cooling_fan_on</li>
+<li>cooling_fan_off</li>
+<li>blower_enabled</li>
+<li>blower1_on</li>
+<li>blower2_on</li>
+<li>blower3_on</li>
+<li>lights_on_delay</li>
+<li>engine_temp_limit</li>
+<li>batt_box_temp</li>
+<li>test_bank</li>
+The update rates are not implemented yet, but will control how fast the RPM/MPH data is sent to the displays.<br />
+The high/low rev limit are for the rev limiter.<br />
+The cooling fan on/off determine at what engine temps the cooling fan goes on or off. Hopefully the fan on is higher<br />
+than the fan off.<br />
+The blower_enabled is the engine temp at which the STM32 even responds to the indoor temps to control the heater.<br />
+The blower1_on is the highest indoor temp at which the blower runs on low speed.<br />
+The blower2_on is the medium speed temperature.<br />
+The blower3_on is the highest speed temperature.<br />
+So the blower will come on high speed when the indoor temp is below what the blower3_on temp is set to.<br />
+The blower will switch to medium speed when the indoor temp reaches blower2_on temp, and will switch to<br />
+low speed when the indoor temp is between blower1_on and blower2_on, and finally go off when above blower1_on.<br />
+The lights on delay is how many seconds the lights/running lights stay on after the engine shuts off.<br />
+The engine_temp_limit is the engine temperature at which an alarm sounds. Currently the engine doesn'nt shut<br />
+down at too high a temp, but at some point in the future it should, along with the oil pressure which isn't hooked up yet.<br />
+The battery box temp is for the heat strip underneath the battery which is behind the passenger seat.<br />
+<h2>More about the Windows Client</h2>
+<img src="Images/ChildDialog.JPG">
+The buttons labeled: 'Test Ports', 'Settings One/Two/Three/Four' call up a child dialog which works the same with<br />
+the A->D keys on the keypad as they do on the main screen of the client screen. 'A' moves up, 'B' moves down, '*' moves<br />
+to the opposite column, 'C' executes whatever the key applies to, and 'D' closes or exits. Each button on the main<br />
+screen are assigned an xml file, so I can edit the name of each button on the child dialog and what it does as far as<br />
+what message it passes to the linux server. So the 3rd button down on the right labeled 'Lights On/Off' will toggle the<br />
+headlights on and off. There is another type of child dialog that is set by xml files which is a scrolling list of values<br />
+to choose from. Most of the scrolling list dialogs are used to set the config parameters.<br />
