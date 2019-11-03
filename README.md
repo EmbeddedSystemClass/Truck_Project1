@@ -215,6 +215,7 @@ cd /home/dan/dev/sched # change directory to where the try_sched.sh gets execute
 This script is in /etc/init.d<br />
 <img src="Images/initd.JPG">
 What this does is, everytime the linux card is turned on or rebooted, try_sched.sh get executed.<br />
+
 ```
 echo "running try_sched.sh (v1.14)" >> status.txt
 date >> status.txt
@@ -293,12 +294,14 @@ if [ $OUT -eq 139 ]
   echo "rebooting from 139" >> status.txt
 fi
 ```
+
 What this does is first, it mounts the flash drive if the file 'temp.txt' exists.<br />
 Then, it checks to see if sched is in /root, moves it to the current directory, sets the exec flag<br />
 and the goes to the './sched odata.dat which executes the sched program.<br />
 If there is not sched in root, it checks to see if there is a 'sched2' in the current directory<br />
 and changes the name to sched, sets the execute flag and executes it. The 'sched2' is what gets<br />
 uploaded by the 'SendFiles' and server program when the client exits with a code '4'.<br />
+
 ```
 if [ $OUT -eq 4 ]
  then
@@ -307,8 +310,10 @@ if [ $OUT -eq 4 ]
   ./sched2 test 1
   OUT=$?
 ```
+
 There is a few lines of code in the very beginning of the sched program that checks if there were<br />
 3 command line params passed to it:<br />
+
 ```
 else if(argc == 3)
 {
@@ -320,6 +325,7 @@ else if(argc == 3)
 	return 10;
 }
 ```
+
 The 2nd one being the string: 'test'. This way, we can check to see if a valid sched has been uploaded.<br />
 Otherwise, it goes to 'bad download', deletes the sched2 and reboots. If the sched returns a code '10'<br />
 when the 'test' string is passed in, it means the file is valid so it renames sched2 to sched, sets the<br />
