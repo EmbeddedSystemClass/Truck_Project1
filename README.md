@@ -44,13 +44,13 @@ fan on or off according to what the DS1620 for engine temp reads. (The DS1620 is
 The other DS1620 is in the cab and reads the indoor temp. A section in the timer callback turns on/off the blower for the<br />
 heater depending on the indoor temp.<br />
 <h2>The Xilinx processor</h2>
-I use a Spartan-3E Xilinx FPGA board to monitor real-time data like engine RPM,MPH. It sends data to the STM32 over a<br />
-parallel port. The STM32 sends data to the FPGA board over a RS-232 port and uses handshaking signal. Two sensors are<br />
-connected to the FPGA board which are converted to RPM/MPH readings. One sensor comes from a hall-effect switch on the<br />
-driveshaft and another comes from a light sensor on the crankshaft. The FPGA also gets messages from the STM32 to generate<br />
-DTMF tones whenever the keys on the keypad are pushed. The data from the RPM/MPH is sent over a parallel port to the STM32<br />
-which sends it on to the client and also sent to an XMEGA processor over a serial line which drives two LCD displays<br />
-mounted on the dash.<br />
+I use a Spartan-3E Xilinx FPGA board to monitor real-time data like engine RPM,MPH. It sends data to the STM32<br />
+over a parallel port. The STM32 sends data to the FPGA board over a RS-232 port and uses handshaking signal.<br />
+Two sensors are connected to the FPGA board which are converted to RPM/MPH readings. One sensor comes from a<br />
+hall-effect switch on the driveshaft and another comes from a light sensor on the crankshaft. The FPGA also<br />
+gets messages from the STM32 to generate DTMF tones whenever the keys on the keypad are pushed. The data from<br />
+the RPM/MPH is sent over a parallel port to the STM32 which sends it on to the client and also sent to an XMEGA<br />
+processor over a serial line which drives two LCD displays mounted on the dash.<br />
 <h2> The IO box (TS-7200)</h2>
 <img src="Images/iobox.JPG">
 I'm using a TS-7200 embedded linux card from Technologic which has a PC-104 card connector. (shown on left)<br />
@@ -393,4 +393,22 @@ The MONITOR_INPUTS2 task is a way to programmatically inject 'fake inputs' to th
 the input ports have changed. The TIMER_TASK is a task that gets called once a second. The SERIAL_RECV<br />
 task gets command from the STM32. The BASIC_CONTROLS task waits on a queue for messages and controls<br />
 the output ports. 
+<h2>Wiring for the relays</h2>
+<img src="Images/wiring_diagram.jpg">
+The box on the left is the TS-7200 card with the IO daughtercards and the 5A relays. These have a common<br />
+ground and power the primary relay modules with 5vdc.<br />
+<img src="Images/relay_modules.png">
+You can buy these real cheap off of ebay (read: China). Since they are rated at 10A, I can use some of<br />
+to power small amperage appliances, like the blinkers or brake lights. Others, like the headlamps,<br />
+are on a separate 10 or 30A cube relay. I don't have the secondary battery anymore. I did that originally<br />
+because I was afraid of voltage spikes, which are not a problem. Plus, I have a voltage supressor<br />
+across the battery terminals. So the common 12v fed to the primary relays comes from the main 12v car<br />
+battery. I do, howerver, have another car battery behind the passenger seat to power an inverter to<br />
+make 110vac to power the laptop and the 9vdc adapter for the 8" monitor, and in the future, a backup<br />
+cam and speakers for the laptop to play music or other mp3 files.<br />
+<h2>Misc.</h2>
+I didn't mention, but the 'Play List' button on the client screen brings up a scrolling list of wav files<br />
+on the laptop that play.<br />
+<img src="Images/play_list.JPG">
+I should also mention that the buttons on the client screen: 'Reboot Server', 'Show Params', 'Home Server'<br />and 'Set Srv Params' will be changed in the future. They are just for testing now.<br />
 

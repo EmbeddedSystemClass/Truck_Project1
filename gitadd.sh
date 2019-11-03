@@ -1,5 +1,4 @@
 git add README.md
-git add Truck_Project1_notes.txt
 git add main_box.txt
 git add io_box.txt
 git add gitadd.sh
@@ -28,6 +27,9 @@ git add Images/rc3.JPG
 git add Images/rcd.JPG
 git add Images/initd.JPG
 git add Images/manage_server.JPG
+git add Images/wiring_diagram.jpg
+git add Images/relay_modules.png
+git add Images/play_list.JPG
 
 git add STM32/*
 git add STM32/.cproject
