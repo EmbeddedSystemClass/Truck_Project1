@@ -24,6 +24,10 @@ git add Images/iobox.JPG
 git add Images/LCD_screen.jpg
 git add Images/ChildDialog.JPG
 git add Images/blinker_ctl.jpg
+git add Images/rc3.JPG
+git add Images/rcd.JPG
+git add Images/initd.JPG
+git add Images/manage_server.JPG
 
 git add STM32/*
 git add STM32/.cproject

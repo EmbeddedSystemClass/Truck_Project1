@@ -153,6 +153,7 @@ There are 40 records in the database. Currently the fields for each record are:
 <li>type</li>
 <li>time_delay</li>
 <li>label</li>
+<br />
 The label field is:<br />
 <li>STARTER</li>
 <li>ACCON</li>
@@ -197,7 +198,137 @@ adding 2 outputs called XLBLINKER and XRBLINKER.<br />
 <img src="Images/blinker_ctl.jpg">
 The type for the 4 blinkers are 3 and the type for the 2 Xblinkers are type 2. So when the brakes are applied<br />
 and one of the blinkers is on, the blinker will still work. (Hope that explains it).<br />
-<h3>mingetty</h3>
+<h3>mingetty & try_sched.sh</h3>
+(Warning: not for the faint of heart)<br />
+I had to compile a c program called mingetty.c for the ARM compiler which can be downloaded online.<br />
+Then I had to modify some files in the /etc directory.<br />
+The directory in /etc/rc.d has the directories: rc0.d->rc6.d which have bash scripts which gets executed<br />
+in order when linux boots.<br />
+<img src="Images/rcd.JPG">
+ the directory: rc.d/rc3.d has links to startup scripts in /etc/init.d<br />
+<img src="Images/rc3.JPG">
+Then in /etc/init.d, I place 'my_startup.sh which is just a switch/case statement with 'start' and 'stop'<br />
+Under 'start' it just does:<br />
+cd /home/dan/dev/sched # change directory to where the try_sched.sh gets executed<br />
+./try_sched.sh # execute the try_sched.sh script<br />
+'my_startup.sh':<br />
+This script is in /etc/init.d<br />
+<img src="Images/initd.JPG">
+What this does is, everytime the linux card is turned on or rebooted, try_sched.sh get executed.<br />
+```
+echo "running try_sched.sh (v1.14)" >> status.txt
+date >> status.txt
+if [ ! -e /mnt/cf/temp.txt ]
+then
+ ../mountcf.sh
+ echo "mounting cf"
+fi
 
+if [ -e /root/sched ]
+then
+ mv /root/sched sched
+ chmod +x sched
+ echo "new sched found in /root" >> status.txt
 
+else if [ -e sched2 ]
+then
+ mv sched2 sched
+ chmod +x sched
+ echo "new sched found (sched2)" >> status.txt
+else
+ echo "using current sched" >> status.txt
+fi
+fi
+
+./sched odata.dat
+OUT=$?
+echo "OUT:" >> status.txt
+echo $OUT >> status.txt
+date >> status.txt
+
+if [ $OUT -eq 1 ]
+ then
+  echo "exit to shell" >> status.txt
+fi
+
+if [ $OUT -eq 2 ]
+ then
+  echo "rebooting from script" >> status.txt
+ /sbin/reboot
+fi 
+
+if [ $OUT -eq 3 ]
+ then
+  echo "shutdown from script" >> status.txt
+/sbin/shutdown -h now
+fi
+
+if [ $OUT -eq 4 ]
+ then
+  echo "downloading new try_sched.sh" >> status.txt
+  ./server >> status.txt
+  ./sched2 test 1
+  OUT=$?
+
+if [ $OUT -eq 10 ]
+  then
+   echo "download ok" >> status.txt
+   mv sched2 sched
+   chmod +x sched
+   /sbin/reboot
+else 
+ echo "bad download" >> status.txt
+  rm sched2
+  /sbin/reboot
+fi
+fi
+
+if [ $OUT -eq 141 ]
+ then
+  echo "rebooting from 141" >> status.txt
+fi
+
+if [ $OUT -eq 139 ]
+ then
+  echo "rebooting from 139" >> status.txt
+fi
+```
+What this does is first, it mounts the flash drive if the file 'temp.txt' exists.<br />
+Then, it checks to see if sched is in /root, moves it to the current directory, sets the exec flag<br />
+and the goes to the './sched odata.dat which executes the sched program.<br />
+If there is not sched in root, it checks to see if there is a 'sched2' in the current directory<br />
+and changes the name to sched, sets the execute flag and executes it. The 'sched2' is what gets<br />
+uploaded by the 'SendFiles' and server program when the client exits with a code '4'.<br />
+```
+if [ $OUT -eq 4 ]
+ then
+  echo "downloading new try_sched.sh" >> status.txt
+  ./server >> status.txt
+  ./sched2 test 1
+  OUT=$?
+```
+There is a few lines of code in the very beginning of the sched program that checks if there were<br />
+3 command line params passed to it:<br />
+```
+else if(argc == 3)
+{
+	if((strcmp(argv[1],"test") == 0))
+	{
+		printf("testing\r\n");
+	}
+	printf("%s\r\n",argv[1]);
+	return 10;
+}
+```
+The 2nd one being the string: 'test'. This way, we can check to see if a valid sched has been uploaded.<br />
+Otherwise, it goes to 'bad download', deletes the sched2 and reboots. If the sched returns a code '10'<br />
+when the 'test' string is passed in, it means the file is valid so it renames sched2 to sched, sets the<br />
+execute flag and reboots.<br />
+The other exit codes pertain to what happens when you go to the 'Manage Server' button on the top left<br />
+of the client screen.<br />
+<img src="Images/manage_server.JPG">
+The 'Reboot Server' button tells the sched program to exit with a code '2', The 'Shutdown' button tells<br />
+the sched to exit with a code '3' and the 'Upload New' button makes the sched exit with a '4'.<br />
+(Exit to Shell will just make the sched quit and if you are not hooked up to comm1 with a tty,<br />
+then you're out of luck, and will have to do a reset.)<br />
 
