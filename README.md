@@ -337,4 +337,60 @@ The 'Reboot Server' button tells the sched program to exit with a code '2', The 
 the sched to exit with a code '3' and the 'Upload New' button makes the sched exit with a '4'.<br />
 (Exit to Shell will just make the sched quit and if you are not hooked up to comm1 with a tty,<br />
 then you're out of luck, and will have to do a reset.)<br />
+At the very end of 'sched.c', when the program exits, a global variable called: 'reboot_on_exit' gets set<br />
+to the exit code sent by the client:<br />
+
+```
+	if(reboot_on_exit == 1)
+	{
+//		printf("sched: exit to shell\r\n");
+		return 1;
+	}
+	else if(reboot_on_exit == 2)
+	{
+//		printf("sched: reboot\r\n");
+
+		return 2;
+	}
+	else if(reboot_on_exit == 3)
+	{
+//		printf("sched: shutdown\r\n");
+		return 3;
+	}
+	else if(reboot_on_exit == 4)
+	{
+//		printf("doing upload new\r\n");
+		return 4;
+	}
+```
+
+<h2>Some highlights of sched</h2>
+The thread_io directory has all the files used to compile the sched program. The 'Makefile' uses the ARM<br />
+cross-compiler to compile for the particular ARM processor the TS-7200 uses. The 3 main c files are:<br />
+sched,c tasks.c and cmd_tasks. The sched.c file is where the 'main()' function is and creates some POSIX<br />
+threads specified in 'tasks.h':<br />
+
+```
+enum task_types
+{
+	GET_HOST_CMD,
+	MONITOR_INPUTS,
+	MONITOR_INPUTS2,
+	TIMER,
+	TIMER2,
+	BUTTONS,
+	TCP_MONITOR,
+	SERIAL_RECV,
+	BASIC_CONTROLS
+} TASK_TYPES;
+```
+
+The function for the GET_HOST_CMD thread is in cmd_tasks,c and is a huge switch/case that gets messages<br />
+from the TCP connection. If the Windows client is not connected, this section gets skipped over.<br />
+The other tasks are in tasks.c.<br />
+The MONITOR_INPUTS task just waits for something to change on the input ports of the IO cards.<br />
+The MONITOR_INPUTS2 task is a way to programmatically inject 'fake inputs' to the system so it thinks<br />
+the input ports have changed. The TIMER_TASK is a task that gets called once a second. The SERIAL_RECV<br />
+task gets command from the STM32. The BASIC_CONTROLS task waits on a queue for messages and controls<br />
+the output ports. 
 
