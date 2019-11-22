@@ -57,6 +57,7 @@ namespace EpServerEngineSampleClient
 		ServerCmds svrcmd2 = new ServerCmds();
 		INetworkClient m_client = new IocpTcpClient();
 		INetworkClient m_client2 = new IocpTcpClient();
+		private string password = "";
 
 		public System.Collections.Generic.List<ButtonList> button_list;
         private List<int> Exclude_From_buttons = new List<int>();
@@ -76,25 +77,22 @@ namespace EpServerEngineSampleClient
         private int no_buttons = 0;
         private int i = 0;
         private int selected_address = 0;
-        private bool avr_running = false;
         private int please_lets_disconnect = 0;
 		private int disconnect_attempts = 0;
         private string m_hostname;
         private string m_portno;
         private bool m_engine_running = false;
         private int server_up_seconds = 0;
-        private int timer_server_up_seconds = 0;
-        private int previous_timer_server_up_seconds = 0;
         //private string current_password = "testasdf";
         //private int password_length = 8;
         private int wait_before_starting = 0;
         //private int server_connection_attempts = 1;
         private bool client_connected = false;
 		private bool home_svr_connected = false;
-		private int giveup_home_svr = 10;
 		// initially try for 20 seconds to connect, then 
 		// give up until user hits 'Call Home' button
-		private int connection_timeout = 0;
+		private string timer_cmd = "SET_PARAMS";
+		private int timer_offset;
 
         private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
         private string xml_dialog2_location = "c:\\Users\\daniel\\dev\\uiformat2.xml";
@@ -113,8 +111,8 @@ namespace EpServerEngineSampleClient
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             svrcmd.SetClient(m_client);
 			svrcmd2.SetClient(m_client2);
-			dlgsetparams = new DlgSetParams(cfg_params);
-            dlgsetparams.SetClient(m_client);
+			//dlgsetparams = new DlgSetParams(cfg_params);
+            //dlgsetparams.SetClient(m_client);
             cbIPAdress.Enabled = true;
             tbReceived.Enabled = true;
             tbPort.Enabled = true;
@@ -252,6 +250,7 @@ namespace EpServerEngineSampleClient
                 //AddMsg(btn.Name + " en: " + btn.Enabled.ToString());
             }
             timer1.Enabled = true;
+			ListMsg("Hello!",true);
 			//btnAVR_Click(new object(), new EventArgs());
 			//AddMsg("buttons used: " + no_buttons.ToString());
 			// start the connection to the home server by default
@@ -268,7 +267,7 @@ namespace EpServerEngineSampleClient
                 ClientOps ops = new ClientOps(this, m_hostname, m_portno);
 				// set the timeout to 5ms - by default it's 0 which causes it to wait a long time
 				// and slows down the UI
-				ops.ConnectionTimeOut = 5;
+				ops.ConnectionTimeOut = 500;
                 m_client.Connect(ops);
                 please_lets_disconnect = 0;
                 disconnect_attempts++;
@@ -277,7 +276,7 @@ namespace EpServerEngineSampleClient
             {
                 please_lets_disconnect = 1; // let's disconnect here!
                 disconnect_attempts = 0;
-            }
+			}
             reevaluate_enabled_buttons();
         }
         public void OnConnected(INetworkClient client, ConnectStatus status)
@@ -299,7 +298,7 @@ namespace EpServerEngineSampleClient
 
 					btnShutdown.Enabled = true;
 					btnReboot.Enabled = true;
-					btnStopSerial.Enabled = true;
+					//btnStopSerial.Enabled = true;
 					tbServerTime.Text = "";
 					tbEngRunTime.Text = "";
 					tbEngineTemp.Text = "";
@@ -329,7 +328,6 @@ namespace EpServerEngineSampleClient
 				//btnStartEng.Text = "Stop Engine";
 				btnSetParams.Enabled = false;
 				reevaluate_enabled_buttons();
-				timer_server_up_seconds = 0;
 			}
 		}
 		protected override void OnClosed(EventArgs e)
@@ -411,16 +409,6 @@ namespace EpServerEngineSampleClient
             switch (str)
             {
 				case "SEND_CONFIG2":
-					/*
-					int test;
-					int test2;
-					for (i = 0; i < 15; i++)
-					{
-						test2 = 2 + i * 2;
-						test = BitConverter.ToInt16(bytes, test2);
-						AddMsg(test2.ToString() + " " + test.ToString());
-					}
-					*/
 					AddMsg("send config2");
 					cfg_params.rpm_update_rate = BitConverter.ToInt16(bytes, 2);
 					cfg_params.mph_update_rate = BitConverter.ToInt16(bytes, 4);
@@ -437,6 +425,8 @@ namespace EpServerEngineSampleClient
 					cfg_params.engine_temp_limit = BitConverter.ToInt16(bytes, 26);
 					cfg_params.battery_box_temp = BitConverter.ToInt16(bytes, 28);
 					cfg_params.test_bank = BitConverter.ToInt16(bytes, 30);
+					cfg_params.password_timeout = BitConverter.ToInt16(bytes, 32);
+					cfg_params.password_retries = BitConverter.ToInt16(bytes, 34);
 					// pass the same msg along to the linux server but just
 					// change the cmd to "UPLOAD_CONFIG"
 					bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
@@ -446,9 +436,27 @@ namespace EpServerEngineSampleClient
 						m_client.Send(packet);
 					}
 					//AddMsg("hi rev: " + cfg_params.high_rev_limit.ToString());
-					//substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
-					//AddMsg("fan on: " + substr);
-					//AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.engine_temp_limit).ToString();
+					AddMsg("temp limit: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
+					AddMsg("fan on: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.fan_off).ToString();
+					AddMsg("fan off: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.blower1_on).ToString();
+					AddMsg("blower 1: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.blower2_on).ToString();
+					AddMsg("blower 2: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.blower3_on).ToString();
+					AddMsg("blower 3: " + substr);
+					AddMsg("");
+					substr = dlgsetparams.get_temp_str(cfg_params.blower_enabled).ToString();
+					AddMsg("blower en: " + substr);
+					AddMsg("");
 					break;
 
 				case "SVR_CMD":
@@ -459,108 +467,11 @@ namespace EpServerEngineSampleClient
 					svrcmd.Send_Cmd(offset);
 					break;
 
-				case "UPDATE_CONFIG":
-					int val2 = cfg_params.fan_on;
-					str = "SET_FAN_ON";
-					byte[] bytes1 = BitConverter.GetBytes(val2);
-					byte[] bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.fan_off;
-					str = "SET_FAN_OFF";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.engine_temp_limit;
-					str = "SET_TEMP_LIMIT";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					//AddMsg(cfg_params.engine_temp_limit.ToString());
-					m_client.Send(packet);
-
-					val2 = cfg_params.high_rev_limit;
-					str = "HIGH_REV_LIMIT";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.low_rev_limit;
-					str = "LOW_REV_LIMIT";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.lights_on_delay;
-					str = "LIGHTS_ON_DELAY";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.blower_enabled;
-					str = "SET_BLOWER_EN_TEMP";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.blower1_on;
-					str = "SET_BLOWER1_TEMP";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.blower2_on;
-					str = "SET_BLOWER2_TEMP";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					val2 = cfg_params.blower3_on;
-					str = "SET_BLOWER3_TEMP";
-					bytes1 = BitConverter.GetBytes(val2);
-					bytes2 = new byte[bytes1.Count() + 2];
-					bytes2[0] = svrcmd.GetCmdIndexB(str);
-					System.Buffer.BlockCopy(bytes1, 0, bytes2, 2, bytes1.Count());
-					packet = new Packet(bytes2, 0, bytes2.Count(), false);
-					m_client.Send(packet);
-
-					string cmd = "UPDATE_CONFIG";		// tell server to write to disk
-					type_msg = svrcmd.GetCmdIndexI(cmd);
-					svrcmd.Send_Cmd(type_msg);
-					//AddMsg("update config");
-					break;
-
 				case "SEND_MSG":
 					//AddMsg("str: " + str + " " + str.Length.ToString());
 					//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
-					ListMsg(ret);
+					Send_Svr_Cmd(ret);
+					ListMsg(ret,false);
 					switch (ret)
                     {
                         case "START_SEQ":
@@ -616,7 +527,7 @@ namespace EpServerEngineSampleClient
                     break;
 
                 case "CURRENT_TIME":
-                    ListMsg(ret);
+                    ListMsg(ret,true);
                     break;
 
                 case "SERVER_UPTIME":
@@ -629,7 +540,39 @@ namespace EpServerEngineSampleClient
                     }
                     else
                         tbServerTime.Text = ret;
-                    break;
+
+					if (server_up_seconds == 2)
+						SetTime();
+
+					if (client_params[selected_address].AutoConn == true && server_up_seconds == 4)
+					{
+						if (dlgsetparams == null)
+						{
+							// call the SET_PARAMS of the linux server
+							// to send the param.conf data back to SEND_CONFIG
+							timer_offset = svrcmd.GetCmdIndexI(timer_cmd);
+							svrcmd.Send_Cmd(timer_offset);
+							timer_cmd = "NEW_PASSWORD1";
+							timer_offset = svrcmd.GetCmdIndexI(timer_cmd);
+							svrcmd.Send_Cmd(timer_offset);
+						}
+						else btnStopSerial.Enabled = true;
+					}
+					if (client_params[selected_address].AutoConn == true && server_up_seconds == 6)
+					{
+						if(dlgsetparams == null)
+						{
+							AddMsg(cfg_params.engine_temp_limit.ToString());
+							dlgsetparams = new DlgSetParams(cfg_params);
+							dlgsetparams.SetParams(cfg_params);
+							dlgsetparams.SetClient(m_client);
+							//AddMsg(cfg_params.engine_temp_limit.ToString());
+							//dlgsetparams.SetParams(cfg_params);
+							//AddMsg("cfg_params in dlgsetparams set: " + dlgsetparams.GetSet());
+							btnStopSerial.Enabled = true;
+						}
+					}
+					break;
 
                 case "ENGINE_RUNTIME":
                     substr = ret.Substring(0, 2);
@@ -688,41 +631,45 @@ namespace EpServerEngineSampleClient
 								break;
                             case 5:
                                 cfg_params.fan_on = int.Parse(word);
-                                //AddMsg("fan on: " + cfg_params.fan_on.ToString());
-                                substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
-                                AddMsg("fan on: " + substr);
-                                AddMsg("");
+                                AddMsg("fan on: " + cfg_params.fan_on.ToString());
+                                //substr = dlgsetparams.get_temp_str(cfg_params.fan_on).ToString();
+                                //AddMsg("fan on: " + substr);
+                                //AddMsg("");
                                 break;
                             case 6:
                                 cfg_params.fan_off = int.Parse(word);
-                                //AddMsg("fan off: " + cfg_params.fan_off.ToString());
-                                substr = dlgsetparams.get_temp_str(cfg_params.fan_off).ToString();
-                                AddMsg("fan off: " + substr);
-                                AddMsg("");
+                                AddMsg("fan off: " + cfg_params.fan_off.ToString());
+                                //substr = dlgsetparams.get_temp_str(cfg_params.fan_off).ToString();
+                                //AddMsg("fan off: " + substr);
+                                //AddMsg("");
                                 break;
                             case 7:
                                 cfg_params.blower_enabled = int.Parse(word);
-								substr = dlgsetparams.get_temp_str(cfg_params.blower_enabled).ToString();
-								AddMsg("blower en: " + substr);
-								AddMsg("");
+								AddMsg("blower en: " + cfg_params.blower_enabled.ToString());
+								//substr = dlgsetparams.get_temp_str(cfg_params.blower_enabled).ToString();
+								//AddMsg("blower en: " + substr);
+								//AddMsg("");
 								break;
                             case 8:
                                 cfg_params.blower1_on = int.Parse(word);
-								substr = dlgsetparams.get_temp_str(cfg_params.blower1_on).ToString();
-								AddMsg("blower1 on: " + substr);
-								AddMsg("");
+								AddMsg("blower 1: " + cfg_params.blower1_on.ToString());
+								//substr = dlgsetparams.get_temp_str(cfg_params.blower1_on).ToString();
+								//AddMsg("blower1 on: " + substr);
+								//AddMsg("");
 								break;
                             case 9:
                                 cfg_params.blower2_on = int.Parse(word);
-								substr = dlgsetparams.get_temp_str(cfg_params.blower2_on).ToString();
-								AddMsg("blower2 on: " + substr);
-								AddMsg("");
+								AddMsg("blower 2: " + cfg_params.blower2_on.ToString());
+								//substr = dlgsetparams.get_temp_str(cfg_params.blower2_on).ToString();
+								//AddMsg("blower2 on: " + substr);
+								//AddMsg("");
 								break;
                             case 10:
                                 cfg_params.blower3_on = int.Parse(word);
-								substr = dlgsetparams.get_temp_str(cfg_params.blower3_on).ToString();
-								AddMsg("blower3 on: " + substr);
-								AddMsg("");
+								AddMsg("blower 3: " + cfg_params.blower3_on.ToString());
+								//substr = dlgsetparams.get_temp_str(cfg_params.blower3_on).ToString();
+								//AddMsg("blower3 on: " + substr);
+								//AddMsg("");
 								break;
                             case 11:
                                 cfg_params.lights_on_delay = int.Parse(word);
@@ -730,20 +677,35 @@ namespace EpServerEngineSampleClient
                                 break;
                             case 12:
                                 cfg_params.engine_temp_limit = int.Parse(word);
-                                //AddMsg("temp limit: " + cfg_params.engine_temp_limit.ToString());
-                                substr = dlgsetparams.get_temp_str(cfg_params.engine_temp_limit).ToString();
-                                AddMsg("temp limit: " + substr);
-                                AddMsg("");
+                                AddMsg("temp limit: " + cfg_params.engine_temp_limit.ToString());
+                                //substr = dlgsetparams.get_temp_str(cfg_params.engine_temp_limit).ToString();
+                                //AddMsg("temp limit: " + substr);
+                                //AddMsg("");
                                 break;
                             case 13:
                                 cfg_params.battery_box_temp = int.Parse(word);
-								substr = dlgsetparams.get_temp_str(cfg_params.battery_box_temp).ToString();
-								AddMsg("battery box temp: " + substr);
-								AddMsg("");
+								//substr = dlgsetparams.get_temp_str(cfg_params.battery_box_temp).ToString();
+								//AddMsg("battery box temp: " + substr);
+								//AddMsg("");
 								break;
                             case 14:
                                 cfg_params.test_bank = int.Parse(word);
                                 break;
+							case 15:
+								cfg_params.password_timeout = int.Parse(word);
+								//AddMsg("pswd timeout: " + cfg_params.password_timeout.ToString());
+								break;
+							case 16:
+								cfg_params.password_retries = int.Parse(word);
+								//AddMsg("pswd retries: " + cfg_params.password_retries.ToString());
+								break;
+								
+							case 17:
+								//AddMsg(word);
+								cfg_params.password = word;
+								AddMsg("password: " + cfg_params.password);
+								break;
+								
                             default:
                                 break;
                         }
@@ -753,15 +715,15 @@ namespace EpServerEngineSampleClient
 					break;
 
                 case "GET_TIME":
-					ListMsg(ret);
+					ListMsg(ret,true);
                     break;
 
                 case "SYSTEM_UP":
-					ListMsg(ret);
+					ListMsg(ret,true);
                     break;
 
                 case "SYSTEM_DOWN":
-                    ListMsg(ret);
+                    ListMsg(ret,true);
                     break;
 
                 case "NAV_UP":
@@ -785,10 +747,15 @@ namespace EpServerEngineSampleClient
                     AddMsg(ret);
                     break;
 
-                default:
+				case "NEW_PASSWORD1":
+					password = ret;
+					AddMsg(password);
+					break;
+				default:
                     break;
             }
         }
+		/*
         void ProcessIOnums(byte[] bytes)
         {
             char[] chars = new char[bytes.Length / sizeof(char)];
@@ -808,6 +775,7 @@ namespace EpServerEngineSampleClient
             //    }
             //}
         }
+		*/
         byte[] BytesFromString(String str)
         {
             byte[] bytes = new byte[str.Length * sizeof(char)];
@@ -828,7 +796,6 @@ namespace EpServerEngineSampleClient
 					{
 						SetHomeSvrStatus(true);
 						AddMsg("home server success");
-						connection_timeout = 0;
 					}
 				}
 			}
@@ -917,12 +884,12 @@ namespace EpServerEngineSampleClient
             ManageServer dlg = new ManageServer(m_client);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
-                cfg_params = dlgsetparams.GetParams();
-                please_lets_disconnect = 1;
+				if(client_params[selected_address].AutoConn == true)
+					cfg_params = dlgsetparams.GetParams();
+				please_lets_disconnect = 1;
             }
             else
             {
-                AddMsg("did not disconnect");
             }
         }
         private void RebootServer(object sender, EventArgs e)
@@ -931,31 +898,68 @@ namespace EpServerEngineSampleClient
         }
         private void StopMbox(object sender, EventArgs e)
         {
-            /*
-            if (system_up)
+			//AddMsg(dlgsetparams.GetSet().ToString());
+			if (dlgsetparams.ShowDialog(this) == DialogResult.OK)
 			{
-				string cmd = "STOP_MBOX_XMIT";
-				int offset = svrcmd.GetCmdIndexI(cmd);
-				svrcmd.Send_Cmd(offset);
-				system_up = false;
-				btnStopSerial.Text = "Start Mbox Xmit";
-				AddMsg("System Down");
+				AddMsg("new password: " + cfg_params.password);
+				cfg_params = dlgsetparams.GetParams();
+				byte[] rpm = BitConverter.GetBytes(cfg_params.si_rpm_update_rate);
+				byte[] mph = BitConverter.GetBytes(cfg_params.si_mph_update_rate);
+				byte[] fpga = BitConverter.GetBytes(cfg_params.si_FPGAXmitRate);
+				byte[] high_rev = BitConverter.GetBytes(cfg_params.si_high_rev_limit);
+				byte[] low_rev = BitConverter.GetBytes(cfg_params.si_low_rev_limit);
+				byte[] fan_on = BitConverter.GetBytes(cfg_params.fan_on);
+				byte[] fan_off = BitConverter.GetBytes(cfg_params.fan_off);
+				byte[] ben = BitConverter.GetBytes(cfg_params.blower_enabled);
+				byte[] b1 = BitConverter.GetBytes(cfg_params.blower1_on);
+				byte[] b2 = BitConverter.GetBytes(cfg_params.blower2_on);
+				byte[] b3 = BitConverter.GetBytes(cfg_params.blower3_on);
+				byte[] lights = BitConverter.GetBytes(cfg_params.si_lights_on_delay);
+				byte[] limit = BitConverter.GetBytes(cfg_params.engine_temp_limit);
+				byte[] batt = BitConverter.GetBytes(cfg_params.battery_box_temp);
+				byte[] test = BitConverter.GetBytes(cfg_params.si_test_bank);
+				byte[] pswd_time = BitConverter.GetBytes(cfg_params.si_password_timeout);
+				byte[] pswd_retries = BitConverter.GetBytes(cfg_params.si_password_retries);
+				byte[] password = BytesFromString(cfg_params.password);
+
+				byte[] bytes = new byte[rpm.Count() + mph.Count() + fpga.Count() + high_rev.Count()
+					+ low_rev.Count() + fan_on.Count() + fan_off.Count() + ben.Count() + b1.Count()
+					+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count()
+					+ test.Count() + pswd_time.Count() + pswd_retries.Count() + password.Count() + 2];
+
+				bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
+				//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
+				System.Buffer.BlockCopy(rpm, 0, bytes, 2, rpm.Count());
+				System.Buffer.BlockCopy(mph, 0, bytes, 4, mph.Count());
+				System.Buffer.BlockCopy(fpga, 0, bytes, 6, fpga.Count());
+				System.Buffer.BlockCopy(high_rev, 0, bytes, 8, high_rev.Count());
+				System.Buffer.BlockCopy(low_rev, 0, bytes, 10, low_rev.Count());
+				System.Buffer.BlockCopy(fan_on, 0, bytes, 12, fan_on.Count());
+				System.Buffer.BlockCopy(fan_off, 0, bytes, 14, fan_off.Count());
+				System.Buffer.BlockCopy(ben, 0, bytes, 16, ben.Count());
+				System.Buffer.BlockCopy(b1, 0, bytes, 18, b1.Count());
+				System.Buffer.BlockCopy(b2, 0, bytes, 20, b2.Count());
+				System.Buffer.BlockCopy(b3, 0, bytes, 22, b3.Count());
+				System.Buffer.BlockCopy(lights, 0, bytes, 24, lights.Count());
+				System.Buffer.BlockCopy(limit, 0, bytes, 26, limit.Count());
+				System.Buffer.BlockCopy(batt, 0, bytes, 28, batt.Count());
+				System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
+				System.Buffer.BlockCopy(pswd_time, 0, bytes, 32, pswd_time.Count());
+				System.Buffer.BlockCopy(pswd_retries, 0, bytes, 34, pswd_retries.Count());
+				System.Buffer.BlockCopy(password, 0, bytes, 36, password.Count());
+
+				Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+				if (m_client.IsConnectionAlive)
+				{
+					m_client.Send(packet);
+				}
 			}
 			else
 			{
-				string cmd = "START_MBOX_XMIT";
-				int offset = svrcmd.GetCmdIndexI(cmd);
-				svrcmd.Send_Cmd(offset);
-				system_up = true;
-				btnStopSerial.Text = "Stop Mbox Xmit";
-				AddMsg("System Up");
+				//                this.txtResult.Text = "Cancelled";
 			}
-            */
-            string cmd = "STOP_MBOX_XMIT";      // just using this temporarily to tell svr to print out conf params
-            int offset = svrcmd.GetCmdIndexI(cmd);
-            svrcmd.Send_Cmd(offset);
-        }
-        public static byte[] ReadFile(string filePath)
+		}
+		public static byte[] ReadFile(string filePath)
         {
             byte[] buffer;
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -1022,19 +1026,15 @@ namespace EpServerEngineSampleClient
         }
         private void SetParamsClick(object sender, EventArgs e)
         {
-			string cmd = "SET_PARAMS";
-            int offset = svrcmd.GetCmdIndexI(cmd);
-            svrcmd.Send_Cmd(offset);
-            /*
-            if (dlgsetparams.ShowDialog(this) == DialogResult.OK)
-			{
-				cfg_params = dlgsetparams.GetParams();
-			}
-			else
-			{
-				//                this.txtResult.Text = "Cancelled";
-			}
+			/*
+			dlgsetparams = new DlgSetParams(cfg_params);
+			dlgsetparams.SetParams(cfg_params);
+			dlgsetparams.SetClient(m_client);
+			AddMsg(cfg_params.engine_temp_limit.ToString());
+			dlgsetparams.ShowDialog(this);
 			*/
+			int offset = svrcmd.GetCmdIndexI("SERVER_UP");
+			svrcmd.Send_Cmd(offset);
 		}
 		private void btnAVR_Click(object sender, EventArgs e)
         {
@@ -1043,7 +1043,6 @@ namespace EpServerEngineSampleClient
 				ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
 				ops.ConnectionTimeOut = 5;
 				m_client2.Connect(ops);
-				giveup_home_svr = 10;       // later we can set this to the value in the config params
 				//AddMsg("initial connect to home svr " + m_client2.IsConnectionAlive.ToString());
 				SetHomeSvrStatus(true);
 			}
@@ -1187,10 +1186,10 @@ namespace EpServerEngineSampleClient
                     break;
             }
         }
-        bool drake = true;
+        int drake = 0;
         private void myTimerTick(object sender, EventArgs e)
         {
-            if (wait_before_starting != 0)
+			if (wait_before_starting != 0)
                 wait_before_starting--;
 
             switch (please_lets_disconnect)            // send the msg to server saying we are disconnecting
@@ -1206,7 +1205,7 @@ namespace EpServerEngineSampleClient
                             btnConnect.Text = "Disconnect";
                             btnShutdown.Enabled = true;
                             btnReboot.Enabled = true;
-                            btnStopSerial.Enabled = true;
+                            //btnStopSerial.Enabled = true;
                             tbServerTime.Text = "";
                             tbEngRunTime.Text = "";
                             tbEngineTemp.Text = "";
@@ -1221,14 +1220,11 @@ namespace EpServerEngineSampleClient
                         }
                         else
                         {
-                            previous_timer_server_up_seconds = timer_server_up_seconds;
-                            timer_server_up_seconds = server_up_seconds;
+							//AddMsg(server_up_seconds.ToString());
                             //tbServerUpTimeSeconds.Text = "server up seconds: " + 
                             //timer_server_up_seconds.ToString() + " " 
                             //+ "previous up seconds: " + previous_timer_server_up_seconds.ToString();
-                            if (timer_server_up_seconds > 2 && timer_server_up_seconds < 6)
-                                SetTime();
-                        }
+						}
                     }
                     else // if not alive
                     {
@@ -1251,8 +1247,9 @@ namespace EpServerEngineSampleClient
                             tbMPH.Text = "";
                             tbServerTime.Text = "";
                             client_connected = false;
-                            ListMsg("server disconnected");
-                            //tbServerUpTimeSeconds.Text = "";
+                            ListMsg("server disconnected",true);
+							//tbServerUpTimeSeconds.Text = "";
+							server_up_seconds = 0;
                         }
                         else
                         {
@@ -1293,19 +1290,27 @@ namespace EpServerEngineSampleClient
                 case 2:         // then wait 1 second to see if it really did disconnect us
                     System.Media.SoundPlayer player;
                     string song = "";
-                    if (drake)
+                    switch (drake)
                     {
-                        AddMsg("Drake, we are leaving...");
-                        drake = false;
-                        song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
-                    }
-                    else
-                    {
-                        AddMsg("Game over man");
-                        drake = true;
-                        song = "c:\\users\\Daniel\\Music\\WavFiles\\GameOverMan.wav";
-                    }
-                    if (m_client.IsConnectionAlive)
+						case 0:
+							AddMsg("killing aliens...");
+							drake = 1;
+							song = "c:\\users\\Daniel\\Music\\WavFiles\\alien_kill2.wav";
+						break;
+						case 1:
+							AddMsg("Game over man...");
+							drake = 2;
+							song = "c:\\users\\Daniel\\Music\\WavFiles\\GameOverMan.wav";
+							break;
+						case 2:
+							AddMsg("Drake, we are leaving...");
+							drake = 0;
+							song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
+							break;
+						default:
+							break;
+					}
+					if (m_client.IsConnectionAlive)
                         m_client.Disconnect();
                     please_lets_disconnect = 0;
                     //drake_img.Visible = true;
@@ -1436,12 +1441,22 @@ namespace EpServerEngineSampleClient
 				m_client.Send(packet);
 			}
         }
-		private void ListMsg(string msg)
+		private void ListMsg(string msg, bool show_date)
 		{
+			string temp = "";
 			DateTime localDate = DateTime.Now;
 			String cultureName = "en-US";
 			var culture = new CultureInfo(cultureName);
-			AddMsg(msg + " " + localDate.ToString(culture));
+			temp = localDate.ToString(culture);
+			if (show_date)
+				AddMsg(msg + " " + temp);
+			else
+			{
+				int index = temp.IndexOf(' ');
+				//AddMsg(index.ToString());
+				temp = temp.Substring(index);
+				AddMsg(msg + " " + temp);
+			}
 		}
 	}
 }

@@ -255,8 +255,12 @@ int main(int argc, char **argv)
 	}
 	else if(reboot_on_exit == 4)
 	{
-//		printf("doing upload new\r\n");
+//		printf("upload new sched\r\n");
 		return 4;
 	}
-
+	else if(reboot_on_exit == 5)
+	{
+//		printf("upload new param\r\n");
+		return 5;
+	}
 }

@@ -10,7 +10,6 @@
 #include <sys/time.h>
 #include "../mytypes.h"
 #include "serial_io.h"
-#include "tasks.h"
 
 // AVR_t6963/test uses comm 1 of TS-7200 at 19200
 #ifdef TEST_AVR_LCD
@@ -36,6 +35,7 @@ static int set_interface_attribs (int fd, int speed, int parity);
 static void set_blocking (int fd, int should_block);
 static struct termios oldtio;
 static struct termios oldtio2;
+extern PARAM_STRUCT ps;
 
 //volatile int STOP=FALSE;
 
@@ -143,9 +143,11 @@ int write_serial(UCHAR byte)
 /************************************************************************************/
 int write_serial2(UCHAR byte)
 {
-	int res;
-	res = write(global_handle2,&byte,1);
-//	printf("%c",byte);
+	int res = -1;
+	if(ps.test_bank == 0)
+	{
+		res = write(global_handle2,&byte,1);
+	}
 	return res;
 }
 #if 0
@@ -201,11 +203,16 @@ UCHAR read_serial(char *errmsg)
 UCHAR read_serial2(char *errmsg)
 {
 	int res;
-	UCHAR byte;
-	res = read(global_handle2,&byte,1);
-	if(res < 0)
-		printf("\nread error: %s\n",strerror(errno));
-		strcpy(errmsg,strerror(errno));
+	UCHAR byte = 0;
+	if(ps.test_bank == 0)
+	{
+		res = read(global_handle2,&byte,1);
+		if(res < 0)
+		{
+			printf("\nread error: %s\n",strerror(errno));
+			strcpy(errmsg,strerror(errno));
+		}
+	}
 	return byte;
 }
 /************************************************************************************/
@@ -222,45 +229,32 @@ int init_serial2(void)
 	UCHAR test = 0x21;
 	global_handle2 = -1;
 
+//	if(ps.test_bank == 0)
+	if(1)
+	{
 // undef this section if console disabled just so it can compile with the console enabled
-	global_handle2 = open (MODEMDEVICE2, O_RDWR | O_NOCTTY | O_SYNC);
-	if (global_handle2 <0)
-	{
-		perror(MODEMDEVICE2);
-		exit(-1);
+		global_handle2 = open (MODEMDEVICE2, O_RDWR | O_NOCTTY | O_SYNC);
+		if (global_handle2 <0)
+		{
+			perror(MODEMDEVICE2);
+			exit(-1);
+		}
+		if(tcgetattr(global_handle2,&oldtio2) != 0)	  /* save current port settings */
+		{
+			myprintf1("tcgetattr (2) error\0", errno);
+			close(global_handle2);
+			exit(1);
+		}
+		set_interface_attribs (global_handle2, BAUDRATE2, 0);
+		set_blocking (global_handle2, 1);	 // blocking
+	//	set_blocking (global_handle2, 0);	// non-blocking
 	}
-	if(tcgetattr(global_handle2,&oldtio2) != 0)	  /* save current port settings */
-	{
-		myprintf1("tcgetattr (2) error\0", errno);
-		close(global_handle2);
-		exit(1);
-	}
-	set_interface_attribs (global_handle2, BAUDRATE2, 0);
-	set_blocking (global_handle2, 1);	 // blocking
-//	set_blocking (global_handle2, 0);	// non-blocking
 
 	return global_handle2;
 }
 
 void printHexByte(UCHAR byte) 
 {
-#if 0
-	char outstr[5];
-	memset(outstr,0x20,10);
-	UCHAR nibble;
-	char nibret;
-//	nibble = (byte & 0b11110000) >> 4;
-	nibble = (byte & 0xF0) >> 4;
-	nibret = nibbleToHexCharacter(nibble);
-	outstr[0] = nibret;
-	nibble = byte & 0x0F;
-	nibret = nibbleToHexCharacter(nibble);
-	outstr[1] = nibret;
-	outstr[3] = 0;
-	send_status_msg(outstr);
-#endif
-	
-//#if 0
 	/* Prints a byte as its hexadecimal equivalent */
 	UCHAR nibble;
 //	nibble = (byte & 0b11110000) >> 4;
@@ -270,7 +264,6 @@ void printHexByte(UCHAR byte)
 	nibble = byte & 0x0F;
 	write_serial2(nibbleToHexCharacter(nibble));
 	write_serial2(0x20);
-//#endif
 }
 
 char nibbleToHexCharacter(UCHAR nibble) 
@@ -290,26 +283,27 @@ char nibbleToHexCharacter(UCHAR nibble)
 void printString2(char *myString)
 {
 	int i = 0;
-
-//	send_status_msg(myString);
-
-	while(myString[i])
+	if(ps.test_bank == 0)
 	{
-		write_serial2(myString[i]);
-		i++;
+		while(myString[i])
+		{
+			write_serial2(myString[i]);
+			i++;
+		}
+		write_serial2('\r');
+		write_serial2('\n');
 	}
-
-//	write_serial2(0xfe);
-	write_serial2('\r');
-	write_serial2('\n');
 
 }
 
 /************************************************************************************/
 void close_serial2(void)
 {
-//	printf("closing serial port\n");
-	tcsetattr(global_handle2,TCSANOW,&oldtio2);
-	close(global_handle2);
+//	if(ps.test_bank == 0)
+	if(1)
+	{
+		tcsetattr(global_handle2,TCSANOW,&oldtio2);
+		close(global_handle2);
+	}
 }
 

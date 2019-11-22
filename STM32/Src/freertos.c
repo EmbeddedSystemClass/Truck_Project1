@@ -63,6 +63,7 @@
 #include "usart.h"
 #include "screen.h"
 #include "string.h"
+#include "stdlib.h"
 #include "gpio.h"
 
 /* USER CODE END Includes */
@@ -125,15 +126,16 @@ static int temp_raw;
 static int test_rise_temp;
 static int too_high_flag;
 static int cooling_fan_override;
+static int blower_override;
 static uint16_t engine_temp_limit = 190;
 static uint16_t fan_on_temp = 175;	// 185F
 static uint16_t fan_off_temp = 150;
 static uint16_t blower1_temp = 65;
-static uint16_t blower2_temp = 50;
-static uint16_t blower3_temp = 35;
-static uint16_t blower_en_temp = 75;
+static uint16_t blower2_temp = 55;
+static uint16_t blower3_temp = 45;
+static uint16_t blower_en_temp = 70;
 static uint16_t batt_box_temp = 75;
-static int blower_on_countdown = 20;
+static int blower_on_countdown = 10;
 //static uint16_t lights_on_delay = 5;	// default is 3 seconds
 //static UCHAR key_mode1, key_mode2;
 static int server_up = 0;
@@ -153,14 +155,22 @@ static int run_time;
 static int rtdata_update_rate;
 
 static KEY_MODE key_mode;
-//static int key_enter_time;
+/*	(from freertos_defs.h)
+typedef enum
+{
+	NORMAL,
+	PASSWORD,
+	NUM_ENTRY,
+}KEY_MODE;
+*/
 static char password[PASSWORD_SIZE];
 static char correct_password[PASSWORD_SIZE];
-static UCHAR password_valid;
-static int password_ptr;
-static int password_retries;
-static int dim_screen;
-static int silent_key;
+static int password_ptr = 0;
+static int password_retries = 3;
+static int password_countdown = 0;
+static int init_password_retries = 3;
+static int init_password_countdown = 10;
+
 //static char num_entry_num[SIZE_NUM];
 //static int task7on;
 
@@ -169,7 +179,7 @@ static void setOneRowLow(uint8_t u8_x)
 	switch (u8_x)
 	{
 		case 0:
-			
+
 			HAL_GPIO_WritePin(GPIOB, row0, GPIO_PIN_SET);
 			HAL_GPIO_WritePin(GPIOB, row1, GPIO_PIN_SET);
 			HAL_GPIO_WritePin(GPIOB, row2, GPIO_PIN_SET);
@@ -222,7 +232,7 @@ int key_is_pressed(void)
 	if (state0 == GPIO_PIN_RESET || state1 == GPIO_PIN_RESET || 
 					state2 == GPIO_PIN_RESET || state3 == GPIO_PIN_RESET) 
 		return 1;
-	
+
 	return 0;
 }
 */
@@ -238,7 +248,7 @@ int key_is_released(void)
 	if (state0 == GPIO_PIN_SET && state1 == GPIO_PIN_SET && 
 					state2 == GPIO_PIN_SET && state3 == GPIO_PIN_SET) 
 		return 1;
-	
+
 	return 0;
 }
 
@@ -297,9 +307,89 @@ osMessageQId SendAVRHandle;
 osMessageQId SendFPGAHandle;
 osTimerId myTimer01Handle;
 
+static void check_password(int num)
+{
+	UCHAR cmd;
+	uint64_t avr_buffer[5];
+	UCHAR ucbuff[8];
+	int i;
+/*
+	cmd = PASSWORD_BAD;
+	ucbuff[0] = cmd;
+	ucbuff[1] = (UCHAR)num;
+	ucbuff[2] = (UCHAR)password_ptr;
+	avr_buffer[0] = pack64(ucbuff);
+	xQueueSend(Send7200Handle, avr_buffer, 0);
+	vTaskDelay(100);
+*/
+	itoa(num, &password[password_ptr],10);
+	if(password[password_ptr] != correct_password[password_ptr])
+	{
+/*
+		cmd = PASSWORD_BAD;
+		ucbuff[0] = cmd;
+		ucbuff[1] = (UCHAR)num;
+		ucbuff[2] = (UCHAR)password_retries;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(Send7200Handle, avr_buffer, 0);
+*/
+		password_ptr = 0;
+		password_retries--;
+		password_countdown = init_password_countdown;
+		memset(password,0,PASSWORD_SIZE);
+
+		if(password_retries < 1)
+		{
+			// tell TS-7200 to turn off engine
+			password_countdown = 0;
+			password_retries = init_password_retries;
+			ucbuff[0] = SPECIAL_TONE_ON;
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(SendFPGAHandle,avr_buffer,0);
+			vTaskDelay(1000);
+			global_ucbuff[0] = DTMF_TONE_OFF;
+			global_avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(SendFPGAHandle, avr_buffer,0);
+			vTaskDelay(20);
+			cmd = SHUTDOWN;
+			ucbuff[0] = cmd;
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(Send7200Handle, avr_buffer, 0);
+		}
+//	}else if(password_ptr == password_len)
+	}else if(password_ptr >= 3 && strcmp(password,correct_password) == 0)
+	{
+		password_countdown = password_ptr = 0;
+		password_retries = init_password_retries;
+
+		key_mode = NORMAL;
+		cmd = PASSWORD_OK;
+		ucbuff[0] = cmd;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(Send7200Handle, avr_buffer, 0);
+
+		for(i = 0;i < 5;i++)
+		{
+			global_ucbuff[0] = DTMF_TONE_ON;
+			global_ucbuff[1] = i;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			vTaskDelay(20);
+			global_ucbuff[0] = DTMF_TONE_OFF;
+			global_avr_buffer[0] = pack64(global_ucbuff);
+			xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			vTaskDelay(20);
+
+		}
+		password_countdown = 0;
+		key_mode = NORMAL;
+	}else
+		password_ptr++;
+}
+
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -310,7 +400,8 @@ void StartSendFPGA(void const * argument);
 void StartRecvFPGA(void const * argument);
 void StartKeyStateTask(void const * argument);
 void Callback01(void const * argument);
-#endif
+
+//#endif
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -320,7 +411,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-       
+
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -396,11 +487,11 @@ void MX_FREERTOS_Init(void) {
   /* after pulling up in MXCube */
   /* USER CODE END RTOS_QUEUES */
 }
-
+#endif
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
   * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used 
+  * @param  argument: Not used
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
@@ -423,12 +514,6 @@ void StartDefaultTask(void const * argument)
 	engine_on = 0;
 	wipers_on = 0;
   	timer_toggle = 0;
-    password_valid = 0;
-    password_ptr = 0;
-	password_retries = 0;
-	dim_screen = 0;
-	silent_key = 0;
-//	system_up = 1;
 	avr_up = 1;
 	run_time = 0;
 //	key_mode = PASSWORD;
@@ -436,9 +521,10 @@ void StartDefaultTask(void const * argument)
 	temp_raw = raw_data = 4;
 	raw_data2 = 4;
 	cooling_fan_override = 0;
+	blower_override = 0;
 
 	memset(correct_password,0,sizeof(correct_password));
-	strcpy(correct_password,"2354795\0");
+	strcpy(correct_password,"4567\0");
 	memset(password,0,PASSWORD_SIZE);
 	osTimerStart(myTimer01Handle,1000);
 //	DWT_Delay_Init();		// for using DWT_Delay_us(microseconds) delay (but why?)
@@ -497,11 +583,20 @@ void StartDefaultTask(void const * argument)
 						ucbuff[0] = cmd;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(Send7200Handle, avr_buffer, 0);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+//						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+//						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 						engine_on = 1;
-						blower_on_countdown = 20;
+						blower_on_countdown = 10;
+//						password_countdown = init_password_countdown;
+//						memset(password,0,PASSWORD_SIZE);
+//						password_ptr = 0;
+//						key_mode = PASSWORD;
+//						password_retries = init_password_retries;
+						cmd = 0;
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(1);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -521,8 +616,9 @@ void StartDefaultTask(void const * argument)
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(Send7200Handle, avr_buffer, 0);
 						engine_on = 0;
-						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+						key_mode = NORMAL;
+//						HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+//						HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 /*
 						if(running_lights_on == 1)
 						{
@@ -544,6 +640,9 @@ void StartDefaultTask(void const * argument)
 						}
 */
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(2);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -575,8 +674,11 @@ void StartDefaultTask(void const * argument)
 						xQueueSend(Send7200Handle, avr_buffer, 0);
 					}else
 					{
-						
+						check_password(3);
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(3);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -603,6 +705,9 @@ void StartDefaultTask(void const * argument)
 						fan_on = 0;
 						cooling_fan_override = 0;
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(4);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -621,30 +726,37 @@ void StartDefaultTask(void const * argument)
 							cmd = BLOWER1;
 							ucbuff[0] = cmd;
 							blower_on = 1;
+							blower_override = 1;
 							break;
 
 						case 1:
 							cmd = BLOWER2;
 							ucbuff[0] = cmd;
 							blower_on = 2;
+							blower_override = 1;
 							break;
 
 						case 2:
 							cmd = BLOWER3;
 							ucbuff[0] = cmd;
 							blower_on = 3;
+							blower_override = 1;
 							break;
 
 						case 3:
 							cmd = BLOWER_OFF;
 							ucbuff[0] = cmd;
 							blower_on = 0;
+							blower_override = 0;
 							break;
 
 						default:
 							blower_on = 0;
 							break;
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(5);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -668,7 +780,9 @@ void StartDefaultTask(void const * argument)
 						cmd = OFF_RUNNING_LIGHTS;
 						ucbuff[0] = cmd;
 					}
-				}else
+				}else if(key_mode == PASSWORD)
+					check_password(6);
+				else
 				{
 					ucbuff[0] = NAV_NUM;
 					ucbuff[1] = key-KP_1+1;
@@ -706,6 +820,9 @@ void StartDefaultTask(void const * argument)
 							xQueueSend(Send7200Handle, avr_buffer, 0);
 						}
 					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(7);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -738,6 +855,9 @@ void StartDefaultTask(void const * argument)
 							break;
 					}
 					ucbuff[0] = cmd;
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(8);
 				}else
 				{
 					ucbuff[0] = NAV_NUM;
@@ -745,6 +865,55 @@ void StartDefaultTask(void const * argument)
 				}
 				avr_buffer[0] = pack64(ucbuff);
 				xQueueSend(Send7200Handle, avr_buffer, 0);
+			break;
+
+			case KP_9:
+				if(key_mode == NORMAL)
+				{
+/*
+					ucbuff[0] = RE_ENTER_PASSWORD;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					key_mode = PASSWORD;
+					password_ptr = 0;
+*/
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(9);
+				}else
+				{
+				}
+			break;
+
+			case KP_0:
+				if(key_mode == NORMAL)
+				{
+					cmd = OFF_RUNNING_LIGHTS;
+					ucbuff[0] = cmd;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					running_lights_on = 0;
+					vTaskDelay(200);
+					cmd = OFF_LIGHTS;
+					ucbuff[0] = cmd;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					lights_on = 0;
+
+					if(brights_on == 1)
+					{
+						cmd = OFF_BRIGHTS;
+						ucbuff[0] = cmd;
+						brights_on = 0;
+						avr_buffer[0] = pack64(ucbuff);
+						xQueueSend(Send7200Handle, avr_buffer, 0);
+					}
+				}else if(key_mode == PASSWORD)
+				{
+					check_password(0);
+				}else
+				{
+				}
 			break;
 
 			case KP_A:
@@ -777,56 +946,23 @@ void StartDefaultTask(void const * argument)
 				xQueueSend(Send7200Handle, avr_buffer, 0);
 			break;
 
-			case KP_9:
-				ucbuff[0] = NAV_NUM;
-
-				recval = engine_temp_limit;
-				ucbuff[1] = (UCHAR)recval;
-				recval >>= 8;
-				ucbuff[2] = (UCHAR)recval;
-				
-				recval = fan_on_temp;
-				ucbuff[3] = (UCHAR)recval;
-				recval >>= 8;
-				ucbuff[4] = (UCHAR)recval;
-				
-				recval = fan_off_temp;
-				ucbuff[5] = (UCHAR)recval;
-				recval >>= 8;
-				ucbuff[6] = (UCHAR)recval;
-
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
-			case KP_0:
-				ucbuff[0] = NAV_NUM;
-				ucbuff[1] = key-KP_0;
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
 			case KP_POUND:
-				ucbuff[0] = GET_CONFIG2;
-				utemp = fan_on_temp;
-				ucbuff[1] = (UCHAR)utemp;
-				utemp >>= 8;
-				ucbuff[2] = (UCHAR)utemp;
-
-				utemp = fan_off_temp;
-				ucbuff[3] = (UCHAR)utemp;
-				utemp >>= 8;
-				ucbuff[4] = (UCHAR)utemp;
-
-				utemp = engine_temp_limit;
-				ucbuff[5] = (UCHAR)utemp;
-				utemp >>= 8;
-				ucbuff[6] = (UCHAR)utemp;
-
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
+				if(key_mode == NORMAL)
+				{
+					running_lights_on = 1;
+					cmd = ON_RUNNING_LIGHTS;
+					ucbuff[0] = cmd;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					vTaskDelay(200);
+					cmd = ON_LIGHTS;
+					ucbuff[0] = cmd;
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(Send7200Handle, avr_buffer, 0);
+					lights_on = 1;
+				}
 			break;
-			
+
 			default:
 				ucbuff[0] = DTMF_TONE_ON;
 				ucbuff[1] = 10;
@@ -1058,9 +1194,8 @@ void StartRecv7200(void const * argument)
 		cmd = buff[0];
 
 		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || 
-				cmd == SERVER_DOWN || cmd == SET_TEMP_LIMIT || cmd == SET_FAN_ON || cmd == SET_FAN_OFF 
-					|| cmd == SEND_CONFIG2 || cmd == GET_CONFIG2)
-		{	
+				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2)
+		{
 /*
 			if(timer_toggle == 0)
 			{
@@ -1068,7 +1203,7 @@ void StartRecv7200(void const * argument)
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 				timer_toggle = 1;
-				
+
 			}else
 			{
 				HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
@@ -1119,7 +1254,7 @@ void StartRecv7200(void const * argument)
 					break;
 				case 	START_SEQ:
 					engine_on = 1;
-					blower_on_countdown = 20;
+					blower_on_countdown = 10;
 					break;
 				case 	SHUTDOWN:
 				case 	ESTOP_SIGNAL:
@@ -1162,22 +1297,22 @@ void StartRecv7200(void const * argument)
 				case 	WIPER_OFF:
 					wipers_on = 0;
 					break;
-				case START_MBOX_XMIT:	
+				case START_MBOX_XMIT:
 //					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 //					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 //					system_up = 1;
 					break;
-				case STOP_MBOX_XMIT:	
+				case STOP_MBOX_XMIT:
 //					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 //					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 //					system_up = 0;
 					break;
-				case START_AVR_XMIT:	
+				case START_AVR_XMIT:
 //					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 //					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
 					avr_up = 1;
 					break;
-				case STOP_AVR_XMIT:	
+				case STOP_AVR_XMIT:
 //					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 //					HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 //					avr_up = 0;
@@ -1210,7 +1345,15 @@ void StartRecv7200(void const * argument)
  					blower_en_temp = (uint16_t)buff[14];
 					blower_en_temp <<= 8;
 					blower_en_temp |= (uint16_t)buff[13];
+/*
+ 					init_password_countdown = (uint16_t)buff[16];
+					init_password_countdown <<= 8;
+					init_password_countdown |= (uint16_t)buff[15];
 
+ 					init_password_retries = (uint16_t)buff[18];
+					init_password_retries <<= 8;
+					init_password_retries |= (uint16_t)buff[17];
+*/
 					for(i = 0;i < 20;i++)
 					{
 						if(timer_toggle == 0)
@@ -1231,7 +1374,7 @@ void StartRecv7200(void const * argument)
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(LD3_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 /*
-					for(i = 0;i < 3;i++)
+					for(i = 0;i < 4;i++)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
 						ucbuff[1] = (UCHAR)i;
@@ -1249,10 +1392,10 @@ void StartRecv7200(void const * argument)
 
 				case SERVER_DOWN:
 /*
-					for(i = 0;i < 3;i++)
+					for(i = 4;i > 0;i--)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
-						ucbuff[1] = (UCHAR)(3-i);
+						ucbuff[1] = (UCHAR)i;
 						avr_buffer[0] = pack64(ucbuff);
 						xQueueSend(SendFPGAHandle,avr_buffer,0);
 						vTaskDelay(10);
@@ -1293,7 +1436,7 @@ odometer_high,low, trip_high,low
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(SendAVRHandle,avr_buffer,0);
 					vTaskDelay(5);
-					
+
 					ucbuff[0] = SEND_INT_RT_VALUES;
 					ucbuff[1] = rtlabel_str[ODOM].row;
 					ucbuff[2] = rtlabel_str[ODOM].data_col;
@@ -1317,36 +1460,48 @@ odometer_high,low, trip_high,low
 					fan_on_temp = (uint16_t)buff[2];
 					fan_on_temp <<= 8;
 					fan_on_temp |= (uint16_t)buff[1];
-					
+
  					fan_off_temp = (uint16_t)buff[4];
 					fan_off_temp <<= 8;
 					fan_off_temp |= (uint16_t)buff[3];
-					
+
  					blower_en_temp = (uint16_t)buff[6];
 					blower_en_temp <<= 8;
 					blower_en_temp |= (uint16_t)buff[5];
-					
+
  					blower1_temp = (uint16_t)buff[8];
 					blower1_temp <<= 8;
 					blower1_temp |= (uint16_t)buff[7];
-					
+
  					blower2_temp = (uint16_t)buff[10];
 					blower2_temp <<= 8;
 					blower2_temp |= (uint16_t)buff[9];
-					
+
  					blower3_temp = (uint16_t)buff[12];
 					blower3_temp <<= 8;
 					blower3_temp |= (uint16_t)buff[11];
-					
+
 					engine_temp_limit = (uint16_t)buff[14];
 					engine_temp_limit <<= 8;
 					engine_temp_limit |= (uint16_t)buff[13];
-					
+
 					batt_box_temp = (uint16_t)buff[16];
 					batt_box_temp <<= 8;
 					batt_box_temp |= (uint16_t)buff[15];
+/*
+					init_password_countdown = (uint16_t)buff[18];
+					init_password_countdown <<= 8;
+					init_password_countdown |= (uint16_t)buff[17];
+
+					init_password_retries = (uint16_t)buff[20];
+					init_password_retries <<= 8;
+					init_password_retries |= (uint16_t)buff[19];
+
+					memcpy(&correct_password[0], &buff[21], 4);
+					correct_password[4] = 0;
+*/
 					break;
-					
+
 				case GET_CONFIG2:
 					// this is just to verify we are sending
 					// the right data
@@ -1376,6 +1531,24 @@ odometer_high,low, trip_high,low
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(Send7200Handle, avr_buffer, 0);
 					vTaskDelay(100);
+					break;
+
+				case SET_KEYMODE:
+					switch (buff[1])
+					{
+						case 0:
+							key_mode = NORMAL;
+							break;
+						case 1:
+							key_mode = PASSWORD;
+							break;
+						case 2:
+							key_mode = NUM_ENTRY;
+							break;
+						default:
+							key_mode = NORMAL;
+							break;
+					}
 					break;
 
 				default:
@@ -1519,7 +1692,7 @@ void StartRecvFPGA(void const * argument)
 //	mph = 1;
 
 	rtdata_update_rate = 0;
-	
+
 	xbyte = 0x21;
 
 	vTaskDelay(2000);
@@ -1527,11 +1700,11 @@ void StartRecvFPGA(void const * argument)
 	vTaskDelay(10);
 	HAL_GPIO_WritePin(GPIOA, PP_ACK_Pin, GPIO_PIN_RESET);
 	vTaskDelay(1);
-	
+
 	frame_ptr = 0;
 
   /* Infinite loop */
-	
+
 	for(;;)
 	{
 
@@ -1651,11 +1824,11 @@ void StartKeyStateTask(void const * argument)
 	unsigned long sendval;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[10];
-	e_isrState = STATE_WAIT_FOR_PRESS;  
+	e_isrState = STATE_WAIT_FOR_PRESS;
 
 	vTaskDelay(1000);
   /* Infinite loop */
-	
+
 	for(;;)
 	{
 		switch (e_isrState)
@@ -1665,7 +1838,7 @@ void StartKeyStateTask(void const * argument)
 				if(key != 0)
 				{
 					e_isrState = STATE_WAIT_FOR_RELEASE;
-					if(key != KP_POUND)
+					if(key_mode == NORMAL)
 					{
 						ucbuff[0] = DTMF_TONE_ON;
 						if(key == KP_0)
@@ -1686,7 +1859,7 @@ void StartKeyStateTask(void const * argument)
 					drive_row_high();
 					sendval = (unsigned long)key;
 					xQueueSend(keypressedHandle, &sendval, 0);
-					if(key != KP_POUND)
+					if(key_mode == NORMAL)
 					{
 						ucbuff[0] = DTMF_TONE_OFF;
 						avr_buffer[0] = pack64(ucbuff);
@@ -1718,6 +1891,47 @@ void Callback01(void const * argument)
 */
 	if(server_up == 1)
 	{
+#if 0
+		if(password_countdown > 0)
+		{
+			if(password_countdown == 1)
+			{
+				global_cmd = SHUTDOWN;
+				global_ucbuff[0] = global_cmd;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(Send7200Handle, global_avr_buffer, 0);
+				engine_on = 0;
+				vTaskDelay(100);
+				global_ucbuff[0] = DTMF_TONE_OFF;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+				key_mode = NORMAL;
+			}
+			password_countdown--;
+
+			if((password_countdown % 2) == 0)
+			{
+				global_ucbuff[0] = DTMF_TONE_ON;
+				global_ucbuff[1] = 0;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+				vTaskDelay(10);
+				global_ucbuff[0] = DTMF_TONE_OFF;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			}else
+			{
+				global_ucbuff[0] = DTMF_TONE_ON;
+				global_ucbuff[1] = 1;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+				vTaskDelay(10);
+				global_ucbuff[0] = DTMF_TONE_OFF;
+				global_avr_buffer[0] = pack64(global_ucbuff);
+				xQueueSend(SendFPGAHandle,global_avr_buffer,0);
+			}
+		}
+#endif
 		global_ucbuff[0] = ENGINE_TEMP;
 		global_ucbuff[2] = (UCHAR)raw_data;
 		raw_data >>= 8;
@@ -1770,7 +1984,7 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 		if(blower_on_countdown != 0)
 			blower_on_countdown--;
 
-		if(raw_data < 251)	// 251 = 257F - high as DS1620 will go
+		if((raw_data > 0 && raw_data < 251) || (raw_data > 510 && raw_data < 404))
 		{
 			if(too_high_flag == 0 && raw_data > engine_temp_limit)
 			{
@@ -1793,7 +2007,7 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 				too_high_flag = 0;
 			}
 
-			if(fan_on == 0 && raw_data >= fan_on_temp)
+			if(engine_on > 0 && fan_on == 0 && raw_data >= fan_on_temp)
 			{
 				global_cmd = ON_FAN;
 				global_ucbuff[0] = global_cmd;
@@ -1813,7 +2027,7 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 			if((raw_data > blower_en_temp && engine_on > 0) && blower_on_countdown == 0)
 //			if(raw_data > blower_en_temp && engine_on > 0)
 			{
-				if(raw_data2 < blower3_temp && blower_on != 3)
+				if(blower_override == 0 && raw_data2 < blower3_temp && blower_on != 3)
 				{
 					global_cmd = BLOWER3;
 					global_ucbuff[0] = global_cmd;
@@ -1821,7 +2035,8 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 					xQueueSend(Send7200Handle, global_avr_buffer, 0);
 					blower_on = 3;
 
-				}else if(raw_data2 < blower2_temp && raw_data2 > blower3_temp && blower_on != 2)
+				}else if(blower_override == 0 && raw_data2 < blower2_temp 
+						&& raw_data2 > blower3_temp && blower_on != 2)
 				{
 					global_cmd = BLOWER2;
 					global_ucbuff[0] = global_cmd;
@@ -1829,13 +2044,15 @@ so if raw_data is > 402 && < 510 then ignore the logic to control fan
 					xQueueSend(Send7200Handle, global_avr_buffer, 0);
 					blower_on = 2;
 
-				}else if(raw_data2 < blower1_temp && raw_data2 > blower2_temp && blower_on != 1)
+				}else if(blower_override == 0 && raw_data2 < blower1_temp 
+						&& raw_data2 > blower2_temp && blower_on != 1)
 				{
 					global_cmd = BLOWER1;
 					global_ucbuff[0] = global_cmd;
 					global_avr_buffer[0] = pack64(global_ucbuff);
 					xQueueSend(Send7200Handle, global_avr_buffer, 0);
 					blower_on = 1;
+
 				}else if(raw_data2 > blower1_temp && blower_on != 0)
 				{
 					global_cmd = BLOWER_OFF;
@@ -1944,6 +2161,7 @@ uint32_t pack32(UCHAR *buff)
 
 	return var32;
 }
+//#endif
 #endif
 /* USER CODE END Application */
 

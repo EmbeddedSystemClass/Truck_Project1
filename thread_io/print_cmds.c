@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "../mytypes.h"
 
-CMD_STRUCT cmd_array[108] =
+CMD_STRUCT cmd_array[114] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -92,6 +92,7 @@ CMD_STRUCT cmd_array[108] =
 	{		SERVER_DOWN,"SERVER_DOWN\0" },
 	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		UPLOAD_OTHER,"UPLOAD_OTHER\0" },
+	{		UPLOAD_NEW_PARAM,"UPLOAD_NEW_PARAM\0" },
 	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
 	{		SET_FAN_ON,"SET_FAN_ON\0" },
 	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
@@ -110,12 +111,17 @@ CMD_STRUCT cmd_array[108] =
 	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
 	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
 	{		SEND_CONFIG2,"SEND_CONFIG2\0" },
-	{		GET_CONFIG2,"GET_CONFIG2\0" }
+	{		GET_CONFIG2,"GET_CONFIG2\0" },
+	{		CLIENT_CONNECTED,"CLIENT_CONNECTED\0" },
+	{		SERVER_CONNECTED,"SERVER_CONNECTED\0" },
+	{		SET_KEYMODE,"SET_KEYMODE\0" },
+	{		PASSWORD_OK,"PASSWORD_OK\0" },
+	{		PASSWORD_BAD,"PASSWORD_BAD\0" }
 };
 
 int main(void)
 {
 	int i;
-	for(i = 0;i < 108;i++)
+	for(i = 0;i < 114;i++)
 		printf("%02d\t\t%02x\t\t%s\n",cmd_array[i].cmd, cmd_array[i].cmd, cmd_array[i].cmd_str);
 }

@@ -426,7 +426,7 @@
 			this.btnSetParams.Name = "btnSetParams";
 			this.btnSetParams.Size = new System.Drawing.Size(235, 61);
 			this.btnSetParams.TabIndex = 12;
-			this.btnSetParams.Text = "Set Svr Params";
+			this.btnSetParams.Text = "Send Server Up";
 			this.btnSetParams.UseVisualStyleBackColor = false;
 			this.btnSetParams.Click += new System.EventHandler(this.SetParamsClick);
 			// 

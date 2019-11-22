@@ -163,7 +163,9 @@ namespace EpServerEngineSampleClient
 						Next_Click(new object(), new EventArgs());
 						break;
 					case "NAV_SIDE":
-						current_selection = 0;
+						current_selection += 10;
+						if (current_selection > no_selections - 1)
+							current_selection = 0;
 						lbPlayList.SelectedIndex = current_selection;
 						break;
 					case "NAV_CLICK":

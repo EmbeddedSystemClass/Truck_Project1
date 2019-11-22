@@ -1,6 +1,8 @@
 /* make_params.c - actual values of rpm_update_rate->low_rev_limit & lights_on_delay is 
 	the index into the choices in the xml files and the collections of the comboboxes
 	in the DlgSetParams.cs of the client proj. and ParamsForm.cs of the server proj.
+	
+as of 11/7/2019 this file is prepended by an 0xAA and appended by an 0x55
 
 high_rev_limit:
 0 - 6000
@@ -71,22 +73,26 @@ int main(void)
 	char filename[20] = "param.conf\0";
 	char *fptr = filename;
 	PARAM_STRUCT ps;
+	UCHAR id = 0xAA;
+	char password[5] = "4567\0";
 
 	ps.rpm_update_rate = 1;
 	ps.mph_update_rate = 2;
 	ps.fpga_xmit_rate = 2;
 	ps.high_rev_limit = 9;
 	ps.low_rev_limit = 7;
-	ps.cooling_fan_on = 171;
-	ps.cooling_fan_off = 154;
-	ps.blower_enabled = 7;
-	ps.blower1_on = 8;
-	ps.blower2_on = 9;
+	ps.cooling_fan_on = 180;
+	ps.cooling_fan_off = 170;
+	ps.blower_enabled = 50;
+	ps.blower1_on = 32;
+	ps.blower2_on = 20;
 	ps.blower3_on = 10;
 	ps.lights_on_delay = 6;
-	ps.engine_temp_limit = 182;
+	ps.engine_temp_limit = 195;
 	ps.batt_box_temp = 40;
 	ps.test_bank = 2;
+	ps.password_timeout = 1;
+	ps.password_retries = 1;
 
 	printf("\r\nrpm_update_rate:\t\t%d\r\n",ps.rpm_update_rate);
 	printf("mph_update_rate:\t\t%d\r\n",ps.mph_update_rate);
@@ -103,9 +109,15 @@ int main(void)
 	printf("engine_temp_limit:\t\t%d\r\n",ps.engine_temp_limit);
 	printf("battery box temp:\t\t%d\r\n",ps.batt_box_temp);
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
+	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
+	printf("password retries:\t\t%d\r\n",ps.password_retries);
 
 	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+	write(fp,&id,1);
 	write(fp,&ps,sizeof(PARAM_STRUCT));
+	write(fp,&password,4);
+	id = 0x55;
+	write(fp,&id,1);
 	close(fp);
 
 	return 0;

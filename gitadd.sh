@@ -189,6 +189,9 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ManageServer.resx
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Password.Designer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Password.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/Password.resx
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/ClientSide/ClientInterface.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/EpServerEngine.cs.csproj
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient.sln

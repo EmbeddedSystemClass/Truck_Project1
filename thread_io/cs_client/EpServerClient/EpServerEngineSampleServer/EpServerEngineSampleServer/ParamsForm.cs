@@ -38,6 +38,8 @@ namespace EpServerEngineSampleServer
 			cbRPMUpdateRate.SelectedIndex = m_cfg.si_rpm_update_rate;
 			cbMPHUpdateRate.SelectedIndex = m_cfg.si_mph_update_rate;
 			cbFPGAXmitRate.SelectedIndex = m_cfg.si_FPGAXmitRate;
+			m_cfg.password_timeout = Convert.ToInt16(cbPasswordTimeout.SelectedItem.ToString());
+			m_cfg.password_retries = Convert.ToInt16(cbPasswordRetries.SelectedItem.ToString());
 		}
 		private void btnTest_Click(object sender, EventArgs e)
 		{
@@ -1130,6 +1132,17 @@ namespace EpServerEngineSampleServer
 		private void btnCancel_Click(object sender, EventArgs e)
 		{
 			this.DialogResult = DialogResult.Cancel;
+		}
+
+		private void cbPasswordTimeout_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			m_cfg.password_timeout = cbPasswordTimeout.SelectedIndex;
+			m_cfg.si_password_timeout = cbPasswordTimeout.SelectedIndex;
+		}
+		private void cbPasswordRetries_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			m_cfg.password_retries = cbPasswordRetries.SelectedIndex;
+			m_cfg.si_password_retries = cbPasswordRetries.SelectedIndex;
 		}
 	}
 }

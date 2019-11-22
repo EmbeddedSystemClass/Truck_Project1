@@ -54,6 +54,23 @@ lights_on_delay:
 10 - 10 minutes
 11 - 30 minutes
 12 - 1 hour
+
+password timeout:
+0 - 10 seconds
+1 - 15 seconds
+2 - 30 seconds
+3 - 1 minute
+4 - 2 minutes
+5 - 5 minutes
+6 - 10 minutes
+
+password retries:
+0 - 2
+1 - 3
+2 - 4
+3 - 5
+4 - 6
+
 */
 
 #include <stdio.h>
@@ -63,6 +80,8 @@ lights_on_delay:
 #include <ctype.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../../mytypes.h"
 
 static char *get_temp_str(int index);
@@ -472,9 +491,10 @@ TEMPS temp_str[359] = {
 	{"-66.1\0", 403}
 	};
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	int i;
+	char password[5];
 /*
 	for(i = 0;i < 10;i++)
 		printf("hi: %s\n",hi_rev[i]);
@@ -502,11 +522,34 @@ int main(void)
 */
 	int fp;
 	char filename[20] = "param.conf\0";
+	if(argc > 1)
+		strcpy(filename,"sched2\0");
 	char *fptr = filename;
 	PARAM_STRUCT ps;
+	UCHAR id;
 
 	fp = open((const char *)fptr, O_RDWR);
+	read(fp,&id,1);
+	if(id != 0xAA)
+	{
+		printf("bad file marker at begin\r\n");
+		close(fp);
+		exit(-1);
+	}
+	i = lseek(fp,-1,SEEK_END);
+//	printf("seek to end - 1: %d\r\n",i);
+	read(fp,&id,1);
+	if(id != 0x55)
+	{
+		printf("bad file marker at end\r\n");
+		close(fp);
+		exit(-1);
+	}
+	i = lseek(fp,1,SEEK_SET);
+//	printf("seek to begin + 1: %d\r\n",i);
 	read(fp, &ps, sizeof(PARAM_STRUCT));
+	read(fp, &password, 4);
+	password[4] = 0;
 	close(fp);
 
 	printf("\r\nrpm_update_rate:\t\t%s\r\n",update_rates[ps.rpm_update_rate]);
@@ -524,7 +567,10 @@ int main(void)
 	printf("engine_temp_limit:\t\t%s\r\n",get_temp_str(ps.engine_temp_limit));
 	printf("battery box temp:\t\t%s\r\n",get_temp_str(ps.batt_box_temp));
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
-	return 0;
+	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
+	printf("password retries:\t\t%d\r\n",ps.password_retries);
+	printf("password:\t\t\t%s\r\n",password);
+	return 11;
 }
 
 static char *get_temp_str(int index)

@@ -60,6 +60,7 @@ PARAM_STRUCT ps;
 static UCHAR read_serial_buffer[SERIAL_BUFF_SIZE];
 static UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 static int no_serial_buff;
+char password[PASSWORD_SIZE];
 
 static int serial_rec;
 int engine_running;
@@ -142,7 +143,8 @@ void init_ips(void)
 		}
 	}
 //	printf("max_ips: %d\r\n",max_ips);
-	i = LoadParams("param.conf",&ps,errmsg);
+	i = LoadParams("param.conf",&ps, &password[0], errmsg);
+	//printString2(password);
 	actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
 
 	//sprintf(tempx,"%d %d %d",ps.engine_temp_limit,ps.cooling_fan_on,ps.cooling_fan_off);
@@ -283,8 +285,6 @@ static void set_output(O_DATA *otp, int onoff)
 				// this causes the server to disconnect for some reason
 				//send_serial(ESTOP_SIGNAL);
 				add_msg_queue(ESTOP_SIGNAL);
-				
-				
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
 			}	
@@ -328,16 +328,13 @@ void send_serial(UCHAR cmd)
 void send_serial2(UCHAR cmd)
 {
 	int i;
-//	pthread_mutex_lock( &serial_write_lock);
-	write_serial2(cmd);
-
-//	pthread_mutex_unlock(&serial_write_lock);
+	if(ps.test_bank == 0)
+		write_serial2(cmd);
 }
 /*********************************************************************/
 void send_serialother(UCHAR cmd, UCHAR *buf)
 {
 	int i;
-
 	pthread_mutex_lock( &serial_write_lock);
 
 	write_serial(cmd);
@@ -347,6 +344,7 @@ void send_serialother(UCHAR cmd, UCHAR *buf)
 //		printHexByte(buf[i]);
 	}
 	pthread_mutex_unlock(&serial_write_lock);
+
 }
 /*********************************************************************/
 void send_serialother2(UCHAR cmd, UCHAR *buf)
@@ -354,12 +352,14 @@ void send_serialother2(UCHAR cmd, UCHAR *buf)
 //	pthread_mutex_lock( &serial_write_lock);
 	int i;
 
-	write_serial2(cmd);
-	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+	if(ps.test_bank == 0)
 	{
-		write_serial2(buf[i]);
+		write_serial2(cmd);
+		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
+		{
+			write_serial2(buf[i]);
+		}
 	}
-//	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -709,7 +709,7 @@ UCHAR timer_task(int test)
 			red_led(0);
 			green_led(1);
 		}
-
+/*
 		write_serial_buffer[0] = running_hours;
 		write_serial_buffer[1] = running_minutes;
 		write_serial_buffer[2] = running_seconds;
@@ -720,7 +720,7 @@ UCHAR timer_task(int test)
 		write_serial_buffer[7] = (UCHAR)odometer;
 		write_serial_buffer[8] = (UCHAR)(trip << 8);
 		write_serial_buffer[9] = (UCHAR)trip;
-
+*/
 //		write_serial_buffer[0] = 0xAA;
 //		write_serial_buffer[1] = 0x55;
 //		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
@@ -739,6 +739,16 @@ UCHAR timer_task(int test)
 			sprintf(tempx,"%dh %dm %ds ",running_hours, running_minutes, running_seconds);
 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_RUNTIME);
 
+			if(running_minutes == 0 && running_seconds == 15)
+			{
+				add_msg_queue(ON_LIGHTS);
+				add_msg_queue(ON_RUNNING_LIGHTS);
+				send_serialother(ON_LIGHTS,(UCHAR*)tempx);
+				send_serialother(ON_RUNNING_LIGHTS,(UCHAR*)tempx);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ON_LIGHTS);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ON_RUNNING_LIGHTS);
+			}
+
 		}else
 		{
 			running_seconds = running_minutes = running_hours = 0;
@@ -751,8 +761,10 @@ UCHAR timer_task(int test)
 				{
 					add_msg_queue(OFF_LLIGHTS);
 					add_msg_queue(OFF_RLIGHTS);
+					add_msg_queue(OFF_LIGHTS);
 					add_msg_queue(OFF_RUNNING_LIGHTS);
 					add_msg_queue(BLOWER_OFF);
+					add_msg_queue(OFF_FAN);
 					usleep(1000);
 					send_serialother(OFF_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
@@ -760,12 +772,12 @@ UCHAR timer_task(int test)
 					usleep(1000);
 					send_serialother(BLOWER_OFF,(UCHAR*)tempx);
 					usleep(1000);
+					send_serialother(OFF_FAN,(UCHAR*)tempx);
+					usleep(1000);
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, OFF_LIGHTS);
 				}
 			}
 		}
-
-
 		odometer++;
 		if(odometer % 2 == 0)
 			trip++;
@@ -957,6 +969,9 @@ UCHAR serial_recv_task(int test)
 
 	memset(errmsg,0,20);
 
+	usleep(_5SEC);	// delay 5 seconds because it hangs when trying
+					// to send to STM32 when starting up
+
 	if(fd = init_serial() < 0)
 	{
 		myprintf1("can't open comm port 1");
@@ -966,7 +981,6 @@ UCHAR serial_recv_task(int test)
 	if(fd = init_serial2() < 0)
 	{
 		myprintf1("can't open comm port 2");
-		//return 0;
 	}
 
 	ch = ch2 = 0x7e;
@@ -976,8 +990,6 @@ UCHAR serial_recv_task(int test)
 
 	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
 
-	usleep(_5SEC);	// delay 5 seconds because it hangs when trying
-					// to send to STM32 when starting up
 	temp = ps.engine_temp_limit;
 	send_buffer[0] = (UCHAR)temp;
 	temp >>= 8;
@@ -1012,6 +1024,18 @@ UCHAR serial_recv_task(int test)
 	send_buffer[12] = (UCHAR)temp;
 	temp >>= 8;
 	send_buffer[13] = (UCHAR)temp;
+/*	
+	temp = ps.password_timeout;
+	send_buffer[14] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[15] = (UCHAR)temp;
+	
+	temp = ps.password_retries;
+	send_buffer[16] = (UCHAR)temp;
+	temp >>= 8;
+	send_buffer[17] = (UCHAR)temp;
+*/
+	
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
 	printString2("server_up");
@@ -1062,7 +1086,7 @@ UCHAR serial_recv_task(int test)
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
 			if(test_sock())
-	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,ENGINE_TEMP);
+	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_TEMP);
 
 //			printString2(tempx);
 //			sprintf(tempx,"%d",temp);
@@ -1088,7 +1112,7 @@ UCHAR serial_recv_task(int test)
 			sprintf(tempx,"%.1f\0", convertF(indoor_temp));
 			//printString2(tempx);
 			if(test_sock())
-	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,INDOOR_TEMP);
+	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, INDOOR_TEMP);
 		}else
 		
 		if(cmd == TEMP_TOO_HIGH)
@@ -1176,7 +1200,19 @@ UCHAR serial_recv_task(int test)
 			temp |= read_serial_buffer[5];
 			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
 			printString2(tempx);
+		}else
+			
+		if(cmd == PASSWORD_OK)
+		{
+			printString2("password ok");
+		}else
+
+		if(cmd == PASSWORD_BAD)
+		{
+			sprintf(tempx,"password: %d %d",read_serial_buffer[1],read_serial_buffer[2]);
+			printString2(tempx);
 		}
+		
 
 		if(shutdown_all)
 		{
@@ -1239,7 +1275,7 @@ UCHAR tcp_monitor_task(int test)
 #ifndef MAKE_TARGET
 	if ( ((int)(ptrp = getprotobyname("tcp"))) == 0)
 	{
-		myprintf1("cannot map tcp to protocol number\0");
+		//printString2("cannot map tcp to protocol number");
 //		printf("cannot map tcp to protocol number\r\n");
 //			exit (1);
 	}
@@ -1252,7 +1288,7 @@ UCHAR tcp_monitor_task(int test)
 #endif
 	if (listen_sd < 0)
 	{
-		myprintf1("socket creation failed\0");
+		//printString2("socket creation failed");
 //		printf("socket creation failed\r\n");
 //			exit(1);
 	}
@@ -1260,7 +1296,7 @@ UCHAR tcp_monitor_task(int test)
 /* Bind a local address to the socket */
 	if (bind(listen_sd, (struct sockaddr *)&sad, sizeof (sad)) < 0)
 	{
-		myprintf1("bind failed\0");
+		//printString2("bind failed");
 //		printf("bind failed\r\n");
 //		exit(1);
 	}
@@ -1268,7 +1304,7 @@ UCHAR tcp_monitor_task(int test)
 /* Specify a size of request queue */
 	if (listen(listen_sd, QLEN) < 0)
 	{
-		myprintf1("listen failed\0");
+		//printString2("listen failed");
 //		printf("listen failed\r\n");
 //			exit(1);
 	}
@@ -1297,13 +1333,13 @@ UCHAR tcp_monitor_task(int test)
 		else
 		{
 //			myprintf1("Server Waiting...\0");
-//			printString2("Server Waiting...\0");
+			//printString2("Server Waiting");
 //			printf("Server Waiting...\r\n");
 //
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, (socklen_t *)&alen)) < 0)
 			{
 				myprintf1("accept failed\0");
-				printf("accept failed\r\n");
+				//printString2("accept failed");
 				return 0;
 //					exit (1);
 			}
@@ -1466,7 +1502,7 @@ UCHAR basic_controls_task(int test)
 	{RBRIGHTS,0},
 	{RHEADLAMP,0}};
 
-	strcpy(tempx,"shutdown...\0");
+	//strcpy(tempx,"shutdown...\0");
 	memset(msg_queue,0,sizeof(msg_queue));
 	msg_queue_ptr = 0;
 
@@ -1896,6 +1932,8 @@ UCHAR basic_controls_task(int test)
 	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				engine_running = 1;
 	//			printf("engine_running: %d\r\n",engine_running);
+//				tempx[0] = 1;	// set key_mode to 'PASSWORD'
+//				send_serialother(SET_KEYMODE,(UCHAR*)tempx);
 				break;
 
 			case SHUTDOWN:
@@ -2002,12 +2040,20 @@ UCHAR basic_controls_task(int test)
 				shutdown_all = 1;
 				reboot_on_exit = 2;
 				break;
+
 			case UPLOAD_NEW:
 				send_serial(SERVER_DOWN);
 				shutdown_all = 1;
 				reboot_on_exit = 4;
-
 				break;	
+
+			case UPLOAD_NEW_PARAM:
+				send_serial(SERVER_DOWN);
+				//printf("upload new param...\r\n");
+				shutdown_all = 1;
+				reboot_on_exit = 5;
+				break;	
+
 			case UPLOAD_OTHER:
 				shutdown_all = 1;
 				reboot_on_exit = 1;

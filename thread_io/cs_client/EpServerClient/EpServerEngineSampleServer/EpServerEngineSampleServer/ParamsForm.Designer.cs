@@ -65,6 +65,10 @@
 			this.btnCancel = new System.Windows.Forms.Button();
 			this.tbDebug = new System.Windows.Forms.TextBox();
 			this.btnTest = new System.Windows.Forms.Button();
+			this.label2 = new System.Windows.Forms.Label();
+			this.cbPasswordRetries = new System.Windows.Forms.ComboBox();
+			this.label3 = new System.Windows.Forms.Label();
+			this.cbPasswordTimeout = new System.Windows.Forms.ComboBox();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -434,7 +438,7 @@
 			// 
 			// btnOK
 			// 
-			this.btnOK.Location = new System.Drawing.Point(380, 248);
+			this.btnOK.Location = new System.Drawing.Point(374, 319);
 			this.btnOK.Name = "btnOK";
 			this.btnOK.Size = new System.Drawing.Size(75, 23);
 			this.btnOK.TabIndex = 73;
@@ -444,7 +448,7 @@
 			// 
 			// btnCancel
 			// 
-			this.btnCancel.Location = new System.Drawing.Point(474, 248);
+			this.btnCancel.Location = new System.Drawing.Point(468, 319);
 			this.btnCancel.Name = "btnCancel";
 			this.btnCancel.Size = new System.Drawing.Size(75, 23);
 			this.btnCancel.TabIndex = 74;
@@ -454,12 +458,12 @@
 			// 
 			// tbDebug
 			// 
-			this.tbDebug.Location = new System.Drawing.Point(2, 298);
+			this.tbDebug.Location = new System.Drawing.Point(2, 319);
 			this.tbDebug.Multiline = true;
 			this.tbDebug.Name = "tbDebug";
 			this.tbDebug.ReadOnly = true;
 			this.tbDebug.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbDebug.Size = new System.Drawing.Size(355, 246);
+			this.tbDebug.Size = new System.Drawing.Size(355, 225);
 			this.tbDebug.TabIndex = 75;
 			// 
 			// btnTest
@@ -472,11 +476,77 @@
 			this.btnTest.UseVisualStyleBackColor = true;
 			this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
 			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(345, 274);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(92, 13);
+			this.label2.TabIndex = 80;
+			this.label2.Text = "Password Retries:";
+			// 
+			// cbPasswordRetries
+			// 
+			this.cbPasswordRetries.AutoCompleteCustomSource.AddRange(new string[] {
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"});
+			this.cbPasswordRetries.FormattingEnabled = true;
+			this.cbPasswordRetries.Items.AddRange(new object[] {
+            "Bank 0",
+            "Bank 1",
+            "Bank 2",
+            "Bank 3",
+            "Bank 4"});
+			this.cbPasswordRetries.Location = new System.Drawing.Point(457, 271);
+			this.cbPasswordRetries.Name = "cbPasswordRetries";
+			this.cbPasswordRetries.Size = new System.Drawing.Size(94, 21);
+			this.cbPasswordRetries.TabIndex = 79;
+			this.cbPasswordRetries.SelectedIndexChanged += new System.EventHandler(this.cbPasswordRetries_SelectedIndexChanged);
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Location = new System.Drawing.Point(345, 245);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(97, 13);
+			this.label3.TabIndex = 78;
+			this.label3.Text = "Password Timeout:";
+			// 
+			// cbPasswordTimeout
+			// 
+			this.cbPasswordTimeout.AutoCompleteCustomSource.AddRange(new string[] {
+            "10 seconds",
+            "15 seconds",
+            "30 seconds",
+            "1 minute",
+            "2 minutes",
+            "5 minutes",
+            "10 minutes"});
+			this.cbPasswordTimeout.FormattingEnabled = true;
+			this.cbPasswordTimeout.Items.AddRange(new object[] {
+            "Bank 0",
+            "Bank 1",
+            "Bank 2",
+            "Bank 3",
+            "Bank 4"});
+			this.cbPasswordTimeout.Location = new System.Drawing.Point(457, 242);
+			this.cbPasswordTimeout.Name = "cbPasswordTimeout";
+			this.cbPasswordTimeout.Size = new System.Drawing.Size(94, 21);
+			this.cbPasswordTimeout.TabIndex = 77;
+			this.cbPasswordTimeout.SelectedIndexChanged += new System.EventHandler(this.cbPasswordTimeout_SelectedIndexChanged);
+			// 
 			// ParamsForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(580, 567);
+			this.Controls.Add(this.label2);
+			this.Controls.Add(this.cbPasswordRetries);
+			this.Controls.Add(this.label3);
+			this.Controls.Add(this.cbPasswordTimeout);
 			this.Controls.Add(this.btnTest);
 			this.Controls.Add(this.tbDebug);
 			this.Controls.Add(this.btnCancel);
@@ -546,5 +616,9 @@
 		private System.Windows.Forms.Button btnTest;
 		private System.Windows.Forms.ComboBox cbBatteryTemp;
 		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.ComboBox cbPasswordRetries;
+		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.ComboBox cbPasswordTimeout;
 	}
 }

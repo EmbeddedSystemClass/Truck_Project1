@@ -182,12 +182,13 @@ int oWriteConfig(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 	return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
-int LoadParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
+int LoadParams(char *filename, PARAM_STRUCT *ps, char *password, char *errmsg)
 {
 	char *fptr;
 	int fp = -1;
 	int i = 0;
 	fptr = (char *)filename;
+	UCHAR id;
 
 	fp = open((const char *)fptr, O_RDWR);
 	if(fp < 0)
@@ -200,8 +201,23 @@ int LoadParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
 
 	i = lseek(fp,0,SEEK_SET);
 	i = 0;
+	read(fp,&id,1);
+	if(id != 0xAA)
+	{
+		close(fp);
+		printString2("bad file marker at begin");
+		return -3;
+	}
 	i = read(fp,(void*)ps,sizeof(PARAM_STRUCT));
+	read(fp,(void*)&password[0],4);
 //	printf("fp:%d  read: %d bytes in oLoadConfig\n",fp,i);
+	read(fp,&id,1);
+	if(id != 0x55)
+	{
+		close(fp);
+		printString2("bad file marker at begin");
+		return -4;
+	}
 	close(fp);
 	strcpy(errmsg,"Success\0");
 	return 0;
@@ -209,12 +225,13 @@ int LoadParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
 ///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-int WriteParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
+int WriteParams(char *filename, PARAM_STRUCT *ps, char *password, char *errmsg)
 {
 	char *fptr;
 	int fp = -1;
 	int i,j,k;
 	fptr = (char *)filename;
+	UCHAR id = 0xAA;
 
 //#ifdef NOTARGET
 	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
@@ -230,8 +247,11 @@ int WriteParams(char *filename, PARAM_STRUCT *ps,char *errmsg)
 	}
 
 	j = 0;
+	write(fp,&id,1);
 	write(fp,(const void*)ps,sizeof(PARAM_STRUCT));
-
+	write(fp,(const void*)&password[0],4);
+	id = 0x55;
+	write(fp,&id,1);
 	close(fp);
 	strcpy(errmsg,"Success\0");
 	return 0;

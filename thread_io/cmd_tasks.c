@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[108] =
+CMD_STRUCT cmd_array[116] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -128,6 +128,7 @@ CMD_STRUCT cmd_array[108] =
 	{		SERVER_DOWN,"SERVER_DOWN\0" },
 	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
 	{		UPLOAD_OTHER,"UPLOAD_OTHER\0" },
+	{		UPLOAD_NEW_PARAM,"UPLOAD_NEW_PARAM\0" },
 	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
 	{		SET_FAN_ON,"SET_FAN_ON\0" },
 	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
@@ -146,7 +147,14 @@ CMD_STRUCT cmd_array[108] =
 	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
 	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
 	{		SEND_CONFIG2,"SEND_CONFIG2\0" },
-	{		GET_CONFIG2,"GET_CONFIG2\0" }
+	{		GET_CONFIG2,"GET_CONFIG2\0" },
+	{		CLIENT_CONNECTED,"CLIENT_CONNECTED\0" },
+	{		SERVER_CONNECTED,"SERVER_CONNECTED\0" },
+	{		SET_KEYMODE,"SET_KEYMODE\0" },
+	{		PASSWORD_OK,"PASSWORD_OK\0" },
+	{		PASSWORD_BAD,"PASSWORD_BAD\0" },
+	{		SET_PASSWORD_TIMEOUT,"SET_PASSWORD_TIMEOUT\0" },
+	{		SET_PASSWORD_RETRIES,"SET_PASSWORD_RETRIES\0" }
 };
 
 //extern illist_t ill;
@@ -155,6 +163,7 @@ extern ollist_t oll;
 UCHAR msg_buf[UPLOAD_BUFF_SIZE];
 UCHAR msg_buf2[UPLOAD_BUFF_SIZE/2];
 extern PARAM_STRUCT ps;
+extern char password[PASSWORD_SIZE];
 
 int shutdown_all;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
@@ -266,7 +275,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.48\0";
+	char version[15] = "sched v1.30\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -428,6 +437,7 @@ UCHAR get_host_cmd_task(int test)
 					case SHUTDOWN_IOBOX:
 					case REBOOT_IOBOX:
 					case UPLOAD_NEW:
+					case UPLOAD_NEW_PARAM:
 					case UPLOAD_OTHER:
 					case TEST_ALL_IO:
 					case TEST_LEFT_BLINKER:
@@ -494,10 +504,13 @@ UCHAR get_host_cmd_task(int test)
 					// allows password to be changed from laptop via tcp connection
 					case NEW_PASSWORD1:
 						rc = 0;
-						memset(tempx,0,50);
+//						memset(tempx,0,50);
+						send_msg(strlen((char*)password)*2,(UCHAR*)password, NEW_PASSWORD1);
+						printString2(password);
+						
 //						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
-						memcpy((void *)&tempx[0],&msg_buf[0],12);
-						myprintf2("read: ",rc);
+//						memcpy((void *)&tempx[0],&msg_buf[0],12);
+//						myprintf2("read: ",rc);
 						break;
 
 					// clear the lcd screen and redraw the menus and rt labels
@@ -560,10 +573,11 @@ UCHAR get_host_cmd_task(int test)
 						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
 						printString2(tempx);
 
-						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
+							printString2(errmsg);
 							myprintf1(errmsg);
 						}
 #endif
@@ -953,13 +967,13 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case STOP_MBOX_XMIT:
+/*
 						sprintf(tempx,"engine temp limit: %.1f\0", convertF(ps.engine_temp_limit));
 						printString2(tempx);
 						sprintf(tempx,"cooling fan on:    %.1f\0", convertF(ps.cooling_fan_on));
 						printString2(tempx);
 						sprintf(tempx,"cooling fan off:   %.1f\0", convertF(ps.cooling_fan_off));
 						printString2(tempx);
-/*
 						sprintf(tempx,"blower 1 on: %.1f\0", convertF(ps.blower1_on));
 						printString2(tempx);
 						sprintf(tempx,"blower 2 on: %.1f\0", convertF(ps.blower2_on));
@@ -1020,12 +1034,13 @@ UCHAR get_host_cmd_task(int test)
 						//send_serial(SET_TEMP_LIMIT);
 						send_serialother(SET_TEMP_LIMIT, &write_serial_buffer[0]);
 //						usleep(1000);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 						
@@ -1037,16 +1052,17 @@ UCHAR get_host_cmd_task(int test)
 //						sprintf(tempx,"cooling fan on: %d", ps.cooling_fan_on);
 //						sprintf(tempx,"cooling fan on: %.1f\0", convertF(ps.cooling_fan_on));
 //						printString2(tempx);
-						write_serial_buffer[0] = msg_buf[2];
-						write_serial_buffer[1] = msg_buf[3];
-						send_serialother(SET_FAN_ON, &write_serial_buffer[0]);
+//						write_serial_buffer[0] = msg_buf[2];
+//						write_serial_buffer[1] = msg_buf[3];
+//						send_serialother(SET_FAN_ON, &write_serial_buffer[0]);
 //						usleep(1000);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 						
@@ -1058,16 +1074,17 @@ UCHAR get_host_cmd_task(int test)
 //						sprintf(tempx,"cooling fan off: %d",ps.cooling_fan_off);
 //						sprintf(tempx,"cooling fan off: %.1f\0", convertF(ps.cooling_fan_off));
 //						printString2(tempx);
-						write_serial_buffer[0] = msg_buf[2];
-						write_serial_buffer[1] = msg_buf[3];
-						send_serialother(SET_FAN_OFF, &write_serial_buffer[0]);
+//						write_serial_buffer[0] = msg_buf[2];
+//						write_serial_buffer[1] = msg_buf[3];
+//						send_serialother(SET_FAN_OFF, &write_serial_buffer[0]);
 //						usleep(1000);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 
@@ -1076,14 +1093,15 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.high_rev_limit = utemp;
-//						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
-//						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
 //						sprintf(tempx,"actual: %d",actual_high_rev_limit);
@@ -1095,14 +1113,15 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.low_rev_limit = utemp;
-//						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
-//						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
+						printString2(tempx);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
 //						sprintf(tempx,"actual: %d",actual_low_rev_limit);
@@ -1121,15 +1140,16 @@ UCHAR get_host_cmd_task(int test)
 						msg_buf[2] = (UCHAR)utemp;
 						utemp >>= 8;
 						msg_buf[3] = (UCHAR)utemp;
-						write_serial_buffer[0] = msg_buf[2];
-						write_serial_buffer[1] = msg_buf[3];
-						send_serialother(LIGHTS_ON_DELAY, &write_serial_buffer[0]);
-//						i = WriteParams("param.conf", &ps, errmsg);
+//						write_serial_buffer[0] = msg_buf[2];
+//						write_serial_buffer[1] = msg_buf[3];
+//						send_serialother(LIGHTS_ON_DELAY, &write_serial_buffer[0]);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 
@@ -1140,28 +1160,30 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower1_on = utemp;
 //						sprintf(tempx,"blower 1 on: %d\0", ps.blower1_on);
 //						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 
-					case SET_BLOWER2_TEMP:
+					case SET_BLOWER2_TEMP: 
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.blower2_on = utemp;
 //						sprintf(tempx,"blower 2 on: %d\0", ps.blower2_on);
 //						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 
@@ -1172,12 +1194,13 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower3_on = utemp;
 //						sprintf(tempx,"blower 3 on: %d\0", ps.blower3_on);
 //						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 
@@ -1188,12 +1211,13 @@ UCHAR get_host_cmd_task(int test)
 						ps.blower_enabled = utemp;
 //						sprintf(tempx,"blower en on: %d\0", ps.blower_enabled);
 //						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 					
@@ -1204,12 +1228,47 @@ UCHAR get_host_cmd_task(int test)
 						ps.batt_box_temp = utemp;
 //						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
 //						printString2(tempx);
-//						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
+						}
+						break;
+
+					case SET_PASSWORD_TIMEOUT:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.password_timeout = utemp;
+//						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
+//						printString2(tempx);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
+						}
+						break;
+	
+					case SET_PASSWORD_RETRIES:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						ps.password_retries = utemp;
+//						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
+//						printString2(tempx);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
+						if(i < 0)
+						{
+//							printf("%s\r\n",errmsg);
+							myprintf1(errmsg);
+							sprintf(tempx,"%s %d",errmsg,i);
+							printString2(tempx);
 						}
 						break;
 	
@@ -1323,15 +1382,41 @@ UCHAR get_host_cmd_task(int test)
 						ps.batt_box_temp = utemp;
 						write_serial_buffer[14] = msg_buf[28];
 						write_serial_buffer[15] = msg_buf[29];
-						
+
 						utemp = (UINT)msg_buf[31];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[30];
 						ps.test_bank = utemp;
-						
+
+						utemp = (UINT)msg_buf[33];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[32];
+						ps.password_timeout = utemp;
+						write_serial_buffer[16] = msg_buf[32];
+						write_serial_buffer[17] = msg_buf[33];
+
+						utemp = (UINT)msg_buf[35];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[34];
+						ps.password_retries = utemp;
+						write_serial_buffer[18] = msg_buf[34];
+						write_serial_buffer[19] = msg_buf[35];
+
+						//memcpy(&password[0],&msg_buf[36],4);
+						j = 0;
+						memset(password,0,PASSWORD_SIZE);
+						for(i = 0;i < 7;i+= 2)
+						{
+							password[j] = write_serial_buffer[j + 20] = msg_buf[i+36];
+							j++;
+						}
+						write_serial_buffer[j] = 0;
+						password[4] = 0;
+						//printf("\r\n%s\r\n",password);
+						printString2(password);
 						send_serialother(SEND_CONFIG2, &write_serial_buffer[0]);
-						usleep(1000);
-						i = WriteParams("param.conf", &ps, errmsg);
+						usleep(500);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						printString2("update config file");
 						break;
 
@@ -1358,6 +1443,10 @@ UCHAR get_host_cmd_task(int test)
 						strcpy(tempx,"HOME_SVR_OFF");
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_OFF);
 						printString2("Home Server Off");
+						break;
+
+					case SERVER_UP:
+						send_serialother(SERVER_UP,(UCHAR *)tempx);
 						break;
 
 					case EXIT_PROGRAM:
@@ -1420,10 +1509,11 @@ exit_program:
 						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
 							myprintf1(errmsg);
 	*/
-						i = WriteParams("param.conf", &ps, errmsg);
+						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 	//							printf("%s\r\n",errmsg);
+							printString2(errmsg);
 							myprintf1(errmsg);
 						}
 	/*
@@ -1741,7 +1831,7 @@ void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %s\0",
 														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
@@ -1756,9 +1846,12 @@ void send_param_msg(void)
 														ps.lights_on_delay,
 														ps.engine_temp_limit,
 														ps.batt_box_temp,
-														ps.test_bank);
+														ps.test_bank,
+														ps.password_timeout,
+														ps.password_retries,
+														password);
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
-//printString2(tempx);
+//	printString2(tempx);
 }
 /*********************************************************************/
 void send_status_msg(char *msg)

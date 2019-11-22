@@ -16,10 +16,20 @@ namespace EpServerEngineSampleClient
     {
         private INetworkClient m_client;
         private ConfigParams cfg;
-
+		private string password = "";
         ServerCmds svrcmd;
         IDictionary<string, int> dtemps;
         List<string> temp_str;
+		IDictionary<string, int> lights_str;
+		IDictionary<string, int> timeout_str;
+		public void SetParams(ConfigParams _cfg)
+		{
+			cfg = _cfg;
+		}
+		public bool GetSet()
+		{
+			return cfg.set;
+		}
         public ConfigParams GetParams()
         {
             return cfg;
@@ -30,10 +40,10 @@ namespace EpServerEngineSampleClient
         }
         private void CancelClick(object sender, EventArgs e)
         {
-
-        }
-        public string get_temp_str(int index)
+		}
+		public string get_temp_str(int index)
         {
+			// return string given the index
 			if (index < 512 && index > 402)
 			{
 				int ret = 250;
@@ -46,8 +56,28 @@ namespace EpServerEngineSampleClient
 				return temp_str[250 - index];
 			else return "NAN";
         }
-        // TODO: need a dialog that pops up if blower1_on is lower that blower2_on or 
+		public int get_temp_index(string str)
+		{
+			int i;
+			for(i = 0;i < 359;i++)
+			{
+				if (str == temp_str[i])
+					return i;
+			}
+			return -1;
+		}
+		public int get_lights_on(string str)
+		{
+			return lights_str[str];
+		}
+		public int get_timeout(string str)
+		{
+			// return selected index of the string
+			return timeout_str[str];
+		}
+		// TODO: need a dialog that pops up if blower1_on is lower that blower2_on or 
 		// blower3_on and so on
+
 		private void OKClicked(object sender, EventArgs e)
         {
             string str = cbFanOff.SelectedItem.ToString();
@@ -71,7 +101,7 @@ namespace EpServerEngineSampleClient
             str = cbTempLimit.SelectedItem.ToString();
             cfg.si_engine_temp_limit = dtemps[str];
 
-            //            blower1_on = Convert.ToInt16(cbBlower1.SelectedItem.ToString());
+            //blower1_on = Convert.ToInt16(cbBlower1.SelectedItem.ToString());
             //MessageBox.Show(cbRPMUpdateRate.SelectedItem.ToString());
             cfg.rpm_update_rate = Convert.ToInt16(cbRPMUpdateRate.SelectedItem.ToString());
             cfg.mph_update_rate = Convert.ToInt16(cbMPHUpdateRate.SelectedItem.ToString());
@@ -80,101 +110,13 @@ namespace EpServerEngineSampleClient
             cfg.rpm_update_rate = Convert.ToInt16(cbRPMUpdateRate.SelectedItem.ToString());
             cfg.mph_update_rate = Convert.ToInt16(cbMPHUpdateRate.SelectedItem.ToString());
             cfg.FPGAXmitRate = Convert.ToInt16(cbFPGAXmitRate.SelectedItem.ToString());
-            byte[] total = new byte[26];
-            byte[] intBytes = BitConverter.GetBytes(cfg.fan_on);
+			cfg.lights_on_delay = get_lights_on(cbLightsOnDelay.SelectedItem.ToString());
+			cfg.password_timeout = get_timeout(cbPasswordTimeout.SelectedItem.ToString());
+			cfg.password = password;
+			//tbTest.Text = cbTestBank.SelectedIndex.ToString();
+			cfg.test_bank = cbTestBank.SelectedIndex;
 
-            Array.Reverse(intBytes);
-            byte[] result = intBytes;
-
-            total[0] = result[2];
-            total[1] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.fan_off);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[2] = result[2];
-            total[3] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.blower_enabled);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[4] = result[2];
-            total[5] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.blower3_on);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[6] = result[2];
-            total[7] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.blower2_on);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[8] = result[2];
-            total[9] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.blower1_on);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[10] = result[2];
-            total[11] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.high_rev_limit);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[12] = result[2];
-            total[13] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.low_rev_limit);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[14] = result[2];
-            total[15] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.rpm_update_rate);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[16] = result[2];
-            total[17] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.mph_update_rate);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[18] = result[2];
-            total[19] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.FPGAXmitRate);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[20] = result[2];
-            total[21] = result[3];
-
-            intBytes = BitConverter.GetBytes(cfg.test_bank);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[22] = result[3];
-            total[23] = 0;
-
-            intBytes = BitConverter.GetBytes(cfg.FPGAXmitRate);
-            Array.Reverse(intBytes);
-            result = intBytes;
-            total[24] = result[2];
-            total[25] = result[3];
-
-            /*
-                        intBytes = BitConverter.GetBytes(cfg.si_comm_en);
-                        Array.Reverse(intBytes);
-                        result = intBytes;
-                        total[24] = result[3];
-                        total[25] = 0;
-            */
-            byte[] bytes2 = new byte[total.Count() + 2];
-            System.Buffer.BlockCopy(total, 0, bytes2, 2, total.Length - 2);
-            string cmd = "SET_PARAMS";
-            bytes2[0] = svrcmd.GetCmdIndexB(cmd);
-            Packet packet = new Packet(bytes2, 0, bytes2.Count(), false);
-            m_client.Send(packet);
-        }
+		}
         private void cbFanOn_SelectedIndexChanged(object sender, EventArgs e)
         {
             string str = cbFanOn.SelectedItem.ToString();
@@ -229,7 +171,7 @@ namespace EpServerEngineSampleClient
         }
         private void cbLightsOnDelay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            cfg.lights_on_delay = cbLightsOnDelay.SelectedIndex;
+			cfg.lights_on_delay = get_lights_on(cbLightsOnDelay.SelectedItem.ToString());
             cfg.si_lights_on_delay = cbLightsOnDelay.SelectedIndex;
         }
         private void cbFPGAXmitRate_SelectedIndexChanged(object sender, EventArgs e)
@@ -252,11 +194,24 @@ namespace EpServerEngineSampleClient
             cfg.test_bank = cbTestBank.SelectedIndex;
             cfg.si_test_bank = cbTestBank.SelectedIndex;
         }
-        public DlgSetParams(ConfigParams cfg_params)
+		private void cbPasswordTimeout_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			string str = cbPasswordTimeout.SelectedItem.ToString();
+			cfg.password_timeout = timeout_str[str];
+			cfg.si_password_timeout = cbPasswordTimeout.SelectedIndex;
+		}
+		private void cbPasswordRetries_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			// since retries are: 2,3,4,5,6 then just add 2 to index
+			cfg.password_retries = cbPasswordRetries.SelectedIndex + 2;
+			cfg.si_password_retries = cbPasswordRetries.SelectedIndex;
+		}
+		public DlgSetParams(ConfigParams cfg_params)
         {
             cfg = cfg_params;
             InitializeComponent();
             svrcmd = new ServerCmds();
+			cfg.set = false;
 
             // initialize the string list with all the string values in the dictionary and
             // populate the temperature comboboxes with them all
@@ -983,7 +938,32 @@ namespace EpServerEngineSampleClient
             dtemps.Add("-65.2\0", 404);
             dtemps.Add("-66.1\0", 403);
 
-            foreach (string str in temp_str)
+			lights_str = new Dictionary<string,int>(13);
+
+			lights_str.Add("1 second",1);
+			lights_str.Add("2 seconds",2);
+			lights_str.Add("3 seconds",3);
+			lights_str.Add("5 seconds",5);
+			lights_str.Add("10 seconds",10);
+			lights_str.Add("15 seconds",15);
+			lights_str.Add("30 seconds",30);
+			lights_str.Add("1 minute",60);
+			lights_str.Add("2 minutes",120);
+			lights_str.Add("5 minutes", 300);
+			lights_str.Add("10 minutes",600);
+			lights_str.Add("30 minutes", 1800);
+			lights_str.Add("1 hour",3600);
+
+			timeout_str = new Dictionary<string, int>(7);
+			timeout_str.Add("10 seconds",10);
+			timeout_str.Add("15 seconds",15);
+			timeout_str.Add("30 seconds",30);
+			timeout_str.Add("1 minute",60);
+			timeout_str.Add("2 minutes",120);
+			timeout_str.Add("5 minutes",300);
+			timeout_str.Add("10 minutes",600);
+
+			foreach (string str in temp_str)
                 cbFanOn.Items.Add(str);
 
             foreach (string str in temp_str)
@@ -1004,70 +984,40 @@ namespace EpServerEngineSampleClient
             foreach (string str in temp_str)
                 cbTempLimit.Items.Add(str);
 
-            if (cfg.set == false)
-            {
-                cbFanOn.SelectedIndex = 64;
-                cfg.si_fan_on = 64;
+			cbFanOn.SelectedIndex = get_temp_index(get_temp_str(cfg.fan_on));
+			cbFanOff.SelectedIndex = get_temp_index(get_temp_str(cfg_params.fan_off));
+			cbBlower1.SelectedIndex = get_temp_index(get_temp_str(cfg_params.blower1_on));
+			cbBlower2.SelectedIndex = get_temp_index(get_temp_str(cfg_params.blower2_on));
+			cbBlower3.SelectedIndex = get_temp_index(get_temp_str(cfg_params.blower3_on));
+			cbBlowerEnabled.SelectedIndex = get_temp_index(get_temp_str(cfg_params.blower_enabled));
+			cbTempLimit.SelectedIndex = get_temp_index(get_temp_str(cfg_params.engine_temp_limit));
+			cbRPMUpdateRate.SelectedIndex = cfg_params.rpm_update_rate;
+			cbMPHUpdateRate.SelectedIndex = cfg_params.mph_update_rate;
+			cbFPGAXmitRate.SelectedIndex = cfg_params.FPGAXmitRate;
+			cbHighRevLimit.SelectedIndex = cfg_params.high_rev_limit;
+			cbLowRevLimit.SelectedIndex = cfg_params.low_rev_limit;
+			cbLightsOnDelay.SelectedIndex = cfg_params.lights_on_delay;
+			cbPasswordTimeout.SelectedIndex = cfg_params.password_timeout;
+			cbPasswordRetries.SelectedIndex = cfg_params.password_retries;
+			cbTestBank.SelectedIndex = cfg_params.test_bank;
+			password = cfg_params.password;
+			//tbTest.Text = cbTestBank.SelectedIndex.ToString();
+		}
 
-                cbFanOff.SelectedIndex = 97;
-                cfg.si_fan_off = 97;
+		private void btnChangePassword_Clicked(object sender, EventArgs e)
+		{
+			Password change_password = new Password(password,13);
+			if (change_password.ShowDialog(this) == DialogResult.OK)
+			{
+				password = change_password.GetPassword();
+				tbNewPasssword.Visible = true;
+				tbNewPasssword.Text = password;
+			}
+			else
+			{
+				//                this.txtResult.Text = "Cancelled";
+			}
 
-                cbTempLimit.SelectedIndex = 98;
-                cfg.si_engine_temp_limit = 98;
-
-                cbBlowerEnabled.SelectedIndex = 175;
-                cfg.si_blower_enabled = 175;
-
-                cbBlower1.SelectedIndex = 208;
-                cfg.si_blower1_on = 208;
-
-                cbBlower2.SelectedIndex = 219;
-                cfg.si_blower2_on = 219;
-
-                cbBlower3.SelectedIndex = 235;
-                cfg.si_blower3_on = 235;
-
-                cbLightsOnDelay.SelectedIndex = 3;
-                cfg.si_lights_on_delay = 3;
-
-                cbTestBank.SelectedIndex = 2;
-                cfg.si_test_bank = 2;
-
-				//cbSetCommPorts.SelectedIndex = 1;
-				//cfg.si_comm_en = 1;
-
-                cbHighRevLimit.SelectedIndex = 9;
-                cfg.si_high_rev_limit = 9;
-
-                cbLowRevLimit.SelectedIndex = 7;
-                cfg.si_low_rev_limit = 7;
-
-                cbRPMUpdateRate.SelectedIndex = 1;
-                cfg.si_rpm_update_rate = 1;
-
-                cbMPHUpdateRate.SelectedIndex = 1;
-                cfg.si_mph_update_rate = 1;
-
-                cbFPGAXmitRate.SelectedIndex = 1;
-                cfg.si_FPGAXmitRate = 1;
-                cfg.set = true;
-            }else
-            {
-                cbFanOn.SelectedIndex = cfg.si_fan_on;
-                cbFanOff.SelectedIndex = cfg.si_fan_off;
-                cbTempLimit.SelectedIndex = cfg.si_engine_temp_limit;
-                cbBlowerEnabled.SelectedIndex = cfg.si_blower_enabled;
-                cbBlower1.SelectedIndex = cfg.si_blower1_on;
-                cbBlower2.SelectedIndex = cfg.si_blower2_on;
-                cbBlower3.SelectedIndex = cfg.si_blower3_on;
-                cbLightsOnDelay.SelectedIndex = cfg.si_lights_on_delay;
-                cbTestBank.SelectedIndex = cfg.si_test_bank;
-                cbHighRevLimit.SelectedIndex = cfg.si_high_rev_limit;
-                cbLowRevLimit.SelectedIndex = cfg.si_low_rev_limit;
-                cbRPMUpdateRate.SelectedIndex = cfg.si_rpm_update_rate;
-                cbMPHUpdateRate.SelectedIndex = cfg.si_mph_update_rate;
-                cbFPGAXmitRate.SelectedIndex = cfg.si_FPGAXmitRate;
-            }
-        }
-    }
+		}
+	}
 }

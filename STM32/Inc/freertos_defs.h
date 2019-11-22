@@ -18,7 +18,7 @@ enum rt_values_offsets
 
 enum key_types
 {
- 	KP_1 = 0xE0, // '1'		- E0
+ 	KP_1 = 0xE0, //		- E0
 	KP_2, // '2'		- E1
 	KP_3, // '3'		- E2
 	KP_4, // '4'		- E3
@@ -84,7 +84,7 @@ typedef enum
 {
 	NORMAL,
 	PASSWORD,
-	NUMENTRY,
+	NUM_ENTRY,
 }KEY_MODE;
 
 #endif

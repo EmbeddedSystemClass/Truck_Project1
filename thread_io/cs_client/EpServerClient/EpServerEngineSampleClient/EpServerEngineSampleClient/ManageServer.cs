@@ -83,14 +83,16 @@ namespace EpServerEngineSampleClient
                 case 4:
                     cmd = "UPLOAD_OTHER";
                     break;
-                default:
+				case 5:
+					cmd = "UPLOAD_NEW_PARAM";
+					break;
+				default:
                     break;
             }
-            if (reboot_code > 0 && reboot_code < 5)
+            if (reboot_code > 0 && reboot_code < 6)
             {
                 offset = svrcmd.GetCmdIndexI(cmd);
                 svrcmd.Send_Cmd(offset);
-                AddMsg("sending REBOOT_IOBOX");
                 this.DialogResult = DialogResult.OK;
             }
             else this.DialogResult = DialogResult.Cancel;
@@ -107,5 +109,11 @@ namespace EpServerEngineSampleClient
         {
 
         }
-    }
+
+		private void btnUploadNewParam_Click(object sender, EventArgs e)
+		{
+			AddMsg("sending UPLOAD_NEW_PARAM");
+			reboot_code = 5;
+		}
+	}
 }

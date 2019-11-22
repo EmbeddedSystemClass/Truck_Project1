@@ -47,7 +47,7 @@ fi
 
 if [ $OUT -eq 4 ]
  then
-  echo "downloading new try_sched.sh" >> status.txt
+  echo "downloading new sched" >> status.txt
   ./server >> status.txt
   ./sched2 test 1
   OUT=$?
@@ -59,7 +59,26 @@ if [ $OUT -eq 10 ]
    chmod +x sched
    /sbin/reboot
 else 
- echo "bad download" >> status.txt
+ echo "bad sched download" >> status.txt
+  rm sched2
+  /sbin/reboot
+fi
+fi
+
+if [ $OUT -eq 5 ]
+ then
+  echo "downloading new param.conf" >> status.txt
+  ./server >> status.txt
+  ./show_params 1 >> status.txt
+  OUT=$?
+
+if [ $OUT -eq 11 ]
+  then
+   echo "param.conf download ok" >> status.txt
+   mv sched2 param.conf
+   /sbin/reboot
+else 
+ echo "bad param.conf download" >> status.txt
   rm sched2
   /sbin/reboot
 fi

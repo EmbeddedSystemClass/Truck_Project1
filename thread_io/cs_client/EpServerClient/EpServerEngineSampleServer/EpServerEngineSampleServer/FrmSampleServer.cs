@@ -162,7 +162,8 @@ namespace EpServerEngineSampleServer
 			switch (str)
 			{
 				case "SEND_MSG":
-					//AddMsg(str);
+					if(ret != "CLIENT_CONNECTED")
+						AddMsg(ret);
 					switch (ret)
 					{
 						case "START_SEQ":
@@ -192,8 +193,8 @@ namespace EpServerEngineSampleServer
 						case "OFF_RUNNING_LIGHTS":
 							break;
 						case "CLIENT_CONNECTED":
-							//bclient_connected = true;
-							//lbConnected.Text = "Connected";
+							bclient_connected = true;
+							lbConnected.Text = "Connected";
 							//AddMsg("getting CLIENT_CONNECTED msg");
 							break;
 						default:
@@ -325,6 +326,14 @@ namespace EpServerEngineSampleServer
 								break;
 							case 14:
 								cfg_params.test_bank = int.Parse(word);
+								break;
+							case 15:
+								cfg_params.si_password_timeout = int.Parse(word);
+								AddMsg("pswd timeout: " + cfg_params.password_timeout.ToString());
+								break;
+							case 16:
+								cfg_params.si_password_retries = int.Parse(word);
+								AddMsg("pswd retries: " + cfg_params.password_retries.ToString());
 								break;
 							default:
 								break;
@@ -602,6 +611,8 @@ namespace EpServerEngineSampleServer
 
 		private void btnGetParams_Click(object sender, EventArgs e)
 		{
+			// this is not parsed in the Process_Msg of the client
+			// but is sent on to the linux server in the 'OnReceived' method
 			Send_Cmd("SET_PARAMS");
 		}
 
@@ -627,10 +638,13 @@ namespace EpServerEngineSampleServer
 			byte[] limit = BitConverter.GetBytes(cfg_params.engine_temp_limit);
 			byte[] batt = BitConverter.GetBytes(cfg_params.battery_box_temp);
 			byte[] test = BitConverter.GetBytes(cfg_params.si_test_bank);
+			byte[] pswd_time = BitConverter.GetBytes(cfg_params.si_password_timeout);
+			byte[] pswd_retries = BitConverter.GetBytes(cfg_params.si_password_retries);
 
 			byte[] bytes = new byte[rpm.Count() + mph.Count() + fpga.Count() + high_rev.Count() 
 				+ low_rev.Count() + fan_on.Count() + fan_off.Count() + ben.Count() + b1.Count() 
-				+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count() + test.Count() + 2];
+				+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count() 
+				+ test.Count() + pswd_time.Count() + pswd_retries.Count() + 2];
 
 			bytes[0] = svrcmd.GetCmdIndexB(cmd);
 			//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
@@ -649,6 +663,8 @@ namespace EpServerEngineSampleServer
 			System.Buffer.BlockCopy(limit, 0, bytes, 26, limit.Count());
 			System.Buffer.BlockCopy(batt, 0, bytes, 28, batt.Count());
 			System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
+			System.Buffer.BlockCopy(pswd_time, 0, bytes, 32, test.Count());
+			System.Buffer.BlockCopy(pswd_retries, 0, bytes, 34, test.Count());
 			//AddMsg(bytes.Length.ToString());
 			AddMsg("send config2");
 			
@@ -700,8 +716,11 @@ namespace EpServerEngineSampleServer
 				}
 				//Send_Cmd("SERVER_CONNECTED");
 			}
-			else AddMsg("server stopped");
-			bclient_connected = false;
+			else
+			{
+				AddMsg("server stopped");
+				bclient_connected = false;
+			}
 		}
 
 		private void btnClearScreen_Click(object sender, EventArgs e)
