@@ -357,7 +357,6 @@ UCHAR get_host_cmd_task(int test)
 	memset(rt_file_data,0,sizeof(rt_file_data));
 	odometer = 0;
 	trip = 0;
-	tcp_connected_time = 0;
 	mask = 1;
 
 	while(TRUE)
@@ -400,7 +399,6 @@ UCHAR get_host_cmd_task(int test)
 
 //				printString2("\r\n");	
 			}
-			tcp_connected_time = 0;
 			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && 
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
@@ -466,39 +464,10 @@ UCHAR get_host_cmd_task(int test)
 					case WIPER_OFF:
 						//send_serialother(cmd,tempx);
 						add_msg_queue(cmd);
-						strcpy(tempx,cmd_array[cmd].cmd_str);
+//						strcpy(tempx,cmd_array[cmd].cmd_str);
 //						printString2(tempx);
 //						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
 //						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
-						break;
-
-					// the next 2 turns on or off the serial port to the PIC24 (monster box)
-					// so if the monster box is switched off for maintenance, the IO box
-					// won't get false signals to turn on or off ports
-/*
-					case SPECIAL_CMD:
-						for(i = 1;i < 20;i++)
-							add_msg_queue(i);
-						break;
-*/
-					case SET_SERIAL_RECV_ON:
-						if(serial_recv_on == 0)
-						{
-							if(fd = init_serial() < 0)
-							{
-								myprintf1("can't open comm port 1\0");
-								return 0;
-							}
-							serial_recv_on = 1;
-						}
-						break;
-
-					case SET_SERIAL_RECV_OFF:
-						if(serial_recv_on == 1)
-						{
-							close_serial();
-							serial_recv_on = 0;
-						}
 						break;
 
 					// allows password to be changed from laptop via tcp connection
@@ -507,15 +476,8 @@ UCHAR get_host_cmd_task(int test)
 //						memset(tempx,0,50);
 						send_msg(strlen((char*)password)*2,(UCHAR*)password, NEW_PASSWORD1);
 						printString2(password);
-						
-//						rc += recv_tcp((UCHAR *)&tempx[0],12,1);
-//						memcpy((void *)&tempx[0],&msg_buf[0],12);
-//						myprintf2("read: ",rc);
 						break;
 
-					// clear the lcd screen and redraw the menus and rt labels
-					// signal to monster box that the password must be re-entered in case of
-					// getting out of vehicle (hijack prevention)
 					case RE_ENTER_PASSWORD:
 						break;
 
@@ -525,62 +487,6 @@ UCHAR get_host_cmd_task(int test)
 					case SET_PARAMS:
 						send_param_msg();
 						printString2("set params");
-#if 0
-						memset(tempx,0,sizeof(tempx));
-//						printf("msg len: %d\r\n",msg_len/2-2);
-//						printf("\r\n");
-
-						j = 0;
-						for(i = 2;i < msg_len;i+=2)
-						{
-							memcpy((void*)&tempx[j++],(char*)&msg_buf[i],1);
-//							msg_buf[msg_len/2] = 0;
-
-//							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
-						}
-/*
-						for(i = 2;i < msg_len;i++)
-						{
-							printf("%d ",msg_buf[i]);
-						}
-*/
-						format_param_msg();
-
-						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
-						printString2(tempx);
-						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
-						printString2(tempx);
-						sprintf(tempx,"fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
-						printString2(tempx);
-						sprintf(tempx,"high_rev_limit: %d\r\n",ps.high_rev_limit);
-						printString2(tempx);
-						sprintf(tempx,"low_rev_limit: %d\r\n",ps.low_rev_limit);
-						printString2(tempx);
-						sprintf(tempx,"cooling fan: %d\r\n",ps.cooling_fan_on);
-						printString2(tempx);
-						sprintf(tempx,"fan off: %d\r\n",ps.cooling_fan_off);
-						printString2(tempx);
-						sprintf(tempx,"blwer en: %d\r\n",ps.blower_enabled);
-						printString2(tempx);
-						sprintf(tempx,"blower1: %d\r\n",ps.blower1_on);
-						printString2(tempx);
-						sprintf(tempx,"blower2: %d\r\n",ps.blower2_on);
-						printString2(tempx);
-						sprintf(tempx,"blower3: %d\r\n",ps.blower3_on);
-						printString2(tempx);
-						sprintf(tempx,"temp limit: %d\r\n",ps.engine_temp_limit);
-						printString2(tempx);
-						sprintf(tempx,"test_bank: %d\r\n",ps.test_bank);
-						printString2(tempx);
-
-						i = WriteParams("param.conf", &ps, &password[0], errmsg);
-						if(i < 0)
-						{
-//							printf("%s\r\n",errmsg);
-							printString2(errmsg);
-							myprintf1(errmsg);
-						}
-#endif
 						break;
 
 					case SET_TIME:
@@ -596,19 +502,6 @@ UCHAR get_host_cmd_task(int test)
 //							write_serial2(tempx[i]);
 						}
 						tempx[msg_len/2-2] = 'M';
-//						printString2("\r\n");	
-
-//						printString2(tempx);
-//						printString2("\r\n");
-
-//						printString2(tempx);	
-//						msg_buf[msg_len/2] = 0;
-//							if(msg_buf[i] > 0x1f && msg_buf[i] < 0x7e)
-//								printf("%c",msg_buf[i]);
-//						printf("set_time: %d %s\r\n",msg_len,tempx);
-//						for(i = 0;i < msg_len*2;i++)
-//							printf("%02x ",msg_buf[i]);
-//#if 0
 						memset(temp_time,0,sizeof(temp_time));
 						i = 0;
 						pch = &tempx[0];
@@ -962,46 +855,13 @@ UCHAR get_host_cmd_task(int test)
 							close_tcp();
 							//printString2("disconnected from socket\0");
 //							printf("disconnecting...\r\n");
-							tcp_connected_time = 0;
 						}
 						break;
 
 					case STOP_MBOX_XMIT:
-/*
-						sprintf(tempx,"engine temp limit: %.1f\0", convertF(ps.engine_temp_limit));
-						printString2(tempx);
-						sprintf(tempx,"cooling fan on:    %.1f\0", convertF(ps.cooling_fan_on));
-						printString2(tempx);
-						sprintf(tempx,"cooling fan off:   %.1f\0", convertF(ps.cooling_fan_off));
-						printString2(tempx);
-						sprintf(tempx,"blower 1 on: %.1f\0", convertF(ps.blower1_on));
-						printString2(tempx);
-						sprintf(tempx,"blower 2 on: %.1f\0", convertF(ps.blower2_on));
-						printString2(tempx);
-						sprintf(tempx,"blower 3 on: %.1f\0", convertF(ps.blower2_on));
-						printString2(tempx);
-						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
-						printString2(tempx);
-						sprintf(tempx,"battery box temp: %.1f\0", convertF(ps.batt_box_temp));
-						printString2(tempx);
-						sprintf(tempx,"\r\nrpm_update: %d\r\n",ps.rpm_update_rate);
-						printString2(tempx);
-						sprintf(tempx,"mph_update: %d\r\n",ps.mph_update_rate);
-						printString2(tempx);
-						sprintf(tempx,"fpga_xmit_rate: %d\r\n",ps.fpga_xmit_rate);
-						printString2(tempx);
-						sprintf(tempx,"high_rev_limit: %d\r\n",ps.high_rev_limit);
-						printString2(tempx);
-						sprintf(tempx,"low_rev_limit: %d\r\n",ps.low_rev_limit);
-						printString2(tempx);
-*/
-//						send_serial(STOP_MBOX_XMIT);
-						//printString2("System Down\0");
 						break;
 
 					case START_MBOX_XMIT:
-						send_serial(START_MBOX_XMIT);
-						//printString2("System Up\0");
 						break;
 
 					case STOP_AVR_XMIT:
@@ -1014,14 +874,6 @@ UCHAR get_host_cmd_task(int test)
 						//printString2("xmit to AVR on\0");
 						break;
 
-						for(i = 4;i < TRRIGHTBLINKER;i++)
-						{
-							ollist_find_data(i,otpp,&oll);
-							sprintf(tempx,"%s %d %d\r\n",otp->label, otp->port, otp->onoff);
-							printString2(tempx);
-						}
-
-						break;
 					case SET_TEMP_LIMIT:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;

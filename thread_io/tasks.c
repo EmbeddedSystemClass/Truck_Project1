@@ -1087,9 +1087,6 @@ UCHAR serial_recv_task(int test)
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_TEMP);
-
-//			printString2(tempx);
-//			sprintf(tempx,"%d",temp);
 //			printString2(tempx);
 			
 		}else
@@ -1110,7 +1107,7 @@ UCHAR serial_recv_task(int test)
 			
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(indoor_temp));
-			//printString2(tempx);
+//			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, INDOOR_TEMP);
 		}else
@@ -1134,7 +1131,8 @@ UCHAR serial_recv_task(int test)
 			rpm |= (int)low_byte;
 
 			sprintf(tempx,"%d",rpm);
-//			printString2(tempx);
+			if(rpm > 0)
+				printString2(tempx);
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
 
@@ -1144,7 +1142,8 @@ UCHAR serial_recv_task(int test)
 			mph <<= 8;
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
-//			printString2(tempx);
+			if(mph > 0)
+				printString2(tempx);
 //			printHexByte(low_byte);
 //			printHexByte(high_byte);
 //			printString2("\r\n");
@@ -1348,7 +1347,6 @@ UCHAR tcp_monitor_task(int test)
 //			myprintf1("connected to socket: \0");
 //			printString2("connected to socket: \0");
 //			printf("connected to socket: \r\n");
-			tcp_connected_time = 0;
 			
 			 //send_param_msg();
 //			 send_status_msg();
