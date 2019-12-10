@@ -1118,7 +1118,7 @@ UCHAR serial_recv_task(int test)
 
 		}else
 
-		if(cmd == SEND_RT_VALUES)
+		if(cmd == SEND_RT_VALUES1)
 		{
 			low_byte = read_serial_buffer[1];
 			high_byte = read_serial_buffer[2];
@@ -1149,6 +1149,18 @@ UCHAR serial_recv_task(int test)
 //			printString2("\r\n");
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
+		}else
+
+		if(cmd == SEND_RT_VALUES2)
+		{
+
+			sprintf(tempx,"%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2], 
+						read_serial_buffer[3], read_serial_buffer[4]);
+//			printString2(tempx);
+
+			if(test_sock())
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS);
+
 		}else
 		
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)

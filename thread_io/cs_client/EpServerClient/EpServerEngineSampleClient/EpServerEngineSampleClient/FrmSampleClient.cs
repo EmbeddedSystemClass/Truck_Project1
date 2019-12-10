@@ -601,6 +601,32 @@ namespace EpServerEngineSampleClient
                     tbMPH.Text = ret;           // comment out for debug
                     break;
 
+				case "SEND_ADCS":
+					string[] words2 = ret.Split(' ');
+					i = 0;
+					foreach(var word in words2)
+					{
+						switch(i)
+						{
+							case 0:
+								tbADC1.Text = word;
+								break;
+							case 1:
+								tbADC2.Text = word;
+								break;
+							case 2:
+								tbADC3.Text = word;
+								break;
+							case 3:
+								tbADC4.Text = word;
+								break;
+							default:
+								break;
+						}
+						i++;
+					}
+					break;
+
                 case "SEND_CONFIG":
                     string[] words = ret.Split(' ');
                     i = 0;

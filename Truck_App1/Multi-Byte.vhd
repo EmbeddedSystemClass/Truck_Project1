@@ -41,6 +41,14 @@ entity multi_byte is
 		mph1_signal : in std_logic;
 --		mph2_signal : in std_logic;
 		tx_rpm_mph : out std_logic;
+		MCP_CS1: out std_logic;
+		MCP_CLK1: out std_logic;
+		MCP_DIN1: in std_logic;
+		MCP_DOUT1: out std_logic;
+		MCP_CS2: out std_logic;
+		MCP_CLK2: out std_logic;
+		MCP_DIN2: in std_logic;
+		MCP_DOUT2: out std_logic;
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
@@ -66,19 +74,27 @@ architecture truck_arch of multi_byte is
 	type state_led is (led_idle, led_start, led_delay, led_start_xmit, led_done);
 	signal state_led_reg, state_led_next: state_led;
 
+	type state_test is (test_idle, test_start1, test_start2, test_done);
+	signal test_reg, test_next: state_test;
+
+	type state_mcp is (mcp_idle, mcp_start1, mcp_start2, mcp_done);
+	signal mcp_reg, mcp_next: state_mcp;
+
 	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
 	signal time_delay_reg3, time_delay_next3: unsigned(27 downto 0);
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);
 	signal time_delay_reg1, time_delay_next1: unsigned(24 downto 0);
+	signal time_delay_reg4, time_delay_next4: unsigned(24 downto 0);
+	signal time_delay_reg5, time_delay_next5: unsigned(24 downto 0);
 
 	signal rpm_db, mph_db: std_logic;
 	signal rpm_result: std_logic_vector(15 downto 0);
+	signal urpm_result: unsigned(15 downto 0);
 	signal mph_result: std_logic_vector(15 downto 0);
 	signal mph_factor: std_logic_vector(22 downto 0);
 	signal rpm_factor: std_logic_vector(22 downto 0);
 	signal start_tx, done_tx, start_rx, done_rx: std_logic;
 	signal data_tx, data_rx: std_logic_vector(7 downto 0);
-	signal urpm_result: unsigned(16 downto 0);
 
 	signal stlv_duty_cycle: std_logic_vector(4 downto 0);
 
@@ -108,8 +124,27 @@ architecture truck_arch of multi_byte is
 	signal dtmf_done1: std_logic;
 	signal done_pwm: std_logic;
 	signal led_dl_array: led_array;
+	signal start_mcp: std_logic;
+	signal done_mcp: std_logic;
+	signal mcp_results: mcp_array;
+	signal compact: std_logic;
 
 begin
+
+MCP_wrapper_unit: entity work.mcp_wrapper(truck_arch)
+	port map(clk=>clk, reset=>reset,
+		MCP_CS1=>MCP_CS1,
+		MCP_CLK1=>MCP_CLK1,
+		MCP_DIN1=>MCP_DIN1,
+		MCP_DOUT1=>MCP_DOUT1,
+		MCP_CS2=>MCP_CS2,
+		MCP_CLK2=>MCP_CLK2,
+		MCP_DIN2=>MCP_DIN2,
+		MCP_DOUT2=>MCP_DOUT2,
+		start=>start_mcp,
+		done=>done_mcp,
+		compact=>compact,
+		results=>mcp_results);
 
 pwm_unit: entity work.lcd_pwm
 	generic map(W2=>W2_SIZE)
@@ -325,18 +360,18 @@ begin
 				end if;
 
 			when pp_done2 =>
-				if time_delay_reg > TIME_DELAY8 then
+				if time_delay_reg > TIME_DELAY8b then
 					time_delay_next <= (others=>'0');
 					temp := conv_integer(sPort);
 					upload(1) <= rpm_result(7 downto 0);
 					upload(2) <= rpm_result(15 downto 8);
 					upload(3) <= mph_result(7 downto 0);
 					upload(4) <= mph_result(15 downto 8);
-					upload(5) <= download(0);
-					upload(6) <= download(1);
-					upload(7) <= download(2);
-					upload(8) <= download(3);
-					upload(9) <= download(4);
+					upload(5) <= mcp_results(0);
+					upload(6) <= mcp_results(1);
+					upload(7) <= mcp_results(2);
+					upload(8) <= mcp_results(3);
+					upload(9) <= mcp_results(4);
 					-- upload(6) <= download(5);
 					-- upload(7) <= download(6);
 					-- upload(8) <= download(7);
@@ -467,13 +502,13 @@ begin
 --							stdlv_transmit_update_rate <= mparam & X"FFFF";
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_ON =>
-							led1 <= "0111";
+--							led1 <= "0111";
 							dtmf_index <= download(0)(4 downto 0);
 							special <= '0';
 							start_dtmf <= '1';
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_OFF =>
-							led1 <= "1011";
+--							led1 <= "1011";
 							start_dtmf <= '0';
 							special <= '0';
 							main_next1 <= do_mcmd;
@@ -512,5 +547,90 @@ begin
 		main_reg1 <= main_next1;
 	end if;
 end process;		
+
+-- ********************************************************************************
+-- test the current rpm_result to see if has changed over the last 640ms or so
+-- if not, it must be off so then set the rpm_result back to zero
+rpm_off_unit: process(clk, reset, test_reg)
+begin
+	if reset = '0' then
+		test_reg <= test_idle;
+		test_next <= test_idle;
+		time_delay_reg4 <= (others=>'0');
+		time_delay_next4 <= (others=>'0');
+		urpm_result <= (others=>'0');
+
+	else if clk'event and clk = '1' then
+		case test_reg is
+			when test_idle =>
+				test_next <= test_start1;
+
+			when test_start1 =>
+				if time_delay_reg4 > TIME_DELAY5 then
+					time_delay_next4 <= (others=>'0');
+--					test_next <= test_start2;
+					test_next <= test_idle;
+				else
+					time_delay_next4 <= time_delay_reg4 + 1;
+				end if;
+
+			when test_start2 =>
+				if time_delay_reg4 > TIME_DELAY7 then
+					time_delay_next4 <= (others=>'0');
+					test_next <= test_done;
+				else
+					time_delay_next4 <= time_delay_reg4 + 1;
+				end if;
+
+			when test_done =>
+				test_next <= test_idle;
+
+		end case;
+		test_reg <= test_next;
+		time_delay_reg4 <= time_delay_next4;
+		end if;
+	end if;
+end process;
+
+mcp_unit: process(clk, reset, test_reg)
+begin
+	if reset = '0' then
+		mcp_reg <= mcp_idle;
+		mcp_next <= mcp_idle;
+		time_delay_reg5 <= (others=>'0');
+		time_delay_next5 <= (others=>'0');
+		start_mcp <= '0';
+--		mcp_results <= (others=>(others=>'0'));
+		compact <= '1';
+
+	else if clk'event and clk = '1' then
+		case mcp_reg is
+			when mcp_idle =>
+				if time_delay_reg5 > TIME_DELAY7 then
+					time_delay_next5 <= (others=>'0');
+					mcp_next <= mcp_start1;
+					start_mcp <= '1';
+				else
+					time_delay_next5 <= time_delay_reg5 + 1;
+				end if;
+
+			when mcp_start1 =>
+				start_mcp <= '0';
+				if done_mcp = '1' then
+					mcp_next <= mcp_start2;
+				end if;
+
+			when mcp_start2 =>
+				mcp_next <= mcp_done;
+
+			when mcp_done =>
+				mcp_next <= mcp_idle;
+
+		end case;
+		mcp_reg <= mcp_next;
+		time_delay_reg5 <= time_delay_next5;
+		end if;
+	end if;
+end process;
 
 end truck_arch;

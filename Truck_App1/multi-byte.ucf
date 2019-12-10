@@ -35,6 +35,16 @@ NET "mph1_signal"  LOC ="p199";
 #NET "mph2_signal"  LOC ="p193";
 NET "tx_rpm_mph"   LOC ="p196";
 
+NET "MCP_CS1"      LOC = "p160";
+NET "MCP_CLK1"     LOC = "p153";
+NET "MCP_DIN1"     LOC = "p152";
+NET "MCP_DOUT1"    LOC = "p151";
+
+NET "MCP_CS2"      LOC = "p150";
+NET "MCP_CLK2"     LOC = "p147";
+NET "MCP_DIN2"     LOC = "p146";
+NET "MCP_DOUT2"    LOC = "p145";
+
 # led1 is the build-in LED's on the board
 NET		"led1[0]"		LOC = "p68";
 NET		"led1[1]"		LOC = "p78";

@@ -84,6 +84,8 @@ git add Truck_App1/rpm.ods
 git add Truck_App1/sensor.vhd
 git add Truck_App1/dtmf.vhd
 git add Truck_App1/lcd_pwm.vhd
+git add Truck_App1/mcp_3002_wrapper.vhd
+git add Truck_App1/mcp3002.vhd
 git add Truck_App1/lib/Common.vhd
 
 git add thread_io/setARMpath.sh
@@ -226,7 +228,6 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEn
 
 git add thread_io/cs_client/server_on_linux.c
 git add thread_io/cs_client/server_on_linux2.c
-git add thread_io/cs_client/new_client.txt
 git add thread_io/cs_client/init_db.c
 git add thread_io/cs_client/list_db.c
 git add thread_io/cs_client/list_db2.c

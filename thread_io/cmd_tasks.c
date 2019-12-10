@@ -37,7 +37,7 @@ extern pthread_mutex_t     tcp_write_lock;
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[116] =
+CMD_STRUCT cmd_array[114] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -76,10 +76,6 @@ CMD_STRUCT cmd_array[116] =
 	{		WIPER1,"WIPER1\0" },
 	{		WIPER2,"WIPER2\0" },
 	{		WIPER_OFF,"WIPER_OFF\0" },
-	{		STOP_MBOX_XMIT,"STOP_MBOX_XMIT\0" },
-	{		START_MBOX_XMIT,"START_MBOX_XMIT\0" },
-	{		STOP_AVR_XMIT,"STOP_AVR_XMIT\0" },
-	{		START_AVR_XMIT,"START_AVR_XMIT\0" },
 	{		SEND_TIME_DATA,"SEND_TIME_DATA\0" },
 	{		SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{		REBOOT_IOBOX,"REBOOT_IOBOX\0" },
@@ -110,13 +106,15 @@ CMD_STRUCT cmd_array[116] =
 	{		EXIT_PROGRAM,"EXIT_PROGRAM\0" },
 	{		ENGINE_TEMP,"ENGINE_TEMP\0" },
 	{		INDOOR_TEMP,"INDOOR_TEMP\0" },
-	{		SEND_RT_VALUES,"SEND_RT_VALUES\0" },
+	{		SEND_RT_VALUES1,"SEND_RT_VALUES1\0" },
+	{		SEND_RT_VALUES2,"SEND_RT_VALUES2\0" },
 	{		ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
 	{		SERVER_UPTIME,"SERVER_UPTIME\0" },
 	{		SEND_CONFIG,"SEND_CONFIG\0" },
 	{		SEND_MSG,"SEND_MSG\0" },
 	{		SEND_RPM,"SEND_RPM\0" },
 	{		SEND_MPH,"SEND_MPH\0" },
+	{		SEND_ADCS,"SEND_ADCS\0" },
 	{		NAV_UP,"NAV_UP\0" },
 	{		NAV_DOWN,"NAV_DOWN\0" },
 	{		NAV_SIDE,"NAV_SIDE\0" },
@@ -275,7 +273,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.30\0";
+	char version[15] = "sched v1.31\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -856,22 +854,6 @@ UCHAR get_host_cmd_task(int test)
 							//printString2("disconnected from socket\0");
 //							printf("disconnecting...\r\n");
 						}
-						break;
-
-					case STOP_MBOX_XMIT:
-						break;
-
-					case START_MBOX_XMIT:
-						break;
-
-					case STOP_AVR_XMIT:
-						send_serial(STOP_AVR_XMIT);
-						//printString2("xmit to AVR off\0");
-						break;
-
-					case START_AVR_XMIT:
-						send_serial(START_AVR_XMIT);
-						//printString2("xmit to AVR on\0");
 						break;
 
 					case SET_TEMP_LIMIT:

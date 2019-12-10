@@ -76,6 +76,10 @@
 			this.button2 = new System.Windows.Forms.Button();
 			this.label9 = new System.Windows.Forms.Label();
 			this.tbIndoorTemp = new System.Windows.Forms.TextBox();
+			this.tbADC1 = new System.Windows.Forms.TextBox();
+			this.tbADC2 = new System.Windows.Forms.TextBox();
+			this.tbADC4 = new System.Windows.Forms.TextBox();
+			this.tbADC3 = new System.Windows.Forms.TextBox();
 			((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
@@ -218,7 +222,7 @@
 			// tbEngRunTime
 			// 
 			this.tbEngRunTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbEngRunTime.Location = new System.Drawing.Point(524, 571);
+			this.tbEngRunTime.Location = new System.Drawing.Point(524, 535);
 			this.tbEngRunTime.Name = "tbEngRunTime";
 			this.tbEngRunTime.ReadOnly = true;
 			this.tbEngRunTime.Size = new System.Drawing.Size(149, 31);
@@ -229,7 +233,7 @@
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label6.Location = new System.Drawing.Point(519, 534);
+			this.label6.Location = new System.Drawing.Point(519, 502);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(124, 29);
 			this.label6.TabIndex = 33;
@@ -290,7 +294,7 @@
 			// 
 			this.label8.AutoSize = true;
 			this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label8.Location = new System.Drawing.Point(514, 485);
+			this.label8.Location = new System.Drawing.Point(514, 459);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(72, 29);
 			this.label8.TabIndex = 39;
@@ -299,7 +303,7 @@
 			// tbMPH
 			// 
 			this.tbMPH.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbMPH.Location = new System.Drawing.Point(592, 481);
+			this.tbMPH.Location = new System.Drawing.Point(592, 455);
 			this.tbMPH.Name = "tbMPH";
 			this.tbMPH.ReadOnly = true;
 			this.tbMPH.Size = new System.Drawing.Size(93, 40);
@@ -310,7 +314,7 @@
 			// 
 			this.label7.AutoSize = true;
 			this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label7.Location = new System.Drawing.Point(514, 425);
+			this.label7.Location = new System.Drawing.Point(514, 409);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(72, 29);
 			this.label7.TabIndex = 37;
@@ -319,7 +323,7 @@
 			// tbRPM
 			// 
 			this.tbRPM.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbRPM.Location = new System.Drawing.Point(592, 421);
+			this.tbRPM.Location = new System.Drawing.Point(592, 405);
 			this.tbRPM.Name = "tbRPM";
 			this.tbRPM.ReadOnly = true;
 			this.tbRPM.Size = new System.Drawing.Size(93, 40);
@@ -569,7 +573,7 @@
 			// 
 			this.label9.AutoSize = true;
 			this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label9.Location = new System.Drawing.Point(503, 370);
+			this.label9.Location = new System.Drawing.Point(503, 361);
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size(84, 29);
 			this.label9.TabIndex = 49;
@@ -578,12 +582,44 @@
 			// tbIndoorTemp
 			// 
 			this.tbIndoorTemp.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.tbIndoorTemp.Location = new System.Drawing.Point(592, 363);
+			this.tbIndoorTemp.Location = new System.Drawing.Point(592, 354);
 			this.tbIndoorTemp.Name = "tbIndoorTemp";
 			this.tbIndoorTemp.ReadOnly = true;
 			this.tbIndoorTemp.Size = new System.Drawing.Size(92, 40);
 			this.tbIndoorTemp.TabIndex = 48;
 			this.tbIndoorTemp.TabStop = false;
+			// 
+			// tbADC1
+			// 
+			this.tbADC1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbADC1.Location = new System.Drawing.Point(523, 581);
+			this.tbADC1.Name = "tbADC1";
+			this.tbADC1.Size = new System.Drawing.Size(63, 35);
+			this.tbADC1.TabIndex = 50;
+			// 
+			// tbADC2
+			// 
+			this.tbADC2.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbADC2.Location = new System.Drawing.Point(604, 581);
+			this.tbADC2.Name = "tbADC2";
+			this.tbADC2.Size = new System.Drawing.Size(63, 35);
+			this.tbADC2.TabIndex = 51;
+			// 
+			// tbADC4
+			// 
+			this.tbADC4.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbADC4.Location = new System.Drawing.Point(604, 637);
+			this.tbADC4.Name = "tbADC4";
+			this.tbADC4.Size = new System.Drawing.Size(63, 35);
+			this.tbADC4.TabIndex = 53;
+			// 
+			// tbADC3
+			// 
+			this.tbADC3.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbADC3.Location = new System.Drawing.Point(523, 637);
+			this.tbADC3.Name = "tbADC3";
+			this.tbADC3.Size = new System.Drawing.Size(63, 35);
+			this.tbADC3.TabIndex = 52;
 			// 
 			// FrmSampleClient
 			// 
@@ -591,6 +627,10 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
 			this.ClientSize = new System.Drawing.Size(1045, 688);
+			this.Controls.Add(this.tbADC4);
+			this.Controls.Add(this.tbADC3);
+			this.Controls.Add(this.tbADC2);
+			this.Controls.Add(this.tbADC1);
 			this.Controls.Add(this.label9);
 			this.Controls.Add(this.tbIndoorTemp);
 			this.Controls.Add(this.button2);
@@ -697,6 +737,10 @@
 		private System.Windows.Forms.TextBox tbHomeSvrConnAttempts;
 		private System.Windows.Forms.Label label9;
 		private System.Windows.Forms.TextBox tbIndoorTemp;
+		private System.Windows.Forms.TextBox tbADC1;
+		private System.Windows.Forms.TextBox tbADC2;
+		private System.Windows.Forms.TextBox tbADC4;
+		private System.Windows.Forms.TextBox tbADC3;
 	}
 }
 
