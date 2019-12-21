@@ -276,12 +276,12 @@ package CommonPckg is
 	constant TIME_DELAY6:  integer:=  4191300;	-- 167ms
 	constant TIME_DELAY6a:  integer:= 3000000;
 	constant TIME_DELAY6b:  integer:= 2000000;
-	constant TIME_DELAY7:  integer:= 1000000;	-- 40ms
-	constant TIME_DELAY8:  integer:= 500000;	-- 20ms
+	constant TIME_DELAY7:  integer:= 1000000;	-- 40ms (25Hz)
+	constant TIME_DELAY8:  integer:= 500000;	-- 20ms (50Hz)
 	constant TIME_DELAY8a:  integer:= 300000;	-- 12ms
-	constant TIME_DELAY8b:  integer:= 150000;	-- 12ms
-	constant TIME_DELAY8c:  integer:= 100000;
-	constant TIME_DELAY9:  integer:=  40000;
+	constant TIME_DELAY8b:  integer:= 150000;	-- 6ms
+	constant TIME_DELAY8c:  integer:= 100000;	-- 4ms
+	constant TIME_DELAY9:  integer:=  40000;	-- 1.6ms
 --	constant TIME_DELAY_500RPM:  integer:=  5454260;
 	constant TIME_DELAY_500RPM:  integer:=  16000000;	-- 330 rpm
 	
@@ -368,6 +368,7 @@ package CommonPckg is
 	type tune_array is array(0 to MAX_TUNE_LEN-1, 0 to 2) of integer range 0 to 95;
 	type dl_array is array(0 to 25) of std_logic_vector(7 downto 0);
 	type led_array is array(0 to 8) of std_logic_vector(7 downto 0);
+	type mcp_array is array(0 to 4) of std_logic_vector(7 downto 0);
 	
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);

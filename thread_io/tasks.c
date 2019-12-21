@@ -770,8 +770,8 @@ UCHAR timer_task(int test)
 					usleep(1000);
 					send_serialother(OFF_RUNNING_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
-					send_serialother(BLOWER_OFF,(UCHAR*)tempx);
-					usleep(1000);
+//					send_serialother(BLOWER_OFF,(UCHAR*)tempx);
+//					usleep(1000);
 					send_serialother(OFF_FAN,(UCHAR*)tempx);
 					usleep(1000);
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, OFF_LIGHTS);
