@@ -82,6 +82,9 @@ IP ip[40];
 static UCHAR msg_queue[MSG_QUEUE_SIZE];
 static int msg_queue_ptr;
 
+FORMAT_STR rtlabel_str[NUM_RT_LABELS];
+FORMAT_STR status_label_str[NUM_STATUS_LABELS];
+
 //static double program_start_time;
 
 #define ON 1
@@ -103,6 +106,8 @@ void init_ips(void)
 	O_DATA **otpp = &otp;
 	char errmsg[20];
 	char tempx[20];
+	UCHAR ucbuff[5];
+	UCHAR xchar = 0x21;
 
 	engine_running = 0;
 	test_lblinkers = 0;
@@ -154,21 +159,6 @@ void init_ips(void)
 //		printf("%s\r\n",errmsg);
 		myprintf1(errmsg);
 	}
-/*
-	else
-	{
-		printf("%d\r\n",ps.rpm_update_rate);
-		printf("%d\r\n",ps.mph_update_rate);
-		printf("%d\r\n",ps.high_rev_limit);
-		printf("%d\r\n",ps.low_rev_limit);
-		printf("%d\r\n",ps.cooling_fan_on);
-		printf("%d\r\n",ps.cooling_fan_off);
-		printf("%d\r\n",ps.blower_enabled);
-		printf("%d\r\n",ps.blower1_on);
-		printf("%d\r\n",ps.blower2_on);
-		printf("%d\r\n",ps.blower3_on);
-	}
-*/
 }
 
 /*********************************************************************/
@@ -231,7 +221,7 @@ static void set_output(O_DATA *otp, int onoff)
 		case 0:
 			if(otp->polarity == 1)
 				otp->onoff = (onoff == 1?0:1);
-			else	
+			else
 				otp->onoff = onoff;
 //			printf("type 0 port: %d onoff: %d\r\n", otp->port, otp->onoff);
 			change_output(otp->port,otp->onoff);
@@ -248,7 +238,7 @@ static void set_output(O_DATA *otp, int onoff)
 				ollist_insert_data(otp->port,&oll,otp);
 //				printf("type 1 port: %d onoff: %d reset: %d pol: %d\r\n\r\n", otp->port,
 //										otp->onoff, otp->reset, otp->polarity);
-			}	
+			}
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
@@ -287,7 +277,7 @@ static void set_output(O_DATA *otp, int onoff)
 				add_msg_queue(ESTOP_SIGNAL);
 //				printf("type 4a port: %d onoff: %d reset: %d \r\n\r\n", otp->port,
 //										otp->onoff, otp->reset);
-			}	
+			}
 			else if(otp->reset == 1)
 			{
 //				if(otp->polarity == 1)
@@ -302,7 +292,7 @@ static void set_output(O_DATA *otp, int onoff)
 	}
 	// send message to monster box telling which port was toggled
 //	send_serial(otp->port, otp->onoff);
-	
+
 }
 /*********************************************************************/
 void send_serial(UCHAR cmd)
@@ -329,7 +319,11 @@ void send_serial2(UCHAR cmd)
 {
 	int i;
 	if(ps.test_bank == 0)
+	{
+		pthread_mutex_lock( &serial_write_lock2);
 		write_serial2(cmd);
+		pthread_mutex_unlock(&serial_write_lock2);
+	}
 }
 /*********************************************************************/
 void send_serialother(UCHAR cmd, UCHAR *buf)
@@ -347,19 +341,21 @@ void send_serialother(UCHAR cmd, UCHAR *buf)
 
 }
 /*********************************************************************/
-void send_serialother2(UCHAR cmd, UCHAR *buf)
+void send_lcd(UCHAR *buf, int size)
 {
-//	pthread_mutex_lock( &serial_write_lock);
 	int i;
+	UCHAR start_byte = AVR_START_BYTE;
+	UCHAR end_byte = AVR_END_BYTE;
 
-	if(ps.test_bank == 0)
+	pthread_mutex_lock( &serial_write_lock2);
+	for(i = 0;i < size;i++)
 	{
-		write_serial2(cmd);
-		for(i = 0;i < SERIAL_BUFF_SIZE;i++)
-		{
-			write_serial2(buf[i]);
-		}
+		write_serial2(buf[i]);
+		//usleep(1000);
+		uSleep(0,1000);
 	}
+	write_serial2(start_byte);
+	pthread_mutex_unlock(&serial_write_lock2);
 }
 /*********************************************************************/
 // if an input switch is changed, update the record for that switch
@@ -377,7 +373,7 @@ UCHAR monitor_input_task(int test)
 	UCHAR result,result2, mask, onoff;
 	int i, rc, flag;
 	int input_port;
-	
+
 
 //	TODO: what if more than 1 button is pushed in same bank or diff bank at same time?
 
@@ -448,7 +444,7 @@ UCHAR monitor_input_task(int test)
 //			uSleep(0,TIME_DELAY/2);
 		if(shutdown_all)
 		{
-//				printf("done mon input tasks\r\n");
+//				printf("done mon input tasks\r\n"); 
 //				myprintf1("done mon input");
 				//printString2("done mon");
 			return 0;
@@ -518,7 +514,7 @@ UCHAR monitor_fake_input_task(int test)
 				if(mask > 0x80)
 				{
 					myprintf1("bad mask\0");
-//					printf("bad mask %02x\r\n",mask);
+					printf("bad mask %02x\r\n",mask);
 					continue;
 				}
 				index = mask2int(mask);
@@ -614,7 +610,7 @@ int change_output(int index, int onoff)
 // this happens 10x a second
 UCHAR timer2_task(int test)
 {
-	int i;
+	int i,j;
 	char tempx[20];
 	int index = 0;
 	int bank = 0;
@@ -627,6 +623,8 @@ UCHAR timer2_task(int test)
 	static test_ctr = 0;
 	static test_ctr2 = 0;
 
+	//printf("\r\n");
+
 	while(TRUE)
 	{
 		uSleep(0,TIME_DELAY/10); 
@@ -636,14 +634,14 @@ UCHAR timer2_task(int test)
 			if(led_onoff == 1)
 			{
 				led_counter = 0;
-				setdioline(7,1);
+//				setdioline(7,1);
 //				red_led(1);
 //				green_led(0);
 			}
 			else
 			{
 				led_onoff = 7;
-				setdioline(7,0);
+//				setdioline(7,0);
 //				red_led(0);
 //				green_led(1);
 			}
@@ -655,10 +653,63 @@ UCHAR timer2_task(int test)
 //			printf("done timer2 task\r\n");
 			//printString2("done time2");
 			return 0;
-		}		
+		}
 	}
 	return 1;
 
+}
+/*********************************************************************/
+void init_LCD()
+{
+	UCHAR row, col, data_col, str;
+	UCHAR xchar = 0x31;
+	UCHAR ucbuff[5];
+	int i,j;
+
+	col = START_RT_VALUE_COL;
+	data_col = col + 10;
+	row = START_RT_VALUE_ROW;
+	str = 0;
+
+	ucbuff[0] = LCD_CLRSCR;
+	send_lcd(ucbuff, 1);
+	usleep(1000);
+
+	ucbuff[0] = LCD_CLRSCR;
+	send_lcd(ucbuff, 1);
+	usleep(1000);
+
+//	printf("\r\n");
+
+	for(j = 0;j < NUM_RT_LABELS;j++)		// index has to start from 1
+	{
+		if(row > ENDING_RT_VALUE_ROW)
+		{
+			col += RT_VALUE_COL_WIDTH;
+			row = START_RT_VALUE_ROW;
+			data_col = col + 15;
+		}
+		rtlabel_str[j].row = row;
+		rtlabel_str[j].col = col;
+		rtlabel_str[j].data_col = data_col;
+
+		ucbuff[0] = EEPROM_STR;
+		ucbuff[1] = (UCHAR)row;
+		ucbuff[2] = (UCHAR)col;
+		ucbuff[3] = (UCHAR)j+1;
+		ucbuff[4] = 20;
+		send_lcd(ucbuff, 5);
+		//usleep(1000);
+/*
+		printf("%d: ",j);
+		printf("%d %d %d :",rtlabel_str[j].row,rtlabel_str[j].col,rtlabel_str[j].data_col); 
+
+		for(i = 1;i < 4;i++)
+			printf("%d ",ucbuff[i]);
+		printf("\r\n");
+*/
+		row++;
+	}
 }
 /*********************************************************************/
 // this happens once a second
@@ -682,9 +733,11 @@ UCHAR timer_task(int test)
 //	static int test_ctr2 = 0;
 //	static UCHAR nav = NAV_DOWN;
 	UCHAR cmd;
-	
+	UCHAR ucbuff[6];
+	int temp;
+	odometer = trip = 0;
+
 	memset(write_serial_buffer,0,SERIAL_BUFF_SIZE);
-	rpm = mph = 0;
 
 	while(TRUE)
 	{
@@ -700,14 +753,14 @@ UCHAR timer_task(int test)
 		if(led_counter == 1)
 		{
 			led_counter = 0;
-			red_led(1);
-			green_led(0);
+//			 (1);
+//			green_led(0);
 		}
 		else
 		{
 			led_counter = 1;
-			red_led(0);
-			green_led(1);
+//			red_led(0);
+//			green_led(1);
 		}
 /*
 		write_serial_buffer[0] = running_hours;
@@ -727,6 +780,57 @@ UCHAR timer_task(int test)
 
 		if(engine_running == 1)
 		{
+/*
+			for(i = 0;i < NUM_RT_LABELS;i++)
+			{
+				ucbuff[0] = SEND_BYTE_RT_VALUES;
+				ucbuff[1] = rtlabel_str[i].row;
+				ucbuff[2] = rtlabel_str[i].data_col;
+				ucbuff[3] = (UCHAR)i;
+				send_lcd(ucbuff, 4);
+				uSleep(0,1000);
+			}
+*/
+			ucbuff[0] = SEND_BYTE_RT_VALUES;
+			ucbuff[1] = rtlabel_str[RUN_TIME].row;
+			ucbuff[2] = rtlabel_str[RUN_TIME].data_col;
+			ucbuff[3] = running_hours;		// hours
+			send_lcd(ucbuff, 4);
+			//uSleep(0,100);
+
+			ucbuff[1] = rtlabel_str[RUN_TIME].row;
+			ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 3;
+			ucbuff[3] = running_minutes;		// minutes
+			send_lcd(ucbuff, 4);
+			//uSleep(0,100);
+
+			ucbuff[1] = rtlabel_str[RUN_TIME].row;
+			ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 6;
+			ucbuff[3] = running_seconds;		// seconds
+			send_lcd(ucbuff, 4);
+			//uSleep(0,100);
+
+			ucbuff[0] = SEND_INT_RT_VALUES;
+			ucbuff[1] = rtlabel_str[ODOM].row;
+			ucbuff[2] = rtlabel_str[ODOM].data_col;
+			temp = odometer;
+			ucbuff[4] = (UCHAR)temp;
+			temp >>= 8;
+			ucbuff[3] = (UCHAR)temp; 
+			send_lcd(ucbuff, 5);
+			//uSleep(0,100);
+			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+
+			ucbuff[0] = SEND_INT_RT_VALUES;
+			ucbuff[1] = rtlabel_str[TRIP].row;
+			ucbuff[2] = rtlabel_str[TRIP].data_col;
+			temp = trip;
+			ucbuff[4] = (UCHAR)temp;
+			temp >>= 8;
+			ucbuff[3] = (UCHAR)temp; 
+			send_lcd(ucbuff, 5);
+			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+
 			if(++running_seconds > 59)
 			{
 				running_seconds = 0;
@@ -748,7 +852,6 @@ UCHAR timer_task(int test)
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ON_LIGHTS);
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ON_RUNNING_LIGHTS);
 			}
-
 		}else
 		{
 			running_seconds = running_minutes = running_hours = 0;
@@ -756,7 +859,7 @@ UCHAR timer_task(int test)
 			{
 				lights_on_countdown--;
 				sprintf(tempx,"countdown: %d",lights_on_countdown);
-				printString2(tempx);
+				//printString3(tempx);
 				if(lights_on_countdown == 0)
 				{
 					add_msg_queue(OFF_LLIGHTS);
@@ -896,6 +999,7 @@ UCHAR read_button_inputs(int test)
 	while(TRUE)
 	{
 		uSleep(0,TIME_DELAY/6);
+/*
 		inputs = 0;
 		mask = 1;
 		for(i = 0;i < 7;i++)
@@ -938,6 +1042,7 @@ UCHAR read_button_inputs(int test)
 				break;
 			}
 		}
+*/
 		if(shutdown_all)
 		{
 //			printf("done read_buttons task\r\n");
@@ -966,6 +1071,7 @@ UCHAR serial_recv_task(int test)
 	UCHAR send_buffer[15];
 	int s;
 	UINT temp;
+	UCHAR ucbuff[6];
 
 	memset(errmsg,0,20);
 
@@ -975,20 +1081,36 @@ UCHAR serial_recv_task(int test)
 	if(fd = init_serial() < 0)
 	{
 		myprintf1("can't open comm port 1");
+		printf("can't open comm port 1");
 		//return 0;
 	}
 
 	if(fd = init_serial2() < 0)
 	{
 		myprintf1("can't open comm port 2");
+		printf("can't open comm port 2");
 	}
 
+	//printString2("trying to open comm3");
+
+	if(fd = init_serial3() < 0)
+	{
+		//myprintf1("can't open comm port 3");
+		//printf("can't open comm port 3");
+		//printString2("can't open comm3");
+	}else
+	{
+		//printString2("comm3 open");
+		//printString3("comm3 open");
+	}
 	ch = ch2 = 0x7e;
 
-	red_led(0);
-	green_led(0);
+	init_LCD();
 
-	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
+//	red_led(0);
+//	green_led(0);
+
+	s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	temp = ps.engine_temp_limit;
 	send_buffer[0] = (UCHAR)temp;
@@ -1024,21 +1146,20 @@ UCHAR serial_recv_task(int test)
 	send_buffer[12] = (UCHAR)temp;
 	temp >>= 8;
 	send_buffer[13] = (UCHAR)temp;
-/*	
+/*
 	temp = ps.password_timeout;
 	send_buffer[14] = (UCHAR)temp;
 	temp >>= 8;
 	send_buffer[15] = (UCHAR)temp;
-	
+
 	temp = ps.password_retries;
 	send_buffer[16] = (UCHAR)temp;
 	temp >>= 8;
 	send_buffer[17] = (UCHAR)temp;
 */
-	
+
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
-	printString2("server_up");
 
 	while(TRUE)
 	{
@@ -1078,19 +1199,19 @@ UCHAR serial_recv_task(int test)
 			engine_temp = (int)high_byte;
 			engine_temp <<= 8;
 			engine_temp |= (int)low_byte;
-			
+
 			temp = (int)high_byte;
 			temp <<= 8;
 			temp |= (int)low_byte;
-			
+
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_TEMP);
 //			printString2(tempx);
-			
+
 		}else
-			
+
 		if(cmd == INDOOR_TEMP)
 		{
 			high_byte = read_serial_buffer[1];
@@ -1100,21 +1221,20 @@ UCHAR serial_recv_task(int test)
 			indoor_temp = (int)high_byte;
 			indoor_temp <<= 8;
 			indoor_temp |= (int)low_byte;
-			
+
 			temp = (int)high_byte;
 			temp <<= 8;
 			temp |= (int)low_byte;
-			
+
 //			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(indoor_temp));
 //			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, INDOOR_TEMP);
 		}else
-		
+
 		if(cmd == TEMP_TOO_HIGH)
 		{
-			printString2("temp too high");
 
 		}else
 
@@ -1131,8 +1251,8 @@ UCHAR serial_recv_task(int test)
 			rpm |= (int)low_byte;
 
 			sprintf(tempx,"%d",rpm);
-			if(rpm > 0)
-				printString2(tempx);
+//			if(rpm > 0)
+//				printString2(tempx);
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_RPM);
 
@@ -1142,27 +1262,74 @@ UCHAR serial_recv_task(int test)
 			mph <<= 8;
 			mph |= (int)low_byte;
 			sprintf(tempx,"%d",mph);
-			if(mph > 0)
-				printString2(tempx);
+//			if(mph > 0)
+//				printString2(tempx);
 //			printHexByte(low_byte);
 //			printHexByte(high_byte);
 //			printString2("\r\n");
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_MPH);
+
+			ucbuff[0] = SEND_INT_RT_VALUES;
+			ucbuff[1] = rtlabel_str[RPM].row;
+			ucbuff[2] = rtlabel_str[RPM].data_col;
+			temp = rpm;
+			ucbuff[4] = (UCHAR)temp;
+			temp >>= 8;
+			ucbuff[3] = (UCHAR)temp; 
+			send_lcd(ucbuff, 5);
+			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+
+			ucbuff[0] = SEND_INT_RT_VALUES;
+			ucbuff[1] = rtlabel_str[MPH].row;
+			ucbuff[2] = rtlabel_str[MPH].data_col;
+			temp = mph;
+			ucbuff[4] = (UCHAR)temp;
+			temp >>= 8;
+			ucbuff[3] = (UCHAR)temp; 
+			send_lcd(ucbuff, 5);
+			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+
 		}else
 
 		if(cmd == SEND_RT_VALUES2)
 		{
+			low_byte = read_serial_buffer[1];
+			ucbuff[0] = SEND_BYTE_RT_VALUES;
+			ucbuff[1] = rtlabel_str[OIL_PRES].row;
+			ucbuff[2] = rtlabel_str[OIL_PRES].data_col;
+			ucbuff[3] = low_byte;
+			send_lcd(ucbuff, 4);
 
-			sprintf(tempx,"%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2], 
-						read_serial_buffer[3], read_serial_buffer[4]);
-//			printString2(tempx);
+			low_byte = read_serial_buffer[2];
+			ucbuff[0] = SEND_BYTE_RT_VALUES;
+			ucbuff[1] = rtlabel_str[FUEL_LEVEL].row;
+			ucbuff[2] = rtlabel_str[FUEL_LEVEL].data_col;
+			ucbuff[3] = low_byte;
+			send_lcd(ucbuff, 4);
+
+			low_byte = read_serial_buffer[3];
+			ucbuff[0] = SEND_BYTE_RT_VALUES;
+			ucbuff[1] = rtlabel_str[MAP].row;
+			ucbuff[2] = rtlabel_str[MAP].data_col;
+			ucbuff[3] = low_byte;
+			send_lcd(ucbuff, 4);
+
+			low_byte = read_serial_buffer[4];
+			ucbuff[0] = SEND_BYTE_RT_VALUES;
+			ucbuff[1] = rtlabel_str[O2].row;
+			ucbuff[2] = rtlabel_str[O2].data_col;
+			ucbuff[3] = low_byte;
+			send_lcd(ucbuff, 4);
+
+			sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
+						read_serial_buffer[3],read_serial_buffer[4]);
 
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS);
 
 		}else
-		
+
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
 		{
 			sprintf(tempx,"nav cmd: %d",cmd);
@@ -1177,19 +1344,19 @@ UCHAR serial_recv_task(int test)
 			temp <<= 8;
 			temp |= read_serial_buffer[1];
 			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
-			printString2(tempx);
-			
+			//printString2(tempx);
+
 			temp = read_serial_buffer[4];
 			temp <<= 8;
 			temp |= read_serial_buffer[3];
 			sprintf(tempx,"cooling fan on: %.1f\0", convertF(temp));
-			printString2(tempx);
+			//printString2(tempx);
 
 			temp = read_serial_buffer[6];
 			temp <<= 8;
 			temp |= read_serial_buffer[5];
 			sprintf(tempx,"cooling fan off: %.1f\0", convertF(temp));
-			printString2(tempx);
+			//printString2(tempx);
 		}else
 
 		if(cmd == GET_CONFIG2)
@@ -1198,41 +1365,42 @@ UCHAR serial_recv_task(int test)
 			temp <<= 8;
 			temp |= read_serial_buffer[1];
 			sprintf(tempx,"fan on: %.1f\0", convertF(temp));
-			printString2(tempx);
+			//printString2(tempx);
 
 			temp = read_serial_buffer[4];
 			temp <<= 8;
 			temp |= read_serial_buffer[3];
 			sprintf(tempx,"fan off: %.1f\0", convertF(temp));
-			printString2(tempx);
+			//printString2(tempx);
 
 			temp = read_serial_buffer[6];
 			temp <<= 8;
 			temp |= read_serial_buffer[5];
 			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
-			printString2(tempx);
+			//printString2(tempx);
 		}else
-			
+
 		if(cmd == PASSWORD_OK)
 		{
-			printString2("password ok");
+			//printString2("password ok");
 		}else
 
 		if(cmd == PASSWORD_BAD)
 		{
 			sprintf(tempx,"password: %d %d",read_serial_buffer[1],read_serial_buffer[2]);
-			printString2(tempx);
+			//printString2(tempx);
 		}
-		
+
 
 		if(shutdown_all)
 		{
-			//printf("shutting down serial task\r\n");
+//			printf("shutting down serial task\r\n");
 			close_serial();
 			close_serial2();
+			close_serial3();
 //			myprintf1("done serial task\r\n");
 			//printString2("closing serial ports");
-			//printf("serial ports done\r\n");
+//			printf("serial ports done\r\n");
 			return 0;
 		}
 
@@ -1349,7 +1517,7 @@ UCHAR tcp_monitor_task(int test)
 //
 			if (  (global_socket=accept(listen_sd, (struct sockaddr *)&cad, (socklen_t *)&alen)) < 0)
 			{
-				myprintf1("accept failed\0");
+//				myprintf1("accept failed\0");
 				//printString2("accept failed");
 				return 0;
 //					exit (1);
@@ -1357,9 +1525,9 @@ UCHAR tcp_monitor_task(int test)
 			if(global_socket > 0)
 				sock_open = 1;
 //			myprintf1("connected to socket: \0");
-//			printString2("connected to socket: \0");
+			//printString2("connected to socket: \0");
 //			printf("connected to socket: \r\n");
-			
+
 			 //send_param_msg();
 //			 send_status_msg();
 
@@ -1559,15 +1727,15 @@ UCHAR basic_controls_task(int test)
 			case ON_RBRIGHTS:
 			case OFF_RBRIGHTS:
 //			case ESTOP_SIGNAL:
-				send_serialother(cmd,tempx);
-				myprintf1(cmd_array[cmd].cmd_str);
-				printString2(cmd_array[cmd].cmd_str);
+				//send_serialother(cmd,tempx);
+//				myprintf1(cmd_array[cmd].cmd_str);
+				printString3(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 				}
-// comment out the printString2 when using on actual iobox				
+// comment out the printString2 when using on actual iobox
 //				printString2(tempx);
 
 			break;
@@ -1577,7 +1745,7 @@ UCHAR basic_controls_task(int test)
 //#if 0
 		switch(cmd)
 		{
-	
+
 			case ENABLE_START:
 	//			index = STARTER;
 	//			rc = ollist_find_data(index,otpp,&oll);
@@ -1727,7 +1895,7 @@ UCHAR basic_controls_task(int test)
 				ollist_insert_data(index,&oll,otp);
 				//printString2("off running lights");
 				break;
-		
+
 			case SPECIAL_CMD:
 				for(j = 0;j < 2;j++)
 					for(i = 0;i < 16;i++)
@@ -1862,7 +2030,7 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				usleep(_100MS);
 				set_output(otp,0);
-			break;		
+			break;
 
 			case WIPER1:
 				index = WWIPER1;
@@ -1872,7 +2040,7 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				usleep(_100MS);
 				set_output(otp,0);
-			break;	
+			break;
 
 			case WIPER2:
 				index = WWIPER1;
@@ -1882,7 +2050,7 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				usleep(_100MS);
 				set_output(otp,1);
-			break;	
+			break;
 
 			case WIPER_OFF:
 				index = WWIPER1;
@@ -1892,7 +2060,7 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				usleep(_100MS);
 				set_output(otp,0);
-			break;	
+			break;
 
 			case TEST_ALL_IO:
 /*
@@ -1949,8 +2117,8 @@ UCHAR basic_controls_task(int test)
 			case SHUTDOWN:
 				//myprintf1("shutdown engine\0");
 				running_seconds = running_minutes = running_hours = 0;
+//				printf("engine_running: %d\r\n",engine_running);
 				engine_running = 0;
-	//			printf("engine_running: %d\r\n",engine_running);
 				change_output(ACCON, 0);
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 0;
@@ -1960,11 +2128,11 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(otp->port,&oll,otp);
-				index = STARTER;
-				rc = ollist_find_data(index,otpp,&oll);
-				otp->onoff = 0;
-				set_output(STARTER,0);
-				ollist_insert_data(index,&oll,otp);
+//				index = STARTER;
+//				rc = ollist_find_data(index,otpp,&oll);
+//				otp->onoff = 0;
+//				set_output(STARTER,0);
+//				ollist_insert_data(index,&oll,otp);
 				lights_on_countdown = actual_lights_on_delay;
 //				add_msg_queue(OFF_RUNNING_LIGHTS);
 				break;
@@ -1976,7 +2144,7 @@ UCHAR basic_controls_task(int test)
 */
 			case SHUTDOWN_IOBOX:
 // read_led & green_led can only be seen on test bench
-//#if 0
+#if 0
 				for(i = 0;i < 10;i++)
 				{
 					red_led(1);		// these lights on on the board
@@ -1992,21 +2160,21 @@ UCHAR basic_controls_task(int test)
 					usleep(2000);
 					green_led(0);
 				}
-//#endif				
+#endif
 				send_serial(SERVER_DOWN);
 				myprintf1("shutdown iobox\0");
 //				printf("shutdown iobox\r\n");
 				//printString2("shutdown iobox");
 				for(i = 0;i < 5;i++)		// scroll the display on the iobox
 				{							// to see the last 10 msg's and pause
-					setdioline(7,1);		// for 1 sec each time
+//					setdioline(7,1);		// for 1 sec each time
 					uSleep(0,100);
-					scroll_up();
-					setdioline(7,0);
+//					scroll_up();
+//					setdioline(7,0);
 					uSleep(0,100);
-					scroll_up();
+//					scroll_up();
 				}
-				setdioline(7,0);
+//				setdioline(7,0);
 //				printf("shutdown iobox\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 3;
@@ -2033,19 +2201,19 @@ UCHAR basic_controls_task(int test)
 					green_led(0);
 				}
 #endif
-				setdioline(7,1);
+//				setdioline(7,1);
 				myprintf1("reboot iobox\0");
 
 				for(i = 0;i < 5;i++)
 				{
-					setdioline(7,1);
+//					setdioline(7,1);
 					uSleep(0,100);
-					scroll_up();
-					setdioline(7,0);
+//					scroll_up();
+//					setdioline(7,0);
 					uSleep(0,100);
-					scroll_up();
+//					scroll_up();
 				}
-				setdioline(7,0);
+//				setdioline(7,0);
 
 				shutdown_all = 1;
 				reboot_on_exit = 2;
@@ -2055,20 +2223,28 @@ UCHAR basic_controls_task(int test)
 				send_serial(SERVER_DOWN);
 				shutdown_all = 1;
 				reboot_on_exit = 4;
-				break;	
+				break;
 
 			case UPLOAD_NEW_PARAM:
 				send_serial(SERVER_DOWN);
 				//printf("upload new param...\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 5;
-				break;	
+				break;
+
+			case SHELL_AND_RENAME:
+				send_serial(SERVER_DOWN);
+				//printString3("shell and rename...\r\n");
+				shutdown_all = 1;
+				reboot_on_exit = 6;
+				break;
 
 			case UPLOAD_OTHER:
 				shutdown_all = 1;
 				reboot_on_exit = 1;
+				//printf("upload other...\r\n");
+				break;
 
-				break;	
 				default:
 				break;
 		}	// end of switch
@@ -2090,7 +2266,7 @@ float convertF(int raw_data)
 	int ret;
 	if ((raw_data & 0x100) != 0)
 	{
-		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */   
+		raw_data = - (((~raw_data)+1) & 0xff); /* take 2's comp */
 	}
 	T_celcius = raw_data * 0.5;
 	T_F = (T_celcius * 1.8) + 32;

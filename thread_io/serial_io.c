@@ -18,10 +18,13 @@
 #else
 #define BAUDRATE B115200
 #endif
-#define BAUDRATE2 B115200
+#define BAUDRATE2 B19200
+#define BAUDRATE3 B115200
 
 #ifdef TS_7800
-#define MODEMDEVICE "/dev/ttyS1"				  // 7800 uses ttyS1 as the 2nd serial port
+#define MODEMDEVICE "/dev/ttyS0"				  // 7800 uses ttyS1 as the 2nd serial port
+#define MODEMDEVICE2 "/dev/ttyS1"
+#define MODEMDEVICE3 "/dev/ttts4"
 #else
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
 #define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
@@ -35,6 +38,7 @@ static int set_interface_attribs (int fd, int speed, int parity);
 static void set_blocking (int fd, int should_block);
 static struct termios oldtio;
 static struct termios oldtio2;
+static struct termios oldtio3;
 extern PARAM_STRUCT ps;
 
 //volatile int STOP=FALSE;
@@ -137,7 +141,7 @@ int write_serial(UCHAR byte)
 {
 	int res;
 //	printf("fd = %d\n",global_handle);
-	res = write(global_handle,&byte,1);
+	res = write(global_handle, &byte, 1);
 	return res;
 }
 /************************************************************************************/
@@ -146,7 +150,17 @@ int write_serial2(UCHAR byte)
 	int res = -1;
 	if(ps.test_bank == 0)
 	{
-		res = write(global_handle2,&byte,1);
+		res = write(global_handle2, &byte, 1);
+	}
+	return res;
+}
+/************************************************************************************/
+int write_serial3(UCHAR byte)
+{
+	int res = -1;
+	if(ps.test_bank == 0)
+	{
+		res = write(global_handle3, &byte, 1);
 	}
 	return res;
 }
@@ -178,6 +192,7 @@ int write_serial_buff(UCHAR *buff, char *errmsg)
 void printString(const char myString[])
 {
 	UCHAR i = 0;
+	return;
 	while(myString[i])
 	{
 		write_serial(myString[i]);
@@ -253,8 +268,41 @@ int init_serial2(void)
 	return global_handle2;
 }
 
+/************************************************************************************/
+int init_serial3(void)
+{
+	global_handle3 = -1;
+
+//	if(ps.test_bank == 0)
+	if(1)
+	{
+// undef this section if console disabled just so it can compile with the console enabled
+		global_handle3 = open (MODEMDEVICE3, O_RDWR | O_NOCTTY | O_SYNC);
+		if (global_handle3 < 0)
+		{
+			//perror(MODEMDEVICE3);
+			//printString2("error on MODEMDEVICE3 open");
+			return -1;
+		}
+		if(tcgetattr(global_handle3,&oldtio3) != 0)	  /* save current port settings */
+		{
+			myprintf1("tcgetattr (2) error\0", errno);
+			close(global_handle3);
+			//printString2("error on tcgetattr");
+			return -1;
+		}
+		set_interface_attribs (global_handle3, BAUDRATE3, 0);
+		set_blocking (global_handle3, 1);	 // blocking
+	//	set_blocking (global_handle2, 0);	// non-blocking
+	}
+
+	return global_handle3;
+}
+
+/************************************************************************************/
 void printHexByte(UCHAR byte) 
 {
+	return;
 	/* Prints a byte as its hexadecimal equivalent */
 	UCHAR nibble;
 //	nibble = (byte & 0b11110000) >> 4;
@@ -266,6 +314,7 @@ void printHexByte(UCHAR byte)
 	write_serial2(0x20);
 }
 
+/************************************************************************************/
 char nibbleToHexCharacter(UCHAR nibble) 
 {
 		                           /* Converts 4 bits into hexadecimal */
@@ -283,6 +332,7 @@ char nibbleToHexCharacter(UCHAR nibble)
 void printString2(char *myString)
 {
 	int i = 0;
+	return;
 	if(ps.test_bank == 0)
 	{
 		while(myString[i])
@@ -293,13 +343,28 @@ void printString2(char *myString)
 		write_serial2('\r');
 		write_serial2('\n');
 	}
+}
 
+/************************************************************************************/
+void printString3(char *myString)
+{
+	int i = 0;
+
+	if(ps.test_bank == 0)
+	{
+		while(myString[i])
+		{
+			write_serial3(myString[i]);
+			i++;
+		}
+		write_serial3('\r');
+		write_serial3('\n');
+	}
 }
 
 /************************************************************************************/
 void close_serial2(void)
 {
-//	if(ps.test_bank == 0)
 	if(1)
 	{
 		tcsetattr(global_handle2,TCSANOW,&oldtio2);
@@ -307,3 +372,11 @@ void close_serial2(void)
 	}
 }
 
+void close_serial3(void)
+{
+	if(1)
+	{
+		tcsetattr(global_handle3,TCSANOW,&oldtio3);
+		close(global_handle3);
+	}
+}

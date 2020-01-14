@@ -10,7 +10,7 @@
 #include <string.h>
 #include "../mytypes.h"
 #include "lcd_func.h"
-#include "serial_io.h"
+#include "serial_io.h" 
 
 #ifndef TS_7800
 
@@ -58,7 +58,7 @@ int myprintf1(char *str)
 	char *ptr = str;
 	char temp[10];
 	char temp2[35];
-
+	return 1;
 	//printString2(str);
 
 	if(!lcd_enabled)
@@ -85,7 +85,7 @@ int myprintf2(char *str, int x)
 	char temp[35];
 	char temp2[10];
 	int i;
-
+	return 1;
 	if(!lcd_enabled)
 	{
 //		printf("%s %d\n",str,x);
@@ -110,7 +110,7 @@ int myprintf3(char *str, int x, int y)
 	char temp[35];
 	char temp2[10];
 	int i;
-
+	return 1;
 	if(!lcd_enabled)
 	{
 //		printf("%s %d %d\n",str,x,y);

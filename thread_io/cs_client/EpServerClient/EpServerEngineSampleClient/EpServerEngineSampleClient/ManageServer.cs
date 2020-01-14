@@ -86,10 +86,13 @@ namespace EpServerEngineSampleClient
 				case 5:
 					cmd = "UPLOAD_NEW_PARAM";
 					break;
+				case 6:
+					cmd = "SHELL_AND_RENAME";
+					break;
 				default:
                     break;
             }
-            if (reboot_code > 0 && reboot_code < 6)
+            if (reboot_code > 0 && reboot_code < 7)
             {
                 offset = svrcmd.GetCmdIndexI(cmd);
                 svrcmd.Send_Cmd(offset);
@@ -114,6 +117,12 @@ namespace EpServerEngineSampleClient
 		{
 			AddMsg("sending UPLOAD_NEW_PARAM");
 			reboot_code = 5;
+		}
+
+		private void btnShellRename_Click(object sender, EventArgs e)
+		{
+			AddMsg("sending SHELL_AND_RENAME");
+			reboot_code = 6;
 		}
 	}
 }

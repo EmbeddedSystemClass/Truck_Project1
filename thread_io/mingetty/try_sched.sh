@@ -1,10 +1,5 @@
 echo "running try_sched.sh (v1.14)" >> status.txt
 date >> status.txt
-if [ ! -e /mnt/cf/temp.txt ]
-then
- ../mountcf.sh
- echo "mounting cf"
-fi
 
 if [ -e /root/sched ]
 then
@@ -83,6 +78,20 @@ else
   /sbin/reboot
 fi
 fi
+
+if [ $OUT -eq 6 ]
+ then
+  if [ -e sched2 ]
+   then
+   echo "exit to shell and rerun sched" >> status.txt
+   mv sched2 sched
+   ./sched odata.dat
+   ./try_sched.sh
+   else 
+   echo "sched2 not found" >> status.txt
+   /sbin/reboot
+  fi
+fi 
 
 if [ $OUT -eq 141 ]
  then

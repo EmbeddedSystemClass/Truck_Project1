@@ -1,4 +1,4 @@
-#if 1
+ #if 1
 #include <unistd.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -35,9 +35,24 @@ extern int engine_running;
 extern pthread_mutex_t     tcp_read_lock;
 extern pthread_mutex_t     tcp_write_lock;
 
+int myprintf1(char *str)
+{
+	return 0;
+}
+int myprintf2(char *str, int x)
+{
+	return 0;
+}
+
+/**********************************************************************************************************/
+int myprintf3(char *str, int x, int y)
+{
+	return 0;
+}
+
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[114] =
+CMD_STRUCT cmd_array[116] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -152,7 +167,9 @@ CMD_STRUCT cmd_array[114] =
 	{		PASSWORD_OK,"PASSWORD_OK\0" },
 	{		PASSWORD_BAD,"PASSWORD_BAD\0" },
 	{		SET_PASSWORD_TIMEOUT,"SET_PASSWORD_TIMEOUT\0" },
-	{		SET_PASSWORD_RETRIES,"SET_PASSWORD_RETRIES\0" }
+	{		SET_PASSWORD_RETRIES,"SET_PASSWORD_RETRIES\0" },
+	{		SHELL_AND_RENAME,"SHELL_AND_RENAME\0" },
+	{		REFRESH_LCD,"REFRESH_LCD\0" }
 };
 
 //extern illist_t ill;
@@ -273,7 +290,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.31\0";
+	char version[15] = "sched v1.23\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -329,10 +346,10 @@ UCHAR get_host_cmd_task(int test)
 	init_ips();
 
 	same_msg = 0;
-	lcd_init();
+//	lcd_init();
 
 // flash green and red led's to signal we are up (if LCD screen not attached)
-//#if 0
+#if 0
 	for(i = 0;i < 5;i++)
 	{
 		red_led(1);
@@ -348,7 +365,7 @@ UCHAR get_host_cmd_task(int test)
 		usleep(10000);
 		green_led(0);
 	}
-//#endif
+#endif
 //	myprintf1("start....\0");
 
 	myprintf1(version);
@@ -405,8 +422,9 @@ UCHAR get_host_cmd_task(int test)
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
-				printString2(tempx);
-//				printf("%s\r\n",tempx);
+				//printString2(tempx);
+				//printString3(tempx);
+				printf("%s\r\n",tempx);
 //				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 			}
 #endif
@@ -435,6 +453,7 @@ UCHAR get_host_cmd_task(int test)
 					case UPLOAD_NEW:
 					case UPLOAD_NEW_PARAM:
 					case UPLOAD_OTHER:
+					case SHELL_AND_RENAME:
 					case TEST_ALL_IO:
 					case TEST_LEFT_BLINKER:
 					case TEST_RIGHT_BLINKER:
@@ -460,12 +479,8 @@ UCHAR get_host_cmd_task(int test)
 					case WIPER1:
 					case WIPER2:
 					case WIPER_OFF:
-						//send_serialother(cmd,tempx);
+						send_serialother(cmd,tempx);
 						add_msg_queue(cmd);
-//						strcpy(tempx,cmd_array[cmd].cmd_str);
-//						printString2(tempx);
-//						sprintf(tempx,"%d %d %d %d ",cmd,trunning_seconds,trunning_minutes,trunning_hours);
-//						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 						break;
 
 					// allows password to be changed from laptop via tcp connection
@@ -473,7 +488,7 @@ UCHAR get_host_cmd_task(int test)
 						rc = 0;
 //						memset(tempx,0,50);
 						send_msg(strlen((char*)password)*2,(UCHAR*)password, NEW_PASSWORD1);
-						printString2(password);
+						//printString2(password);
 						break;
 
 					case RE_ENTER_PASSWORD:
@@ -484,7 +499,7 @@ UCHAR get_host_cmd_task(int test)
 					// have been saved to disk in a config file
 					case SET_PARAMS:
 						send_param_msg();
-						printString2("set params");
+						//printString2("set params");
 						break;
 
 					case SET_TIME:
@@ -803,19 +818,19 @@ UCHAR get_host_cmd_task(int test)
 
 					// adjust the 2x20 LCD screen on the IO box
 					case LCD_SHIFT_LEFT:
-						shift_left();
+//						shift_left();
 						break;
 
 					case LCD_SHIFT_RIGHT:
-						shift_right();
+//						shift_right();
 						break;
 
 					case SCROLL_UP:
-						scroll_up();
+//						scroll_up();
 						break;
 
 					case SCROLL_DOWN:
-						scroll_down();
+//						scroll_down();
 						break;
 
 					case CLOSE_DB:
@@ -874,7 +889,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 						
@@ -896,7 +911,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 						
@@ -918,7 +933,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -928,14 +943,14 @@ UCHAR get_host_cmd_task(int test)
 						utemp |= (UINT)msg_buf[2];
 						ps.high_rev_limit = utemp;
 						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
-						printString2(tempx);
+						//printString2(tempx);
 						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
 //						sprintf(tempx,"actual: %d",actual_high_rev_limit);
@@ -948,14 +963,14 @@ UCHAR get_host_cmd_task(int test)
 						utemp |= (UINT)msg_buf[2];
 						ps.low_rev_limit = utemp;
 						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
-						printString2(tempx);
+						//printString2(tempx);
 						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
 //						sprintf(tempx,"actual: %d",actual_low_rev_limit);
@@ -983,7 +998,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -1000,7 +1015,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -1017,7 +1032,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -1034,7 +1049,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -1051,7 +1066,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 					
@@ -1068,7 +1083,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 
@@ -1085,7 +1100,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 	
@@ -1102,7 +1117,7 @@ UCHAR get_host_cmd_task(int test)
 //							printf("%s\r\n",errmsg);
 							myprintf1(errmsg);
 							sprintf(tempx,"%s %d",errmsg,i);
-							printString2(tempx);
+							//printString2(tempx);
 						}
 						break;
 	
@@ -1128,7 +1143,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.high_rev_limit = utemp;
 						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
 						sprintf(tempx,"hi rev: %d",actual_high_rev_limit);
-						printString2(tempx);
+						//printString2(tempx);
 						
 						utemp = (UINT)msg_buf[11];
 						utemp <<= 8;
@@ -1136,7 +1151,7 @@ UCHAR get_host_cmd_task(int test)
 						ps.low_rev_limit = utemp;
 						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
 						sprintf(tempx,"low rev: %d",actual_low_rev_limit);
-						printString2(tempx);
+						//printString2(tempx);
 						
 						utemp = (UINT)msg_buf[13];
 						utemp <<= 8;
@@ -1149,7 +1164,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[1] = msg_buf[13];
 						//sprintf(tempx,"fan on: %d",ps.cooling_fan_on);
 						sprintf(tempx,"fan on: %.1f\0", convertF(ps.cooling_fan_on));
-						printString2(tempx);
+						//printString2(tempx);
 
 						utemp = (UINT)msg_buf[15];
 						utemp <<= 8;
@@ -1158,7 +1173,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[2] = msg_buf[14];
 						write_serial_buffer[3] = msg_buf[15];
 						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
-						printString2(tempx);
+						//printString2(tempx);
 						
 						utemp = (UINT)msg_buf[17];
 						utemp <<= 8;
@@ -1167,7 +1182,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[4] = msg_buf[16];
 						write_serial_buffer[5] = msg_buf[17];
 						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
-						printString2(tempx);
+						//printString2(tempx);
 						
 						utemp = (UINT)msg_buf[19];
 						utemp <<= 8;
@@ -1176,7 +1191,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[6] = msg_buf[18];
 						write_serial_buffer[7] = msg_buf[19];
 						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
-						printString2(tempx);
+						//printString2(tempx);
 						
 						utemp = (UINT)msg_buf[21];
 						utemp <<= 8;
@@ -1199,7 +1214,7 @@ UCHAR get_host_cmd_task(int test)
 						actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
 						utemp = (UINT)actual_lights_on_delay;
 						sprintf(tempx,"lights on delay: %d %d",actual_lights_on_delay,ps.lights_on_delay);
-						printString2(tempx);
+						//printString2(tempx);
 
 						utemp = (UINT)msg_buf[27];
 						utemp <<= 8;
@@ -1208,7 +1223,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[12] = msg_buf[26];
 						write_serial_buffer[13] = msg_buf[27];
 						sprintf(tempx,"eng temp limit: %.1f\0", convertF(ps.engine_temp_limit));
-						printString2(tempx);
+						//printString2(tempx);
 
 						utemp = (UINT)msg_buf[29];
 						utemp <<= 8;
@@ -1247,21 +1262,25 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[j] = 0;
 						password[4] = 0;
 						//printf("\r\n%s\r\n",password);
-						printString2(password);
+						//printString2(password);
 						send_serialother(SEND_CONFIG2, &write_serial_buffer[0]);
 						usleep(500);
 						i = WriteParams("param.conf", &ps, &password[0], errmsg);
-						printString2("update config file");
+						//printString2("update config file");
 						break;
 
 					case GET_CONFIG2:
-						printString2("get config2");
+						//printString2("get config2");
 						send_serialother(GET_CONFIG2,&write_serial_buffer[0]);
 						break;
 
 					case GET_VERSION:
-						printString2(version);
+						//printString2(version);
 						send_status_msg(version);
+						break;
+
+					case REFRESH_LCD:
+						init_LCD();
 						break;
 
 					case SVR_CMD:
@@ -1270,13 +1289,13 @@ UCHAR get_host_cmd_task(int test)
 					case HOME_SVR_ON:
 						strcpy(tempx,"HOME_SVR_ON");
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_ON);
-						printString2("Home Server On");
+						//printString2("Home Server On");
 						break;
 
 					case HOME_SVR_OFF:
 						strcpy(tempx,"HOME_SVR_OFF");
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_OFF);
-						printString2("Home Server Off");
+						//printString2("Home Server Off");
 						break;
 
 					case SERVER_UP:
@@ -1304,12 +1323,12 @@ exit_program:
 						else if(reboot_on_exit == 3)
 						{
 							myprintf1("shutting down...\0");
-							printf("shutting down...\r\n");
+//							printf("shutting down...\r\n");
 						}
 						else if(reboot_on_exit == 4)
 						{
 							myprintf1("upload new...\0");
-							printf("upload new...\r\n");
+//							printf("upload new...\r\n");
 						}
 
 						// save the current list of events
@@ -1347,7 +1366,7 @@ exit_program:
 						if(i < 0)
 						{
 	//							printf("%s\r\n",errmsg);
-							printString2(errmsg);
+							//printString2(errmsg);
 							myprintf1(errmsg);
 						}
 	/*
@@ -1442,7 +1461,7 @@ int get_msg(void)
 	ret = recv_tcp(preamble,16,1);
 	if(ret < 0)
 	{
-		printString2("get_msg error\0");
+		//printString2("get_msg error\0");
 		printHexByte(ret);
 	}
 /*

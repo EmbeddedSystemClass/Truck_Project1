@@ -155,16 +155,18 @@ int main(void)
 		for(col = 0;col < COLUMN-1;col++)
 		{
 			GDispCharAt(row,col,xbyte);
-			_delay_ms(2);
+			_delay_ms(1);
 			if(++xbyte > 0x7e)
 			{
 				xbyte = 0x21;
 			}
 		}
 	}
-	_delay_ms(1000);
 */
-		
+	_delay_ms(500);
+
+	clr();
+
 	memset((void *)curr_num,0,SIZE_NUM);
 	memcpy((void *)curr_num,"0123456\0",7);
 
@@ -172,24 +174,36 @@ int main(void)
 
 	row = col = 0;
 
-    while (1)
-    {
+	while (1)
+        {
 		key = receiveByte();
 		buff[chptr] = key;
 		chptr++;
 
+		_delay_ms(1);
 		if(key == AVR_START_BYTE)
 		{
+			_delay_ms(10);
 			switch(buff[0])
 			{
 				case CHAR_CMD:
+					ch = buff[1];
+					if(ch > 0x1F && ch < 0x7f)
+					{
+						GDispCharAt(row,col,ch);
 
-					putChar();
-				
-					if(num_entry_mode == 1)
-						if(num_entry_ptr < SIZE_NUM)
-							curr_num[num_entry_ptr++] = ch;
+						if(++col > COLUMN-1)
+						{
+							col = 0;
+							if(++row > ROWS-1)
+								row = 0;
+						}
 					}
+
+//					putChar();
+//					if(num_entry_mode == 1)
+//						if(num_entry_ptr < SIZE_NUM)
+//							curr_num[num_entry_ptr++] = ch;
 					break;
 
 				case GOTO_CMD:
@@ -387,7 +401,15 @@ int main(void)
 					int_val = (UINT)buff[3];
 					int_val <<= 8;
 					int_val |= (UINT)buff[4];
-					sprintf(str,"%04d ",int_val);
+					if(int_val < 10)
+						sprintf(str,"%d ",int_val);
+					else if(int_val < 100)
+						sprintf(str,"%02d ",int_val);
+					else if(int_val < 1000)
+						sprintf(str,"%03d ",int_val);
+					else
+						sprintf(str,"%04d ",int_val);
+
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
@@ -482,7 +504,7 @@ int main(void)
 			}
 			chptr = 0;
 //			_delay_ms(5);
-			transmitByte(AVR_END_BYTE);	
+//			transmitByte(AVR_END_BYTE);
 			// send 0xFD back to let PIC24 know we are finished with this command
 //			printHexByte(buff[5]+0x30);
 //			printString(" ");
@@ -493,6 +515,7 @@ int main(void)
 
 static void putChar(void)
 {
+/*
 	UCHAR ch = buff[1];
 	if(ch > 0x1F && ch < 0x7f)
 	{
@@ -504,7 +527,8 @@ static void putChar(void)
 			if(++row > ROWS-1)
 				row = 0;
 		}
-	}	
+	}
+*/
 }	
 
 static void setMode(void)
@@ -531,7 +555,7 @@ static char *eeprom_str_lookup(int index, char *str)
 {
 	int i,j,k;
 	i = j = k = 0;
-	index++;
+//	index++;
 
 	do{
 		j++;

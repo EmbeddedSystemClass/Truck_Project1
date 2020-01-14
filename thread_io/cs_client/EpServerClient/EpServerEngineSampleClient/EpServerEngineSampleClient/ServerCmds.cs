@@ -125,7 +125,9 @@ namespace EpServerEngineSampleClient
 			PASSWORD_OK,
 			PASSWORD_BAD,
 			SET_PASSWORD_TIMEOUT,
-			SET_PASSWORD_RETRIES
+			SET_PASSWORD_RETRIES,
+			SHELL_AND_RENAME,
+			REFRESH_LCD
 		}
 
 		public ServerCmds()

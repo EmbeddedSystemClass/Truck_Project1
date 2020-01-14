@@ -26,8 +26,9 @@ char menu_labels[NUM_STR][24] = {
 	{"TRIP\0"},
 	{"RPM\0"},
 	{"MPH\0"},
-	{"RUN TIME\0"},  
+	{"RUN TIME\0"},
 	{"ENG TEMP\0"},
+	{"FUEL LEVEL\0"},
 	{"OUTDOOR TEMP\0"},
 	{"INDOOR TEMP\0"},
 	{"ENGINE\0"},				// status values (STATUS_VALUES_OFFSET)
@@ -36,7 +37,6 @@ char menu_labels[NUM_STR][24] = {
 	{"BRIGHTS\0"},
 	{"BRAKES\0"},
 	{"RUNNING LIGHTS\0"},
-	{"BLOWER\0"},
 	{"enter password:\0"},	// various message string	(VARIOUS_MSG_OFFSET)
 	{"bad password\0"},
 	{"start engine\0"},

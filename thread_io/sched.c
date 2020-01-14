@@ -218,7 +218,10 @@ int main(int argc, char **argv)
 	for (i = 0; i < NUM_TASKS; i++)
 	{
 		if (pthread_join(_threads[i].pthread, NULL) !=0)
+		{
+//			printf("exit\r\n");
 			perror("main() pthread_join failed"),exit(1);
+		}
 
 		if(i == 0)
 		{
@@ -245,7 +248,6 @@ int main(int argc, char **argv)
 	else if(reboot_on_exit == 2)
 	{
 //		printf("sched: reboot\r\n");
-
 		return 2;
 	}
 	else if(reboot_on_exit == 3)
@@ -263,4 +265,10 @@ int main(int argc, char **argv)
 //		printf("upload new param\r\n");
 		return 5;
 	}
+	else if(reboot_on_exit == 6)
+	{
+		//printString3("shell and rename (sched.c)\r\n");
+		return 6;
+	}
+
 }

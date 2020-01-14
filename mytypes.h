@@ -37,6 +37,30 @@ typedef struct _ip
 	char label[OLABELSIZE];
 }IP;
 
+typedef struct
+{
+	UCHAR row;
+	UCHAR col;
+	UCHAR data_col;
+} FORMAT_STR;
+
+
+enum rt_values_offsets
+{
+	OIL_PRES,
+	AIR_TEMP,
+	MAP,
+	OIL_TEMP,
+	O2,
+	ODOM,
+	TRIP,
+	RPM,
+	MPH,
+	RUN_TIME,
+	ENG_TEMP,
+	FUEL_LEVEL
+} RT_VALUES_OFFSETS_TYPES;
+
 // msg's sent from client to TS-7200
 enum cmd_types
 {
@@ -153,7 +177,9 @@ enum cmd_types
 	PASSWORD_OK,
 	PASSWORD_BAD,
 	SET_PASSWORD_TIMEOUT,
-	SET_PASSWORD_RETRIES
+	SET_PASSWORD_RETRIES,
+	SHELL_AND_RENAME,
+	REFRESH_LCD
 }CMD_TYPES;
 
 // msg's sent from STM32 to TS-7200
@@ -300,11 +326,11 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 22
-#define START_RT_VALUE_ROW 6
+#define NUM_RT_LABELS 20
+#define START_RT_VALUE_ROW 1
 #define START_RT_VALUE_COL 0
-#define ENDING_RT_VALUE_ROW 15
-#define RT_VALUE_COL_WIDTH 18
+#define ENDING_RT_VALUE_ROW 10
+#define RT_VALUE_COL_WIDTH 19
 
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1

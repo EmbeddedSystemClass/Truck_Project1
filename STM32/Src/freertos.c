@@ -97,8 +97,6 @@ const uint8_t au8_keyTable[NUM_ROWS][NUM_COLS] =
 	{KP_1, KP_2, KP_3, KP_A }
 };
 
-FORMAT_STR rtlabel_str[NUM_RT_LABELS];
-FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 uint64_t pack64(UCHAR *buff);
 //uint32_t pack32(UCHAR *buff);
 
@@ -302,7 +300,7 @@ osThreadId myTask09Handle;
 osThreadId myTask10Handle;
 osMessageQId keypressedHandle;
 osMessageQId Send7200Handle;
-osMessageQId SendAVRHandle;
+osMessageQId SendMonitorHandle;
 osMessageQId SendFPGAHandle;
 osTimerId myTimer01Handle;
 
@@ -392,7 +390,7 @@ static void check_password(int num)
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
-void StartAVRTask(void const * argument);
+void StartMonitorTask(void const * argument);
 void StartTask7200(void const * argument);
 void StartRecv7200(void const * argument);
 void StartSendFPGA(void const * argument);
@@ -436,7 +434,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of myTask04 */
-//  osThreadDef(myTask04, StartAVRTask, osPriorityIdle, 0, 128);
+//  osThreadDef(myTask04, StartMonitorTask, osPriorityIdle, 0, 128);
 //  myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
 
   /* definition and creation of myTask05 */
@@ -472,9 +470,9 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(Send7200, 10, uint64_t);
   Send7200Handle = osMessageCreate(osMessageQ(Send7200), NULL);
 
-  /* definition and creation of SendAVR */
-  osMessageQDef(SendAVR, 10, uint64_t);
-  SendAVRHandle = osMessageCreate(osMessageQ(SendAVR), NULL);
+  /* definition and creation of SendTS7800 */
+  osMessageQDef(SendTS7800, 10, uint64_t);
+  SendMonitorHandle = osMessageCreate(osMessageQ(SendTS7800), NULL);
 
   /* definition and creation of SendFPGA */
   osMessageQDef(SendFPGA, 10, uint64_t);
@@ -482,7 +480,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  /* note: Send7200, SendAVR & SendFPGA must be reset from uint16_t to uint64_t */
+  /* note: Send7200, SendTS7800 & SendFPGA must be reset from uint16_t to uint64_t */
   /* after pulling up in MXCube */
   /* USER CODE END RTOS_QUEUES */
 }
@@ -536,31 +534,6 @@ void StartDefaultTask(void const * argument)
 	vTaskDelay(10);
 	initDS16202();
 
-#if 0
-// had to do this explicitly instead of using DISPLAY_RTLABELS (not working yet)
-
-	row = START_RT_VALUE_ROW;
-	col = START_RT_VALUE_COL;
-
-	for(j = 1;j < NUM_RT_LABELS;j++)		// index has to start from 1
-	{
-		ucbuff[0] = EEPROM_STR;
-		ucbuff[1] = (UCHAR)row++;
-		ucbuff[2] = (UCHAR)col;
-
-		if(row > ENDING_RT_VALUE_ROW)
-		{
-			col += RT_VALUE_COL_WIDTH;
-			row = START_RT_VALUE_ROW;
-		}
-		ucbuff[3] = (UCHAR)j;
-		ucbuff[4] = 20;
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRHandle,avr_buffer,0);
-		vTaskDelay(10);
-		row++;
-	}
-#endif
   /* Infinite loop */
  
   for(;;)
@@ -959,32 +932,27 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_StartAVRTask */
+/* USER CODE BEGIN Header_StartMonitorTask */
 /**
 * @brief Function implementing the myTask04 thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartAVRTask */
-void StartAVRTask(void const * argument)
+/* USER CODE END Header_StartMonitorTask */
+void StartMonitorTask(void const * argument)
 {
-  /* USER CODE BEGIN StartAVRTask */
+  /* USER CODE BEGIN StartMonitorTask */
 	uint64_t avr_buffer[10];
 	UCHAR ucbuff[10];
-	UCHAR start_byte = AVR_START_BYTE;
-	UCHAR end_byte = AVR_END_BYTE;
 	UCHAR temp;
 
   /* Infinite loop */
 
 	for(;;)
 	{
-		xQueueReceive(SendAVRHandle, avr_buffer, portMAX_DELAY);
-	if(1)
-		{
+		xQueueReceive(SendMonitorHandle, avr_buffer, portMAX_DELAY);
 			ucbuff[0] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
-
 			ucbuff[1] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
 
@@ -1007,45 +975,9 @@ void StartAVRTask(void const * argument)
 			avr_buffer[0] >>= 8;
 
 			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
-
-			switch (ucbuff[0])
-			{
-				case EEPROM_STR:
-				case EEPROM_STR2:
-				case DISPLAY_TEMP:
-				case SEND_INT_RT_VALUES:
-				case DISPLAY_ELAPSED_TIME:
-				case SET_MODE_CMD:
-					HAL_UART_Transmit(&huart2, &ucbuff[0], 5, 100);
-					break;
-				case CHAR_CMD:
-				case SET_NUM_ENTRY_MODE:
-				case PASSWORD_MODE:
-					HAL_UART_Transmit(&huart2, &ucbuff[0], 2, 100);
-					break;
-				case GOTO_CMD:
-					HAL_UART_Transmit(&huart2, &ucbuff[0], 3, 100);
-					break;
-				case SEND_BYTE_HEX_VALUES:
-				case SEND_BYTE_RT_VALUES:
-					HAL_UART_Transmit(&huart2, &ucbuff[0], 4, 100);
-					break;
-				case LCD_CLRSCR:
-				case DISPLAY_STATUSLABELS:
-					HAL_UART_Transmit(&huart2, &ucbuff[0], 1, 100);
-					break;
-				default:
-					break;
-			}
-
-			temp = 0;
-
-			do {
-				HAL_UART_Receive(&huart2, &temp, 1, portMAX_DELAY);
-			} while(temp != end_byte);
 		}
 	}
-  /* USER CODE END StartAVRTask */
+  /* USER CODE END StartMonitorTask */
 }
 
 /* USER CODE BEGIN Header_StartTask7200 */
@@ -1104,27 +1036,6 @@ void StartTask7200(void const * argument)
 		/*
 		HAL_UART_Receive(&huart1, &Recv7200buff[0], SERIAL_BUFF_SIZE, 1000);
 
-		ucbuff[0] = SEND_BYTE_RT_VALUES;
-		ucbuff[1] = rtlabel_str[RUN_TIME].row;
-		ucbuff[2] = rtlabel_str[RUN_TIME].data_col;
-		ucbuff[3] = Recv7200buff[0];		// hours
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRHandle,avr_buffer,0);
-		vTaskDelay(5);
-
-		ucbuff[1] = rtlabel_str[RUN_TIME].row;
-		ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 3;
-		ucbuff[3] = Recv7200buff[1];		// minutes
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRHandle,avr_buffer,0);
-		vTaskDelay(5);
-
-		ucbuff[1] = rtlabel_str[RUN_TIME].row;
-		ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 6;
-		ucbuff[3] = Recv7200buff[2];		// seconds
-		avr_buffer[0] = pack64(ucbuff);
-		xQueueSend(SendAVRHandle,avr_buffer,0);
-		vTaskDelay(5);
 
 		vTaskDelay(100);
 		*/
@@ -1347,53 +1258,6 @@ void StartRecv7200(void const * argument)
 					vTaskDelay(10);
 					server_up = 0;
 					break;
-#if 0
-				case SEND_TIME_DATA:
-/*
-running_hours,minutes,seconds,
-total running_hours,minutes,seconds,
-odometer_high,low, trip_high,low
-*/
-					ucbuff[0] = SEND_BYTE_RT_VALUES;
-					ucbuff[1] = rtlabel_str[RUN_TIME].row;
-					ucbuff[2] = rtlabel_str[RUN_TIME].data_col;
-					ucbuff[3] = buff[1];		// hours
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendAVRHandle,avr_buffer,0);
-					vTaskDelay(5);
-
-					ucbuff[1] = rtlabel_str[RUN_TIME].row;
-					ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 3;
-					ucbuff[3] = buff[2];		// minutes
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendAVRHandle,avr_buffer,0);
-					vTaskDelay(5);
-
-					ucbuff[1] = rtlabel_str[RUN_TIME].row;
-					ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 6;
-					ucbuff[3] = buff[3];		// seconds
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendAVRHandle,avr_buffer,0);
-					vTaskDelay(5);
-
-					ucbuff[0] = SEND_INT_RT_VALUES;
-					ucbuff[1] = rtlabel_str[ODOM].row;
-					ucbuff[2] = rtlabel_str[ODOM].data_col;
-					ucbuff[3] = buff[7];
-					ucbuff[4] = buff[8];
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendAVRHandle,avr_buffer,0);
-					vTaskDelay(10);
-
-					ucbuff[0] = SEND_INT_RT_VALUES;
-					ucbuff[1] = rtlabel_str[TRIP].row;
-					ucbuff[2] = rtlabel_str[TRIP].data_col;
-					ucbuff[3] = buff[9];
-					ucbuff[4] = buff[10];
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(SendAVRHandle,avr_buffer,0);
-					break;
-#endif
 
 				case SEND_CONFIG2:
 					fan_on_temp = (uint16_t)buff[2];
@@ -1493,6 +1357,11 @@ odometer_high,low, trip_high,low
 				default:
 					break;
 			}
+			// relay the message onto the monitor task
+			// (or later we can put this with each case stmnt)
+			ucbuff[0] = cmd;
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(SendMonitorHandle,avr_buffer,0);
 			memset(buff,0,SERIAL_BUFF_SIZE);
 		}
 		vTaskDelay(50);
@@ -1683,27 +1552,8 @@ void StartRecvFPGA(void const * argument)
 		if(xbyte == 0xFE)
 		{
 			frame_ptr = 0;
+
 #if 0
-			ucbuff[0] = SEND_INT_RT_VALUES;
-			ucbuff[1] = rtlabel_str[RPM].row;
-			ucbuff[2] = rtlabel_str[RPM].data_col;
-//				ucbuff[3] = (UCHAR)(rpm >> 8);
-//				ucbuff[4] = (UCHAR)rpm;
-			ucbuff[4] = buff[0];
-			ucbuff[3] = buff[1];
-//				avr_buffer[0] = pack64(ucbuff);
-//				xQueueSend(SendAVRHandle,avr_buffer,0);
-			vTaskDelay(10);
-
-			ucbuff[1] = rtlabel_str[MPH].row;
-			ucbuff[2] = rtlabel_str[MPH].data_col;
-//				ucbuff[3] = (UCHAR)(mph >> 8);
-//				ucbuff[4] = (UCHAR)mph;
-			ucbuff[4] = buff[2];
-			ucbuff[3] = buff[3];
-//				avr_buffer[0] = pack64(ucbuff);
-//				xQueueSend(SendAVRHandle,avr_buffer,0);
-
 			if(rpm++ > 5000)		// simulate data for testing
 				rpm = 500;
 			if(++mph > 100)
@@ -1735,7 +1585,18 @@ void StartRecvFPGA(void const * argument)
 			ucbuff[3] = buff[6];
 			ucbuff[4] = buff[7];
 			ucbuff[5] = buff[8];
-
+/*	
+	if calling mcp_3002_wrapper.vhd with compact set to 1 then
+	1st 4 channels have each mcp result as 8-bit values 
+	otherwise to get the 10-bit values for greater accuracy:
+	
+	stuff 4 10-bit values (returned by MCP) into 5 8-bit values (mcp_array)
+	ch 0 MCP3002 bits 0->7
+	ch 0 MCP3002 bits 8->9 & ch 1 bits 0 -> 5
+	ch 1 bits 6 -> 9 & ch 2 bits 0 -> 3
+	ch 2 bits 4 -> 9 & ch 3 0 -> 1
+	ch 3 2 -> 9
+*/
 			avr_buffer[0] = pack64(ucbuff);
 			xQueueSend(Send7200Handle, avr_buffer, 0);
 
@@ -1826,12 +1687,6 @@ void Callback01(void const * argument)
 {
   /* USER CODE BEGIN Callback01 */
 
-	// do the DS1620 temp conversion every second
-/*
-	global_ucbuff[0] = DISPLAY_TEMP;
-	global_ucbuff[1] = rtlabel_str[ENG_TEMP].row;
-	global_ucbuff[2] = rtlabel_str[ENG_TEMP].data_col;
-*/
 	if(server_up == 1)
 	{
 #if 0
@@ -1876,6 +1731,7 @@ void Callback01(void const * argument)
 		}
 #endif
 
+		// do the DS1620 temp conversion every second
 		// raw_data is engine temp
 		writeByteTo1620(DS1620_CMD_STARTCONV);
 		vTaskDelay(30);

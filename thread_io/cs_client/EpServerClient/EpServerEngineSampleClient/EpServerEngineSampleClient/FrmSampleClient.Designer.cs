@@ -370,7 +370,7 @@
 			this.btnReboot.Name = "btnReboot";
 			this.btnReboot.Size = new System.Drawing.Size(235, 61);
 			this.btnReboot.TabIndex = 14;
-			this.btnReboot.Text = "Reboot Server";
+			this.btnReboot.Text = "Refresh LCD";
 			this.btnReboot.UseVisualStyleBackColor = false;
 			this.btnReboot.Click += new System.EventHandler(this.RebootServer);
 			// 

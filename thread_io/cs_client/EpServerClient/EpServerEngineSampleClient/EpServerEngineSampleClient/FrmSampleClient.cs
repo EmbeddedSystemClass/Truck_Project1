@@ -920,8 +920,10 @@ namespace EpServerEngineSampleClient
         }
         private void RebootServer(object sender, EventArgs e)
         {
-
-        }
+			string cmd = "REFRESH_LCD";
+			int offset = svrcmd.GetCmdIndexI(cmd);
+			svrcmd.Send_Cmd(offset);
+		}
         private void StopMbox(object sender, EventArgs e)
         {
 			//AddMsg(dlgsetparams.GetSet().ToString());

@@ -61,7 +61,8 @@ void basic_controls(UCHAR code);
 void send_serial(UCHAR cmd);
 void send_serial2(UCHAR cmd);
 void send_serialother(UCHAR cmd, UCHAR *buf);
-void send_serialother2(UCHAR cmd, UCHAR *buf);
+//void send_serialother2(UCHAR cmd, int size, UCHAR *buf);
+void send_lcd(UCHAR *buf, int size);
 void send_param_msg(void);
 void add_msg_queue(UCHAR cmd);
 UCHAR get_msg_queue(void);
@@ -71,7 +72,7 @@ int put_sock(UCHAR *buf,int buflen, int block, char *errmsg);
 int get_sock(UCHAR *buf, int buflen, int block, char *errmsg);
 int get_msg(void);
 void send_msg(int msg_len, UCHAR *msg, UCHAR msg_type);
-
+void init_LCD();
 void *work_routine(void *arg);
 int send_tcp(UCHAR *str,int len);
 int recv_tcp(UCHAR *str, int strlen,int block);
