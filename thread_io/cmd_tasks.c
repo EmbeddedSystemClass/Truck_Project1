@@ -1280,7 +1280,7 @@ UCHAR get_host_cmd_task(int test)
 						break;
 
 					case REFRESH_LCD:
-						init_LCD();
+						init_LCD(1);
 						break;
 
 					case SVR_CMD:

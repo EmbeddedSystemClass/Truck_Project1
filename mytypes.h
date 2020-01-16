@@ -58,7 +58,15 @@ enum rt_values_offsets
 	MPH,
 	RUN_TIME,
 	ENG_TEMP,
-	FUEL_LEVEL
+	FUEL_LEVEL,
+	OUTDOOR_TEMP,
+	IND_TEMP,
+	ENGINE,
+	COOLING_FAN,
+	HEAD_LIGHTS,
+	BRIGHTS,
+	BRAKES,
+	RUNNING_LIGHTS
 } RT_VALUES_OFFSETS_TYPES;
 
 // msg's sent from client to TS-7200
@@ -181,6 +189,26 @@ enum cmd_types
 	SHELL_AND_RENAME,
 	REFRESH_LCD
 }CMD_TYPES;
+
+enum key_types
+{
+ 	KP_1 = 0xE0, //		- E0
+	KP_2, // '2'		- E1
+	KP_3, // '3'		- E2
+	KP_4, // '4'		- E3
+	KP_5, // '5'		- E4
+	KP_6, // '6'		- E5
+	KP_7, // '7'		- E6
+	KP_8, // '8'		- E7
+	KP_9, // '9'		- E8
+	KP_A, // 'A'		- E9
+	KP_B, // 'B'		- EA
+	KP_C, // 'C'		- EB
+	KP_D, // 'D'		- EC
+	KP_POUND,	// '#'	- ED
+	KP_AST, // '*'		- EE
+	KP_0 	// '0'		- EF
+} KEY_TYPES;
 
 // msg's sent from STM32 to TS-7200
 enum upstream_msg

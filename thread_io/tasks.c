@@ -42,7 +42,7 @@ int total_count;
 extern int lights_on_delay[13];
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, 
-monitor_fake_input_task, timer_task, timer2_task, read_button_inputs, 
+monitor_fake_input_task, timer_task, timer2_task, LCD_serial_queue, 
 serial_recv_task, tcp_monitor_task, basic_controls_task};
 
 int threads_ready_count=0;
@@ -345,13 +345,11 @@ void send_lcd(UCHAR *buf, int size)
 {
 	int i;
 	UCHAR start_byte = AVR_START_BYTE;
-	UCHAR end_byte = AVR_END_BYTE;
-
-	pthread_mutex_lock( &serial_write_lock2);
+	
+	pthread_mutex_lock(&serial_write_lock2);
 	for(i = 0;i < size;i++)
 	{
 		write_serial2(buf[i]);
-		//usleep(1000);
 		uSleep(0,1000);
 	}
 	write_serial2(start_byte);
@@ -659,27 +657,24 @@ UCHAR timer2_task(int test)
 
 }
 /*********************************************************************/
-void init_LCD()
+void init_LCD(int clr)
 {
 	UCHAR row, col, data_col, str;
 	UCHAR xchar = 0x31;
 	UCHAR ucbuff[5];
 	int i,j;
+	char tempx[20];
 
 	col = START_RT_VALUE_COL;
 	data_col = col + 10;
 	row = START_RT_VALUE_ROW;
 	str = 0;
 
-	ucbuff[0] = LCD_CLRSCR;
-	send_lcd(ucbuff, 1);
-	usleep(1000);
-
-	ucbuff[0] = LCD_CLRSCR;
-	send_lcd(ucbuff, 1);
-	usleep(1000);
-
-//	printf("\r\n");
+	if(clr)
+	{
+		ucbuff[0] = LCD_CLRSCR;
+		send_lcd(ucbuff, 1);
+	}
 
 	for(j = 0;j < NUM_RT_LABELS;j++)		// index has to start from 1
 	{
@@ -697,17 +692,13 @@ void init_LCD()
 		ucbuff[1] = (UCHAR)row;
 		ucbuff[2] = (UCHAR)col;
 		ucbuff[3] = (UCHAR)j+1;
-		ucbuff[4] = 20;
+		ucbuff[4] = 18;
 		send_lcd(ucbuff, 5);
-		//usleep(1000);
-/*
-		printf("%d: ",j);
-		printf("%d %d %d :",rtlabel_str[j].row,rtlabel_str[j].col,rtlabel_str[j].data_col); 
+		usleep(1000);
 
-		for(i = 1;i < 4;i++)
-			printf("%d ",ucbuff[i]);
-		printf("\r\n");
-*/
+//		sprintf(tempx,"%d %d %d :",rtlabel_str[j].row,rtlabel_str[j].col,rtlabel_str[j].data_col); 
+//		printString3(tempx);
+
 		row++;
 	}
 }
@@ -762,53 +753,27 @@ UCHAR timer_task(int test)
 //			red_led(0);
 //			green_led(1);
 		}
-/*
-		write_serial_buffer[0] = running_hours;
-		write_serial_buffer[1] = running_minutes;
-		write_serial_buffer[2] = running_seconds;
-		write_serial_buffer[3] = trunning_hours;
-		write_serial_buffer[4] = trunning_minutes;
-		write_serial_buffer[5] = trunning_seconds;
-		write_serial_buffer[6] = (UCHAR)(odometer << 8);
-		write_serial_buffer[7] = (UCHAR)odometer;
-		write_serial_buffer[8] = (UCHAR)(trip << 8);
-		write_serial_buffer[9] = (UCHAR)trip;
-*/
-//		write_serial_buffer[0] = 0xAA;
-//		write_serial_buffer[1] = 0x55;
-//		send_serialother(SEND_TIME_DATA, &write_serial_buffer[0]);
 
 		if(engine_running == 1)
 		{
-/*
-			for(i = 0;i < NUM_RT_LABELS;i++)
-			{
-				ucbuff[0] = SEND_BYTE_RT_VALUES;
-				ucbuff[1] = rtlabel_str[i].row;
-				ucbuff[2] = rtlabel_str[i].data_col;
-				ucbuff[3] = (UCHAR)i;
-				send_lcd(ucbuff, 4);
-				uSleep(0,1000);
-			}
-*/
 			ucbuff[0] = SEND_BYTE_RT_VALUES;
 			ucbuff[1] = rtlabel_str[RUN_TIME].row;
 			ucbuff[2] = rtlabel_str[RUN_TIME].data_col;
 			ucbuff[3] = running_hours;		// hours
 			send_lcd(ucbuff, 4);
-			//uSleep(0,100);
+			uSleep(0,1000);
 
 			ucbuff[1] = rtlabel_str[RUN_TIME].row;
 			ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 3;
 			ucbuff[3] = running_minutes;		// minutes
 			send_lcd(ucbuff, 4);
-			//uSleep(0,100);
+			uSleep(0,1000);
 
 			ucbuff[1] = rtlabel_str[RUN_TIME].row;
 			ucbuff[2] = rtlabel_str[RUN_TIME].data_col + 6;
 			ucbuff[3] = running_seconds;		// seconds
 			send_lcd(ucbuff, 4);
-			//uSleep(0,100);
+			uSleep(0,1000);
 
 			ucbuff[0] = SEND_INT_RT_VALUES;
 			ucbuff[1] = rtlabel_str[ODOM].row;
@@ -818,18 +783,19 @@ UCHAR timer_task(int test)
 			temp >>= 8;
 			ucbuff[3] = (UCHAR)temp; 
 			send_lcd(ucbuff, 5);
-			//uSleep(0,100);
-			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+			uSleep(0,1000);
 
 			ucbuff[0] = SEND_INT_RT_VALUES;
 			ucbuff[1] = rtlabel_str[TRIP].row;
 			ucbuff[2] = rtlabel_str[TRIP].data_col;
+
 			temp = trip;
 			ucbuff[4] = (UCHAR)temp;
 			temp >>= 8;
 			ucbuff[3] = (UCHAR)temp; 
+			uSleep(0,1000);
+
 			send_lcd(ucbuff, 5);
-			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
 
 			if(++running_seconds > 59)
 			{
@@ -990,63 +956,16 @@ UCHAR timer_task(int test)
 }
 
 /*********************************************************************/
-// task to handle the 2 buttons on the IO box
-UCHAR read_button_inputs(int test)
+UCHAR LCD_serial_queue(int test)
 {
-	int i,j;
-	UCHAR inputs,mask;
+	usleep(_5SEC);
+	usleep(_5SEC);
 
 	while(TRUE)
 	{
-		uSleep(0,TIME_DELAY/6);
-/*
-		inputs = 0;
-		mask = 1;
-		for(i = 0;i < 7;i++)
-		{
-			j = getdioline(i);
-			if(j)
-				inputs |= mask;
-			mask <<= 1;
-		}
-		inputs = ~inputs;
-		inputs &= 0x3f;
-
-		if(inputs != 0)
-		{
-			inputs = mask2int(inputs);
-			inputs++;
-			switch(inputs)
-			{
-				case 1:
-//					shift_left();
-					scroll_up();
-				break;
-				case 2:
-//					shift_right();
-					scroll_down();
-				break;
-				case 3:
-//					lcd_home();
-				break;
-				case 4:
-//					lcd_cls();
-				break;
-				case 5:
-//					scroll_up();
-				break;
-				case 6:
-//					scroll_down();
-				break;
-				default:
-				break;
-			}
-		}
-*/
+		uSleep(1,0);
 		if(shutdown_all)
 		{
-//			printf("done read_buttons task\r\n");
-			//printString2('done buttons");
 			return 0;
 		}
 	}
@@ -1072,6 +991,11 @@ UCHAR serial_recv_task(int test)
 	int s;
 	UINT temp;
 	UCHAR ucbuff[6];
+	int brights = 0;
+	int fan_on = 0;
+	int running_lights = 0;
+	int lights_on = 0;
+	int wipers = 0;
 
 	memset(errmsg,0,20);
 
@@ -1091,6 +1015,8 @@ UCHAR serial_recv_task(int test)
 		printf("can't open comm port 2");
 	}
 
+	init_LCD(1);
+
 	//printString2("trying to open comm3");
 
 	if(fd = init_serial3() < 0)
@@ -1104,8 +1030,6 @@ UCHAR serial_recv_task(int test)
 		//printString3("comm3 open");
 	}
 	ch = ch2 = 0x7e;
-
-	init_LCD();
 
 //	red_led(0);
 //	green_led(0);
@@ -1160,6 +1084,7 @@ UCHAR serial_recv_task(int test)
 
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
+	printString3("server up");
 
 	while(TRUE)
 	{
@@ -1178,19 +1103,123 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		cmd = read_serial_buffer[0];
 
+		switch(cmd)
+		{
+			case KP_0:
+				break;
+			case KP_1:
+				cmd = START_SEQ;
+				add_msg_queue(cmd);
+				break;
+			case KP_2:
+				cmd = SHUTDOWN;
+				add_msg_queue(cmd);
+				break;
+			case KP_3:
+				if(lights_on == 1)
+				{
+					if(brights == 0)
+					{
+						cmd = ON_BRIGHTS;
+						brights = 1;
+					}else
+					{
+						cmd = OFF_BRIGHTS;
+						brights = 0;
+					}
+					add_msg_queue(cmd);
+				}
+				break;
+			case KP_4:
+				if(fan_on == 0)
+				{
+					cmd = ON_FAN;
+					fan_on = 1;
+				}else
+				{
+					cmd = OFF_FAN;
+					fan_on = 0;
+				}
+				add_msg_queue(cmd);
+				break;
+			case KP_5:
+				break;
+			case KP_6:
+				if(running_lights)
+				{
+					cmd = ON_RUNNING_LIGHTS;
+					running_lights = 1;
+				}else
+				{
+					cmd = OFF_RUNNING_LIGHTS;
+					running_lights = 0;
+				}
+				add_msg_queue(cmd);
+				break;
+			case KP_7:
+				if(lights_on == 0)
+				{
+					cmd = ON_LIGHTS;
+					lights_on = 1;
+				}else
+				{
+					cmd = OFF_LIGHTS;
+					lights_on = 0;
+				}
+				add_msg_queue(cmd);
+				if(brights == 1)
+				{
+					brights = 0;
+					cmd = OFF_BRIGHTS;
+					add_msg_queue(cmd);
+				}
+				break;
+			case KP_8:
+				switch(wipers)
+				{
+					case 0:
+						cmd = WIPER1;
+						wipers = 1;
+					break;
+					case 1:
+						cmd = WIPER2;
+						wipers = 2;
+					break;
+					case 2:
+						cmd = WIPER_OFF;
+						wipers = 0;
+					break;
+					default:
+						cmd = WIPER_OFF;
+						wipers = 0;
+					break;
+					add_msg_queue(cmd);
+				}
+				break;
+			case KP_9:
+				break;
+			case KP_A:
+				break;
+			case KP_B:
+				break;
+			case KP_C:
+				break;
+			case KP_D:
+				break;
+			default:
+				break;
+		}
+
 		// these are the keypad cmd's sent from STM32
 		// but if the menus of the STM32/LCD/keypad select the feature
 		// then the cmd is between and including NAV_UP & NAV_CLOSE
 		// (see below)
+/*
 		if(cmd >= ENABLE_START && cmd <= WIPER_OFF)
 		{
 			add_msg_queue(cmd);		// send msg to basic_controls_task
-			strcpy(tempx,cmd_array[cmd].cmd_str);
-			// send to client if tcp connected (all this does is 
-			// display the cmd's on the scrolling listbox
-			//send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 		}else
-
+*/
 		if(cmd == ENGINE_TEMP)
 		{
 			high_byte = read_serial_buffer[1];
@@ -1208,8 +1237,19 @@ UCHAR serial_recv_task(int test)
 			sprintf(tempx,"%.1f\0", convertF(engine_temp));
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, ENGINE_TEMP);
-//			printString2(tempx);
 
+			ucbuff[0] = DISPLAY_STR;
+			ucbuff[1] = rtlabel_str[ENG_TEMP].row;
+			ucbuff[2] = rtlabel_str[ENG_TEMP].data_col;
+			memcpy(ucbuff+3,tempx,strlen(tempx));
+			send_lcd(ucbuff,strlen(tempx)+4);
+/*
+			ucbuff[0] = DISPLAY_TEMP;
+			ucbuff[1] = rtlabel_str[ENGINE_TEMP].row;
+			ucbuff[2] = rtlabel_str[ENGINE_TEMP].data_col;
+			ucbuff[3] = high_byte;
+			ucbuff[4] = low_byte;
+*/
 		}else
 
 		if(cmd == INDOOR_TEMP)
@@ -1226,11 +1266,14 @@ UCHAR serial_recv_task(int test)
 			temp <<= 8;
 			temp |= (int)low_byte;
 
-//			sprintf(tempx,"%d %2x %2x %.1f\0",engine_temp, high_byte, low_byte, convertF(engine_temp));
 			sprintf(tempx,"%.1f\0", convertF(indoor_temp));
-//			printString2(tempx);
 			if(test_sock())
 	 			send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, INDOOR_TEMP);
+			ucbuff[0] = DISPLAY_STR;
+			ucbuff[1] = rtlabel_str[IND_TEMP].row;
+			ucbuff[2] = rtlabel_str[IND_TEMP].data_col;
+			memcpy(ucbuff+3,tempx,strlen(tempx));
+			send_lcd(ucbuff,strlen(tempx)+4);
 		}else
 
 		if(cmd == TEMP_TOO_HIGH)
@@ -1729,7 +1772,7 @@ UCHAR basic_controls_task(int test)
 //			case ESTOP_SIGNAL:
 				//send_serialother(cmd,tempx);
 //				myprintf1(cmd_array[cmd].cmd_str);
-				printString3(cmd_array[cmd].cmd_str);
+				//printString3(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);

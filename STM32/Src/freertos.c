@@ -140,13 +140,9 @@ static int server_up = 0;
 
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
 static int timer_toggle;
-static int lights_on;
-static int brights_on;
 static int blower_on;
 static int fan_on;
 static int engine_on;
-static int running_lights_on;
-static int wipers_on;
 //static int system_up;
 static int run_time;
 static int rtdata_update_rate;
@@ -503,12 +499,9 @@ void StartDefaultTask(void const * argument)
 	uint16_t recval;
 //	int row, col;
 
-//	lights_on = lights_on_delay;
-	brights_on = 0;
 	fan_on = 0;
 	blower_on = 0;
 	engine_on = 0;
-	wipers_on = 0;
   	timer_toggle = 0;
 	run_time = 0;
 //	key_mode = PASSWORD;
@@ -542,328 +535,11 @@ void StartDefaultTask(void const * argument)
 		key = (UCHAR)recval;
 		cmd = 0;
 
+		ucbuff[0] = key;
+		avr_buffer[0] = pack64(ucbuff);
+		xQueueSend(Send7200Handle, avr_buffer, 0);
 		switch(key)
 		{
-			case KP_1:
-				if(key_mode == NORMAL)
-				{
-					if(engine_on == 0)
-					{
-						cmd = START_SEQ;
-						ucbuff[0] = cmd;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-						engine_on = 1;
-						blower_on_countdown = 5;
-//						password_countdown = init_password_countdown;
-//						memset(password,0,PASSWORD_SIZE);
-//						password_ptr = 0;
-//						key_mode = PASSWORD;
-//						password_retries = init_password_retries;
-						cmd = 0;
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(1);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-				}
-			break;
-
-			case KP_2:
-				if(key_mode == NORMAL)
-				{
-					if(engine_on == 1)
-					{
-						cmd = SHUTDOWN;
-						ucbuff[0] = cmd;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-						engine_on = 0;
-						key_mode = NORMAL;
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(2);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-				}
-				break;
-
-			case KP_3:
-				if(key_mode == NORMAL)
-				{
-					if(lights_on == 1)
-					{
-						if(brights_on == 0)
-						{
-							cmd = ON_BRIGHTS;
-							ucbuff[0] = cmd;
-							brights_on = 1;
-						}
-						else
-						{
-							cmd = OFF_BRIGHTS;
-							ucbuff[0] = cmd;
-							brights_on = 0;
-						}
-						ucbuff[0] = cmd;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-					}else
-					{
-						check_password(3);
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(3);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-				}
-			break;
-
-			case KP_4:
-				if(key_mode == NORMAL)
-				{
-					if(fan_on == 0)
-					{
-						cmd = ON_FAN;
-						ucbuff[0] = cmd;
-						fan_on = 1;
-						cooling_fan_override = 1;
-					}
-					else
-					{
-						cmd = OFF_FAN;
-						ucbuff[0] = cmd;
-						fan_on = 0;
-						cooling_fan_override = 0;
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(4);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-				}
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
-			case KP_5:
-				if(key_mode == NORMAL)
-				{
-#if 0
-					switch(blower_on)
-					{
-						case 0:	
-							cmd = BLOWER1;
-							ucbuff[0] = cmd;
-							blower_on = 1;
-							blower_override = 1;
-							break;
-
-						case 1:
-							cmd = BLOWER2;
-							ucbuff[0] = cmd;
-							blower_on = 2;
-							blower_override = 1;
-							break;
-
-						case 2:
-							cmd = BLOWER3;
-							ucbuff[0] = cmd;
-							blower_on = 3;
-							blower_override = 1;
-							break;
-
-						case 3:
-							cmd = BLOWER_OFF;
-							ucbuff[0] = cmd;
-							blower_on = 0;
-							blower_override = 0;
-							break;
-
-						default:
-							blower_on = 0;
-							break;
-					}
-#endif
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(5);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-				}
-				//avr_buffer[0] = pack64(ucbuff);
-				//xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
-			case KP_6:
-				if(key_mode == NORMAL)
-				{
-					if(running_lights_on == 0)
-					{
-						running_lights_on = 1;
-						cmd = ON_RUNNING_LIGHTS;
-						ucbuff[0] = cmd;
-					}else
-					{
-						running_lights_on = 0;
-						cmd = OFF_RUNNING_LIGHTS;
-						ucbuff[0] = cmd;
-					}
-				}else if(key_mode == PASSWORD)
-					check_password(6);
-				else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-				}
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
-			case KP_7:
-				if(key_mode == NORMAL)
-				{
-					if(lights_on == 0)
-					{
-						cmd = ON_LIGHTS;
-						ucbuff[0] = cmd;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-						//lights_on = lights_on_delay;
-						lights_on = 1;
-					}
-					else
-					{
-						cmd = OFF_LIGHTS;
-						ucbuff[0] = cmd;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-						lights_on = 0;
-
-						if(brights_on == 1)
-						{
-							cmd = OFF_BRIGHTS;
-							ucbuff[0] = cmd;
-							brights_on = 0;
-							avr_buffer[0] = pack64(ucbuff);
-							xQueueSend(Send7200Handle, avr_buffer, 0);
-						}
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(7);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-				}
-
-			break;
-
-			case KP_8:
-				if(key_mode == NORMAL)
-				{
-					switch (wipers_on)
-					{
-						case 0:
-							cmd = WIPER1;
-							wipers_on = 1;
-							break;
-						case 1:
-							cmd = WIPER2;
-							wipers_on = 2;
-							break;
-						case 2:
-							cmd = WIPER_OFF;
-							wipers_on = 0;
-							break;
-						default:
-							wipers_on = 0;
-							break;
-					}
-					ucbuff[0] = cmd;
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(8);
-				}else
-				{
-					ucbuff[0] = NAV_NUM;
-					ucbuff[1] = key-KP_1+1;
-				}
-				avr_buffer[0] = pack64(ucbuff);
-				xQueueSend(Send7200Handle, avr_buffer, 0);
-			break;
-
-			case KP_9:
-				if(key_mode == NORMAL)
-				{
-/*
-					ucbuff[0] = RE_ENTER_PASSWORD;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-					key_mode = PASSWORD;
-					password_ptr = 0;
-*/
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(9);
-				}else
-				{
-				}
-			break;
-
-			case KP_0:
-				if(key_mode == NORMAL)
-				{
-					cmd = OFF_RUNNING_LIGHTS;
-					ucbuff[0] = cmd;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-					running_lights_on = 0;
-					vTaskDelay(200);
-					cmd = OFF_LIGHTS;
-					ucbuff[0] = cmd;
-					avr_buffer[0] = pack64(ucbuff);
-					xQueueSend(Send7200Handle, avr_buffer, 0);
-					lights_on = 0;
-
-					if(brights_on == 1)
-					{
-						cmd = OFF_BRIGHTS;
-						ucbuff[0] = cmd;
-						brights_on = 0;
-						avr_buffer[0] = pack64(ucbuff);
-						xQueueSend(Send7200Handle, avr_buffer, 0);
-					}
-				}else if(key_mode == PASSWORD)
-				{
-					check_password(0);
-				}else
-				{
-				}
-			break;
-
 			case KP_A:
 				ucbuff[0] = NAV_UP;
 				avr_buffer[0] = pack64(ucbuff);
@@ -895,6 +571,7 @@ void StartDefaultTask(void const * argument)
 			break;
 
 			case KP_POUND:
+/*
 				if(key_mode == NORMAL)
 				{
 					running_lights_on = 1;
@@ -909,6 +586,7 @@ void StartDefaultTask(void const * argument)
 					xQueueSend(Send7200Handle, avr_buffer, 0);
 					lights_on = 1;
 				}
+*/
 			break;
 
 			default:
@@ -974,8 +652,7 @@ void StartMonitorTask(void const * argument)
 			ucbuff[7] = (UCHAR)avr_buffer[0];
 			avr_buffer[0] >>= 8;
 
-			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
-		}
+//			HAL_UART_Transmit(&huart2, &start_byte, 1, 100);
 	}
   /* USER CODE END StartMonitorTask */
 }
@@ -1083,42 +760,11 @@ void StartRecv7200(void const * argument)
 		{
 			switch (cmd)
 			{
-				case 	ON_ACC:				// 3
-					break;
-				case 	OFF_ACC:			// 4
-					break;
-				case 	ON_FUEL_PUMP:		// 5
-					break;
-				case 	OFF_FUEL_PUMP:		// 6
-					break;
 				case 	ON_FAN:				// 7
 					fan_on = 1;
 					break;
 				case 	OFF_FAN:			// 8
 					fan_on = 0;
-					break;
-				case 	ON_LIGHTS:			// 9
-					//lights_on = lights_on_delay;
-					lights_on = 1;
-					break;
-				case 	OFF_LIGHTS:			// 10
-					lights_on = 0;
-					break;
-				case 	ON_BRIGHTS:			// 11
-					brights_on = 1;
-					break;
-				case 	OFF_BRIGHTS:		// 12
-					brights_on = 0;
-					break;
-				case 	ON_BRAKES:
-					break;
-				case 	OFF_BRAKES:
-					break;
-				case 	ON_RUNNING_LIGHTS:
-					running_lights_on = 1;
-					break;
-				case 	OFF_RUNNING_LIGHTS:
-					running_lights_on = 0;
 					break;
 				case 	SPECIAL_CMD:
 					break;
@@ -1129,22 +775,6 @@ void StartRecv7200(void const * argument)
 				case 	SHUTDOWN:
 				case 	ESTOP_SIGNAL:
 					engine_on = 0;
-					break;
-				case 	ON_LLIGHTS:
-					break;
-				case 	OFF_LLIGHTS:
-					break;
-				case 	ON_LBRIGHTS:
-					break;
-				case 	OFF_LBRIGHTS:
-					break;
-				case 	ON_RLIGHTS:
-					break;
-				case 	OFF_RLIGHTS:
-					break;
-				case 	ON_RBRIGHTS:
-					break;
-				case 	OFF_RBRIGHTS:
 					break;
 				case 	BLOWER_OFF:
 					blower_on = 0;
@@ -1158,15 +788,7 @@ void StartRecv7200(void const * argument)
 				case 	BLOWER3:
 					blower_on = 3;
 					break;
-				case 	WIPER1:
-					wipers_on = 1;
-					break;
-				case 	WIPER2:
-					wipers_on = 2;
-					break;
-				case 	WIPER_OFF:
-					wipers_on = 0;
-					break;
+
 				case SERVER_UP:
 					engine_temp_limit = (uint16_t)buff[2];
 					engine_temp_limit <<= 8;

@@ -307,11 +307,11 @@ void printHexByte(UCHAR byte)
 	UCHAR nibble;
 //	nibble = (byte & 0b11110000) >> 4;
 	nibble = (byte & 0xF0) >> 4;
-	write_serial2(nibbleToHexCharacter(nibble));
+	write_serial3(nibbleToHexCharacter(nibble));
 //	nibble = byte & 0b00001111;
 	nibble = byte & 0x0F;
-	write_serial2(nibbleToHexCharacter(nibble));
-	write_serial2(0x20);
+	write_serial3(nibbleToHexCharacter(nibble));
+	write_serial3(0x20);
 }
 
 /************************************************************************************/

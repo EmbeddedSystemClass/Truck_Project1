@@ -2,6 +2,13 @@ unzip -o ~/thread_io.zip
 mv mytypes.h ..
 make clean
 make &> out.txt
+if  grep -q "bin/arm-linux-gcc: Command not found" out.txt
+ then
+  find2 "bin/arm-linux-gcc: Command not found" out.txt
+  echo "setARMpath.sh not run"
+  setARMpath.sh
+  ./test2.sh
+fi
 if grep -q error out.txt
  then
   find2 error out.txt
