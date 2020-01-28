@@ -36,7 +36,7 @@ pthread_mutex_t     io_mem_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_write_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_read_lock=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     serial_write_lock2=PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t     serial_read_lock2=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     msg_queue_lock=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 extern int lights_on_delay[13];
@@ -693,14 +693,17 @@ void init_LCD(int clr)
 		ucbuff[2] = (UCHAR)col;
 		ucbuff[3] = (UCHAR)j+1;
 		ucbuff[4] = 18;
-		send_lcd(ucbuff, 5);
-		usleep(1000);
+		if(j < ENGINE)
+		{
+			send_lcd(ucbuff, 5);
+			usleep(100);
+		}
 
 //		sprintf(tempx,"%d %d %d :",rtlabel_str[j].row,rtlabel_str[j].col,rtlabel_str[j].data_col); 
 //		printString3(tempx);
-
 		row++;
 	}
+	
 }
 /*********************************************************************/
 // this happens once a second
@@ -1103,113 +1106,154 @@ UCHAR serial_recv_task(int test)
 		pthread_mutex_unlock(&serial_read_lock);
 		cmd = read_serial_buffer[0];
 
-		switch(cmd)
+		if((cmd >= KP_1 && cmd <= KP_9) || cmd == KP_0)
 		{
-			case KP_0:
-				break;
-			case KP_1:
-				cmd = START_SEQ;
-				add_msg_queue(cmd);
-				break;
-			case KP_2:
-				cmd = SHUTDOWN;
-				add_msg_queue(cmd);
-				break;
-			case KP_3:
-				if(lights_on == 1)
-				{
-					if(brights == 0)
+			switch(cmd)
+			{
+				case KP_0:
+					break;
+				case KP_1:
+					cmd = START_SEQ;
+					add_msg_queue(cmd);
+//					strcpy(tempx,"ENGINE\0");
+//					i = ENGINE;
+					break;
+				case KP_2:
+					cmd = SHUTDOWN;
+					add_msg_queue(cmd);
+//					memset(tempx,0x20,22);
+//					tempx[22] = 0;
+//					i = ENGINE;
+					break;
+				case KP_3:
+					if(lights_on == 1)
 					{
-						cmd = ON_BRIGHTS;
-						brights = 1;
+						if(brights == 0)
+						{
+							cmd = ON_BRIGHTS;
+//							i = BRIGHTS;
+//							strcpy(tempx,"BRIGHTS\0");
+							brights = 1;
+						}else
+						{
+							cmd = OFF_BRIGHTS;
+//							i = BRIGHTS;
+//							memset(tempx,0x20,22);
+//							tempx[22] = 0;
+							brights = 0;
+						}
+						add_msg_queue(cmd);
+					}
+					break;
+				case KP_4:
+					if(fan_on == 0)
+					{
+						cmd = ON_FAN;
+//						i = COOLING_FAN;
+//						strcpy(tempx,"COOLINGFAN\0");
+						fan_on = 1;
 					}else
 					{
-						cmd = OFF_BRIGHTS;
-						brights = 0;
+						cmd = OFF_FAN;
+//						i = COOLING_FAN;
+//						memset(tempx,0x20,22);
+//						tempx[22] = 0;
+						fan_on = 0;
 					}
 					add_msg_queue(cmd);
-				}
-				break;
-			case KP_4:
-				if(fan_on == 0)
-				{
-					cmd = ON_FAN;
-					fan_on = 1;
-				}else
-				{
-					cmd = OFF_FAN;
-					fan_on = 0;
-				}
-				add_msg_queue(cmd);
-				break;
-			case KP_5:
-				break;
-			case KP_6:
-				if(running_lights)
-				{
-					cmd = ON_RUNNING_LIGHTS;
-					running_lights = 1;
-				}else
-				{
-					cmd = OFF_RUNNING_LIGHTS;
-					running_lights = 0;
-				}
-				add_msg_queue(cmd);
-				break;
-			case KP_7:
-				if(lights_on == 0)
-				{
-					cmd = ON_LIGHTS;
-					lights_on = 1;
-				}else
-				{
-					cmd = OFF_LIGHTS;
-					lights_on = 0;
-				}
-				add_msg_queue(cmd);
-				if(brights == 1)
-				{
-					brights = 0;
-					cmd = OFF_BRIGHTS;
+					break;
+				case KP_5:
+					break;
+				case KP_6:
+					if(running_lights == 0)
+					{
+						cmd = ON_RUNNING_LIGHTS;
+//						i = RUNNING_LIGHTS;
+//						strcpy(tempx,"RUNNING LIGHTS\0");
+						running_lights = 1;
+					}else
+					{
+						cmd = OFF_RUNNING_LIGHTS;
+//						i = RUNNING_LIGHTS;
+//						memset(tempx,0x20,22);
+//						tempx[22] = 0;
+						running_lights = 0;
+					}
 					add_msg_queue(cmd);
-				}
-				break;
-			case KP_8:
-				switch(wipers)
-				{
-					case 0:
-						cmd = WIPER1;
-						wipers = 1;
 					break;
-					case 1:
-						cmd = WIPER2;
-						wipers = 2;
-					break;
-					case 2:
-						cmd = WIPER_OFF;
-						wipers = 0;
-					break;
-					default:
-						cmd = WIPER_OFF;
-						wipers = 0;
-					break;
+				case KP_7:
+					if(lights_on == 0)
+					{
+						cmd = ON_LIGHTS;
+//						i = HEAD_LIGHTS;
+//						strcpy(tempx,"HEADLIGHTS\0");
+						lights_on = 1;
+					}else
+					{
+						cmd = OFF_LIGHTS;
+//						memset(tempx,0x20,22);
+//						tempx[22] = 0;
+//						i = HEAD_LIGHTS;
+						lights_on = 0;
+					}
 					add_msg_queue(cmd);
-				}
-				break;
-			case KP_9:
-				break;
-			case KP_A:
-				break;
-			case KP_B:
-				break;
-			case KP_C:
-				break;
-			case KP_D:
-				break;
-			default:
-				break;
+					if(brights == 1)
+					{
+						brights = 0;
+						cmd = OFF_BRIGHTS;
+//						i = BRIGHTS;
+//						memset(tempx,0x20,22);
+//						tempx[22] = 0;
+						add_msg_queue(cmd);
+					}
+					break;
+				case KP_8:
+					switch(wipers)
+					{
+						case 0:
+							cmd = WIPER1;
+							wipers = 1;
+						break;
+						case 1:
+							cmd = WIPER2;
+							wipers = 2;
+						break;
+						case 2:
+							cmd = WIPER_OFF;
+							wipers = 0;
+						break;
+						default:
+							cmd = WIPER_OFF;
+							wipers = 0;
+						break;
+						add_msg_queue(cmd);
+					}
+					break;
+				case KP_9:
+					break;
+				default:
+					break;
+			}
+/*
+			ucbuff[0] = DISPLAY_STR;
+			ucbuff[1] = rtlabel_str[i].row;
+			ucbuff[2] = rtlabel_str[i].col;
+			memcpy(ucbuff+3,tempx,strlen(tempx));
+			send_lcd(ucbuff,strlen(tempx)+4);
+			sprintf(tempx,"%d %d",i,rtlabel_str[i].row);
+			printString3(tempx);
+*/
 		}
-
+/*
+				case KP_A:
+					break;
+				case KP_B:
+					break;
+				case KP_C:
+					break;
+				case KP_D:
+					break;
+*/
 		// these are the keypad cmd's sent from STM32
 		// but if the menus of the STM32/LCD/keypad select the feature
 		// then the cmd is between and including NAV_UP & NAV_CLOSE
@@ -1369,8 +1413,20 @@ UCHAR serial_recv_task(int test)
 						read_serial_buffer[3],read_serial_buffer[4]);
 
 			if(test_sock())
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS);
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
 
+			printString3(tempx);
+		}else
+
+		if(cmd == SEND_RT_VALUES3)
+		{
+			sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
+						read_serial_buffer[3],read_serial_buffer[4]);
+
+			if(test_sock())
+				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
+
+			printString3(tempx);
 		}else
 
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
@@ -1786,6 +1842,24 @@ UCHAR basic_controls_task(int test)
 			break;
 		}
 //#if 0
+		switch(cmd)
+		{
+			case ON_FAN:
+			case OFF_FAN:
+			case ON_LIGHTS:
+			case OFF_LIGHTS:
+			case START_SEQ:
+			case SHUTDOWN:
+			case ON_RUNNING_LIGHTS:
+			case OFF_RUNNING_LIGHTS:
+			case ON_BRIGHTS:
+			case OFF_BRIGHTS:
+			case ON_BRAKES:
+			case OFF_BRAKES:
+				break;
+			default:
+				break;
+		}
 		switch(cmd)
 		{
 

@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 	}
 	else if(reboot_on_exit == 6)
 	{
-		printString3("shell and rename (sched.c)");
+		//printString3("shell and rename (sched.c)");
 		return 6;
 	}
 

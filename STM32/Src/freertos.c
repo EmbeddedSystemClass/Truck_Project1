@@ -877,6 +877,22 @@ void StartRecv7200(void const * argument)
 						vTaskDelay(10);
 					}
 */
+					for(i = 0;i < 30;i++)
+					{
+						if(timer_toggle == 0)
+						{
+							HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+							HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+							vTaskDelay(30);
+							timer_toggle = 1;
+						}else
+						{
+							HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+							HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+							vTaskDelay(30);
+							timer_toggle = 0;
+						}
+					}
 					vTaskDelay(10);
 					server_up = 0;
 					break;
@@ -1114,7 +1130,7 @@ void StartRecvFPGA(void const * argument)
 	GPIO_PinState state;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
-	UCHAR buff[10];
+	UCHAR buff[13];
 	int frame_ptr;
 
 //	UINT rpm, mph;
@@ -1201,27 +1217,23 @@ void StartRecvFPGA(void const * argument)
 			}
 				//vTaskDelay(100);
 
-			ucbuff[0] = SEND_RT_VALUES2;	// the 5 MCP ADC values
+			ucbuff[0] = SEND_RT_VALUES2;	// the 1st 4 MCP ADC values
 			ucbuff[1] = buff[4];
 			ucbuff[2] = buff[5];
 			ucbuff[3] = buff[6];
 			ucbuff[4] = buff[7];
-			ucbuff[5] = buff[8];
-/*	
-	if calling mcp_3002_wrapper.vhd with compact set to 1 then
-	1st 4 channels have each mcp result as 8-bit values 
-	otherwise to get the 10-bit values for greater accuracy:
-	
-	stuff 4 10-bit values (returned by MCP) into 5 8-bit values (mcp_array)
-	ch 0 MCP3002 bits 0->7
-	ch 0 MCP3002 bits 8->9 & ch 1 bits 0 -> 5
-	ch 1 bits 6 -> 9 & ch 2 bits 0 -> 3
-	ch 2 bits 4 -> 9 & ch 3 0 -> 1
-	ch 3 2 -> 9
-*/
+
 			avr_buffer[0] = pack64(ucbuff);
 			xQueueSend(Send7200Handle, avr_buffer, 0);
 
+			ucbuff[0] = SEND_RT_VALUES3;	// the 2nd 4 MCP ADC values
+			ucbuff[1] = buff[8];
+			ucbuff[2] = buff[9];
+			ucbuff[3] = buff[10];
+			ucbuff[4] = buff[11];
+
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(Send7200Handle, avr_buffer, 0);
 		}else
 		{
 //			buff[frame_ptr] = (xbyte & 0x7F);		// test for broken wire (in this case bit 7)

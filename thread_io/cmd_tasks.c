@@ -52,7 +52,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[116] =
+CMD_STRUCT cmd_array[118] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -123,13 +123,15 @@ CMD_STRUCT cmd_array[116] =
 	{		INDOOR_TEMP,"INDOOR_TEMP\0" },
 	{		SEND_RT_VALUES1,"SEND_RT_VALUES1\0" },
 	{		SEND_RT_VALUES2,"SEND_RT_VALUES2\0" },
+	{		SEND_RT_VALUES3,"SEND_RT_VALUES3\0" },
 	{		ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
 	{		SERVER_UPTIME,"SERVER_UPTIME\0" },
 	{		SEND_CONFIG,"SEND_CONFIG\0" },
 	{		SEND_MSG,"SEND_MSG\0" },
 	{		SEND_RPM,"SEND_RPM\0" },
 	{		SEND_MPH,"SEND_MPH\0" },
-	{		SEND_ADCS,"SEND_ADCS\0" },
+	{		SEND_ADCS1,"SEND_ADCS1\0" },
+	{		SEND_ADCS2,"SEND_ADCS2\0" },
 	{		NAV_UP,"NAV_UP\0" },
 	{		NAV_DOWN,"NAV_DOWN\0" },
 	{		NAV_SIDE,"NAV_SIDE\0" },
@@ -290,7 +292,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.23\0";
+	char version[15] = "sched v1.25\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];

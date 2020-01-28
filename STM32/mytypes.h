@@ -37,6 +37,38 @@ typedef struct _ip
 	char label[OLABELSIZE];
 }IP;
 
+typedef struct
+{
+	UCHAR row;
+	UCHAR col;
+	UCHAR data_col;
+} FORMAT_STR;
+
+
+enum rt_values_offsets
+{
+	OIL_PRES,
+	AIR_TEMP,
+	MAP,
+	OIL_TEMP,
+	O2,
+	ODOM,
+	TRIP,
+	RPM,
+	MPH,
+	RUN_TIME,
+	ENG_TEMP,
+	FUEL_LEVEL,
+	OUTDOOR_TEMP,
+	IND_TEMP,
+	ENGINE,
+	COOLING_FAN,
+	HEAD_LIGHTS,
+	BRIGHTS,
+	BRAKES,
+	RUNNING_LIGHTS
+} RT_VALUES_OFFSETS_TYPES;
+
 // msg's sent from client to TS-7200
 enum cmd_types
 {
@@ -109,13 +141,15 @@ enum cmd_types
 	INDOOR_TEMP,
 	SEND_RT_VALUES1,
 	SEND_RT_VALUES2,
+	SEND_RT_VALUES3,
 	ENGINE_RUNTIME,
 	SERVER_UPTIME,
 	SEND_CONFIG,
 	SEND_MSG,
 	SEND_RPM,
 	SEND_MPH,
-	SEND_ADCS,
+	SEND_ADCS1,
+	SEND_ADCS2,
 	NAV_UP,
 	NAV_DOWN,
 	NAV_SIDE,
@@ -153,8 +187,30 @@ enum cmd_types
 	PASSWORD_OK,
 	PASSWORD_BAD,
 	SET_PASSWORD_TIMEOUT,
-	SET_PASSWORD_RETRIES
+	SET_PASSWORD_RETRIES,
+	SHELL_AND_RENAME,
+	REFRESH_LCD
 }CMD_TYPES;
+
+enum key_types
+{
+ 	KP_1 = 0xE0, //		- E0
+	KP_2, // '2'		- E1
+	KP_3, // '3'		- E2
+	KP_4, // '4'		- E3
+	KP_5, // '5'		- E4
+	KP_6, // '6'		- E5
+	KP_7, // '7'		- E6
+	KP_8, // '8'		- E7
+	KP_9, // '9'		- E8
+	KP_A, // 'A'		- E9
+	KP_B, // 'B'		- EA
+	KP_C, // 'C'		- EB
+	KP_D, // 'D'		- EC
+	KP_POUND,	// '#'	- ED
+	KP_AST, // '*'		- EE
+	KP_0 	// '0'		- EF
+} KEY_TYPES;
 
 // msg's sent from STM32 to TS-7200
 enum upstream_msg
@@ -300,11 +356,11 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 22
-#define START_RT_VALUE_ROW 6
+#define NUM_RT_LABELS 20
+#define START_RT_VALUE_ROW 1
 #define START_RT_VALUE_COL 0
-#define ENDING_RT_VALUE_ROW 15
-#define RT_VALUE_COL_WIDTH 18
+#define ENDING_RT_VALUE_ROW 10
+#define RT_VALUE_COL_WIDTH 19
 
 #define NUM_STATUS_LABELS 7
 #define START_STATUS_VALUE_ROW 1

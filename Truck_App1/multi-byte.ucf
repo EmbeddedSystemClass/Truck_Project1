@@ -34,6 +34,10 @@ NET "rpm1_signal"  LOC ="p202";
 NET "mph1_signal"  LOC ="p199";
 #NET "mph2_signal"  LOC ="p193";
 NET "tx_rpm_mph"   LOC ="p196";
+NET "TS7800TX"     LOC ="p190";
+NET "TS7800RX"     LOC ="p192";
+NET "monitorTX"    LOC ="p187";
+NET "monitorRX"    LOC ="p189";
 
 NET "MCP_CS1"      LOC = "p160";
 NET "MCP_CLK1"     LOC = "p153";
@@ -44,6 +48,16 @@ NET "MCP_CS2"      LOC = "p150";
 NET "MCP_CLK2"     LOC = "p147";
 NET "MCP_DIN2"     LOC = "p146";
 NET "MCP_DOUT2"    LOC = "p145";
+
+NET "MCP_CS3"      LOC = "p144";
+NET "MCP_CLK3"     LOC = "p140";
+NET "MCP_DIN3"     LOC = "p139";
+NET "MCP_DOUT3"    LOC = "p138";
+
+NET "MCP_CS4"      LOC = "p137";
+NET "MCP_CLK4"     LOC = "p135";
+NET "MCP_DIN4"     LOC = "p134";
+NET "MCP_DOUT4"    LOC = "p133";
 
 # led1 is the build-in LED's on the board
 NET		"led1[0]"		LOC = "p68";

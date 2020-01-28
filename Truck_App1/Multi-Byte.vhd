@@ -41,6 +41,10 @@ entity multi_byte is
 		mph1_signal : in std_logic;
 --		mph2_signal : in std_logic;
 		tx_rpm_mph : out std_logic;
+		TS7800TX : out std_logic;
+		TS7800RX : in std_logic;
+		monitorTX : out std_logic;
+		monitorRX : in std_logic;
 		MCP_CS1: out std_logic;
 		MCP_CLK1: out std_logic;
 		MCP_DIN1: in std_logic;
@@ -49,6 +53,14 @@ entity multi_byte is
 		MCP_CLK2: out std_logic;
 		MCP_DIN2: in std_logic;
 		MCP_DOUT2: out std_logic;
+		MCP_CS3: out std_logic;
+		MCP_CLK3: out std_logic;
+		MCP_DIN3: in std_logic;
+		MCP_DOUT3: out std_logic;
+		MCP_CS4: out std_logic;
+		MCP_CLK4: out std_logic;
+		MCP_DIN4: in std_logic;
+		MCP_DOUT4: out std_logic;
 		led1: out std_logic_vector(3 downto 0)
 		);
 end multi_byte;
@@ -141,6 +153,14 @@ MCP_wrapper_unit: entity work.mcp_wrapper(truck_arch)
 		MCP_CLK2=>MCP_CLK2,
 		MCP_DIN2=>MCP_DIN2,
 		MCP_DOUT2=>MCP_DOUT2,
+		MCP_CS3=>MCP_CS3,
+		MCP_CLK3=>MCP_CLK3,
+		MCP_DIN3=>MCP_DIN3,
+		MCP_DOUT3=>MCP_DOUT3,
+		MCP_CS4=>MCP_CS4,
+		MCP_CLK4=>MCP_CLK4,
+		MCP_DIN4=>MCP_DIN4,
+		MCP_DOUT4=>MCP_DOUT4,
 		start=>start_mcp,
 		done=>done_mcp,
 		compact=>compact,
@@ -313,11 +333,14 @@ begin
 		upload(3) <= X"02";		-- mph low byte
 		upload(4) <= X"03";		-- mph high byte
 		upload(5) <= X"04";		-- brightness param
-		upload(6) <= X"05";
-		upload(7) <= X"06";
-		upload(8) <= X"07";
-		upload(9) <= X"08";
-		upload(10) <= X"09";
+		upload(6) <= X"05";		-- oil pressure
+		upload(7) <= X"06";		-- gas gauge
+		upload(8) <= X"07";		-- MAP
+		upload(9) <= X"08";		-- O2
+		upload(10) <= X"09";	-- TPS
+		upload(11) <= X"0A";	-- light sensor on dash
+		upload(12) <= X"0B";	-- not used 
+		upload(13) <= X"0C";	-- not used 
 		rpm_factor <= std_logic_vector(conv_unsigned(RPM_DVND, DVSR_SIZE));
 		mph_factor <= std_logic_vector(conv_unsigned(MPH_DVND, DVSR_SIZE));
 		
@@ -339,7 +362,7 @@ begin
 				skip <= not skip;
 				if skip = '1' then
 					sPort <= sPort + 1;
-					if sPort > 8 then
+					if sPort > 13 then
 						sPort <= (others=>'0');
 					end if;
 				end if;
@@ -372,16 +395,11 @@ begin
 					upload(7) <= mcp_results(2);
 					upload(8) <= mcp_results(3);
 					upload(9) <= mcp_results(4);
-					-- upload(6) <= download(5);
-					-- upload(7) <= download(6);
-					-- upload(8) <= download(7);
-					-- upload(9) <= download(8);
-					-- upload(10) <= download(9);
-					-- upload(11) <= download(10);
-					-- upload(12) <= download(11);
-					-- upload(13) <= download(12);
-					-- upload(14) <= download(13);
-					-- upload(15) <= download(14);
+					upload(10) <= mcp_results(5);
+					upload(11) <= mcp_results(6);
+					upload(12) <= mcp_results(7);
+					upload(13) <= mcp_results(8);	-- these not used because compact = 1 for now
+					upload(14) <= mcp_results(9);	--  "
 					pport_next <= pp_idle;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -559,6 +577,8 @@ begin
 		time_delay_reg4 <= (others=>'0');
 		time_delay_next4 <= (others=>'0');
 		urpm_result <= (others=>'0');
+		TS7800TX <= '0';
+		monitorTX <= '0';
 
 	else if clk'event and clk = '1' then
 		case test_reg is
@@ -568,8 +588,8 @@ begin
 			when test_start1 =>
 				if time_delay_reg4 > TIME_DELAY5 then
 					time_delay_next4 <= (others=>'0');
---					test_next <= test_start2;
-					test_next <= test_idle;
+					test_next <= test_start2;
+--					test_next <= test_idle;
 				else
 					time_delay_next4 <= time_delay_reg4 + 1;
 				end if;
@@ -600,7 +620,6 @@ begin
 		time_delay_reg5 <= (others=>'0');
 		time_delay_next5 <= (others=>'0');
 		start_mcp <= '0';
---		mcp_results <= (others=>(others=>'0'));
 		compact <= '1';
 
 	else if clk'event and clk = '1' then
