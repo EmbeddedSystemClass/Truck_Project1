@@ -94,9 +94,9 @@ LD_SYS_LIBS = $(SYS_LIBRARIES)
 # gcc3 and gcc4 doesn't support thumb-interworking, but compiles anyway
 # gcc3/4 doesn't work with -mapcs-32
 #use this for TS-7200
-#CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+CC_FLAGS = -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #use this for TS-7800
-CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
+#CC_FLAGS = -static -g -DTS_7800 -DMAKE_TARGET -Wstrict-prototypes -mcpu=arm920t
 #CC_FLAGS = -static -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32 -mthumb-interwork
 #this works for either TS-7200 or TS-7800
 #CC_FLAGS = -g -Wstrict-prototypes -mcpu=arm920t -mapcs-32
@@ -121,16 +121,16 @@ all : sched
 #llist_test_threads llist_test_threads_rw
 
 sched.o: sched.c tasks.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c sched.c
+	${CC} -DTS_7800 ${INCLUDE_PATHS} ${CC_FLAGS} -c sched.c
 
 ioports.o: ioports.c ioports.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c ioports.c
+	${CC} -DTS_7800 ${INCLUDE_PATHS} ${CC_FLAGS} -c ioports.c
 
 tasks.o: tasks.c tasks.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c tasks.c
 
 serial_io.o: serial_io.c serial_io.h
-	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
+	${CC} -DTS_7800 ${INCLUDE_PATHS} ${CC_FLAGS} -c serial_io.c
 
 ollist_threads_rw.o: queue/ollist_threads_rw.c queue/ollist_threads_rw.h
 	${CC} ${INCLUDE_PATHS} ${CC_FLAGS} -c queue/ollist_threads_rw.c
@@ -141,10 +141,10 @@ rdwr.o: queue/rdwr.c queue/rdwr.h
 config_file.o: cs_client/config_file.c  queue/ollist_threads_rw.h
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cs_client/config_file.c
 
-lcd_func.o: lcd_func.c lcd_func.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
+#lcd_func.o: lcd_func.c lcd_func.h
+#	${CC} -DTS_7800 ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
 
-cmd_tasks.o: cmd_tasks.c
+cmd_tasks.o: cmd_tasks.c 
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c cmd_tasks.c
 
 test_dio1.o: test_dio1.c lcd_func.c lcd_func.h serial_io.c serial_io.h
@@ -152,10 +152,16 @@ test_dio1.o: test_dio1.c lcd_func.c lcd_func.h serial_io.c serial_io.h
 
 test_dio1: test_dio1.o lcd_func.o serial_io.o
 
+GPS.o: GPS.c minmea.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c GPS.c
+
+minmea.o: minmea.c minmea.h
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c minmea.c
+
 #sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
-sched: sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o cmd_tasks.o
+sched: sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o cmd_tasks.o GPS.o minmea.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
-	${CC} -static -pthread sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o  lcd_func.o config_file.o cmd_tasks.o -o sched
+	${CC} -static -pthread sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o cmd_tasks.o GPS.o minmea.o -o sched
 #	${CC} -static -pthread sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o #rdwr.o serial_io.o  lcd_func.o config_file.o -o sched
 
 #read_sd: read_sd.o

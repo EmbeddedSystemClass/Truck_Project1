@@ -225,6 +225,13 @@ git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/R
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/ServerInterface.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/bin/
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/EpServerEngineSampleClient.csproj.user
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/GPSForm.Designer.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/GPSForm.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/GPSForm.resx
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/GPSdata.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/GPSlist.cs
+git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/gps_list.xml
+
 
 git add thread_io/cs_client/server_on_linux.c
 git add thread_io/cs_client/server_on_linux2.c

@@ -89,13 +89,13 @@
 			this.tbReceived.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.tbReceived.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbReceived.Font = new System.Drawing.Font("Arial Narrow", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbReceived.Location = new System.Drawing.Point(700, 264);
 			this.tbReceived.Multiline = true;
 			this.tbReceived.Name = "tbReceived";
 			this.tbReceived.ReadOnly = true;
 			this.tbReceived.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.tbReceived.Size = new System.Drawing.Size(331, 408);
+			this.tbReceived.Size = new System.Drawing.Size(327, 408);
 			this.tbReceived.TabIndex = 18;
 			this.tbReceived.TabStop = false;
 			// 
@@ -394,7 +394,7 @@
 			this.btnDBMgmt.Name = "btnDBMgmt";
 			this.btnDBMgmt.Size = new System.Drawing.Size(235, 61);
 			this.btnDBMgmt.TabIndex = 15;
-			this.btnDBMgmt.Text = "Home Server";
+			this.btnDBMgmt.Text = "GPS";
 			this.btnDBMgmt.UseVisualStyleBackColor = false;
 			this.btnDBMgmt.Click += new System.EventHandler(this.DBMgmt);
 			// 
@@ -626,7 +626,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(1045, 688);
+			this.ClientSize = new System.Drawing.Size(1041, 688);
 			this.Controls.Add(this.tbADC4);
 			this.Controls.Add(this.tbADC3);
 			this.Controls.Add(this.tbADC2);

@@ -69,6 +69,7 @@ namespace EpServerEngineSampleClient
         private PortSet2 psDlg5 = null;
         private PortSet2 psDlg6 = null;
         private PlayerDlg playdlg = null;
+		private GPSForm gpsform = null;
         private Child_Scrolling_List slist = null;
 
         private List<ClientParams> client_params;
@@ -157,7 +158,9 @@ namespace EpServerEngineSampleClient
 
             playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
 
-            slist = new Child_Scrolling_List(m_client);
+			gpsform = new GPSForm("c:\\users\\daniel\\dev\\gps_list.xml",m_client);
+
+			slist = new Child_Scrolling_List(m_client);
             slist.Enable_Dlg(false);
 
             client_params = new List<ClientParams>();
@@ -343,6 +346,7 @@ namespace EpServerEngineSampleClient
                 psDlg5.Dispose();
                 psDlg6.Dispose();
                 playdlg.Dispose();
+				gpsform.Dispose();
                 base.OnClosed(e);
             }
         }
@@ -385,8 +389,12 @@ namespace EpServerEngineSampleClient
             {
                 slist.Process_Msg(receivedPacket.PacketRaw);
             }
-            else
-                Process_Msg(receivedPacket.PacketRaw);
+			else if (gpsform.Visible == true)
+			{
+				gpsform.Process_Msg(receivedPacket.PacketRaw);
+			}
+			else
+				Process_Msg(receivedPacket.PacketRaw);
         }
         private void Process_Msg(byte[] bytes)
         {
@@ -601,7 +609,7 @@ namespace EpServerEngineSampleClient
                     tbMPH.Text = ret;           // comment out for debug
                     break;
 
-				case "SEND_ADCS":
+				case "SEND_ADCS1":
 					string[] words2 = ret.Split(' ');
 					i = 0;
 					foreach(var word in words2)
@@ -777,6 +785,7 @@ namespace EpServerEngineSampleClient
 					password = ret;
 					AddMsg(password);
 					break;
+
 				default:
                     break;
             }
@@ -927,64 +936,60 @@ namespace EpServerEngineSampleClient
         private void StopMbox(object sender, EventArgs e)
         {
 			//AddMsg(dlgsetparams.GetSet().ToString());
-			if (dlgsetparams.ShowDialog(this) == DialogResult.OK)
+			if (m_client.IsConnectionAlive)
 			{
-				AddMsg("new password: " + cfg_params.password);
-				cfg_params = dlgsetparams.GetParams();
-				byte[] rpm = BitConverter.GetBytes(cfg_params.si_rpm_update_rate);
-				byte[] mph = BitConverter.GetBytes(cfg_params.si_mph_update_rate);
-				byte[] fpga = BitConverter.GetBytes(cfg_params.si_FPGAXmitRate);
-				byte[] high_rev = BitConverter.GetBytes(cfg_params.si_high_rev_limit);
-				byte[] low_rev = BitConverter.GetBytes(cfg_params.si_low_rev_limit);
-				byte[] fan_on = BitConverter.GetBytes(cfg_params.fan_on);
-				byte[] fan_off = BitConverter.GetBytes(cfg_params.fan_off);
-				byte[] ben = BitConverter.GetBytes(cfg_params.blower_enabled);
-				byte[] b1 = BitConverter.GetBytes(cfg_params.blower1_on);
-				byte[] b2 = BitConverter.GetBytes(cfg_params.blower2_on);
-				byte[] b3 = BitConverter.GetBytes(cfg_params.blower3_on);
-				byte[] lights = BitConverter.GetBytes(cfg_params.si_lights_on_delay);
-				byte[] limit = BitConverter.GetBytes(cfg_params.engine_temp_limit);
-				byte[] batt = BitConverter.GetBytes(cfg_params.battery_box_temp);
-				byte[] test = BitConverter.GetBytes(cfg_params.si_test_bank);
-				byte[] pswd_time = BitConverter.GetBytes(cfg_params.si_password_timeout);
-				byte[] pswd_retries = BitConverter.GetBytes(cfg_params.si_password_retries);
-				byte[] password = BytesFromString(cfg_params.password);
-
-				byte[] bytes = new byte[rpm.Count() + mph.Count() + fpga.Count() + high_rev.Count()
-					+ low_rev.Count() + fan_on.Count() + fan_off.Count() + ben.Count() + b1.Count()
-					+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count()
-					+ test.Count() + pswd_time.Count() + pswd_retries.Count() + password.Count() + 2];
-
-				bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
-				//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
-				System.Buffer.BlockCopy(rpm, 0, bytes, 2, rpm.Count());
-				System.Buffer.BlockCopy(mph, 0, bytes, 4, mph.Count());
-				System.Buffer.BlockCopy(fpga, 0, bytes, 6, fpga.Count());
-				System.Buffer.BlockCopy(high_rev, 0, bytes, 8, high_rev.Count());
-				System.Buffer.BlockCopy(low_rev, 0, bytes, 10, low_rev.Count());
-				System.Buffer.BlockCopy(fan_on, 0, bytes, 12, fan_on.Count());
-				System.Buffer.BlockCopy(fan_off, 0, bytes, 14, fan_off.Count());
-				System.Buffer.BlockCopy(ben, 0, bytes, 16, ben.Count());
-				System.Buffer.BlockCopy(b1, 0, bytes, 18, b1.Count());
-				System.Buffer.BlockCopy(b2, 0, bytes, 20, b2.Count());
-				System.Buffer.BlockCopy(b3, 0, bytes, 22, b3.Count());
-				System.Buffer.BlockCopy(lights, 0, bytes, 24, lights.Count());
-				System.Buffer.BlockCopy(limit, 0, bytes, 26, limit.Count());
-				System.Buffer.BlockCopy(batt, 0, bytes, 28, batt.Count());
-				System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
-				System.Buffer.BlockCopy(pswd_time, 0, bytes, 32, pswd_time.Count());
-				System.Buffer.BlockCopy(pswd_retries, 0, bytes, 34, pswd_retries.Count());
-				System.Buffer.BlockCopy(password, 0, bytes, 36, password.Count());
-
-				Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-				if (m_client.IsConnectionAlive)
+				if (dlgsetparams.ShowDialog(this) == DialogResult.OK)
 				{
+					AddMsg("new password: " + cfg_params.password);
+					cfg_params = dlgsetparams.GetParams();
+					byte[] rpm = BitConverter.GetBytes(cfg_params.si_rpm_update_rate);
+					byte[] mph = BitConverter.GetBytes(cfg_params.si_mph_update_rate);
+					byte[] fpga = BitConverter.GetBytes(cfg_params.si_FPGAXmitRate);
+					byte[] high_rev = BitConverter.GetBytes(cfg_params.si_high_rev_limit);
+					byte[] low_rev = BitConverter.GetBytes(cfg_params.si_low_rev_limit);
+					byte[] fan_on = BitConverter.GetBytes(cfg_params.fan_on);
+					byte[] fan_off = BitConverter.GetBytes(cfg_params.fan_off);
+					byte[] ben = BitConverter.GetBytes(cfg_params.blower_enabled);
+					byte[] b1 = BitConverter.GetBytes(cfg_params.blower1_on);
+					byte[] b2 = BitConverter.GetBytes(cfg_params.blower2_on);
+					byte[] b3 = BitConverter.GetBytes(cfg_params.blower3_on);
+					byte[] lights = BitConverter.GetBytes(cfg_params.si_lights_on_delay);
+					byte[] limit = BitConverter.GetBytes(cfg_params.engine_temp_limit);
+					byte[] batt = BitConverter.GetBytes(cfg_params.battery_box_temp);
+					byte[] test = BitConverter.GetBytes(cfg_params.si_test_bank);
+					byte[] pswd_time = BitConverter.GetBytes(cfg_params.si_password_timeout);
+					byte[] pswd_retries = BitConverter.GetBytes(cfg_params.si_password_retries);
+					byte[] password = BytesFromString(cfg_params.password);
+
+					byte[] bytes = new byte[rpm.Count() + mph.Count() + fpga.Count() + high_rev.Count()
+						+ low_rev.Count() + fan_on.Count() + fan_off.Count() + ben.Count() + b1.Count()
+						+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count()
+						+ test.Count() + pswd_time.Count() + pswd_retries.Count() + password.Count() + 2];
+
+					bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
+					//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
+					System.Buffer.BlockCopy(rpm, 0, bytes, 2, rpm.Count());
+					System.Buffer.BlockCopy(mph, 0, bytes, 4, mph.Count());
+					System.Buffer.BlockCopy(fpga, 0, bytes, 6, fpga.Count());
+					System.Buffer.BlockCopy(high_rev, 0, bytes, 8, high_rev.Count());
+					System.Buffer.BlockCopy(low_rev, 0, bytes, 10, low_rev.Count());
+					System.Buffer.BlockCopy(fan_on, 0, bytes, 12, fan_on.Count());
+					System.Buffer.BlockCopy(fan_off, 0, bytes, 14, fan_off.Count());
+					System.Buffer.BlockCopy(ben, 0, bytes, 16, ben.Count());
+					System.Buffer.BlockCopy(b1, 0, bytes, 18, b1.Count());
+					System.Buffer.BlockCopy(b2, 0, bytes, 20, b2.Count());
+					System.Buffer.BlockCopy(b3, 0, bytes, 22, b3.Count());
+					System.Buffer.BlockCopy(lights, 0, bytes, 24, lights.Count());
+					System.Buffer.BlockCopy(limit, 0, bytes, 26, limit.Count());
+					System.Buffer.BlockCopy(batt, 0, bytes, 28, batt.Count());
+					System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
+					System.Buffer.BlockCopy(pswd_time, 0, bytes, 32, pswd_time.Count());
+					System.Buffer.BlockCopy(pswd_retries, 0, bytes, 34, pswd_retries.Count());
+					System.Buffer.BlockCopy(password, 0, bytes, 36, password.Count());
+
+					Packet packet = new Packet(bytes, 0, bytes.Count(), false);
 					m_client.Send(packet);
 				}
-			}
-			else
-			{
-				//                this.txtResult.Text = "Cancelled";
 			}
 		}
 		public static byte[] ReadFile(string filePath)
@@ -1010,34 +1015,36 @@ namespace EpServerEngineSampleClient
         }
         private void DBMgmt(object sender, EventArgs e)
         {
-			/*            
-            int val2 = 185;
-            //string str = "SET_TEMP_LIMIT";
-            string str = "SET_FAN_ON";
-            //byte[] bytes1 = new byte[2];
-
-            byte[] bytes1 = BitConverter.GetBytes(val2);
-            byte[] bytes = new byte[bytes1.Count() + 2];
-            bytes[0] = svrcmd.GetCmdIndexB(str);
-            System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count());
-            Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-            m_client.Send(packet);
-            //DlgForm1 dlg = new DlgForm1();
-            //dlg.ShowDialog();
-
-            Control sCtl = this.Controls[0];
-            for (i = 0; i < this.Controls.Count; i++)
-            {
-                if (sCtl.GetType() == typeof(Button))
-                {
-                    sCtl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
-                    sCtl.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(200)))));
-                    AddMsg(sCtl.Name);
-                }
-                sCtl = GetNextControl(sCtl, true);
-            }
-            AddMsg(this.Controls.Count.ToString());
-			*/
+			byte[] param = new byte[4];
+			byte[] bytes = new byte[6];
+			gpsform.Enable_Dlg(true);
+			gpsform.StartPosition = FormStartPosition.Manual;
+			gpsform.Location = new Point(100, 10);
+			param = BitConverter.GetBytes(1);   // turn gps sending on
+												//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
+			AddMsg(param.Length.ToString() + " " + bytes.Length.ToString());
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			bytes[0] = svrcmd.GetCmdIndexB("ENABLE_GPS_SEND_DATA");
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			if (m_client.IsConnectionAlive)
+			{
+				m_client.Send(packet);
+			}
+			if (gpsform.ShowDialog(this) == DialogResult.OK)
+			{
+			}
+			else
+			{
+			}
+			gpsform.Enable_Dlg(false);
+			param = BitConverter.GetBytes(0);// turn gps sending off
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			bytes[0] = svrcmd.GetCmdIndexB("ENABLE_GPS_SEND_DATA");
+			packet = new Packet(bytes, 0, bytes.Count(), false);
+			if (m_client.IsConnectionAlive)
+			{
+				m_client.Send(packet);
+			}
 		}
 		private void ClearScreen(object sender, EventArgs e)
         {

@@ -19,7 +19,7 @@
 #define BAUDRATE B115200
 #endif
 #define BAUDRATE2 B19200
-#define BAUDRATE3 B115200
+#define BAUDRATE3 B9600
 
 #ifdef TS_7800
 #define MODEMDEVICE "/dev/ttyS0"				  // 7800 uses ttyS1 as the 2nd serial port
@@ -231,6 +231,19 @@ UCHAR read_serial2(char *errmsg)
 	return byte;
 }
 /************************************************************************************/
+UCHAR read_serial3(char *errmsg)
+{
+	int res;
+	UCHAR byte = 0;
+	res = read(global_handle3,&byte,1);
+	if(res < 0)
+	{
+		printf("\nread error: %s\n",strerror(errno));
+		strcpy(errmsg,strerror(errno));
+	}
+	return byte;
+}
+/************************************************************************************/
 void close_serial(void)
 {
 //	printf("closing serial port\n");
@@ -349,7 +362,7 @@ void printString2(char *myString)
 void printString3(char *myString)
 {
 	int i = 0;
-
+	return;
 	if(ps.test_bank == 0)
 	{
 		while(myString[i])

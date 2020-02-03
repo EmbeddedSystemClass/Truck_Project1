@@ -24,6 +24,7 @@
 #include "ioports.h"
 #include "serial_io.h"
 #include "queue/ollist_threads_rw.h"
+#include "minmea.h"
 #include "tasks.h"
 //#include "cs_client/config_file.h"
 #include "lcd_func.h"
@@ -40,6 +41,7 @@ pthread_mutex_t     serial_write_lock2=PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t     msg_queue_lock=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 extern int lights_on_delay[13];
+extern int enable_gps_send_data;
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, 
 monitor_fake_input_task, timer_task, timer2_task, LCD_serial_queue, 
@@ -827,7 +829,7 @@ UCHAR timer_task(int test)
 			if(lights_on_countdown > 0)
 			{
 				lights_on_countdown--;
-				sprintf(tempx,"countdown: %d",lights_on_countdown);
+				//sprintf(tempx,"countdown: %d",lights_on_countdown);
 				//printString3(tempx);
 				if(lights_on_countdown == 0)
 				{
@@ -958,15 +960,192 @@ UCHAR timer_task(int test)
 	return 1;
 }
 
+static struct minmea_sentence_rmc rmc;
+static struct minmea_sentence_gga gga;
+static struct minmea_sentence_gll gll;
+//static struct minmea_sentence_gst gst;
+static struct minmea_sentence_gsv gsv;
+static struct minmea_sentence_vtg vtg;
+static struct minmea_sentence_gsa gsa;
+
 /*********************************************************************/
+// baud rate factory set to 4800
+// initial cmd: $PSRF100,1,4800,8,1,0*0C
 UCHAR LCD_serial_queue(int test)
 {
-	usleep(_5SEC);
-	usleep(_5SEC);
+	
+	UCHAR ch;
+	int i,k;
+	char tempx[200];
+	char errmsg[30];
+//	struct timespec ts;
+//	struct minmea_date date;
+//	struct minmea_time time;
+	int size_msg;
 
+	struct minmea_sentence_rmc *prmc = &rmc;
+	struct minmea_sentence_gga *pgga = &gga;
+	struct minmea_sentence_gll *pgll = &gll;
+//	struct minmea_sentence_gst *pgst = &gst;
+	struct minmea_sentence_gsv *pgsv = &gsv;
+	struct minmea_sentence_vtg *pvtg = &vtg;
+	struct minmea_sentence_gsa *pgsa = &gsa;
+
+	int ret_val = -1;
+	usleep(_5SEC);
+	usleep(_5SEC);
+	float tfloat;
+	static int onoff = 0;
+	void *vstruct;
+	int client_send_data = 0;
+
+	//printf("starting GPS task\r\n");
+	k = 0;
+	enable_gps_send_data = 0;
 	while(TRUE)
 	{
-		uSleep(1,0);
+		uSleep(0,1000);
+		memset(tempx,0,sizeof(tempx));
+		i = -1;
+		client_send_data = 0;
+		do
+		{
+			i++;
+			tempx[i] = read_serial3(errmsg);
+			if(tempx[i] < 0)
+				printf("%s\r\n",errmsg);
+ 		}while(i < 200 && tempx[i] != 0x0D && tempx[i-1] != 0x0A);	// if CRLF, quit
+
+		//printf("%s\r\n",tempx);
+		ret_val = minmea_sentence_id(tempx, false);
+		//printf("%d %d: ",k++,ret_val);
+
+		switch(ret_val)
+		{
+			// recommended minimum specific data
+			// time, date, lat/long, speed, direction
+			case MINMEA_SENTENCE_RMC:
+				if(get_rmc_frame(tempx, prmc) > 0)
+				{
+					tfloat  = minmea_tofloat(&rmc.speed);
+					//sprintf(tempx,"RMC speed: %f",tfloat);
+					client_send_data = SEND_GPS_RMC_DATA;
+				}
+				break;
+
+			// system fixed data
+			case MINMEA_SENTENCE_GGA:
+				if(get_gga_frame(tempx, pgga) > 0)
+				{
+					//sprintf(tempx,"GGA sat tracked: %d",gga.satellites_tracked);
+					client_send_data = SEND_GPS_GGA_DATA;
+				}
+				break;
+
+			// this was in the minmea code but not in docs (deprecated?)
+/*
+			case MINMEA_SENTENCE_GST:
+				if(get_gsa_frame(tempx, pgsa) > 0)
+				{
+					sprintf(tempx,"GST ?");
+					client_send_data = SEND_GPS_GST_DATA;
+				}
+				break;
+*/
+			// satellites in view
+			case MINMEA_SENTENCE_GSV:
+				if(get_gsv_frame(tempx, pgsv) > 0)
+				{
+					//sprintf(tempx,"GSV total sats: %d",gsv.total_sats);
+					client_send_data = SEND_GPS_GSV_DATA;
+				}
+				break;
+
+			// active satellites
+			case MINMEA_SENTENCE_GSA:
+				if(get_gsa_frame(tempx, pgsa) > 0)
+				{
+					//sprintf(tempx,"GSA total sats: %d",gsa.fix_type);
+					client_send_data = SEND_GPS_GSA_DATA;
+				}
+				break;
+
+			// lat/long, time 
+			case MINMEA_SENTENCE_GLL:
+				if(get_gll_frame(tempx, pgll) > 0)
+				{
+	//				sprintf(tempx,"long: %f lat %f",minmea_tocoord(&gll.latitude), 
+	//					minmea_tocoord(&gll.longitude));
+	//				sprintf(tempx,"long: %f lat %f",minmea_tofloat(&gll.latitude),
+	//						minmea_tofloat(&gll.longitude));
+	//				sprintf(tempx,"%d %d",gll.latitude.value, gll.longitude.value);
+					client_send_data = SEND_GPS_GLL_DATA;
+				}
+				break;
+
+			case MINMEA_SENTENCE_VTG:
+				if(get_vtg_frame(tempx, pvtg) > 0)
+				{
+/*
+					sprintf(tempx,"VTG true course: %f mag track: %f speed (kph) %f",
+							minmea_tofloat(&vtg.true_track_degrees),
+							minmea_tofloat(&vtg.magnetic_track_degrees),
+							minmea_tofloat(&vtg.speed_kph));
+*/
+					client_send_data = SEND_GPS_VTG_DATA;
+				}
+				break;
+
+			case MINMEA_SENTENCE_ZDA:
+//				memcpy(pzda,vstruct,sizeof(struct minmea_sentence_zda));
+//				sprintf(tempx,"ZDA");
+					client_send_data = SEND_GPS_ZDA_DATA;
+				break;
+
+			case MINMEA_INVALID:
+				sprintf(tempx,"MINMEA_INVALID");
+				break;
+
+			default:
+				sprintf(tempx,"%d UNKNOWN",ret_val);
+				break;
+		}
+
+		if(test_sock() && enable_gps_send_data == 1)
+		{
+			//printf("ret_val: %d\r\n",ret_val);
+			size_msg = strlen(tempx) - 7;
+
+			memcpy((void *)tempx, (const void *)(tempx + 7),(size_t)size_msg);
+			tempx[size_msg] = 0;
+			switch(ret_val)
+			{
+				case MINMEA_SENTENCE_RMC:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+				case MINMEA_SENTENCE_GGA:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+//				case MINMEA_SENTENCE_GST:
+//					send_msg(160,(UCHAR*)tempx, client_send_data);
+//					break;
+				case MINMEA_SENTENCE_GSV:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+				case MINMEA_SENTENCE_GSA:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+				case MINMEA_SENTENCE_GLL:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+				case MINMEA_SENTENCE_VTG:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+				default:
+					break;
+			}
+		}
+
 		if(shutdown_all)
 		{
 			return 0;
@@ -1087,7 +1266,7 @@ UCHAR serial_recv_task(int test)
 
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
-	printString3("server up");
+	//printString3("server up");
 
 	while(TRUE)
 	{
@@ -1415,7 +1594,7 @@ UCHAR serial_recv_task(int test)
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
 
-			printString3(tempx);
+			//printString3(tempx);
 		}else
 
 		if(cmd == SEND_RT_VALUES3)
@@ -1426,7 +1605,7 @@ UCHAR serial_recv_task(int test)
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
 
-			printString3(tempx);
+			//printString3(tempx);
 		}else
 
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)

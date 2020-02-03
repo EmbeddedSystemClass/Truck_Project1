@@ -93,37 +93,27 @@ namespace EpServerEngineSampleClient
 		{
 			current_selection = lbPlayList.SelectedIndex;
 			string song = mp3file[current_selection].mp3_location;
-            AddMsg(song.ToString());               
+            //AddMsg(song.ToString());               
 			player.SoundLocation = song;
 			player.Play();
 		}
 
 		private void Next_Click(object sender, EventArgs e)
 		{
-				current_selection++;
-				if (current_selection > no_selections - 1)
-					current_selection = 0;
-				lbPlayList.SelectedIndex = current_selection;
-/*
-				string song = mp3file[current_selection].mp3_location;
-				player.SoundLocation = song;
-				player.Play();
-*/
+			current_selection++;
+			if (current_selection > no_selections - 1)
+				current_selection = 0;
+			lbPlayList.SelectedIndex = current_selection;
+			//AddMsg(current_selection.ToString() + ": " + mp3file[current_selection].mp3_location.ToString());
 		}
 
 		private void Prev_Click(object sender, EventArgs e)
 		{
-				current_selection--;
-				if (current_selection < 0)
-					current_selection = no_selections - 1;
-				AddMsg(current_selection.ToString() + " " + mp3file[current_selection].mp3_location.ToString());
-
-				lbPlayList.SelectedIndex = current_selection;
-/*
-				string song = mp3file[current_selection].mp3_location;
-				player.SoundLocation = song;
-				player.Play();
-*/
+			current_selection--;
+			if (current_selection < 0)
+				current_selection = no_selections - 1;
+			lbPlayList.SelectedIndex = current_selection;
+			//AddMsg(current_selection.ToString() + ": " + mp3file[current_selection].mp3_location.ToString());
 		}
 		public void Enable_Dlg(bool wait)
 		{

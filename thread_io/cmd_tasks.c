@@ -31,7 +31,7 @@
 #include "lcd_func.h"
 
 extern int engine_running;
-
+int enable_gps_send_data;
 extern pthread_mutex_t     tcp_read_lock;
 extern pthread_mutex_t     tcp_write_lock;
 
@@ -52,7 +52,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[118] =
+CMD_STRUCT cmd_array[127] =
 {
 	{		NON_CMD,"NON_CMD\0" },
 	{		ENABLE_START,"ENABLE_START\0" },
@@ -171,7 +171,16 @@ CMD_STRUCT cmd_array[118] =
 	{		SET_PASSWORD_TIMEOUT,"SET_PASSWORD_TIMEOUT\0" },
 	{		SET_PASSWORD_RETRIES,"SET_PASSWORD_RETRIES\0" },
 	{		SHELL_AND_RENAME,"SHELL_AND_RENAME\0" },
-	{		REFRESH_LCD,"REFRESH_LCD\0" }
+	{		REFRESH_LCD,"REFRESH_LCD\0" },
+	{		SEND_GPS_GLL_DATA,"SEND_GPS_GLL_DATA\0" },
+	{		SEND_GPS_GGA_DATA,"SEND_GPS_GGA_DATA\0" },
+	{		SEND_GPS_GSA_DATA,"SEND_GPS_GSA_DATA\0" },
+	{		SEND_GPS_GSV_DATA,"SEND_GPS_GSV_DATA\0" },
+	{		SEND_GPS_RMC_DATA,"SEND_GPS_RMC_DATA\0" },
+	{		SEND_GPS_VTG_DATA,"SEND_GPS_VTG_DATA\0" },
+	{		SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
+	{		SET_GPS_DATA,"SET_GPS_DATA\0" },
+	{		ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
 };
 
 //extern illist_t ill;
@@ -261,7 +270,8 @@ UCHAR get_host_cmd_task(int test)
 	size_t isize;
 	size_t osize;
 	UCHAR bank;
-	UCHAR test2;
+	int test1, test2;
+	UCHAR test2a, checksum;
 	UCHAR _port,_onoff,_type,_time_delay;
 	int _input;
 	int testx;
@@ -274,7 +284,6 @@ UCHAR get_host_cmd_task(int test)
 	char tempx[200];
 	UCHAR tempy[30];
 	char temp_time[5];
-	UCHAR utemp1[2];
 	char *pch;
 	int fname_index;
 	UCHAR uch_fname_index;
@@ -796,11 +805,11 @@ UCHAR get_host_cmd_task(int test)
 							getFileCreationTime(dat_names[i],tempx);
 							j = GetFileFormat(dat_names[i]);
 							if(j < 0)
-								test2 = 0xff;
+								test2a = 0xff;
 							else
-								test2 = (UCHAR)j;
+								test2a = (UCHAR)j;
 							send_tcp((UCHAR*)&tempx,TDATE_STAMP_STR_LEN);
-							send_tcp((UCHAR*)&test2,1);
+							send_tcp((UCHAR*)&test2a,1);
 						}
 						break;
 
@@ -1302,6 +1311,53 @@ UCHAR get_host_cmd_task(int test)
 
 					case SERVER_UP:
 						send_serialother(SERVER_UP,(UCHAR *)tempx);
+						break;
+
+					case SET_GPS_DATA:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						test1 = (int)utemp;
+						utemp = (UINT)msg_buf[5];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[4];
+						test2 = (int)utemp;
+						//for(i = 0;i < 8;i++)
+							//printf("%02x ",msg_buf[i]);
+						
+						//printf("\r\n%d %d\r\n",test1,test2);
+						checksum = 0;
+						memset(tempx,0,sizeof(tempx));
+						sprintf(tempx,"$PSRF103,%02d,00,%02d,01",test1,test2);
+						//printf("%s\r\n",tempx);
+						//printf("strlen: %d\r\n",strlen(tempx));
+						for(i = 1;i < strlen(tempx);i++)
+						{
+							checksum ^= tempx[i];
+							//printf("%02x ",checksum);
+							//printf("%c",tempx[i]);
+						}
+						//printf("\r\n");
+						//printf("cksum: %02x\r\n",checksum);
+						sprintf(tempy,"*%02x",checksum);
+						strcat(tempx,tempy);
+						strcat(tempx,"\r\n");
+						//printf("\r\n%s",tempx);
+						for(i = 0;i < strlen(tempx);i++)
+						{
+							write_serial3(tempx[i]);
+							//printf("%c",tempx[i]);
+							usleep(1000);
+						}
+						//printf("\r\n");	
+						break;
+
+					case ENABLE_GPS_SEND_DATA:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						enable_gps_send_data = (int)utemp;
+						//printf("enable gps send data: %d\r\n",enable_gps_send_data);
 						break;
 
 					case EXIT_PROGRAM:

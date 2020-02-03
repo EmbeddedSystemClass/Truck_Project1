@@ -112,6 +112,14 @@
     <Compile Include="FrmSampleClient.Designer.cs">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
     </Compile>
+    <Compile Include="GPSdata.cs" />
+    <Compile Include="GPSForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GPSForm.Designer.cs">
+      <DependentUpon>GPSForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GPSlist.cs" />
     <Compile Include="ManageServer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -172,6 +180,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSampleClient.resx">
       <DependentUpon>FrmSampleClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GPSForm.resx">
+      <DependentUpon>GPSForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ManageServer.resx">
       <DependentUpon>ManageServer.cs</DependentUpon>

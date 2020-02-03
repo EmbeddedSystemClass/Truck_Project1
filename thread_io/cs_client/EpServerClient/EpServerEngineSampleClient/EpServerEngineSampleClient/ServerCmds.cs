@@ -81,13 +81,15 @@ namespace EpServerEngineSampleClient
 			INDOOR_TEMP,
 			SEND_RT_VALUES1,
 			SEND_RT_VALUES2,
+			SEND_RT_VALUES3,
 			ENGINE_RUNTIME,
 			SERVER_UPTIME,
 			SEND_CONFIG,
 			SEND_MSG,
 			SEND_RPM,
 			SEND_MPH,
-			SEND_ADCS,
+			SEND_ADCS1,
+			SEND_ADCS2,
 			NAV_UP,
 			NAV_DOWN,
 			NAV_SIDE,
@@ -127,7 +129,16 @@ namespace EpServerEngineSampleClient
 			SET_PASSWORD_TIMEOUT,
 			SET_PASSWORD_RETRIES,
 			SHELL_AND_RENAME,
-			REFRESH_LCD
+			REFRESH_LCD,
+			SEND_GPS_GLL_DATA,
+			SEND_GPS_GGA_DATA,
+			SEND_GPS_GSA_DATA,
+			SEND_GPS_GSV_DATA,
+			SEND_GPS_RMC_DATA,
+			SEND_GPS_VTG_DATA,
+			SEND_GPS_ZDA_DATA,
+			ENABLE_GPS_SEND_DATA,
+			SET_GPS_DATA
 		}
 
 		public ServerCmds()
@@ -193,7 +204,6 @@ namespace EpServerEngineSampleClient
         {
             string test = " ";
             byte[] bytes = BytesFromString(test);
-			//qt.Enqueue(sendcmd);
 			if (m_client.IsConnectionAlive)
 			{
 				bytes.SetValue((byte)sendcmd, 0);
