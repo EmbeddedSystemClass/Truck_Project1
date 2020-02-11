@@ -161,9 +161,6 @@ minmea.o: minmea.c minmea.h
 distance.o: distance.c
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c distance.c
 
-#distance: distance.o
-#	${CC} -static distance.o -o distance -lm
-
 #sched: sched.o ioports.o tasks.o illist_threads_rw.o ollist_threads_rw.o rt_llist_threads_rw.o rdwr.o serial_io.o config_file.o lcd_func.o
 sched: sched.o ioports.o tasks.o ollist_threads_rw.o rdwr.o serial_io.o config_file.o cmd_tasks.o GPS.o minmea.o  distance.o
 # if we don't use -static then the target should have: libpthread.so.0 in the /lib directory
