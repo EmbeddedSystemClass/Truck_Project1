@@ -107,6 +107,11 @@ git add thread_io/make_db
 git add thread_io/serial_io.c
 git add thread_io/serial_io.h
 git add thread_io/read_sd.c
+git add thread_io/minmea.c
+git add thread_io/minmea.h
+git add thread_io/GPS.c
+git add thread_io/distance.c
+
 git add thread_io/thread_io_notes.txt
 git add thread_io/mingetty/mountcf.sh
 git add thread_io/mingetty/try_sched_7250.sh
@@ -120,10 +125,9 @@ git add thread_io/mingetty/Makefile
 git add thread_io/mingetty/param.conf
 git add thread_io/test_tcp/*.c
 git add thread_io/test_tcp/*.h
-git add thread_io/test_tcp/iostate.bin
 git add thread_io/test_tcp/make_target
+git add thread_io/test_tcp/make_target2
 git add thread_io/test_tcp/Makefile
-git add thread_io/test_tcp/Makefile2
 git add thread_io/ir104_man.pdf
 git add thread_io/how2formatSDCardExt.png
 git add thread_io/TS-7200_connections.jpg

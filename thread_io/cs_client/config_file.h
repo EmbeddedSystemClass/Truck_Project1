@@ -13,3 +13,5 @@ int GetFileFormat(char *filename);
 int getFileCreationTime(char *path,char *str);
 int WriteParams(char *filename, PARAM_STRUCT *ps, char *password, char *errmsg);
 int LoadParams(char *filename, PARAM_STRUCT *ps, char *password, char *errmsg);
+int LoadWayPoints(char *filename, WAYPOINTS *wp, char *errmsg);
+int WriteWayPoints(char *filename, WAYPOINTS *wp, char *errmsg);

@@ -104,7 +104,7 @@ BULD_TARGET = $(PROJECT)
 
 #all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4 lcd_func2
 #all :  test_inports test_ioports2 test_ioports4 lcd_func lcd_func2
-all : show_params make_params
+all : show_params make_params make_waypoints show_waypoints
 #all : test_upload_new
 
 client.o: client.c
@@ -182,11 +182,23 @@ show_params: show_params.o
 make_params.o: make_params.c
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c make_params.c
 
+make_waypoints.o: make_waypoints.c
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c make_waypoints.c
+
+show_waypoints.o: show_waypoints.c
+	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c show_waypoints.c
+
 make_params: make_params.o
 	${CC} make_params.o -o make_params
 
+make_waypoints: make_waypoints.o
+	${CC} make_waypoints.o -o make_waypoints
+
+show_waypoints: show_waypoints.o
+	${CC} show_waypoints.o -o show_waypoints
+
 clean :
 	rm -f *.o *~ *# core client server client2 server2 test_write \
-	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params test_upload_new
+	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params test_upload_new make_waypoints show_waypoints
 #	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
 #	rm -f *.o *~ *# core server2

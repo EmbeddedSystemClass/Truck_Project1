@@ -76,11 +76,14 @@ static int test_lblinkers;
 static int test_rblinkers;
 extern int shutdown_all;
 extern int actual_lights_on_delay;
+//double double getDistance(double lat1, double lon1, double lat2, double lon2, double *yards, double *miles);
+extern double getDistance(double lat1, double lon1, double lat2, double lon2, double *yards, double *miles);
 //extern int time_set;
 
 int max_ips;
 IP ip[40];
-
+WAYPOINTS wp[36];	// see make_waypoints for how many records are made
+int no_waypoints;
 static UCHAR msg_queue[MSG_QUEUE_SIZE];
 static int msg_queue_ptr;
 
@@ -151,6 +154,9 @@ void init_ips(void)
 	}
 //	printf("max_ips: %d\r\n",max_ips);
 	i = LoadParams("param.conf",&ps, &password[0], errmsg);
+	no_waypoints = LoadWayPoints("waypoints.conf",&wp[0], errmsg);
+//	for(i = 0;i < no_waypoints;i++)
+//		printf("%s %f %f\r\n",wp[i].name, wp[i].latitude, wp[i].longitude);
 	//printString2(password);
 	actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
 
@@ -340,21 +346,29 @@ void send_serialother(UCHAR cmd, UCHAR *buf)
 //		printHexByte(buf[i]);
 	}
 	pthread_mutex_unlock(&serial_write_lock);
-
 }
 /*********************************************************************/
-void send_lcd(UCHAR *buf, int size)
+void  send_lcd(UCHAR *buf, int size)
 {
 	int i;
 	UCHAR start_byte = AVR_START_BYTE;
-	
+	UCHAR ch = 0;
+	char errmsg[20];
+
 	pthread_mutex_lock(&serial_write_lock2);
 	for(i = 0;i < size;i++)
 	{
 		write_serial2(buf[i]);
-		uSleep(0,1000);
+		uSleep(0,5000);
 	}
 	write_serial2(start_byte);
+	ch = 0;
+	do 
+	{
+		printf("-%02x ",ch);
+		ch = read_serial2(errmsg);
+	}while(ch != AVR_END_BYTE);
+	printf("%02x ",ch);
 	pthread_mutex_unlock(&serial_write_lock2);
 }
 /*********************************************************************/
@@ -668,7 +682,7 @@ void init_LCD(int clr)
 	char tempx[20];
 
 	col = START_RT_VALUE_COL;
-	data_col = col + 10;
+	data_col = col + 9;
 	row = START_RT_VALUE_ROW;
 	str = 0;
 
@@ -678,34 +692,56 @@ void init_LCD(int clr)
 		send_lcd(ucbuff, 1);
 	}
 
-	for(j = 0;j < NUM_RT_LABELS;j++)		// index has to start from 1
+	ucbuff[0] = EEPROM_STR;
+	for(j = 0;j <= IND_TEMP;j++)		// index has to start from 1
 	{
 		if(row > ENDING_RT_VALUE_ROW)
 		{
 			col += RT_VALUE_COL_WIDTH;
 			row = START_RT_VALUE_ROW;
-			data_col = col + 15;
+			data_col = col + 9;
 		}
 		rtlabel_str[j].row = row;
 		rtlabel_str[j].col = col;
 		rtlabel_str[j].data_col = data_col;
 
-		ucbuff[0] = EEPROM_STR;
-		ucbuff[1] = (UCHAR)row;
-		ucbuff[2] = (UCHAR)col;
+		ucbuff[1] = row;
+		ucbuff[2] = col;
 		ucbuff[3] = (UCHAR)j+1;
-		ucbuff[4] = 18;
-		if(j < ENGINE)
-		{
-			send_lcd(ucbuff, 5);
-			usleep(100);
-		}
-
-//		sprintf(tempx,"%d %d %d :",rtlabel_str[j].row,rtlabel_str[j].col,rtlabel_str[j].data_col); 
-//		printString3(tempx);
+		ucbuff[4] = 6;
 		row++;
+		send_lcd(ucbuff,5);
+		usleep(1000);
 	}
-	
+
+	col = START_RT_VALUE_COL;
+//	row = rtlabel_str[TRIP].row + 2;
+	row = 9;
+	data_col = col + 9;
+	ucbuff[0] = EEPROM_STR;
+	//printf("\r\n");
+	for(j = LAT;j <= GPS_ALT;j++)
+	{
+		rtlabel_str[j].row = row;
+		rtlabel_str[j].col = col;
+		if(j == GPS_SPEED)
+			rtlabel_str[j].data_col = data_col + 2;
+		else
+			rtlabel_str[j].data_col = data_col;
+		ucbuff[1] = row;
+		ucbuff[2] = col;
+		ucbuff[3] = (UCHAR)j + 1;
+		ucbuff[4] = 8;
+		row++;
+		send_lcd(ucbuff,5);
+		usleep(1000);
+		//for(i = 1;i < 5;i++)
+			//printf("%d ",ucbuff[i]);
+		//printf("\r\n");
+	}
+	//for(i = 0;i < NUM_RT_LABELS;i++)
+		//printf("\r\n%d %d %d",rtlabel_str[i].row, rtlabel_str[i].col, rtlabel_str[i].data_col);
+	//printf("\r\n");
 }
 /*********************************************************************/
 // this happens once a second
@@ -968,20 +1004,36 @@ static struct minmea_sentence_gsv gsv;
 static struct minmea_sentence_vtg vtg;
 static struct minmea_sentence_gsa gsa;
 
+typedef struct
+{
+	float yards;
+	float miles;
+	char name[30];
+	int units;
+}FARRAY;
+
+static char gps_strings[20][80];
+
 /*********************************************************************/
 // baud rate factory set to 4800
 // initial cmd: $PSRF100,1,4800,8,1,0*0C
 UCHAR LCD_serial_queue(int test)
 {
-	
 	UCHAR ch;
 	int i,k;
+	FARRAY fa[35];		// this should be big enough to store all the waypoints in wp[]
+	double curr_lat, curr_long;
+	float float1, float2;
+	double ydistance1, ydistance2;
+	double mdistance1, mdistance2;
+	int closest_wp, next_closest_wp;
 	char tempx[200];
+	char tempy[30];
 	char errmsg[30];
-//	struct timespec ts;
-//	struct minmea_date date;
-//	struct minmea_time time;
+	UCHAR ucbuff[20];
 	int size_msg;
+	FILE *fp;
+	int no_recs;
 
 	struct minmea_sentence_rmc *prmc = &rmc;
 	struct minmea_sentence_gga *pgga = &gga;
@@ -998,16 +1050,45 @@ UCHAR LCD_serial_queue(int test)
 	static int onoff = 0;
 	void *vstruct;
 	int client_send_data = 0;
-
+	//printf("\r\n\r\n");
 	//printf("starting GPS task\r\n");
 	k = 0;
 	enable_gps_send_data = 0;
+	fp = fopen ("test3.txt", "r");
+
+	memset(gps_strings,0,sizeof(char)*124*80);
+
+	//printf("starting...\r\n");
+
+	i = 0;
+	while(fscanf(fp, "%s", tempx)!=EOF)
+	{
+		//printf("%s - ",tempx);
+		strcpy(gps_strings[i],tempx);
+		strcat(gps_strings[i],"\r\n");
+//		printf("%s",gps_strings[i]);
+		memset(tempx,0,sizeof(tempx));
+		i++;
+	}
+	fclose(fp);
+	no_recs = i;
+	//printf("\r\nno_recs: %d no waypoints: %d\r\n",no_recs, no_waypoints);
+
+	//uSleep(0,_1SEC);
+	//printf("\r\n\r\n");
+
+//	for(i = 0;i < 125;i++)
+//		printf("%s",gps_strings[i]);
+	tfloat = 0.001;
+	k = 0;
 	while(TRUE)
 	{
-		uSleep(0,1000);
+		//uSleep(_1SEC,0);
+		usleep(10000000);
 		memset(tempx,0,sizeof(tempx));
-		i = -1;
+//		i = -1;
 		client_send_data = 0;
+/*
 		do
 		{
 			i++;
@@ -1015,10 +1096,16 @@ UCHAR LCD_serial_queue(int test)
 			if(tempx[i] < 0)
 				printf("%s\r\n",errmsg);
  		}while(i < 200 && tempx[i] != 0x0D && tempx[i-1] != 0x0A);	// if CRLF, quit
+*/
+		
+		//printf("%s...\r\n",tempx);
+		strcpy(tempx,gps_strings[k]);
+		//printf("%s",tempx);
+		if(k >= no_recs)
+			k = 0;
+		else k++;
 
-		//printf("%s\r\n",tempx);
 		ret_val = minmea_sentence_id(tempx, false);
-		//printf("%d %d: ",k++,ret_val);
 
 		switch(ret_val)
 		{
@@ -1027,9 +1114,75 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_RMC:
 				if(get_rmc_frame(tempx, prmc) > 0)
 				{
-					tfloat  = minmea_tofloat(&rmc.speed);
-					//sprintf(tempx,"RMC speed: %f",tfloat);
+					sprintf(tempy,"%.2f\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
+					//printf("%s\r\n",tempy);
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[LAT].row;
+					ucbuff[2] = rtlabel_str[LAT].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+
+					sprintf(tempy,"%.2f\0",(curr_long = minmea_tocoord(&rmc.longitude)));
+					//printf("%s\r\n",tempy);
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[LONG].row;
+					ucbuff[2] = rtlabel_str[LONG].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+
+					memset(tempy,0,sizeof(tempy));
+					sprintf(tempy,"%.1f\0",minmea_tofloat(&rmc.speed)+ tfloat);
+					//printf("%s\r\n",tempy);
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[GPS_SPEED].row;
+					ucbuff[2] = rtlabel_str[GPS_SPEED].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+/*
+					sprintf(tempx,"time: hours: %d minutes: %d seconds %d",
+						rmc.time.hours,rmc.time.minutes,rmc.time.seconds);
+					sprintf(tempx,"date: %d %d %d",rmc.date.day,rmc.date.month,rmc.date.year);
+						minmea_tocoord(&rmc.longitude));
+*/
+//					sprintf(tempx,"direction: %.0f",minmea_tofloat(&rmc.course));
 					client_send_data = SEND_GPS_RMC_DATA;
+
+					if(no_waypoints > 0)
+					{
+						for(i = 0;i < no_waypoints;i++)		// store all the relative distances in fa
+						{
+							getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
+												curr_lat, curr_long, &fa[i].yards, &fa[i].miles);
+							strcpy(fa[i].name,wp[i].name);
+							//printf("%d: %s %f\r\n",i, fa[i].name, fa[i].miles);
+						}
+						mdistance2 = 1000000.0;
+						for(i = 0;i < no_waypoints;i++)		// find the nearest waypoint
+						{
+							mdistance1 = fa[i].miles;
+							if(mdistance1 < mdistance2)
+							{	
+								mdistance2 = mdistance1;
+								closest_wp = i;
+							}
+						}
+						mdistance2 = 1000000.0;
+						for(i = 0;i < no_waypoints;i++)		// find the next nearest waypoint
+						{
+							if(i != closest_wp)
+							{
+								mdistance1 = fa[i].miles;
+								if(mdistance1 < mdistance2)
+								{	
+									mdistance2 = mdistance1;
+									next_closest_wp = i;
+								}
+							}
+						}
+						//printf("%d %d\r\n",closest_wp, next_closest_wp);
+					}
 				}
 				break;
 
@@ -1037,13 +1190,20 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GGA:
 				if(get_gga_frame(tempx, pgga) > 0)
 				{
-					//sprintf(tempx,"GGA sat tracked: %d",gga.satellites_tracked);
+					memset(tempy,0,sizeof(tempy));
+					sprintf(tempy,"%.0f\0",3.2808*minmea_tofloat(&gga.altitude)+ tfloat);
+					//printf("%s\r\n",tempy);
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[GPS_ALT].row;
+					ucbuff[2] = rtlabel_str[GPS_ALT].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
 					client_send_data = SEND_GPS_GGA_DATA;
 				}
 				break;
 
 			// this was in the minmea code but not in docs (deprecated?)
-/*
+/*  
 			case MINMEA_SENTENCE_GST:
 				if(get_gsa_frame(tempx, pgsa) > 0)
 				{
@@ -1103,14 +1263,13 @@ UCHAR LCD_serial_queue(int test)
 				break;
 
 			case MINMEA_INVALID:
-				sprintf(tempx,"MINMEA_INVALID");
+				printf("MINMEA_INVALID");
 				break;
 
 			default:
-				sprintf(tempx,"%d UNKNOWN",ret_val);
+				printf("%d UNKNOWN",ret_val);
 				break;
 		}
-
 		if(test_sock() && enable_gps_send_data == 1)
 		{
 			//printf("ret_val: %d\r\n",ret_val);
@@ -1122,6 +1281,7 @@ UCHAR LCD_serial_queue(int test)
 			{
 				case MINMEA_SENTENCE_RMC:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
+
 					break;
 				case MINMEA_SENTENCE_GGA:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
@@ -1145,6 +1305,7 @@ UCHAR LCD_serial_queue(int test)
 					break;
 			}
 		}
+		//printf("\r\n");
 
 		if(shutdown_all)
 		{

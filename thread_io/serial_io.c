@@ -274,8 +274,8 @@ int init_serial2(void)
 			exit(1);
 		}
 		set_interface_attribs (global_handle2, BAUDRATE2, 0);
-		set_blocking (global_handle2, 1);	 // blocking
-	//	set_blocking (global_handle2, 0);	// non-blocking
+//		set_blocking (global_handle2, 1);	 // blocking
+		set_blocking (global_handle2, 0);	// non-blocking
 	}
 
 	return global_handle2;
@@ -306,7 +306,7 @@ int init_serial3(void)
 		}
 		set_interface_attribs (global_handle3, BAUDRATE3, 0);
 		set_blocking (global_handle3, 1);	 // blocking
-	//	set_blocking (global_handle2, 0);	// non-blocking
+//		set_blocking (global_handle2, 0);	// non-blocking
 	}
 
 	return global_handle3;

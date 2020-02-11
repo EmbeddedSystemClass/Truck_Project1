@@ -39,6 +39,22 @@ typedef struct _ip
 
 typedef struct
 {
+	float latitude;
+	float longitude;
+	char name[30];
+}WAYPOINTS;
+
+enum dist_units
+{
+	METERS,
+	FEET,
+	MILES,
+	KILOMETERS,
+	YARDS
+}DIST_UNITS;
+
+typedef struct
+{
 	UCHAR row;
 	UCHAR col;
 	UCHAR data_col;
@@ -61,6 +77,11 @@ enum rt_values_offsets
 	FUEL_LEVEL,
 	OUTDOOR_TEMP,
 	IND_TEMP,
+	LAT,
+	LONG,
+	GPS_DIR,
+	GPS_SPEED,
+	GPS_ALT,
 	ENGINE,
 	COOLING_FAN,
 	HEAD_LIGHTS,
@@ -309,7 +330,7 @@ enum output_types
 
 #define LEN 30
 #define AVR_BUF_LEN 15
-#define NUM_STR 32	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
+#define NUM_STR 36	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -365,10 +386,10 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 20
+#define NUM_RT_LABELS 24
 #define START_RT_VALUE_ROW 1
 #define START_RT_VALUE_COL 0
-#define ENDING_RT_VALUE_ROW 10
+#define ENDING_RT_VALUE_ROW 7
 #define RT_VALUE_COL_WIDTH 19
 
 #define NUM_STATUS_LABELS 7

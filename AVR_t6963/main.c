@@ -40,8 +40,9 @@ volatile UINT xrow, xcol;
 volatile UCHAR buff[LEN];
 static char *eeprom_str_lookup(int index, char *str);
 static float convertF(int raw_data);
-#define TEMP_SIZE 800
-UCHAR temp[TEMP_SIZE];
+static char test_str[] = "test 123\0";
+//#define TEMP_SIZE 800
+//UCHAR temp[TEMP_SIZE];
 
 // use timer to keep track of things like:
 // - seconds before re-enter password
@@ -97,6 +98,9 @@ int main(void)
 	onoff = 0;
 
 ///	char disp_str[STR_LEN];
+
+	for(i = 0;i < strlen(test_str);i++)
+		ch = test_str[i];
 
 	initUSART();
 	GDispInit();
@@ -255,7 +259,7 @@ int main(void)
 					{
 						strcpy(str,eeprom_str_lookup(index, str));
 						GDispGoto(row,col);
-						for(i = 0;i < blanks;i++)
+						for(i = 0;i <= blanks;i++)
  							GDispChar(0x20);
 						GDispStringAt(row,col,str);
 /*
@@ -441,12 +445,18 @@ int main(void)
 //					for(i = 0;i < j;i++)
 //						GDispChar(0x20);
 					i = 0;
+
 					do{
 						str[i] = buff[i+3];
 						i++;
 					}while(i < STR_LEN && buff[i] != 0);
 
-//					strncpy(disp_str,(char *)&buff[4],disp_str_len);
+					GDispGoto((UINT)buff[1],(UINT)buff[2]);
+					for(j = 0;j < i+1;j++)
+					{
+						GDispChar(0x20);
+						_delay_us(10);
+					}
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
 
@@ -477,7 +487,7 @@ int main(void)
 					int_val = convertF(int_val);
 					if(int_val < 100)
 						sprintf(str,"%2d ",int_val);
-					else	
+					else
 						sprintf(str,"%3d ",int_val);
 					GDispStringAt((UINT)buff[1],(UINT)buff[2],str);
 				break;
@@ -488,7 +498,7 @@ int main(void)
 					FONT_8X8();
 					_delay_ms(100);
 				break;
-				
+
 				case SET_8X8_FONT:
 					FONT_8X8();
 					_delay_ms(100);
@@ -504,8 +514,8 @@ int main(void)
 			}
 			chptr = 0;
 //			_delay_ms(5);
-//			transmitByte(AVR_END_BYTE);
-			// send 0xFD back to let PIC24 know we are finished with this command
+			transmitByte(AVR_END_BYTE);
+// send 0xFD back to let TS-7800 know we are finished with this command
 //			printHexByte(buff[5]+0x30);
 //			printString(" ");
 		}

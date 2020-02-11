@@ -86,8 +86,10 @@ struct minmea_sentence_gga {
     int fix_quality;
     int satellites_tracked;
     struct minmea_float hdop;
-    struct minmea_float altitude; char altitude_units;
-    struct minmea_float height; char height_units;
+    struct minmea_float altitude;
+	char altitude_units;
+    struct minmea_float height;
+	char height_units;
     struct minmea_float dgps_age;
 };
 
@@ -231,7 +233,7 @@ int get_gll_frame(char *line, struct minmea_sentence_gll *frame);
 /**
  * Convert GPS UTC date/time representation to a UNIX timestamp.
  */
-int minmea_gettime(struct timespec *ts, const struct minmea_date *date, const struct minmea_time *time_);
+int minmea_gettime(struct tm *tm, const struct minmea_date *date, const struct minmea_time *time_);
 
 /**
  * Rescale a fixed-point value to a different scale. Rounds towards zero.

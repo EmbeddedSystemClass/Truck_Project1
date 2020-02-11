@@ -301,7 +301,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.25\0";
+	char version[15] = "sched v1.26\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];

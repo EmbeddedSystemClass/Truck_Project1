@@ -257,6 +257,90 @@ int WriteParams(char *filename, PARAM_STRUCT *ps, char *password, char *errmsg)
 	return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
+int LoadWayPoints(char *filename, WAYPOINTS *wp, char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i = 0;
+	fptr = (char *)filename;
+	UCHAR id;
+	long filesize;
+	int no_recs;
+
+	fp = open((const char *)fptr, O_RDWR);
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+		printf("%s  %s\n",errmsg,filename);
+		return -2;
+	}
+
+	filesize = lseek(fp,0,SEEK_END);
+	filesize -= 2;
+	no_recs = filesize/sizeof(WAYPOINTS);
+	i = lseek(fp,0,SEEK_SET);
+	i = 0;
+	read(fp,&id,1);
+	if(id != 0xAB)
+	{
+		close(fp);
+		printString2("bad file marker at begin");
+		return -3;
+	}
+	for(i = 0;i < no_recs;i++)
+	{
+		memset(wp[i].name,0,30);
+		read(fp,(void*)&wp[i],sizeof(WAYPOINTS));
+		//printf("%s\r\n",wp[i].name);
+	}
+	//printf("fp:%d  read: %d bytes in LoadWayPoints\n",fp,i);
+	read(fp,&id,1);
+	if(id != 0x54)
+	{
+		close(fp);
+		printString2("bad file marker at begin");
+		return -4;
+	}
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return no_recs;
+}
+///////////////////// Write/LoadConfig functions used by init/list_db start here (see make_db) ///////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+int WriteWayPoints(char *filename, WAYPOINTS *wp, char *errmsg)
+{
+	char *fptr;
+	int fp = -1;
+	int i,j,k;
+	fptr = (char *)filename;
+	UCHAR id = 0xAB;
+
+//#ifdef NOTARGET
+	fp = open((const char *)fptr, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+//#else
+//	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
+//#endif
+	if(fp < 0)
+	{
+		strcpy(errmsg,strerror(errno));
+		close(fp);
+		printf("%s  %s\n",errmsg,filename);
+		return -2;
+	}
+
+	j = 0;
+	write(fp,&id,1);
+	write(fp,(const void*)wp,sizeof(WAYPOINTS));
+	id = 0x54;
+	write(fp,&id,1);
+	close(fp);
+	strcpy(errmsg,"Success\0");
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 int oWriteConfigXML(char *filename, O_DATA *curr_o_array,size_t size,char *errmsg)
 {
 	char *fptr;
