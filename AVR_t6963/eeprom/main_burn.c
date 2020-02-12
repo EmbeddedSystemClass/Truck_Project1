@@ -36,6 +36,8 @@ char menu_labels[NUM_STR][24] = {
 	{"GPS DIR\0"},
 	{"GPS SPEED\0"},
 	{"GPS ALT\0"},
+	{"NEXT\0"},
+	{"PREV\0"},
 	{"ENGINE\0"},				// status values (STATUS_VALUES_OFFSET)
 	{"COOL FAN\0"},
 	{"HEADLAMPS\0"},

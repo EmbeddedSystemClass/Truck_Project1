@@ -137,8 +137,8 @@ namespace EpServerEngineSampleClient
 			SEND_GPS_RMC_DATA,
 			SEND_GPS_VTG_DATA,
 			SEND_GPS_ZDA_DATA,
-			ENABLE_GPS_SEND_DATA,
-			SET_GPS_DATA
+			SET_GPS_DATA,
+			ENABLE_GPS_SEND_DATA
 		}
 
 		public ServerCmds()

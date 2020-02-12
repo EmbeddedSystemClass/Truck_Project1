@@ -82,6 +82,8 @@ enum rt_values_offsets
 	GPS_DIR,
 	GPS_SPEED,
 	GPS_ALT,
+	NEXT,
+	PREV,
 	ENGINE,
 	COOLING_FAN,
 	HEAD_LIGHTS,
@@ -218,8 +220,8 @@ enum cmd_types
 	SEND_GPS_RMC_DATA,
 	SEND_GPS_VTG_DATA,
 	SEND_GPS_ZDA_DATA,
-	ENABLE_GPS_SEND_DATA,
-	SET_GPS_DATA
+	SET_GPS_DATA,
+	ENABLE_GPS_SEND_DATA
 }CMD_TYPES;
 
 enum key_types
@@ -386,7 +388,7 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 24
+#define NUM_RT_LABELS 27
 #define START_RT_VALUE_ROW 1
 #define START_RT_VALUE_COL 0
 #define ENDING_RT_VALUE_ROW 7

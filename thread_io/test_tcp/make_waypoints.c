@@ -66,7 +66,7 @@ int main(void)
 	ps.longitude = -105.487160;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"apt\0");	
+	strcpy(ps.name,"apt\0");
 	ps.latitude = 43.757889;
 	ps.longitude = -105.488953;
 	write(fp,&ps,sizeof(WAYPOINTS));
@@ -101,12 +101,12 @@ int main(void)
 	ps.longitude = -105.405686;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"Rest Area\0");
+	strcpy(ps.name,"Rest Area \0");
 	ps.latitude = 43.320457;
 	ps.longitude = -105.350739;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"NBill Disp\0");
+	strcpy(ps.name,"NBill Disp \0");
 	ps.latitude = 43.296722;
 	ps.longitude = -105.330917;
 	write(fp,&ps,sizeof(WAYPOINTS));
@@ -116,12 +116,12 @@ int main(void)
 	ps.longitude = -105.260056;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"Trees\0");
+	strcpy(ps.name,"Trees   \0");
 	ps.latitude = 43.180722;
 	ps.longitude = -105.259717;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"Tanks\0");
+	strcpy(ps.name,"Tanks   \0");
 	ps.latitude = 43.020543;
 	ps.longitude = -105.262975;
 	write(fp,&ps,sizeof(WAYPOINTS));
@@ -191,14 +191,14 @@ int main(void)
 	ps.longitude = -104.804031;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
-	strcpy(ps.name,"Shack\0");
+	strcpy(ps.name,"Shack  \0");
 	ps.latitude = 42.997181;
 	ps.longitude = -104.803291;
 	write(fp,&ps,sizeof(WAYPOINTS));
 
 	id = 0x54;
 	write(fp,&id,1);
-	
+
 	close(fp);
 
 	return 0;

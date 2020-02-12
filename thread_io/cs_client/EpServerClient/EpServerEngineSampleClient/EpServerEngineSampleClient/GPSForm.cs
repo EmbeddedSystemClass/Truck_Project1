@@ -30,6 +30,7 @@ namespace EpServerEngineSampleClient
 		private int selected_index = 0;
 		private GPSdata gps_data;
 		private byte[] recv_buff;
+		private bool m_pause = false;
 
 		public GPSForm(string xml_file_location, INetworkClient client)
 		{
@@ -104,9 +105,6 @@ namespace EpServerEngineSampleClient
 		{
 			if (m_wait == true)
 			{
-				//AddMsg(recv_buff.Length.ToString());
-				
-				
 				int type_msg = (int)bytes[0];
 				System.Buffer.BlockCopy(bytes, 2, recv_buff, 0, bytes.Length-2);
 				string msg = svrcmd.GetName(type_msg);
@@ -117,7 +115,8 @@ namespace EpServerEngineSampleClient
 						//System.Buffer.BlockCopy(recv_buff, 0, gps_data.gll, 0, 36);
 						break;
 					case "SEND_GPS_GGA_DATA":
-						AddMsg("GGA: " + StringFromByteArr(recv_buff));
+						//AddMsg("GGA: " + StringFromByteArr(recv_buff));
+						tbAltitude.Text = StringFromByteArr(recv_buff);
 						break;
 					case "SEND_GPS_GSA_DATA":
 						AddMsg("GSA: " + StringFromByteArr(recv_buff));
@@ -126,7 +125,49 @@ namespace EpServerEngineSampleClient
 						AddMsg("GSV: " + StringFromByteArr(recv_buff));
 						break;
 					case "SEND_GPS_RMC_DATA":
-						AddMsg("RMC: " + StringFromByteArr(recv_buff));
+						
+						string[] words = StringFromByteArr(recv_buff).Split(',');
+						
+						int i = 0;
+						foreach (var word in words)
+						{
+							switch (i)
+							{
+								case 0:
+									tbLatt.Text = word;
+									break;
+								case 1:
+									tbLong.Text = word;
+									break;
+								case 2:
+									tbSpeed.Text = word;
+									break;
+								case 3:
+									tbDirection.Text = word;
+									break;
+								case 4:
+									tbNWPDist.Text = word + " miles";
+									break;
+								case 5:
+									tbNextWP.Text = word;
+									break;
+								case 6:
+									tbLWPDist.Text = word + " miles";
+									break;
+								case 7:
+									tbLastWP.Text = word;
+									break;
+								default:
+									AddMsg(i.ToString());
+									break;
+							}
+
+							i++;
+						}
+						
+						if(!m_pause)						
+							AddMsg(StringFromByteArr(recv_buff) + " ");
+						
 						break;
 					case "SEND_GPS_VTG_DATA":
 						AddMsg("VTG: " + StringFromByteArr(recv_buff));
@@ -197,14 +238,14 @@ namespace EpServerEngineSampleClient
 
 		private void btnPause_Click(object sender, EventArgs e)
 		{
-			if(m_wait)
+			if(m_pause)
 			{
-				m_wait = false;
+				m_pause = false;
 				btnPause.Text = "Continue";
 			}
 			else
 			{
-				m_wait = true;
+				m_pause = true;
 				btnPause.Text = "Pause";
 			}
 		}
@@ -238,5 +279,9 @@ namespace EpServerEngineSampleClient
 			return buffer;
 		}
 
+		private void btnClear_Click(object sender, EventArgs e)
+		{
+			tbAddMsg.Clear();
+		}
 	}
 }

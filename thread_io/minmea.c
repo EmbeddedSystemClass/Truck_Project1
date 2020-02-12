@@ -45,9 +45,10 @@ uint8_t minmea_checksum(const char *sentence)
 bool minmea_check(const char *sentence, bool strict)
 {
     uint8_t checksum = 0x00;
+	int string_len;
 
     // Sequence length is limited.
-    if (strlen(sentence) > MINMEA_MAX_LENGTH + 3)
+    if ((string_len = strlen(sentence)) > MINMEA_MAX_LENGTH + 3)
 	{
 		printf("seq len\r\n");
         return false;
@@ -56,7 +57,7 @@ bool minmea_check(const char *sentence, bool strict)
     // A valid sentence starts with "$".
     if (*sentence++ != '$')
 	{
-		printf("starts with...\r\n");
+//		printf("starts with...\r\n");
         return false;
 	}
 
@@ -92,7 +93,7 @@ bool minmea_check(const char *sentence, bool strict)
 //printf("\n%02x %02x\n",checksum,expected);
         if (checksum != expected)
 		{
-			printf("checksum\r\n");
+			printf("%d checksum\r\n",string_len);
             return false;
 		}
     } else if (strict) 

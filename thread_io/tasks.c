@@ -365,10 +365,10 @@ void  send_lcd(UCHAR *buf, int size)
 	ch = 0;
 	do 
 	{
-		printf("-%02x ",ch);
+		//printf("-%02x ",ch);
 		ch = read_serial2(errmsg);
 	}while(ch != AVR_END_BYTE);
-	printf("%02x ",ch);
+	//printf("%02x ",ch);
 	pthread_mutex_unlock(&serial_write_lock2);
 }
 /*********************************************************************/
@@ -719,8 +719,8 @@ void init_LCD(int clr)
 	row = 9;
 	data_col = col + 9;
 	ucbuff[0] = EEPROM_STR;
-	//printf("\r\n");
-	for(j = LAT;j <= GPS_ALT;j++)
+//	printf("\r\n");
+	for(j = LAT;j <= PREV;j++)
 	{
 		rtlabel_str[j].row = row;
 		rtlabel_str[j].col = col;
@@ -739,9 +739,11 @@ void init_LCD(int clr)
 			//printf("%d ",ucbuff[i]);
 		//printf("\r\n");
 	}
-	//for(i = 0;i < NUM_RT_LABELS;i++)
-		//printf("\r\n%d %d %d",rtlabel_str[i].row, rtlabel_str[i].col, rtlabel_str[i].data_col);
-	//printf("\r\n");
+/*
+	for(i = 0;i < NUM_RT_LABELS;i++)
+		printf("\r\n%d %d %d",rtlabel_str[i].row, rtlabel_str[i].col, rtlabel_str[i].data_col);
+	printf("\r\n");
+*/
 }
 /*********************************************************************/
 // this happens once a second
@@ -1046,7 +1048,6 @@ UCHAR LCD_serial_queue(int test)
 	int ret_val = -1;
 	usleep(_5SEC);
 	usleep(_5SEC);
-	float tfloat;
 	static int onoff = 0;
 	void *vstruct;
 	int client_send_data = 0;
@@ -1079,12 +1080,11 @@ UCHAR LCD_serial_queue(int test)
 
 //	for(i = 0;i < 125;i++)
 //		printf("%s",gps_strings[i]);
-	tfloat = 0.001;
 	k = 0;
 	while(TRUE)
 	{
 		//uSleep(_1SEC,0);
-		usleep(10000000);
+		usleep(1000000);
 		memset(tempx,0,sizeof(tempx));
 //		i = -1;
 		client_send_data = 0;
@@ -1114,32 +1114,49 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_RMC:
 				if(get_rmc_frame(tempx, prmc) > 0)
 				{
-					sprintf(tempy,"%.2f\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
+					memset(tempx,0,sizeof(tempx));
+					sprintf(tempy,"%.2f,\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
 					//printf("%s\r\n",tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
 					ucbuff[1] = rtlabel_str[LAT].row;
 					ucbuff[2] = rtlabel_str[LAT].data_col;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
+					memcpy(ucbuff+3,tempy,strlen(tempy)-1);
 					send_lcd(ucbuff,strlen(tempy)+5);
 					usleep(1000);
+					strcat(tempx,tempy);
 
-					sprintf(tempy,"%.2f\0",(curr_long = minmea_tocoord(&rmc.longitude)));
+					sprintf(tempy,"%.2f,\0",(curr_long = minmea_tocoord(&rmc.longitude)));
 					//printf("%s\r\n",tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
 					ucbuff[1] = rtlabel_str[LONG].row;
 					ucbuff[2] = rtlabel_str[LONG].data_col;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
+					memcpy(ucbuff+3,tempy,strlen(tempy)-1);
 					send_lcd(ucbuff,strlen(tempy)+5);
 					usleep(1000);
+					strcat(tempx,tempy);
 
-					memset(tempy,0,sizeof(tempy));
-					sprintf(tempy,"%.1f\0",minmea_tofloat(&rmc.speed)+ tfloat);
+					sprintf(tempy,"%.1f,\0",minmea_tofloat(&rmc.speed));
 					//printf("%s\r\n",tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
 					ucbuff[1] = rtlabel_str[GPS_SPEED].row;
 					ucbuff[2] = rtlabel_str[GPS_SPEED].data_col;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
+					memcpy(ucbuff+3,tempy,strlen(tempy)-1);
 					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+					strcat(tempx,tempy);
+
+					sprintf(tempy,"%.2f,\0",minmea_tofloat(&rmc.course));
+					memset(ucbuff,0,sizeof(ucbuff));
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[GPS_DIR].row;
+					ucbuff[2] = rtlabel_str[GPS_DIR].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy)-1);
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+					strcat(tempx,tempy);
 /*
 					sprintf(tempx,"time: hours: %d minutes: %d seconds %d",
 						rmc.time.hours,rmc.time.minutes,rmc.time.seconds);
@@ -1155,7 +1172,7 @@ UCHAR LCD_serial_queue(int test)
 						{
 							getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
 												curr_lat, curr_long, &fa[i].yards, &fa[i].miles);
-							strcpy(fa[i].name,wp[i].name);
+							strcpy(fa[i].name, wp[i].name);
 							//printf("%d: %s %f\r\n",i, fa[i].name, fa[i].miles);
 						}
 						mdistance2 = 1000000.0;
@@ -1181,8 +1198,48 @@ UCHAR LCD_serial_queue(int test)
 								}
 							}
 						}
-						//printf("%d %d\r\n",closest_wp, next_closest_wp);
+//						printf("%d %d\r\n",closest_wp, next_closest_wp);
+//						printf("%s\r\n",tempx);
 					}
+					//memset(tempx,0,sizeof(tempx));
+					sprintf(tempy, "%.1f\0",fa[closest_wp].miles);
+					memset(ucbuff,0,sizeof(ucbuff));
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[NEXT].row;
+					ucbuff[2] = rtlabel_str[NEXT].data_col + 17;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+					strcat(tempx, tempy);
+					strcat(tempx,",");
+					sprintf(tempy, "%s\0",fa[closest_wp].name);
+					strcat(tempx, tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[NEXT].row;
+					ucbuff[2] = rtlabel_str[NEXT].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+					strcat(tempx,",");
+					sprintf(tempy, "%.1f\0",fa[next_closest_wp].miles);
+					strcat(tempx, tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[PREV].row;
+					ucbuff[2] = rtlabel_str[PREV].data_col + 17;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
+					usleep(1000);
+					strcat(tempx,",");
+					sprintf(tempy, "%s\0",fa[next_closest_wp].name);
+					strcat(tempx, tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
+					ucbuff[0] = DISPLAY_STR;
+					ucbuff[1] = rtlabel_str[PREV].row;
+					ucbuff[2] = rtlabel_str[PREV].data_col;
+					memcpy(ucbuff+3,tempy,strlen(tempy));
+					send_lcd(ucbuff,strlen(tempy)+5);
 				}
 				break;
 
@@ -1190,14 +1247,15 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GGA:
 				if(get_gga_frame(tempx, pgga) > 0)
 				{
-					memset(tempy,0,sizeof(tempy));
-					sprintf(tempy,"%.0f\0",3.2808*minmea_tofloat(&gga.altitude)+ tfloat);
+					memset(tempx,0,sizeof(tempy));
+					sprintf(tempx,"%.1f\0",3.2808*minmea_tofloat(&gga.altitude));
 					//printf("%s\r\n",tempy);
+					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
 					ucbuff[1] = rtlabel_str[GPS_ALT].row;
 					ucbuff[2] = rtlabel_str[GPS_ALT].data_col;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
-					send_lcd(ucbuff,strlen(tempy)+5);
+					memcpy(ucbuff+3,tempx,strlen(tempx)-2);
+					send_lcd(ucbuff,strlen(tempx)+5);
 					client_send_data = SEND_GPS_GGA_DATA;
 				}
 				break;
@@ -1263,48 +1321,57 @@ UCHAR LCD_serial_queue(int test)
 				break;
 
 			case MINMEA_INVALID:
-				printf("MINMEA_INVALID");
+				//printf("MINMEA_INVALID");
 				break;
 
 			default:
-				printf("%d UNKNOWN",ret_val);
+				//printf("%d UNKNOWN",ret_val);
 				break;
 		}
+
 		if(test_sock() && enable_gps_send_data == 1)
 		{
 			//printf("ret_val: %d\r\n",ret_val);
-			size_msg = strlen(tempx) - 7;
+//			size_msg = strlen(tempx) - 7;
+			size_msg = strlen(tempx);
 
-			memcpy((void *)tempx, (const void *)(tempx + 7),(size_t)size_msg);
-			tempx[size_msg] = 0;
+//			memcpy((void *)tempx, (const void *)(tempx + 7),(size_t)size_msg);
+			//tempx[size_msg + 1] = 0;
 			switch(ret_val)
 			{
 				case MINMEA_SENTENCE_RMC:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
-
 					break;
+
 				case MINMEA_SENTENCE_GGA:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
+
 //				case MINMEA_SENTENCE_GST:
 //					send_msg(160,(UCHAR*)tempx, client_send_data);
 //					break;
+
 				case MINMEA_SENTENCE_GSV:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
+
 				case MINMEA_SENTENCE_GSA:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
+
 				case MINMEA_SENTENCE_GLL:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
+
 				case MINMEA_SENTENCE_VTG:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
+
 				default:
 					break;
 			}
 		}
+
 		//printf("\r\n");
 
 		if(shutdown_all)
