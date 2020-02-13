@@ -87,9 +87,9 @@ double getDistance(double lat1, double lon1, double lat2, double lon2, double *y
 									* (-3 + 4 * cos2SigmaM * cos2SigmaM)));
 
 	double s = b * A * (sigma - deltaSigma);
-	*yards = s * 1.0936;
-	*miles = s * 0.00062137;
-	return 1;
+	*yards = s * 1.093613;
+	*miles = s * 0.0006213711922373;
+	return s;
 //	printf("%lf ",s);
 /*
 	switch(units)

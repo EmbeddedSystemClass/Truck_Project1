@@ -90,10 +90,11 @@ bool minmea_check(const char *sentence, bool strict)
         int expected = upper << 4 | lower;
 
         // Check for checksum mismatch.
-//printf("\n%02x %02x\n",checksum,expected);
+
         if (checksum != expected)
 		{
 			printf("%d checksum\r\n",string_len);
+			printf("\n%02x %02x\r\n",checksum,expected);
             return false;
 		}
     } else if (strict) 

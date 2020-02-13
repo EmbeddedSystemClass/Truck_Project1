@@ -82,7 +82,7 @@ extern double getDistance(double lat1, double lon1, double lat2, double lon2, do
 
 int max_ips;
 IP ip[40];
-WAYPOINTS wp[36];	// see make_waypoints for how many records are made
+WAYPOINTS wp[45];	// see make_waypoints for how many records are made
 int no_waypoints;
 static UCHAR msg_queue[MSG_QUEUE_SIZE];
 static int msg_queue_ptr;
@@ -724,10 +724,14 @@ void init_LCD(int clr)
 	{
 		rtlabel_str[j].row = row;
 		rtlabel_str[j].col = col;
+
 		if(j == GPS_SPEED)
 			rtlabel_str[j].data_col = data_col + 2;
+		else if(j == NEXT || j == PREV)
+			rtlabel_str[j].data_col = data_col - 3;
 		else
 			rtlabel_str[j].data_col = data_col;
+
 		ucbuff[1] = row;
 		ucbuff[2] = col;
 		ucbuff[3] = (UCHAR)j + 1;
@@ -1008,14 +1012,18 @@ static struct minmea_sentence_gsa gsa;
 
 typedef struct
 {
-	float yards;
-	float miles;
+	double yards;
+	double miles;
+	double meters;
 	char name[30];
 	int units;
 }FARRAY;
 
+char directions[16][7] = {"North\0","NNE\0","NE\0","ENE\0","East\0","ESE\0","SE\0","SSE\0","South\0","SSW\0","SW\0","WSW\0","West\0","WNW\0","NW\0","NNW\0"};
+
 static char gps_strings[20][80];
 
+//#define USE_SAMPLE_DATA	-- define this in Makefile
 /*********************************************************************/
 // baud rate factory set to 4800
 // initial cmd: $PSRF100,1,4800,8,1,0*0C
@@ -1023,9 +1031,8 @@ UCHAR LCD_serial_queue(int test)
 {
 	UCHAR ch;
 	int i,k;
-	FARRAY fa[35];		// this should be big enough to store all the waypoints in wp[]
+	FARRAY fa[45];		// this should be big enough to store all the waypoints in wp[]
 	double curr_lat, curr_long;
-	float float1, float2;
 	double ydistance1, ydistance2;
 	double mdistance1, mdistance2;
 	int closest_wp, next_closest_wp;
@@ -1036,6 +1043,7 @@ UCHAR LCD_serial_queue(int test)
 	int size_msg;
 	FILE *fp;
 	int no_recs;
+	double tfloat;
 
 	struct minmea_sentence_rmc *prmc = &rmc;
 	struct minmea_sentence_gga *pgga = &gga;
@@ -1051,29 +1059,28 @@ UCHAR LCD_serial_queue(int test)
 	static int onoff = 0;
 	void *vstruct;
 	int client_send_data = 0;
-	//printf("\r\n\r\n");
-	//printf("starting GPS task\r\n");
+
 	k = 0;
 	enable_gps_send_data = 0;
+
+#ifdef USE_SAMPLE_DATA
 	fp = fopen ("test3.txt", "r");
 
 	memset(gps_strings,0,sizeof(char)*124*80);
 
-	//printf("starting...\r\n");
-
 	i = 0;
 	while(fscanf(fp, "%s", tempx)!=EOF)
 	{
-		//printf("%s - ",tempx);
 		strcpy(gps_strings[i],tempx);
 		strcat(gps_strings[i],"\r\n");
-//		printf("%s",gps_strings[i]);
 		memset(tempx,0,sizeof(tempx));
 		i++;
 	}
 	fclose(fp);
 	no_recs = i;
-	//printf("\r\nno_recs: %d no waypoints: %d\r\n",no_recs, no_waypoints);
+	printf("\r\nusing sample data...\r\n");
+#endif
+//	printf("\r\nno_recs: %d no waypoints: %d\r\n",no_recs, no_waypoints);
 
 	//uSleep(0,_1SEC);
 	//printf("\r\n\r\n");
@@ -1083,12 +1090,15 @@ UCHAR LCD_serial_queue(int test)
 	k = 0;
 	while(TRUE)
 	{
-		//uSleep(_1SEC,0);
+
+#ifdef USE_SAMPLE_DATA
 		usleep(1000000);
+#endif
 		memset(tempx,0,sizeof(tempx));
-//		i = -1;
+		i = -1;
 		client_send_data = 0;
-/*
+
+#ifndef USE_SAMPLE_DATA
 		do
 		{
 			i++;
@@ -1096,15 +1106,15 @@ UCHAR LCD_serial_queue(int test)
 			if(tempx[i] < 0)
 				printf("%s\r\n",errmsg);
  		}while(i < 200 && tempx[i] != 0x0D && tempx[i-1] != 0x0A);	// if CRLF, quit
-*/
-		
-		//printf("%s...\r\n",tempx);
+#endif
+
+#ifdef USE_SAMPLE_DATA
 		strcpy(tempx,gps_strings[k]);
 		//printf("%s",tempx);
 		if(k >= no_recs)
 			k = 0;
 		else k++;
-
+#endif
 		ret_val = minmea_sentence_id(tempx, false);
 
 		switch(ret_val)
@@ -1115,7 +1125,7 @@ UCHAR LCD_serial_queue(int test)
 				if(get_rmc_frame(tempx, prmc) > 0)
 				{
 					memset(tempx,0,sizeof(tempx));
-					sprintf(tempy,"%.2f,\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
+					sprintf(tempy,"%.4f,\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
 					//printf("%s\r\n",tempy);
 					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
@@ -1126,7 +1136,7 @@ UCHAR LCD_serial_queue(int test)
 					usleep(1000);
 					strcat(tempx,tempy);
 
-					sprintf(tempy,"%.2f,\0",(curr_long = minmea_tocoord(&rmc.longitude)));
+					sprintf(tempy,"%.4f,\0",(curr_long = minmea_tocoord(&rmc.longitude)));
 					//printf("%s\r\n",tempy);
 					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
@@ -1148,7 +1158,10 @@ UCHAR LCD_serial_queue(int test)
 					usleep(1000);
 					strcat(tempx,tempy);
 
-					sprintf(tempy,"%.2f,\0",minmea_tofloat(&rmc.course));
+					tfloat = minmea_tofloat(&rmc.course);
+					i = (int)tfloat/24.0;
+					//printf("%d: %.2f %s\r\n",i,tfloat,directions[i]);
+					sprintf(tempy,"%s,\0",directions[i]);
 					memset(ucbuff,0,sizeof(ucbuff));
 					ucbuff[0] = DISPLAY_STR;
 					ucbuff[1] = rtlabel_str[GPS_DIR].row;
@@ -1157,20 +1170,13 @@ UCHAR LCD_serial_queue(int test)
 					send_lcd(ucbuff,strlen(tempy)+5);
 					usleep(1000);
 					strcat(tempx,tempy);
-/*
-					sprintf(tempx,"time: hours: %d minutes: %d seconds %d",
-						rmc.time.hours,rmc.time.minutes,rmc.time.seconds);
-					sprintf(tempx,"date: %d %d %d",rmc.date.day,rmc.date.month,rmc.date.year);
-						minmea_tocoord(&rmc.longitude));
-*/
-//					sprintf(tempx,"direction: %.0f",minmea_tofloat(&rmc.course));
 					client_send_data = SEND_GPS_RMC_DATA;
 
 					if(no_waypoints > 0)
 					{
 						for(i = 0;i < no_waypoints;i++)		// store all the relative distances in fa
 						{
-							getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
+							fa[i].meters = getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
 												curr_lat, curr_long, &fa[i].yards, &fa[i].miles);
 							strcpy(fa[i].name, wp[i].name);
 							//printf("%d: %s %f\r\n",i, fa[i].name, fa[i].miles);
@@ -1180,7 +1186,7 @@ UCHAR LCD_serial_queue(int test)
 						{
 							mdistance1 = fa[i].miles;
 							if(mdistance1 < mdistance2)
-							{	
+							{
 								mdistance2 = mdistance1;
 								closest_wp = i;
 							}
@@ -1192,7 +1198,7 @@ UCHAR LCD_serial_queue(int test)
 							{
 								mdistance1 = fa[i].miles;
 								if(mdistance1 < mdistance2)
-								{	
+								{
 									mdistance2 = mdistance1;
 									next_closest_wp = i;
 								}
@@ -1202,16 +1208,31 @@ UCHAR LCD_serial_queue(int test)
 //						printf("%s\r\n",tempx);
 					}
 					//memset(tempx,0,sizeof(tempx));
-					sprintf(tempy, "%.1f\0",fa[closest_wp].miles);
-					memset(ucbuff,0,sizeof(ucbuff));
-					ucbuff[0] = DISPLAY_STR;
-					ucbuff[1] = rtlabel_str[NEXT].row;
-					ucbuff[2] = rtlabel_str[NEXT].data_col + 17;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
-					send_lcd(ucbuff,strlen(tempy)+5);
-					usleep(1000);
+					if(fa[closest_wp].miles > 1.0)
+					{
+						sprintf(tempy, "%.1f mi\0",fa[closest_wp].miles);
+						memset(ucbuff,0,sizeof(ucbuff));
+						ucbuff[0] = DISPLAY_STR;
+						ucbuff[1] = rtlabel_str[NEXT].row;
+						ucbuff[2] = rtlabel_str[NEXT].data_col + 16;
+						memcpy(ucbuff+3,tempy,strlen(tempy));
+						send_lcd(ucbuff,strlen(tempy)+5);
+						usleep(1000);
+					}
+					else
+					{
+						sprintf(tempy, "%.1f yd\0",fa[closest_wp].yards);
+						memset(ucbuff,0,sizeof(ucbuff));
+						ucbuff[0] = DISPLAY_STR;
+						ucbuff[1] = rtlabel_str[NEXT].row;
+						ucbuff[2] = rtlabel_str[NEXT].data_col + 16;
+						memcpy(ucbuff+3,tempy,strlen(tempy));
+						send_lcd(ucbuff,strlen(tempy)+5);
+						usleep(1000);
+					}
 					strcat(tempx, tempy);
 					strcat(tempx,",");
+
 					sprintf(tempy, "%s\0",fa[closest_wp].name);
 					strcat(tempx, tempy);
 					memset(ucbuff,0,sizeof(ucbuff));
@@ -1222,16 +1243,32 @@ UCHAR LCD_serial_queue(int test)
 					send_lcd(ucbuff,strlen(tempy)+5);
 					usleep(1000);
 					strcat(tempx,",");
-					sprintf(tempy, "%.1f\0",fa[next_closest_wp].miles);
-					strcat(tempx, tempy);
-					memset(ucbuff,0,sizeof(ucbuff));
-					ucbuff[0] = DISPLAY_STR;
-					ucbuff[1] = rtlabel_str[PREV].row;
-					ucbuff[2] = rtlabel_str[PREV].data_col + 17;
-					memcpy(ucbuff+3,tempy,strlen(tempy));
-					send_lcd(ucbuff,strlen(tempy)+5);
-					usleep(1000);
-					strcat(tempx,",");
+
+					if(fa[next_closest_wp].miles > 1.0)
+					{
+						sprintf(tempy, "%.1f mi\0",fa[next_closest_wp].miles);
+						strcat(tempx, tempy);
+						memset(ucbuff,0,sizeof(ucbuff));
+						ucbuff[0] = DISPLAY_STR;
+						ucbuff[1] = rtlabel_str[PREV].row;
+						ucbuff[2] = rtlabel_str[PREV].data_col + 16;
+						memcpy(ucbuff+3,tempy,strlen(tempy));
+						send_lcd(ucbuff,strlen(tempy)+5);
+						strcat(tempx,",");
+						usleep(1000);
+					}else
+					{
+						sprintf(tempy, "%.1f yd\0",fa[next_closest_wp].yards);
+						strcat(tempx,tempy);
+						memset(ucbuff,0,sizeof(ucbuff));
+						ucbuff[0] = DISPLAY_STR;
+						ucbuff[1] = rtlabel_str[PREV].row;
+						ucbuff[2] = rtlabel_str[PREV].data_col + 16;
+						memcpy(ucbuff+3,tempy,strlen(tempy));
+						send_lcd(ucbuff,strlen(tempy)+5);
+						strcat(tempx,",");
+						usleep(1000);
+					}
 					sprintf(tempy, "%s\0",fa[next_closest_wp].name);
 					strcat(tempx, tempy);
 					memset(ucbuff,0,sizeof(ucbuff));
@@ -1240,6 +1277,9 @@ UCHAR LCD_serial_queue(int test)
 					ucbuff[2] = rtlabel_str[PREV].data_col;
 					memcpy(ucbuff+3,tempy,strlen(tempy));
 					send_lcd(ucbuff,strlen(tempy)+5);
+					sprintf(tempy,",%d,%d,%d\0",	rmc.date.day,rmc.date.month,rmc.date.year);
+					strcat(tempx, tempy);
+					printf("%s\r\n",tempx);
 				}
 				break;
 
@@ -1256,6 +1296,9 @@ UCHAR LCD_serial_queue(int test)
 					ucbuff[2] = rtlabel_str[GPS_ALT].data_col;
 					memcpy(ucbuff+3,tempx,strlen(tempx)-2);
 					send_lcd(ucbuff,strlen(tempx)+5);
+					sprintf(tempy,",%d,%d,%d\0", gga.time.hours, gga.time.minutes, gga.time.seconds);
+					strcat(tempx, tempy);
+					//printf("%s\r\n",tempx);
 					client_send_data = SEND_GPS_GGA_DATA;
 				}
 				break;
@@ -1364,6 +1407,10 @@ UCHAR LCD_serial_queue(int test)
 					break;
 
 				case MINMEA_SENTENCE_VTG:
+					send_msg(160,(UCHAR*)tempx, client_send_data);
+					break;
+
+				case MINMEA_SENTENCE_ZDA:
 					send_msg(160,(UCHAR*)tempx, client_send_data);
 					break;
 

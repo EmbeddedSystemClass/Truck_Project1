@@ -1347,7 +1347,7 @@ UCHAR get_host_cmd_task(int test)
 						{
 							write_serial3(tempx[i]);
 							//printf("%c",tempx[i]);
-							usleep(1000);
+							usleep(2000);
 						}
 						//printf("\r\n");	
 						break;
