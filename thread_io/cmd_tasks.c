@@ -52,135 +52,112 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[127] =
+CMD_STRUCT cmd_array[104] =
 {
-	{		NON_CMD,"NON_CMD\0" },
-	{		ENABLE_START,"ENABLE_START\0" },
-	{		STARTER_OFF,"STARTER_OFF\0" },
-	{		ON_ACC,"ON_ACC\0" },
-	{		OFF_ACC,"OFF_ACC\0" },
-	{		ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
-	{		OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
-	{		ON_FAN,"ON_FAN\0" },
-	{		OFF_FAN,"OFF_FAN\0" },
-	{		ON_LIGHTS,"ON_LIGHTS\0" },
-	{		OFF_LIGHTS,"OFF_LIGHTS\0" },
-	{		ON_BRIGHTS,"ON_BRIGHTS\0" },
-	{		OFF_BRIGHTS,"OFF_BRIGHTS\0" },
-	{		BLANK,"BLANK\0" },
-	{		ESTOP_SIGNAL,"ESTOP_SIGNAL\0" },
-	{		ON_BRAKES,"ON_BRAKES\0" },
-	{		OFF_BRAKES,"OFF_BRAKES\0" },
-	{		ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
-	{		OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
-	{		SPECIAL_CMD,"SPECIAL_CMD\0" },
-	{		START_SEQ,"START_SEQ\0" },
-	{		SHUTDOWN,"SHUTDOWN\0" },
-	{		ON_LLIGHTS,"ON_LLIGHTS\0" },
-	{		OFF_LLIGHTS,"OFF_LLIGHTS\0" },
-	{		ON_LBRIGHTS,"ON_LBRIGHTS\0" },
-	{		OFF_LBRIGHTS,"OFF_LBRIGHTS\0" },
-	{		ON_RLIGHTS,"ON_RLIGHTS\0" },
-	{		OFF_RLIGHTS,"OFF_RLIGHTS\0" },
-	{		ON_RBRIGHTS,"ON_RBRIGHTS\0" },
-	{		OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
-	{		BLOWER1,"BLOWER1\0" },
-	{		BLOWER2,"BLOWER2\0" },
-	{		BLOWER3,"BLOWER3\0" },
-	{		BLOWER_OFF,"BLOWER_OFF\0" },
-	{		WIPER1,"WIPER1\0" },
-	{		WIPER2,"WIPER2\0" },
-	{		WIPER_OFF,"WIPER_OFF\0" },
-	{		SEND_TIME_DATA,"SEND_TIME_DATA\0" },
-	{		SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
-	{		REBOOT_IOBOX,"REBOOT_IOBOX\0" },
-	{		TEST_ALL_IO,"TEST_ALL_IO\0" },
-	{		SEND_ODATA,"SEND_ODATA\0" },
-	{		SAVE_TO_DISK,"SAVE_TO_DISK\0" },
-	{		GET_DIR,"GET_DIR\0" },
-	{		LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
-	{		LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
-	{		SCROLL_UP,"SCROLL_UP\0" },
-	{		SCROLL_DOWN,"SCROLL_DOWN\0" },
-	{		ENABLE_LCD,"ENABLE_LCD\0" },
-	{		SET_TIME,"SET_TIME\0" },
-	{		GET_TIME,"GET_TIME\0" },
-	{		SHOW_ODATA,"SHOW_ODATA\0" },
-	{		NEW_PASSWORD1,"NEW_PASSWORD1\0" },
-	{		SET_SERIAL_RECV_ON,"SET_SERIAL_RECV_ON\0" },
-	{		SET_SERIAL_RECV_OFF,"SET_SERIAL_RECV_OFF\0" },
-	{		TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
-	{		TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
-	{		RE_ENTER_PASSWORD,"RE_ENTER_PASSWORD\0" },
-	{		DISCONNECT,"DISCONNECT\0" },
-	{		CLOSE_DB,"CLOSE_DB\0" },
-	{		OPEN_DB,"OPEN_DB\0" },
-	{		BAD_MSG,"BAD_MSG\0" },
-	{		CURRENT_TIME,"CURRENT_TIME\0" },
-	{		SET_PARAMS,"SET_PARAMS\0" },
-	{		EXIT_PROGRAM,"EXIT_PROGRAM\0" },
-	{		ENGINE_TEMP,"ENGINE_TEMP\0" },
-	{		INDOOR_TEMP,"INDOOR_TEMP\0" },
-	{		SEND_RT_VALUES1,"SEND_RT_VALUES1\0" },
-	{		SEND_RT_VALUES2,"SEND_RT_VALUES2\0" },
-	{		SEND_RT_VALUES3,"SEND_RT_VALUES3\0" },
-	{		ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
-	{		SERVER_UPTIME,"SERVER_UPTIME\0" },
-	{		SEND_CONFIG,"SEND_CONFIG\0" },
-	{		SEND_MSG,"SEND_MSG\0" },
-	{		SEND_RPM,"SEND_RPM\0" },
-	{		SEND_MPH,"SEND_MPH\0" },
-	{		SEND_ADCS1,"SEND_ADCS1\0" },
-	{		SEND_ADCS2,"SEND_ADCS2\0" },
-	{		NAV_UP,"NAV_UP\0" },
-	{		NAV_DOWN,"NAV_DOWN\0" },
-	{		NAV_SIDE,"NAV_SIDE\0" },
-	{		NAV_CLICK,"NAV_CLICK\0" },
-	{		NAV_CLOSE,"NAV_CLOSE\0" },
-	{		NAV_NUM,"NAV_NUM\0" },
-	{		SEND_STATUS,"SEND_STATUS\0" },
-	{		SERVER_UP,"SERVER_UP\0" },
-	{		SERVER_DOWN,"SERVER_DOWN\0" },
-	{		UPLOAD_NEW,"UPLOAD_NEW\0" },
-	{		UPLOAD_OTHER,"UPLOAD_OTHER\0" },
-	{		UPLOAD_NEW_PARAM,"UPLOAD_NEW_PARAM\0" },
-	{		SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
-	{		SET_FAN_ON,"SET_FAN_ON\0" },
-	{		SET_FAN_OFF,"SET_FAN_OFF\0" },
-	{		HIGH_REV_LIMIT,"HIGH_REV_LIMIT\0" },
-	{		LOW_REV_LIMIT,"LOW_REV_LIMIT\0" },
-	{		LIGHTS_ON_DELAY,"LIGHTS_ON_DELAY\0" },
-	{		SET_BLOWER_EN_TEMP,"SET_BLOWER_EN_TEMP\0" },
-	{		SET_BLOWER1_TEMP,"SET_BLOWER1_TEMP\0" },
-	{		SET_BLOWER2_TEMP,"SET_BLOWER2_TEMP\0" },
-	{		SET_BLOWER3_TEMP,"SET_BLOWER3_TEMP\0" },
-	{		SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
-	{		TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
-	{		GET_VERSION,"GET_VERSION\0" },
-	{		SVR_CMD,"SVR_CMD\0" },
-	{		HOME_SVR_ON,"HOME_SVR_ON\0" },
-	{		HOME_SVR_OFF,"HOME_SVR_OFF\0" },
-	{		UPDATE_CONFIG,"UPDATE_CONFIG\0" },
-	{		SEND_CONFIG2,"SEND_CONFIG2\0" },
-	{		GET_CONFIG2,"GET_CONFIG2\0" },
-	{		CLIENT_CONNECTED,"CLIENT_CONNECTED\0" },
-	{		SERVER_CONNECTED,"SERVER_CONNECTED\0" },
-	{		SET_KEYMODE,"SET_KEYMODE\0" },
-	{		PASSWORD_OK,"PASSWORD_OK\0" },
-	{		PASSWORD_BAD,"PASSWORD_BAD\0" },
-	{		SET_PASSWORD_TIMEOUT,"SET_PASSWORD_TIMEOUT\0" },
-	{		SET_PASSWORD_RETRIES,"SET_PASSWORD_RETRIES\0" },
-	{		SHELL_AND_RENAME,"SHELL_AND_RENAME\0" },
-	{		REFRESH_LCD,"REFRESH_LCD\0" },
-	{		SEND_GPS_GLL_DATA,"SEND_GPS_GLL_DATA\0" },
-	{		SEND_GPS_GGA_DATA,"SEND_GPS_GGA_DATA\0" },
-	{		SEND_GPS_GSA_DATA,"SEND_GPS_GSA_DATA\0" },
-	{		SEND_GPS_GSV_DATA,"SEND_GPS_GSV_DATA\0" },
-	{		SEND_GPS_RMC_DATA,"SEND_GPS_RMC_DATA\0" },
-	{		SEND_GPS_VTG_DATA,"SEND_GPS_VTG_DATA\0" },
-	{		SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
-	{		SET_GPS_DATA,"SET_GPS_DATA\0" },
-	{		ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
+	{	NON_CMD,"NON_CMD\0" },
+	{	ENABLE_START,"ENABLE_START\0" },
+	{	STARTER_OFF,"STARTER_OFF\0" },
+	{	ON_ACC,"ON_ACC\0" },
+	{	OFF_ACC,"OFF_ACC\0" },
+	{	ON_FUEL_PUMP,"ON_FUEL_PUMP\0" },
+	{	OFF_FUEL_PUMP,"OFF_FUEL_PUMP\0" },
+	{	ON_FAN,"ON_FAN\0" },
+	{	OFF_FAN,"OFF_FAN\0" },
+	{	ON_LIGHTS,"ON_LIGHTS\0" },
+	{	OFF_LIGHTS,"OFF_LIGHTS\0" },
+	{	ON_BRIGHTS,"ON_BRIGHTS\0" },
+	{	OFF_BRIGHTS,"OFF_BRIGHTS\0" },
+	{	BLANK,"BLANK\0" },
+	{	ESTOP_SIGNAL,"ESTOP_SIGNAL\0" },
+	{	ON_BRAKES,"ON_BRAKES\0" },
+	{	OFF_BRAKES,"OFF_BRAKES\0" },
+	{	ON_RUNNING_LIGHTS,"ON_RUNNING_LIGHTS\0" },
+	{	OFF_RUNNING_LIGHTS,"OFF_RUNNING_LIGHTS\0" },
+	{	SPECIAL_CMD,"SPECIAL_CMD\0" },
+	{	START_SEQ,"START_SEQ\0" },
+	{	SHUTDOWN,"SHUTDOWN\0" },
+	{	ON_LLIGHTS,"ON_LLIGHTS\0" },
+	{	OFF_LLIGHTS,"OFF_LLIGHTS\0" },
+	{	ON_LBRIGHTS,"ON_LBRIGHTS\0" },
+	{	OFF_LBRIGHTS,"OFF_LBRIGHTS\0" },
+	{	ON_RLIGHTS,"ON_RLIGHTS\0" },
+	{	OFF_RLIGHTS,"OFF_RLIGHTS\0" },
+	{	ON_RBRIGHTS,"ON_RBRIGHTS\0" },
+	{	OFF_RBRIGHTS,"OFF_RBRIGHTS\0" },
+	{	WIPER1,"WIPER1\0" },
+	{	WIPER2,"WIPER2\0" },
+	{	WIPER_OFF,"WIPER_OFF\0" },
+	{	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
+	{	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
+	{	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
+	{	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
+	{	SCROLL_UP,"SCROLL_UP\0" },
+	{	SCROLL_DOWN,"SCROLL_DOWN\0" },
+	{	ENABLE_LCD,"ENABLE_LCD\0" },
+	{	SET_TIME,"SET_TIME\0" },
+	{	GET_TIME,"GET_TIME\0" },
+	{	TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
+	{	TEST_RIGHT_BLINKER,"TEST_RIGHT_BLINKER\0" },
+	{	DISCONNECT,"DISCONNECT\0" },
+	{	BAD_MSG,"BAD_MSG\0" },
+	{	CURRENT_TIME,"CURRENT_TIME\0" },
+	{	SET_PARAMS,"SET_PARAMS\0" },
+	{	EXIT_PROGRAM,"EXIT_PROGRAM\0" },
+	{	ENGINE_TEMP,"ENGINE_TEMP\0" },
+	{	INDOOR_TEMP,"INDOOR_TEMP\0" },
+	{	SEND_RT_VALUES1,"SEND_RT_VALUES1\0" },
+	{	SEND_RT_VALUES2,"SEND_RT_VALUES2\0" },
+	{	SEND_RT_VALUES3,"SEND_RT_VALUES3\0" },
+	{	ENGINE_RUNTIME,"ENGINE_RUNTIME\0" },
+	{	SERVER_UPTIME,"SERVER_UPTIME\0" },
+	{	SEND_CONFIG,"SEND_CONFIG\0" },
+	{	SEND_MSG,"SEND_MSG\0" },
+	{	SEND_RPM,"SEND_RPM\0" },
+	{	SEND_MPH,"SEND_MPH\0" },
+	{	SEND_ADCS1,"SEND_ADCS1\0" },
+	{	SEND_ADCS2,"SEND_ADCS2\0" },
+	{	NAV_UP,"NAV_UP\0" },
+	{	NAV_DOWN,"NAV_DOWN\0" },
+	{	NAV_SIDE,"NAV_SIDE\0" },
+	{	NAV_CLICK,"NAV_CLICK\0" },
+	{	NAV_CLOSE,"NAV_CLOSE\0" },
+	{	NAV_NUM,"NAV_NUM\0" },
+	{	SEND_STATUS,"SEND_STATUS\0" },
+	{	SERVER_UP,"SERVER_UP\0" },
+	{	SERVER_DOWN,"SERVER_DOWN\0" },
+	{	UPLOAD_NEW,"UPLOAD_NEW\0" },
+	{	UPLOAD_OTHER,"UPLOAD_OTHER\0" },
+	{	UPLOAD_NEW_PARAM,"UPLOAD_NEW_PARAM\0" },
+	{	SET_TEMP_LIMIT,"SET_TEMP_LIMIT\0" },
+	{	SET_FAN_ON,"SET_FAN_ON\0" },
+	{	SET_FAN_OFF,"SET_FAN_OFF\0" },
+	{	HIGH_REV_LIMIT,"HIGH_REV_LIMIT\0" },
+	{	LOW_REV_LIMIT,"LOW_REV_LIMIT\0" },
+	{	LIGHTS_ON_DELAY,"LIGHTS_ON_DELAY\0" },
+	{	SET_BLOWER_EN_TEMP,"SET_BLOWER_EN_TEMP\0" },
+	{	SET_BLOWER1_TEMP,"SET_BLOWER1_TEMP\0" },
+	{	SET_BLOWER2_TEMP,"SET_BLOWER2_TEMP\0" },
+	{	SET_BLOWER3_TEMP,"SET_BLOWER3_TEMP\0" },
+	{	SET_BATT_BOX_TEMP,"SET_BATT_BOX_TEMP\0" },
+	{	TEMP_TOO_HIGH,"TEMP_TOO_HIGH\0" },
+	{	GET_VERSION,"GET_VERSION\0" },
+	{	UPDATE_CONFIG,"UPDATE_CONFIG\0" },
+	{	SEND_CONFIG2,"SEND_CONFIG2\0" },
+	{	GET_CONFIG2,"GET_CONFIG2\0" },
+	{	CLIENT_CONNECTED,"CLIENT_CONNECTED\0" },
+	{	SERVER_CONNECTED,"SERVER_CONNECTED\0" },
+	{	SET_KEYMODE,"SET_KEYMODE\0" },
+	{	SHELL_AND_RENAME,"SHELL_AND_RENAME\0" },
+	{	REFRESH_LCD,"REFRESH_LCD\0" },
+	{	SEND_GPS_GLL_DATA,"SEND_GPS_GLL_DATA\0" },
+	{	SEND_GPS_GGA_DATA,"SEND_GPS_GGA_DATA\0" },
+	{	SEND_GPS_GSA_DATA,"SEND_GPS_GSA_DATA\0" },
+	{	SEND_GPS_GSV_DATA,"SEND_GPS_GSV_DATA\0" },
+	{	SEND_GPS_RMC_DATA,"SEND_GPS_RMC_DATA\0" },
+	{	SEND_GPS_VTG_DATA,"SEND_GPS_VTG_DATA\0" },
+	{	SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
+	{	SET_GPS_DATA,"SET_GPS_DATA\0" },
+	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
 };
 
 //extern illist_t ill;
@@ -301,7 +278,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.26\0";
+	char version[15] = "sched v1.27\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -465,7 +442,6 @@ UCHAR get_host_cmd_task(int test)
 					case UPLOAD_NEW_PARAM:
 					case UPLOAD_OTHER:
 					case SHELL_AND_RENAME:
-					case TEST_ALL_IO:
 					case TEST_LEFT_BLINKER:
 					case TEST_RIGHT_BLINKER:
 					case ON_BRIGHTS:
@@ -483,10 +459,6 @@ UCHAR get_host_cmd_task(int test)
 					case ON_RUNNING_LIGHTS:
 					case OFF_RUNNING_LIGHTS:
 					case SPECIAL_CMD:
-					case BLOWER_OFF:
-					case BLOWER1:
-					case BLOWER2:
-					case BLOWER3:
 					case WIPER1:
 					case WIPER2:
 					case WIPER_OFF:
@@ -494,20 +466,6 @@ UCHAR get_host_cmd_task(int test)
 						add_msg_queue(cmd);
 						break;
 
-					// allows password to be changed from laptop via tcp connection
-					case NEW_PASSWORD1:
-						rc = 0;
-//						memset(tempx,0,50);
-						send_msg(strlen((char*)password)*2,(UCHAR*)password, NEW_PASSWORD1);
-						//printString2(password);
-						break;
-
-					case RE_ENTER_PASSWORD:
-						break;
-
-					// this gets a cmd from the client with extra data that sets the params
-					// TODO: first send the current params that are used by the server and
-					// have been saved to disk in a config file
 					case SET_PARAMS:
 						send_param_msg();
 						//printString2("set params");
@@ -626,207 +584,6 @@ UCHAR get_host_cmd_task(int test)
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME);
 						break;
 
-					case SEND_ODATA:
-						j = 0;
-						k = 0;
-//						printf("\r\nmsg_len: %d\r\n",msg_len);
-						memset(tempy,0,sizeof(tempy));
-						for(i = 2;i < msg_len+2;i+=2)
-						{
-							tempy[j++] = msg_buf[i];
-						}
-						pch = (char*)&tempy[0];
-						i = 0;
-						while(*pch != 0x7B)				// open bracket
-						{
-							pch++;
-							i++;
-						}
-						pch++;
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,tempy,i);
-						_port = (UCHAR)atoi(tempx);
-//						printf("port: %d\r\n",_port);
-						i = 0;
-						while(*pch != 0x7C)				// bar
-						{
-							pch++;
-							i++;
-						}
-						pch++;
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch-i-1,i);
-						_onoff = (UCHAR)atoi(tempx);
-//						printf("onoff: %d\r\n",_onoff);
-						i = 0;
-						while(*pch != 0x7D)				// close bracket
-						{
-							pch++;
-							i++;
-						}
-						pch++;
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch-i-1,i);
-						_type = (UCHAR)atoi(tempx);
-//						printf("type: %d\r\n",_type);
-
-						i = 0;
-						while(*pch != 0x7E)				// tilde
-						{
-							pch++;
-							i++;
-						}
-						pch++;
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch-i-1,i);
-						_time_delay = (UCHAR)atoi(tempx);
-//						printf("time_delay: %d\r\n",_time_delay);
-						
-						i = 0;
-						while(*pch != 0x7A)				// 'z'
-						{
-							pch++;
-							i++;
-						}
-						pch++;
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch-i-1,i);
-						_input = atoi(tempx);
-//						printf("input: %d\r\n",_input);
-
-						i = 0;
-					
-						memset(tempx,0,sizeof(tempx));
-						memcpy(tempx,pch,34);
-//						printf("label: %s\r\n",tempx);
-
-						ollist_find_data(_port,&otp,&oll);
-						otp->onoff = _onoff;
-						otp->type = _type;
-						otp->time_delay = _time_delay;
-						otp->input_port = (UCHAR)_input;
-						strcpy(otp->label,tempx);
-//						printf("%s\r\n",otp->label);
-						ollist_insert_data(_port,&oll,otp);
-/*
-						for(i = STARTER;i < TESTOUTPUT24;i++)
-						{
-							ollist_find_data(i,otpp,&oll);
-							printf("%d %d %d %d %s\r\n",otp->port,otp->onoff, otp->type,
-								otp->time_delay,otp->label);
-						}
-*/
-						break;
-
-					// send all the data to the laptop
-
-					case SHOW_ODATA:
-/* this crashes ???
-						rc = 0;
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_find_data(i,&otp,&oll);
-							printf("%d %d %d %s\r\n",otp->port,otp->onoff,otp->type,otp->label);
-//							printString2(tempx);
-						}
-//						myprintf1("done\0");
-*/
-						break;
-
-					// get all the data from the laptop
-#if 0
-					case RECV_ALL_ODATA:
-						rc = 0;
-						otp = &tempo1;
-						recv_tcp((UCHAR*)&uch_fname_index,1,1);
-//						myprintf2("index: \0",uch_fname_index);
-						if(uch_fname_index > 0)
-						{
-							uch_fname_index--;
-							fname_index = (int)uch_fname_index;
-							olLoadConfig(dat_names[fname_index],&oll,isize,errmsg);
-						}
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_find_data(i,&otp,&oll);
-							rc += send_tcp((UCHAR *)otp,sizeof(O_DATA));
-						}
-						break;
-*/
-					// get the names and time/datestamps of only the dat files
-					// on the IO box and send to the laptop
-#endif
-					case GET_DIR:
-						d = opendir( "." );
-						if( d == NULL )
-						{
-							myprintf1("bad OPEN_DIR\0");
-//							return -1;
-						}
-						num = 0;
-
-						memset(dat_names,0,NUM_DAT_NAMES*DAT_NAME_STR_LEN);
-						memset(tempx,0,sizeof(tempx));
-
-						while( ( dir = readdir( d ) ) && num < NUM_DAT_NAMES-1)
-						{
-							if(strcmp( dir->d_name, "." ) == 0 || \
-								strcmp( dir->d_name, ".." ) == 0 || dir->d_type == DT_DIR)
-								continue;
-
-							memset(tempx,0,sizeof(tempx));
-							strcpy(tempx,dir->d_name);
-//							printf("%s\r\n",tempx);
-							pch = tempx;
-							j = 0;
-
-							while(*pch++ != '.' && j < DAT_NAME_STR_LEN)
-								j++;
-
-							strncpy(tempx,pch,j+1);
-
-							if(dir->d_type == DT_REG && strcmp(tempx,"dat") == 0 )
-//							if(dir->d_type == DT_REG)
-							{
-								strcpy(dat_names[num++],dir->d_name);
-							}
-						}
-						closedir( d );
-//						memset(tempx,0x20,sizeof(tempx));
-						send_tcp((UCHAR*)&num,1);
-						for(i = 0;i < num;i++)
-						{
-							cmd = (UCHAR)strlen(dat_names[i]);
-							send_tcp(&cmd,1);
-							send_tcp((UCHAR *)&dat_names[i],cmd);
-						}
-						for(i = 0;i < num;i++)
-						{
-							getFileCreationTime(dat_names[i],tempx);
-							j = GetFileFormat(dat_names[i]);
-							if(j < 0)
-								test2a = 0xff;
-							else
-								test2a = (UCHAR)j;
-							send_tcp((UCHAR*)&tempx,TDATE_STAMP_STR_LEN);
-							send_tcp((UCHAR*)&test2a,1);
-						}
-						break;
-
-					// save what's currenly in the databases to the disk on the IO box
-					case SAVE_TO_DISK:
-/*
-						for(i = 0;i < 20;i++)
-						{
-							ollist_find_data(i,otpp,&oll);
-							printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->type);
-						}
-*/
-						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
-							myprintf1(errmsg);
-//						printf("done\r\n");
-						break;
-
 					// adjust the 2x20 LCD screen on the IO box
 					case LCD_SHIFT_LEFT:
 //						shift_left();
@@ -842,29 +599,6 @@ UCHAR get_host_cmd_task(int test)
 
 					case SCROLL_DOWN:
 //						scroll_down();
-						break;
-
-					case CLOSE_DB:
-						if(olWriteConfig(oFileName,&oll,osize,errmsg) < 0)
-							myprintf1(errmsg);
-						break;
-
-					case OPEN_DB:
-						if(access(oFileName,F_OK) != -1)
-						{
-							rc = olLoadConfig(oFileName,&oll,osize,errmsg);
-							if(rc > 0)
-							{
-								myprintf1(errmsg);
-							}
-						}
-/*
-						for(i = 0;i < NUM_PORT_BITS;i++)
-						{
-							ollist_find_data(i,otpp,&oll);
-							printf("%s %d %d %d\r\n",otp->label,otp->port,otp->onoff,otp->type);
-						}
-*/
 						break;
 
 					// update the sched.log file with current log of events
@@ -1097,40 +831,6 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						break;
-
-					case SET_PASSWORD_TIMEOUT:
-						utemp = (UINT)msg_buf[3];
-						utemp <<= 8;
-						utemp |= (UINT)msg_buf[2];
-						ps.password_timeout = utemp;
-//						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
-//						printString2(tempx);
-						i = WriteParams("param.conf", &ps, &password[0], errmsg);
-						if(i < 0)
-						{
-//							printf("%s\r\n",errmsg);
-							myprintf1(errmsg);
-							sprintf(tempx,"%s %d",errmsg,i);
-							//printString2(tempx);
-						}
-						break;
-	
-					case SET_PASSWORD_RETRIES:
-						utemp = (UINT)msg_buf[3];
-						utemp <<= 8;
-						utemp |= (UINT)msg_buf[2];
-						ps.password_retries = utemp;
-//						sprintf(tempx,"blower en on: %d\0", ps.batt_box_temp);
-//						printString2(tempx);
-						i = WriteParams("param.conf", &ps, &password[0], errmsg);
-						if(i < 0)
-						{
-//							printf("%s\r\n",errmsg);
-							myprintf1(errmsg);
-							sprintf(tempx,"%s %d",errmsg,i);
-							//printString2(tempx);
-						}
-						break;
 	
 					case UPDATE_CONFIG:
 						utemp = (UINT)msg_buf[3];
@@ -1294,21 +994,6 @@ UCHAR get_host_cmd_task(int test)
 						init_LCD(1);
 						break;
 
-					case SVR_CMD:
-						break;
-
-					case HOME_SVR_ON:
-						strcpy(tempx,"HOME_SVR_ON");
-						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_ON);
-						//printString2("Home Server On");
-						break;
-
-					case HOME_SVR_OFF:
-						strcpy(tempx,"HOME_SVR_OFF");
-						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, HOME_SVR_OFF);
-						//printString2("Home Server Off");
-						break;
-
 					case SERVER_UP:
 						send_serialother(SERVER_UP,(UCHAR *)tempx);
 						break;
@@ -1331,11 +1016,12 @@ UCHAR get_host_cmd_task(int test)
 						sprintf(tempx,"$PSRF103,%02d,00,%02d,01",test1,test2);
 						//printf("%s\r\n",tempx);
 						//printf("strlen: %d\r\n",strlen(tempx));
+						printf("\r\n%d\r\n",strlen(tempx));
 						for(i = 1;i < strlen(tempx);i++)
 						{
 							checksum ^= tempx[i];
-							//printf("%02x ",checksum);
-							//printf("%c",tempx[i]);
+//							printf("%02x ",checksum);
+							printf("%c",tempx[i]);
 						}
 						//printf("\r\n");
 						//printf("cksum: %02x\r\n",checksum);
@@ -1343,11 +1029,12 @@ UCHAR get_host_cmd_task(int test)
 						strcat(tempx,tempy);
 						strcat(tempx,"\r\n");
 						//printf("\r\n%s",tempx);
-						for(i = 0;i < strlen(tempx);i++)
+						printf("\r\n");
+						for(i = 0;i < 23;i++)
 						{
 							write_serial3(tempx[i]);
-							//printf("%c",tempx[i]);
-							usleep(2000);
+							printf("%c",tempx[i]);
+							usleep(500);
 						}
 						//printf("\r\n");	
 						break;

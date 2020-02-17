@@ -356,7 +356,7 @@ static void check_password(int num)
 		password_retries = init_password_retries;
 
 		key_mode = NORMAL;
-		cmd = PASSWORD_OK;
+//		cmd = PASSWORD_OK;
 		ucbuff[0] = cmd;
 		avr_buffer[0] = pack64(ucbuff);
 		xQueueSend(Send7200Handle, avr_buffer, 0);
@@ -755,7 +755,7 @@ void StartRecv7200(void const * argument)
 		HAL_UART_Receive_IT(&huart1, &buff[0], SERIAL_BUFF_SIZE+1);
 		cmd = buff[0];
 
-		if((cmd >= ENABLE_START && cmd <= SEND_TIME_DATA) || cmd == SERVER_UP || 
+		if((cmd >= ENABLE_START && cmd <= WIPER_OFF) || cmd == SERVER_UP || 
 				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2)
 		{
 			switch (cmd)
@@ -775,18 +775,6 @@ void StartRecv7200(void const * argument)
 				case 	SHUTDOWN:
 				case 	ESTOP_SIGNAL:
 					engine_on = 0;
-					break;
-				case 	BLOWER_OFF:
-					blower_on = 0;
-					break;
-				case 	BLOWER1:
-					blower_on = 1;
-					break;
-				case 	BLOWER2:
-					blower_on = 2;
-					break;
-				case 	BLOWER3:
-					blower_on = 3;
 					break;
 
 				case SERVER_UP:

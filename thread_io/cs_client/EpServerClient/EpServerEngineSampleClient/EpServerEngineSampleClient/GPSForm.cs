@@ -103,11 +103,13 @@ namespace EpServerEngineSampleClient
 
 		public void Process_Msg(byte[] bytes)
 		{
-			if (m_wait == true)
+			if (m_wait == true && m_pause == false)
 			{
 				int type_msg = (int)bytes[0];
 				System.Buffer.BlockCopy(bytes, 2, recv_buff, 0, bytes.Length-2);
 				string msg = svrcmd.GetName(type_msg);
+				//AddMsg(msg);
+			
 				switch (msg)
 				{
 					case "SEND_GPS_GLL_DATA":
@@ -115,8 +117,32 @@ namespace EpServerEngineSampleClient
 						//System.Buffer.BlockCopy(recv_buff, 0, gps_data.gll, 0, 36);
 						break;
 					case "SEND_GPS_GGA_DATA":
-						//AddMsg("GGA: " + StringFromByteArr(recv_buff));
-						tbAltitude.Text = StringFromByteArr(recv_buff);
+						string[] words = StringFromByteArr(recv_buff).Split(',');
+
+						int i = 0;
+						foreach (var word in words)
+						{
+							switch (i)
+							{
+								case 0:
+									//AddMsg(i.ToString() + " " + word);
+									tbAltitude.Text = word;
+									break;
+								case 1:
+									tbHour.Text = word;
+									break;
+								case 2:
+									tbMinute.Text = word;
+									break;
+								case 3:
+									tbSecond.Text = word;
+									break;
+								default:
+									//AddMsg("? " + i.ToString() + " " + word);
+									break;
+							}
+							i++;
+						}
 						break;
 					case "SEND_GPS_GSA_DATA":
 						AddMsg("GSA: " + StringFromByteArr(recv_buff));
@@ -125,13 +151,12 @@ namespace EpServerEngineSampleClient
 						AddMsg("GSV: " + StringFromByteArr(recv_buff));
 						break;
 					case "SEND_GPS_RMC_DATA":
+						string[] words2 = StringFromByteArr(recv_buff).Split(',');
 						
-						string[] words = StringFromByteArr(recv_buff).Split(',');
-						
-						int i = 0;
-						foreach (var word in words)
+						int j = 0;
+						foreach (var word in words2)
 						{
-							switch (i)
+							switch (j)
 							{
 								case 0:
 									tbLatt.Text = word;
@@ -146,28 +171,32 @@ namespace EpServerEngineSampleClient
 									tbDirection.Text = word;
 									break;
 								case 4:
-									tbNWPDist.Text = word + " miles";
+									tbNWPDist.Text = word;
 									break;
 								case 5:
 									tbNextWP.Text = word;
 									break;
 								case 6:
-									tbLWPDist.Text = word + " miles";
+									tbLWPDist.Text = word;
 									break;
 								case 7:
 									tbLastWP.Text = word;
 									break;
+								case 8:     // hours
+									tbDay.Text = word;
+									break;
+								case 9:     // minutes
+									tbMonth.Text = word;
+									break;	
+								case 10:    // seconds
+									tbYear.Text = word;
+									break;	
 								default:
-									AddMsg(i.ToString());
+									AddMsg("?? " + j.ToString());
 									break;
 							}
-
-							i++;
+							j++;
 						}
-						
-						if(!m_pause)						
-							AddMsg(StringFromByteArr(recv_buff) + " ");
-						
 						break;
 					case "SEND_GPS_VTG_DATA":
 						AddMsg("VTG: " + StringFromByteArr(recv_buff));
@@ -176,18 +205,9 @@ namespace EpServerEngineSampleClient
 						AddMsg("ZDA: " + StringFromByteArr(recv_buff));
 						break;
 					default:
+						//AddMsg(msg);
 						break;
 				}
-				
-				/*
-				char[] chars = new char[bytes.Length / sizeof(char) + 2];
-				char[] chars2 = new char[bytes.Length / sizeof(char)];
-				// src srcoffset dest destoffset len
-				System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-				System.Buffer.BlockCopy(bytes, 2, chars2, 0, bytes.Length - 2);
-				string ret = new string(chars2);
-				string str = svrcmd.GetName(type_msg);
-				*/
 			}
 		}
 
@@ -241,19 +261,19 @@ namespace EpServerEngineSampleClient
 			if(m_pause)
 			{
 				m_pause = false;
-				btnPause.Text = "Continue";
+				btnPause.Text = "Pause";
 			}
 			else
 			{
 				m_pause = true;
-				btnPause.Text = "Pause";
+				btnPause.Text = "Continue";
 			}
 		}
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			byte[] test = ReadFile("@C:\\Users\\Daniel\\dev\\Gps\\output\\single\\gga.out");
-			AddMsg(test.Length.ToString());
+			//byte[] test = ReadFile("@C:\\Users\\Daniel\\dev\\Gps\\output\\single\\gga.out");
+			//AddMsg(test.Length.ToString());
 			//gps_data.gga.altitude.value
 			//System.Buffer.BlockCopy(test, 0, gps_data.gga, 0, test.Length);
 		}

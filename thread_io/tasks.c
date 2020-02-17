@@ -731,7 +731,7 @@ void init_LCD(int clr)
 			rtlabel_str[j].data_col = data_col - 3;
 		else
 			rtlabel_str[j].data_col = data_col;
-
+		
 		ucbuff[1] = row;
 		ucbuff[2] = col;
 		ucbuff[3] = (UCHAR)j + 1;
@@ -879,15 +879,12 @@ UCHAR timer_task(int test)
 					add_msg_queue(OFF_RLIGHTS);
 					add_msg_queue(OFF_LIGHTS);
 					add_msg_queue(OFF_RUNNING_LIGHTS);
-					add_msg_queue(BLOWER_OFF);
 					add_msg_queue(OFF_FAN);
 					usleep(1000);
 					send_serialother(OFF_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
 					send_serialother(OFF_RUNNING_LIGHTS,(UCHAR*)tempx);
 					usleep(1000);
-//					send_serialother(BLOWER_OFF,(UCHAR*)tempx);
-//					usleep(1000);
 					send_serialother(OFF_FAN,(UCHAR*)tempx);
 					usleep(1000);
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, OFF_LIGHTS);
@@ -1179,6 +1176,7 @@ UCHAR LCD_serial_queue(int test)
 							fa[i].meters = getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
 												curr_lat, curr_long, &fa[i].yards, &fa[i].miles);
 							strcpy(fa[i].name, wp[i].name);
+							
 							//printf("%d: %s %f\r\n",i, fa[i].name, fa[i].miles);
 						}
 						mdistance2 = 1000000.0;
@@ -1186,7 +1184,7 @@ UCHAR LCD_serial_queue(int test)
 						{
 							mdistance1 = fa[i].miles;
 							if(mdistance1 < mdistance2)
-							{
+							{	
 								mdistance2 = mdistance1;
 								closest_wp = i;
 							}
@@ -1198,7 +1196,7 @@ UCHAR LCD_serial_queue(int test)
 							{
 								mdistance1 = fa[i].miles;
 								if(mdistance1 < mdistance2)
-								{
+								{	
 									mdistance2 = mdistance1;
 									next_closest_wp = i;
 								}
@@ -1279,7 +1277,7 @@ UCHAR LCD_serial_queue(int test)
 					send_lcd(ucbuff,strlen(tempy)+5);
 					sprintf(tempy,",%d,%d,%d\0",	rmc.date.day,rmc.date.month,rmc.date.year);
 					strcat(tempx, tempy);
-					printf("%s\r\n",tempx);
+					//printf("%s\r\n",tempx);
 				}
 				break;
 
@@ -1364,11 +1362,11 @@ UCHAR LCD_serial_queue(int test)
 				break;
 
 			case MINMEA_INVALID:
-				//printf("MINMEA_INVALID");
+				printf("MINMEA_INVALID\r\n");
 				break;
 
 			default:
-				//printf("%d UNKNOWN",ret_val);
+				printf("%d UNKNOWN\r\n",ret_val);
 				break;
 		}
 
@@ -1933,18 +1931,6 @@ UCHAR serial_recv_task(int test)
 			//printString2(tempx);
 		}else
 
-		if(cmd == PASSWORD_OK)
-		{
-			//printString2("password ok");
-		}else
-
-		if(cmd == PASSWORD_BAD)
-		{
-			sprintf(tempx,"password: %d %d",read_serial_buffer[1],read_serial_buffer[2]);
-			//printString2(tempx);
-		}
-
-
 		if(shutdown_all)
 		{
 //			printf("shutting down serial task\r\n");
@@ -2255,10 +2241,6 @@ UCHAR basic_controls_task(int test)
 			case OFF_LIGHTS:
 			case START_SEQ:
 			case SHUTDOWN:
-			case BLOWER_OFF:
-			case BLOWER1:
-			case BLOWER2:
-			case BLOWER3:
 			case ON_RUNNING_LIGHTS:
 			case OFF_RUNNING_LIGHTS:
 			case ON_BRIGHTS:
@@ -2546,62 +2528,6 @@ UCHAR basic_controls_task(int test)
 
 			// turn off all the others first then turn on
 			// the one relay according to the command
-			case BLOWER1:
-				index = HTRBLOWERMED;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				index = HTRBLOWERHIGH;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,0);
-				index = HTRBLOWERLOW;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,1);
-			break;
-
-			case BLOWER2:
-				index = HTRBLOWERHIGH;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				index = HTRBLOWERLOW;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,0);
-				index = HTRBLOWERMED;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,1);
-			break;
-
-			case BLOWER3:
-				index = HTRBLOWERMED;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				index = HTRBLOWERLOW;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,0);
-				index = HTRBLOWERHIGH;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,1);
-			break;
-
-			// turn all off
-			case BLOWER_OFF:
-				index = HTRBLOWERMED;
-				ollist_find_data(index,otpp,&oll);
-				set_output(otp,0);
-				index = HTRBLOWERHIGH;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,0);
-				index = HTRBLOWERLOW;
-				ollist_find_data(index,otpp,&oll);
-				usleep(_100MS);
-				set_output(otp,0);
-			break;
 
 			case WIPER1:
 				index = WWIPER1;
@@ -2631,23 +2557,6 @@ UCHAR basic_controls_task(int test)
 				ollist_find_data(index,otpp,&oll);
 				usleep(_100MS);
 				set_output(otp,0);
-			break;
-
-			case TEST_ALL_IO:
-/*
-				for(i = ps.test_bank*8;i < (ps.test_bank+1)*8;i++)
-				{
-					ollist_find_data(i,otpp,&oll);
-					set_output(otp,1);
-					myprintf2("test: ",i);
-//					printf("\r\n %d \r\n");
-					usleep(1000000);
-					set_output(otp,0);
-					usleep(_100MS);
-	//				printf("%d\r\n",i);
-
-				}
-*/
 			break;
 
 			case START_SEQ:

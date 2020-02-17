@@ -19,7 +19,7 @@
 #define BAUDRATE B115200
 #endif
 #define BAUDRATE2 B19200
-#define BAUDRATE3 B9600
+#define BAUDRATE3 B4800
 
 #ifdef TS_7800
 #define MODEMDEVICE "/dev/ttyS0"				  // 7800 uses ttyS1 as the 2nd serial port
