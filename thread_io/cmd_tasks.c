@@ -279,7 +279,7 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.27\0";
+	char version[15] = "sched v1.28\0";
 	UINT utemp;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
@@ -1013,46 +1013,24 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[4];
 						test2 = (int)utemp;
-						//for(i = 0;i < 8;i++)
-							//printf("%02x ",msg_buf[i]);
 						
-						//printf("\r\n%d %d\r\n",test1,test2);
 						checksum = 0;
 						memset(tempx,0,sizeof(tempx));
 						sprintf(tempx,"$PSRF103,%02d,00,%02d,01",test1,test2);
-						//printf("%s\r\n",tempx);
-						//printf("strlen: %d\r\n",strlen(tempx));
-//						printf("\r\n%d\r\n",strlen(tempx));
+					
 						for(i = 1;i < strlen(tempx);i++)
-						{
 							checksum ^= tempx[i];
-//							printf("%02x ",checksum);
-//							printf("%c",tempx[i]);
-						}
-						//printf("\r\n");
-						//printf("cksum: %02x\r\n",checksum);
+
 						sprintf(tempy,"*%02x",checksum);
 						strcat(tempx,tempy);
 						strcat(tempx,"\r\n");
-						//printf("\r\n%s",tempx);
-//						printf("\r\n");
+
 						for(i = 0;i < 25;i++)
 						{
 							if(write_serial3(tempx[i]) < 0)
 								printf("bad char comm 3\r\n");
 							usleep(500);
 						}
-/*
-						for(i = 0;i < 25;i++)
-						{
-							printf("%c",tempx[i]);
-						}
-						for(i = 0;i < 25;i++)
-						{
-							printf("%02x ",tempx[i]);
-						}
-						printf("\r\n");	
-*/
 						break;
 
 					case SET_GPS_BAUDRATE:
@@ -1060,63 +1038,7 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						test1 = (int)utemp;
-						
-						printf("\r\n%d\r\n",test1);
-						checksum = 0;
-						memset(tempx,0,sizeof(tempx));
-						switch(test1)
-						{
-							case 0:
-								test2 = 4800;
-								break;
-							case 1:
-								test2 = 9600;
-								break;
-							case 2:
-								test2 = 19200;
-								break;
-							case 3:
-								test2 = 38400;
-								break;
-							default:
-								break;
-						}
-						sprintf(tempx,"$PSRF100,1,%d,8,1,0",test2);
-						printf("%s\r\n",tempx);
-						printf("strlen: %d\r\n",strlen(tempx));
-						printf("\r\n%d\r\n",strlen(tempx));
-						for(i = 1;i < strlen(tempx);i++)
-						{
-							checksum ^= tempx[i];
-//							printf("%02x ",checksum);
-							printf("%c",tempx[i]);
-						}
-						printf("\r\n");
-						printf("cksum: %02x\r\n",checksum);
-						sprintf(tempy,"*%02x",checksum);
-						strcat(tempx,tempy);
-						strcat(tempx,"\r\n");
-						//printf("\r\n%s",tempx);
-//						printf("\r\n");
-						for(i = 0;i < strlen(tempx);i++)
-						{
-							if(write_serial3(tempx[i]) < 0)
-								printf("bad char comm 3\r\n");
-							usleep(500);
-						}
-
-						for(i = 0;i < strlen(tempx);i++)
-						{
-							printf("%c",tempx[i]);
-						}
-						for(i = 0;i < strlen(tempx);i++)
-						{
-							printf("%02x ",tempx[i]);
-						}
-						printf("\r\n");	
-						close_serial3();
-						usleep(1000);
-						init_serial3(test1);
+						set_gps_baudrate(test1);
 						break;
 
 					case ENABLE_GPS_SEND_DATA:
@@ -1124,36 +1046,28 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						enable_gps_send_data = (int)utemp;
-						//printf("enable gps send data: %d\r\n",enable_gps_send_data);
 						break;
 
 					case EXIT_PROGRAM:
 
-//printf("exiting program...\r\n");
 exit_program:
 
 						j = 0;
-//							printf("exit code: %d\r\n",reboot_on_exit);
-						// return codes that tell try_sched.sh what to do
 						if(reboot_on_exit == 1)
 						{
 							myprintf1("exit to shell\0");
-//								printf("exit to shell\r\n");
 						}
 						else if(reboot_on_exit == 2)
 						{
 							myprintf1("rebooting...\0");
-//								printf("rebooting...\r\n");
 						}
 						else if(reboot_on_exit == 3)
 						{
 							myprintf1("shutting down...\0");
-//							printf("shutting down...\r\n");
 						}
 						else if(reboot_on_exit == 4)
 						{
 							myprintf1("upload new...\0");
-//							printf("upload new...\r\n");
 						}
 
 						// save the current list of events
@@ -1536,4 +1450,51 @@ void send_param_msg(void)
 void send_status_msg(char *msg)
 {
 	send_msg(strlen((char*)msg)*2,(UCHAR*)msg, SEND_STATUS);
+}
+
+void set_gps_baudrate(int baudrate)
+{
+	char tempx[50];
+	char tempy[10];
+	int test2;
+	UCHAR checksum;
+	int i;
+	
+	memset(tempx,0,sizeof(tempx));
+	switch(baudrate)
+	{
+		case 0:
+			test2 = 4800;
+			break;
+		case 1:
+			test2 = 9600;
+			break;
+		case 2:
+			test2 = 19200;
+			break;
+		case 3:
+			test2 = 38400;
+			break;
+		default:
+			test2 = 4800;
+			break;
+	}
+	sprintf(tempx,"$PSRF100,1,%d,8,1,0",test2);
+	checksum = 0;
+	for(i = 1;i < strlen(tempx);i++)
+	{
+		checksum ^= tempx[i];
+	}
+	sprintf(tempy,"*%02x",checksum);
+	strcat(tempx,tempy);
+	strcat(tempx,"\r\n");
+	for(i = 0;i < strlen(tempx);i++)
+	{
+		if(write_serial3(tempx[i]) < 0)
+			printf("bad char comm 3\r\n");
+		usleep(500);
+	}
+	close_serial3();
+	usleep(1000);
+	init_serial3(baudrate);
 }

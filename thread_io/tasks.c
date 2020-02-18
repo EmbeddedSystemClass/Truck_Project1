@@ -1006,6 +1006,7 @@ static struct minmea_sentence_gll gll;
 static struct minmea_sentence_gsv gsv;
 static struct minmea_sentence_vtg vtg;
 static struct minmea_sentence_gsa gsa;
+static struct minmea_sentence_zda zda;
 
 typedef struct
 {
@@ -1033,6 +1034,8 @@ UCHAR LCD_serial_queue(int test)
 	double ydistance1, ydistance2;
 	double mdistance1, mdistance2;
 	int closest_wp, next_closest_wp;
+	int error_count = 0;
+	int br_try = 0;
 	char tempx[200];
 	char tempy[30];
 	char errmsg[30];
@@ -1049,6 +1052,7 @@ UCHAR LCD_serial_queue(int test)
 	struct minmea_sentence_gsv *pgsv = &gsv;
 	struct minmea_sentence_vtg *pvtg = &vtg;
 	struct minmea_sentence_gsa *pgsa = &gsa;
+	struct minmea_sentence_gsa *pzda = &zda;
 
 	int ret_val = -1;
 	usleep(_5SEC);
@@ -1102,7 +1106,8 @@ UCHAR LCD_serial_queue(int test)
 			tempx[i] = read_serial3(errmsg);
 			if(tempx[i] < 0)
 				printf("%s\r\n",errmsg);
- 		}while(i < 200 && tempx[i] != 0x0D && tempx[i-1] != 0x0A);	// if CRLF, quit
+//			printf("%c",tempx[i]);
+ 		}while(i < 200 && tempx[i] != 0x0D && tempx[i-1] != 0x0A && tempx[i] < 0x7e);	// if CRLF, quit
 #endif
 
 #ifdef USE_SAMPLE_DATA
@@ -1121,6 +1126,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_RMC:
 				if(get_rmc_frame(tempx, prmc) > 0)
 				{
+					error_count = 0;
 					memset(tempx,0,sizeof(tempx));
 					sprintf(tempy,"%.4f,\0",(curr_lat = minmea_tocoord(&rmc.latitude)));
 					//printf("%s\r\n",tempy);
@@ -1285,6 +1291,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GGA:
 				if(get_gga_frame(tempx, pgga) > 0)
 				{
+					error_count = 0;
 					memset(tempx,0,sizeof(tempy));
 					sprintf(tempx,"%.1f\0",3.2808*minmea_tofloat(&gga.altitude));
 					//printf("%s\r\n",tempy);
@@ -1315,6 +1322,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GSV:
 				if(get_gsv_frame(tempx, pgsv) > 0)
 				{
+					error_count = 0;
 					//sprintf(tempx,"GSV total sats: %d",gsv.total_sats);
 					client_send_data = SEND_GPS_GSV_DATA;
 				}
@@ -1324,6 +1332,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GSA:
 				if(get_gsa_frame(tempx, pgsa) > 0)
 				{
+					error_count = 0;
 					//sprintf(tempx,"GSA total sats: %d",gsa.fix_type);
 					client_send_data = SEND_GPS_GSA_DATA;
 				}
@@ -1333,6 +1342,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_GLL:
 				if(get_gll_frame(tempx, pgll) > 0)
 				{
+					error_count = 0;
 	//				sprintf(tempx,"long: %f lat %f",minmea_tocoord(&gll.latitude), 
 	//					minmea_tocoord(&gll.longitude));
 	//				sprintf(tempx,"long: %f lat %f",minmea_tofloat(&gll.latitude),
@@ -1345,6 +1355,7 @@ UCHAR LCD_serial_queue(int test)
 			case MINMEA_SENTENCE_VTG:
 				if(get_vtg_frame(tempx, pvtg) > 0)
 				{
+					error_count = 0;
 /*
 					sprintf(tempx,"VTG true course: %f mag track: %f speed (kph) %f",
 							minmea_tofloat(&vtg.true_track_degrees),
@@ -1356,18 +1367,60 @@ UCHAR LCD_serial_queue(int test)
 				break;
 
 			case MINMEA_SENTENCE_ZDA:
-//				memcpy(pzda,vstruct,sizeof(struct minmea_sentence_zda));
-//				sprintf(tempx,"ZDA");
+				if(get_zda_frame(tempx, pzda) > 0)
+				{
+					error_count = 0;
 					client_send_data = SEND_GPS_ZDA_DATA;
+				}
 				break;
 
 			case MINMEA_INVALID:
-				//printf("MINMEA_INVALID ");
+				if(error_count < 2)
+//					printf("MINMEA_INVALID\r\n");
+				error_count++;
 				break;
 
 			default:
-				//printf("%d UNKNOWN ",ret_val);
+				if(error_count < 2)
+//					printf("%d UNKNOWN ",ret_val);
+				error_count++;
 				break;
+		}
+
+		if(error_count > 2)
+		{
+			switch(br_try)
+			{
+				case 0:
+					br_try++;
+					set_gps_baudrate(0);
+//					printf("trying 4800\r\n");
+				break;
+				case 1:
+					br_try++;
+					set_gps_baudrate(1);
+//					printf("trying 9600\r\n");
+				break;
+				case 2:
+					br_try++;
+					set_gps_baudrate(2);
+//					printf("trying 19200\r\n");
+				break;
+				case 3:
+					br_try++;
+					set_gps_baudrate(3);
+//					printf("trying 38400\r\n");
+				break;
+				default:
+					br_try = 0;
+					set_gps_baudrate(0);
+//					printf("trying default\r\n");
+				break;
+			}
+			error_count = 0;
+			ps.baudrate3 = br_try - 1;
+//			printf("baudrate: %d\r\n",ps.baudrate3);
+			WriteParams("param.conf", &ps, &password[0], errmsg);
 		}
 
 		if(test_sock() && enable_gps_send_data == 1)

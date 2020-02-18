@@ -83,6 +83,7 @@ int test_sd(int test);
 int test_sock(void);
 void init_ips(void);
 void send_status_msg(char *msg);
+void set_gps_baudrate(int baudrate);
 //double getDistance(double lat1, double lon1, double lat2, double lon2, int units);
 typedef struct
 {

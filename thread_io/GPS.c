@@ -77,6 +77,13 @@ int get_vtg_frame(char *line, struct minmea_sentence_vtg *frame)
     return -1;
 }
 
+int get_zda_frame(char *line, struct minmea_sentence_zda *frame)
+{
+	if (minmea_parse_zda(frame, line))
+	    return 1;
+    return -1;
+}
+
 #if 0
 int GPS(char *line, void **vstruct)
 {

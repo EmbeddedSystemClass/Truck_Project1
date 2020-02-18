@@ -229,6 +229,7 @@ int get_gsa_frame(char *line, struct minmea_sentence_gsa *frame);
 int get_gst_frame(char *line, struct minmea_sentence_gst *frame);
 int get_gsv_frame(char *line, struct minmea_sentence_gsv *frame);
 int get_gll_frame(char *line, struct minmea_sentence_gll *frame);
+int get_zda_frame(char *line, struct minmea_sentence_zda *frame);
 
 /**
  * Convert GPS UTC date/time representation to a UNIX timestamp.
