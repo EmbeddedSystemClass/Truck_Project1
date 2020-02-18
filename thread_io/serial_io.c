@@ -25,7 +25,7 @@
 #define MODEMDEVICE "/dev/ttyS0"				  // 7800 uses ttyS1 as the 2nd serial port
 #define MODEMDEVICE2 "/dev/ttyS1"
 #define MODEMDEVICE3 "/dev/ttts4"
-#else
+#else  
 #define MODEMDEVICE "/dev/ttyAM0"				  // 7200 uses ttyAM0 if console disabled
 #define MODEMDEVICE2 "/dev/ttyAM1"				  // 7200 uses ttyAM1 as 2nd serial port
 #endif	// end of ifdef TS_7800
@@ -148,7 +148,8 @@ int write_serial(UCHAR byte)
 int write_serial2(UCHAR byte)
 {
 	int res = -1;
-	if(ps.test_bank == 0)
+//	if(ps.test_bank == 0)
+	if(1)
 	{
 		res = write(global_handle2, &byte, 1);
 	}
@@ -158,9 +159,11 @@ int write_serial2(UCHAR byte)
 int write_serial3(UCHAR byte)
 {
 	int res = -1;
-	if(ps.test_bank == 0)
+//	if(ps.test_bank == 0)
+	if(1)
 	{
 		res = write(global_handle3, &byte, 1);
+		//printf("%02x ",byte);
 	}
 	return res;
 }
@@ -219,7 +222,8 @@ UCHAR read_serial2(char *errmsg)
 {
 	int res;
 	UCHAR byte = 0;
-	if(ps.test_bank == 0)
+//	if(ps.test_bank == 0)
+	if(1)
 	{
 		res = read(global_handle2,&byte,1);
 		if(res < 0)
@@ -282,11 +286,30 @@ int init_serial2(void)
 }
 
 /************************************************************************************/
-int init_serial3(void)
+int init_serial3(int baudrate)
 {
 	global_handle3 = -1;
+	int actual_baudrate = B4800;
 
 //	if(ps.test_bank == 0)
+	switch(baudrate)
+	{
+		case 0:
+			actual_baudrate = B4800;
+			break;
+		case 1:
+			actual_baudrate = B9600;
+			break;
+		case 2:
+			actual_baudrate = B19200;
+			break;
+		case 3:
+			actual_baudrate = B38400;
+			break;
+		default:
+			actual_baudrate = B4800;
+			break;
+	}
 	if(1)
 	{
 // undef this section if console disabled just so it can compile with the console enabled
@@ -304,7 +327,9 @@ int init_serial3(void)
 			//printString2("error on tcgetattr");
 			return -1;
 		}
-		set_interface_attribs (global_handle3, BAUDRATE3, 0);
+//		set_interface_attribs (global_handle3, BAUDRATE3, 0);
+		set_interface_attribs (global_handle3, actual_baudrate, 0);
+		//printf("baudrate: %d %d\r\n",baudrate, actual_baudrate);
 		set_blocking (global_handle3, 1);	 // blocking
 //		set_blocking (global_handle2, 0);	// non-blocking
 	}
@@ -346,7 +371,8 @@ void printString2(char *myString)
 {
 	int i = 0;
 	return;
-	if(ps.test_bank == 0)
+//	if(ps.test_bank == 0)
+	if(1)
 	{
 		while(myString[i])
 		{
@@ -363,7 +389,8 @@ void printString3(char *myString)
 {
 	int i = 0;
 	return;
-	if(ps.test_bank == 0)
+//	if(ps.test_bank == 0)
+	if(1)
 	{
 		while(myString[i])
 		{

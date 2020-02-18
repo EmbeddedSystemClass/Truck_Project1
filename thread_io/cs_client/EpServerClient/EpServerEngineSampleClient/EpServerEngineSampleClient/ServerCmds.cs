@@ -115,6 +115,7 @@ namespace EpServerEngineSampleClient
 			SEND_GPS_VTG_DATA,
 			SEND_GPS_ZDA_DATA,
 			SET_GPS_DATA,
+			SET_GPS_BAUDRATE,
 			ENABLE_GPS_SEND_DATA
 		}
 

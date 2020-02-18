@@ -68,6 +68,8 @@
 			this.btnChangePassword = new System.Windows.Forms.Button();
 			this.tbNewPasssword = new System.Windows.Forms.TextBox();
 			this.tbTest = new System.Windows.Forms.TextBox();
+			this.label19 = new System.Windows.Forms.Label();
+			this.cbBaudRate3 = new System.Windows.Forms.ComboBox();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -75,7 +77,7 @@
 			// 
 			this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
 			this.btnOK.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnOK.Location = new System.Drawing.Point(606, 452);
+			this.btnOK.Location = new System.Drawing.Point(606, 494);
 			this.btnOK.Name = "btnOK";
 			this.btnOK.Size = new System.Drawing.Size(99, 44);
 			this.btnOK.TabIndex = 0;
@@ -87,7 +89,7 @@
 			// 
 			this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
 			this.btnCancel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnCancel.Location = new System.Drawing.Point(732, 452);
+			this.btnCancel.Location = new System.Drawing.Point(732, 494);
 			this.btnCancel.Name = "btnCancel";
 			this.btnCancel.Size = new System.Drawing.Size(99, 44);
 			this.btnCancel.TabIndex = 1;
@@ -537,7 +539,7 @@
 			// btnChangePassword
 			// 
 			this.btnChangePassword.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnChangePassword.Location = new System.Drawing.Point(40, 392);
+			this.btnChangePassword.Location = new System.Drawing.Point(40, 434);
 			this.btnChangePassword.Name = "btnChangePassword";
 			this.btnChangePassword.Size = new System.Drawing.Size(223, 36);
 			this.btnChangePassword.TabIndex = 43;
@@ -547,7 +549,7 @@
 			// 
 			// tbNewPasssword
 			// 
-			this.tbNewPasssword.Location = new System.Drawing.Point(40, 452);
+			this.tbNewPasssword.Location = new System.Drawing.Point(40, 494);
 			this.tbNewPasssword.Name = "tbNewPasssword";
 			this.tbNewPasssword.Size = new System.Drawing.Size(128, 20);
 			this.tbNewPasssword.TabIndex = 44;
@@ -555,17 +557,50 @@
 			// 
 			// tbTest
 			// 
-			this.tbTest.Location = new System.Drawing.Point(384, 454);
+			this.tbTest.Location = new System.Drawing.Point(384, 496);
 			this.tbTest.Name = "tbTest";
 			this.tbTest.Size = new System.Drawing.Size(100, 20);
 			this.tbTest.TabIndex = 45;
+			// 
+			// label19
+			// 
+			this.label19.AutoSize = true;
+			this.label19.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label19.Location = new System.Drawing.Point(453, 448);
+			this.label19.Name = "label19";
+			this.label19.Size = new System.Drawing.Size(199, 25);
+			this.label19.TabIndex = 47;
+			this.label19.Text = "Comm3 Baudrate:";
+			// 
+			// cbBaudRate3
+			// 
+			this.cbBaudRate3.AutoCompleteCustomSource.AddRange(new string[] {
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"});
+			this.cbBaudRate3.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.cbBaudRate3.FormattingEnabled = true;
+			this.cbBaudRate3.Items.AddRange(new object[] {
+            "4800",
+            "9600",
+            "19200",
+            "38400"});
+			this.cbBaudRate3.Location = new System.Drawing.Point(691, 445);
+			this.cbBaudRate3.Name = "cbBaudRate3";
+			this.cbBaudRate3.Size = new System.Drawing.Size(141, 33);
+			this.cbBaudRate3.TabIndex = 46;
+			this.cbBaudRate3.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
 			// 
 			// DlgSetParams
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(857, 514);
+			this.ClientSize = new System.Drawing.Size(857, 556);
+			this.Controls.Add(this.label19);
+			this.Controls.Add(this.cbBaudRate3);
 			this.Controls.Add(this.tbTest);
 			this.Controls.Add(this.tbNewPasssword);
 			this.Controls.Add(this.btnChangePassword);
@@ -643,5 +678,7 @@
 		private System.Windows.Forms.Button btnChangePassword;
 		private System.Windows.Forms.TextBox tbNewPasssword;
 		private System.Windows.Forms.TextBox tbTest;
+		private System.Windows.Forms.Label label19;
+		private System.Windows.Forms.ComboBox cbBaudRate3;
 	}
 }

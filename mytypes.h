@@ -198,6 +198,7 @@ enum cmd_types
 	SEND_GPS_VTG_DATA,
 	SEND_GPS_ZDA_DATA,
 	SET_GPS_DATA,
+	SET_GPS_BAUDRATE,
 	ENABLE_GPS_SEND_DATA
 }CMD_TYPES;
 
@@ -406,6 +407,7 @@ typedef struct params
 	int test_bank;
 	int password_timeout;
 	int password_retries;
+	int baudrate3;
 }PARAM_STRUCT;
 
 // FPGA commands

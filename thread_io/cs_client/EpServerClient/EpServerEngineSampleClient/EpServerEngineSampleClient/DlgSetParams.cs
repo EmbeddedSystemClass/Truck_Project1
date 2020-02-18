@@ -112,6 +112,7 @@ namespace EpServerEngineSampleClient
             cfg.FPGAXmitRate = Convert.ToInt16(cbFPGAXmitRate.SelectedItem.ToString());
 			cfg.lights_on_delay = get_lights_on(cbLightsOnDelay.SelectedItem.ToString());
 			cfg.password_timeout = get_timeout(cbPasswordTimeout.SelectedItem.ToString());
+			cfg.baudrate3 = Convert.ToInt16(cbBaudRate3.SelectedItem.ToString());
 			cfg.password = password;
 			//tbTest.Text = cbTestBank.SelectedIndex.ToString();
 			cfg.test_bank = cbTestBank.SelectedIndex;
@@ -205,6 +206,11 @@ namespace EpServerEngineSampleClient
 			// since retries are: 2,3,4,5,6 then just add 2 to index
 			cfg.password_retries = cbPasswordRetries.SelectedIndex + 2;
 			cfg.si_password_retries = cbPasswordRetries.SelectedIndex;
+		}
+		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			cfg.baudrate3 = cbBaudRate3.SelectedIndex;
+			cfg.si_baudrate3 = cbBaudRate3.SelectedIndex;
 		}
 		public DlgSetParams(ConfigParams cfg_params)
         {
@@ -999,6 +1005,7 @@ namespace EpServerEngineSampleClient
 			cbLightsOnDelay.SelectedIndex = cfg_params.lights_on_delay;
 			cbPasswordTimeout.SelectedIndex = cfg_params.password_timeout;
 			cbPasswordRetries.SelectedIndex = cfg_params.password_retries;
+			cbBaudRate3.SelectedIndex = cfg_params.baudrate3;
 			cbTestBank.SelectedIndex = cfg_params.test_bank;
 			password = cfg_params.password;
 			//tbTest.Text = cbTestBank.SelectedIndex.ToString();

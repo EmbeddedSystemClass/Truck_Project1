@@ -31,6 +31,7 @@ namespace EpServerEngineSampleClient
 		private GPSdata gps_data;
 		private byte[] recv_buff;
 		private bool m_pause = false;
+		int selected_baudrate = 0;
 
 		public GPSForm(string xml_file_location, INetworkClient client)
 		{
@@ -302,6 +303,25 @@ namespace EpServerEngineSampleClient
 		private void btnClear_Click(object sender, EventArgs e)
 		{
 			tbAddMsg.Clear();
+		}
+
+		private void cbBaudRate_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			selected_baudrate = cbBaudRate.SelectedIndex;
+		}
+
+		private void button1_Click_1(object sender, EventArgs e)
+		{
+			byte[] baud_rate = BitConverter.GetBytes(selected_baudrate);
+			byte[] bytes = new byte[baud_rate.Count() + 2];
+			System.Buffer.BlockCopy(baud_rate, 0, bytes, 2, baud_rate.Count());
+			bytes[0] = svrcmd.GetCmdIndexB("SET_GPS_BAUDRATE");
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			if (m_client.IsConnectionAlive)
+			{
+				m_client.Send(packet);
+			}
+
 		}
 	}
 }

@@ -129,6 +129,8 @@ char lights[13][15] =  {"1 second",
 						"30 minutes",
 						"1 hour"};
 
+char baudrates[4][10] = {"4800", "9600", "19200", "38400"};
+
 TEMPS temp_str[359] = {
 	{"257.0\0", 250},
 	{"256.1\0", 249},
@@ -570,6 +572,7 @@ int main(int argc, char *argv[])
 	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
 	printf("password retries:\t\t%d\r\n",ps.password_retries);
 	printf("password:\t\t\t%s\r\n",password);
+	printf("comm3 baudrate:\t\t\t%s\r\n",baudrates[ps.baudrate3]);
 	return 11;
 }
 

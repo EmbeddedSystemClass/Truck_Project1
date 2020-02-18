@@ -25,6 +25,7 @@ namespace EpServerEngineSampleClient
         public int test_bank { get; set; }
 		public int password_timeout { get; set; }
 		public int password_retries { get; set; }
+		public int baudrate3 { get; set; }
 		public string password { get; set; }
 
 		public int si_fan_on { get; set; }
@@ -44,6 +45,7 @@ namespace EpServerEngineSampleClient
         public int si_battery_box_temp { get; set; }
 		public int si_password_timeout { get; set; }
 		public int si_password_retries { get; set; }
+		public int si_baudrate3 { get; set; }
 		public bool set { get; set; }
 	}
 }

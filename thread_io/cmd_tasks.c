@@ -52,7 +52,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[104] =
+CMD_STRUCT cmd_array[105] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -157,6 +157,7 @@ CMD_STRUCT cmd_array[104] =
 	{	SEND_GPS_VTG_DATA,"SEND_GPS_VTG_DATA\0" },
 	{	SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
 	{	SET_GPS_DATA,"SET_GPS_DATA\0" },
+	{	SET_GPS_BAUDRATE,"SET_GPS_BAUDRATE\0" },
 	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
 };
 
@@ -962,6 +963,11 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[18] = msg_buf[34];
 						write_serial_buffer[19] = msg_buf[35];
 
+						utemp = (UINT)msg_buf[37];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[36];
+						ps.baudrate3 = utemp;
+
 						//memcpy(&password[0],&msg_buf[36],4);
 						j = 0;
 						memset(password,0,PASSWORD_SIZE);
@@ -1016,12 +1022,12 @@ UCHAR get_host_cmd_task(int test)
 						sprintf(tempx,"$PSRF103,%02d,00,%02d,01",test1,test2);
 						//printf("%s\r\n",tempx);
 						//printf("strlen: %d\r\n",strlen(tempx));
-						printf("\r\n%d\r\n",strlen(tempx));
+//						printf("\r\n%d\r\n",strlen(tempx));
 						for(i = 1;i < strlen(tempx);i++)
 						{
 							checksum ^= tempx[i];
 //							printf("%02x ",checksum);
-							printf("%c",tempx[i]);
+//							printf("%c",tempx[i]);
 						}
 						//printf("\r\n");
 						//printf("cksum: %02x\r\n",checksum);
@@ -1029,14 +1035,88 @@ UCHAR get_host_cmd_task(int test)
 						strcat(tempx,tempy);
 						strcat(tempx,"\r\n");
 						//printf("\r\n%s",tempx);
-						printf("\r\n");
-						for(i = 0;i < 23;i++)
+//						printf("\r\n");
+						for(i = 0;i < 25;i++)
 						{
-							write_serial3(tempx[i]);
-							printf("%c",tempx[i]);
+							if(write_serial3(tempx[i]) < 0)
+								printf("bad char comm 3\r\n");
 							usleep(500);
 						}
-						//printf("\r\n");	
+/*
+						for(i = 0;i < 25;i++)
+						{
+							printf("%c",tempx[i]);
+						}
+						for(i = 0;i < 25;i++)
+						{
+							printf("%02x ",tempx[i]);
+						}
+						printf("\r\n");	
+*/
+						break;
+
+					case SET_GPS_BAUDRATE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						test1 = (int)utemp;
+						
+						printf("\r\n%d\r\n",test1);
+						checksum = 0;
+						memset(tempx,0,sizeof(tempx));
+						switch(test1)
+						{
+							case 0:
+								test2 = 4800;
+								break;
+							case 1:
+								test2 = 9600;
+								break;
+							case 2:
+								test2 = 19200;
+								break;
+							case 3:
+								test2 = 38400;
+								break;
+							default:
+								break;
+						}
+						sprintf(tempx,"$PSRF100,1,%d,8,1,0",test2);
+						printf("%s\r\n",tempx);
+						printf("strlen: %d\r\n",strlen(tempx));
+						printf("\r\n%d\r\n",strlen(tempx));
+						for(i = 1;i < strlen(tempx);i++)
+						{
+							checksum ^= tempx[i];
+//							printf("%02x ",checksum);
+							printf("%c",tempx[i]);
+						}
+						printf("\r\n");
+						printf("cksum: %02x\r\n",checksum);
+						sprintf(tempy,"*%02x",checksum);
+						strcat(tempx,tempy);
+						strcat(tempx,"\r\n");
+						//printf("\r\n%s",tempx);
+//						printf("\r\n");
+						for(i = 0;i < strlen(tempx);i++)
+						{
+							if(write_serial3(tempx[i]) < 0)
+								printf("bad char comm 3\r\n");
+							usleep(500);
+						}
+
+						for(i = 0;i < strlen(tempx);i++)
+						{
+							printf("%c",tempx[i]);
+						}
+						for(i = 0;i < strlen(tempx);i++)
+						{
+							printf("%02x ",tempx[i]);
+						}
+						printf("\r\n");	
+						close_serial3();
+						usleep(1000);
+						init_serial3(test1);
 						break;
 
 					case ENABLE_GPS_SEND_DATA:
@@ -1429,7 +1509,7 @@ void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %s\0",
+	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %s\0",
 														ps.rpm_update_rate,
 														ps.mph_update_rate,
 														ps.fpga_xmit_rate,
@@ -1447,6 +1527,7 @@ void send_param_msg(void)
 														ps.test_bank,
 														ps.password_timeout,
 														ps.password_retries,
+														ps.baudrate3,
 														password);
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 //	printString2(tempx);

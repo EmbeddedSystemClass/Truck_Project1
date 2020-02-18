@@ -93,6 +93,7 @@ int main(void)
 	ps.test_bank = 2;
 	ps.password_timeout = 1;
 	ps.password_retries = 1;
+	ps.baudrate3 = 0;			//	0 = 4800, 1 = 9600, 2 = 19200, 3 = 38400
 
 	printf("\r\nrpm_update_rate:\t\t%d\r\n",ps.rpm_update_rate);
 	printf("mph_update_rate:\t\t%d\r\n",ps.mph_update_rate);
@@ -111,6 +112,7 @@ int main(void)
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
 	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
 	printf("password retries:\t\t%d\r\n",ps.password_retries);
+	printf("comm3 baudrate:\t\t%d\r\n",ps.baudrate3);
 
 	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
 	write(fp,&id,1);

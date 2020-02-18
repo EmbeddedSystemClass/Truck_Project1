@@ -50,7 +50,7 @@ bool minmea_check(const char *sentence, bool strict)
     // Sequence length is limited.
     if ((string_len = strlen(sentence)) > MINMEA_MAX_LENGTH + 3)
 	{
-		printf("seq len\r\n");
+		//printf("seq len ");
         return false;
 	}
 
@@ -76,14 +76,14 @@ bool minmea_check(const char *sentence, bool strict)
         int upper = hex2int(*sentence++);
         if (upper == -1)
 		{
-			printf(" upper\n");
+			printf(" upper ");
             return false;
 		}
 //		printf("upper: %d\n",upper);
         int lower = hex2int(*sentence++);
         if (lower == -1)
 		{
-			printf("lower\n");
+			printf("lower ");
             return false;
 		}
 //		printf("lower: %d\n",lower);
@@ -93,14 +93,14 @@ bool minmea_check(const char *sentence, bool strict)
 
         if (checksum != expected)
 		{
-			printf("%d checksum\r\n",string_len);
-			printf("\n%02x %02x\r\n",checksum,expected);
+			printf("%d checksum ",string_len);
+			printf("\n%02x %02x ",checksum,expected);
             return false;
 		}
     } else if (strict) 
 	{
         // Discard non-checksummed frames in strict mode.
-		printf("strict\r\n");
+		printf("strict ");
         return false;
     }
 

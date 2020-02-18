@@ -1362,11 +1362,11 @@ UCHAR LCD_serial_queue(int test)
 				break;
 
 			case MINMEA_INVALID:
-				printf("MINMEA_INVALID\r\n");
+				//printf("MINMEA_INVALID ");
 				break;
 
 			default:
-				printf("%d UNKNOWN\r\n",ret_val);
+				//printf("%d UNKNOWN ",ret_val);
 				break;
 		}
 
@@ -1474,10 +1474,10 @@ UCHAR serial_recv_task(int test)
 
 	//printString2("trying to open comm3");
 
-	if(fd = init_serial3() < 0)
+	if(fd = init_serial3(ps.baudrate3) < 0)
 	{
 		//myprintf1("can't open comm port 3");
-		//printf("can't open comm port 3");
+		printf("can't open comm port 3");
 		//printString2("can't open comm3");
 	}else
 	{

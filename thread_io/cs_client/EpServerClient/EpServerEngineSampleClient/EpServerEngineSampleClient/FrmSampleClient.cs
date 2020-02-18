@@ -301,7 +301,7 @@ namespace EpServerEngineSampleClient
 
 					btnShutdown.Enabled = true;
 					btnReboot.Enabled = true;
-					//btnStopSerial.Enabled = true;
+					btnStopSerial.Enabled = true;
 					tbServerTime.Text = "";
 					tbEngRunTime.Text = "";
 					tbEngineTemp.Text = "";
@@ -452,18 +452,6 @@ namespace EpServerEngineSampleClient
 					AddMsg("");
 					substr = dlgsetparams.get_temp_str(cfg_params.fan_off).ToString();
 					AddMsg("fan off: " + substr);
-					AddMsg("");
-					substr = dlgsetparams.get_temp_str(cfg_params.blower1_on).ToString();
-					AddMsg("blower 1: " + substr);
-					AddMsg("");
-					substr = dlgsetparams.get_temp_str(cfg_params.blower2_on).ToString();
-					AddMsg("blower 2: " + substr);
-					AddMsg("");
-					substr = dlgsetparams.get_temp_str(cfg_params.blower3_on).ToString();
-					AddMsg("blower 3: " + substr);
-					AddMsg("");
-					substr = dlgsetparams.get_temp_str(cfg_params.blower_enabled).ToString();
-					AddMsg("blower en: " + substr);
 					AddMsg("");
 					break;
 
@@ -733,8 +721,13 @@ namespace EpServerEngineSampleClient
 								cfg_params.password_retries = int.Parse(word);
 								//AddMsg("pswd retries: " + cfg_params.password_retries.ToString());
 								break;
-								
+
 							case 17:
+								cfg_params.baudrate3 = int.Parse(word);
+								AddMsg("baudrate3: " + cfg_params.baudrate3.ToString());
+								break;
+
+							case 18:
 								//AddMsg(word);
 								cfg_params.password = word;
 								AddMsg("password: " + cfg_params.password);
@@ -959,12 +952,13 @@ namespace EpServerEngineSampleClient
 					byte[] test = BitConverter.GetBytes(cfg_params.si_test_bank);
 					byte[] pswd_time = BitConverter.GetBytes(cfg_params.si_password_timeout);
 					byte[] pswd_retries = BitConverter.GetBytes(cfg_params.si_password_retries);
+					byte[] baudrate3 = BitConverter.GetBytes(cfg_params.si_baudrate3);
 					byte[] password = BytesFromString(cfg_params.password);
 
 					byte[] bytes = new byte[rpm.Count() + mph.Count() + fpga.Count() + high_rev.Count()
 						+ low_rev.Count() + fan_on.Count() + fan_off.Count() + ben.Count() + b1.Count()
 						+ b2.Count() + b3.Count() + lights.Count() + limit.Count() + batt.Count()
-						+ test.Count() + pswd_time.Count() + pswd_retries.Count() + password.Count() + 2];
+						+ test.Count() + pswd_time.Count() + pswd_retries.Count() + baudrate3.Count() + password.Count() + 2];
 
 					bytes[0] = svrcmd.GetCmdIndexB("UPDATE_CONFIG");
 					//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
@@ -985,7 +979,8 @@ namespace EpServerEngineSampleClient
 					System.Buffer.BlockCopy(test, 0, bytes, 30, test.Count());
 					System.Buffer.BlockCopy(pswd_time, 0, bytes, 32, pswd_time.Count());
 					System.Buffer.BlockCopy(pswd_retries, 0, bytes, 34, pswd_retries.Count());
-					System.Buffer.BlockCopy(password, 0, bytes, 36, password.Count());
+					System.Buffer.BlockCopy(baudrate3, 0, bytes, 36, baudrate3.Count());
+					System.Buffer.BlockCopy(password, 0, bytes, 38, password.Count());
 
 					Packet packet = new Packet(bytes, 0, bytes.Count(), false);
 					m_client.Send(packet);
@@ -1240,7 +1235,7 @@ namespace EpServerEngineSampleClient
                             btnConnect.Text = "Disconnect";
                             btnShutdown.Enabled = true;
                             btnReboot.Enabled = true;
-                            //btnStopSerial.Enabled = true;
+                            btnStopSerial.Enabled = true;
                             tbServerTime.Text = "";
                             tbEngRunTime.Text = "";
                             tbEngineTemp.Text = "";

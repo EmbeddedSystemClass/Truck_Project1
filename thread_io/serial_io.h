@@ -1,4 +1,3 @@
-int init_serial2(void);
 int write_serial2(UCHAR byte);
 void printString2(char *myString);
 UCHAR read_serial2(char *errmsg);
@@ -8,6 +7,8 @@ int global_handle2;
 int global_handle3;
 
 int init_serial(void);
+int init_serial2(void);
+int init_serial3(int baudrate);
 int write_serial(UCHAR byte);
 void printString(const char myString[]);
 UCHAR read_serial(char *errmsg);
