@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "../mytypes.h"
 
-char cmd_strings[104][25] = {
+char cmd_strings[105][25] = {
 	"NON_CMD\0",
 	"ENABLE_START\0",
 	"STARTER_OFF\0",
@@ -105,6 +105,7 @@ char cmd_strings[104][25] = {
 	"SEND_GPS_VTG_DATA\0",
 	"SEND_GPS_ZDA_DATA\0",
 	"SET_GPS_DATA\0",
+	"SET_GPS_BAUDRATE\0",
 	"ENABLE_GPS_SEND_DATA\0"
 };
 
@@ -113,6 +114,6 @@ char cmd_strings[104][25] = {
 int main(void)
 {
 	int i;
-	for(i = 0;i < 104;i++)
+	for(i = 0;i < 105;i++)
 		printf("\t{\t%s,\"%s\\0\" },\n",cmd_strings[i],cmd_strings[i]);
 }

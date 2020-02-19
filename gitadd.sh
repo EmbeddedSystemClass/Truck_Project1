@@ -135,6 +135,7 @@ git add thread_io/manage_boot_bios.txt
 git add thread_io/shell2linux.txt
 git add thread_io/IO_card_layout.png
 git add thread_io/print_cmds.c
+git add thread_io/print_cmds2.c
 git add thread_io/do_print_cmds.sh
 git add thread_io/cmds_list.txt
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/ChildDialog.xml

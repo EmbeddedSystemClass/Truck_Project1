@@ -1031,7 +1031,6 @@ UCHAR LCD_serial_queue(int test)
 	int i,k;
 	FARRAY fa[45];		// this should be big enough to store all the waypoints in wp[]
 	double curr_lat, curr_long;
-	double ydistance1, ydistance2;
 	double mdistance1, mdistance2;
 	int closest_wp, next_closest_wp;
 	int error_count = 0;
@@ -1040,7 +1039,6 @@ UCHAR LCD_serial_queue(int test)
 	char tempy[30];
 	char errmsg[30];
 	UCHAR ucbuff[20];
-	int size_msg;
 	FILE *fp;
 	int no_recs;
 	double tfloat;
@@ -1425,12 +1423,6 @@ UCHAR LCD_serial_queue(int test)
 
 		if(test_sock() && enable_gps_send_data == 1)
 		{
-			//printf("ret_val: %d\r\n",ret_val);
-//			size_msg = strlen(tempx) - 7;
-			size_msg = strlen(tempx);
-
-//			memcpy((void *)tempx, (const void *)(tempx + 7),(size_t)size_msg);
-			//tempx[size_msg + 1] = 0;
 			switch(ret_val)
 			{
 				case MINMEA_SENTENCE_RMC:

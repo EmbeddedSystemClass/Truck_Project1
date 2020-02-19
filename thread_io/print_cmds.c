@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "../mytypes.h"
 
-CMD_STRUCT cmd_array[104] =
+CMD_STRUCT cmd_array[105] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -106,12 +106,13 @@ CMD_STRUCT cmd_array[104] =
 	{	SEND_GPS_VTG_DATA,"SEND_GPS_VTG_DATA\0" },
 	{	SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
 	{	SET_GPS_DATA,"SET_GPS_DATA\0" },
+	{	SET_GPS_BAUDRATE,"SET_GPS_BAUDRATE\0" },
 	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
 };
 
 int main(void)
 {
 	int i;
-	for(i = 0;i < 104;i++)
+	for(i = 0;i < 105;i++)
 		printf("%02d\t\t%02x\t\t%s\n",cmd_array[i].cmd, cmd_array[i].cmd, cmd_array[i].cmd_str);
 }
