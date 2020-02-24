@@ -39,6 +39,22 @@ typedef struct _ip
 
 typedef struct
 {
+	float latitude;
+	float longitude;
+	char name[30];
+}WAYPOINTS;
+
+enum dist_units
+{
+	METERS,
+	FEET,
+	MILES,
+	KILOMETERS,
+	YARDS
+}DIST_UNITS;
+
+typedef struct
+{
 	UCHAR row;
 	UCHAR col;
 	UCHAR data_col;
@@ -61,6 +77,13 @@ enum rt_values_offsets
 	FUEL_LEVEL,
 	OUTDOOR_TEMP,
 	IND_TEMP,
+	LAT,
+	LONG,
+	GPS_DIR,
+	GPS_SPEED,
+	GPS_ALT,
+	NEXT,
+	PREV,
 	ENGINE,
 	COOLING_FAN,
 	HEAD_LIGHTS,
@@ -73,18 +96,18 @@ enum rt_values_offsets
 enum cmd_types
 {
 	NON_CMD,
-	ENABLE_START,		// 1
-	STARTER_OFF,		// 2
-	ON_ACC,				// 3
-	OFF_ACC,			// 4
-	ON_FUEL_PUMP,		// 5
-	OFF_FUEL_PUMP,		// 6
-	ON_FAN,				// 7
-	OFF_FAN,			// 8
-	ON_LIGHTS,			// 9
-	OFF_LIGHTS,			// 10
-	ON_BRIGHTS,			// 11
-	OFF_BRIGHTS,		// 12
+	ENABLE_START,
+	STARTER_OFF,
+	ON_ACC,
+	OFF_ACC,
+	ON_FUEL_PUMP,
+	OFF_FUEL_PUMP,
+	ON_FAN,
+	OFF_FAN,
+	ON_LIGHTS,
+	OFF_LIGHTS,
+	ON_BRIGHTS,
+	OFF_BRIGHTS,
 	BLANK,
 	ESTOP_SIGNAL,
 	ON_BRAKES,
@@ -102,20 +125,11 @@ enum cmd_types
 	OFF_RLIGHTS,
 	ON_RBRIGHTS,
 	OFF_RBRIGHTS,
-	BLOWER1,
-	BLOWER2,
-	BLOWER3,
-	BLOWER_OFF,
 	WIPER1,
 	WIPER2,
 	WIPER_OFF,
-	SEND_TIME_DATA,
 	SHUTDOWN_IOBOX,
 	REBOOT_IOBOX,
-	TEST_ALL_IO,
-	SEND_ODATA,
-	SAVE_TO_DISK,
-	GET_DIR,
 	LCD_SHIFT_RIGHT,
 	LCD_SHIFT_LEFT,
 	SCROLL_UP,
@@ -123,16 +137,9 @@ enum cmd_types
 	ENABLE_LCD,
 	SET_TIME,
 	GET_TIME,
-	SHOW_ODATA,
-	NEW_PASSWORD1,
-	SET_SERIAL_RECV_ON,
-	SET_SERIAL_RECV_OFF,
 	TEST_LEFT_BLINKER,
 	TEST_RIGHT_BLINKER,
-	RE_ENTER_PASSWORD,
 	DISCONNECT,
-	CLOSE_DB,
-	OPEN_DB,
 	BAD_MSG,
 	CURRENT_TIME,
 	SET_PARAMS,
@@ -175,21 +182,25 @@ enum cmd_types
 	SET_BATT_BOX_TEMP,
 	TEMP_TOO_HIGH,
 	GET_VERSION,
-	SVR_CMD,
-	HOME_SVR_ON,
-	HOME_SVR_OFF,
 	UPDATE_CONFIG,
 	SEND_CONFIG2,
 	GET_CONFIG2,
 	CLIENT_CONNECTED,
 	SERVER_CONNECTED,
 	SET_KEYMODE,
-	PASSWORD_OK,
-	PASSWORD_BAD,
-	SET_PASSWORD_TIMEOUT,
-	SET_PASSWORD_RETRIES,
 	SHELL_AND_RENAME,
-	REFRESH_LCD
+	REFRESH_LCD,
+	SEND_GPS_GLL_DATA,
+	SEND_GPS_GGA_DATA,
+	SEND_GPS_GSA_DATA,
+	SEND_GPS_GSV_DATA,
+	SEND_GPS_RMC_DATA,
+	SEND_GPS_VTG_DATA,
+	SEND_GPS_ZDA_DATA,
+	SET_GPS_DATA,
+	SET_GPS_BAUDRATE,
+	ENABLE_GPS_SEND_DATA,
+	ADC_GATE
 }CMD_TYPES;
 
 enum key_types
@@ -300,7 +311,7 @@ enum output_types
 
 #define LEN 30
 #define AVR_BUF_LEN 15
-#define NUM_STR 32	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
+#define NUM_STR 36	// no. of strings in eeprom (AVR_t6963/eeprom/main_burn.c)
 
 #define COLUMN              40      //Set column number to be e.g. 32 for 8x8 fonts, 2 pages
 #define ROWS                16
@@ -356,10 +367,10 @@ enum output_types
 #define NO_MENUS 2
 
 // start positions on screen
-#define NUM_RT_LABELS 20
+#define NUM_RT_LABELS 27
 #define START_RT_VALUE_ROW 1
 #define START_RT_VALUE_COL 0
-#define ENDING_RT_VALUE_ROW 10
+#define ENDING_RT_VALUE_ROW 7
 #define RT_VALUE_COL_WIDTH 19
 
 #define NUM_STATUS_LABELS 7
@@ -397,6 +408,7 @@ typedef struct params
 	int test_bank;
 	int password_timeout;
 	int password_retries;
+	int baudrate3;
 }PARAM_STRUCT;
 
 // FPGA commands
@@ -410,6 +422,7 @@ typedef struct params
 #define TUNE_OFF					0x08
 #define LOAD_TUNE					0x09
 #define SHOW_DOWNLOAD				0x0A
+#define ADC_CTL						0x0B
 
 // params for lcd_pwm (screen dimmer)
 #define PWM_OFF_PARAM					0x01 // off

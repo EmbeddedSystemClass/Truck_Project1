@@ -199,7 +199,8 @@ enum cmd_types
 	SEND_GPS_ZDA_DATA,
 	SET_GPS_DATA,
 	SET_GPS_BAUDRATE,
-	ENABLE_GPS_SEND_DATA
+	ENABLE_GPS_SEND_DATA,
+	ADC_GATE
 }CMD_TYPES;
 
 enum key_types
@@ -421,6 +422,7 @@ typedef struct params
 #define TUNE_OFF					0x08
 #define LOAD_TUNE					0x09
 #define SHOW_DOWNLOAD				0x0A
+#define ADC_CTL						0x0B
 
 // params for lcd_pwm (screen dimmer)
 #define PWM_OFF_PARAM					0x01 // off
