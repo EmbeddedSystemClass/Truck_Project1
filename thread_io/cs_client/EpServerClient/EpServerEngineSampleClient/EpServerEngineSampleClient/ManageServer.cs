@@ -37,7 +37,6 @@ namespace EpServerEngineSampleClient
                 tbReceived.AppendText(message + "\r\n");
             }
         }
-
         private void RebootServer_Click(object sender, EventArgs e)
         {
             AddMsg("sending REBOOT_IOBOX");
@@ -123,6 +122,12 @@ namespace EpServerEngineSampleClient
 		{
 			AddMsg("sending SHELL_AND_RENAME");
 			reboot_code = 6;
+		}
+
+		private void button1_Click(object sender, EventArgs e)
+		{
+			int offset = svrcmd.GetCmdIndexI("SERVER_UP");
+			svrcmd.Send_Cmd(offset);
 		}
 	}
 }

@@ -222,6 +222,11 @@ git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEn
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ParamsForm.Designer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ConfigParams.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngineSampleServer/EpServerEngineSampleServer/ServerCmds.cs
+git add	thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ADCForm.Designer.cs
+git add	thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ADCForm.cs
+git add	thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/ADCForm.resx
+git add	thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/adc_list.xml
+git add	thread_io/cs_client/EpServerClient/EpServerEngineSampleClient/EpServerEngineSampleClient/uiformat1.xml
 
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/IocpTcpServer.cs
 git add thread_io/cs_client/EpServerClient/EpServerEngine.cs/EpServerEngine.cs/IocpTcpSocket.cs

@@ -116,7 +116,10 @@ namespace EpServerEngineSampleClient
 			SEND_GPS_ZDA_DATA,
 			SET_GPS_DATA,
 			SET_GPS_BAUDRATE,
-			ENABLE_GPS_SEND_DATA
+			ENABLE_GPS_SEND_DATA,
+			ENABLE_ADC_SEND_DATA,
+			ADC_GATE,
+			SET_ADC_RATE
 		}
 
 		public ServerCmds()

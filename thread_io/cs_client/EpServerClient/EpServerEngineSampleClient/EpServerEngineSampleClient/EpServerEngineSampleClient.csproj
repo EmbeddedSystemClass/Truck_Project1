@@ -78,6 +78,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ADCForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ADCForm.Designer.cs">
+      <DependentUpon>ADCForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="ButtonList.cs" />
     <Compile Include="ChangeDB.cs">
       <SubType>Form</SubType>
@@ -166,6 +172,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>_Client_SQLDataSet.xsd</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ADCForm.resx">
+      <DependentUpon>ADCForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ChangeDB.resx">
       <DependentUpon>ChangeDB.cs</DependentUpon>
     </EmbeddedResource>

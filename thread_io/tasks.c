@@ -42,6 +42,7 @@ pthread_mutex_t     msg_queue_lock=PTHREAD_MUTEX_INITIALIZER;
 int total_count;
 extern int lights_on_delay[13];
 extern int enable_gps_send_data;
+extern int enable_adc_send_data;
 
 UCHAR (*fptr[NUM_TASKS])(int) = { get_host_cmd_task, monitor_input_task, 
 monitor_fake_input_task, timer_task, timer2_task, LCD_serial_queue, 
@@ -354,7 +355,7 @@ void  send_lcd(UCHAR *buf, int size)
 	UCHAR start_byte = AVR_START_BYTE;
 	UCHAR ch = 0;
 	char errmsg[20];
-
+return;
 	pthread_mutex_lock(&serial_write_lock2);
 	for(i = 0;i < size;i++)
 	{
@@ -1061,6 +1062,7 @@ UCHAR LCD_serial_queue(int test)
 
 	k = 0;
 	enable_gps_send_data = 0;
+	enable_adc_send_data = 0;
 
 #ifdef USE_SAMPLE_DATA
 	fp = fopen ("test3.txt", "r");
@@ -1089,6 +1091,16 @@ UCHAR LCD_serial_queue(int test)
 	k = 0;
 	while(TRUE)
 	{
+		usleep(100000);
+		if(shutdown_all)
+			{
+				return 0;
+			}
+		return 1;
+	}
+	if(0)
+	{
+
 
 #ifdef USE_SAMPLE_DATA
 		usleep(1000000);
@@ -1582,7 +1594,7 @@ UCHAR serial_recv_task(int test)
 
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
-//	printString3("server up");
+	printString3("server up");
 
 	while(TRUE)
 	{
@@ -1898,24 +1910,30 @@ UCHAR serial_recv_task(int test)
 			ucbuff[3] = low_byte;
 			send_lcd(ucbuff, 4);
 
-			sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
-						read_serial_buffer[3],read_serial_buffer[4]);
+			if(enable_adc_send_data)
+			{
+				sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
+							read_serial_buffer[3],read_serial_buffer[4]);
 
-			if(test_sock())
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
+				if(test_sock())
+					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
 
-//			printString3(tempx);
+				//printString3(tempx);
+			}
 		}else
 
 		if(cmd == SEND_RT_VALUES3)
 		{
-			sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
-						read_serial_buffer[3],read_serial_buffer[4]);
+			if(enable_adc_send_data)
+			{
+				sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
+							read_serial_buffer[3],read_serial_buffer[4]);
 
-			if(test_sock())
-				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
+				if(test_sock())
+					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
 
-//			printString3(tempx);
+				//printString3(tempx);
+			}
 		}else
 
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)

@@ -18,8 +18,8 @@
 #else
 #define BAUDRATE B115200
 #endif
-#define BAUDRATE2 B19200
-#define BAUDRATE3 B4800
+#define BAUDRATE2 B115200
+#define BAUDRATE3 B115200
 
 #ifdef TS_7800
 #define MODEMDEVICE "/dev/ttyS0"				  // 7800 uses ttyS1 as the 2nd serial port
@@ -371,7 +371,7 @@ char nibbleToHexCharacter(UCHAR nibble)
 void printString2(char *myString)
 {
 	int i = 0;
-	return;
+
 //	if(ps.test_bank == 0)
 	if(1)
 	{

@@ -70,7 +70,8 @@ namespace EpServerEngineSampleClient
         private PortSet2 psDlg6 = null;
         private PlayerDlg playdlg = null;
 		private GPSForm gpsform = null;
-        private Child_Scrolling_List slist = null;
+		private ADCForm adcform = null;
+		private Child_Scrolling_List slist = null;
 
         private List<ClientParams> client_params;
         private int current_button = 0;
@@ -112,8 +113,8 @@ namespace EpServerEngineSampleClient
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             svrcmd.SetClient(m_client);
 			svrcmd2.SetClient(m_client2);
-			//dlgsetparams = new DlgSetParams(cfg_params);
-            //dlgsetparams.SetClient(m_client);
+			dlgsetparams = new DlgSetParams(cfg_params);
+            dlgsetparams.SetClient(m_client);
             cbIPAdress.Enabled = true;
             tbReceived.Enabled = true;
             tbPort.Enabled = true;
@@ -159,6 +160,8 @@ namespace EpServerEngineSampleClient
             playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
 
 			gpsform = new GPSForm("c:\\users\\daniel\\dev\\gps_list.xml",m_client);
+
+			adcform = new ADCForm("c:\\users\\daniel\\dev\\adc_list.xml", m_client);
 
 			slist = new Child_Scrolling_List(m_client);
             slist.Enable_Dlg(false);
@@ -347,7 +350,8 @@ namespace EpServerEngineSampleClient
                 psDlg6.Dispose();
                 playdlg.Dispose();
 				gpsform.Dispose();
-                base.OnClosed(e);
+				adcform.Dispose();
+				base.OnClosed(e);
             }
         }
         public void OnReceived(INetworkClient client, Packet receivedPacket)
@@ -392,6 +396,10 @@ namespace EpServerEngineSampleClient
 			else if (gpsform.Visible == true)
 			{
 				gpsform.Process_Msg(receivedPacket.PacketRaw);
+			}
+			else if (adcform.Visible == true)
+			{
+				adcform.Process_Msg(receivedPacket.PacketRaw);
 			}
 			else
 				Process_Msg(receivedPacket.PacketRaw);
@@ -596,32 +604,6 @@ namespace EpServerEngineSampleClient
                 case "SEND_MPH":
                     tbMPH.Text = ret;           // comment out for debug
                     break;
-
-				case "SEND_ADCS1":
-					string[] words2 = ret.Split(' ');
-					i = 0;
-					foreach(var word in words2)
-					{
-						switch(i)
-						{
-							case 0:
-								tbADC1.Text = word;
-								break;
-							case 1:
-								tbADC2.Text = word;
-								break;
-							case 2:
-								tbADC3.Text = word;
-								break;
-							case 3:
-								tbADC4.Text = word;
-								break;
-							default:
-								break;
-						}
-						i++;
-					}
-					break;
 
                 case "SEND_CONFIG":
                     string[] words = ret.Split(' ');
@@ -1056,15 +1038,36 @@ namespace EpServerEngineSampleClient
         }
         private void SetParamsClick(object sender, EventArgs e)
         {
-			/*
-			dlgsetparams = new DlgSetParams(cfg_params);
-			dlgsetparams.SetParams(cfg_params);
-			dlgsetparams.SetClient(m_client);
-			AddMsg(cfg_params.engine_temp_limit.ToString());
-			dlgsetparams.ShowDialog(this);
-			*/
-			int offset = svrcmd.GetCmdIndexI("SERVER_UP");
-			svrcmd.Send_Cmd(offset);
+			byte[] param = new byte[4];
+			byte[] bytes = new byte[6];
+			adcform.Enable_Dlg(true);
+			adcform.StartPosition = FormStartPosition.Manual;
+			adcform.Location = new Point(100, 10);
+			param = BitConverter.GetBytes(1);   // turn adc sending on
+												//System.Buffer.BlockCopy(src, src_offset, dest, dest_offset,count)
+			AddMsg(param.Length.ToString() + " " + bytes.Length.ToString());
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			bytes[0] = svrcmd.GetCmdIndexB("ENABLE_ADC_SEND_DATA");
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			if (m_client.IsConnectionAlive)
+			{
+				m_client.Send(packet);
+			}
+			if (adcform.ShowDialog(this) == DialogResult.OK)
+			{
+			}
+			else
+			{
+			}
+			adcform.Enable_Dlg(false);
+			param = BitConverter.GetBytes(0);// turn adc sending off
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			bytes[0] = svrcmd.GetCmdIndexB("ENABLE_ADC_SEND_DATA");
+			packet = new Packet(bytes, 0, bytes.Count(), false);
+			if (m_client.IsConnectionAlive)
+			{
+				m_client.Send(packet);
+			}
 		}
 		private void btnAVR_Click(object sender, EventArgs e)
         {

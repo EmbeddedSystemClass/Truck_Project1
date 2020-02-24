@@ -32,6 +32,7 @@
 
 extern int engine_running;
 int enable_gps_send_data;
+int enable_adc_send_data;
 extern pthread_mutex_t     tcp_read_lock;
 extern pthread_mutex_t     tcp_write_lock;
 
@@ -52,7 +53,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[106] =
+CMD_STRUCT cmd_array[108] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -159,7 +160,9 @@ CMD_STRUCT cmd_array[106] =
 	{	SET_GPS_DATA,"SET_GPS_DATA\0" },
 	{	SET_GPS_BAUDRATE,"SET_GPS_BAUDRATE\0" },
 	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" },
-	{	ADC_GATE,"ADC_GATE\0" }
+	{	ENABLE_ADC_SEND_DATA,"ENABLE_ADC_SEND_DATA\0" },
+	{	ADC_GATE,"ADC_GATE\0" },
+	{	SET_ADC_RATE,"SET_ADC_RATE\0" }
 };
 
 //extern illist_t ill;
@@ -280,9 +283,8 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.30\0";
+	char version[15] = "sched v1.31\0";
 	UINT utemp;
-	static UCHAR send_adc = 0;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 
@@ -378,6 +380,7 @@ UCHAR get_host_cmd_task(int test)
 			{
 //				printf("bad msg\r\n");
 				cmd = BAD_MSG;
+				usleep(10000);
 			}else
 			{
 				rc = recv_tcp(&msg_buf[0],msg_len,1);
@@ -409,7 +412,7 @@ UCHAR get_host_cmd_task(int test)
 				cmd != SCROLL_UP && cmd > 0)
 //					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
 				myprintf2(cmd_array[cmd].cmd_str,cmd);
-#if 0
+//#if 0
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
@@ -418,7 +421,7 @@ UCHAR get_host_cmd_task(int test)
 				//printf("%s\r\n",tempx);
 //				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 			}
-#endif
+//#endif
 			if(cmd > 0)
 			{
 				rc = 0;
@@ -1050,19 +1053,96 @@ UCHAR get_host_cmd_task(int test)
 						enable_gps_send_data = (int)utemp;
 						break;
 
-					case ADC_GATE:
-						if(send_adc == 1)
+					case ENABLE_ADC_SEND_DATA:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						enable_adc_send_data = (int)utemp;
+						//sprintf(tempx,"enable_adc_send_data: %d",enable_adc_send_data);
+						//printString3(tempx);
+
+						if(enable_adc_send_data == 0)
+						{
+							write_serial_buffer[0] = 0;
+						}
+						else
 						{
 							write_serial_buffer[0] = 0xFF;
-							send_adc = 0;
+						}
+						send_serialother(ADC_GATE, &write_serial_buffer[0]);
+						printString3(tempx);						
+						break;
+
+					case ADC_GATE:
+						if(enable_adc_send_data == 0)
+						{
+							write_serial_buffer[0] = 0xFF;
+							enable_adc_send_data = 1;
 						}
 						else
 						{
 							write_serial_buffer[0] = 0;
-							send_adc = 1;
+							enable_adc_send_data = 0;
 						}
 						send_serialother(ADC_GATE, &write_serial_buffer[0]);
-						sprintf(tempx,"send ADC_GATE: %d",send_adc);
+						sprintf(tempx,"send ADC_GATE: %d",enable_adc_send_data);
+						printString3(tempx);
+						break;
+
+					case SET_ADC_RATE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						switch(utemp)
+						{
+							case 1000:
+								write_serial_buffer[0] = 0x7F;
+								write_serial_buffer[1] = 0xFF;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 500:
+								write_serial_buffer[0] = 0x0F;
+								write_serial_buffer[1] = 0xFF;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 250:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0xFF;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 125:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0x7F;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 75:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0x3F;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 30:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0x1F;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 20:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0x0F;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							case 10:
+								write_serial_buffer[0] = 0;
+								write_serial_buffer[1] = 0x07;
+								write_serial_buffer[2] = 0xFF;
+							break;
+							default:
+								write_serial_buffer[0] = 0x7F;
+								write_serial_buffer[1] = 0xFF;
+								write_serial_buffer[2] = 0xFF;
+							break;
+						}
+						send_serialother(SET_ADC_RATE, &write_serial_buffer[0]);
+						sprintf(tempx,"%d %02x %02x %02x",utemp, write_serial_buffer[0], write_serial_buffer[1],write_serial_buffer[1]);
 						printString3(tempx);
 						break;
 

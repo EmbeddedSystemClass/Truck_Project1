@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Table>
+	<GPSlist>
+		<Name>GGA</Name>
+		<index>0</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>GLL</Name>
+		<index>1</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>GSA</Name>
+		<index>2</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>GSV</Name>
+		<index>3</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>RMC</Name>
+		<index>4</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>VTG</Name>
+		<index>5</index>
+		<update_rate>0</update_rate>
+		<selected>true</selected>
+	</GPSlist>
+	<GPSlist>
+		<Name>ZDA</Name>
+		<index>6</index>
+		<update_rate>0</update_rate>
+		<selected>false</selected>
+	</GPSlist>
+</Table>

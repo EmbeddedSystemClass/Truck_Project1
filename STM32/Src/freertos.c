@@ -757,7 +757,7 @@ void StartRecv7200(void const * argument)
 		cmd = buff[0];
 
 		if((cmd >= ENABLE_START && cmd <= WIPER_OFF) || cmd == SERVER_UP || 
-				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || cmd == ADC_GATE)
+				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || cmd == ADC_GATE || cmd == SET_ADC_RATE)
 		{
 			switch (cmd)
 			{
@@ -983,16 +983,19 @@ void StartRecv7200(void const * argument)
 
 				case ADC_GATE:
 					ucbuff[0] = ADC_CTL;
-					if(send_adc == 0)
-					{
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					if(buff[1] > 0)
 						send_adc = 1;
-						ucbuff[1] = 0xFF;
-					}
-					else
-					{
-						send_adc = 0;
-						ucbuff[1] = 0;
-					}
+					else send_adc = 0;
+					break;
+
+				case SET_ADC_RATE:
+					ucbuff[0] = SET_ADC_RATE2;
+					ucbuff[1] = buff[1];
+					ucbuff[2] = buff[2];
+					ucbuff[3] = buff[3];
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(SendFPGAHandle,avr_buffer,0);
 					break;
