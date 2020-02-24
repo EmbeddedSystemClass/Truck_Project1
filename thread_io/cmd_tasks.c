@@ -52,7 +52,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[105] =
+CMD_STRUCT cmd_array[106] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -158,7 +158,8 @@ CMD_STRUCT cmd_array[105] =
 	{	SEND_GPS_ZDA_DATA,"SEND_GPS_ZDA_DATA\0" },
 	{	SET_GPS_DATA,"SET_GPS_DATA\0" },
 	{	SET_GPS_BAUDRATE,"SET_GPS_BAUDRATE\0" },
-	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" }
+	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" },
+	{	ADC_GATE,"ADC_GATE\0" }
 };
 
 //extern illist_t ill;
@@ -279,8 +280,9 @@ UCHAR get_host_cmd_task(int test)
 	serial_recv_on = 1;
 //	time_set = 0;
 	shutdown_all = 0;
-	char version[15] = "sched v1.28\0";
+	char version[15] = "sched v1.30\0";
 	UINT utemp;
+	static UCHAR send_adc = 0;
 //	UCHAR time_buffer[20];
 	UCHAR write_serial_buffer[SERIAL_BUFF_SIZE];
 
@@ -412,8 +414,8 @@ UCHAR get_host_cmd_task(int test)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
 				//printString2(tempx);
-				//printString3(tempx);
-				printf("%s\r\n",tempx);
+				printString3(tempx);
+				//printf("%s\r\n",tempx);
 //				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 			}
 #endif
@@ -1046,6 +1048,22 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						enable_gps_send_data = (int)utemp;
+						break;
+
+					case ADC_GATE:
+						if(send_adc == 1)
+						{
+							write_serial_buffer[0] = 0xFF;
+							send_adc = 0;
+						}
+						else
+						{
+							write_serial_buffer[0] = 0;
+							send_adc = 1;
+						}
+						send_serialother(ADC_GATE, &write_serial_buffer[0]);
+						sprintf(tempx,"send ADC_GATE: %d",send_adc);
+						printString3(tempx);
 						break;
 
 					case EXIT_PROGRAM:

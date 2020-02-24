@@ -326,6 +326,7 @@ package CommonPckg is
 	constant TUNE_OFF: std_logic_vector(7 downto 0):= X"08";
 	constant LOAD_TUNE: std_logic_vector(7 downto 0):= X"09";
 	constant SHOW_DOWNLOAD: std_logic_vector(7 downto 0):= X"0A";
+	constant ADC_CTL: std_logic_vector(7 downto 0):= X"0B";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";
@@ -368,7 +369,7 @@ package CommonPckg is
 	type tune_array is array(0 to MAX_TUNE_LEN-1, 0 to 2) of integer range 0 to 95;
 	type dl_array is array(0 to 25) of std_logic_vector(7 downto 0);
 	type led_array is array(0 to 8) of std_logic_vector(7 downto 0);
-	type mcp_array is array(0 to 4) of std_logic_vector(7 downto 0);
+	type mcp_array is array(0 to 9) of std_logic_vector(7 downto 0);
 	
 	type dtmf_array is array(0 to 1) of std_logic_vector(19 downto 0);
 	type data_queue is array(0 to 100) of std_logic_vector(7 downto 0);

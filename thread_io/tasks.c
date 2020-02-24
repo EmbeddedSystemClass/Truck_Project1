@@ -1461,9 +1461,6 @@ UCHAR LCD_serial_queue(int test)
 					break;
 			}
 		}
-
-		//printf("\r\n");
-
 		if(shutdown_all)
 		{
 			return 0;
@@ -1519,7 +1516,8 @@ UCHAR serial_recv_task(int test)
 
 	//printString2("trying to open comm3");
 
-	if(fd = init_serial3(ps.baudrate3) < 0)
+//	if(fd = init_serial3(ps.baudrate3) < 0)
+	if(fd = init_serial3(5) < 0)
 	{
 		//myprintf1("can't open comm port 3");
 		printf("can't open comm port 3");
@@ -1584,7 +1582,7 @@ UCHAR serial_recv_task(int test)
 
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
-	//printString3("server up");
+//	printString3("server up");
 
 	while(TRUE)
 	{
@@ -1731,15 +1729,6 @@ UCHAR serial_recv_task(int test)
 				default:
 					break;
 			}
-/*
-			ucbuff[0] = DISPLAY_STR;
-			ucbuff[1] = rtlabel_str[i].row;
-			ucbuff[2] = rtlabel_str[i].col;
-			memcpy(ucbuff+3,tempx,strlen(tempx));
-			send_lcd(ucbuff,strlen(tempx)+4);
-			sprintf(tempx,"%d %d",i,rtlabel_str[i].row);
-			printString3(tempx);
-*/
 		}
 /*
 				case KP_A:
@@ -1862,7 +1851,9 @@ UCHAR serial_recv_task(int test)
 			temp >>= 8;
 			ucbuff[3] = (UCHAR)temp; 
 			send_lcd(ucbuff, 5);
-			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+			sprintf(tempx,"%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+//			printString3("start:");
+//			printString3(tempx);
 
 			ucbuff[0] = SEND_INT_RT_VALUES;
 			ucbuff[1] = rtlabel_str[MPH].row;
@@ -1872,7 +1863,8 @@ UCHAR serial_recv_task(int test)
 			temp >>= 8;
 			ucbuff[3] = (UCHAR)temp; 
 			send_lcd(ucbuff, 5);
-			//printf("%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+			sprintf(tempx,"%02x %02x\r\n",ucbuff[3], ucbuff[4]);
+//			printString3(tempx);
 
 		}else
 
@@ -1912,7 +1904,7 @@ UCHAR serial_recv_task(int test)
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
 
-			//printString3(tempx);
+//			printString3(tempx);
 		}else
 
 		if(cmd == SEND_RT_VALUES3)
@@ -1923,7 +1915,7 @@ UCHAR serial_recv_task(int test)
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
 
-			//printString3(tempx);
+//			printString3(tempx);
 		}else
 
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
@@ -2309,7 +2301,7 @@ UCHAR basic_controls_task(int test)
 //			case ESTOP_SIGNAL:
 				//send_serialother(cmd,tempx);
 //				myprintf1(cmd_array[cmd].cmd_str);
-				//printString3(cmd_array[cmd].cmd_str);
+//				printString3(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);

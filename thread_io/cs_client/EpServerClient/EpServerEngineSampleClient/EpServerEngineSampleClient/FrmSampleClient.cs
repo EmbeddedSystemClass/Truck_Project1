@@ -1318,6 +1318,7 @@ namespace EpServerEngineSampleClient
                     please_lets_disconnect = 2;     // next time around disconnect anyway
                     break;
                 case 2:         // then wait 1 second to see if it really did disconnect us
+					
                     System.Media.SoundPlayer player;
                     string song = "";
                     switch (drake)
@@ -1349,6 +1350,7 @@ namespace EpServerEngineSampleClient
                     player.Play();
                     player.Dispose();
                     //drake_img.Visible = false;
+					
                     break;
             }
 

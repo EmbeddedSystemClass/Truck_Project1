@@ -92,7 +92,7 @@ architecture truck_arch of multi_byte is
 	type state_mcp is (mcp_idle, mcp_start1, mcp_start2, mcp_done);
 	signal mcp_reg, mcp_next: state_mcp;
 
-	signal time_delay_reg, time_delay_next: unsigned(24 downto 0);		-- send_uart1
+	signal time_delay_reg, time_delay_next: unsigned(25 downto 0);
 	signal time_delay_reg3, time_delay_next3: unsigned(27 downto 0);
 	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);
 	signal time_delay_reg1, time_delay_next1: unsigned(24 downto 0);
@@ -116,7 +116,7 @@ architecture truck_arch of multi_byte is
 	signal done_rpm, done_mph: std_logic;
 	signal stlv_duty_cycle2: std_logic_vector(5 downto 0);
 	signal sPort, sPort2: unsigned(7 downto 0);
-	signal download: dl_array;
+	signal download: dl_array;	-- array(0 to 25) of std_logic_vector(7 downto 0);
 	signal upload: dl_array;
 	signal LED_cmd: std_logic_vector(7 downto 0);
 --	signal uLED_cmd: unsigned(7 downto 0);
@@ -140,6 +140,7 @@ architecture truck_arch of multi_byte is
 	signal done_mcp: std_logic;
 	signal mcp_results: mcp_array;
 	signal compact: std_logic;
+	signal adc_gate: std_logic;
 
 begin
 
@@ -305,7 +306,6 @@ begin
 end process;
 -- ********************************************************************************
 pport_unit: process(clk, reset, pport_reg)
-variable temp: integer range 0 to 255:= 0;
 begin
 	if reset = '0' then
 		pport_reg <= pp_idle;
@@ -362,14 +362,14 @@ begin
 				skip <= not skip;
 				if skip = '1' then
 					sPort <= sPort + 1;
-					if sPort > 13 then
+					if sPort > 14 then
 						sPort <= (others=>'0');
 					end if;
 				end if;
 				pport_next <= pp_start2;
 
 			when pp_start2 =>
-				if time_delay_reg > TIME_DELAY7 then
+				if time_delay_reg > TIME_DELAY8b then
  					time_delay_next <= (others=>'0');
 					PP_CS <= '0';
 					pport_next <= pp_done;
@@ -383,23 +383,24 @@ begin
 				end if;
 
 			when pp_done2 =>
-				if time_delay_reg > TIME_DELAY8b then
+				if time_delay_reg > TIME_DELAY7 then
 					time_delay_next <= (others=>'0');
-					temp := conv_integer(sPort);
 					upload(1) <= rpm_result(7 downto 0);
 					upload(2) <= rpm_result(15 downto 8);
 					upload(3) <= mph_result(7 downto 0);
 					upload(4) <= mph_result(15 downto 8);
-					upload(5) <= mcp_results(0);
-					upload(6) <= mcp_results(1);
-					upload(7) <= mcp_results(2);
-					upload(8) <= mcp_results(3);
-					upload(9) <= mcp_results(4);
-					upload(10) <= mcp_results(5);
-					upload(11) <= mcp_results(6);
-					upload(12) <= mcp_results(7);
-					upload(13) <= mcp_results(8);	-- these not used because compact = 1 for now
-					upload(14) <= mcp_results(9);	--  "
+					if adc_gate = '1' then
+						upload(5) <= mcp_results(0);
+						upload(6) <= mcp_results(1);
+						upload(7) <= mcp_results(2);
+						upload(8) <= mcp_results(3);
+						upload(9) <= mcp_results(4);
+						upload(10) <= mcp_results(5);
+						upload(11) <= mcp_results(6);
+						upload(12) <= mcp_results(7);
+						upload(13) <= mcp_results(8);	-- these not used because compact = 1 for now
+						upload(14) <= mcp_results(9);	--  "
+					end if;
 					pport_next <= pp_idle;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -501,11 +502,12 @@ begin
 		special <= '0';
 		dtmf_index <= (others=>'0');
 --		stdlv_transmit_update_rate <=  X"1FFFFF";
-		led1 <= "1111";
+--		led1 <= "1111";
 		start_pwm2 <= '0';
 		key_len <= X"14";
 		stlv_duty_cycle2 <= "111111";
 		tune1 <= load_tune_array(tune1);
+		adc_gate <= '0';
 
 	elsif clk'event and clk = '1' then
 		case main_reg1 is
@@ -513,8 +515,8 @@ begin
 --				reset_rev_limits <= '0';
 				if start_calc = '1' then
 --					led1 <= download(0)(3 downto 0);	-- first param is download(0)
-					led1 <= mcmd(3 downto 0);
-				
+--					led1 <= mcmd(3 downto 0);
+--					led1 <= mcmd(3 downto 0);
 					case mcmd is
 						when SET_UPDATE_RATE =>
 --							stdlv_transmit_update_rate <= mparam & X"FFFF";
@@ -552,6 +554,9 @@ begin
 							tune1 <= load_tune_array(tune1);
 							main_next1 <= do_mcmd;
 --							led1 <= "0111";
+						when ADC_CTL =>
+							adc_gate <= download(0)(0);
+							main_next1 <= do_mcmd;
 						when others =>
 --							main_next1 <= idle1a;
 							main_next1 <= other_cmd;
@@ -621,14 +626,20 @@ begin
 		time_delay_next5 <= (others=>'0');
 		start_mcp <= '0';
 		compact <= '1';
+		led1 <= "1111";
 
 	else if clk'event and clk = '1' then
 		case mcp_reg is
 			when mcp_idle =>
-				if time_delay_reg5 > TIME_DELAY7 then
+				if time_delay_reg5 > TIME_DELAY8c then
 					time_delay_next5 <= (others=>'0');
-					mcp_next <= mcp_start1;
-					start_mcp <= '1';
+					if adc_gate = '1' then
+						start_mcp <= '1';
+						mcp_next <= mcp_start1;
+					else
+						mcp_next <= mcp_idle;
+					end if;	
+					led1 <= "0111";
 				else
 					time_delay_next5 <= time_delay_reg5 + 1;
 				end if;
@@ -637,10 +648,17 @@ begin
 				start_mcp <= '0';
 				if done_mcp = '1' then
 					mcp_next <= mcp_start2;
+					led1 <= "1011";
 				end if;
 
 			when mcp_start2 =>
-				mcp_next <= mcp_done;
+				if time_delay_reg5 > TIME_DELAY8c then
+					time_delay_next5 <= (others=>'0');
+					mcp_next <= mcp_done;
+					led1 <= "1101";
+				else
+					time_delay_next5 <= time_delay_reg5 + 1;
+				end if;
 
 			when mcp_done =>
 				mcp_next <= mcp_idle;

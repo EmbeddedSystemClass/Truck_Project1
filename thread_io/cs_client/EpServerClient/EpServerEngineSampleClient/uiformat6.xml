@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>					<!-- Settings One dialog -->
-		<Label>LCD Scroll Up</Label>
-		<Command>50</Command>
-		<Length>1</Length>
+		<Label>Home Server</Label>
+		<Command>102</Command>
+		<Length>2</Length>
 	</UIFormat>
 	<UIFormat>
 		<Label>LCD Scroll Down</Label>
@@ -42,12 +42,12 @@
 	</UIFormat>
 	<UIFormat>
 		<Label>Test Left Blinker</Label>
-		<Command>59</Command>
+		<Command>42</Command>
 		<Length>1</Length>
 	</UIFormat>
 	<UIFormat>
 		<Label>Test Right Blinker</Label>
-		<Command>60</Command>
+		<Command>43</Command>
 		<Length>1</Length>
 	</UIFormat>
 </Table>

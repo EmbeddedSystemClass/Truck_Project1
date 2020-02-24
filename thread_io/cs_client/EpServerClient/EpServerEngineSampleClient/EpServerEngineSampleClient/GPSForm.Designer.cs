@@ -172,7 +172,7 @@
 			this.tbLatt.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbLatt.Location = new System.Drawing.Point(82, 226);
 			this.tbLatt.Name = "tbLatt";
-			this.tbLatt.Size = new System.Drawing.Size(100, 31);
+			this.tbLatt.Size = new System.Drawing.Size(111, 31);
 			this.tbLatt.TabIndex = 19;
 			// 
 			// tbLong
@@ -180,7 +180,7 @@
 			this.tbLong.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.tbLong.Location = new System.Drawing.Point(82, 276);
 			this.tbLong.Name = "tbLong";
-			this.tbLong.Size = new System.Drawing.Size(100, 29);
+			this.tbLong.Size = new System.Drawing.Size(111, 29);
 			this.tbLong.TabIndex = 20;
 			// 
 			// tbNextWP

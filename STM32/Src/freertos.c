@@ -134,6 +134,7 @@ static uint16_t blower3_temp = 45;
 static uint16_t blower_en_temp = 70;
 static uint16_t batt_box_temp = 75;
 static int blower_on_countdown = 5;
+static int send_adc = 0;
 //static uint16_t lights_on_delay = 5;	// default is 3 seconds
 //static UCHAR key_mode1, key_mode2;
 static int server_up = 0;
@@ -756,7 +757,7 @@ void StartRecv7200(void const * argument)
 		cmd = buff[0];
 
 		if((cmd >= ENABLE_START && cmd <= WIPER_OFF) || cmd == SERVER_UP || 
-				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2)
+				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || cmd == ADC_GATE)
 		{
 			switch (cmd)
 			{
@@ -980,6 +981,22 @@ void StartRecv7200(void const * argument)
 					}
 					break;
 
+				case ADC_GATE:
+					ucbuff[0] = ADC_CTL;
+					if(send_adc == 0)
+					{
+						send_adc = 1;
+						ucbuff[1] = 0xFF;
+					}
+					else
+					{
+						send_adc = 0;
+						ucbuff[1] = 0;
+					}
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
 				default:
 					break;
 			}
@@ -1118,7 +1135,7 @@ void StartRecvFPGA(void const * argument)
 	GPIO_PinState state;
 	uint64_t avr_buffer[5];
 	UCHAR ucbuff[8];
-	UCHAR buff[13];
+	UCHAR buff[25];
 	int frame_ptr;
 
 //	UINT rpm, mph;
@@ -1205,23 +1222,27 @@ void StartRecvFPGA(void const * argument)
 			}
 				//vTaskDelay(100);
 
-			ucbuff[0] = SEND_RT_VALUES2;	// the 1st 4 MCP ADC values
-			ucbuff[1] = buff[4];
-			ucbuff[2] = buff[5];
-			ucbuff[3] = buff[6];
-			ucbuff[4] = buff[7];
+			if(send_adc == 1)
+			{
+				ucbuff[0] = SEND_RT_VALUES2;	// the 1st 4 MCP ADC values
+				ucbuff[1] = buff[4];
+				ucbuff[2] = buff[5];
+				ucbuff[3] = buff[6];
+				ucbuff[4] = buff[7];
 
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(Send7200Handle, avr_buffer, 0);
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
 
-			ucbuff[0] = SEND_RT_VALUES3;	// the 2nd 4 MCP ADC values
-			ucbuff[1] = buff[8];
-			ucbuff[2] = buff[9];
-			ucbuff[3] = buff[10];
-			ucbuff[4] = buff[11];
+				ucbuff[0] = SEND_RT_VALUES3;	// the 2nd 4 MCP ADC values
+				ucbuff[1] = buff[8];
+				ucbuff[2] = buff[9];
+				ucbuff[3] = buff[10];
+				ucbuff[4] = buff[11];
+				avr_buffer[0] = pack64(ucbuff);
+				xQueueSend(Send7200Handle, avr_buffer, 0);
+			}
 
-			avr_buffer[0] = pack64(ucbuff);
-			xQueueSend(Send7200Handle, avr_buffer, 0);
+			//memset(buff,0x30,sizeof(buff));
 		}else
 		{
 //			buff[frame_ptr] = (xbyte & 0x7F);		// test for broken wire (in this case bit 7)

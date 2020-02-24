@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Table>
 	<UIFormat>					<!-- Settings One dialog -->
-		<Label>LCD Scroll Up</Label>
-		<Command>50</Command>
+		<Label>Toggle ADC</Label>
+		<Command>105</Command>
 		<Length>1</Length>
 	</UIFormat>
 	<UIFormat>

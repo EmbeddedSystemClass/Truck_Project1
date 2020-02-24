@@ -149,6 +149,7 @@ int write_serial2(UCHAR byte)
 {
 	int res = -1;
 //	if(ps.test_bank == 0)
+	return -1;
 	if(1)
 	{
 		res = write(global_handle2, &byte, 1);
@@ -228,7 +229,7 @@ UCHAR read_serial2(char *errmsg)
 		res = read(global_handle2,&byte,1);
 		if(res < 0)
 		{
-			printf("\nread error: %s\n",strerror(errno));
+			printf("\r\nread error: %s\r\n",strerror(errno));
 			strcpy(errmsg,strerror(errno));
 		}
 	}
@@ -242,7 +243,7 @@ UCHAR read_serial3(char *errmsg)
 	res = read(global_handle3,&byte,1);
 	if(res < 0)
 	{
-		printf("\nread error: %s\n",strerror(errno));
+		printf("\r\nread error: %s\r\n",strerror(errno));
 		strcpy(errmsg,strerror(errno));
 	}
 	return byte;
@@ -307,7 +308,7 @@ int init_serial3(int baudrate)
 			actual_baudrate = B38400;
 			break;
 		default:
-			actual_baudrate = B4800;
+			actual_baudrate = B115200;
 			break;
 	}
 	if(1)
@@ -388,7 +389,6 @@ void printString2(char *myString)
 void printString3(char *myString)
 {
 	int i = 0;
-	return;
 //	if(ps.test_bank == 0)
 	if(1)
 	{
