@@ -100,10 +100,17 @@ FORMAT_STR status_label_str[NUM_STATUS_LABELS];
 static double curtime(void)
 {
 	struct timeval tv;
-	gettimeofday (&tv, NULL);
-	return tv.tv_sec + tv.tv_usec / 1000000.0;
+	if(gettimeofday (&tv, NULL) == 0)
+		return tv.tv_sec + tv.tv_usec / 1000000.0;
+	else return 0.0;
 }
-
+/*
+ clock_t start = clock();
+   //... do work here
+   clock_t end = clock();
+   double time_elapsed_in_seconds = (end - start)/(double)CLOCKS_PER_SEC;
+   return 0;
+*/
 /****************************************************************************************************/
 void init_ips(void)
 {
@@ -307,20 +314,13 @@ static void set_output(O_DATA *otp, int onoff)
 void send_serial(UCHAR cmd)
 {
 	int i;
-//	UCHAR buffer[21];
-// send what just changed to the PIC24/AVR to dispaly on screen
-//	memset(buffer,0,sizeof(buffer));
 	pthread_mutex_lock( &serial_write_lock);
+
 	write_serial(cmd);
-/*
 	for(i = 0;i < SERIAL_BUFF_SIZE;i++)
 	{
-		if(i == 10)
-			write_serial(SYSTEM_UP);
-		else
-			write_serial(0);
+		write_serial(0);
 	}
-*/
 	pthread_mutex_unlock(&serial_write_lock);
 }
 /*********************************************************************/
@@ -756,12 +756,12 @@ UCHAR timer_task(int test)
 {
 	int i;
 	UCHAR time_buffer[20];
-	char tempx[20];
+	char tempx[SERIAL_BUFF_SIZE];
 	int index = 0;
 	int bank = 0;
 	int fp;
 	UCHAR mask;
-	time_t curtime2;
+//	time_t curtime2;
 	struct timeval mtv;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
@@ -1489,6 +1489,7 @@ UCHAR serial_recv_task(int test)
 	int i = 0;
 	int j = 0;
 	int k = 0;
+	int s;
 	UCHAR ch, ch2;
 	UCHAR cmd;
 	UCHAR low_byte, high_byte;
@@ -1496,8 +1497,7 @@ UCHAR serial_recv_task(int test)
 	int fd;
 	char errmsg[20];
 	char tempx[30];
-	UCHAR send_buffer[15];
-	int s;
+	UCHAR send_buffer[SERIAL_BUFF_SIZE];
 	UINT temp;
 	UCHAR ucbuff[6];
 	int brights = 0;
@@ -1594,6 +1594,7 @@ UCHAR serial_recv_task(int test)
 
 	// send msg to STM32 so it can play a set of beeps & blips
 	send_serialother(SERVER_UP,&send_buffer[0]);
+
 	printString3("server up");
 
 	while(TRUE)
@@ -1917,9 +1918,10 @@ UCHAR serial_recv_task(int test)
 
 				if(test_sock())
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS1);
+				printString3(tempx);
 
-				//printString3(tempx);
 			}
+
 		}else
 
 		if(cmd == SEND_RT_VALUES3)
@@ -1929,10 +1931,10 @@ UCHAR serial_recv_task(int test)
 				sprintf(tempx, "%02x %02x %02x %02x", read_serial_buffer[1], read_serial_buffer[2],
 							read_serial_buffer[3],read_serial_buffer[4]);
 
-				if(test_sock())
-					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
+//				if(test_sock())
+//					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,SEND_ADCS2);
 
-				//printString3(tempx);
+//				printString3(tempx);
 			}
 		}else
 
@@ -2696,7 +2698,7 @@ UCHAR basic_controls_task(int test)
 					green_led(0);
 				}
 #endif
-				send_serial(SERVER_DOWN);
+				send_serialother(SERVER_DOWN,(UCHAR *)tempx);
 				myprintf1("shutdown iobox\0");
 //				printf("shutdown iobox\r\n");
 				//printString2("shutdown iobox");
@@ -2716,7 +2718,7 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case REBOOT_IOBOX:
-				send_serial(SERVER_DOWN);
+				send_serialother(SERVER_DOWN,(UCHAR *)tempx);
 
 #if 0
 				setdioline(7,1);
@@ -2755,21 +2757,19 @@ UCHAR basic_controls_task(int test)
 				break;
 
 			case UPLOAD_NEW:
-				send_serial(SERVER_DOWN);
+				send_serialother(SERVER_DOWN,(UCHAR *)tempx);
 				shutdown_all = 1;
 				reboot_on_exit = 4;
 				break;
 
 			case UPLOAD_NEW_PARAM:
-				send_serial(SERVER_DOWN);
-				//printf("upload new param...\r\n");
+				send_serialother(SERVER_DOWN,(UCHAR *)tempx);				//printf("upload new param...\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 5;
 				break;
 
 			case SHELL_AND_RENAME:
-				send_serial(SERVER_DOWN);
-				//printString3("shell and rename...\r\n");
+				send_serialother(SERVER_DOWN,(UCHAR *)tempx);				//printString3("shell and rename...\r\n");
 				shutdown_all = 1;
 				reboot_on_exit = 6;
 				break;

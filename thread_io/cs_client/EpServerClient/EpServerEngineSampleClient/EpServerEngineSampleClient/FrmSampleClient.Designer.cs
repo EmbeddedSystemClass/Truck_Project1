@@ -377,6 +377,7 @@
 			// btnStopSerial
 			// 
 			this.btnStopSerial.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+			this.btnStopSerial.Enabled = false;
 			this.btnStopSerial.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.btnStopSerial.Location = new System.Drawing.Point(266, 112);
 			this.btnStopSerial.Name = "btnStopSerial";

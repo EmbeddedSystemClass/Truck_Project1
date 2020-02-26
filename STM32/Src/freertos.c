@@ -138,7 +138,6 @@ static int send_adc = 0;
 //static uint16_t lights_on_delay = 5;	// default is 3 seconds
 //static UCHAR key_mode1, key_mode2;
 static int server_up = 0;
-
 //static UCHAR buff[SERIAL_BUFF_SIZE+1];
 static int timer_toggle;
 static int blower_on;
@@ -745,7 +744,7 @@ void StartRecv7200(void const * argument)
 //	UCHAR tone;
 	test_rise_temp = 0;
 	too_high_flag = 0;
-	UCHAR ucbuff[8];
+	UCHAR ucbuff[10];
 
 	/* Infinite loop */
 	vTaskDelay(1000);
@@ -757,7 +756,9 @@ void StartRecv7200(void const * argument)
 		cmd = buff[0];
 
 		if((cmd >= ENABLE_START && cmd <= WIPER_OFF) || cmd == SERVER_UP || 
-				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || cmd == ADC_GATE || cmd == SET_ADC_RATE)
+				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || 
+				cmd == ADC_GATE || cmd == SET_ADC_RATE || cmd == SET_FPGA_RATE || 
+				cmd == SET_RPM_MPH_RATE)
 		{
 			switch (cmd)
 			{
@@ -779,6 +780,7 @@ void StartRecv7200(void const * argument)
 					break;
 
 				case SERVER_UP:
+
 					engine_temp_limit = (uint16_t)buff[2];
 					engine_temp_limit <<= 8;
 					engine_temp_limit |= (uint16_t)buff[1];
@@ -887,6 +889,10 @@ void StartRecv7200(void const * argument)
 					break;
 
 				case SEND_CONFIG2:
+					utemp = (uint16_t)buff[2];
+					utemp <<= 8;
+					utemp |= (uint16_t)buff[1];
+
 					fan_on_temp = (uint16_t)buff[2];
 					fan_on_temp <<= 8;
 					fan_on_temp |= (uint16_t)buff[1];
@@ -994,8 +1000,20 @@ void StartRecv7200(void const * argument)
 				case SET_ADC_RATE:
 					ucbuff[0] = SET_ADC_RATE2;
 					ucbuff[1] = buff[1];
-					ucbuff[2] = buff[2];
-					ucbuff[3] = buff[3];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
+				case SET_FPGA_RATE:
+					ucbuff[0] = SET_FPGA_SEND_UPDATE_RATE;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
+				case SET_RPM_MPH_RATE:
+					ucbuff[0] = SET_RPM_MPH_UPDATE_RATE;
+					ucbuff[1] = buff[1];
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(SendFPGAHandle,avr_buffer,0);
 					break;
@@ -1162,6 +1180,9 @@ void StartRecvFPGA(void const * argument)
 	for(;;)
 	{
 
+		if(server_up > 0)
+		{
+
 		do {
 			state = HAL_GPIO_ReadPin(GPIOA,PP_CS_Pin);
 		}while(state != GPIO_PIN_SET);
@@ -1256,6 +1277,7 @@ void StartRecvFPGA(void const * argument)
 		vTaskDelay(5);
 		HAL_GPIO_WritePin(GPIOA, PP_ACK_Pin, GPIO_PIN_RESET);
 		xbyte = 0;
+		}else vTaskDelay(1000);
 	}
   /* USER CODE END StartRecvFPGA */
 }
@@ -1379,6 +1401,7 @@ void Callback01(void const * argument)
 
 		// do the DS1620 temp conversion every second
 		// raw_data is engine temp
+
 		writeByteTo1620(DS1620_CMD_STARTCONV);
 		vTaskDelay(30);
 		raw_data = readTempFrom1620();

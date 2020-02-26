@@ -37,11 +37,6 @@ rpm_update_rate:
 1 - 2000
 2 - 3000
 
-mph_update_rate:
-0 - 1000
-1 - 2000
-2 - 3000
-
 lights_on_delay:
 0 - 1 second
 1 - 2 seconds
@@ -76,8 +71,7 @@ int main(void)
 	UCHAR id = 0xAA;
 	char password[5] = "4567\0";
 
-	ps.rpm_update_rate = 1;
-	ps.mph_update_rate = 2;
+	ps.rpm_mph_update_rate = 1;
 	ps.fpga_xmit_rate = 2;
 	ps.high_rev_limit = 9;
 	ps.low_rev_limit = 7;
@@ -95,8 +89,7 @@ int main(void)
 	ps.password_retries = 1;
 	ps.baudrate3 = 0;			//	0 = 4800, 1 = 9600, 2 = 19200, 3 = 38400
 
-	printf("\r\nrpm_update_rate:\t\t%d\r\n",ps.rpm_update_rate);
-	printf("mph_update_rate:\t\t%d\r\n",ps.mph_update_rate);
+	printf("\r\nrpm_mph_update_rate:\t\t%d\r\n",ps.rpm_mph_update_rate);
 	printf("fpga_xmit_rate:\t\t\t%d\r\n",ps.fpga_xmit_rate);
 	printf("high_rev_limit:\t\t\t%d\r\n",ps.high_rev_limit);
 	printf("low_rev_limit:\t\t\t%d\r\n",ps.low_rev_limit);

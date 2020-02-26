@@ -129,5 +129,11 @@ namespace EpServerEngineSampleClient
 			int offset = svrcmd.GetCmdIndexI("SERVER_UP");
 			svrcmd.Send_Cmd(offset);
 		}
+
+		private void button2_Click(object sender, EventArgs e)
+		{
+			int offset = svrcmd.GetCmdIndexI("SERVER_DOWN");
+			svrcmd.Send_Cmd(offset);
+		}
 	}
 }

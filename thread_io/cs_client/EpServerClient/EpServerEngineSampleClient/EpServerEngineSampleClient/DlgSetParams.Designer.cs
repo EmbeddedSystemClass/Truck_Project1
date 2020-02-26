@@ -52,13 +52,11 @@
 			this.label11 = new System.Windows.Forms.Label();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label13 = new System.Windows.Forms.Label();
-			this.label14 = new System.Windows.Forms.Label();
 			this.cbHighRevLimit = new System.Windows.Forms.ComboBox();
 			this.cbLowRevLimit = new System.Windows.Forms.ComboBox();
 			this.cbLightsOnDelay = new System.Windows.Forms.ComboBox();
 			this.cbFPGAXmitRate = new System.Windows.Forms.ComboBox();
-			this.cbRPMUpdateRate = new System.Windows.Forms.ComboBox();
-			this.cbMPHUpdateRate = new System.Windows.Forms.ComboBox();
+			this.cbRPM_MPHUpdateRate = new System.Windows.Forms.ComboBox();
 			this.cbTestBank = new System.Windows.Forms.ComboBox();
 			this.label15 = new System.Windows.Forms.Label();
 			this.label16 = new System.Windows.Forms.Label();
@@ -67,9 +65,11 @@
 			this.cbPasswordRetries = new System.Windows.Forms.ComboBox();
 			this.btnChangePassword = new System.Windows.Forms.Button();
 			this.tbNewPasssword = new System.Windows.Forms.TextBox();
-			this.tbTest = new System.Windows.Forms.TextBox();
 			this.label19 = new System.Windows.Forms.Label();
 			this.cbBaudRate3 = new System.Windows.Forms.ComboBox();
+			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.button1 = new System.Windows.Forms.Button();
+			this.btnSendUpdateRates = new System.Windows.Forms.Button();
 			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -77,9 +77,9 @@
 			// 
 			this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
 			this.btnOK.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnOK.Location = new System.Drawing.Point(606, 494);
+			this.btnOK.Location = new System.Drawing.Point(625, 450);
 			this.btnOK.Name = "btnOK";
-			this.btnOK.Size = new System.Drawing.Size(99, 44);
+			this.btnOK.Size = new System.Drawing.Size(99, 41);
 			this.btnOK.TabIndex = 0;
 			this.btnOK.Text = "OK";
 			this.btnOK.UseVisualStyleBackColor = true;
@@ -89,9 +89,9 @@
 			// 
 			this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
 			this.btnCancel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnCancel.Location = new System.Drawing.Point(732, 494);
+			this.btnCancel.Location = new System.Drawing.Point(734, 450);
 			this.btnCancel.Name = "btnCancel";
-			this.btnCancel.Size = new System.Drawing.Size(99, 44);
+			this.btnCancel.Size = new System.Drawing.Size(99, 41);
 			this.btnCancel.TabIndex = 1;
 			this.btnCancel.Text = "Cancel";
 			this.btnCancel.UseVisualStyleBackColor = true;
@@ -324,19 +324,9 @@
 			this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label13.Location = new System.Drawing.Point(452, 223);
 			this.label13.Name = "label13";
-			this.label13.Size = new System.Drawing.Size(200, 25);
+			this.label13.Size = new System.Drawing.Size(175, 25);
 			this.label13.TabIndex = 27;
-			this.label13.Text = "RPM Update Rate";
-			// 
-			// label14
-			// 
-			this.label14.AutoSize = true;
-			this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label14.Location = new System.Drawing.Point(452, 268);
-			this.label14.Name = "label14";
-			this.label14.Size = new System.Drawing.Size(216, 25);
-			this.label14.TabIndex = 28;
-			this.label14.Text = "MPH Transmit Rate";
+			this.label13.Text = "RPM/MPH Rate";
 			// 
 			// cbHighRevLimit
 			// 
@@ -409,41 +399,39 @@
 			this.cbFPGAXmitRate.FormattingEnabled = true;
 			this.cbFPGAXmitRate.Items.AddRange(new object[] {
             "1000",
-            "2000",
-            "3000"});
+            "900",
+            "800",
+            "700",
+            "600",
+            "500",
+            "400"});
 			this.cbFPGAXmitRate.Location = new System.Drawing.Point(690, 175);
 			this.cbFPGAXmitRate.Name = "cbFPGAXmitRate";
 			this.cbFPGAXmitRate.Size = new System.Drawing.Size(141, 33);
 			this.cbFPGAXmitRate.TabIndex = 34;
 			this.cbFPGAXmitRate.SelectedIndexChanged += new System.EventHandler(this.cbFPGAXmitRate_SelectedIndexChanged);
 			// 
-			// cbRPMUpdateRate
+			// cbRPM_MPHUpdateRate
 			// 
-			this.cbRPMUpdateRate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.cbRPMUpdateRate.FormattingEnabled = true;
-			this.cbRPMUpdateRate.Items.AddRange(new object[] {
+			this.cbRPM_MPHUpdateRate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.cbRPM_MPHUpdateRate.FormattingEnabled = true;
+			this.cbRPM_MPHUpdateRate.Items.AddRange(new object[] {
             "1000",
-            "2000",
-            "3000"});
-			this.cbRPMUpdateRate.Location = new System.Drawing.Point(690, 220);
-			this.cbRPMUpdateRate.Name = "cbRPMUpdateRate";
-			this.cbRPMUpdateRate.Size = new System.Drawing.Size(141, 33);
-			this.cbRPMUpdateRate.TabIndex = 35;
-			this.cbRPMUpdateRate.SelectedIndexChanged += new System.EventHandler(this.cbRPMUpdateRate_SelectedIndexChanged);
-			// 
-			// cbMPHUpdateRate
-			// 
-			this.cbMPHUpdateRate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.cbMPHUpdateRate.FormattingEnabled = true;
-			this.cbMPHUpdateRate.Items.AddRange(new object[] {
-            "1000",
-            "2000",
-            "3000"});
-			this.cbMPHUpdateRate.Location = new System.Drawing.Point(690, 265);
-			this.cbMPHUpdateRate.Name = "cbMPHUpdateRate";
-			this.cbMPHUpdateRate.Size = new System.Drawing.Size(141, 33);
-			this.cbMPHUpdateRate.TabIndex = 36;
-			this.cbMPHUpdateRate.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
+            "700",
+            "500",
+            "300",
+            "200",
+            "100",
+            "70",
+            "50",
+            "30",
+            "20",
+            "10"});
+			this.cbRPM_MPHUpdateRate.Location = new System.Drawing.Point(690, 220);
+			this.cbRPM_MPHUpdateRate.Name = "cbRPM_MPHUpdateRate";
+			this.cbRPM_MPHUpdateRate.Size = new System.Drawing.Size(141, 33);
+			this.cbRPM_MPHUpdateRate.TabIndex = 35;
+			this.cbRPM_MPHUpdateRate.SelectedIndexChanged += new System.EventHandler(this.cbRPMUpdateRate_SelectedIndexChanged);
 			// 
 			// cbTestBank
 			// 
@@ -452,7 +440,7 @@
 			this.cbTestBank.Items.AddRange(new object[] {
             "On",
             "Off"});
-			this.cbTestBank.Location = new System.Drawing.Point(690, 310);
+			this.cbTestBank.Location = new System.Drawing.Point(690, 266);
 			this.cbTestBank.Name = "cbTestBank";
 			this.cbTestBank.Size = new System.Drawing.Size(141, 33);
 			this.cbTestBank.TabIndex = 37;
@@ -462,7 +450,7 @@
 			// 
 			this.label15.AutoSize = true;
 			this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label15.Location = new System.Drawing.Point(452, 316);
+			this.label15.Location = new System.Drawing.Point(452, 272);
 			this.label15.Name = "label15";
 			this.label15.Size = new System.Drawing.Size(143, 25);
 			this.label15.TabIndex = 38;
@@ -472,7 +460,7 @@
 			// 
 			this.label16.AutoSize = true;
 			this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label16.Location = new System.Drawing.Point(452, 357);
+			this.label16.Location = new System.Drawing.Point(452, 313);
 			this.label16.Name = "label16";
 			this.label16.Size = new System.Drawing.Size(212, 25);
 			this.label16.TabIndex = 40;
@@ -498,7 +486,7 @@
             "2 minutes",
             "5 minutes",
             "10 minutes"});
-			this.cbPasswordTimeout.Location = new System.Drawing.Point(690, 355);
+			this.cbPasswordTimeout.Location = new System.Drawing.Point(690, 311);
 			this.cbPasswordTimeout.Name = "cbPasswordTimeout";
 			this.cbPasswordTimeout.Size = new System.Drawing.Size(141, 33);
 			this.cbPasswordTimeout.TabIndex = 39;
@@ -508,7 +496,7 @@
 			// 
 			this.label18.AutoSize = true;
 			this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label18.Location = new System.Drawing.Point(452, 403);
+			this.label18.Location = new System.Drawing.Point(452, 359);
 			this.label18.Name = "label18";
 			this.label18.Size = new System.Drawing.Size(203, 25);
 			this.label18.TabIndex = 42;
@@ -530,7 +518,7 @@
             "4",
             "5",
             "6"});
-			this.cbPasswordRetries.Location = new System.Drawing.Point(690, 400);
+			this.cbPasswordRetries.Location = new System.Drawing.Point(690, 356);
 			this.cbPasswordRetries.Name = "cbPasswordRetries";
 			this.cbPasswordRetries.Size = new System.Drawing.Size(141, 33);
 			this.cbPasswordRetries.TabIndex = 41;
@@ -539,9 +527,9 @@
 			// btnChangePassword
 			// 
 			this.btnChangePassword.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.btnChangePassword.Location = new System.Drawing.Point(40, 434);
+			this.btnChangePassword.Location = new System.Drawing.Point(12, 401);
 			this.btnChangePassword.Name = "btnChangePassword";
-			this.btnChangePassword.Size = new System.Drawing.Size(223, 36);
+			this.btnChangePassword.Size = new System.Drawing.Size(223, 33);
 			this.btnChangePassword.TabIndex = 43;
 			this.btnChangePassword.Text = "Change Password";
 			this.btnChangePassword.UseVisualStyleBackColor = true;
@@ -549,24 +537,18 @@
 			// 
 			// tbNewPasssword
 			// 
-			this.tbNewPasssword.Location = new System.Drawing.Point(40, 494);
+			this.tbNewPasssword.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.tbNewPasssword.Location = new System.Drawing.Point(12, 450);
 			this.tbNewPasssword.Name = "tbNewPasssword";
-			this.tbNewPasssword.Size = new System.Drawing.Size(128, 20);
+			this.tbNewPasssword.Size = new System.Drawing.Size(223, 29);
 			this.tbNewPasssword.TabIndex = 44;
 			this.tbNewPasssword.Visible = false;
-			// 
-			// tbTest
-			// 
-			this.tbTest.Location = new System.Drawing.Point(384, 496);
-			this.tbTest.Name = "tbTest";
-			this.tbTest.Size = new System.Drawing.Size(100, 20);
-			this.tbTest.TabIndex = 45;
 			// 
 			// label19
 			// 
 			this.label19.AutoSize = true;
 			this.label19.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label19.Location = new System.Drawing.Point(453, 448);
+			this.label19.Location = new System.Drawing.Point(453, 404);
 			this.label19.Name = "label19";
 			this.label19.Size = new System.Drawing.Size(199, 25);
 			this.label19.TabIndex = 47;
@@ -587,21 +569,54 @@
             "9600",
             "19200",
             "38400"});
-			this.cbBaudRate3.Location = new System.Drawing.Point(691, 445);
+			this.cbBaudRate3.Location = new System.Drawing.Point(691, 401);
 			this.cbBaudRate3.Name = "cbBaudRate3";
 			this.cbBaudRate3.Size = new System.Drawing.Size(141, 33);
 			this.cbBaudRate3.TabIndex = 46;
 			this.cbBaudRate3.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+			// 
+			// textBox1
+			// 
+			this.textBox1.Location = new System.Drawing.Point(253, 450);
+			this.textBox1.Multiline = true;
+			this.textBox1.Name = "textBox1";
+			this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+			this.textBox1.Size = new System.Drawing.Size(245, 41);
+			this.textBox1.TabIndex = 48;
+			// 
+			// button1
+			// 
+			this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.button1.Location = new System.Drawing.Point(516, 450);
+			this.button1.Name = "button1";
+			this.button1.Size = new System.Drawing.Size(99, 41);
+			this.button1.TabIndex = 49;
+			this.button1.Text = "Refresh";
+			this.button1.UseVisualStyleBackColor = true;
+			this.button1.Click += new System.EventHandler(this.button1_Click);
+			// 
+			// btnSendUpdateRates
+			// 
+			this.btnSendUpdateRates.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.btnSendUpdateRates.Location = new System.Drawing.Point(253, 401);
+			this.btnSendUpdateRates.Name = "btnSendUpdateRates";
+			this.btnSendUpdateRates.Size = new System.Drawing.Size(194, 33);
+			this.btnSendUpdateRates.TabIndex = 50;
+			this.btnSendUpdateRates.Text = "FPGA Update Rates";
+			this.btnSendUpdateRates.UseVisualStyleBackColor = true;
+			this.btnSendUpdateRates.Click += new System.EventHandler(this.btnSendUpdateRates_Click);
 			// 
 			// DlgSetParams
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-			this.ClientSize = new System.Drawing.Size(857, 556);
+			this.ClientSize = new System.Drawing.Size(857, 508);
+			this.Controls.Add(this.btnSendUpdateRates);
+			this.Controls.Add(this.button1);
+			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.label19);
 			this.Controls.Add(this.cbBaudRate3);
-			this.Controls.Add(this.tbTest);
 			this.Controls.Add(this.tbNewPasssword);
 			this.Controls.Add(this.btnChangePassword);
 			this.Controls.Add(this.label18);
@@ -610,13 +625,11 @@
 			this.Controls.Add(this.cbPasswordTimeout);
 			this.Controls.Add(this.label15);
 			this.Controls.Add(this.cbTestBank);
-			this.Controls.Add(this.cbMPHUpdateRate);
-			this.Controls.Add(this.cbRPMUpdateRate);
+			this.Controls.Add(this.cbRPM_MPHUpdateRate);
 			this.Controls.Add(this.cbFPGAXmitRate);
 			this.Controls.Add(this.cbLightsOnDelay);
 			this.Controls.Add(this.cbLowRevLimit);
 			this.Controls.Add(this.cbHighRevLimit);
-			this.Controls.Add(this.label14);
 			this.Controls.Add(this.label13);
 			this.Controls.Add(this.label12);
 			this.Controls.Add(this.label11);
@@ -654,7 +667,6 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.Label label14;
         private System.Windows.Forms.ComboBox cbFanOn;
         private System.Windows.Forms.ComboBox cbBlower1;
         private System.Windows.Forms.ComboBox cbBlower2;
@@ -665,8 +677,7 @@
         private System.Windows.Forms.ComboBox cbLowRevLimit;
         private System.Windows.Forms.ComboBox cbLightsOnDelay;
         private System.Windows.Forms.ComboBox cbFPGAXmitRate;
-        private System.Windows.Forms.ComboBox cbRPMUpdateRate;
-        private System.Windows.Forms.ComboBox cbMPHUpdateRate;
+        private System.Windows.Forms.ComboBox cbRPM_MPHUpdateRate;
         private System.Windows.Forms.ComboBox cbTestBank;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.ComboBox cbTempLimit;
@@ -677,8 +688,10 @@
 		private System.Windows.Forms.ComboBox cbPasswordRetries;
 		private System.Windows.Forms.Button btnChangePassword;
 		private System.Windows.Forms.TextBox tbNewPasssword;
-		private System.Windows.Forms.TextBox tbTest;
 		private System.Windows.Forms.Label label19;
 		private System.Windows.Forms.ComboBox cbBaudRate3;
+		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.Button button1;
+		private System.Windows.Forms.Button btnSendUpdateRates;
 	}
 }

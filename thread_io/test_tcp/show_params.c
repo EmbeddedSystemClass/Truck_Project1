@@ -2,6 +2,12 @@
 	the index into the choices in the xml files and the collections of the comboboxes
 	in the DlgSetParams.cs of the client proj. and ParamsForm.cs of the server proj.
 
+SET_PARAMS - sent by client - tells svr to call SEND_CONFIG which sends all current params
+SEND_CONFIG - sent by svr - tells client to load all params in cfg_params struct
+SEND_CONFIG2 - sent by svr - tells client to send all params in cfg_params using UPDATE_CONFIG
+UPDATE_CONFIG - sent by client - sends all params to svr 
+
+
 high_rev_limit:
 0 - 6000
 1 - 5800
@@ -31,11 +37,6 @@ fpga_xmit_rate:
 2 - 3000
 
 rpm_update_rate:
-0 - 1000
-1 - 2000
-2 - 3000
-
-mph_update_rate:
 0 - 1000
 1 - 2000
 2 - 3000
@@ -516,7 +517,7 @@ int main(int argc, char *argv[])
 
 	for(i = 1;i < 251;i++)
 		printf("%s\n",get_temp_str(i));
-		
+
 	for(i = 403;i < 512;i++)
 		printf("%s\n",get_temp_str(i));
 
@@ -554,8 +555,7 @@ int main(int argc, char *argv[])
 	password[4] = 0;
 	close(fp);
 
-	printf("\r\nrpm_update_rate:\t\t%s\r\n",update_rates[ps.rpm_update_rate]);
-	printf("mph_update_rate:\t\t%s\r\n",update_rates[ps.mph_update_rate]);
+	printf("\r\nrpm_mph_update_rate:\t%s\r\n",update_rates[ps.rpm_mph_update_rate]);
 	printf("fpga_xmit_rate:\t\t\t%s\r\n",update_rates[ps.fpga_xmit_rate]);
 	printf("high_rev_limit:\t\t\t%s\r\n",hi_rev[ps.high_rev_limit]);
 	printf("low_rev_limit:\t\t\t%s\r\n",lo_rev[ps.low_rev_limit]);
@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
 	printf("blower2_on:\t\t\t%s\r\n",get_temp_str(ps.blower2_on));
 	printf("blower3_on:\t\t\t%s\r\n",get_temp_str(ps.blower3_on));
 	printf("lights delay:\t\t\t%s\r\n",lights[ps.lights_on_delay]);
-	printf("engine_temp_limit:\t\t%s\r\n",get_temp_str(ps.engine_temp_limit));
+	printf("engine_temp_limit:\t%s\r\n",get_temp_str(ps.engine_temp_limit));
 	printf("battery box temp:\t\t%s\r\n",get_temp_str(ps.batt_box_temp));
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
 	printf("password timeout:\t\t%d\r\n",ps.password_timeout);

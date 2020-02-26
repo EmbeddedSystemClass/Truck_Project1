@@ -25,7 +25,7 @@ GNULDFLAGS_T = ${GNULDFLAGS} -pthread
 CC = ${GNUCC}
 
 #all : client server client2 server
-all : make_waypoints show_waypoints
+all : make_waypoints show_waypoints make_params show_params
 
 client.o: client.c
 	${CC} ${CC_FLAGS} -DTEST_CLIENT ${INCLUDE_PATHS} -c client.c
@@ -42,6 +42,12 @@ make_waypoints.o: make_waypoints.c
 show_waypoints.o: show_waypoints.c
 	${CC} ${CC_FLAGS} -c show_waypoints.c
 
+make_params.o: make_params.c
+	${CC} ${CC_FLAGS} -c make_params.c
+
+show_params.o: show_params.c
+	${CC} ${CC_FLAGS} -c show_params.c
+
 client: client.o
 	${CC} client.o -o client
 
@@ -54,9 +60,16 @@ make_waypoints: make_waypoints.o
 show_waypoints: show_waypoints.o
 	${CC} show_waypoints.o -o show_waypoints
 
+show_params: show_params.o
+	${CC} show_params.o -o show_params
+
+make_params: make_params.o
+	${CC} make_params.o -o make_params
+
+
 clean :
 #	rm -f *.o *~ *# core client server client2 server test_write test_read client make_waypoints
 #	rm -f *.o *~ *# client2
 #	rm -f *.o *~ *# test_upload_new
-	rm -f *.o *- *# make_waypoints show_waypoints
+	rm -f *.o *- *# make_waypoints show_waypoints make_params show_params
 

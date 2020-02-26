@@ -102,76 +102,7 @@ GNUNOANSI = -g -gnu99 -Wstrict-prototypes
 
 BULD_TARGET = $(PROJECT)
 
-#all : client server client2 server2 test_write test_read test_inports test_ioports2 test_ioports4 lcd_func2
-#all :  test_inports test_ioports2 test_ioports4 lcd_func lcd_func2
 all : show_params make_params make_waypoints show_waypoints
-#all : test_upload_new
-
-client.o: client.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c client.c
-
-server.o: server.c
-	${CC} ${CC_FLAGS} -DTEST_SEQUENCE ${INCLUDE_PATHS} -c server.c
-
-test_upload_new.o: test_upload_new.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c test_upload_new.c
-
-client: client.o
-	${CC} client.o -o client
-
-server: server.o
-	${CC} server.o -o server
-
-client2.o: client.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c client.c
-
-server2.o: server.c
-	${CC} ${CC_FLAGS} -DCOPY_FILE ${INCLUDE_PATHS} -c server.c
-
-client2: client2.o
-	${CC}  client.o -o client2
-
-server2: server2.o
-	${CC} server.o -o server2
-
-test_upload_new: test_upload_new.o
-	${CC} test_upload_new.o -o test_upload_new
-
-test_write.o: test_write.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_write.c
-
-test_read.o: test_read.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_read.c
-
-test_write: test_write.o
-	${CC} test_write.o -o test_write
-
-test_read: test_read.o
-	${CC} test_read.o -o test_read
-
-lcd_func.o: lcd_func.c lcd_func.h
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c lcd_func.c
-
-lcd_func2: lcd_func.o
-	${CC} lcd_func.o -o lcd_func2
-
-test_inports.o: test_inports.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_inports.c
-
-test_inports: test_inports.o
-	${CC} test_inports.o -o test_inports
-
-test_ioports2.o: test_ioports2.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_ioports2.c
-
-test_ioports2: test_ioports2.o
-	${CC} test_ioports2.o -o test_ioports2
-
-test_ioports4.o: test_ioports4.c
-	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c test_ioports4.c
-
-test_ioports4: test_ioports4.o
-	${CC} test_ioports4.o -o test_ioports4
 
 show_params.o: show_params.c
 	${CC} ${CC_FLAGS} ${INCLUDE_PATHS} -c show_params.c
@@ -198,7 +129,4 @@ show_waypoints: show_waypoints.o
 	${CC} show_waypoints.o -o show_waypoints
 
 clean :
-	rm -f *.o *~ *# core client server client2 server2 test_write \
-	test_read test_inports test_ioports2 test_ioports4 lcd_func2 show_params make_params test_upload_new make_waypoints show_waypoints
-#	rm -f *.o *~ *# core test_inports test_ioports2 test_ioports4
-#	rm -f *.o *~ *# core server2
+	rm -f *.o *~ *# core show_params make_params  make_waypoints show_waypoints

@@ -35,7 +35,7 @@ int enable_gps_send_data;
 int enable_adc_send_data;
 extern pthread_mutex_t     tcp_read_lock;
 extern pthread_mutex_t     tcp_write_lock;
-
+int config_file_ok = -1;
 int myprintf1(char *str)
 {
 	return 0;
@@ -53,7 +53,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[108] =
+CMD_STRUCT cmd_array[110] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -162,7 +162,9 @@ CMD_STRUCT cmd_array[108] =
 	{	ENABLE_GPS_SEND_DATA,"ENABLE_GPS_SEND_DATA\0" },
 	{	ENABLE_ADC_SEND_DATA,"ENABLE_ADC_SEND_DATA\0" },
 	{	ADC_GATE,"ADC_GATE\0" },
-	{	SET_ADC_RATE,"SET_ADC_RATE\0" }
+	{	SET_ADC_RATE,"SET_ADC_RATE\0" },
+	{	SET_RPM_MPH_RATE,"SET_RPM_MPH_RATE\0" },
+	{	SET_FPGA_RATE,"SET_FPGA_RATE\0" }
 };
 
 //extern illist_t ill;
@@ -238,7 +240,7 @@ UCHAR get_host_cmd_task(int test)
 //	I_DATA *itp;
 	O_DATA *otp;
 	O_DATA **otpp = &otp;
-	int rc = 0;
+	int rc = 0; 
 	int rc1 = 0;
 	UCHAR cmd = 0x21;
 	UCHAR onoff;
@@ -263,7 +265,7 @@ UCHAR get_host_cmd_task(int test)
 	struct dirent *dir;
 	int num;
 	UCHAR test_io_num = 0;
-	char tempx[200];
+	char tempx[SERIAL_BUFF_SIZE];
 	UCHAR tempy[30];
 	char temp_time[5];
 	char *pch;
@@ -330,7 +332,9 @@ UCHAR get_host_cmd_task(int test)
 	ollist_init(&oll);
 	if(access(oFileName,F_OK) != -1)
 	{
-		rc = olLoadConfig(oFileName,&oll,osize,errmsg);
+		config_file_ok = olLoadConfig(oFileName,&oll,osize,errmsg);
+		//sprintf(tempx, "%d loadconfig",rc);
+		//printString3(tempx);
 		if(rc > 0)
 		{
 			myprintf1(errmsg);
@@ -837,140 +841,143 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						break;
-	
+
 					case UPDATE_CONFIG:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
-						ps.rpm_update_rate = utemp;
+						ps.rpm_mph_update_rate = utemp;
+						write_serial_buffer[0] = msg_buf[2];
+						write_serial_buffer[1] = msg_buf[3];
 						
 						utemp = (UINT)msg_buf[5];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[4];
-						ps.mph_update_rate = utemp;
+						ps.fpga_xmit_rate = utemp;
+						write_serial_buffer[2] = msg_buf[4];
+						write_serial_buffer[3] = msg_buf[5];
 						
 						utemp = (UINT)msg_buf[7];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[6];
-						ps.fpga_xmit_rate = utemp;
+						ps.high_rev_limit = utemp;
+						write_serial_buffer[4] = msg_buf[6];
+						write_serial_buffer[5] = msg_buf[7];
+						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
+						sprintf(tempx,"hi rev: %d",actual_high_rev_limit);
+						printString3(tempx);
 						
 						utemp = (UINT)msg_buf[9];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[8];
-						ps.high_rev_limit = utemp;
-						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
-						sprintf(tempx,"hi rev: %d",actual_high_rev_limit);
-						//printString2(tempx);
+						ps.low_rev_limit = utemp;
+						write_serial_buffer[6] = msg_buf[8];
+						write_serial_buffer[7] = msg_buf[9];
+						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
+						sprintf(tempx,"low rev: %d",actual_low_rev_limit);
+						printString3(tempx);
 						
 						utemp = (UINT)msg_buf[11];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[10];
-						ps.low_rev_limit = utemp;
-						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
-						sprintf(tempx,"low rev: %d",actual_low_rev_limit);
-						//printString2(tempx);
-						
-						utemp = (UINT)msg_buf[13];
-						utemp <<= 8;
-						utemp |= (UINT)msg_buf[12];
 						ps.cooling_fan_on = utemp;
 						// start loading serial buffer to send to STM32
 						// as a SEND_CONFIG2 msg
 						// only need to send temp data - low byte 1st
-						write_serial_buffer[0] = msg_buf[12];
-						write_serial_buffer[1] = msg_buf[13];
+						write_serial_buffer[8] = msg_buf[10];
+						write_serial_buffer[9] = msg_buf[11];
 						//sprintf(tempx,"fan on: %d",ps.cooling_fan_on);
 						sprintf(tempx,"fan on: %.1f\0", convertF(ps.cooling_fan_on));
-						//printString2(tempx);
+						printString3(tempx);
 
+						utemp = (UINT)msg_buf[13];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[12];
+						ps.cooling_fan_off = utemp;
+						write_serial_buffer[10] = msg_buf[12];
+						write_serial_buffer[11] = msg_buf[13];
+						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
+						printString3(tempx);
+						
 						utemp = (UINT)msg_buf[15];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[14];
-						ps.cooling_fan_off = utemp;
-						write_serial_buffer[2] = msg_buf[14];
-						write_serial_buffer[3] = msg_buf[15];
-						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
-						//printString2(tempx);
+						ps.blower_enabled = utemp;
+						write_serial_buffer[12] = msg_buf[14];
+						write_serial_buffer[13] = msg_buf[15];
+						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
+						printString3(tempx);
 						
 						utemp = (UINT)msg_buf[17];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[16];
-						ps.blower_enabled = utemp;
-						write_serial_buffer[4] = msg_buf[16];
-						write_serial_buffer[5] = msg_buf[17];
-						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
-						//printString2(tempx);
+						ps.blower1_on = utemp;
+						write_serial_buffer[14] = msg_buf[16];
+						write_serial_buffer[15] = msg_buf[17];
+						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
+						printString3(tempx);
 						
 						utemp = (UINT)msg_buf[19];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[18];
-						ps.blower1_on = utemp;
-						write_serial_buffer[6] = msg_buf[18];
-						write_serial_buffer[7] = msg_buf[19];
-						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
-						//printString2(tempx);
+						ps.blower2_on = utemp;
+						write_serial_buffer[16] = msg_buf[18];
+						write_serial_buffer[17] = msg_buf[19];
 						
 						utemp = (UINT)msg_buf[21];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[20];
-						ps.blower2_on = utemp;
-						write_serial_buffer[8] = msg_buf[20];
-						write_serial_buffer[9] = msg_buf[21];
+						ps.blower3_on = utemp;
+						write_serial_buffer[18] = msg_buf[20];
+						write_serial_buffer[19] = msg_buf[21];
 						
 						utemp = (UINT)msg_buf[23];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[22];
-						ps.blower3_on = utemp;
-						write_serial_buffer[10] = msg_buf[22];
-						write_serial_buffer[11] = msg_buf[23];
-						
-						utemp = (UINT)msg_buf[25];
-						utemp <<= 8;
-						utemp |= (UINT)msg_buf[24];
 						ps.lights_on_delay = utemp;
 						actual_lights_on_delay = lights_on_delay[ps.lights_on_delay];
 						utemp = (UINT)actual_lights_on_delay;
 						sprintf(tempx,"lights on delay: %d %d",actual_lights_on_delay,ps.lights_on_delay);
-						//printString2(tempx);
+						printString3(tempx);
+
+						utemp = (UINT)msg_buf[25];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[24];
+						ps.engine_temp_limit = utemp;
+						write_serial_buffer[20] = msg_buf[24];
+						write_serial_buffer[21] = msg_buf[25];
+						sprintf(tempx,"eng temp limit: %.1f\0", convertF(ps.engine_temp_limit));
+						printString3(tempx);
 
 						utemp = (UINT)msg_buf[27];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[26];
-						ps.engine_temp_limit = utemp;
-						write_serial_buffer[12] = msg_buf[26];
-						write_serial_buffer[13] = msg_buf[27];
-						sprintf(tempx,"eng temp limit: %.1f\0", convertF(ps.engine_temp_limit));
-						//printString2(tempx);
+						ps.batt_box_temp = utemp;
+						write_serial_buffer[22] = msg_buf[26];
+						write_serial_buffer[23] = msg_buf[27];
 
 						utemp = (UINT)msg_buf[29];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[28];
-						ps.batt_box_temp = utemp;
-						write_serial_buffer[14] = msg_buf[28];
-						write_serial_buffer[15] = msg_buf[29];
+						ps.test_bank = utemp;
 
 						utemp = (UINT)msg_buf[31];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[30];
-						ps.test_bank = utemp;
+						ps.password_timeout = utemp;
+						write_serial_buffer[24] = msg_buf[30];
+						write_serial_buffer[25] = msg_buf[31];
 
 						utemp = (UINT)msg_buf[33];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[32];
-						ps.password_timeout = utemp;
-						write_serial_buffer[16] = msg_buf[32];
-						write_serial_buffer[17] = msg_buf[33];
+						ps.password_retries = utemp;
+						write_serial_buffer[26] = msg_buf[32];
+						write_serial_buffer[27] = msg_buf[33];
 
 						utemp = (UINT)msg_buf[35];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[34];
-						ps.password_retries = utemp;
-						write_serial_buffer[18] = msg_buf[34];
-						write_serial_buffer[19] = msg_buf[35];
-
-						utemp = (UINT)msg_buf[37];
-						utemp <<= 8;
-						utemp |= (UINT)msg_buf[36];
 						ps.baudrate3 = utemp;
 
 						//memcpy(&password[0],&msg_buf[36],4);
@@ -1093,56 +1100,29 @@ UCHAR get_host_cmd_task(int test)
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
-						switch(utemp)
-						{
-							case 1000:
-								write_serial_buffer[0] = 0x7F;
-								write_serial_buffer[1] = 0xFF;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 500:
-								write_serial_buffer[0] = 0x0F;
-								write_serial_buffer[1] = 0xFF;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 250:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0xFF;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 125:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0x7F;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 75:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0x3F;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 30:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0x1F;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 20:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0x0F;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							case 10:
-								write_serial_buffer[0] = 0;
-								write_serial_buffer[1] = 0x07;
-								write_serial_buffer[2] = 0xFF;
-							break;
-							default:
-								write_serial_buffer[0] = 0x7F;
-								write_serial_buffer[1] = 0xFF;
-								write_serial_buffer[2] = 0xFF;
-							break;
-						}
+						write_serial_buffer[0] = (UCHAR)utemp;
 						send_serialother(SET_ADC_RATE, &write_serial_buffer[0]);
-						sprintf(tempx,"%d %02x %02x %02x",utemp, write_serial_buffer[0], write_serial_buffer[1],write_serial_buffer[1]);
+						sprintf(tempx,"adc rate: %d",utemp);
+						printString3(tempx);
+						break;
+
+					case SET_RPM_MPH_RATE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(SET_RPM_MPH_RATE, &write_serial_buffer[0]);
+//						sprintf(tempx,"rpm rate: %d",utemp);
+//						printString3(tempx);
+						break;
+
+					case SET_FPGA_RATE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(SET_FPGA_RATE, &write_serial_buffer[0]);
+						sprintf(tempx,"fpga rate: %d",utemp);
 						printString3(tempx);
 						break;
 
@@ -1206,35 +1186,6 @@ exit_program:
 							//printString2(errmsg);
 							myprintf1(errmsg);
 						}
-	/*
-						printf("%d\r\n",ps.rpm_update_rate);
-						printf("%d\r\n",ps.mph_update_rate);
-						printf("%d\r\n",ps.high_rev_limit);
-						printf("%d\r\n",ps.low_rev_limit);
-						printf("%d\r\n",ps.cooling_fan_on);
-						printf("%d\r\n",ps.cooling_fan_off);
-						printf("%d\r\n",ps.blower_enabled);
-						printf("%d\r\n",ps.blower1_on);
-						printf("%d\r\n",ps.blower2_on);
-						printf("%d\r\n",ps.blower3_on);
-	*/
-	//						close_tcp();
-
-	//						strcpy(tempx,"sched.log\0");
-	//						WriteOdometer(tempx, &odometer, errmsg);
-	/*
-						logfile_handle = open((const char *)&tempx[0], O_RDWR,
-								S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-
-						if(logfile_handle < 0)
-						{
-							printf("handle: %d\n",logfile_handle);
-							return logfile_handle;
-						}
-						write(logfile_handle,&odometer,sizeof(int));
-						write(logfile_handle,&trip,sizeof(int));
-						close(logfile_handle);
-	*/
 
 						// pulse the LED on the IO box before shutting down
 #if 0
@@ -1493,12 +1444,7 @@ static void format_param_msg(void)
 	temp_conv = (int)msg_buf[18];
 	temp_conv <<= 8;
 	temp_conv |= (int)msg_buf[19];
-	ps.rpm_update_rate = temp_conv;
-
-	temp_conv = (int)msg_buf[20];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[21];
-	ps.mph_update_rate = temp_conv;
+	ps.rpm_mph_update_rate = temp_conv;
 	
 	temp_conv = (int)msg_buf[22];
 	temp_conv <<= 8;
@@ -1521,9 +1467,8 @@ void send_param_msg(void)
 {
 	char tempx[40];
 
-	sprintf(tempx,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %s\0",
-														ps.rpm_update_rate,
-														ps.mph_update_rate,
+	sprintf(tempx, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %s\0",
+														ps.rpm_mph_update_rate,
 														ps.fpga_xmit_rate,
 														ps.high_rev_limit,
 														ps.low_rev_limit,
@@ -1542,7 +1487,9 @@ void send_param_msg(void)
 														ps.baudrate3,
 														password);
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
-//	printString2(tempx);
+	printString3(tempx);
+	sprintf(tempx, "config file ok: %d",config_file_ok);
+	printString3(tempx);
 }
 /*********************************************************************/
 void send_status_msg(char *msg)
