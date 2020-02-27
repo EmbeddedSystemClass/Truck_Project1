@@ -1,7 +1,7 @@
 /* make_params.c - actual values of rpm_update_rate->low_rev_limit & lights_on_delay is 
 	the index into the choices in the xml files and the collections of the comboboxes
 	in the DlgSetParams.cs of the client proj. and ParamsForm.cs of the server proj.
-	
+
 as of 11/7/2019 this file is prepended by an 0xAA and appended by an 0x55
 
 high_rev_limit:
@@ -84,7 +84,7 @@ int main(void)
 	ps.lights_on_delay = 6;
 	ps.engine_temp_limit = 195;
 	ps.batt_box_temp = 40;
-	ps.test_bank = 2;
+	ps.test_bank = 1;
 	ps.password_timeout = 1;
 	ps.password_retries = 1;
 	ps.baudrate3 = 0;			//	0 = 4800, 1 = 9600, 2 = 19200, 3 = 38400
@@ -105,7 +105,7 @@ int main(void)
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
 	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
 	printf("password retries:\t\t%d\r\n",ps.password_retries);
-	printf("comm3 baudrate:\t\t%d\r\n",ps.baudrate3);
+	printf("comm3 baudrate:\t\t\t%d\r\n",ps.baudrate3);
 
 	fp = open((const char *)fptr, O_WRONLY | O_CREAT, 666);
 	write(fp,&id,1);

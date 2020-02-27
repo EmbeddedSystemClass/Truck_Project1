@@ -93,7 +93,7 @@ typedef struct temps
 	int index;
 }TEMPS;
 
-char update_rates[10][6] = {"1000","2000","3000"};
+char update_rates[10][6] = {"1000", "900", "800", "700", "600", "500", "400"};
 
 char hi_rev[10][10] =  {"6000",
 						"5800",
@@ -555,7 +555,7 @@ int main(int argc, char *argv[])
 	password[4] = 0;
 	close(fp);
 
-	printf("\r\nrpm_mph_update_rate:\t%s\r\n",update_rates[ps.rpm_mph_update_rate]);
+	printf("\r\nrpm_mph_update_rate:\t\t%s\r\n",update_rates[ps.rpm_mph_update_rate]);
 	printf("fpga_xmit_rate:\t\t\t%s\r\n",update_rates[ps.fpga_xmit_rate]);
 	printf("high_rev_limit:\t\t\t%s\r\n",hi_rev[ps.high_rev_limit]);
 	printf("low_rev_limit:\t\t\t%s\r\n",lo_rev[ps.low_rev_limit]);
@@ -566,13 +566,13 @@ int main(int argc, char *argv[])
 	printf("blower2_on:\t\t\t%s\r\n",get_temp_str(ps.blower2_on));
 	printf("blower3_on:\t\t\t%s\r\n",get_temp_str(ps.blower3_on));
 	printf("lights delay:\t\t\t%s\r\n",lights[ps.lights_on_delay]);
-	printf("engine_temp_limit:\t%s\r\n",get_temp_str(ps.engine_temp_limit));
+	printf("engine_temp_limit:\t\t%s\r\n",get_temp_str(ps.engine_temp_limit));
 	printf("battery box temp:\t\t%s\r\n",get_temp_str(ps.batt_box_temp));
 	printf("test_bank:\t\t\t%d\r\n",ps.test_bank);
 	printf("password timeout:\t\t%d\r\n",ps.password_timeout);
 	printf("password retries:\t\t%d\r\n",ps.password_retries);
-	printf("password:\t\t\t%s\r\n",password);
 	printf("comm3 baudrate:\t\t\t%s\r\n",baudrates[ps.baudrate3]);
+	printf("password:\t\t\t%s\r\n",password);
 	return 11;
 }
 

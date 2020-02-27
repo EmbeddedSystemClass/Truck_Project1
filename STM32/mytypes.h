@@ -130,11 +130,6 @@ enum cmd_types
 	WIPER_OFF,
 	SHUTDOWN_IOBOX,
 	REBOOT_IOBOX,
-	LCD_SHIFT_RIGHT,
-	LCD_SHIFT_LEFT,
-	SCROLL_UP,
-	SCROLL_DOWN,
-	ENABLE_LCD,
 	SET_TIME,
 	GET_TIME,
 	TEST_LEFT_BLINKER,
@@ -162,7 +157,6 @@ enum cmd_types
 	NAV_SIDE,
 	NAV_CLICK,
 	NAV_CLOSE,
-	NAV_NUM,
 	SEND_STATUS,
 	SERVER_UP,
 	SERVER_DOWN,
@@ -200,7 +194,14 @@ enum cmd_types
 	SET_GPS_DATA,
 	SET_GPS_BAUDRATE,
 	ENABLE_GPS_SEND_DATA,
-	ADC_GATE
+	ENABLE_ADC_SEND_DATA,
+	ADC_GATE,
+	SET_ADC_RATE,
+	SET_RPM_MPH_RATE,
+	SET_FPGA_RATE,
+	SEND_RT_FPGA_STATUS,
+	SEND_REV_LIMIT_OVERRIDE,
+	SEND_FP_OVERRIDE
 }CMD_TYPES;
 
 enum key_types
@@ -222,20 +223,6 @@ enum key_types
 	KP_AST, // '*'		- EE
 	KP_0 	// '0'		- EF
 } KEY_TYPES;
-
-// msg's sent from STM32 to TS-7200
-enum upstream_msg
-{
-	RT_DATA = 0xD0,
-	RPM_DATA,
-	ABLE_TO_START,
-	RPM_OK,
-	RPM_TOO_LOW,
-	RPM_TOO_HIGH,
-	OIL_PRESS_TOO_LOW,
-	ENGINE_TEMP_TOO_HIGH,
-	RESET_TYPE4
-} UPSTREAM_MSG;
 
 // 25 total output_types
 // until now the input labels match the outputs
@@ -377,22 +364,9 @@ enum output_types
 #define START_STATUS_VALUE_ROW 1
 #define START_STATUS_VALUE_COL 2
 
-enum num_entry_types
-{
-	TIME_DATE,
-	TIME_ENG_OFF,
-	FPGA_SEND_RATE,
-	RPM_MPH_UPDATE_RATE,
-	HIGH_REV_LIMIT2,
-	LOW_REV_LIMIT2,
-	SET_LIGHTS_OFF,
-	CHANGE_PASSWORD
-}NUM_ENTRY_TYPES;
-
 typedef struct params
 {
-	int rpm_update_rate;	// update rates for LED displays
-	int mph_update_rate;
+	int rpm_mph_update_rate;	// update rates for LED displays
 	int fpga_xmit_rate;
 	int high_rev_limit;
 	int low_rev_limit;
@@ -413,7 +387,7 @@ typedef struct params
 
 // FPGA commands
 #define SET_FPGA_SEND_UPDATE_RATE 	0x01
-#define SET_UPDATE_RATE				0x02
+#define SET_RPM_MPH_UPDATE_RATE		0x02
 #define DTMF_TONE_ON 				0x03
 #define DTMF_TONE_OFF 				0x04
 #define SPECIAL_TONE_ON 			0x05
@@ -423,6 +397,11 @@ typedef struct params
 #define LOAD_TUNE					0x09
 #define SHOW_DOWNLOAD				0x0A
 #define ADC_CTL						0x0B
+#define SET_ADC_RATE2				0x0C
+#define SET_HIGH_REV_LIMIT 			0x0D
+#define SET_LOW_REV_LIMIT 			0x0E
+#define REV_LIMIT_OVERRIDE			0x0F
+#define FUEL_PUMP_OVERRIDE			0x10
 
 // params for lcd_pwm (screen dimmer)
 #define PWM_OFF_PARAM					0x01 // off

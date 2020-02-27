@@ -23,6 +23,8 @@ namespace EpServerEngineSampleClient
         List<string> temp_str;
 		IDictionary<string, int> lights_str;
 		IDictionary<string, int> timeout_str;
+		private bool rev_limit_override = false;
+		private bool fp_override = false;
 		public void SetParams(ConfigParams _cfg)
 		{
 			cfg = _cfg;
@@ -188,8 +190,9 @@ namespace EpServerEngineSampleClient
         private void cbRPMUpdateRate_SelectedIndexChanged(object sender, EventArgs e)
         {
             cfg.rpm_mph_update_rate = cbRPM_MPHUpdateRate.SelectedIndex;
-        }
-        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
+			cfg.si_rpm_mph_update_rate = cbRPM_MPHUpdateRate.SelectedIndex;
+		}
+		private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
         {
             //cfg.mph_mph_update_rate = cbMPHUpdateRate.SelectedIndex;
         }
@@ -1032,6 +1035,7 @@ namespace EpServerEngineSampleClient
 
 		}
 
+		// refresh button
 		private void button1_Click(object sender, EventArgs e)
 		{
 			if (refreshed == false)
@@ -1069,21 +1073,84 @@ namespace EpServerEngineSampleClient
 			textBox1.AppendText(get_temp_index(get_temp_str(cfg.fan_off)).ToString() + "\r\n");
 			*/
 		}
-
-		private void btnSendUpdateRates_Click(object sender, EventArgs e)
+	
+		private void btnHighRev_Click(object sender, EventArgs e)
 		{
-			byte[] rpm_mph = BitConverter.GetBytes(cfg.rpm_mph_update_rate);
-			byte[] bytes = new byte[rpm_mph.Count() + 2];
-			bytes[0] = svrcmd.GetCmdIndexB("SET_RPM_MPH_RATE");
-			System.Buffer.BlockCopy(rpm_mph, 0, bytes, 2, rpm_mph.Count());
+			byte[] param = BitConverter.GetBytes(cfg.si_high_rev_limit);
+			byte [] bytes = new byte[param.Count() + 2];
+			bytes[0] = svrcmd.GetCmdIndexB("HIGH_REV_LIMIT");
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
 			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-			//m_client.Send(packet);
+			m_client.Send(packet);
+		}
 
-			rpm_mph = BitConverter.GetBytes(cfg.FPGAXmitRate);
-			bytes = new byte[rpm_mph.Count() + 2];
+		private void btnLowRev_Click(object sender, EventArgs e)
+		{
+			byte[] param = BitConverter.GetBytes(cfg.si_low_rev_limit);
+			byte[] bytes = new byte[param.Count() + 2];
+			bytes[0] = svrcmd.GetCmdIndexB("LOW_REV_LIMIT");
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			m_client.Send(packet);
+		}
+
+		private void btnXmitRate_Click(object sender, EventArgs e)
+		{
+			byte[] param = BitConverter.GetBytes(cfg.FPGAXmitRate);
+			byte[] bytes = new byte[param.Count() + 2];
 			bytes[0] = svrcmd.GetCmdIndexB("SET_FPGA_RATE");
-			System.Buffer.BlockCopy(rpm_mph, 0, bytes, 2, rpm_mph.Count());
-			packet = new Packet(bytes, 0, bytes.Count(), false);
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			m_client.Send(packet);
+		}
+
+		private void btnRPMMPH_Click(object sender, EventArgs e)
+		{
+			byte[] param = BitConverter.GetBytes(cfg.rpm_mph_update_rate);
+			byte[] bytes = new byte[param.Count() + 2];
+			bytes[0] = svrcmd.GetCmdIndexB("SET_RPM_MPH_RATE");
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			m_client.Send(packet);
+		}
+
+		private void btnRevLimitOR_Click(object sender, EventArgs e)
+		{
+			if(rev_limit_override)
+			{
+				rev_limit_override = false;
+				btnRevLimitOR.Text = "Set RLOR";
+			}
+			else
+			{
+				rev_limit_override = true;
+				btnRevLimitOR.Text = "Unset RLOR";
+			}
+			byte[] param = BitConverter.GetBytes(rev_limit_override?1:0);
+			byte[] bytes = new byte[param.Count() + 2];
+			bytes[0] = svrcmd.GetCmdIndexB("SEND_REV_LIMIT_OVERRIDE");
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
+			m_client.Send(packet);
+		}
+
+		private void btnFPOR_Click(object sender, EventArgs e)
+		{
+			if (fp_override)
+			{
+				fp_override = false;
+				btnFPOR.Text = "Set FPOR";
+			}
+			else
+			{
+				fp_override = true;
+				btnFPOR.Text = "Unset FPOR";
+			}
+			byte[] param = BitConverter.GetBytes(fp_override ? 1 : 0);
+			byte[] bytes = new byte[param.Count() + 2];
+			bytes[0] = svrcmd.GetCmdIndexB("SEND_FP_OVERRIDE");
+			System.Buffer.BlockCopy(param, 0, bytes, 2, param.Count());
+			Packet packet = new Packet(bytes, 0, bytes.Count(), false);
 			m_client.Send(packet);
 		}
 	}

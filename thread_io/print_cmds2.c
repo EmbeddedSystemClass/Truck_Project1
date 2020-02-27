@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "../mytypes.h"
 
-char cmd_strings[105][25] = {
+char cmd_strings[107][30] = {
 	"NON_CMD\0",
 	"ENABLE_START\0",
 	"STARTER_OFF\0",
@@ -37,11 +37,6 @@ char cmd_strings[105][25] = {
 	"WIPER_OFF\0",
 	"SHUTDOWN_IOBOX\0",
 	"REBOOT_IOBOX\0",
-	"LCD_SHIFT_RIGHT\0",
-	"LCD_SHIFT_LEFT\0",
-	"SCROLL_UP\0",
-	"SCROLL_DOWN\0",
-	"ENABLE_LCD\0",
 	"SET_TIME\0",
 	"GET_TIME\0",
 	"TEST_LEFT_BLINKER\0",
@@ -69,7 +64,6 @@ char cmd_strings[105][25] = {
 	"NAV_SIDE\0",
 	"NAV_CLICK\0",
 	"NAV_CLOSE\0",
-	"NAV_NUM\0",
 	"SEND_STATUS\0",
 	"SERVER_UP\0",
 	"SERVER_DOWN\0",
@@ -106,14 +100,20 @@ char cmd_strings[105][25] = {
 	"SEND_GPS_ZDA_DATA\0",
 	"SET_GPS_DATA\0",
 	"SET_GPS_BAUDRATE\0",
-	"ENABLE_GPS_SEND_DATA\0"
+	"ENABLE_GPS_SEND_DATA\0",
+	"ENABLE_ADC_SEND_DATA\0",
+	"ADC_GATE\0",
+	"SET_ADC_RATE\0",
+	"SET_RPM_MPH_RATE\0",
+	"SET_FPGA_RATE\0",
+	"SEND_RT_FPGA_STATUS\0",
+	"SEND_REV_LIMIT_OVERRIDE\0",
+	"SEND_FP_OVERRIDE\0"
 };
-
-// 	{		INDOOR_TEMP,"INDOOR_TEMP\0" },
 
 int main(void)
 {
 	int i;
-	for(i = 0;i < 105;i++)
+	for(i = 0;i < 107;i++)
 		printf("\t{\t%s,\"%s\\0\" },\n",cmd_strings[i],cmd_strings[i]);
 }

@@ -53,7 +53,7 @@ int myprintf3(char *str, int x, int y)
 
 #define TOGGLE_OTP otp->onoff = (otp->onoff == 1?0:1)
 
-CMD_STRUCT cmd_array[110] =
+CMD_STRUCT cmd_array[107] =
 {
 	{	NON_CMD,"NON_CMD\0" },
 	{	ENABLE_START,"ENABLE_START\0" },
@@ -90,11 +90,6 @@ CMD_STRUCT cmd_array[110] =
 	{	WIPER_OFF,"WIPER_OFF\0" },
 	{	SHUTDOWN_IOBOX,"SHUTDOWN_IOBOX\0" },
 	{	REBOOT_IOBOX,"REBOOT_IOBOX\0" },
-	{	LCD_SHIFT_RIGHT,"LCD_SHIFT_RIGHT\0" },
-	{	LCD_SHIFT_LEFT,"LCD_SHIFT_LEFT\0" },
-	{	SCROLL_UP,"SCROLL_UP\0" },
-	{	SCROLL_DOWN,"SCROLL_DOWN\0" },
-	{	ENABLE_LCD,"ENABLE_LCD\0" },
 	{	SET_TIME,"SET_TIME\0" },
 	{	GET_TIME,"GET_TIME\0" },
 	{	TEST_LEFT_BLINKER,"TEST_LEFT_BLINKER\0" },
@@ -122,7 +117,6 @@ CMD_STRUCT cmd_array[110] =
 	{	NAV_SIDE,"NAV_SIDE\0" },
 	{	NAV_CLICK,"NAV_CLICK\0" },
 	{	NAV_CLOSE,"NAV_CLOSE\0" },
-	{	NAV_NUM,"NAV_NUM\0" },
 	{	SEND_STATUS,"SEND_STATUS\0" },
 	{	SERVER_UP,"SERVER_UP\0" },
 	{	SERVER_DOWN,"SERVER_DOWN\0" },
@@ -164,7 +158,10 @@ CMD_STRUCT cmd_array[110] =
 	{	ADC_GATE,"ADC_GATE\0" },
 	{	SET_ADC_RATE,"SET_ADC_RATE\0" },
 	{	SET_RPM_MPH_RATE,"SET_RPM_MPH_RATE\0" },
-	{	SET_FPGA_RATE,"SET_FPGA_RATE\0" }
+	{	SET_FPGA_RATE,"SET_FPGA_RATE\0" },
+	{	SEND_RT_FPGA_STATUS,"SEND_RT_FPGA_STATUS\0" },
+	{	SEND_REV_LIMIT_OVERRIDE,"SEND_REV_LIMIT_OVERRIDE\0" },
+	{	SEND_FP_OVERRIDE,"SEND_FP_OVERRIDE\0" }
 };
 
 //extern illist_t ill;
@@ -177,7 +174,6 @@ extern char password[PASSWORD_SIZE];
 
 int shutdown_all;
 static UCHAR pre_preamble[] = {0xF8,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0x00};
-static void format_param_msg(void);
 
 // these are the actual values that are shown in the client's dialog's comboboxes
 // as choices for rev limit's and lights_on_delays
@@ -389,34 +385,12 @@ UCHAR get_host_cmd_task(int test)
 			{
 				rc = recv_tcp(&msg_buf[0],msg_len,1);
 				cmd = msg_buf[0];
-//				printHexByte(cmd);
-//				printHexByte(rc);
-//				printString2("\r\n");	
-				j = 0;
-
-//				for(i = 0;i < msg_len;i++)
-//					printHexByte(msg_buf[i]);
-
-//				printString2("\r\n");	
 
 				for(i = 2;i < msg_len+2;i+=2)
 					msg_buf2[j++] = msg_buf[i];
 
-
-//				for(i = 0;i < j;i++)
-//				{
-//					printHexByte(msg_buf2[i]);
-//					write_serial2(msg_buf2[i]);
-//					printHexByte(msg_buf2[i]);
-//				}
-
-//				printString2("\r\n");	
 			}
-			if(cmd != LCD_SHIFT_RIGHT && cmd != LCD_SHIFT_LEFT && cmd != SCROLL_DOWN && 
-				cmd != SCROLL_UP && cmd > 0)
-//					&& cmd != GET_TIME && cmd != SET_TIME && cmd > 0)
-				myprintf2(cmd_array[cmd].cmd_str,cmd);
-//#if 0
+
 			if(cmd > 0)
 			{
 				sprintf(tempx, "cmd: %d %s\0",cmd,cmd_array[cmd].cmd_str);
@@ -425,7 +399,7 @@ UCHAR get_host_cmd_task(int test)
 				//printf("%s\r\n",tempx);
 //				printf("cmd: %d %s\r\n",cmd,cmd_array[cmd].cmd_str);
 			}
-//#endif
+
 			if(cmd > 0)
 			{
 				rc = 0;
@@ -594,24 +568,6 @@ UCHAR get_host_cmd_task(int test)
 						send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx,GET_TIME);
 						break;
 
-					// adjust the 2x20 LCD screen on the IO box
-					case LCD_SHIFT_LEFT:
-//						shift_left();
-						break;
-
-					case LCD_SHIFT_RIGHT:
-//						shift_right();
-						break;
-
-					case SCROLL_UP:
-//						scroll_up();
-						break;
-
-					case SCROLL_DOWN:
-//						scroll_down();
-						break;
-
-					// update the sched.log file with current log of events
 					case BAD_MSG:
 //						shutdown_all = 1;
 //						myprintf1("bad msg");
@@ -698,7 +654,7 @@ UCHAR get_host_cmd_task(int test)
 						utemp |= (UINT)msg_buf[2];
 						ps.high_rev_limit = utemp;
 						sprintf(tempx,"high rev limit: %d\0", ps.high_rev_limit);
-						//printString2(tempx);
+						printString3(tempx);
 						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
@@ -708,8 +664,10 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
-//						sprintf(tempx,"actual: %d",actual_high_rev_limit);
-//						printString2(tempx);
+						sprintf(tempx,"actual: %d",actual_high_rev_limit);
+						printString3(tempx);
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(HIGH_REV_LIMIT, &write_serial_buffer[0]);
 						break;
 
 					case LOW_REV_LIMIT:
@@ -718,7 +676,7 @@ UCHAR get_host_cmd_task(int test)
 						utemp |= (UINT)msg_buf[2];
 						ps.low_rev_limit = utemp;
 						sprintf(tempx,"low rev limit: %d\0", ps.low_rev_limit);
-						//printString2(tempx);
+						printString3(tempx);
 						i = WriteParams("param.conf", &ps, &password[0], errmsg);
 						if(i < 0)
 						{
@@ -728,8 +686,10 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
-//						sprintf(tempx,"actual: %d",actual_low_rev_limit);
-//						printString2(tempx);
+						sprintf(tempx,"actual: %d",actual_low_rev_limit);
+						printString3(tempx);
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(LOW_REV_LIMIT, &write_serial_buffer[0]);
 						break;
 
 					case LIGHTS_ON_DELAY:
@@ -847,36 +807,38 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[2];
 						ps.rpm_mph_update_rate = utemp;
-						write_serial_buffer[0] = msg_buf[2];
-						write_serial_buffer[1] = msg_buf[3];
-						
+						write_serial_buffer[0] = (UCHAR)utemp;
+						sprintf(tempx,"rpm/mph rate: %d",utemp);
+						printString3(tempx);
+
 						utemp = (UINT)msg_buf[5];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[4];
 						ps.fpga_xmit_rate = utemp;
-						write_serial_buffer[2] = msg_buf[4];
-						write_serial_buffer[3] = msg_buf[5];
-						
+						write_serial_buffer[1] = (UCHAR)utemp;
+						sprintf(tempx,"fpga xmit rate: %d",utemp);
+						printString3(tempx);
+
 						utemp = (UINT)msg_buf[7];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[6];
 						ps.high_rev_limit = utemp;
-						write_serial_buffer[4] = msg_buf[6];
-						write_serial_buffer[5] = msg_buf[7];
+						write_serial_buffer[2] = (UCHAR)utemp;
+
 						actual_high_rev_limit = atoi(hi_rev[ps.high_rev_limit]);
 						sprintf(tempx,"hi rev: %d",actual_high_rev_limit);
 						printString3(tempx);
-						
+
 						utemp = (UINT)msg_buf[9];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[8];
 						ps.low_rev_limit = utemp;
-						write_serial_buffer[6] = msg_buf[8];
-						write_serial_buffer[7] = msg_buf[9];
+						write_serial_buffer[3] = (UCHAR)utemp;
+
 						actual_low_rev_limit = atoi(lo_rev[ps.low_rev_limit]);
 						sprintf(tempx,"low rev: %d",actual_low_rev_limit);
 						printString3(tempx);
-						
+
 						utemp = (UINT)msg_buf[11];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[10];
@@ -884,8 +846,8 @@ UCHAR get_host_cmd_task(int test)
 						// start loading serial buffer to send to STM32
 						// as a SEND_CONFIG2 msg
 						// only need to send temp data - low byte 1st
-						write_serial_buffer[8] = msg_buf[10];
-						write_serial_buffer[9] = msg_buf[11];
+						write_serial_buffer[4] = msg_buf[10];
+						write_serial_buffer[5] = msg_buf[11];
 						//sprintf(tempx,"fan on: %d",ps.cooling_fan_on);
 						sprintf(tempx,"fan on: %.1f\0", convertF(ps.cooling_fan_on));
 						printString3(tempx);
@@ -894,8 +856,8 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[12];
 						ps.cooling_fan_off = utemp;
-						write_serial_buffer[10] = msg_buf[12];
-						write_serial_buffer[11] = msg_buf[13];
+						write_serial_buffer[6] = msg_buf[12];
+						write_serial_buffer[7] = msg_buf[13];
 						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
 						printString3(tempx);
 						
@@ -903,8 +865,8 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[14];
 						ps.blower_enabled = utemp;
-						write_serial_buffer[12] = msg_buf[14];
-						write_serial_buffer[13] = msg_buf[15];
+						write_serial_buffer[8] = msg_buf[14];
+						write_serial_buffer[9] = msg_buf[15];
 						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
 						printString3(tempx);
 						
@@ -912,8 +874,8 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[16];
 						ps.blower1_on = utemp;
-						write_serial_buffer[14] = msg_buf[16];
-						write_serial_buffer[15] = msg_buf[17];
+						write_serial_buffer[10] = msg_buf[16];
+						write_serial_buffer[11] = msg_buf[17];
 						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
 						printString3(tempx);
 						
@@ -921,15 +883,15 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[18];
 						ps.blower2_on = utemp;
-						write_serial_buffer[16] = msg_buf[18];
-						write_serial_buffer[17] = msg_buf[19];
+						write_serial_buffer[12] = msg_buf[18];
+						write_serial_buffer[13] = msg_buf[19];
 						
 						utemp = (UINT)msg_buf[21];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[20];
 						ps.blower3_on = utemp;
-						write_serial_buffer[18] = msg_buf[20];
-						write_serial_buffer[19] = msg_buf[21];
+						write_serial_buffer[14] = msg_buf[20];
+						write_serial_buffer[15] = msg_buf[21];
 						
 						utemp = (UINT)msg_buf[23];
 						utemp <<= 8;
@@ -944,8 +906,8 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[24];
 						ps.engine_temp_limit = utemp;
-						write_serial_buffer[20] = msg_buf[24];
-						write_serial_buffer[21] = msg_buf[25];
+						write_serial_buffer[16] = msg_buf[24];
+						write_serial_buffer[17] = msg_buf[25];
 						sprintf(tempx,"eng temp limit: %.1f\0", convertF(ps.engine_temp_limit));
 						printString3(tempx);
 
@@ -953,8 +915,8 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[26];
 						ps.batt_box_temp = utemp;
-						write_serial_buffer[22] = msg_buf[26];
-						write_serial_buffer[23] = msg_buf[27];
+						write_serial_buffer[18] = msg_buf[26];
+						write_serial_buffer[19] = msg_buf[27];
 
 						utemp = (UINT)msg_buf[29];
 						utemp <<= 8;
@@ -965,15 +927,15 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[30];
 						ps.password_timeout = utemp;
-						write_serial_buffer[24] = msg_buf[30];
-						write_serial_buffer[25] = msg_buf[31];
+//						write_serial_buffer[24] = msg_buf[30];
+//						write_serial_buffer[25] = msg_buf[31];
 
 						utemp = (UINT)msg_buf[33];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[32];
 						ps.password_retries = utemp;
-						write_serial_buffer[26] = msg_buf[32];
-						write_serial_buffer[27] = msg_buf[33];
+//						write_serial_buffer[26] = msg_buf[32];
+//						write_serial_buffer[27] = msg_buf[33];
 
 						utemp = (UINT)msg_buf[35];
 						utemp <<= 8;
@@ -982,7 +944,9 @@ UCHAR get_host_cmd_task(int test)
 
 						//memcpy(&password[0],&msg_buf[36],4);
 						j = 0;
+
 						memset(password,0,PASSWORD_SIZE);
+/*
 						for(i = 0;i < 7;i+= 2)
 						{
 							password[j] = write_serial_buffer[j + 20] = msg_buf[i+36];
@@ -990,6 +954,7 @@ UCHAR get_host_cmd_task(int test)
 						}
 						write_serial_buffer[j] = 0;
 						password[4] = 0;
+*/
 						//printf("\r\n%s\r\n",password);
 						//printString2(password);
 						send_serialother(SEND_CONFIG2, &write_serial_buffer[0]);
@@ -1126,8 +1091,28 @@ UCHAR get_host_cmd_task(int test)
 						printString3(tempx);
 						break;
 
-					case EXIT_PROGRAM:
+					case SEND_REV_LIMIT_OVERRIDE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(SEND_REV_LIMIT_OVERRIDE, &write_serial_buffer[0]);
+						sprintf(tempx,"rev limit override: %d",utemp);
+						printString3(tempx);
+						break;
+					
+					case SEND_FP_OVERRIDE:
+						utemp = (UINT)msg_buf[3];
+						utemp <<= 8;
+						utemp |= (UINT)msg_buf[2];
+						write_serial_buffer[0] = (UCHAR)utemp;
+						send_serialother(SEND_FP_OVERRIDE, &write_serial_buffer[0]);
+						sprintf(tempx,"fuel pump override: %d",utemp);
+						printString3(tempx);
+						break;
+					
 
+					case EXIT_PROGRAM:
 exit_program:
 
 						j = 0;
@@ -1397,71 +1382,7 @@ int get_sock(UCHAR *buf, int buflen, int block, char *errmsg)
 }
 
 /*********************************************************************/
-static void format_param_msg(void)
-{
-	int temp_conv;
 
-	temp_conv = (int)msg_buf[2];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[3];
-	ps.cooling_fan_on = temp_conv;
-
-	temp_conv = (int)msg_buf[4];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[5];
-	ps.cooling_fan_off = temp_conv;
-
-	temp_conv = (int)msg_buf[6];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[7];
-	ps.blower_enabled = temp_conv;
-
-	temp_conv = (int)msg_buf[8];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[9];
-	ps.blower3_on = temp_conv;
-
-	temp_conv = (int)msg_buf[10];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[11];
-	ps.blower2_on = temp_conv;
-
-	temp_conv = (int)msg_buf[12];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[13];
-	ps.blower1_on = temp_conv;
-
-	temp_conv = (int)msg_buf[14];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[15];
-	ps.high_rev_limit = temp_conv;
-
-	temp_conv = (int)msg_buf[16];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[17];
-	ps.low_rev_limit = temp_conv;
-
-	temp_conv = (int)msg_buf[18];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[19];
-	ps.rpm_mph_update_rate = temp_conv;
-	
-	temp_conv = (int)msg_buf[22];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[23];
-	ps.fpga_xmit_rate = temp_conv;
-	
-	temp_conv = (int)msg_buf[24];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[25];
-	ps.engine_temp_limit = temp_conv;
-
-	temp_conv = (int)msg_buf[26];
-	temp_conv <<= 8;
-	temp_conv |= (int)msg_buf[27];
-	ps.test_bank = temp_conv;
-	
-}
 /*********************************************************************/
 void send_param_msg(void)
 {
@@ -1488,8 +1409,8 @@ void send_param_msg(void)
 														password);
 	send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_CONFIG);
 	printString3(tempx);
-	sprintf(tempx, "config file ok: %d",config_file_ok);
-	printString3(tempx);
+	//sprintf(tempx, "config file ok: %d",config_file_ok);
+	//printString3(tempx);
 }
 /*********************************************************************/
 void send_status_msg(char *msg)

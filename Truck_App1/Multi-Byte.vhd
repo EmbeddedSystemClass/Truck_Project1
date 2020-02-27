@@ -34,8 +34,8 @@ entity multi_byte is
 		pwm_spk1 : out std_logic;
 		pwm_spk2 : out std_logic;
 		pwm_lcd : out std_logic;
---		fp_shutoff : out std_logic;
---		rev_limit : out std_logic;
+		fp_shutoff : out std_logic;
+		rev_limit : out std_logic;
 		rpm1_signal : in std_logic;
 --		rpm2_signal : in std_logic;
 		mph1_signal : in std_logic;
@@ -67,10 +67,9 @@ end multi_byte;
 
 architecture truck_arch of multi_byte is
 
-	type pport_type is (pp_idle, pp_start1, pp_start2, pp_done, pp_done2);
+	type pport_type is (pp_preidle, pp_idle, pp_start1, pp_start2, pp_done, pp_done2);
 	signal pport_reg, pport_next: pport_type;
 
-	-- recv_uart
 	type state_uart2 is (pre_idle, idle2, next1, start1, done, rx_delay);
 	signal state_uart_reg2, state_uart_next2: state_uart2;
 
@@ -89,15 +88,18 @@ architecture truck_arch of multi_byte is
 	type state_test is (test_idle, test_start1, test_start2, test_done);
 	signal test_reg, test_next: state_test;
 
+	type state_rev_limit is (rev_idle, rev_start1, rev_start2, rev_done);
+	signal rev_reg, rev_next: state_rev_limit;
+
 	type state_mcp is (mcp_idle, mcp_start1, mcp_start2, mcp_done);
 	signal mcp_reg, mcp_next: state_mcp;
 
 	signal time_delay_reg, time_delay_next: unsigned(25 downto 0);
-	signal time_delay_reg3, time_delay_next3: unsigned(27 downto 0);
-	signal time_delay_reg2, time_delay_next2: unsigned(17 downto 0);
 	signal time_delay_reg1, time_delay_next1: unsigned(24 downto 0);
+	signal time_delay_reg3, time_delay_next3: unsigned(27 downto 0);
 	signal time_delay_reg4, time_delay_next4: unsigned(24 downto 0);
-	signal time_delay_reg5, time_delay_next5: unsigned(24 downto 0);
+	signal time_delay_reg5, time_delay_next5: unsigned(25 downto 0);
+	signal time_delay_reg6, time_delay_next6: unsigned(25 downto 0);
 
 	signal rpm_db, mph_db: std_logic;
 	signal rpm_result: std_logic_vector(15 downto 0);
@@ -141,6 +143,19 @@ architecture truck_arch of multi_byte is
 	signal mcp_results: mcp_array;
 	signal compact: std_logic;
 	signal adc_gate: std_logic;
+	signal adc_delay: unsigned(25 downto 0);
+	signal send_delay: unsigned(25 downto 0);
+	signal rpm_mph_delay: unsigned(25 downto 0);
+	signal high_rev_limit: unsigned(25 downto 0);
+	signal low_rev_limit: unsigned(25 downto 0);
+	signal dl_param: std_logic_vector(3 downto 0);
+	signal stlv_rev_limit_override: std_logic;
+	signal stlv_fuel_pump_override: std_logic;
+	signal stlv_status1: std_logic_vector(7 downto 0);
+	signal stlv_status2: std_logic_vector(7 downto 0);
+	signal stlv_status3: std_logic_vector(7 downto 0);
+	signal stlv_status4: std_logic_vector(7 downto 0);
+	signal stlv_engine_running: std_logic;
 
 begin
 
@@ -282,7 +297,7 @@ begin
 				state_led_next <= led_delay;
 
 			when led_delay =>
-				if time_delay_reg1 > TIME_DELAY7 then
+				if time_delay_reg1 > rpm_mph_delay then
 					time_delay_next1 <= (others=>'0');
 					state_led_next <= led_start_xmit;
 				else
@@ -308,11 +323,12 @@ end process;
 pport_unit: process(clk, reset, pport_reg)
 begin
 	if reset = '0' then
-		pport_reg <= pp_idle;
-		pport_next <= pp_idle;
+		pport_reg <= pp_preidle;
+		pport_next <= pp_preidle;
 		time_delay_reg <= (others=>'0');
 		time_delay_next <= (others=>'0');
 		sPort <= (others=>'0');
+		led1 <= "1111";
 --		pwm_lcd <= '0';
 --sPort <= "10101010";
 
@@ -346,6 +362,14 @@ begin
 		
 	else if clk'event and clk = '1' then
 		case pport_reg is
+			when pp_preidle =>
+				if time_delay_reg > TIME_DELAY7 then
+ 					time_delay_next <= (others=>'0');
+					pport_next <= pp_idle;
+				else
+					time_delay_next <= time_delay_reg + 1;
+				end if;
+			
 			when pp_idle =>
 				PP_DATA0 <= upload(conv_integer(sPort))(0);
 				PP_DATA1 <= upload(conv_integer(sPort))(1);
@@ -355,6 +379,7 @@ begin
 				PP_DATA5 <= upload(conv_integer(sPort))(5);
 				PP_DATA6 <= upload(conv_integer(sPort))(6);
 				PP_DATA7 <= upload(conv_integer(sPort))(7);
+				led1 <= "0111";
 				pport_next <= pp_start1;
 			
  			when pp_start1 =>
@@ -362,16 +387,18 @@ begin
 				skip <= not skip;
 				if skip = '1' then
 					sPort <= sPort + 1;
-					if sPort > 14 then
+					if sPort > 17 then
 						sPort <= (others=>'0');
 					end if;
 				end if;
 				pport_next <= pp_start2;
 
 			when pp_start2 =>
-				if time_delay_reg > TIME_DELAY8b then
+				if time_delay_reg > TIME_DELAY8c then
+--				if time_delay_reg > TIME_DELAY7 then
  					time_delay_next <= (others=>'0');
 					PP_CS <= '0';
+					led1 <= "1011";
 					pport_next <= pp_done;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -380,27 +407,32 @@ begin
 			when pp_done =>
 				if PP_ACK = '1' then
 					pport_next <= pp_done2;
+					led1 <= "1101";
 				end if;
 
 			when pp_done2 =>
-				if time_delay_reg > TIME_DELAY7 then
+				if time_delay_reg > send_delay then
+--				if time_delay_reg > TIME_DELAY7 then
 					time_delay_next <= (others=>'0');
 					upload(1) <= rpm_result(7 downto 0);
 					upload(2) <= rpm_result(15 downto 8);
 					upload(3) <= mph_result(7 downto 0);
 					upload(4) <= mph_result(15 downto 8);
-					if adc_gate = '1' then
-						upload(5) <= mcp_results(0);
-						upload(6) <= mcp_results(1);
-						upload(7) <= mcp_results(2);
-						upload(8) <= mcp_results(3);
-						upload(9) <= mcp_results(4);
-						upload(10) <= mcp_results(5);
-						upload(11) <= mcp_results(6);
-						upload(12) <= mcp_results(7);
-						upload(13) <= mcp_results(8);	-- these not used because compact = 1 for now
-						upload(14) <= mcp_results(9);	--  "
-					end if;
+					upload(5) <= mcp_results(0);
+					upload(6) <= mcp_results(1);
+					upload(7) <= mcp_results(2);
+					upload(8) <= mcp_results(3);
+					upload(9) <= mcp_results(4);
+					upload(10) <= mcp_results(5);
+					upload(11) <= mcp_results(6);
+					upload(12) <= mcp_results(7);
+--					upload(13) <= mcp_results(8);	-- these not used because compact = 1 for now
+--					upload(14) <= mcp_results(9);	--  "
+					upload(13) <= stlv_status1;
+					upload(14) <= stlv_status2;
+					upload(15) <= stlv_status3;
+					upload(16) <= stlv_status4;
+					led1 <= "1110";
 					pport_next <= pp_idle;
 				else
 					time_delay_next <= time_delay_reg + 1;
@@ -493,7 +525,7 @@ end process;
 
 -- ********************************************************************************
 calc_proc1: process(clk,reset,main_reg1, tune1)
-variable temp: integer range 0 to 11:= 0;
+variable temp: integer range 0 to 16000000:= 16000000;
 begin
 	if reset = '0' then
 		main_reg1 <= idle1a;
@@ -508,18 +540,88 @@ begin
 		stlv_duty_cycle2 <= "111111";
 		tune1 <= load_tune_array(tune1);
 		adc_gate <= '0';
+		send_delay <=  "00" & X"07FFFF";
+		adc_delay  <=  "00" & X"07FFFF";
+		dl_param <= (others=>'0');
+		stlv_rev_limit_override <= '1';
+		stlv_fuel_pump_override <= '1';
+		high_rev_limit <= conv_unsigned(HREV_LIMIT_4200,26);
+		low_rev_limit 	<= conv_unsigned(LREV_LIMIT_3700,26);
+		stlv_status1 <= (others=>'0');
+		stlv_status2 <= (others=>'0');
+		stlv_status3 <= (others=>'0');
+		stlv_status4 <= (others=>'0');
+--		stlv_status4 <= X"AA";
 
 	elsif clk'event and clk = '1' then
 		case main_reg1 is
 			when idle1a =>
+				-- always set this bit so svr can tell if engine is running
+				stlv_status3(3) <= stlv_engine_running;
 --				reset_rev_limits <= '0';
 				if start_calc = '1' then
 --					led1 <= download(0)(3 downto 0);	-- first param is download(0)
 --					led1 <= mcmd(3 downto 0);
---					led1 <= mcmd(3 downto 0);
 					case mcmd is
-						when SET_UPDATE_RATE =>
---							stdlv_transmit_update_rate <= mparam & X"FFFF";
+						when SET_FPGA_SEND_UPDATE_RATE =>
+							dl_param <= download(0)(3 downto 0);
+							stlv_status1(7 downto 4) <= download(0)(3 downto 0);
+							case dl_param is
+								when "0000" =>
+									send_delay <= conv_unsigned(TIME_DELAY3/8,26);
+								when "0001" =>
+									send_delay <= conv_unsigned(TIME_DELAY5/8,26);
+								when "0010" =>
+									send_delay <= conv_unsigned(TIME_DELAY5a/8,26);
+								when "0011" =>
+									send_delay <= conv_unsigned(TIME_DELAY6/8,26);
+								when "0100" =>
+									send_delay <= conv_unsigned(TIME_DELAY6a/8,26);
+								when "0101" =>
+									send_delay <= conv_unsigned(TIME_DELAY6b/8,26);
+								when "0110" =>
+									send_delay <= conv_unsigned(TIME_DELAY7/8,26);
+								when "0111" =>
+									send_delay <= conv_unsigned(TIME_DELAY8/8,26);
+								when "1000" =>
+									send_delay <= conv_unsigned(TIME_DELAY8a/8,26);
+								when "1001" =>
+									send_delay <= conv_unsigned(TIME_DELAY8b/8,26);
+								when "1010" =>
+									send_delay <= conv_unsigned(TIME_DELAY8c/8,26);
+								when others =>	
+									send_delay <= conv_unsigned(TIME_DELAY5/8,26);
+							end case;
+							main_next1 <= do_mcmd;
+						when SET_RPM_MPH_UPDATE_RATE =>
+							dl_param <= download(0)(3 downto 0);
+							stlv_status1(3 downto 0) <= download(0)(3 downto 0);
+							case dl_param is
+								when "0000" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY3/8,26);
+								when "0001" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY5/8,26);
+								when "0010" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY5a/8,26);
+								when "0011" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY6/8,26);
+								when "0100" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY6a/8,26);
+								when "0101" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY6b/8,26);
+								when "0110" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY7/8,26);
+								when "0111" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY8/8,26);
+								when "1000" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY8a/8,26);
+								when "1001" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY8b/8,26);
+								when "1010" =>
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY8c/8,26);
+								when others =>	
+									rpm_mph_delay <= conv_unsigned(TIME_DELAY5,26);
+							end case;
 							main_next1 <= do_mcmd;
 						when DTMF_TONE_ON =>
 --							led1 <= "0111";
@@ -556,6 +658,99 @@ begin
 --							led1 <= "0111";
 						when ADC_CTL =>
 							adc_gate <= download(0)(0);
+							stlv_status3(2) <= download(0)(0);
+							main_next1 <= do_mcmd;
+						when SET_ADC_RATE2 =>
+							dl_param <= download(0)(3 downto 0);
+							stlv_status3(7 downto 4) <= download(0)(3 downto 0);
+							case dl_param is
+								when "0000" =>
+									adc_delay <= conv_unsigned(TIME_DELAY5,26);
+								when "0001" =>
+									adc_delay <= conv_unsigned(TIME_DELAY5a,26);
+								when "0010" =>
+									adc_delay <= conv_unsigned(TIME_DELAY6,26);
+								when "0011" =>
+									adc_delay <= conv_unsigned(TIME_DELAY6a,26);
+								when "0100" =>
+									adc_delay <= conv_unsigned(TIME_DELAY6b,26);
+								when "0101" =>
+									adc_delay <= conv_unsigned(TIME_DELAY7,26);
+								when "0110" =>
+									adc_delay <= conv_unsigned(TIME_DELAY8,26);
+								when "0111" =>
+									adc_delay <= conv_unsigned(TIME_DELAY8a,26);
+								when "1000" =>
+									adc_delay <= conv_unsigned(TIME_DELAY8b,26);
+								when "1001" =>
+									adc_delay <= conv_unsigned(TIME_DELAY8c,26);
+								when "1010" =>
+									adc_delay <= conv_unsigned(TIME_DELAY9,26);
+								when others =>	
+									adc_delay <= conv_unsigned(TIME_DELAY5,26);
+							end case;
+							main_next1 <= do_mcmd;
+						when SET_HIGH_REV_LIMIT =>	
+							dl_param <= download(0)(3 downto 0);
+							stlv_status2(7 downto 4) <= download(0)(3 downto 0);
+							case dl_param is
+								when "0000" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_6000,26);
+								when "0001" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_5800,26);
+								when "0010" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_5600,26);
+								when "0011" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_5400,26);
+								when "0100" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_5200,26);
+								when "0101" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_5000,26);
+								when "0110" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4800,26);
+								when "0111" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4600,26);
+								when "1000" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4400,26);
+								when "1001" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4200,26);
+								when "1010" =>
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4000,26);
+								when others =>	
+									high_rev_limit <= conv_unsigned(HREV_LIMIT_4400,26);
+							end case;
+							main_next1 <= do_mcmd;
+						when SET_LOW_REV_LIMIT =>	
+							dl_param <= download(0)(3 downto 0);
+							stlv_status2(3 downto 0) <= download(0)(3 downto 0);
+							case dl_param is
+								when "0000" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4500,26);
+								when "0001" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4400,26);
+								when "0010" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4300,26);
+								when "0011" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4200,26);
+								when "0100" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4100,26);
+								when "0101" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_4000,26);
+								when "0110" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_3900,26);
+								when "0111" =>
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_3800,26);
+								when others =>	
+									low_rev_limit <= conv_unsigned(LREV_LIMIT_3700,26);
+							end case;
+							main_next1 <= do_mcmd;
+						when REV_LIMIT_OVERRIDE =>	
+							stlv_rev_limit_override <= download(0)(0);
+							stlv_status3(0) <= download(0)(0);
+							main_next1 <= do_mcmd;
+						when FUEL_PUMP_OVERRIDE =>	
+							stlv_fuel_pump_override <= download(0)(0);
+							stlv_status3(1) <= download(0)(0);
 							main_next1 <= do_mcmd;
 						when others =>
 --							main_next1 <= idle1a;
@@ -575,19 +770,22 @@ end process;
 -- test the current rpm_result to see if has changed over the last 640ms or so
 -- if not, it must be off so then set the rpm_result back to zero
 rpm_off_unit: process(clk, reset, test_reg)
+variable temp: integer range 0 to 40:= 40;
 begin
 	if reset = '0' then
 		test_reg <= test_idle;
 		test_next <= test_idle;
 		time_delay_reg4 <= (others=>'0');
 		time_delay_next4 <= (others=>'0');
-		urpm_result <= (others=>'0');
 		TS7800TX <= '0';
 		monitorTX <= '0';
 
 	else if clk'event and clk = '1' then
 		case test_reg is
 			when test_idle =>
+--				if done_rpm = '1' then 
+					
+--				end if;
 				test_next <= test_start1;
 
 			when test_start1 =>
@@ -617,6 +815,68 @@ begin
 	end if;
 end process;
 
+-- ********************************************************************************
+rev_limit_unit: process(clk, reset, rev_reg)
+begin
+	if reset = '0' then
+		rev_reg <= rev_idle;
+		rev_next <= rev_idle;
+		time_delay_reg6 <= (others=>'0');
+		time_delay_next6 <= (others=>'0');
+		urpm_result <= (others=>'0');
+		rev_limit <= '0';	-- turn relay off to begin with
+		fp_shutoff <= '1';	-- start off with fuel pump enabled
+		stlv_engine_running <= '0';
+
+	else if clk'event and clk = '1' then
+		case rev_reg is
+			when rev_idle =>
+				if stlv_rev_limit_override = '1' then
+					rev_limit <= '1';
+					rev_next <= rev_idle;
+				else
+					urpm_result <= conv_unsigned(conv_integer(rpm_result),16);
+					if urpm_result > high_rev_limit then
+						rev_limit <= '0';
+					elsif urpm_result < low_rev_limit then 
+						rev_limit <= '1';
+					end if;	
+					rev_next <= rev_start1;
+				end if;
+
+			when rev_start1 =>
+				if time_delay_reg6 > TIME_DELAY6 then
+					time_delay_next6 <= (others=>'0');
+					
+					rev_next <= rev_start2;
+--					test_next <= test_idle;
+				else
+					time_delay_next6 <= time_delay_reg6 + 1;
+				end if;
+
+			when rev_start2 =>
+				if time_delay_reg6 > TIME_DELAY6 then
+					time_delay_next6 <= (others=>'0');
+					rev_next <= rev_done;
+					if urpm_result > TIME_DELAY_500RPM then
+						stlv_engine_running <= '1';
+					else 
+						stlv_engine_running <= '0';
+				else
+					time_delay_next6 <= time_delay_reg6 + 1;
+				end if;
+
+			when rev_done =>
+				rev_next <= rev_idle;
+
+		end case;
+		rev_reg <= rev_next;
+		time_delay_reg6 <= time_delay_next6;
+		end if;
+	end if;
+end process;
+
+-- ********************************************************************************
 mcp_unit: process(clk, reset, test_reg)
 begin
 	if reset = '0' then
@@ -626,12 +886,12 @@ begin
 		time_delay_next5 <= (others=>'0');
 		start_mcp <= '0';
 		compact <= '1';
-		led1 <= "1111";
+--		led1 <= "1111";
 
 	else if clk'event and clk = '1' then
 		case mcp_reg is
 			when mcp_idle =>
-				if time_delay_reg5 > TIME_DELAY8c then
+				if time_delay_reg5 > adc_delay then
 					time_delay_next5 <= (others=>'0');
 					if adc_gate = '1' then
 						start_mcp <= '1';
@@ -639,7 +899,7 @@ begin
 					else
 						mcp_next <= mcp_idle;
 					end if;	
-					led1 <= "0111";
+--					led1 <= "0111";
 				else
 					time_delay_next5 <= time_delay_reg5 + 1;
 				end if;
@@ -648,14 +908,14 @@ begin
 				start_mcp <= '0';
 				if done_mcp = '1' then
 					mcp_next <= mcp_start2;
-					led1 <= "1011";
+--					led1 <= "1011";
 				end if;
 
 			when mcp_start2 =>
-				if time_delay_reg5 > TIME_DELAY8c then
+				if time_delay_reg5 > adc_delay then
 					time_delay_next5 <= (others=>'0');
 					mcp_next <= mcp_done;
-					led1 <= "1101";
+--					led1 <= "1101";
 				else
 					time_delay_next5 <= time_delay_reg5 + 1;
 				end if;

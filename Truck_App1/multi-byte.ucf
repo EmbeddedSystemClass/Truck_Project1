@@ -27,8 +27,8 @@ NET "pwm_signal_2"  LOC ="p5";
 NET "pwm_spk1"  LOC ="p2";
 NET "pwm_spk2"  LOC ="p3";
 NET "pwm_lcd"  LOC ="p203";
-#NET "fp_shutoff"  LOC ="p205";
-#NET "rev_limit"  LOC ="p200";
+NET "fp_shutoff"  LOC ="p205";
+NET "rev_limit"  LOC ="p200";
 NET "rpm1_signal"  LOC ="p202";
 #NET "rpm2_signal"  LOC ="p197";
 NET "mph1_signal"  LOC ="p199";
@@ -41,23 +41,23 @@ NET "monitorRX"    LOC ="p189";
 
 NET "MCP_CS1"      LOC = "p160";
 NET "MCP_CLK1"     LOC = "p153";
-NET "MCP_DIN1"     LOC = "p152";
-NET "MCP_DOUT1"    LOC = "p151";
+NET "MCP_DIN1"     LOC = "p151";
+NET "MCP_DOUT1"    LOC = "p152";
 
 NET "MCP_CS2"      LOC = "p150";
 NET "MCP_CLK2"     LOC = "p147";
-NET "MCP_DIN2"     LOC = "p146";
-NET "MCP_DOUT2"    LOC = "p145";
+NET "MCP_DIN2"     LOC = "p145";
+NET "MCP_DOUT2"    LOC = "p146";
 
 NET "MCP_CS3"      LOC = "p144";
 NET "MCP_CLK3"     LOC = "p140";
-NET "MCP_DIN3"     LOC = "p139";
-NET "MCP_DOUT3"    LOC = "p138";
+NET "MCP_DIN3"     LOC = "p138";
+NET "MCP_DOUT3"    LOC = "p139";
 
 NET "MCP_CS4"      LOC = "p137";
 NET "MCP_CLK4"     LOC = "p135";
-NET "MCP_DIN4"     LOC = "p134";
-NET "MCP_DOUT4"    LOC = "p133";
+NET "MCP_DIN4"     LOC = "p133";
+NET "MCP_DOUT4"    LOC = "p134";
 
 # led1 is the build-in LED's on the board
 NET		"led1[0]"		LOC = "p68";

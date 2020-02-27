@@ -47,11 +47,6 @@ namespace EpServerEngineSampleClient
 			WIPER_OFF,
 			SHUTDOWN_IOBOX,
 			REBOOT_IOBOX,
-			LCD_SHIFT_RIGHT,
-			LCD_SHIFT_LEFT,
-			SCROLL_UP,
-			SCROLL_DOWN,
-			ENABLE_LCD,
 			SET_TIME,
 			GET_TIME,
 			TEST_LEFT_BLINKER,
@@ -79,7 +74,6 @@ namespace EpServerEngineSampleClient
 			NAV_SIDE,
 			NAV_CLICK,
 			NAV_CLOSE,
-			NAV_NUM,
 			SEND_STATUS,
 			SERVER_UP,
 			SERVER_DOWN,
@@ -119,7 +113,12 @@ namespace EpServerEngineSampleClient
 			ENABLE_GPS_SEND_DATA,
 			ENABLE_ADC_SEND_DATA,
 			ADC_GATE,
-			SET_ADC_RATE
+			SET_ADC_RATE,
+			SET_RPM_MPH_RATE,
+			SET_FPGA_RATE,
+			SEND_RT_FPGA_STATUS,
+			SEND_REV_LIMIT_OVERRIDE,
+			SEND_FP_OVERRIDE
 		}
 
 		public ServerCmds()

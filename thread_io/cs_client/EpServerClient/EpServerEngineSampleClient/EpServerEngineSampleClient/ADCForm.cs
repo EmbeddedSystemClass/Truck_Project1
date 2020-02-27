@@ -33,7 +33,6 @@ namespace EpServerEngineSampleClient
 		private bool m_pause = false;
 		//private bool m_pause = true;
 		//int selected_baudrate = 0;
-		int ms_delay;
 		public ADCForm(string xml_file_location, INetworkClient client)
 		{
 			InitializeComponent();
@@ -164,7 +163,8 @@ namespace EpServerEngineSampleClient
 		private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			int sel = lbMsDelay.SelectedIndex;
-			switch(sel)
+			/*
+			switch (sel)
 			{
 				case 0:
 					ms_delay = 1000;
@@ -193,8 +193,9 @@ namespace EpServerEngineSampleClient
 				default:
 					break;
 			}
-			AddMsg(ms_delay.ToString());
-			byte[] update_rate = BitConverter.GetBytes(ms_delay);
+			*/
+			//AddMsg(ms_delay.ToString());
+			byte[] update_rate = BitConverter.GetBytes(sel);
 			byte[] bytes = new byte[update_rate.Count() + 2];
 			System.Buffer.BlockCopy(update_rate, 0, bytes, 2, update_rate.Count());
 			bytes[0] = svrcmd.GetCmdIndexB("SET_ADC_RATE");

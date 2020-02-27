@@ -162,6 +162,7 @@ void init_ips(void)
 	}
 //	printf("max_ips: %d\r\n",max_ips);
 	i = LoadParams("param.conf",&ps, &password[0], errmsg);
+	ps.blower1_on = 32;	// KLUDGE: this was not loading fsr
 	no_waypoints = LoadWayPoints("waypoints.conf",&wp[0], errmsg);
 //	for(i = 0;i < no_waypoints;i++)
 //		printf("%s %f %f\r\n",wp[i].name, wp[i].latitude, wp[i].longitude);
@@ -1505,6 +1506,7 @@ UCHAR serial_recv_task(int test)
 	int running_lights = 0;
 	int lights_on = 0;
 	int wipers = 0;
+	static UCHAR status1, status2, status3, status4;
 
 	memset(errmsg,0,20);
 
@@ -1597,6 +1599,7 @@ UCHAR serial_recv_task(int test)
 
 	printString3("server up");
 
+	status1 = status2 = status3 = status4 = 0;
 	while(TRUE)
 	{
 		pthread_mutex_lock( &serial_read_lock); 
@@ -1937,6 +1940,34 @@ UCHAR serial_recv_task(int test)
 //				printString3(tempx);
 			}
 		}else
+			
+		if(cmd == SEND_RT_FPGA_STATUS)
+		{
+			if(status1 != read_serial_buffer[4])
+			{
+				status1 = read_serial_buffer[4];
+				sprintf(tempx, "4: %02x", status1);
+				printString3(tempx);
+			}
+			if(status2 != read_serial_buffer[1])
+			{
+				status2 = read_serial_buffer[1];
+				sprintf(tempx, "1: %02x", status2);
+				printString3(tempx);
+			}
+			if(status3 != read_serial_buffer[2])
+			{
+				status3 = read_serial_buffer[2];
+				sprintf(tempx, "2: %02x", status3);
+				printString3(tempx);
+			}
+			if(status4 != read_serial_buffer[3])
+			{
+				status4 = read_serial_buffer[3];
+				sprintf(tempx, "3: %02x", status4);
+				printString3(tempx);			
+			}
+		}
 
 		if(cmd >= NAV_UP && cmd <= NAV_CLOSE)
 		{
@@ -1945,27 +1976,6 @@ UCHAR serial_recv_task(int test)
 			if(test_sock())
 				send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, cmd);
 		}else 
-
-		if(cmd == NAV_NUM)
-		{
-			temp = read_serial_buffer[2];
-			temp <<= 8;
-			temp |= read_serial_buffer[1];
-			sprintf(tempx,"engine temp limit: %.1f\0", convertF(temp));
-			//printString2(tempx);
-
-			temp = read_serial_buffer[4];
-			temp <<= 8;
-			temp |= read_serial_buffer[3];
-			sprintf(tempx,"cooling fan on: %.1f\0", convertF(temp));
-			//printString2(tempx);
-
-			temp = read_serial_buffer[6];
-			temp <<= 8;
-			temp |= read_serial_buffer[5];
-			sprintf(tempx,"cooling fan off: %.1f\0", convertF(temp));
-			//printString2(tempx);
-		}else
 
 		if(cmd == GET_CONFIG2)
 		{
@@ -2255,9 +2265,6 @@ UCHAR basic_controls_task(int test)
 	UCHAR cmd;
 	char tempx[SERIAL_BUFF_SIZE];
 
-//	static UCHAR buffer[30] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
-//				17,18,19,20,21,22,23,24,25,26,27,28,29};
-
 	static SPECIAL_CMD_ARR sp_cmd_arr[16] = {
 	{LHEADLAMP,1},
 	{LBRIGHTS,1},
@@ -2276,7 +2283,6 @@ UCHAR basic_controls_task(int test)
 	{RBRIGHTS,0},
 	{RHEADLAMP,0}};
 
-	//strcpy(tempx,"shutdown...\0");
 	memset(msg_queue,0,sizeof(msg_queue));
 	msg_queue_ptr = 0;
 
@@ -2319,22 +2325,15 @@ UCHAR basic_controls_task(int test)
 			case ON_RBRIGHTS:
 			case OFF_RBRIGHTS:
 //			case ESTOP_SIGNAL:
-				//send_serialother(cmd,tempx);
-//				myprintf1(cmd_array[cmd].cmd_str);
-//				printString3(cmd_array[cmd].cmd_str);
 				if(test_sock())
 				{
 					sprintf(tempx,"%s",cmd_array[cmd].cmd_str);
 					send_msg(strlen((char*)tempx)*2,(UCHAR*)tempx, SEND_MSG);
 				}
-// comment out the printString2 when using on actual iobox
-//				printString2(tempx);
-
 			break;
 			default:
 			break;
 		}
-//#if 0
 		switch(cmd)
 		{
 			case ON_FAN:
@@ -2449,7 +2448,6 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 1;
 				ollist_insert_data(index,&oll,otp);
-//				printString2("lights on");
 				break;
 
 			case OFF_LIGHTS:
@@ -2462,7 +2460,6 @@ UCHAR basic_controls_task(int test)
 				rc = ollist_find_data(index,otpp,&oll);
 				otp->onoff = 0;
 				ollist_insert_data(index,&oll,otp);
-//				printString2("off lights");
 				break;
 
 			case ON_LLIGHTS:
@@ -2617,44 +2614,28 @@ UCHAR basic_controls_task(int test)
 			break;
 
 			case START_SEQ:
-				//myprintf1("start seq\0");
 				ollist_find_data(ACCON,&otp,&oll);
 				otp->onoff = 1;
 				otp->reset = 0;
-	//			printf("%d %s\r\n",otp->port,otp->label);
-	//			change_output(otp->port,otp->onoff);
 				change_output(ACCON,1);
 				ollist_insert_data(otp->port,&oll,otp);
 				ollist_find_data(FUELPUMP,&otp,&oll);
 				otp->onoff = 1;
 				otp->reset = 0;
-	//			printf("%d %s\r\n",otp->port,otp->label);
-	//			change_output(otp->port,otp->onoff);
 				change_output(FUELPUMP,1);
 				ollist_insert_data(otp->port,&oll,otp);
 
 				index = STARTER;
 				rc = ollist_find_data(index,otpp,&oll);
-	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
-	//			otp->onoff = 0;
-	//			otp->reset = 0;
-	//			TOGGLE_OTP;
-	//			ollist_insert_data(index,&oll,otp);
 				usleep(_100MS);
 				change_input(STARTER_INPUT, 0);
 				usleep(_10MS);
 				change_input(STARTER_INPUT, 1);
-	//			printf("starter on: port: %d onoff: %d type: %d reset: %d\r\n",otp->port,otp->onoff,otp->type,otp->reset);
 				engine_running = 1;
-	//			printf("engine_running: %d\r\n",engine_running);
-//				tempx[0] = 1;	// set key_mode to 'PASSWORD'
-//				send_serialother(SET_KEYMODE,(UCHAR*)tempx);
 				break;
 
 			case SHUTDOWN:
-				//myprintf1("shutdown engine\0");
 				running_seconds = running_minutes = running_hours = 0;
-//				printf("engine_running: %d\r\n",engine_running);
 				engine_running = 0;
 				change_output(ACCON, 0);
 				ollist_find_data(ACCON,&otp,&oll);

@@ -758,7 +758,8 @@ void StartRecv7200(void const * argument)
 		if((cmd >= ENABLE_START && cmd <= WIPER_OFF) || cmd == SERVER_UP || 
 				cmd == SERVER_DOWN || cmd == SEND_CONFIG2 || cmd == GET_CONFIG2 || 
 				cmd == ADC_GATE || cmd == SET_ADC_RATE || cmd == SET_FPGA_RATE || 
-				cmd == SET_RPM_MPH_RATE)
+				cmd == SET_RPM_MPH_RATE || cmd == HIGH_REV_LIMIT || cmd == LOW_REV_LIMIT || 
+				cmd == SEND_REV_LIMIT_OVERRIDE || cmd == SEND_FP_OVERRIDE)
 		{
 			switch (cmd)
 			{
@@ -889,41 +890,61 @@ void StartRecv7200(void const * argument)
 					break;
 
 				case SEND_CONFIG2:
-					utemp = (uint16_t)buff[2];
-					utemp <<= 8;
-					utemp |= (uint16_t)buff[1];
+					ucbuff[0] = SET_RPM_MPH_UPDATE_RATE;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					vTaskDelay(100);
 
-					fan_on_temp = (uint16_t)buff[2];
+					ucbuff[0] = SET_FPGA_SEND_UPDATE_RATE;
+					ucbuff[1] = buff[2];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					vTaskDelay(100);
+
+					ucbuff[0] = SET_HIGH_REV_LIMIT;
+					ucbuff[1] = buff[3];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					vTaskDelay(100);
+
+					ucbuff[0] = SET_LOW_REV_LIMIT;
+					ucbuff[1] = buff[4];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					vTaskDelay(100);
+
+					fan_on_temp = (uint16_t)buff[6];
 					fan_on_temp <<= 8;
-					fan_on_temp |= (uint16_t)buff[1];
+					fan_on_temp |= (uint16_t)buff[5];
 
- 					fan_off_temp = (uint16_t)buff[4];
+ 					fan_off_temp = (uint16_t)buff[8];
 					fan_off_temp <<= 8;
-					fan_off_temp |= (uint16_t)buff[3];
+					fan_off_temp |= (uint16_t)buff[7];
 
- 					blower_en_temp = (uint16_t)buff[6];
+ 					blower_en_temp = (uint16_t)buff[10];
 					blower_en_temp <<= 8;
-					blower_en_temp |= (uint16_t)buff[5];
+					blower_en_temp |= (uint16_t)buff[9];
 
- 					blower1_temp = (uint16_t)buff[8];
+ 					blower1_temp = (uint16_t)buff[12];
 					blower1_temp <<= 8;
-					blower1_temp |= (uint16_t)buff[7];
+					blower1_temp |= (uint16_t)buff[11];
 
- 					blower2_temp = (uint16_t)buff[10];
+ 					blower2_temp = (uint16_t)buff[14];
 					blower2_temp <<= 8;
-					blower2_temp |= (uint16_t)buff[9];
+					blower2_temp |= (uint16_t)buff[13];
 
- 					blower3_temp = (uint16_t)buff[12];
+ 					blower3_temp = (uint16_t)buff[16];
 					blower3_temp <<= 8;
-					blower3_temp |= (uint16_t)buff[11];
+					blower3_temp |= (uint16_t)buff[15];
 
-					engine_temp_limit = (uint16_t)buff[14];
+					engine_temp_limit = (uint16_t)buff[18];
 					engine_temp_limit <<= 8;
-					engine_temp_limit |= (uint16_t)buff[13];
+					engine_temp_limit |= (uint16_t)buff[17];
 
-					batt_box_temp = (uint16_t)buff[16];
+					batt_box_temp = (uint16_t)buff[20];
 					batt_box_temp <<= 8;
-					batt_box_temp |= (uint16_t)buff[15];
+					batt_box_temp |= (uint16_t)buff[19];
 /*
 					init_password_countdown = (uint16_t)buff[18];
 					init_password_countdown <<= 8;
@@ -969,24 +990,6 @@ void StartRecv7200(void const * argument)
 					vTaskDelay(100);
 					break;
 
-				case SET_KEYMODE:
-					switch (buff[1])
-					{
-						case 0:
-							key_mode = NORMAL;
-							break;
-						case 1:
-							key_mode = PASSWORD;
-							break;
-						case 2:
-							key_mode = NUM_ENTRY;
-							break;
-						default:
-							key_mode = NORMAL;
-							break;
-					}
-					break;
-
 				case ADC_GATE:
 					ucbuff[0] = ADC_CTL;
 					ucbuff[1] = buff[1];
@@ -1013,6 +1016,34 @@ void StartRecv7200(void const * argument)
 
 				case SET_RPM_MPH_RATE:
 					ucbuff[0] = SET_RPM_MPH_UPDATE_RATE;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
+				case HIGH_REV_LIMIT:
+					ucbuff[0] = SET_HIGH_REV_LIMIT;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+				
+				case LOW_REV_LIMIT:
+					ucbuff[0] = SET_LOW_REV_LIMIT;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
+				case SEND_REV_LIMIT_OVERRIDE:
+					ucbuff[0] = REV_LIMIT_OVERRIDE;
+					ucbuff[1] = buff[1];
+					avr_buffer[0] = pack64(ucbuff);
+					xQueueSend(SendFPGAHandle,avr_buffer,0);
+					break;
+
+				case SEND_FP_OVERRIDE:
+					ucbuff[0] = FUEL_PUMP_OVERRIDE;
 					ucbuff[1] = buff[1];
 					avr_buffer[0] = pack64(ucbuff);
 					xQueueSend(SendFPGAHandle,avr_buffer,0);
@@ -1265,6 +1296,13 @@ void StartRecvFPGA(void const * argument)
 				avr_buffer[0] = pack64(ucbuff);
 				xQueueSend(Send7200Handle, avr_buffer, 0);
 			}
+			ucbuff[0] = SEND_RT_FPGA_STATUS;
+			ucbuff[1] = buff[12];
+			ucbuff[2] = buff[13];
+			ucbuff[3] = buff[14];
+			ucbuff[4] = buff[15];
+			avr_buffer[0] = pack64(ucbuff);
+			xQueueSend(Send7200Handle, avr_buffer, 0);
 
 			//memset(buff,0x30,sizeof(buff));
 		}else

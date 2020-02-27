@@ -284,6 +284,28 @@ package CommonPckg is
 	constant TIME_DELAY9:  integer:=  40000;	-- 1.6ms
 --	constant TIME_DELAY_500RPM:  integer:=  5454260;
 	constant TIME_DELAY_500RPM:  integer:=  16000000;	-- 330 rpm
+
+	constant HREV_LIMIT_6000: integer:= 6000;
+	constant HREV_LIMIT_5800: integer:= 5800;
+	constant HREV_LIMIT_5600: integer:= 5600;
+	constant HREV_LIMIT_5400: integer:= 5400;
+	constant HREV_LIMIT_5200: integer:= 5200;
+	constant HREV_LIMIT_5000: integer:= 5000;
+	constant HREV_LIMIT_4800: integer:= 4800;
+	constant HREV_LIMIT_4600: integer:= 4600;
+	constant HREV_LIMIT_4400: integer:= 4400;
+	constant HREV_LIMIT_4200: integer:= 4200;
+	constant HREV_LIMIT_4000: integer:= 4000;
+
+	constant LREV_LIMIT_4500: integer:= 4500;
+	constant LREV_LIMIT_4400: integer:= 4400;
+	constant LREV_LIMIT_4300: integer:= 4300;
+	constant LREV_LIMIT_4200: integer:= 4200;
+	constant LREV_LIMIT_4100: integer:= 4100;
+	constant LREV_LIMIT_4000: integer:= 4000;
+	constant LREV_LIMIT_3900: integer:= 3900;
+	constant LREV_LIMIT_3800: integer:= 3800;
+	constant LREV_LIMIT_3700: integer:= 3700;
 	
 -- baud rates for 7-seg displays	
 	constant DVSR_MU_9600: integer:= 320;	-- 9600 baud
@@ -317,7 +339,7 @@ package CommonPckg is
 	constant MAX_TUNE_LEN: integer:= 20;
 
 	constant SET_FPGA_SEND_UPDATE_RATE: std_logic_vector(7 downto 0):= X"01";
-	constant SET_UPDATE_RATE: std_logic_vector(7 downto 0):= X"02";
+	constant SET_RPM_MPH_UPDATE_RATE: std_logic_vector(7 downto 0):= X"02";
 	constant DTMF_TONE_ON: std_logic_vector(7 downto 0):= X"03";
 	constant DTMF_TONE_OFF: std_logic_vector(7 downto 0):= X"04";
 	constant SPECIAL_TONE_ON: std_logic_vector(7 downto 0):= X"05";
@@ -327,6 +349,11 @@ package CommonPckg is
 	constant LOAD_TUNE: std_logic_vector(7 downto 0):= X"09";
 	constant SHOW_DOWNLOAD: std_logic_vector(7 downto 0):= X"0A";
 	constant ADC_CTL: std_logic_vector(7 downto 0):= X"0B";
+	constant SET_ADC_RATE2: std_logic_vector(7 downto 0):= X"0C";
+	constant SET_HIGH_REV_LIMIT: std_logic_vector(7 downto 0):= X"0D";
+	constant SET_LOW_REV_LIMIT: std_logic_vector(7 downto 0):= X"0E";
+	constant REV_LIMIT_OVERRIDE: std_logic_vector(7 downto 0):= X"0F";
+	constant FUEL_PUMP_OVERRIDE: std_logic_vector(7 downto 0):= X"10";
 
 	constant  PWM_OFF_PARAM: std_logic_vector(7 downto 0):= X"01";
 	constant  PWM_ON_PARAM: std_logic_vector(7 downto 0):= X"1F";

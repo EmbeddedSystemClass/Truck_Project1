@@ -93,7 +93,6 @@ namespace EpServerEngineSampleClient
 		private bool home_svr_connected = false;
 		// initially try for 20 seconds to connect, then 
 		// give up until user hits 'Call Home' button
-		private string timer_cmd = "SET_PARAMS";
 		private int timer_offset;
 
         private string xml_dialog1_location = "c:\\Users\\daniel\\dev\\uiformat1.xml";
@@ -425,6 +424,7 @@ namespace EpServerEngineSampleClient
 
             switch (str)
             {
+				// this is sent by home server (not used)
 				case "SEND_CONFIG2":
 					AddMsg("send config2");
 					cfg_params.rpm_mph_update_rate = BitConverter.ToInt16(bytes, 2);
@@ -548,7 +548,7 @@ namespace EpServerEngineSampleClient
 					if (server_up_seconds == 2)
 						SetTime();
 
-					if (client_params[selected_address].AutoConn == true && server_up_seconds == 6)
+					if (client_params[selected_address].AutoConn == true && server_up_seconds == 4)
 					{
 						if(dlgsetparams == null)
 						{
@@ -556,7 +556,9 @@ namespace EpServerEngineSampleClient
 							dlgsetparams = new DlgSetParams(cfg_params);
 							dlgsetparams.SetClient(m_client);
 							dlgsetparams.SetParams(cfg_params);
-							timer_offset = svrcmd.GetCmdIndexI(timer_cmd);
+							// SET_PARAMS asks the server to load all the params from the config file
+							// and send them back to here via the SEND_CONFIG msg
+							timer_offset = svrcmd.GetCmdIndexI("SET_PARAMS");
 							svrcmd.Send_Cmd(timer_offset);
 							AddMsg(cfg_params.engine_temp_limit.ToString());
 							AddMsg("cfg_params in dlgsetparams set: " + dlgsetparams.GetSet());
@@ -678,7 +680,8 @@ namespace EpServerEngineSampleClient
 								break;
                             case 13:
                                 cfg_params.test_bank = int.Parse(word);
-                                break;
+								AddMsg("test bank: " + cfg_params.test_bank.ToString());
+								break;
 							case 14:
 								cfg_params.password_timeout = int.Parse(word);
 								AddMsg("pswd timeout: " + cfg_params.password_timeout.ToString());
@@ -729,10 +732,6 @@ namespace EpServerEngineSampleClient
                 case "ESTOP_SIGNAL":
                     AddMsg("ESTOP: " + ret);
                     m_engine_running = false;
-                    break;
-
-                case "NAV_NUM":
-                    AddMsg(ret);
                     break;
 
                 case "SEND_STATUS":
