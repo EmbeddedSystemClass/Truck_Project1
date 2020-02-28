@@ -733,7 +733,7 @@ void init_LCD(int clr)
 			rtlabel_str[j].data_col = data_col - 3;
 		else
 			rtlabel_str[j].data_col = data_col;
-		
+
 		ucbuff[1] = row;
 		ucbuff[2] = col;
 		ucbuff[3] = (UCHAR)j + 1;
@@ -1193,7 +1193,7 @@ UCHAR LCD_serial_queue(int test)
 							fa[i].meters = getDistance((double)wp[i].latitude, (double)wp[i].longitude, 
 												curr_lat, curr_long, &fa[i].yards, &fa[i].miles);
 							strcpy(fa[i].name, wp[i].name);
-							
+
 							//printf("%d: %s %f\r\n",i, fa[i].name, fa[i].miles);
 						}
 						mdistance2 = 1000000.0;
@@ -1201,7 +1201,7 @@ UCHAR LCD_serial_queue(int test)
 						{
 							mdistance1 = fa[i].miles;
 							if(mdistance1 < mdistance2)
-							{	
+							{
 								mdistance2 = mdistance1;
 								closest_wp = i;
 							}
@@ -1213,7 +1213,7 @@ UCHAR LCD_serial_queue(int test)
 							{
 								mdistance1 = fa[i].miles;
 								if(mdistance1 < mdistance2)
-								{	
+								{
 									mdistance2 = mdistance1;
 									next_closest_wp = i;
 								}
@@ -1940,7 +1940,7 @@ UCHAR serial_recv_task(int test)
 //				printString3(tempx);
 			}
 		}else
-			
+
 		if(cmd == SEND_RT_FPGA_STATUS)
 		{
 			if(status1 != read_serial_buffer[4])
@@ -1965,7 +1965,7 @@ UCHAR serial_recv_task(int test)
 			{
 				status4 = read_serial_buffer[3];
 				sprintf(tempx, "3: %02x", status4);
-				printString3(tempx);			
+				printString3(tempx);
 			}
 		}
 

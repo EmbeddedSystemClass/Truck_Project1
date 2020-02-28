@@ -2,10 +2,6 @@ Main Box to house STM32 chip and keypad
 
 Screen Box has the AVR & LCD screen (in sep. panel to left above red & green buttons)
 
-This box replaces the old monster box which housed the screen, keypad, AVR, PIC24FJ and the FPGA boards.
-The main box connects to the screen box via an RS-232 cable using 3v3->5v & RS-232 converters
-There is also a PWM wire (screen dim) from the STM32 to the screen box (or use the PWM on from the FPGA)
-
 The AVR and screen work as before and are connected the same, but an STM32 Discovery board replaces the
 Microchip PIC24FJ128.
 
@@ -32,13 +28,34 @@ cmds from keypad
 engine temp from DS1620 task 
 rt values (rpm/mph) from recv FPGA task
 
-Since the UART receive's are in queues, they can
+Since the UART receives are in queues, they can
 only transfer 8 bytes at a time, so the TS-7200 UART
 could just use buffers protected by mutexes but can
 the FreeRTOS mutexes be called from without the 
 FreeRTOS tasks, or just ordinary functions?
 
 The STM32 has up to 16 ADC channels but the FPGA can be used to do the ADC using support chips.
+
+FPGA reads (2) MCP chips (4 channels)
+MCP ch0		- oil pressure				current
+MCP ch1		- gas gauge
+MCP ch2		- MAP
+MCP ch3		- O2
+
+MCP ch4		- TPS
+MCP ch5		- light sensor on dash
+MCP ch6		- 
+MCP ch7		- 
+
+for now the MCP channels just return 8 bit accuracy but in the future when implementing actual
+ign adv, do a sep. FPGA module for the MAP, O2 & TPS to get 10-bit accuracy and the others
+8-bit so the 10-bit can go faster while the others don't need to be polled as fast
+
+TS7800TX	communicates with TS-7800
+TS7800RX
+
+monitorTX	used to monitor status/data of FPGA
+monitorRX
 
 pinout for LCD:
 
@@ -221,22 +238,61 @@ recv_uart process. And another input to stop the broadcast (or command).
 TODO: Also, may want a reference signal generated when the FPGA is running to
 blink an LED on the dash to show the FPGA is running. (or in the main box)
 
-TODO: In the StartDefaultTask of freertos.c - wait for a message from the AVR/LCD 
-before sending the init_rtlabels/DISPLAY_RTLABELS msg's.
-
-TODO: See if the parallel port can be made bi-directional, that would free up
-UART3 on the STM32. (The FPGA can have as many UARTS as there are pins available).
-
 TODO: need a timer in XMEGA processor that turns displays to '0' if no signal 
 
 TODO: 3 or 4 input buttons on dash to int's on STM32
 		and 3 or 4 outputs on dash from STM32 for status lights
+
+TODO: send FPGA rt data to monitorTX and to TS7800TX signals.
+
+SET_PARAMS - sent by client - tells svr to call SEND_CONFIG which sends all current params
+SEND_CONFIG - sent by svr - tells client to load all params in cfg_params struct
+SEND_CONFIG2 - sent by svr to STM32 (there is a SEND_CONFIG2 as a case in the client's ProcessMsg
+										but it's just there for the home server - not being used)
+UPDATE_CONFIG - sent by client after DlgSetParams closes - sends all params to svr 
 		
-TODO: make text file in EpClient directory that says either "laptop" or "desktop"
-	so the client knows which xml file to read from
+STM32 sends SEND_RT_FPGA_STATUS	with 4 bytes at end of every StartRecvFPGA. 
+in serial_recv_task, svr prints out the status codes:
 
-TODO: SET_PARAMS not quite working right
+		if(cmd == SEND_RT_FPGA_STATUS)
+		{
+			if(status1 != read_serial_buffer[4])
+			{
+				status1 = read_serial_buffer[4];
+				sprintf(tempx, "4: %02x", status1);
+				printString3(tempx);
+			}
+			if(status2 != read_serial_buffer[1])
+			{
+				status2 = read_serial_buffer[1];
+				sprintf(tempx, "1: %02x", status2);
+				printString3(tempx);
+			}
+			if(status3 != read_serial_buffer[2])
+			{
+				status3 = read_serial_buffer[2];
+				sprintf(tempx, "2: %02x", status3);
+				printString3(tempx);
+			}
+			if(status4 != read_serial_buffer[3])
+			{
+				status4 = read_serial_buffer[3];
+				sprintf(tempx, "3: %02x", status4);
+				printString3(tempx);			
+			}
+		}
 
+high nibble of status1: SET_FPGA_RATE
+low nibble of status1 is SET_RPM_MPH_RATE
+
+high nibble of status2: SET_ADC_RATE
+low nibble of status2: HIGH_REV_LIMIT
+
+bit 6 of status3: SEND_REV_LIMIT_OVERRIDE
+bit 1 of statud3: SEND_FP_OVERRIDE
+bit 7 of status3: ADC_GATE
+low nibble of status3: LOW_REV_LIMIT
+		
 XMEGA proc for driving LED module (rpm/mph)
 The TX's of USART's 1 & 2 go to the LED module (rpm/mph).
 2) one is for mph and the other is rpm.
@@ -306,32 +362,90 @@ NET "data_ready"  LOC ="p162";	32
 
 these go threw the 3v3 conv chip board
 
-p4 starts from the 2nd pair on the dip
+p4 starts from the 2nd pair on the plugin dip
 which is actually the 3rd pair on the board
 the first pair on the dip are gnd and 
 the first pair on the board are 3v3 which
 are not used
 
-NET "pwm_signal_1"  LOC ="p4";		bottom	1
-NET "pwm_signal_2"  LOC ="p5";		top		2
-NET "pwm_spk1"  LOC ="p2";			bottom	3
-NET "pwm_spk2"  LOC ="p3";			top		4
-NET "pwm_lcd"  LOC ="p203";			bottom	5
-#NET "fp_shutoff"  LOC ="p205";		top		6	not used
-#NET "rev_limit"  LOC ="p200";		bottom	7	not used
-NET "rpm1_signal"  LOC ="p202";		top		8
-NET "rpm2_signal"  LOC ="p197";		bottom	9
-NET "mph1_signal"  LOC ="p199";		top		10
-NET "mph2_signal"  LOC ="p193";		bottom	11
-NET "tx_rpm_mph"   LOC ="p196";		top		12
+											pin on FPGA		pin on top row of conv board
+NET "pwm_signal_1"  LOC ="p4";		bottom	1				24
+NET "pwm_signal_2"  LOC ="p5";		top		2				23
+NET "pwm_spk1"  	LOC ="p2";		bottom	3				22
+NET "pwm_spk2"  	LOC ="p3";		top		4				21
+NET "pwm_lcd"      LOC ="p203";		bottom	5				20
+NET "fp_shutoff"   LOC ="p205";		top		6				19
+NET "rev_limit"    LOC ="p200";		bottom	7				18
+NET "rpm1_signal"  LOC ="p202";		top		8				17
+NET "rpm2_signal"  LOC ="p197";		bottom	9				16
+NET "mph1_signal"  LOC ="p199";		top		10				15
+NET "mph2_signal"  LOC ="p193";		bottom	11				14
+NET "tx_rpm_mph"   LOC ="p196";		top		12				13
+NET "TS7800TX"     LOC ="p190";		bottom	13				12
+NET "TS7800RX"     LOC ="p192";		top		14				11
+NET "monitorTX"    LOC ="p187";		bottom	15				10
+NET "monitorRX"    LOC ="p189";		top		16				9
 
-(6) unused
-NET "32I/Os_2_13"  LOC ="p190";
-NET "32I/Os_2_14"  LOC ="p192";
-NET "32I/Os_2_15"  LOC ="p187";
-NET "32I/Os_2_16"  LOC ="p189";
-NET "32I/Os_2_17"  LOC ="p185";		// 2 extra pins on header
-NET "32I/Os_2_18"  LOC ="p186";
+no conn. on 1st 2 of dip going into 16I/Os_1 because
+it's for the 5v. The next 2 pairs are gnd, the 3rd pair
+is 153 & 160.
+on lower left of FPGA card when looking at mbox 
+with lid open to the left
+153 is 3rd one up from bottom of dip on top
+160 is  "   "  "    "    "     " bottom
+
+NET "MCP_CS1"      LOC = "p160";
+NET "MCP_CLK1"     LOC = "p153";
+NET "MCP_DIN1"     LOC = "p151";
+NET "MCP_DOUT1"    LOC = "p152";
+
+NET "MCP_CS2"      LOC = "p150";
+NET "MCP_CLK2"     LOC = "p147";
+NET "MCP_DIN2"     LOC = "p145";
+NET "MCP_DOUT2"    LOC = "p146";
+
+NET "MCP_CS3"      LOC = "p144";
+NET "MCP_CLK3"     LOC = "p140";
+NET "MCP_DIN3"     LOC = "p138";
+NET "MCP_DOUT3"    LOC = "p139";
+
+NET "MCP_CS4"      LOC = "p137";
+NET "MCP_CLK4"     LOC = "p135";
+NET "MCP_DIN4"     LOC = "p133";
+NET "MCP_DOUT4"    LOC = "p134";
+
+note: lines were not swapped on 2nd board so that DIN->DOUT 
+so I swapped them in the ucf file.
+also: made 2 diff bit files in main_FPGA: slow.bit and fast.bit
+
+sip on 1st board for (2) MCP3002's:
+1) +5vdc
+2) gnd
+3) CS 1
+4) CLK 1
+5) DIN 1
+6) DOUT 1
+7) CS 2
+8) CLK 2
+9) DIN 2
+10) DOUT 2
+11) ch 0 (1)
+12) ch 1 (1)
+13) ch 0 (2)
+14) ch 1 (2)
+
+bottom view of MCP3002:
+
+DIN		DOUT	CLK		VCC 
+
+GND		CH1		CH0		CS
+
+top view of MCP3002:
+
+VCC		CLK		DOUT	DIN
+
+CS		CH0		CH1		GND
+
 
 3v3 converter board:
 *********************************
@@ -359,8 +473,8 @@ DB-15 B: (on right)
     12    14    16     18     20      22    24   
 
 DB-15 A: (on left)
-... 5   3   1
-...   4   2
+15  13  11   9   7   5   3   1
+  14  12  10   8   6   4   2
 
 DB-15 on right looking on outside:
 (yellow tape)
@@ -373,15 +487,15 @@ DB-15 on right looking on outside:
 22)	grn (2)				pwm_spk1
 21)	org (1)				pwm_spk2
 20)	brn (2)				pwm_lcd
-19)	bl/wht (1)			fp_shutoff	not used
-18)	brn/wht (2)			rev_limit	not used
+19)	bl/wht (1)			fp_shutoff	not used (accelerometer)
+18)	brn/wht (2)			rev_limit
 17)	bl (1)				rpm1_signal
 16)	org (2)				rpm2_signal
 15)	org/wht (1)			mph1_signal
 14)	org/wht (2)			mph2_signal
 13) br (1)				tx_rpm_mph
-12)	bl (2)				TX to LCD (PA2)	- to brn/wht wire to LCD
-11)	br/wht (1)			RX to LCD (PA3)	- to bl/wht wire to LCD
+12)	bl (2)				TX to monitor
+11)	br/wht (1)			RX from monitor
 (open) org/wht
 
 DB-15 on left looking from outside:
@@ -395,12 +509,12 @@ DB-15 on left looking from outside:
 6)	grn/wht (2)			DS16202 DQ ***
 7)	br (1)				DS16202 CLK
 8)	br (2)				DS16202 RST
-9)	bl/wht (1)
-10)	bl (2)
-11)	bl (1)
-12)	org (2)
-13)	grn (1)
-14)	bl/wht(2)
+9)	bl/wht (1)			TS7800TX
+10)	bl (2)				TS7800RX
+11)	bl (1)				monitorTX
+12)	org (2)				monitorRX
+13)	grn (1)				
+14)	bl/wht(2)			
 15)	grn/wht (1)
 (open) br/wht (2)
 
@@ -537,12 +651,14 @@ NET "32I/Os_2_9"  LOC ="p197";
 NET "32I/Os_2_10"  LOC ="p199";
 NET "32I/Os_2_11"  LOC ="p193";
 NET "32I/Os_2_12"  LOC ="p196";
+
 NET "32I/Os_2_13"  LOC ="p190";
 NET "32I/Os_2_14"  LOC ="p192";
 NET "32I/Os_2_15"  LOC ="p187";
 NET "32I/Os_2_16"  LOC ="p189";
-NET "32I/Os_2_17"  LOC ="p185";
-NET "32I/Os_2_18"  LOC ="p186";
+NET "32I/Os_2_17"  LOC ="p185";		-- these are open
+NET "32I/Os_2_18"  LOC ="p186";			"
+
 NET "32I/Os_2_19"  LOC ="p180";
 NET "32I/Os_2_20"  LOC ="p181";
 NET "32I/Os_2_21"  LOC ="p178";
@@ -558,3 +674,20 @@ NET "32I/Os_2_30"  LOC ="p164";
 NET "32I/Os_2_31"  LOC ="p161";
 NET "32I/Os_2_32"  LOC ="p162";
 
+#16I/Os_1
+NET "16I/Os_1_1"  LOC = "p160"  ;
+NET "16I/Os_1_2"  LOC = "p153"  ;
+NET "16I/Os_1_3"  LOC = "p152"  ;
+NET "16I/Os_1_4"  LOC = "p151"  ;
+NET "16I/Os_1_5"  LOC = "p150"  ;
+NET "16I/Os_1_6"  LOC = "p147"  ;
+NET "16I/Os_1_7"  LOC = "p146"  ;
+NET "16I/Os_1_8"  LOC = "p145"  ;
+NET "16I/Os_1_9"  LOC = "p144"  ;
+NET "16I/Os_1_10"  LOC = "p140"  ;
+NET "16I/Os_1_11"  LOC = "p139"  ;
+NET "16I/Os_1_12"  LOC = "p138"  ;
+NET "16I/Os_1_13"  LOC = "p137"  ;
+NET "16I/Os_1_14"  LOC = "p135"  ;
+NET "16I/Os_1_15"  LOC = "p134"  ;
+NET "16I/Os_1_16"  LOC = "p133"  ;

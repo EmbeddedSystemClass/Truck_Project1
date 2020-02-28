@@ -603,7 +603,7 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						break;
-						
+
 					case SET_FAN_ON:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
@@ -625,7 +625,7 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						break;
-						
+
 					case SET_FAN_OFF:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
@@ -784,7 +784,7 @@ UCHAR get_host_cmd_task(int test)
 							//printString2(tempx);
 						}
 						break;
-					
+
 					case SET_BATT_BOX_TEMP:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
@@ -860,7 +860,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[7] = msg_buf[13];
 						sprintf(tempx,"fan off: %.1f\0", convertF(ps.cooling_fan_off));
 						printString3(tempx);
-						
+
 						utemp = (UINT)msg_buf[15];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[14];
@@ -869,7 +869,7 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[9] = msg_buf[15];
 						sprintf(tempx,"blower en: %.1f\0", convertF(ps.blower_enabled));
 						printString3(tempx);
-						
+
 						utemp = (UINT)msg_buf[17];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[16];
@@ -878,21 +878,21 @@ UCHAR get_host_cmd_task(int test)
 						write_serial_buffer[11] = msg_buf[17];
 						sprintf(tempx,"blower1: %.1f\0", convertF(ps.blower1_on));
 						printString3(tempx);
-						
+
 						utemp = (UINT)msg_buf[19];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[18];
 						ps.blower2_on = utemp;
 						write_serial_buffer[12] = msg_buf[18];
 						write_serial_buffer[13] = msg_buf[19];
-						
+
 						utemp = (UINT)msg_buf[21];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[20];
 						ps.blower3_on = utemp;
 						write_serial_buffer[14] = msg_buf[20];
 						write_serial_buffer[15] = msg_buf[21];
-						
+
 						utemp = (UINT)msg_buf[23];
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[22];
@@ -990,11 +990,11 @@ UCHAR get_host_cmd_task(int test)
 						utemp <<= 8;
 						utemp |= (UINT)msg_buf[4];
 						test2 = (int)utemp;
-						
+
 						checksum = 0;
 						memset(tempx,0,sizeof(tempx));
 						sprintf(tempx,"$PSRF103,%02d,00,%02d,01",test1,test2);
-					
+
 						for(i = 1;i < strlen(tempx);i++)
 							checksum ^= tempx[i];
 
@@ -1042,7 +1042,7 @@ UCHAR get_host_cmd_task(int test)
 							write_serial_buffer[0] = 0xFF;
 						}
 						send_serialother(ADC_GATE, &write_serial_buffer[0]);
-						printString3(tempx);						
+						printString3(tempx);
 						break;
 
 					case ADC_GATE:
@@ -1100,7 +1100,7 @@ UCHAR get_host_cmd_task(int test)
 						sprintf(tempx,"rev limit override: %d",utemp);
 						printString3(tempx);
 						break;
-					
+
 					case SEND_FP_OVERRIDE:
 						utemp = (UINT)msg_buf[3];
 						utemp <<= 8;
@@ -1110,7 +1110,7 @@ UCHAR get_host_cmd_task(int test)
 						sprintf(tempx,"fuel pump override: %d",utemp);
 						printString3(tempx);
 						break;
-					
+
 
 					case EXIT_PROGRAM:
 exit_program:
@@ -1425,7 +1425,7 @@ void set_gps_baudrate(int baudrate)
 	int test2;
 	UCHAR checksum;
 	int i;
-	
+
 	memset(tempx,0,sizeof(tempx));
 	switch(baudrate)
 	{

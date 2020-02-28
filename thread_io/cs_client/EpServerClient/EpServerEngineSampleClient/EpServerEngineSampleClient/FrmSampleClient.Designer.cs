@@ -455,7 +455,7 @@
 			this.btnHomeSvr.Name = "btnHomeSvr";
 			this.btnHomeSvr.Size = new System.Drawing.Size(235, 61);
 			this.btnHomeSvr.TabIndex = 8;
-			this.btnHomeSvr.Text = "Call Home";
+			this.btnHomeSvr.Text = "Unused";
 			this.btnHomeSvr.UseVisualStyleBackColor = false;
 			this.btnHomeSvr.Click += new System.EventHandler(this.btnAVR_Click);
 			// 

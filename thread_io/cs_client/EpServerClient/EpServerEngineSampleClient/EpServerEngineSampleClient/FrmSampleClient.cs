@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using EpLibrary.cs;
 using System.IO;
+using System.Collections;
 using System.Xml.Serialization;
 using System.Drawing;
 using System.Timers;
@@ -111,7 +112,6 @@ namespace EpServerEngineSampleClient
             //this.conn = new System.Data.SqlClient.SqlConnection(connectionString);
             //            this.cmd = new System.Data.SqlClient.SqlCommand("UPDATE O_DATA SET label=@label WHERE port=@recno", conn);
             svrcmd.SetClient(m_client);
-			svrcmd2.SetClient(m_client2);
 			//dlgsetparams = new DlgSetParams(cfg_params);
             //dlgsetparams.SetClient(m_client);
             cbIPAdress.Enabled = true;
@@ -156,7 +156,7 @@ namespace EpServerEngineSampleClient
             psDlg6.SetButtonLabels();
             //psDlg6.Name = "Dialog Three";
 
-            playdlg = new PlayerDlg("c:\\users\\daniel\\dev\\player.xml", m_client);
+            playdlg = new PlayerDlg("c:\\Users\\daniel\\Music\\WavFiles", m_client);
 
 			gpsform = new GPSForm("c:\\users\\daniel\\dev\\gps_list.xml",m_client);
 
@@ -256,11 +256,6 @@ namespace EpServerEngineSampleClient
             }
             timer1.Enabled = true;
 			ListMsg("Hello!",true);
-			//btnAVR_Click(new object(), new EventArgs());
-			//AddMsg("buttons used: " + no_buttons.ToString());
-			// start the connection to the home server by default
-			//btnAVR_Click(new object(), new EventArgs());
-			//AddMsg("connection timeout: " + m_client2.ConnectionTimeOut.ToString()); - this returns '0'
 		}
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -316,10 +311,6 @@ namespace EpServerEngineSampleClient
 					btnStopSerial.Enabled = valid_cfg;
 				}
 			}
-			//else if (m_client2.IsConnectionAlive)
-				//AddMsg("connection alive");
-
-			//else AddMsg("home svr: " + client.HostName);
         }
         public void OnDisconnect(INetworkClient client)
         {
@@ -357,10 +348,6 @@ namespace EpServerEngineSampleClient
         public void OnReceived(INetworkClient client, Packet receivedPacket)
         {
 			// anything that gets sent here gets sent to home server if it's up
-			if (m_client2.IsConnectionAlive)
-			{
-				m_client2.Send(receivedPacket);
-			}
 			if (psDlg.Visible == true)
             {
                 psDlg.Process_Msg(receivedPacket.PacketRaw);
@@ -474,7 +461,6 @@ namespace EpServerEngineSampleClient
 				case "SEND_MSG":
 					//AddMsg("str: " + str + " " + str.Length.ToString());
 					//AddMsg(ret + " " + str + " " + type_msg.ToString() + bytes.Length.ToString());
-					Send_Svr_Cmd(ret);
 					ListMsg(ret,false);
 					switch (ret)
                     {
@@ -747,27 +733,6 @@ namespace EpServerEngineSampleClient
                     break;
             }
         }
-		/*
-        void ProcessIOnums(byte[] bytes)
-        {
-            char[] chars = new char[bytes.Length / sizeof(char)];
-            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            string nums = new string(chars);
-            //AddMsg(nums);
-
-            string[] words = nums.Split(' ');
-            //foreach (var word in words)
-            //{
-            //    if (word == "xx")
-            //        AddMsg("nl");
-            //    else
-            //    {
-            //        temp = int.Parse(word);
-            //        AddMsg(temp.ToString());
-            //    }
-            //}
-        }
-		*/
         byte[] BytesFromString(String str)
         {
             byte[] bytes = new byte[str.Length * sizeof(char)];
@@ -776,23 +741,6 @@ namespace EpServerEngineSampleClient
         }
         public void OnSent(INetworkClient client, SendStatus status, Packet sentPacket)
         {
-			if (client == m_client2)
-			{
-				if (status != SendStatus.SUCCESS)
-				{
-					AddMsg("status: home svr not success");
-					SetHomeSvrStatus(false);
-				}else
-				{
-					if (!home_svr_connected)
-					{
-						SetHomeSvrStatus(true);
-						AddMsg("home server success");
-					}
-				}
-			}
-			else
-			{
 				switch (status)
 				{
 					case SendStatus.SUCCESS:
@@ -815,8 +763,6 @@ namespace EpServerEngineSampleClient
 						Debug.WriteLine("SEND Socket Error");
 						break;
 				}
-			}
-
         }
         delegate void AddMsg_Involk(string message);
         public void AddMsg(string message)
@@ -884,11 +830,17 @@ namespace EpServerEngineSampleClient
             {
             }
         }
-        private void RebootServer(object sender, EventArgs e)
-        {
+		private void RebootServer(object sender, EventArgs e)
+		{
 			string cmd = "REFRESH_LCD";
 			int offset = svrcmd.GetCmdIndexI(cmd);
 			svrcmd.Send_Cmd(offset);
+		}
+
+		// Insert logic for processing found files here.
+		public static void ProcessFile(string path)
+		{
+			//AddMsg("Processed file " + path);
 		}
 		// DlgSetParams dialog
 		private void StopMbox(object sender, EventArgs e)
@@ -1065,28 +1017,8 @@ namespace EpServerEngineSampleClient
 		}
 		private void btnAVR_Click(object sender, EventArgs e)		// this one labeled 'home svr'
         {
-			if (!home_svr_connected)
-			{
-				ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
-				ops.ConnectionTimeOut = 5;
-				m_client2.Connect(ops);
-				//AddMsg("initial connect to home svr " + m_client2.IsConnectionAlive.ToString());
-				SetHomeSvrStatus(true);
-			}
-			else
-			{
-				SetHomeSvrStatus(false);
-				m_client2.Disconnect();
-			}
-			/*
-			psDlg4.Enable_Dlg(true);
-            psDlg4.StartPosition = FormStartPosition.Manual;
-            psDlg4.Location = new Point(100, 10);
-            psDlg4.ShowDialog(this);
-            psDlg.Enable_Dlg(false);
-			*/
 		}
-        private void Dialog1_Click(object sender, EventArgs e)
+		private void Dialog1_Click(object sender, EventArgs e)
         {
             psDlg.Enable_Dlg(true);
             psDlg.StartPosition = FormStartPosition.Manual;
@@ -1323,59 +1255,59 @@ namespace EpServerEngineSampleClient
                     {
 						case 0:
 							AddMsg("killing aliens...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\alien_kill2.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\alien_kill2.wav";
 						break;
 						case 1:
 							AddMsg("Game over man...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\GameOverMan.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\GameOverMan.wav";
 							break;
 						case 2:
 							AddMsg("A day on the farm...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\day_on_the_farm.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\day_on_the_farm.wav";
 							break;
 						case 3:
 							AddMsg("Drake, we are leaving...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\DRAKE.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\DRAKE.wav";
 							break;
 						case 4:
 							AddMsg("Breakfast in bed...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\sweethearts.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\sweethearts.wav";
 							break;
 						case 5:
 							AddMsg("illegal aliens");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\illegal_aliens.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\illegal_aliens.wav";
 							break;
 						case 6:
 							AddMsg("express elevator");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\express_elevator.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\express_elevator.wav";
 							break;
 						case 7:
 							AddMsg("knives, sharp sticks...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\knives_sharp_sticks.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\knives_sharp_sticks.wav";
 							break;
 						case 8:
 							AddMsg("Stop yer grinin and drop yer linin");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\stop_yer_grinnin.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\stop_yer_grinnin.wav";
 							break;
 						case 9:
 							AddMsg("They're comin outta the gd walls!");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\comin_outa_the_gd_walls.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\comin_outa_the_gd_walls.wav";
 							break;
 						case 10:
 							AddMsg("we're in some real pretty shit now man!");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\pretty_shit_now_man.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\pretty_shit_now_man.wav";
 							break;
 						case 11:
 							AddMsg("how do you get out of the chicken shit outfit?");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\chicken_shit.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\chicken_shit.wav";
 							break;
 						case 12:
 							AddMsg("you can count me out...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\count_me_out.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\count_me_out.wav";
 							break;
 						case 13:
 							AddMsg("the cut the power...");
-							song = "c:\\users\\Daniel\\Music\\WavFiles\\cut_the_power.wav";
+							song = "c:\\users\\Daniel\\Music\\WavFiles2\\cut_the_power.wav";
 							break;
 						default:
 							break;
@@ -1389,77 +1321,6 @@ namespace EpServerEngineSampleClient
                     player.Dispose();
                     break;
             }
-
-//			if (giveup_home_svr > 0)
-			//if(!home_svr_connected)
-			/*
-			if(true)
-			{
-
-				if (connection_timeout > 2 || !home_svr_connected)
-				{
-					tbHomeSvrConnAttempts.Visible = true;
-					lbHomeSvrConnAttempts.Visible = true;
-					tbHomeSvrConnAttempts.Text = (connection_timeout - 2).ToString() + " " + connection_timeout.ToString();
-					btnHomeSvr.Text = "Call Home";
-					if (!home_svr_connected)
-					{
-						ClientOps ops = new ClientOps(this, "192.168.42.150", "8000");
-						ops.ConnectionTimeOut = 2000;
-						m_client2.Connect(ops);
-					}
-					if (--giveup_home_svr < 1)
-					{
-						connection_timeout = 0;
-						tbHomeSvrConnAttempts.Visible = false;
-						lbHomeSvrConnAttempts.Visible = false;
-						//AddMsg("give up home svr");
-					}
-					if (giveup_home_svr == 1)
-						lbHomeSvrConnAttempts.Text = "giving up";
-					//AddMsg(giveup_home_svr.ToString());
-				}
-				else
-				{
-					tbHomeSvrConnAttempts.Visible = false;
-					lbHomeSvrConnAttempts.Visible = false;
-					btnHomeSvr.Text = "Hangup Home";
-				}
-				if(!home_svr_connected)
-					connection_timeout++;
-			}
-			*/
-			Send_Svr_Cmd("CLIENT_CONNECTED");
-		}
-		private void SetHomeSvrStatus(bool logged_in)
-		{
-			if (logged_in)
-			{
-				home_svr_connected = true;
-				//AddMsg("avr svr connect");
-				btnHomeSvr.Text = "Hangup Home";
-			}
-			else
-			{
-				home_svr_connected = false;
-				btnHomeSvr.Text = "Call Home";
-				//AddMsg("avr svr disconnect");
-			}
-
-		}
-		private void Send_Svr_Cmd(string cmd2)
-		{
-			if (m_client2.IsConnectionAlive)
-			{
-				byte[] bytes1;
-				string cmd = "SEND_MSG";
-				bytes1 = BytesFromString(cmd2);
-				byte[] bytes = new byte[bytes1.Count() - 1 + 2];
-				bytes[0] = svrcmd.GetCmdIndexB(cmd);
-				System.Buffer.BlockCopy(bytes1, 0, bytes, 2, bytes1.Count() - 1);
-				Packet packet = new Packet(bytes, 0, bytes.Count(), false);
-				m_client2.Send(packet);
-			}
 		}
 		private void IPAddressChanged(object sender, EventArgs e)
         {

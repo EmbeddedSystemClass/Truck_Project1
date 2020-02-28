@@ -862,6 +862,7 @@ begin
 						stlv_engine_running <= '1';
 					else 
 						stlv_engine_running <= '0';
+					end if;
 				else
 					time_delay_next6 <= time_delay_reg6 + 1;
 				end if;

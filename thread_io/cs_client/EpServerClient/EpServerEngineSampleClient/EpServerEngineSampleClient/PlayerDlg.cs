@@ -30,45 +30,35 @@ namespace EpServerEngineSampleClient
 		private bool m_wait = false;
 		ServerCmds svrcmd = new ServerCmds();
 
-		public PlayerDlg(string xml_file_location, INetworkClient client)
+		public PlayerDlg(string filePath, INetworkClient client)
 		{
 			InitializeComponent();
 			m_client = client;
 			svrcmd.SetClient(m_client);
 			player = new System.Media.SoundPlayer();
 			mp3file = new List<Mp3File>();
-			XmlReader xmlfile = null;
-			DataSet ds = new DataSet();
-			var filePath = xml_file_location;
-			xmlfile = XmlReader.Create(filePath, new XmlReaderSettings());
-			ds.ReadXml(xmlfile);
-			// load the ui_format for this dialog from xml_file_location
 			Mp3File item = null;
-			foreach (DataRow dr in ds.Tables[0].Rows)
+			string[] fileEntries = Directory.GetFiles(filePath);
+			int i = 0;
+			foreach (string fileName in fileEntries)
 			{
 				item = new Mp3File();
-				item.mp3_location = dr.ItemArray[0].ToString();
-				item.index = Convert.ToInt16(dr.ItemArray[1]);
-                if (File.Exists(item.mp3_location))
+				item.mp3_location = fileName;
+				item.index = i++;
+
+				if (File.Exists(item.mp3_location))
                 {
                     //AddMsg(item.mp3_location + " " + item.index.ToString());
                     mp3file.Add(item);
                     string str = item.mp3_location.ToString();
                     int index = str.LastIndexOf("\\");
                     string str2 = str.Substring(index+1);
-                    //AddMsg(index.ToString());
-                    //lbPlayList.Items.Add(item.mp3_location.ToString() + " " + index.ToString());
                     lbPlayList.Items.Add(str2);
                     item = null;
                     no_selections++;
                 }
 			}
 			current_selection = 0;
-/*
-			string song = mp3file[current_selection].mp3_location;
-			player.SoundLocation = song;
-			player.Play();
-*/
 		}
 		delegate void AddMsg_Involk(string message);
 		public void AddMsg(string message)
